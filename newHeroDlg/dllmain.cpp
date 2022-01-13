@@ -266,15 +266,6 @@ int __stdcall OnAfterMarketDlgArtifactPlace(LoHook* h, HookContext* c)
     return EXEC_DEFAULT;
 }
 
-int __stdcall OnAdventureDlgCreate2(LoHook* h, HookContext* c)
-{   
-    _Dlg_* dlg = *(_Dlg_**)c->edi;
-    _DlgItem_* it;
-   // dlg->AddItem(_DlgStaticDef_::Create(200, 200, 5455, SpellInt_DEF, 0, 0, 18));
-  //  dlg->AddItem(_DlgTextButton_::Create(22, 22, 14222, (char*)"m_automf.def", (char*)"23", (char*)"bigfont.fnt", 16, 22, 0x18, 162, 2));
-   // ExecErmCmd("IF:L^2 22^");
-    return EXEC_DEFAULT;
-}
 int __stdcall OnBeforeHeroDlgArtifactPlace(LoHook* h, HookContext* c)
 
 {
@@ -417,21 +408,10 @@ int __stdcall OnBeforeHeroSwapDlgShow(LoHook* h, HookContext* c)
   
     return EXEC_DEFAULT;
 }
-int __stdcall OnAdventureDlgCreate(LoHook* h, HookContext* c)
 
-{
-    _Dlg_* dlg = *(_Dlg_**)(c->ebp - 0x14);
 
-    dlg->AddItemToOwnArrayList(_DlgStaticText_::Create(o_HD_X -450, o_HD_Y -28, 65, 27, (char*)"myText", (char*)"bigfont.fnt",1,540, ALIGN_H_LEFT, 0));
-
-  ///  dlg->AddItemToOwnArrayList(_DlgStaticTextPcx8ed_::Create(o_HD_X - 200, o_HD_Y - 50,
-    return EXEC_DEFAULT;
-}
-
-//OnAdventureDlgCreate
 void HooksInit()
 {
-    _GEM->WriteLoHook(0x401F9A, OnAdventureDlgCreate);
 
     _GEM->WriteLoHook(0x4DEF7A, OnBeforeHeroDlgArtifactPlace);
     _GEM->WriteLoHook(0x4E15BF, OnAfter_HeroDlg_Create);
