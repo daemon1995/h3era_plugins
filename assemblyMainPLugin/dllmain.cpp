@@ -8,7 +8,9 @@
 #include "..\heroes\headers\HoMM3_Base.h"
 #include "..\heroes\headers\HoMM3_Res.h"
 #include "..\heroes\headers\HoMM3_GUI.h"*/
-
+#ifndef UNICODE
+//#define UNICODE
+#endif 
 #include <string>
 #include <iostream>
 #include "webFunctions.h"
@@ -26,16 +28,16 @@ PatcherInstance* _GEM;
 
 namespace dllText
 {
-    const char* PLUGIN_VERSION = "2.45";
+    const char* PLUGIN_VERSION = "2.47";
 
     const char* PLUGIN_NAME = "GemMainPLugin.era";
     const char* PLUGIN_AUTHOR = "daemon_n";
-    const char* PLUGIN_DATA = "31.12.2021";
+    const char* PLUGIN_DATA = "19.01.2022";
 }
 
 
 
-void Debug(int a)
+void Debug(int a=1)
 {
 
     y[80] = a;
@@ -43,12 +45,10 @@ void Debug(int a)
 }
 
 
-
-
 #define SpellInt_DEF (*(char**)0x5F6A3E)
 //#define SPBID 3430
 
-
+bool MMstrings[3] = { 0,0,0 };
 float onlineVersion = 0;
 float localVersion = 0;
 
@@ -59,109 +59,201 @@ int __stdcall GameStart(LoHook* h, HookContext* c)
 {
     h->Undo();
 
-    if (std::atoi(GetEraJSON("gem_plugin.main_menu.display_version")) == 1)
+    if (std::atoi(GetEraJSON("gem_plugin.main_menu.current_version.display_version")) == 1)
     {
-
-        if (std::atoi(GetEraJSON("gem_plugin.main_menu.read_registry")) == 1)
+        MMstrings[0] = TRUE;
+        if (std::atoi(GetEraJSON("gem_plugin.main_menu.current_version.read_registry")) == 1)
         {
 
             localVersion = getGameFromRegistry();
-        }
 
-        if (std::atoi(GetEraJSON("gem_plugin.main_menu.check_online"))== 1 )
-        {
-           // LPCWSTR siteForCheckingVersion = A2W_EX(fileLink.c_str(), fileLink.length());
-           // DeleteUrlCacheEntry(GetEraJSON("gem_plugin.main_menu.remote_file"));
-
-            onlineVersion = checkOnlineVersion(GetEraJSON("gem_plugin.main_menu.remote_file"));
+           // CALL_12(void, __fastcall, 0x4F6C00, (char*)std::to_string(localVersion).c_str(), 1, -1, -1, -1, 0, -1, 0, -1, 0, -1, 0);
 
         }
+
     }
-    //  CALL_12(void, __fastcall, 0x4f6c00, "{~>resource.def:0}", 1, -1, -1, -1, 0, -1, 0, -1, 0, -1, 0);
- // }
+
+    if (std::atoi(GetEraJSON("gem_plugin.main_menu.online_version.display_version")) == 1)
+    {
+        MMstrings[1] = TRUE;
+        if (std::atoi(GetEraJSON("gem_plugin.main_menu.online_version.check_online")) == 1)
+        {
+
+            onlineVersion = checkOnlineVersion(GetEraJSON("gem_plugin.main_menu.online_version.remote_file"));
+        }
+
+    }
+
+    if (std::atoi(GetEraJSON("gem_plugin.main_menu.era_version.display_version")) == 1)
+    {
+        MMstrings[2] = TRUE;
+    }
 
     return EXEC_DEFAULT;
 }
 //int __stdcall Dlg_OnMouseMove(HiHook* hook, _Dlg_* dlg, int Xabs, int Yasb)
 
+void Dlg_MainMenu_CreateText(_Dlg_* dlg, int x, int y, int length, string myText, int id)
+{
+
+    if (800 - x < length)
+    {
+        x = 800 - length;
+    }
+    if (600 - y < 16)
+    {
+        y = 600 - 16;
+    }
+
+    dlg->AddItem(_DlgStaticText_::Create(x, y, length, 16, (char*)myText.c_str(), (char*)"medfont2.fnt", 7, id, ALIGN_H_LEFT, 0));
+
+}
 void Dlg_MainMenu_Info(_Dlg_* dlg)
 {
-    if (std::atoi(GetEraJSON("gem_plugin.main_menu.display_version")) == 1)
+
+
+    if (MMstrings[0])
     {
+        string jsonString = "gem_plugin.main_menu.current_version";
+
         string c_version;
         if (localVersion)
         {
             c_version = std::to_string(localVersion);
-
         }
         else
         {
             c_version = dllText::PLUGIN_VERSION;
-
         }
-        if (std::atoi(GetEraJSON("gem_plugin.main_menu.custom_version")))
+
+        if (std::atoi(GetEraJSON((jsonString + ".custom_version").c_str())))
         {
-            c_version = GetEraJSON("gem_plugin.main_menu.custom_version");
-            //int length = c_version.length();
+            c_version = GetEraJSON((jsonString + ".custom_version").c_str());
 
             while (c_version.length() < 4)
             {
                 c_version += "0";
 
             }
-
         }
 
+        int xPos = std::atoi(GetEraJSON((jsonString + ".x").c_str()));
+        int yPos = std::atoi(GetEraJSON((jsonString + ".y").c_str()));
+        int id = 550;
         //c_version = GetEraJSON("gem_plugin.version");
-        sprintf(o_TextBuffer, "ASSEMBLY v%s", c_version.erase(4).c_str());
-        dlg->AddItem(_DlgStaticText_::Create(580, 535, 200, 55, o_TextBuffer, (char*)"medfont2.fnt", 7, 550, ALIGN_H_LEFT|ALIGN_V_BOTTOM, 0));
+        int charLength = 7;
 
-        if (onlineVersion)
+        std::string textLine = "ASSEMBLY v" + c_version.erase(4);
+
+        std::string checkLine = GetEraJSON((jsonString + ".custom_text").c_str());
+        if (checkLine.length())
         {
-            string c_version = std::to_string(onlineVersion);
-            sprintf(o_TextBuffer, "(latest v%s)", c_version.erase(4).c_str());
-            dlg->AddItem(_DlgStaticText_::Create(580, 547, 200, 55, o_TextBuffer, (char*)"medfont2.fnt", 7, 551, ALIGN_H_LEFT|ALIGN_V_BOTTOM, 0));
-
+            textLine = checkLine;
         }
+        int stringLength = std::atoi(GetEraJSON((jsonString + ".length_in_px").c_str()));
+
+        if (stringLength <= 0)
+        {
+            stringLength = textLine.length() * charLength;
+        }
+
+        Dlg_MainMenu_CreateText(dlg, xPos, yPos, stringLength, textLine, id);
     }
 
-}
+    if (MMstrings[1])
+    {
+        string jsonString = "gem_plugin.main_menu.online_version";
+
+        std::string textLine = "(latest v" + std::to_string(onlineVersion).erase(4) + ")";
+
+        int xPos = std::atoi(GetEraJSON((jsonString + ".x").c_str()));
+        int yPos = std::atoi(GetEraJSON((jsonString + ".y").c_str()));
+        int id = 551;
+        //c_version = GetEraJSON("gem_plugin.version");
+        int charLength = 7;
+
+
+        std::string checkLine = GetEraJSON((jsonString + ".custom_text").c_str());
+        if (checkLine.length())
+        {
+            textLine = checkLine;
+        }
+        int stringLength = std::atoi(GetEraJSON((jsonString + ".length_in_px").c_str()));
+
+        if (stringLength <= 0)
+        {
+            stringLength = textLine.length() * charLength;
+        }
+
+        Dlg_MainMenu_CreateText(dlg, xPos, yPos, stringLength, textLine, id);
+
+    }
+
+    _DlgItem_* wndText = dlg->GetItem(545);
+    if (wndText)
+    {
+        wndText->Hide();
+    }
+
+    if (MMstrings[2])
+    {
+        string jsonString = "gem_plugin.main_menu.era_version";
+
+        int xPos = std::atoi(GetEraJSON((jsonString + ".x").c_str()));
+        int yPos = std::atoi(GetEraJSON((jsonString + ".y").c_str()));
+        int id = 545;
+        //c_version = GetEraJSON("gem_plugin.version");
+        int charLength = 7;
+
+        string textLine = "HoMM3 ERA " + (string)GetEraVersion();
+
+        std::string checkLine = GetEraJSON((jsonString + ".custom_text").c_str());
+        if (checkLine.length())
+        {
+            textLine = checkLine;
+        }
+
+        int stringLength = std::atoi(GetEraJSON((jsonString + ".length_in_px").c_str()));
+
+        if (stringLength <= 0)
+        {
+            stringLength = textLine.length() * charLength;
+        }
+
+        Dlg_MainMenu_CreateText(dlg, xPos, yPos, stringLength, textLine, id);
+
+    }
+
+
+ }
+
+
 int __stdcall gem_Dlg_MainMenu_Create(LoHook* hook, HookContext* c) //at the and of the Create function
 {
-    _Dlg_* dlg = (_Dlg_*)c->edi; //edi - from IDA
+    _Dlg_* dlg = (_Dlg_*)c->ecx;// -0x280); //edi - from IDA //changed to ecx cause i like ecx
     Dlg_MainMenu_Info(dlg);
     return EXEC_DEFAULT;
 }
 
-int __stdcall gem_Dlg_MainMenu_NewGame(LoHook* hook, HookContext* c)// before 
-{
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    Dlg_MainMenu_Info(dlg);
-    return EXEC_DEFAULT;
-}
-
-int __stdcall gem_Dlg_MainMenu_LoadGame(LoHook* hook, HookContext* c)
-{
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    Dlg_MainMenu_Info(dlg);
-    return EXEC_DEFAULT;
-}
-int __stdcall gem_Dlg_MainMenu_CampaignGame(LoHook* hook, HookContext* c)
-{
-    _Dlg_ * dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    Dlg_MainMenu_Info(dlg);
-    return EXEC_DEFAULT;
-}
 
 
 void HooksInit()
 {   
 
     //Dlg's
-    _GEM->WriteLoHook(0x4FBCA4, gem_Dlg_MainMenu_Create);
-    _GEM->WriteLoHook(0x4EF32A, gem_Dlg_MainMenu_NewGame);
-    _GEM->WriteLoHook(0x4EF665, gem_Dlg_MainMenu_LoadGame);
-    _GEM->WriteLoHook(0x4F0799, gem_Dlg_MainMenu_CampaignGame); //goes from new game
+ //   _GEM->WriteLoHook(0x4FBD71, gem_Dlg_MainMenu_Create);
+  //  _GEM->WriteLoHook(0x4EF32A, gem_Dlg_MainMenu_NewGame);
+  //  _GEM->WriteLoHook(0x4EF665, gem_Dlg_MainMenu_LoadGame);
+ //   _GEM->WriteLoHook(0x4F0799, gem_Dlg_MainMenu_CampaignGame); //goes from new game
+     _GEM->WriteLoHook(0x4FBD71, gem_Dlg_MainMenu_Create);
+     _GEM->WriteLoHook(0x4EF32A, gem_Dlg_MainMenu_Create);
+     _GEM->WriteLoHook(0x4EF665, gem_Dlg_MainMenu_Create);
+     _GEM->WriteLoHook(0x4F0799, gem_Dlg_MainMenu_Create); //goes from new game
+
+
+
+
+
 
     //  _GEM->WriteHiHook(0x5FFCA0, SPLICE_, EXTENDED_, THISCALL_, Dlg_OnMouseMove);
 
@@ -195,7 +287,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             //RegisterHandler(OnBattleReplay, "OnBattleReplay");
 
             globalPatcher = GetPatcher();
-            _GEM = globalPatcher->CreateInstance("ERA.assembly.plugin");
+            _GEM = globalPatcher->CreateInstance((char*)"ERA.assembly.plugin");
             HooksInit();
 
 
