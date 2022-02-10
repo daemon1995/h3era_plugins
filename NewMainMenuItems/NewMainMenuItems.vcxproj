@@ -78,13 +78,13 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>D:\games\HoMM 3 ERA\Mods\Random wallpaper\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
-    <IncludePath>$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);C:\Users\dimon\source\repos\heroes\oldHeroesHeaders;</IncludePath>
+    <IncludePath>C:\Users\dimon\source\repos\heroes\oldHeroesHeaders;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>D:\games\HoMM 3 ERA\Mods\Random wallpaper\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
-    <IncludePath>$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);C:\Users\dimon\source\repos\heroes\oldHeroesHeaders;</IncludePath>
+    <IncludePath>C:\Users\dimon\source\repos\heroes\oldHeroesHeaders;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>

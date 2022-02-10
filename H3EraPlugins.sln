@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "newAdvMapItems", "NewAdvMap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NewHeroDlgItems", "NewHeroDlgItems\NewHeroDlgItems.vcxproj", "{C974D039-D3A0-4E86-A083-4EC87685E904}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wog_native_dialogs", "wog_native_dialogs\wog_native_dialogs.vcxproj", "{78945DEF-727A-4580-9CF7-1C0CF819E0D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -63,6 +65,14 @@ Global
 		{C974D039-D3A0-4E86-A083-4EC87685E904}.Release|x64.Build.0 = Release|x64
 		{C974D039-D3A0-4E86-A083-4EC87685E904}.Release|x86.ActiveCfg = Release|Win32
 		{C974D039-D3A0-4E86-A083-4EC87685E904}.Release|x86.Build.0 = Release|Win32
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Debug|x64.ActiveCfg = Debug|x64
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Debug|x64.Build.0 = Debug|x64
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Debug|x86.ActiveCfg = Debug|Win32
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Debug|x86.Build.0 = Debug|Win32
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Release|x64.ActiveCfg = Release|x64
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Release|x64.Build.0 = Release|x64
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Release|x86.ActiveCfg = Release|Win32
+		{78945DEF-727A-4580-9CF7-1C0CF819E0D6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

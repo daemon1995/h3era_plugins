@@ -6,16 +6,14 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "pch.h"
+#include "..\..\..\include\homm3.h"
+#include "..\..\..\include\HoMM3_Dlg.cpp"
+#include "..\..\..\include\HoMM3_Extra.h" 
+#include "..\..\..\include\WogClasses.h"
 
 #include <algorithm>
-#include <iostream>
 
-#include ".\headers\era.h"
-#include ".\headers\homm3.h"
-#include ".\headers\HoMM3_Dlg.cpp"
-#include ".\headers\HoMM3_Extra.h" 
-#include ".\headers\WogClasses.h"
+#include "..\..\..\include\era.h"
 using namespace Era;
 
 Patcher* _P;
@@ -40,9 +38,9 @@ struct _TXT_;
 _TXT_* txtresWOG;
 
 // текстовые переменные из wnd.json
-const char* n_BigFont = "bigfont2.fnt";
-const char* n_MedFont = "medfont2.fnt";
-const char* n_SmallFont = "smalfont2.fnt";
+char* n_BigFont = "bigfont2.fnt";
+char* n_MedFont = "medfont2.fnt";
+char* n_SmallFont = "smalfont2.fnt";
 
 char* json_CrExpo[12];
 char* json_WoGOpt[2];
@@ -74,10 +72,10 @@ char myString3[1024];
 // версия ERA
 int ERA_VERSION = NULL;
 
-const char* radioBttnDef = "radiobttn.def";
-const char* checkboxDef = "checkbox.def";
-const char* textProcD = "%d";
-const char* textProcS = "%s";
+char* radioBttnDef = "radiobttn.def";
+char* checkboxDef = "checkbox.def";
+char* textProcD = "%d";
+char* textProcS = "%s";
 
 // названия кнопок ОК и ОТМЕНА
 #define box64x30Pcx (*(char**)0x5D5D68) // "Box64x30.pcx"
@@ -139,7 +137,7 @@ int __stdcall Y_Dlg_MainMenu_Create(HiHook* hook, _Dlg_* dlg)
 
     const char* ERA_version = GetEraVersion();
     sprintf(o_TextBuffer, "HoMM3 ERA %s", ERA_version );
-    dlg->AddItem(_DlgStaticText_::Create(590, 570, 200, 20, o_TextBuffer, (char*)n_MedFont, 7, 545, ALIGN_H_RIGHT | ALIGN_V_BOTTOM, 0)); 
+    dlg->AddItem(_DlgStaticText_::Create(590, 570, 200, 20, o_TextBuffer, n_MedFont, 7, 545, ALIGN_H_RIGHT | ALIGN_V_BOTTOM, 0)); 
 
     return ret;
 }
@@ -155,7 +153,7 @@ void __stdcall OnReportVersion (TEvent* Event) {
 
 int __stdcall Y_LoadAllTXTinGames(LoHook* h, HookContext* c)
 {
-    txtresWOG = _TXT_::Load( (char* )"\\zvs\\Lib1.res\\txtres.txt" );
+    txtresWOG = _TXT_::Load( "\\zvs\\Lib1.res\\txtres.txt" );
     return EXEC_DEFAULT;
 }
 
@@ -166,9 +164,9 @@ int __stdcall Y_Hook_MainLoop(LoHook* h, HookContext* c)
     n_MedFont = GetEraJSON("wnd.fonts.med_font");
     n_SmallFont = GetEraJSON("wnd.fonts.small_font");
     // загружаем необходимые русскоязычные игровые шрифты
-    bigfont2 = _Fnt_::Load((char*)n_BigFont);
-    medfont2 = _Fnt_::Load((char*)n_MedFont);
-    smalfont2 = _Fnt_::Load((char*)n_SmallFont);
+    bigfont2 = _Fnt_::Load(n_BigFont);
+    medfont2 = _Fnt_::Load(n_MedFont);
+    smalfont2 = _Fnt_::Load(n_SmallFont);
 
     json_CrExpo[0] = GetEraJSON("wnd.dlg_crexpo.line0");
     json_CrExpo[1] = GetEraJSON("wnd.dlg_crexpo.line1");
@@ -276,8 +274,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             Dlg_Curse(_PI);     // диалог проклятий и благословлений
             Dlg_DropArt(_PI);   // диалог сброса артефактов на землю    
             Dlg_Sphinx(_PI);    // диалог сфинкса и IF:D/E
-           // Dlg_IFG(_PI);       // диалог IF:G
-            //Dlg_ChooseAttack(_PI);  // диалог выбора типа атаки монстром
+            Dlg_IFG(_PI);       // диалог IF:G
+            Dlg_ChooseAttack(_PI);  // диалог выбора типа атаки монстром
             Dlg_CastleReBuild(_PI); // диалог перестройки замка
             HD5_Functions(_PI);     // реализация функций, вырезанных в HD 5 версии
             DlgBattleLog(_PI);  // окно диалога статуса действий и событий в битве

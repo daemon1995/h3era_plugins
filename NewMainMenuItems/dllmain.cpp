@@ -1,8 +1,8 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 
 #include "pch.h"
-#include "..\oldHeroesHeaders\headers\era.h"
-#include "..\oldHeroesHeaders\headers\HoMM3.h"
+#include ".\headers\era.h"
+#include ".\headers\HoMM3.h"
 
 #include <iostream>
 
