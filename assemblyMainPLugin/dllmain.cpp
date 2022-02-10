@@ -1,20 +1,23 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 
 #include "pch.h"
-#include "..\oldHeroesHeaders\headers\era.h"
-#include "..\oldHeroesHeaders\headers\HoMM3.h"
+#include "webFunctions.h"
+#include "localFunctions.h"
+#include ".\headers\era.h"
+#include ".\headers\HoMM3.h"
 /*#include "..\heroes\headers\patcher_x86.hpp"
 #include "..\heroes\headers\HoMM3_ids.h"
 #include "..\heroes\headers\HoMM3_Base.h"
 #include "..\heroes\headers\HoMM3_Res.h"
 #include "..\heroes\headers\HoMM3_GUI.h"*/
-#ifndef UNICODE
-//#define UNICODE
-#endif 
+//#ifndef UNICODE
+   // #define UNICODE
+//#endif 
+
 #include <string>
 #include <iostream>
-#include "webFunctions.h"
-#include "localFunctions.h"
+
+//void cleanCache(string fileLink);
 
 
 using namespace Era;
@@ -28,7 +31,7 @@ PatcherInstance* _GEM;
 
 namespace dllText
 {
-    const char* PLUGIN_VERSION = "2.47";
+    const char* PLUGIN_VERSION = "2.50";
 
     const char* PLUGIN_NAME = "GemMainPLugin.era";
     const char* PLUGIN_AUTHOR = "daemon_n";
@@ -44,13 +47,14 @@ void Debug(int a=1)
     ExecErmCmd("IF:L^%Y80^");
 }
 
-
+    
 #define SpellInt_DEF (*(char**)0x5F6A3E)
 //#define SPBID 3430
 
 bool MMstrings[3] = { 0,0,0 };
-float onlineVersion = 0;
+float onlineVersion = 0.0f;
 float localVersion = 0;
+//float checkOnlineVersion(string fileLink);
 
 char* GetEraJSON(const char* json_string_name) {
     return tr(json_string_name);
@@ -66,9 +70,6 @@ int __stdcall GameStart(LoHook* h, HookContext* c)
         {
 
             localVersion = getGameFromRegistry();
-
-           // CALL_12(void, __fastcall, 0x4F6C00, (char*)std::to_string(localVersion).c_str(), 1, -1, -1, -1, 0, -1, 0, -1, 0, -1, 0);
-
         }
 
     }
@@ -78,8 +79,15 @@ int __stdcall GameStart(LoHook* h, HookContext* c)
         MMstrings[1] = TRUE;
         if (std::atoi(GetEraJSON("gem_plugin.main_menu.online_version.check_online")) == 1)
         {
+            string myVer = GetEraJSON("gem_plugin.main_menu.online_version.remote_file");
+            //USES_CONVERSION_EX;
+          //  LPCWSTR siteForCheckingVersion = A2W_EX(myVer.c_str(), myVer.length());
+          //  cleanCache(myVer.c_str());
 
-            onlineVersion = checkOnlineVersion(GetEraJSON("gem_plugin.main_menu.online_version.remote_file"));
+            //onlineVersion = checkOnlineVersionAfterCacheClean(myVer);
+            onlineVersion = checkOnlineVersion(myVer);
+
+          //  CALL_12(void, __fastcall, 0x4F6C00, (char*)std::to_string(onlineVersion).c_str(), 1, -1, -1, -1, 0, -1, 0, -1, 0, -1, 0);
         }
 
     }

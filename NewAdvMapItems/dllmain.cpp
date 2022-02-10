@@ -37,9 +37,6 @@ char* GetEraJSON(const char* json_string_name) {
 }
 
 
-
-
-
 //#define SPBID 3430
 POINT k_newSacrificeWindowArtifactSlotPositions[19] = {
 {0x1AE, 0x11}, {0x1f3,0x11},{0x169,0x11},{0x137,0x11}, {0x225,0x11},
@@ -266,6 +263,15 @@ int __stdcall OnAfterMarketDlgArtifactPlace(LoHook* h, HookContext* c)
     return EXEC_DEFAULT;
 }
 
+int __stdcall OnAdventureDlgCreate2(LoHook* h, HookContext* c)
+{   
+    _Dlg_* dlg = *(_Dlg_**)c->edi;
+    _DlgItem_* it;
+   // dlg->AddItem(_DlgStaticDef_::Create(200, 200, 5455, SpellInt_DEF, 0, 0, 18));
+  //  dlg->AddItem(_DlgTextButton_::Create(22, 22, 14222, (char*)"m_automf.def", (char*)"23", (char*)"bigfont.fnt", 16, 22, 0x18, 162, 2));
+   // ExecErmCmd("IF:L^2 22^");
+    return EXEC_DEFAULT;
+}
 int __stdcall OnBeforeHeroDlgArtifactPlace(LoHook* h, HookContext* c)
 
 {
@@ -409,10 +415,11 @@ int __stdcall OnBeforeHeroSwapDlgShow(LoHook* h, HookContext* c)
     return EXEC_DEFAULT;
 }
 
-
+//OnAdventureDlgCreate
 void HooksInit()
 {
 
+    
     _GEM->WriteLoHook(0x4DEF7A, OnBeforeHeroDlgArtifactPlace);
     _GEM->WriteLoHook(0x4E15BF, OnAfter_HeroDlg_Create);
    
@@ -422,6 +429,8 @@ void HooksInit()
     _GEM->WriteLoHook(0x56073A, OnBeforeSacrDlgArtifactPlace);
 
     _GEM->WriteLoHook(0x5AEAF0, OnBeforeHeroSwapDlgShow);
+
+    
     
     return;
 

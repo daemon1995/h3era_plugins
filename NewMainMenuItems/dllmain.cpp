@@ -41,8 +41,16 @@ void Dlg_NewLogo_Create(_Dlg_* dlg)
 }
 int __stdcall gem_Dlg_MainMenu_Create(LoHook* hook, HookContext* c) //at the and of the Create function
 {
-    _Dlg_* dlg = (_Dlg_*)c->edi; //edi - from IDA
-    Dlg_NewLogo_Create(dlg);
+
+    _Dlg_* dlg = (_Dlg_*)c->ecx;// -0x280); //edi - from IDA //changed to ecx cause i like ecx
+    _DlgItem_* it = dlg->GetItem(33);
+
+    if (dlg)
+    {
+        Dlg_NewLogo_Create(dlg);
+
+    }
+   // hook->Undo();
     return EXEC_DEFAULT;
 }
 
@@ -53,6 +61,12 @@ int __stdcall gem_Dlg_MainMenu_NewGame(LoHook* hook, HookContext* c)// before
     return EXEC_DEFAULT;
 }
 
+int __stdcall gem_Dlg_MainMenu_Bik(LoHook* hook, HookContext* c)// before 
+{
+    Era::ExecErmCmd("IF:L^^");
+    return 0x4EEF3F;
+
+}
 int __stdcall gem_Dlg_MainMenu_LoadGame(LoHook* hook, HookContext* c)
 {
     _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
@@ -114,8 +128,6 @@ int __stdcall gem_Dlg_LobbyMenu_ShowAvailableScenarios(LoHook* hook, HookContext
     return EXEC_DEFAULT;
 }
 
-
-
 int __stdcall gem_Dlg_LobbyMenu_ShowRandomMap(LoHook* hook, HookContext* c) //call RMG dlg,
 {
   //  Era::ExecErmCmd("IF:L^^");
@@ -165,11 +177,13 @@ int __stdcall gem_Dlg_LobbyMenu_ShowAdvancedOptions(LoHook* hook, HookContext* c
 }
 
 
-
 void HooksInit()
 {   
+  //  _PI->WriteLoHook(0x4EEEFD, gem_Dlg_MainMenu_Bik);
+
     //Dlg's
-    _PI->WriteLoHook(0x4FBCA4, gem_Dlg_MainMenu_Create);
+   // _PI->WriteLoHook(0x4FBCA4, gem_Dlg_MainMenu_Create);
+    _PI->WriteLoHook(0x4FBD71, gem_Dlg_MainMenu_Create);
     _PI->WriteLoHook(0x4EF32A, gem_Dlg_MainMenu_NewGame);
     _PI->WriteLoHook(0x4EF665, gem_Dlg_MainMenu_LoadGame);
     _PI->WriteLoHook(0x4F0799, gem_Dlg_MainMenu_CampaignGame); //goes from new game
@@ -205,7 +219,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             //RegisterHandler(OnBattleReplay, "OnBattleReplay");
 
             _P = GetPatcher();
-            _PI = _P->CreateInstance(dllText::PLUGIN_NAME);
+            _PI = _P->CreateInstance((char*)"ERA.NewMainMenuItems");
             HooksInit();
         }
         break;
