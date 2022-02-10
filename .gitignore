@@ -13,7 +13,7 @@
 *.filters
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
-
+*\*.vcxproj
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
