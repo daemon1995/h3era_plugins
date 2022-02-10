@@ -12,6 +12,7 @@ using namespace Era;
 
 char* GetEraJSON(const char* json_string_name) {
     return tr(json_string_name);
+
 }
 
 Patcher* _P;
