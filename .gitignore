@@ -11,9 +11,11 @@
 *.sln.docstates
 *.vcxproj
 *.filters
+*/*.vcxproj
+*/*.sln
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
-*/*.vcxproj
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
