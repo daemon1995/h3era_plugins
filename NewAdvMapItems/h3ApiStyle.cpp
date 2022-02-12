@@ -33,21 +33,63 @@ int __stdcall OnAdventureDlgCreate(LoHook* h, HookContext* c)
             H3SEHandler seh;
             try
             {
-
-                H3DlgItem* mithrilDef = H3DlgDef::Create(600, 3, 20, 10, MITHRIL_DEF_ID, "SMALmith.def");
                 //  CALL_1(_int_, __thiscall, 0x4CE6E0, this)
                  // P_gamem
                   //Era::y[1] = THISCALL_1(INT, 0x4CE6E0, *(INT*)0x699538);
                 int saveY = Era::y[1];
                 Era::y[1] = P_Game->GetPlayerID();
+                int meId = P_Game->GetPlayerID();
                 Era::ExecErmCmd("OW:Ry1/7/?y1");
 
-                H3DlgItem* mithriText = H3DlgText::Create(627, 3, 78, 22, std::to_string(Era::y[1]).c_str(), "smalfont.fnt", eTextColor::WHITE, MITHRIL_TEXT_ID, eTextAlignment::HLEFT);
-                H3DlgItem* mithrilBack = H3DlgFrame::Create(600, 3, 82, 16, MITHRIL_FRAME_ID, 0xF711);
-                dlg->AddItem(mithrilBack);   mithrilBack->Show();
-                dlg->AddItem(mithrilDef);   mithrilDef->Show();
-                dlg->AddItem(mithriText); 
-                mithriText->Show();
+   
+
+                H3Palette565* myPal = P_PlayersPalette;
+
+                H3RGB565 frameColor = myPal->color[meId * 32 +31];
+                H3RGB565 shadowColor = myPal->color[meId * 32 + 1];
+
+               
+              //  H3DlgItem* mithrilFrameShadow = H3DlgFrame::Create(601, 3, 87, 17, MITHRIL_FRAME_ID + 1, shadowColor);
+              //  dlg->AddItem(mithrilFrameShadow);   mithrilFrameShadow->Show();
+
+
+             //   H3DlgItem* mithrilFrame = H3DlgFrame::Create(600, 2, 87, 17, MITHRIL_FRAME_ID, frameColor);
+             //   dlg->AddItem(mithrilFrame);   mithrilFrame->Show();
+
+                H3DlgItem* mithrilFrameShadowL = H3DlgFrame::Create(601, 3, 1, 17, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32 + 1]);
+                dlg->AddItem(mithrilFrameShadowL);   mithrilFrameShadowL->Show();
+
+                H3DlgItem* mithrilFrameShadowR = H3DlgFrame::Create(688, 3, 1, 17, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32 + 1]);
+                dlg->AddItem(mithrilFrameShadowR);   mithrilFrameShadowR->Show();
+
+                H3DlgItem* mithrilFrameShadowUp = H3DlgFrame::Create(601, 3, 87, 1, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32]);
+                dlg->AddItem(mithrilFrameShadowUp);   mithrilFrameShadowUp->Show();
+
+                H3DlgItem* mithrilFrameShadowDown = H3DlgFrame::Create(601, 19, 87, 1, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32]);
+                dlg->AddItem(mithrilFrameShadowDown);   mithrilFrameShadowDown->Show();
+
+
+
+                H3DlgItem* mithrilFrameL = H3DlgFrame::Create(600, 2, 1, 17, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32 + 30]);
+                dlg->AddItem(mithrilFrameL);   mithrilFrameL->Show();
+
+                H3DlgItem* mithrilFrameR = H3DlgFrame::Create(687, 2, 1, 17, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32 + 30]);
+                dlg->AddItem(mithrilFrameR);   mithrilFrameR->Show();
+
+                H3DlgItem* mithrilFrameUp = H3DlgFrame::Create(600, 2, 88, 1, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32 + 31]);
+                dlg->AddItem(mithrilFrameUp);   mithrilFrameUp->Show();
+
+                H3DlgItem* mithrilFrameDown = H3DlgFrame::Create(600, 18, 88, 1, MITHRIL_FRAME_ID + 1, myPal->color[meId * 32 + 31]);
+                dlg->AddItem(mithrilFrameDown);   mithrilFrameDown->Show();
+
+
+                H3DlgItem* mithrilDef = H3DlgDef::Create(601, 3, 16, 10, MITHRIL_DEF_ID, "SMALmith.def");
+                dlg->AddItem(mithrilDef); mithrilDef->Show();
+
+                H3DlgItem* mithriText = H3DlgText::Create(630, 3, 78, 22, std::to_string(Era::y[1]).c_str(), "smalfont.fnt", eTextColor::WHITE, MITHRIL_TEXT_ID, eTextAlignment::HLEFT);
+                dlg->AddItem(mithriText); mithriText->Show();
+
+                
                 Era::y[1] = saveY;
                 //*some stuff that can create an error...
                    // *

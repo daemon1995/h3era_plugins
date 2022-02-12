@@ -40,9 +40,9 @@ struct _TXT_;
 _TXT_* txtresWOG;
 
 // текстовые переменные из wnd.json
-const char* n_BigFont = "bigfont2.fnt";
-const char* n_MedFont = "medfont2.fnt";
-const char* n_SmallFont = "smalfont2.fnt";
+char* n_BigFont = "bigfont2.fnt";
+char* n_MedFont = "medfont2.fnt";
+char* n_SmallFont = "smalfont2.fnt";
 
 char* json_CrExpo[12];
 char* json_WoGOpt[2];
