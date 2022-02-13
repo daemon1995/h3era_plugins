@@ -333,12 +333,12 @@ void __stdcall OnPreHeroScreen(TEvent* e)
     _DlgItem_* it = dlg->GetItem(bkgId);
 
     CorrectPcxNames(heroId);
-
+    
     for (int i = 0; i < 4; i++)
     {
         it = dlg->GetItem(bkgId++);
         if (it) it->SendCommand(DLG_CMD_SET_PCX, int(pcxNames[i].c_str()));
-
+       // it->SendCommand(11, int("dfgdfg.pcx"));
     }
 
     it = dlg->GetItem(NPC_BttnID);

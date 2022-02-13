@@ -85,8 +85,21 @@ int __stdcall GameStart(LoHook* h, HookContext* c)
           //  cleanCache(myVer.c_str());
 
             //onlineVersion = checkOnlineVersionAfterCacheClean(myVer);
-            onlineVersion = checkOnlineVersion(myVer);
+            try
+            {
+                onlineVersion = checkOnlineVersion(myVer);
 
+            }
+            catch (const std::exception & e)
+            {
+                //  H3Exception::LogError(e, custom_file_name);
+             //     
+            }
+          //  catch (const networks)
+            {
+                //  H3Exception::LogError(e, custom_file_name);
+             //     
+            }
           //  CALL_12(void, __fastcall, 0x4F6C00, (char*)std::to_string(onlineVersion).c_str(), 1, -1, -1, -1, 0, -1, 0, -1, 0, -1, 0);
         }
 
