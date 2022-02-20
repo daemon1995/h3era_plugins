@@ -47,9 +47,7 @@ void Debug(int a=1)
     ExecErmCmd("IF:L^%Y80^");
 }
 
-    
-#define SpellInt_DEF (*(char**)0x5F6A3E)
-//#define SPBID 3430
+    //#define SPBID 3430
 
 bool MMstrings[3] = { 0,0,0 };
 float onlineVersion = 0.0f;
@@ -80,11 +78,7 @@ int __stdcall GameStart(LoHook* h, HookContext* c)
         if (std::atoi(GetEraJSON("gem_plugin.main_menu.online_version.check_online")) == 1)
         {
             string myVer = GetEraJSON("gem_plugin.main_menu.online_version.remote_file");
-            //USES_CONVERSION_EX;
-          //  LPCWSTR siteForCheckingVersion = A2W_EX(myVer.c_str(), myVer.length());
-          //  cleanCache(myVer.c_str());
-
-            //onlineVersion = checkOnlineVersionAfterCacheClean(myVer);
+ 
             try
             {
                 onlineVersion = checkOnlineVersion(myVer);
@@ -162,7 +156,7 @@ void Dlg_MainMenu_Info(_Dlg_* dlg)
         int yPos = std::atoi(GetEraJSON((jsonString + ".y").c_str()));
         int id = 550;
         //c_version = GetEraJSON("gem_plugin.version");
-        int charLength = 7;
+        int charLength = 8;
 
         std::string textLine = "ASSEMBLY v" + c_version.erase(4);
 

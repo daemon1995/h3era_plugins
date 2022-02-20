@@ -89,7 +89,8 @@ int __stdcall OnAdventureDlgCreate(LoHook* h, HookContext* c)
                 H3DlgItem* mithriText = H3DlgText::Create(630, 3, 78, 22, std::to_string(Era::y[1]).c_str(), "smalfont.fnt", eTextColor::WHITE, MITHRIL_TEXT_ID, eTextAlignment::HLEFT);
                 dlg->AddItem(mithriText); mithriText->Show();
 
-                
+                   
+               // mithriText.se
                 Era::y[1] = saveY;
                 //*some stuff that can create an error...
                    // *
