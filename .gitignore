@@ -14,7 +14,6 @@
 *.sln
 */*.vcxproj
 */*.sln
-*/pch.*
 */framework.*
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

@@ -1,10 +1,8 @@
 #include "functions.h"    
-#include ".\h3api_single\H3API.hpp"
-#include ".\headers\era.h" 
+
 
 using namespace Era;
 using namespace h3;
-
 
 
 int __stdcall OnAdventureDlgCreate(LoHook* h, HookContext* c)
