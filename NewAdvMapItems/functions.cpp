@@ -106,7 +106,7 @@ int __stdcall OnResourceBarDlgUpdate(LoHook* h, HookContext* c)
 }
 
 
-void SetFrameColor( H3BaseDlg* advDlg, const int& playerId)
+void SetFrameColor( H3BaseDlg* advDlg, int playerId)
 {
     H3RGB565 color = P_PlayersPalette->color[playerId * 32 + 1];
     H3DlgFrame* frameIt = advDlg->GetFrame(MITHRIL_FRAME_ID);
