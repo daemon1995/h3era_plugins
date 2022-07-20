@@ -98,8 +98,6 @@ bool CheckHeroBackPackArtifactsDlg(H3Msg* msg, H3BaseDlg* dlg, H3Hero* hero)
     {
         msg->command = eMsgCommand::WHEEL_BUTTON;
         msg->subtype = eMsgSubtype::MOUSE_WHEEL_BUTTON_UP;// disable next shift + LMC reaction to prevent other reactions
-        msg->flags = eMsgFlag::NONE;
-
     }
 
     if (msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP)
@@ -206,14 +204,11 @@ _LHF_(Dlg_HeroInfo_BeforeBlockWheel)
 
 }
 
-_LHF_(Dlg_SwapHero_BeforeblockWheel)
+int __stdcall DlgSwapHero_Proc(HiHook* h, H3SwapManager* swapMgr, H3Msg* msg)
 {
-    H3Msg* msg = (H3Msg*)c->edi;// (c->ebp + 0x8);
-
-    if (msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP  // if mouse wheel bttn release
-        || msg->subtype == eMsgSubtype::LBUTTON_DOWN && msg->flags == eMsgFlag::SHIFT)  // or LMC press + shift
+    if (msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP && msg->command == eMsgCommand::WHEEL_BUTTON // if mouse wheel bttn release
+        || msg->subtype == eMsgSubtype::LBUTTON_DOWN && msg->flags == eMsgFlag::SHIFT && msg->command == eMsgCommand::ITEM_COMMAND) // or LMC press + shift
     {
-        H3SwapManager* swapMgr = H3SwapManager::Get(); // get swapMgr
         H3BaseDlg* dlg = (H3BaseDlg*)swapMgr->dlg;
         bool art = false;
         int heroSide = -1;
@@ -228,13 +223,13 @@ _LHF_(Dlg_SwapHero_BeforeblockWheel)
         if (art)
         {
             swapMgr->UpdateLuckMorale();  // update luck and morale SwapMgr_SetLuckAndMorale((int)o_SwapMgr)
-            
+
             THISCALL_2(int, 0x5AF4E0, swapMgr, 0);//SwapMgr_RedrawHeroDollBackpack left hero
             THISCALL_2(int, 0x5AF4E0, swapMgr, 1);//SwapMgr_RedrawHeroDollBackpack roght hero
 
             swapMgr->RefreshDialog(); //THISCALL_1(int, 0x5B1200, swapMgr); // SwapMgr_DlgRedraw1(void *this)
 
-            if (heroSide !=-1) // if PvP trade 
+            if (heroSide != -1) // if PvP trade 
             {
                 swapMgr->samePlayer = 1; // correct pvp Data
                 swapMgr->twoHumansTrade = 1;
@@ -242,22 +237,18 @@ _LHF_(Dlg_SwapHero_BeforeblockWheel)
             }
 
             dlg->Redraw(); // redraw to see changes
-
-
         }
     }
-    return EXEC_DEFAULT;
+    
+    return THISCALL_2(signed int, h->GetDefaultFunc(), (void*)swapMgr, msg);
 }
-
-
-void HooksInit()
+_LHF_(HooksInit)
 {
    
     _PI->WriteLoHook(0x4DD624, Dlg_HeroInfo_BeforeBlockWheel);
-    _PI->WriteLoHook(0x5B0227, Dlg_SwapHero_BeforeblockWheel); // use LoHook till
-  //  _PI->WriteHiHook(0x5B0100, SPLICE_, EXTENDED_, THISCALL_, DlgSwapHero_Proc);
+    _PI->WriteHiHook(0x5B0100, SPLICE_, EXTENDED_, THISCALL_, DlgSwapHero_Proc);
 
-    return;
+    return EXEC_DEFAULT;
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -281,7 +272,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance("Hero_Artifacts_Dlg.daemon.plugin");
 
-            HooksInit();
+            _PI->WriteLoHook(0x4EEAF2,HooksInit);
 
 
         }
