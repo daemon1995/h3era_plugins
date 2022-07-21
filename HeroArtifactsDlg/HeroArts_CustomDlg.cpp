@@ -91,8 +91,8 @@ void HeroArts_CustomDlg::SwitchHeroArtifact(H3Artifact* art, int itId)
         SortHeroBackPackArtfacts(hero);
 
     this->selectedArt = art->id;
-    P_SoundMgr->PlaySoundAsync("BUTTON.wav");
-    
+    P_SoundMgr->ClickSound();
+
 
     return;
 }
