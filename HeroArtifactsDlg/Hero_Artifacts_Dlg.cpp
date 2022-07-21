@@ -128,7 +128,7 @@ bool CheckHeroBackPackArtifactsDlg(H3Msg* msg, H3BaseDlg* dlg, H3Hero* hero)
             if (vSlot >= eArtifactSlots::HEAD && vSlot <= eArtifactSlots::MISC5) // if slot is in range
             {
                 //play sound
-                P_SoundMgr->Play("BUTTON");
+                P_SoundMgr->PlaySoundAsync("BUTTON.wav");
 
                 std::vector<H3Artifact> heroArts(0);
                 heroArts.reserve(MAX_BP_ARTIFACTS);
