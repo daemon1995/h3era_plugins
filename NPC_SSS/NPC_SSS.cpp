@@ -1,36 +1,21 @@
-﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
+﻿#include "creature_info_dlg.cpp"
+#include "Header.h"
 
-#define _H3API_PLUGINS_
-#define _H3API_MESSAGES_
-#define _H3API_EXCEPTION_
-#define _H3API_PATCHER_X86_
-
-//#include <iostream>
-
-#include "H3API.hpp"
-//#include "patcher_x86.hpp"
-#include "era.h"
-#include "..\..\headers\WogClasses.h"
-Patcher* globalPatcher;
-PatcherInstance* _PI;
 
 using namespace h3;
 using namespace Era;
 
 
-inline char* Get_ITxt(int StrNum, int ColNum) { return CDECL_3(char*, 0x77710B, StrNum, ColNum, 0x2860724); }
 //struct _DlgNPC_;
-struct _Npc_;
-inline _Npc_* GetNpc(int hero_id) { return ((_Npc_*)(0x28620C0 + 296 * hero_id)); }
-
-//_Npc_* npc;
-#define o_dlgNPC ((_DlgNPC_*)0x28604D8)
-#define NPC_DLG_LEFT_BTTN_ID 220
-#define NPC_DLG_RIGHT_BTTN_ID 221
-#define NPC_MAX_SKILLS 15
 
 
+_Npc_* GetNpc(int hero_id) { return ((_Npc_*)(0x28620C0 + 296 * hero_id)); }
+Patcher* globalPatcher;
+PatcherInstance* _PI;
 std::vector<INT8> npcSSVec(0);
+
+int GetWoGOptionsStatus(int option_id) { return DwordAt(0x2771920 + (option_id * 4)); }
+char* Get_ITxt(int StrNum, int ColNum) { return CDECL_3(char*, 0x77710B, StrNum, ColNum, 0x2860724); }
 int GetTxtStringIdBySkillId(int skillId)
 {
     int strId = 0;
@@ -68,31 +53,33 @@ void SetNewSecSkillsFrames(H3BaseDlg* dlg, int increment = 0)
     int newFrameId = 0, currentFrameId;
     int ssNumber = npcSSVec.back();
    // txt->Load
+   // bool isEnhNPC = GetWoGOptionsStatus(51); // if enh npc is enabled
 
-    for (size_t i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
     {
        // if ((int)o_dlgNPC->SpecBonus[i])
         
-            H3DlgDef* SSkillDef = dlg->GetDef(60 + i);
-            
-            currentFrameId = SSkillDef->GetFrame();
-            if (increment)
-            {
-                auto res = std::find_if(std::begin(npcSSVec), std::end(npcSSVec), [currentFrameId](int a) {return a == currentFrameId; });
+        H3DlgDef* SSkillDef = dlg->GetDef(60 + i);
 
-                if (res != npcSSVec.end())
-                    newFrameId = *(res + increment);
-            }
-            else  // if not switching
-                newFrameId = npcSSVec.at(i); // repeat current skills. but with correct order
+        currentFrameId = SSkillDef->GetFrame();
 
-            int realSkillId = newFrameId % 2 ? (newFrameId + 1) / 2 -1: newFrameId /2- 1;
-            int strId = GetTxtStringIdBySkillId(realSkillId);
+        if (increment)
+        {
+            auto res = std::find_if(std::begin(npcSSVec), std::end(npcSSVec), [currentFrameId](int a) {return a == currentFrameId; });
 
-            o_dlgNPC->SpecBonusHints[i] = newFrameId % 2 ? Get_ITxt(28 + strId,1) : Get_ITxt(28 + strId, 2); // new hint depends on learned or not
-            o_dlgNPC->SpecBonusPopUpText[i] = Get_ITxt(64 + strId, 1); // Setting New PopUp Msg
-            o_dlgNPC->SpecBonus[i] = (char*)newFrameId; // setting new pic for PopUp Msg
-            SSkillDef->SetFrame(newFrameId);
+            if (res != npcSSVec.end())
+                newFrameId = *(res + increment);
+        }
+        else  // if not switching
+            newFrameId = npcSSVec.at(i); // repeat current skills. but with correct order
+
+        int realSkillId = newFrameId % 2 ? (newFrameId + 1) / 2 - 1 : newFrameId / 2 - 1;
+        int strId = GetTxtStringIdBySkillId(realSkillId);
+       
+        o_dlgNPC->SpecBonusHints[i] = newFrameId % 2 ? Get_ITxt(28 + strId, 1) : Get_ITxt(28 + strId, 2); // new hint depends on learned or not
+        o_dlgNPC->SpecBonusPopUpText[i] = Get_ITxt(64 + strId, 1); // Setting New PopUp Msg
+        o_dlgNPC->SpecBonus[i] = (char*)newFrameId; // setting new pic for PopUp Msg
+        SSkillDef->SetFrame(newFrameId);
     }
 
 
@@ -111,8 +98,6 @@ void SetNewSecSkillsFrames(H3BaseDlg* dlg, int increment = 0)
 
     return;
 }
-
-
 
 bool NPC_CalcSkillMayBe(_Npc_* npc, int ind)
 {
@@ -159,8 +144,9 @@ bool NPC_CalcSkillMayBe(_Npc_* npc, int ind)
 
 int GetNpcSSkills(_Npc_* npc)
 {   
-    int npcSecSkillsBits = *(int*)((int)npc + 0x120);
-    int npcBannedSecSkillsBits = *(int*)((int)npc + 0x124);
+    INT npcSecSkillsBits = *(INT*)((INT)npc + 0x120);
+    INT npcBannedSecSkillsBits = *(INT*)((INT)npc + 0x124);
+
     npcSSVec.clear();
     npcSSVec.reserve(NPC_MAX_SKILLS);
     int mask = 1;
@@ -208,6 +194,7 @@ int __fastcall WogNPC_BTTNS_Proc(H3Msg* msg) // mouse handle foo
     return 0;
 }
 
+
 int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
 {
     _DlgNPC_* npcDlg = o_dlgNPC;
@@ -218,11 +205,22 @@ int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
     H3Hero* hero = P_DialogHero;
     if (hero) // check if getting id from Hero Dlg
          npc = GetNpc(hero->id);
-    else // other case get NPC from active hero
+    else if(global_NPC == nullptr)// other case get NPC from active hero
     {
         H3Player* actPlayer = P_Game->GetPlayer();
         npc = GetNpc(actPlayer->GetActiveHero()->id);
     }
+    else // when not owned npc in battle
+    {
+        npc = global_NPC;
+        int npcType = *(int*)((int)npc + 0xC); //
+
+        // H3DlgPcx* npcBg = dlg->GetPcx(4);
+        dlg->GetPcx(4)->SendCommand(11, *(int*)((*(int*)0x449650) + 4 * (P_CreatureInformation[npcType + 174].town))); // set correct creature 
+        //H3DlgDef* npcDef = dlg->GetDef(5);
+        dlg->GetDef(5)->SendCommand(9, (INT)P_CreatureInformation[npcType + 174].defName);
+    }
+
 
     GetNpcSSkills(npc); // place new skills into vector
 
@@ -230,7 +228,7 @@ int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
     {
         int yPos = dlg->GetDef(60)->GetY() + 3; // get current any SS frame y pos
         int xLeftPos = dlg->GetDef(60)->GetX() - 25; // get current first SS frame x pos
-        int xRighttPos = dlg->GetDef(65)->GetX() + 55; // get current last SS frame x pos
+        int xRighttPos = dlg->GetDef(65)->GetX() + 55 ; // get current last SS frame x pos
 
         H3DlgCustomButton* leftBttn = H3DlgCustomButton::Create(xLeftPos, yPos, NPC_DLG_LEFT_BTTN_ID, "hsbtns3.def", WogNPC_BTTNS_Proc, 0, 1);
         leftBttn->AddHotkey(eVKey::H3VK_LEFT); // adding 2 HK for lazy daemon
@@ -251,20 +249,28 @@ int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
 
     return EXEC_DEFAULT;
 }
-void HooksInit()
+
+
+_LHF_(HooksInit)
 {
     //  _PI->WriteLoHook(0x4F9D79, OnHeroLvlUpDlgShow);
-
 
     H3DLL wndPlugin = h3::H3DLL::H3DLL("wog native dialogs.era");
     int pluginHookAddress = wndPlugin.NeedleSearch<3>({0x3D,0x68,0x02 }, 15);
 
     if (pluginHookAddress)
+    {
         _PI->WriteLoHook(pluginHookAddress, Before_WndNPC_DLG);
- 
-   
+        _PI->WriteLoHook(0x5F3EA0, Dlg_CreatureInfo_Battle_AfterSettingText);
+        _PI->WriteLoHook(0x5F51F8, Dlg_CreatureInfo_Proc);
+    }
 
-    return;
+   // _PI->WriteDword(0x5F3728 + 1, 350); //dlg height
+   // _PI->WriteDword(0x5F3CE4 + 1, 324); // dlg hint bar pos
+   // _PI->WriteLoHook(0x5F371B, Dlg_CreatureInfo_Battle_BeforeCreate);
+  //  _PI->WriteLoHook(0x5F3CB1, Dlg_CreatureInfo_Battle_BeforeSettingText);
+
+    return EXEC_DEFAULT;
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -291,7 +297,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
                 _PI = globalPatcher->CreateInstance("NPC_SSS.daemon.plugin");
 
-                HooksInit();
+                _PI->WriteLoHook(0x4EEAF2, HooksInit);
 
 
             }
