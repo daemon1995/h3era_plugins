@@ -94,14 +94,12 @@ int PrepareAndShowArtifactsDlg(H3Hero*hero, int slot, H3DlgItem* it, std::vector
 
 bool CheckHeroBackPackArtifactsDlg(H3Msg* msg, H3BaseDlg* dlg, H3Hero* hero)
 {
-    if (msg->subtype == eMsgSubtype::LBUTTON_DOWN && msg->flags == eMsgFlag::SHIFT)// only for shift + LMC
-    {
-        msg->command = eMsgCommand::WHEEL_BUTTON;
-        msg->subtype = eMsgSubtype::MOUSE_WHEEL_BUTTON_UP;// disable next shift + LMC reaction to prevent other reactions
-    }
 
-    if (msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP)
+    if (msg->subtype == eMsgSubtype::LBUTTON_DOWN
+        && msg->flags == eMsgFlag::SHIFT
+        || msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP)
     {
+
         
         H3DlgItem* it = dlg->ItemAtPosition(msg); // get clicked itrm
 
@@ -116,17 +114,20 @@ bool CheckHeroBackPackArtifactsDlg(H3Msg* msg, H3BaseDlg* dlg, H3Hero* hero)
             {       
                 H3SwapManager* swapMgr = H3SwapManager::Get(); // get swapMgr
                 swapMgr->heroClicked = slotId < 46 ? 0 : 1;
-                
                 hero = swapMgr->hero[swapMgr->heroClicked];// : swapMgr->hero[1]; //get correct hero
-                if (hero->owner != P_Game->GetPlayerID())
-                    return ART_NOT_PLACED;
-
                 vSlot = slotId < 46 ? slotId - 27 : slotId - 46; // and his slots
-             // swapMgr->slotClicked = slotId;
             }
+
+            if (hero->owner != P_Game->GetPlayerID())
+                return ART_NOT_PLACED;
 
             if (vSlot >= eArtifactSlots::HEAD && vSlot <= eArtifactSlots::MISC5) // if slot is in range
             {
+                if (msg->subtype == eMsgSubtype::LBUTTON_DOWN && msg->flags == eMsgFlag::SHIFT)// only for shift + LMC
+                {
+                    msg->command = eMsgCommand::WHEEL_BUTTON;
+                    msg->subtype = eMsgSubtype::MOUSE_WHEEL_BUTTON_UP;// disable next shift + LMC reaction to prevent other reactions
+                }
                 //play sound
                 P_SoundMgr->ClickSound();
 
