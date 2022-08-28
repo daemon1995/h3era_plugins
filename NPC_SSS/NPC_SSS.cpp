@@ -197,31 +197,12 @@ int __fastcall WogNPC_BTTNS_Proc(H3Msg* msg) // mouse handle foo
 
 int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
 {
+
     _DlgNPC_* npcDlg = o_dlgNPC;
-    _Npc_* npc;
+    _Npc_* npc = (_Npc_*)o_dlgNPC->DlgTop;
 
     HDDlg* dlg = (HDDlg*)c->esi;
     
-    H3Hero* hero = P_DialogHero;
-    if (hero) // check if getting id from Hero Dlg
-         npc = GetNpc(hero->id);
-    else if(global_NPC == nullptr)// other case get NPC from active hero
-    {
-        H3Player* actPlayer = P_Game->GetPlayer();
-        npc = GetNpc(actPlayer->GetActiveHero()->id);
-    }
-    else // when not owned npc in battle
-    {
-        npc = global_NPC;
-        int npcType = *(int*)((int)npc + 0xC); //
-
-        // H3DlgPcx* npcBg = dlg->GetPcx(4);
-        dlg->GetPcx(4)->SendCommand(11, *(int*)((*(int*)0x449650) + 4 * (P_CreatureInformation[npcType + 174].town))); // set correct creature 
-        //H3DlgDef* npcDef = dlg->GetDef(5);
-        dlg->GetDef(5)->SendCommand(9, (INT)P_CreatureInformation[npcType + 174].defName);
-    }
-
-
     GetNpcSSkills(npc); // place new skills into vector
 
     if (npcSSVec.size() > 6 && dlg) // if need to display >6 standard SSkills
@@ -253,6 +234,7 @@ int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
 
 _LHF_(HooksInit)
 {
+
     //  _PI->WriteLoHook(0x4F9D79, OnHeroLvlUpDlgShow);
 
     H3DLL wndPlugin = h3::H3DLL::H3DLL("wog native dialogs.era");

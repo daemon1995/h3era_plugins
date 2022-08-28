@@ -2,7 +2,7 @@
 
 #define _H3API_PLUGINS_
 #define _H3API_MESSAGES_
-#define _H3API_EXCEPTION_
+//#define _H3API_EXCEPTION_
 #define _H3API_PATCHER_X86_
 #define o_dlgNPC ((_DlgNPC_*)0x28604D8)
 #define NPC_DLG_LEFT_BTTN_ID 220
@@ -17,7 +17,6 @@
 
 
 struct _Npc_;
-_Npc_* global_NPC = nullptr;
 _Npc_* GetNpc(int hero_id);
 int GetTxtStringIdBySkillId(int skillId);
 char* Get_ITxt(int StrNum, int ColNum);

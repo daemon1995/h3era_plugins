@@ -51,7 +51,6 @@ _LHF_(Dlg_CreatureInfo_Battle_AfterSettingText)
                 npc = GetNpc(heroId);
             else
                 npc = side == 0 ? (_Npc_*)0x2861E70 : (_Npc_*)0x2861F98;
-            global_NPC = npc;
 
 
             int npcSecSkillsBits = *(int*)((int)npc + 0x120);
@@ -125,7 +124,9 @@ _LHF_(Dlg_CreatureInfo_Battle_AfterSettingText)
                 H3String str = P_CreatureInformation[monId].description;
                 int firstCh = str.FindFirstOf('[');
                 int lastCh = str.FindFirstOf(']');
-                dlg->GetText(-1)->SetText(str.Erase(firstCh, lastCh + 1));
+                if (firstCh >= 0 && lastCh >= 0 && lastCh > firstCh)
+                    dlg->GetText(-1)->SetText(str.Erase(firstCh, lastCh + 1));
+
             }
         }
     }
@@ -144,8 +145,6 @@ _LHF_(Dlg_CreatureInfo_Proc)
 
         if (mon_id >= MON_COMMANDER_FIRST_A && mon_id <= MON_COMMANDER_LAST_D)
         {
-            if (itemId == 30722 && msg->command == eMsgCommand::ITEM_COMMAND && msg->subtype == eMsgSubtype::LBUTTON_DOWN)
-                global_NPC = nullptr; // fixing crash and wrong images in battle commander
 
             //setting hint , hacking buffer
             if (itemId >= DLG_CREATURE_INFO_MIN_SKILL_ID && itemId < DLG_CREATURE_INFO_MIN_SKILL_ID + NPC_MAX_SKILLS && itemId != *(int*)0x68C6B0)
