@@ -13,6 +13,8 @@
 #define DLG_CREATURE_INFO_MAX_SKILL_ID 569
 #define MON_COMMANDER_FIRST_A 174
 #define MON_COMMANDER_LAST_D 191
+#define o_BPP ByteAt(0x5FA228 + 3) << 3
+
 //#include <iostream>
 
 
@@ -23,6 +25,7 @@ char* Get_ITxt(int StrNum, int ColNum);
 #include "H3API.hpp"
 
 #include "era.h"
-
+Patcher* globalPatcher;
+PatcherInstance* _PI;
 #include "..\..\headers\WogClasses.h"
 //#include "..\..\headers\HoMM3.h"

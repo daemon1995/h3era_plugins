@@ -2,13 +2,14 @@
 
 using namespace h3;
 using namespace Era;
-
+H3LoadedPcx16* npc_abils[NPC_MAX_SKILLS];
+H3CombatCreature* current_stack;
 _LHF_(Dlg_CreatureInfo_Battle_BeforeSettingText)
 {
     H3CreatureInfoDlg* dlg = *(H3CreatureInfoDlg**)(c->ebp - 0x30);
     if (dlg)
     {
-
+        
         int width = dlg->GetWidth();
         int height = 311;
 
@@ -30,13 +31,57 @@ _LHF_(Dlg_CreatureInfo_Battle_BeforeSettingText)
     return EXEC_DEFAULT;
 }
 
+
+void SSS_CreateResources( H3LoadedPcx16* res_arr[], const char *src_def)
+{
+    H3LoadedDef* npcSkillDef = H3LoadedDef::Load(src_def);
+
+    int x = 20;
+    int y = 255;
+    int imgOffset = 19;
+
+    int width = npcSkillDef->widthDEF;
+    int height = npcSkillDef->heightDEF;
+    constexpr int scale = 3; // Scale of the pic
+    int i_width = width / scale;
+    int i_height = height / scale;
+    H3LoadedPcx16* buf = H3LoadedPcx16::Create(width, height);
+
+    int color_type = o_BPP;
+    int it_height = i_height - (color_type != 32);
+    for (INT8 i = 0; i < NPC_MAX_SKILLS; i++)
+    {
+        npcSkillDef->DrawToPcx16(0, 1 + i * 2, 0, 0, width, height, buf, 0, 0, false);
+        res_arr[i] = H3LoadedPcx16::Create(i_width, i_height);
+
+        int pix_atX = -scale / 2, pix_atY = -scale / 2;
+        for (int k = 0; k < i_width; k++)
+        {
+            pix_atX += scale;
+
+            for (int j = 0; j < it_height; j++)
+            {
+                pix_atY += scale;
+                *res_arr[i]->GetPixel888(k, j) = H3ARGB888(buf->GetPixel888(pix_atX, pix_atY)->GetColor());
+            }
+            pix_atY = -scale / 2;
+        }
+    }
+
+
+    buf->Destroy();
+    return;
+
+}
+
+
 _LHF_(Dlg_CreatureInfo_Battle_AfterSettingText)
 {
     H3CreatureInfoDlg* dlg = (H3CreatureInfoDlg*)(c->esi);
     if (dlg)
     {
         int monId = dlg->creatureId;
-
+    //    H3Messagebox(current_stack->info.namePlural);
         if (monId >= MON_COMMANDER_FIRST_A && monId <= MON_COMMANDER_LAST_D)
         {
 
@@ -67,36 +112,13 @@ _LHF_(Dlg_CreatureInfo_Battle_AfterSettingText)
                 int y = 255;
                 int imgOffset = 19;
 
-                int width = npcSkillDef->widthDEF;
-                int height = npcSkillDef->heightDEF;
-                int scale = 3; // Scale of the pic
-                int i_width = width / scale;
-                int i_height = height / scale;
-                H3LoadedPcx16* tempPcxFromDefFrame = H3LoadedPcx16::Create(width, height);
+                int i_width = npc_abils[0]->width;
+                int i_height = npc_abils[0]->height;
 
                 for (int i = 0; i < NPC_MAX_SKILLS; i++)
                 {
                     if (npcSecSkillsBits & mask) // if skill is already learned
                     {
-
-                        npcSkillDef->DrawToPcx16(0, 1 + i * 2, 0, 0, width, height, tempPcxFromDefFrame, 0, 0, false);
-                        H3LoadedPcx16* resizedPcx = H3LoadedPcx16::Create(i_width, i_height);
-
-                        int pix_atX = -scale / 2, pix_atY = -scale / 2;
-                        for (int k = 0; k < i_height; k++)
-                        {
-                            pix_atX += scale;
-
-                            for (int j = 0; j < i_width; j++)
-                            {
-                                pix_atY += scale;
-                                resizedPcx->GetPixel888(k, j)->r = tempPcxFromDefFrame->GetPixel888(pix_atX, pix_atY)->r;
-                                resizedPcx->GetPixel888(k, j)->g = tempPcxFromDefFrame->GetPixel888(pix_atX, pix_atY)->g;
-                                resizedPcx->GetPixel888(k, j)->b = tempPcxFromDefFrame->GetPixel888(pix_atX, pix_atY)->b;
-                            }
-                            pix_atY = -scale / 2;
-                        }
-
                         H3DlgPcx16* dlgPcx = H3DlgPcx16::Create(x, y, i_width, i_height, itemId++, nullptr);
                         if (isLMC) // seting hint for rmc and hower
                         {
@@ -106,7 +128,7 @@ _LHF_(Dlg_CreatureInfo_Battle_AfterSettingText)
                             dlgPcx->SetHints(hint, hintRmc.String(), 1);
                         }
 
-                        dlgPcx->SetPcx(resizedPcx);
+                        dlgPcx->SetPcx(npc_abils[i]);
                         dlg->AddItem(dlgPcx);
                         x += imgOffset;
                         counter++;
@@ -133,7 +155,65 @@ _LHF_(Dlg_CreatureInfo_Battle_AfterSettingText)
 
     return EXEC_DEFAULT;
 }
-_LHF_(Dlg_CreatureInfo_Proc)
+_LHF_(Dlg_CreatureInfo_RmcProc)
+{
+    H3Msg* msg = (H3Msg*)(c->esi);
+    int item_id = msg->itemId;
+   // H3Messagebox(std::to_string(item_id).c_str());
+
+    if (current_stack->activeSpellNumber
+        && (item_id > 220 && item_id < 224
+            || item_id >= 3000 && item_id < 3003)
+        && msg->subtype == eMsgSubtype::RBUTTON_DOWN)
+    {
+        int arr_size = sizeof(current_stack->activeSpellDuration) / sizeof(INT32);
+        int columns = 5 > current_stack->activeSpellNumber ? current_stack->activeSpellNumber : 5;
+        int rows = current_stack->activeSpellNumber / columns + (bool)(current_stack->activeSpellNumber % columns);
+
+        int d_w = H3LoadedDef::Load("spellint.def")->widthDEF;
+        int d_h = H3LoadedDef::Load("spellint.def")->heightDEF;
+        int width = (d_w + 5) * columns + 35;
+        int height = (d_h + 5) * rows + 35;
+
+        H3Dlg* dlg = new H3Dlg(width, height);
+
+
+        int x = 20, y = 20;
+        int dur = 0, counter = 0;
+        for (INT8 i = 0; i < arr_size; i++)
+        {
+            dur = current_stack->activeSpellDuration[i];
+            if (dur)
+            {
+
+                H3DlgDef* def = H3DlgDef::Create(x, y, "spellint.def", i + 1);
+                H3String str = "x";
+                str.Append(dur);
+                H3DlgText* text = H3DlgText::Create(x, y + 25, d_w, 14, str.String(), h3::NH3Dlg::Text::TINY, 1, 0, eTextAlignment::MIDDLE_RIGHT);
+
+                dlg->AddItem(def);
+                if (i != NH3Spells::eSpell::BERSERK && i != NH3Spells::eSpell::DISRUPTING_RAY)
+                    dlg->AddItem(text);
+                if (++counter == columns)
+                {
+                    counter = 0;
+                    x = 20;
+                    y += d_h + 5;
+                }
+                else
+                    x += d_w + 5;
+            }
+        }
+
+        dlg->PlaceAtMouse();
+        dlg->RMB_Show();
+        msg->itemId = -1;
+    }
+
+    return EXEC_DEFAULT;
+}
+
+_LHF_(Dlg_CreatureInfo_HintProc)
 {
     H3Msg* msg = (H3Msg*)(c->esi);
 
@@ -143,22 +223,21 @@ _LHF_(Dlg_CreatureInfo_Proc)
         H3CreatureInfoDlg* dlg = (H3CreatureInfoDlg*)msg->GetDlg();
         int mon_id = dlg->creatureId;
 
-        if (mon_id >= MON_COMMANDER_FIRST_A && mon_id <= MON_COMMANDER_LAST_D)
+        if (mon_id >= MON_COMMANDER_FIRST_A
+            && mon_id <= MON_COMMANDER_LAST_D
+            && itemId >= DLG_CREATURE_INFO_MIN_SKILL_ID
+            && itemId < DLG_CREATURE_INFO_MIN_SKILL_ID + NPC_MAX_SKILLS
+            && itemId != *(int*)0x68C6B0)
         {
-
             //setting hint , hacking buffer
-            if (itemId >= DLG_CREATURE_INFO_MIN_SKILL_ID && itemId < DLG_CREATURE_INFO_MIN_SKILL_ID + NPC_MAX_SKILLS && itemId != *(int*)0x68C6B0)
-            {
 
-                *(int*)0x68C6B0 = itemId;
+            *(int*)0x68C6B0 = itemId;
 
-                H3DlgItem* it = dlg->GetH3DlgItem(itemId);
-                strcpy(h3_TextBuffer, it->GetHint());
-                c->return_address = 0x5F5319;
+            H3DlgItem* it = dlg->GetH3DlgItem(itemId);
+            strcpy(h3_TextBuffer, it->GetHint());
+            c->return_address = 0x5F5319;
 
-                return NO_EXEC_DEFAULT;
-
-            }
+            return NO_EXEC_DEFAULT;
         }
     }
 
@@ -167,6 +246,10 @@ _LHF_(Dlg_CreatureInfo_Proc)
 
 _LHF_(Dlg_CreatureInfo_Battle_BeforeCreate)
 {
+    current_stack = (H3CombatCreature*)(c->eax);
+   // H3Messagebox(current_stack->info.soundName);
+    return EXEC_DEFAULT;
+
     // *(int*)(c->ebp + 0x10) += 25;
     // y[5] = *(int*)(*(int*)c->ebp + 0x10);
     int currDlgHeight = *(int*)0x5F3729;
