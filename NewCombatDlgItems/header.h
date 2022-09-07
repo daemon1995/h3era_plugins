@@ -10,9 +10,13 @@
 #define _H3API_PATCHER_X86_
 #define _H3API_PLUGINS_
 #include "..\..\oldHeroesHeaders\h3api_single\H3API.hpp"
+#ifndef ERA_H
+#define ERA_H
 #include "..\..\oldHeroesHeaders\headers\era.h"
+#endif
 Patcher* globalPatcher;
 PatcherInstance* _PI;
+
 #define DLG_HEIGHT_ADD 56
 #include "map"
 #include "string"
