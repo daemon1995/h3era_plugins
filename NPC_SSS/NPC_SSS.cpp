@@ -231,22 +231,7 @@ int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
 }
 
 
-_LHF_(Before_HD_Mod_Kills_ERM)
-{
-  //  Era::ExecErmCmd("BG:Q1;");
-    //H3Messagebox("1");
-   
-   // Era::y[22] = P_WindowManager->resultItemID;
-   //     Era::ExecErmCmd("BU:V1;");
-    FASTCALL_3(int, 0x475B30, H3CombatManager::Get(),(H3Msg*)(c->ebp+0xC), (H3Msg*)(c->ebp + 0xC));
-    //Era::ExecErmCmd("HE-1:T1/12/0/12/1;");
-   // H3CombatManager::Get()->finished = 1;
 
-    //return EXEC_DEFAULT;
-
-    c->return_address = 0x4F051B;
-    return NO_EXEC_DEFAULT;
-}
 _LHF_(HooksInit)
 {
 
@@ -261,20 +246,11 @@ _LHF_(HooksInit)
         SSS_CreateResources(npc_abils, "dlg_npc3.def");
         _PI->WriteLoHook(0x5F3EA0, Dlg_CreatureInfo_Battle_AfterSettingText);
         _PI->WriteLoHook(0x5F51F8, Dlg_CreatureInfo_HintProc);
-
-       
-    }
-    H3DLL hd_wog = h3::H3DLL::H3DLL("hd_wog.dll");
-    pluginHookAddress = hd_wog.NeedleSearch<5>({ 0x8b,0x15,0xE0,0x4F,0x69 }, 0);
-    if (pluginHookAddress)
-    {
-      //  _PI->WriteLoHook(pluginHookAddress, Before_HD_Mod_Kills_ERM);
-
+      
     }
 
-    _PI->WriteLoHook(0x5F4C5D, Dlg_CreatureInfo_RmcProc);
 
-    _PI->WriteLoHook(0x46846A, Dlg_CreatureInfo_Battle_BeforeCreate);
+
 
    // _PI->WriteDword(0x5F3728 + 1, 350); //dlg height
    // _PI->WriteDword(0x5F3CE4 + 1, 324); // dlg hint bar pos
