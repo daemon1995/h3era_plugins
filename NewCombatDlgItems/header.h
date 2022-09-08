@@ -17,7 +17,7 @@
 Patcher* globalPatcher;
 PatcherInstance* _PI;
 
-#define DLG_HEIGHT_ADD 56
+#define DLG_HEIGHT_ADD 86
 #include "map"
 #include "string"
 

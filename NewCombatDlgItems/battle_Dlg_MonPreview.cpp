@@ -22,25 +22,42 @@ _LHF_(Battle_Dlg_Create)
 		H3DlgDef* def;
 		H3DlgText* text;
 
-		int item_id = 4000;
 		int x_pos, y_pos;
 
 		// add new modified BG
 		H3DlgPcx* _bg = H3DlgPcx::Create(0, 70 + DLG_HEIGHT_ADD, creature_stat_bg[0]->width, creature_stat_bg[0]->height, 777, nullptr);
-		if (dlg_panel->GetX() < 400)
-		{			
-			_bg->SetPcx(creature_stat_bg[0]);
-			_bg->AdjustColor(P_CombatManager->heroOwner[0]);
-		}
-		else
-		{
-			_bg->SetPcx(creature_stat_bg[1]);
-			int player_id = P_CombatManager->hero[1] > 0 ? P_CombatManager->heroOwner[1] : P_CombatManager->heroOwner[0];
-			_bg->AdjustColor(player_id);
-		}
-		
-		
+		static int call_counter = 0;
+		bool side = call_counter++ & 1;
+		int player_id = P_CombatManager->hero[side] > 0 ? P_CombatManager->heroOwner[side] : P_CombatManager->heroOwner[!side];
+		_bg->SetPcx(creature_stat_bg[side]);
+		_bg->AdjustColor(player_id);
+
 		dlg_panel->AddItem(_bg);
+
+		for (auto it : dlg_panel->GetItems())
+		{
+			int id = it->GetID();
+			if (id >= 2210 && id <= 2213)
+			{
+				//x_pos
+				if (id % 2 == 0)
+					it->Cast<H3DlgText>()->SetAlignment(eTextAlignment::MIDDLE_RIGHT);
+				else
+					it->SetY(it->GetY()+40);
+			}
+
+		}
+		int item_id = 4000;
+		for (int i = 4; i < 6; i++)
+		{
+			x_pos = 9;
+			y_pos = 12 * i -3 + DLG_HEIGHT_ADD;
+			H3String temp = "gem_plugin.combat_dlg.";
+			temp.Append(i);
+			text = H3DlgText::Create(x_pos, y_pos, 60, 12, Era::tr(temp.String()), NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_LEFT);
+			dlg_panel->AddItem(text);
+		}
+
 
 
 		item_id = 4004;
@@ -66,7 +83,7 @@ _LHF_(Battle_Dlg_Create)
 			for (int i = 0; i < 4; i++)
 			{
 				x_pos = 9;
-				y_pos = 11 * i + 132;
+				y_pos = 12 * i + 74 + DLG_HEIGHT_ADD;
 				//json_name + i;Era::tr((json_name + i).String())
 				H3String temp = "gem_plugin.combat_dlg.";
 				temp.Append(i);
@@ -99,14 +116,14 @@ _LHF_(Battle_Dlg_Create)
 		for (int i = 0; i < 12; i++)
 		{
 			x_pos = 5 + (i & 1) * 34;
-			y_pos = 224 + i / 2 * 19;
+			y_pos = 168 + DLG_HEIGHT_ADD + i / 2 * 19;
 
 			H3DlgPcx16* _pcx = H3DlgPcx16::Create(x_pos, y_pos, i_width, i_height, item_id++, nullptr);
 			_pcx->SetPcx(smaller_spellint[0]);
 			dlg_panel->AddItem(_pcx);
 
-			x_pos = 5 + (i & 1) * 34;
-			y_pos = 224 + i / 2 * 19;
+		//	x_pos = 5 + (i & 1) * 34;
+		//	y_pos = 224 + i / 2 * 19;
 
 			text = H3DlgText::Create(x_pos + 10, y_pos + 8, 24, 12, "", NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_RIGHT);
 			dlg_panel->AddItem(text);
@@ -195,7 +212,12 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 					}
 					
 					break;
-
+				case 2210:
+					it->Cast<H3DlgText>()->SetText(std::to_string(stack->healthLost).c_str());
+					break;
+				case 2212:
+					it->Cast<H3DlgText>()->SetText(std::to_string(stack->numberAtStart - stack->numberAlive).c_str());
+					break;
 				case 4005:
 					//def = it->Cast<H3DlgDef>();
 					def = nullptr;

@@ -12,7 +12,9 @@
                 "1":   "Retals:",
                 "2":   "Shots:",
                 "3":   "Spells:",
-
+                "4":   "HP lost:",
+                "5":   "losses:",
+                
                 "active":   "active",
                 "wait":   "waiting",
                 "def":   "defends",
