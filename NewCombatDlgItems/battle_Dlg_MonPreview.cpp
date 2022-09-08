@@ -189,7 +189,7 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 
 			H3DlgDef* def;
 			H3DlgText* text;
-			int frame_id, luck, morale, spell_id;
+			int frame_id, luck, morale, spell_id, losses;
 			int it_id = 0;
 			H3Hero* hero;
 			//H3Messagebox();
@@ -210,13 +210,18 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 						if (stack->info.damageLow != stack->info.damageHigh) str.Append("-").Append((hero->primarySkill[0] + 1) * stack->info.damageHigh);
 						it->Cast<H3DlgText>()->SetText(str.String());
 					}
-					
+					break;
+				case 2209:
+					it->Cast<H3DlgText>()->SetText(std::to_string(stack->info.hitPoints).c_str());
 					break;
 				case 2210:
-					it->Cast<H3DlgText>()->SetText(std::to_string(stack->healthLost).c_str());
+					it->Cast<H3DlgText>()->SetText(std::to_string(stack->info.hitPoints - stack->healthLost).c_str());
 					break;
 				case 2212:
-					it->Cast<H3DlgText>()->SetText(std::to_string(stack->numberAtStart - stack->numberAlive).c_str());
+					losses = stack->numberAtStart - stack->numberAlive;
+					str.Append(losses);
+					it->Cast<H3DlgText>()->SetText(str.String());
+			
 					break;
 				case 4005:
 					//def = it->Cast<H3DlgDef>();
