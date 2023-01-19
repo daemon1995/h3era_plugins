@@ -9,7 +9,9 @@ const char* newOkBtn = "iOkay2.def";
 const char* newCastBtn = "iMagic.def";
 const char* spellListBtn = "iBaff.def";
 
-
+using namespace h3;
+extern PatcherInstance* _PI;
+extern H3CombatCreature* creature_dlg_stack;
 
 #define WOG_STACK_EXPERIENCE_ON *(int*)0x02772730
 

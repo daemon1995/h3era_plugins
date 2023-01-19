@@ -165,6 +165,9 @@
     <ClInclude Include="header.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="battle_CreatureDlg_SpellsPreview.cpp" />
+    <ClCompile Include="battle_Dlg_MonPreview.cpp" />
+    <ClCompile Include="CreatureDlgHandler.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

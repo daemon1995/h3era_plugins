@@ -11,20 +11,14 @@
 #define _H3API_PATCHER_X86_
 #define _H3API_PLUGINS_
 
-
-#include "..\..\oldHeroesHeaders\h3api_single\H3API.hpp"
-#include "..\..\oldHeroesHeaders\headers\era.h"
-
-
-
-Patcher* globalPatcher;
-PatcherInstance* _PI;
-void DebugInt(int i)
+namespace Era
 {
-	h3::H3Messagebox(Era::IntToStr(i).c_str());
+	char* tr(const char* key);
 }
-#include "map"
-#include "string"
+#include "..\..\oldHeroesHeaders\h3api_single\H3API.hpp"
+
+
+
 
 
 

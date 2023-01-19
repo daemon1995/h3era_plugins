@@ -3,9 +3,6 @@
 
 
 using namespace h3;
-H3CombatCreature* creature_dlg_stack = nullptr;
-
-
 
 
 

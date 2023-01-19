@@ -1,9 +1,14 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #include "header.h"
+#include "..\..\oldHeroesHeaders\headers\era.h"
 
-#include "battle_Dlg_MonPreview.cpp"
-#include "battle_CreatureDlg_SpellsPreview.cpp"
-#include "CreatureDlgHandler.cpp"
+Patcher* globalPatcher;
+PatcherInstance* _PI;
+void Dlg_MonPreview_HooksInit(PatcherInstance* pi);
+void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi);
+void Dlg_CreatureSpellInfo_HooksInit(PatcherInstance* pi);
+
+//#include "battle_Dlg_MonPreview.cpp"
 
 
 using namespace h3;
