@@ -1,7 +1,5 @@
-#pragma once
-#include <wininet.h>
-#include <malloc.h>
-#include <stdio.h>
+
+#include "localFunctions.h"
 
 LONG GetStringRegKey(HKEY hKey, const std::wstring& strValueName, std::wstring& strValue, const std::wstring& strDefaultValue)
 {
@@ -18,7 +16,7 @@ LONG GetStringRegKey(HKEY hKey, const std::wstring& strValueName, std::wstring& 
 }
 
 
-std::string getGameFromRegistry()
+float getGameFromRegistry()
 {
     LPCWSTR root = L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\HoMM 3 ERA\\";
 
@@ -30,37 +28,37 @@ std::string getGameFromRegistry()
         std::wstring strValueOfBinDir;
         std::wstring strKeyDefaultValue;
         GetStringRegKey(hKey, L"version", strValueOfBinDir, L"0.0");
-        std::string res(strValueOfBinDir.begin(), strValueOfBinDir.end());
-        return res;
+        return std::stof(strValueOfBinDir);
+
     }
     else
     {
-        return dllText::PLUGIN_VERSION;
+        return atof(dllText::PLUGIN_VERSION);
 
     }
 
- // bool bDoesNotExistsSpecifically(lRes == ERROR_FILE_NOT_FOUND);
+    bool bDoesNotExistsSpecifically(lRes == ERROR_FILE_NOT_FOUND);
 
 
 
-//#define BUFFER 8192
-//    wchar_t  value[255];
-//    DWORD BufferSize = BUFFER;
-//
-//    LPCWSTR mainRoot = L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\HoMM 3 ERA";
-//    LPCWSTR KeyName = L"Version";
-//    //  LPCWSTR* value;
-//
-//    int result = RegGetValueW(HKEY_LOCAL_MACHINE, mainRoot, KeyName, RRF_RT_REG_SZ, NULL, &value, &BufferSize);
-//
-//    if (result == 0)
-//    {
-//        return std::stof(value);
-//    }
-//    else
-//    {
-//        return 0;
-//    }
+#define BUFFER 8192
+    wchar_t  value[255];
+    DWORD BufferSize = BUFFER;
+
+    LPCWSTR mainRoot = L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\HoMM 3 ERA";
+    LPCWSTR KeyName = L"Version";
+    //  LPCWSTR* value;
+
+    int result = RegGetValueW(HKEY_LOCAL_MACHINE, mainRoot, KeyName, RRF_RT_REG_SZ, NULL, &value, &BufferSize);
+
+    if (result == 0)
+    {
+        return std::stof(value);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 
