@@ -1,4 +1,6 @@
-#include "header.h"
+#include "battle_Dlg_MonPreview.h"
+
+
 using namespace h3;
 
 //int stack_dlg_ = 0;
@@ -14,7 +16,7 @@ _LHF_(Battle_Dlg_Create)
 {
 	//H3Ini* myIni = new H3Ini;
 
-	
+
 	H3CombatMonsterPanel* dlg_panel = (H3CombatMonsterPanel*)c->eax;
 
 	if (dlg_panel && dlg_panel->GetHeight() > 200)
@@ -43,7 +45,7 @@ _LHF_(Battle_Dlg_Create)
 				if (id % 2 == 0)
 					it->Cast<H3DlgText>()->SetAlignment(eTextAlignment::MIDDLE_RIGHT);
 				else
-					it->SetY(it->GetY()+40);
+					it->SetY(it->GetY() + 40);
 			}
 
 		}
@@ -51,7 +53,7 @@ _LHF_(Battle_Dlg_Create)
 		for (int i = 4; i < 6; i++)
 		{
 			x_pos = 9;
-			y_pos = 12 * i -3 + DLG_HEIGHT_ADD;
+			y_pos = 12 * i - 3 + DLG_HEIGHT_ADD;
 			H3String temp = "gem_plugin.combat_dlg.";
 			temp.Append(i);
 			text = H3DlgText::Create(x_pos, y_pos, 60, 12, Era::tr(temp.String()), NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_LEFT);
@@ -122,8 +124,8 @@ _LHF_(Battle_Dlg_Create)
 			_pcx->SetPcx(smaller_spellint[0]);
 			dlg_panel->AddItem(_pcx);
 
-		//	x_pos = 5 + (i & 1) * 34;
-		//	y_pos = 224 + i / 2 * 19;
+			//	x_pos = 5 + (i & 1) * 34;
+			//	y_pos = 224 + i / 2 * 19;
 
 			text = H3DlgText::Create(x_pos + 10, y_pos + 8, 24, 12, "", NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_RIGHT);
 			dlg_panel->AddItem(text);
@@ -136,29 +138,15 @@ _LHF_(Battle_Dlg_Create)
 
 void Hel_SetActionType(H3CombatCreature* stack, H3DlgDef* def, H3DlgText* text)
 {
-	
-
 
 	if (stack->IsWaiting())
-	{
-		//def->SetFrame(3);
 		text->SetText(Era::tr("gem_plugin.combat_dlg.wait"));
-	}
 	else if (stack->IsDefending())
-	{
-	//	def->SetFrame(4);
 		text->SetText(Era::tr("gem_plugin.combat_dlg.def"));
-	}
 	else if (stack->IsDone())
-	{
-	//	def->SetFrame(6);
 		text->SetText(Era::tr("gem_plugin.combat_dlg.done"));
-	}
-	else 
-	{
-	//	def->SetFrame(5);
+	else
 		text->SetText(Era::tr("gem_plugin.combat_dlg.active"));
-	}
 	return;
 }
 
@@ -178,8 +166,8 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 			if (stack->activeSpellNumber)
 			{
 				int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-				
-				for (INT8 i = arr_size -1; i >=0; --i)
+
+				for (INT8 i = arr_size - 1; i >= 0; --i)
 				{
 					if (stack->activeSpellDuration[i])
 						active_spells[counter++] = i;
@@ -221,7 +209,7 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 					losses = stack->numberAtStart - stack->numberAlive;
 					str.Append(losses);
 					it->Cast<H3DlgText>()->SetText(str.String());
-			
+
 					break;
 				case 4005:
 					//def = it->Cast<H3DlgDef>();
@@ -271,7 +259,7 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 						{
 							--counter;
 							H3String duration = "";
-							if (counter>=0
+							if (counter >= 0
 								&& active_spells[counter] != NH3Spells::eSpell::BERSERK
 								&& active_spells[counter] != NH3Spells::eSpell::DISRUPTING_RAY)
 								duration.Append("x").Append(stack->activeSpellDuration[active_spells[counter]]);
@@ -293,8 +281,7 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 }
 
 
-
-void CreateSmallerPics(H3LoadedDef* src, H3Vector<H3LoadedPcx16*> &dst_vec, INT32 count, int w , int h)
+void CreateSmallerPics(H3LoadedDef* src, H3Vector<H3LoadedPcx16*>& dst_vec, INT32 count, int w, int h)
 {
 	//
 
@@ -306,7 +293,7 @@ void CreateSmallerPics(H3LoadedDef* src, H3Vector<H3LoadedPcx16*> &dst_vec, INT3
 	int i_width = w / scale;
 	int i_height = h / scale;
 
-	H3LoadedPcx16* buf = H3LoadedPcx16::Create( w, h);
+	H3LoadedPcx16* buf = H3LoadedPcx16::Create(w, h);
 	int color_type = o_BPP;
 	int it_height = i_height - (color_type != 32);
 	for (INT i = 0; i < count; i++)
@@ -325,7 +312,7 @@ void CreateSmallerPics(H3LoadedDef* src, H3Vector<H3LoadedPcx16*> &dst_vec, INT3
 
 				for (int j = 0; j < it_height; j++)
 				{
-					pix_atY += scale;					
+					pix_atY += scale;
 					*dst_vec[i]->GetPixel888(k, j) = H3ARGB888(buf->GetPixel888(pix_atX, pix_atY)->GetColor());
 				}
 				pix_atY = -scale / 2;
@@ -374,4 +361,18 @@ void CreateResources()
 	}
 
 	return;
+}
+
+void Dlg_MonPreview_HooksInit(PatcherInstance* pi)
+{
+	CreateResources();
+
+	constexpr int dlg_height = 288 + DLG_HEIGHT_ADD;
+	constexpr int dlg_y = 267 - DLG_HEIGHT_ADD + 13;
+	pi->WriteDword(0x47205A + 1, dlg_height); // left dlg height ++
+	pi->WriteDword(0x472092 + 1, dlg_height); // right dlg height ++
+	pi->WriteDword(0x472061 + 1, dlg_y); // left dlg y_pos ++
+	pi->WriteDword(0x472099 + 1, dlg_y); // right dlg y_pos ++
+	pi->WriteLoHook(0x46D6CB, Battle_Dlg_Create);
+	pi->WriteLoHook(0x46D97A, Battle_Dlg_StackInfo_Show);
 }

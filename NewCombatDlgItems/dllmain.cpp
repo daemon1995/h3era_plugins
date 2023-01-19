@@ -1,40 +1,24 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #include "header.h"
+
 #include "battle_Dlg_MonPreview.cpp"
-#include "battle_Dlg_SpellsPreview.cpp"
+#include "battle_CreatureDlg_SpellsPreview.cpp"
+#include "CreatureDlgHandler.cpp"
+
 
 using namespace h3;
 
 _LHF_(HooksInit)
 {
 
-   // path.Append("\\new_battle_interface_text.ini");
-    //H3Ini* myIni = new H3Ini;
+    if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.popup"))) // if json is active
+        Dlg_MonPreview_HooksInit(_PI);
+    if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.creature_info"))) // if json is active
+        Dlg_CreatureInfo_HooksInit(_PI);
 
-    //_PI->WriteLoHook(0x462E2B, Battle_Dlg_Create);
+    if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.spells"))) // if json is active
+      Dlg_CreatureSpellInfo_HooksInit(_PI);
 
-    if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.popup")))
-    {
-        _PI->WriteLoHook(0x46D6CB, Battle_Dlg_Create);
-        _PI->WriteLoHook(0x46D97A, Battle_Dlg_StackInfo_Show);
-        CreateResources();
-        constexpr int dlg_height = 288 + DLG_HEIGHT_ADD;
-        constexpr int dlg_y = 267 - DLG_HEIGHT_ADD + 13;
-        _PI->WriteDword(0x47205A + 1, dlg_height); // left dlg height ++
-        _PI->WriteDword(0x472092 + 1, dlg_height); // right dlg height ++
-        _PI->WriteDword(0x472061 + 1, dlg_y); // left dlg y_pos ++
-        _PI->WriteDword(0x472099 + 1, dlg_y); // right dlg y_pos ++
-
-    }
-    if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.spells")))
-    {
-    _PI->WriteLoHook(0x5F4C5D, Dlg_CreatureInfo_RmcProc);
-    _PI->WriteLoHook(0x5F3741, Dlg_CreatureInfo_Battle_BeforeCreate);
-    }
-
-    //_PI->WriteLoHook(0x46D6CB, Dlg_LobbyMenu_NewGame);
-   // _PI->WriteByte(0x57C10C+2, 0); // skip building "Random Map Button
-   // _PI->WriteLoHook(0x5E7FC2, OnAfterMarketDlgArtifactPlace);
     return EXEC_DEFAULT;
 }
 
@@ -60,9 +44,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             _PI = globalPatcher->CreateInstance("battle_dlg.daemon.plugin");
             Era::ConnectEra();
             _PI->WriteLoHook(0x4EEAF2, HooksInit);
-
-
-
 
         }
     case DLL_THREAD_ATTACH:
