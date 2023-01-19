@@ -5,14 +5,14 @@
 //#define _H3API_EXCEPTION_
 #define _H3API_PATCHER_X86_
 #define o_dlgNPC ((_DlgNPC_*)0x28604D8)
-#define NPC_DLG_LEFT_BTTN_ID 220
-#define NPC_DLG_RIGHT_BTTN_ID 221
-#define NPC_MAX_SKILLS 15
-#define WOG_OPT_STACK_EXPERIENCE 900
-#define DLG_CREATURE_INFO_MIN_SKILL_ID 555
-#define DLG_CREATURE_INFO_MAX_SKILL_ID 569
-#define MON_COMMANDER_FIRST_A 174
-#define MON_COMMANDER_LAST_D 191
+constexpr int NPC_DLG_LEFT_BTTN_ID = 220;
+constexpr int NPC_DLG_RIGHT_BTTN_ID = 221;
+constexpr int NPC_MAX_SKILLS = 15;
+constexpr int WOG_OPT_STACK_EXPERIENCE = 900;
+constexpr int DLG_CREATURE_INFO_MIN_SKILL_ID = 555;
+constexpr int DLG_CREATURE_INFO_MAX_SKILL_ID = 569;
+constexpr int MON_COMMANDER_FIRST_A = 174;
+constexpr int MON_COMMANDER_LAST_D = 191;
 #define o_BPP ByteAt(0x5FA228 + 3) << 3
 
 //#include <iostream>
