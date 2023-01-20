@@ -167,7 +167,7 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 			{
 				int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
 
-				for (INT8 i = arr_size - 1; i >= 0; --i)
+				for (INT32 i = arr_size - 1; i >= 0; --i)
 				{
 					if (stack->activeSpellDuration[i])
 						active_spells[counter++] = i;

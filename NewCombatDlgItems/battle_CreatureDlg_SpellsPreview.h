@@ -9,7 +9,7 @@ class SpellsDlg
 {
 
 public:
-	SpellsDlg(int width, int height, int x = -1, int y = -1):H3Dlg(width, height, x,y)	{	}
+	SpellsDlg(int width, int height, int x = -1, int y = -1) :H3Dlg(width, height, x, y) {	}
 
 	BOOL OnLeftClickOutside() override
 	{

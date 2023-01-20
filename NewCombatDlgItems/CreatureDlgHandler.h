@@ -27,7 +27,7 @@ class CreatureDlgHandler
 	H3CombatCreature* stack = nullptr;
 public:
 
-	CreatureDlgHandler(H3CreatureInfoDlg* dlg, H3CombatCreature* stack):
+	CreatureDlgHandler(H3CreatureInfoDlg* dlg, H3CombatCreature* stack) :
 		dlg(dlg), stack(stack), expOn(WOG_STACK_EXPERIENCE_ON)
 	{
 		if (dlg)
@@ -41,23 +41,16 @@ public:
 
 		}
 
-		//h3
 	}
 
 	bool SetWitdt;
 
 	bool AlignItems();
-	
+
 	bool AddExperienceButton();
 	bool AddSpellEfects();
 	bool AddCommanderSkills();
 
-
-	void operator() (H3CreatureInfoDlg* dlg)
-	{
-	//	this->dlg = dlg;
-		dlg->AddItem(H3DlgDef::Create(220, 220, "iokay32.def"));
-	}
 };
 
 

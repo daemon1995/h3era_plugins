@@ -9,13 +9,26 @@ H3CombatCreature* currentStack = nullptr;
 
 int __stdcall gem_Dlg_CreatureInfo_BattleCtor(HiHook* hook, H3CreatureInfoDlg* dlg, H3CombatCreature* mon, int x, int y, bool isLMC)
 {
+
+	y -= 30; // make dlg start higher cause of new size
+
+	if (y < 0)
+	{
+		if (P_CombatManager->dlg->GetHeight() == 600) // hd mod combat dlg height check
+			y = 0; // non dlg changes
+		else if (y < -15) // new base y-value
+			y = -15;
+	}
+
+	x -= 30;
+
 	if (800 - x < DLG_WIDTH)// set battle dlg new xPos limit
 		x = 800 - DLG_WIDTH;
 	if (x < 0)
 		x = 0;
-
 	if (600 - y < DLG_HEIGHT)
 		y = 600 - DLG_HEIGHT;
+
 	currentStack = mon;
 	return THISCALL_5(int, hook->GetDefaultFunc(), dlg, mon, x, y, isLMC);
 }
@@ -51,7 +64,6 @@ int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3
 
 	return THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
 }
-
 
 
 
@@ -171,7 +183,7 @@ bool CreatureDlgHandler::AddSpellEfects()
 	{
 		int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
 
-		for (INT8 i = 0; i < arr_size; ++i)
+		for (INT32 i = 0; i < arr_size; ++i)
 		{
 			if (stack->activeSpellDuration[i])
 				active_spells[counter++] = i;
@@ -233,13 +245,14 @@ bool CreatureDlgHandler::AddSpellEfects()
 			durTextItem->SetHints(h3_TextBuffer, spellDesc.String(), true);
 			dlg->AddItem(durTextItem);
 		}
+		
 
 		if (i == 4 && needToExpnd)
 		{
 			H3DlgButton_proc callback = CallSpellsDlg;
 			H3DlgCustomButton* dlgCallBttn = H3DlgCustomButton::Create(283, yPos + 42, DLG_SPELLS_BTTN_ID, spellListBtn, callback, 0, 1);
 			dlgCallBttn->AddHotkey(h3::eVKey::H3VK_S);
-			dlgCallBttn->SetHints(Era::tr("gem_plugin.combat_dlg.creature_info.npc_hint"), h3_NullString, true);
+			dlgCallBttn->SetHints(Era::tr("gem_plugin.combat_dlg.creature_info.spell_list_hint"), h3_NullString, true);
 			dlg->AddItem(dlgCallBttn);
 		}
 	}
@@ -272,10 +285,6 @@ _LHF_(gem_Dlg_CreatureInfo_DescriptionCreate)
 	return NO_EXEC_DEFAULT;
 }
 
-_LHF_(gem_Dlg_CreatureInfo_notBattleCtor)
-{
-	return EXEC_DEFAULT;
-}
 
 _LHF_(gem_Dlg_CreatureInfo_notBattle_Created)
 {
