@@ -14,6 +14,7 @@
 namespace Era
 {
 	char* tr(const char* key);
+	void ExecErmCommand(const char* key);
 }
 #include "..\..\oldHeroesHeaders\h3api_single\H3API.hpp"
 

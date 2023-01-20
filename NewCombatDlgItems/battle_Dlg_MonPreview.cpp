@@ -261,7 +261,9 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 							H3String duration = "";
 							if (counter >= 0
 								&& active_spells[counter] != NH3Spells::eSpell::BERSERK
-								&& active_spells[counter] != NH3Spells::eSpell::DISRUPTING_RAY)
+								&& active_spells[counter] != NH3Spells::eSpell::DISRUPTING_RAY
+								&& active_spells[counter] != NH3Spells::eSpell::BIND
+								)
 								duration.Append("x").Append(stack->activeSpellDuration[active_spells[counter]]);
 							it->Cast<H3DlgText>()->SetText(duration.String());
 						}

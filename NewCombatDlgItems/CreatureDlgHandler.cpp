@@ -23,6 +23,18 @@ int __stdcall gem_Dlg_CreatureInfo_BattleCtor(HiHook* hook, H3CreatureInfoDlg* d
 
 int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3Msg* msg)
 {
+	int itemId = *(int*)0x68C6B0;
+	if ((itemId >= 1000 && itemId <= 1005
+		|| itemId == WOG_CREATURE_EXP_BUTTON_ID
+		|| itemId == DLG_SPELLS_BTTN_ID)
+		&& msg->command == eMsgCommand::MOUSE_OVER)
+	{
+		H3DlgTextPcx* hint = dlg->GetTextPcx(224);
+
+		if (hint)
+			hint->SetText(dlg->GetH3DlgItem(itemId)->GetHint());
+		//	
+	}
 
 	if (msg->itemId == WOG_CREATURE_EXP_BUTTON_ID
 		&& msg->command == eMsgCommand::MOUSE_BUTTON) // if mouse ckick then call exp dlg
@@ -32,7 +44,7 @@ int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3
 		else if (msg->subtype == h3::eMsgSubtype::RBUTTON_DOWN)
 		{
 			main_isRMC = true;
-			msg->itemId = NULL;
+			msg->itemId = -1;
 		}
 		THISCALL_0(signed int, 0x7645BB); // call wog creature dlg
 	}
@@ -40,14 +52,18 @@ int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3
 	return THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
 }
 
+
+
+
 bool CreatureDlgHandler::AlignItems()
 {
 
-	H3DlgItem* hint = dlg->GetH3DlgItem(224); //
+	H3DlgTextPcx* hint = dlg->GetTextPcx(224); //
 	if (hint)
 	{
+		//hint->d
 		hint->SetY(DLG_HEIGHT - hint->GetHeight() - 7); //set new hint yPos
-		hint->SetX((DLG_WIDTH - hint->GetWidth()) / 2); // align center
+		//hint->SetX((DLG_WIDTH - hint->GetWidth()) / 2); // align center
 	}
 
 	H3DlgText* name = dlg->GetText(203); //set new description pos
@@ -114,38 +130,42 @@ bool CreatureDlgHandler::AlignItems()
 
 bool CreatureDlgHandler::AddExperienceButton()
 {
-	constexpr int x_pos = 233;
-	constexpr int y_pos = 307;
+	bool isNPC = !(dlg->creatureId < 174 || dlg->creatureId > 191);
+	if (!isNPC || stack != nullptr)
+	{
+		constexpr int x_pos = 233;
+		constexpr int y_pos = 307;
 
-	H3DlgPcx* frame = H3DlgPcx::Create(x_pos - 1, y_pos - 1, -1, "box46x32.pcx");
-	dlg->AddItem(frame);
+		H3DlgPcx* frame = H3DlgPcx::Create(x_pos - 1, y_pos - 1, -1, "box46x32.pcx");
+		dlg->AddItem(frame);
 
-	H3DlgDefButton* bttn = H3DlgDefButton::Create(x_pos, y_pos, WOG_CREATURE_EXP_BUTTON_ID, "CrExpBut.def", 0, 1, false, h3::eVKey::H3VK_E);
-	dlg->AddItem(bttn);
+
+		H3DlgDefButton* bttn = H3DlgDefButton::Create(x_pos, y_pos, WOG_CREATURE_EXP_BUTTON_ID, "CrExpBut.def", 0, 1, false, h3::eVKey::H3VK_E);
+
+
+		H3String hint = isNPC ? Era::tr("gem_plugin.combat_dlg.creature_info.npc_hint") : Era::tr("gem_plugin.combat_dlg.creature_info.stack_exp_hint");
+		//H3Messagebox(hint.String());
+		bttn->SetHints(hint.String(), h3_NullString, true);
+		dlg->AddItem(bttn);
+	}
+
 	return false;
 }
-
 
 int __fastcall CallSpellsDlg(H3Msg* msg)
 {
-	//ShowStackAvtiveSpells(creature_dlg_stack, true);
-
 	ShowStackAvtiveSpells(creature_dlg_stack, true);
 	return false;
 }
-
 
 bool CreatureDlgHandler::AddSpellEfects()
 {
 	const int xPos = 182;
 	const int yPos = 307;
 
-	//return false;
-
 	H3Vector<INT32> active_spells(stack->activeSpellNumber);
 	int counter = 0;
-	//	DebugInt(active_spells.Size());
-		//DebugInt(stack->activeSpellNumber);
+
 
 	if (stack->activeSpellNumber)
 	{
@@ -167,11 +187,37 @@ bool CreatureDlgHandler::AddSpellEfects()
 	for (size_t i = 0; i < spellsToShow; i++)
 	{
 		int yPos = 42 * i + 47;
-		spellDef = H3DlgDef::Create(283, yPos, "spellint.def", active_spells[i] + 1);
+		int defId = 1000 + i;
+		spellDef = H3DlgDef::Create(283, yPos, defId, "spellint.def", active_spells[i] + 1);
+
+		H3String hint = H3GeneralText::Get()->GetText(612);
+		H3String spellName = H3Spell::Get()[active_spells[i]].name;
+		H3String spellDesc = H3Spell::Get()[active_spells[i]].description[0];
+
+		switch (active_spells[i])
+		{
+		case h3::eSpell::BIND:
+			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(682));
+			break;
+		case h3::eSpell::BERSERK:
+			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(683));
+			break;
+		case h3::eSpell::DISRUPTING_RAY:
+			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(684));
+			break;
+		default:
+			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(612), spellName.String(), stack->activeSpellDuration[active_spells[i]]);
+			break;
+		}
+
+		spellDef->SetHints(h3_TextBuffer, spellDesc.String(), true);
+		//spellDef->SetHint(H3Spell::Get()[active_spells[i]].description[0]);
 		dlg->AddItem(spellDef);
+
 		if (stack->activeSpellDuration[active_spells[i]] // if stack has this spell active
 			&& active_spells[i] != NH3Spells::eSpell::BERSERK // and not permanent effect
-			&& active_spells[i] != NH3Spells::eSpell::DISRUPTING_RAY)
+			&& active_spells[i] != NH3Spells::eSpell::DISRUPTING_RAY
+			&& active_spells[i] != NH3Spells::eSpell::BIND)
 		{
 			H3String duration = "";
 			duration.Append("x").Append(stack->activeSpellDuration[active_spells[i]]);
@@ -184,6 +230,7 @@ bool CreatureDlgHandler::AddSpellEfects()
 				1,
 				0,
 				eTextAlignment::BOTTOM_RIGHT);
+			durTextItem->SetHints(h3_TextBuffer, spellDesc.String(), true);
 			dlg->AddItem(durTextItem);
 		}
 
@@ -192,9 +239,9 @@ bool CreatureDlgHandler::AddSpellEfects()
 			H3DlgButton_proc callback = CallSpellsDlg;
 			H3DlgCustomButton* dlgCallBttn = H3DlgCustomButton::Create(283, yPos + 42, DLG_SPELLS_BTTN_ID, spellListBtn, callback, 0, 1);
 			dlgCallBttn->AddHotkey(h3::eVKey::H3VK_S);
+			dlgCallBttn->SetHints(Era::tr("gem_plugin.combat_dlg.creature_info.npc_hint"), h3_NullString, true);
 			dlg->AddItem(dlgCallBttn);
 		}
-
 	}
 
 	return false;
@@ -204,6 +251,8 @@ bool CreatureDlgHandler::AddSpellEfects()
 //{
 //	return false;
 //}
+
+
 
 
 _LHF_(gem_Dlg_CreatureInfo_AddUpradeButton)
@@ -243,8 +292,6 @@ _LHF_(gem_Dlg_BatttleCreatureInfo_Create)
 	CreatureDlgHandler handler((H3CreatureInfoDlg*)c->eax, currentStack);
 	return EXEC_DEFAULT;
 }
-//const char* newDlgFrame = "iOkay2.def";
-
 
 _LHF_(Wnd_BeforeExpoDlgShow)
 {
@@ -272,6 +319,8 @@ _LHF_(Before_WndNPC_DLG)
 
 	return EXEC_DEFAULT;
 }
+
+
 void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 {
 	pi->WriteLoHook(0x5F4961, gem_Dlg_CreatureInfo_BuyCreature); //BuyCreatureInfoDlg
@@ -281,8 +330,12 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 
 	pi->WriteHiHook(0x5F3700, SPLICE_, EXTENDED_, THISCALL_, gem_Dlg_CreatureInfo_BattleCtor);
 	pi->WriteHiHook(0x5F4C00, SPLICE_, EXTENDED_, THISCALL_, gem_Dlg_CreatureInfo_Proc); // dlg proc
+//	pi->WriteLoHook(0x5F5327, gem_Dlg_CreatureInfo_SetHint); //BattleCreatureInfo
+
+
 
 	//_before description field create
+
 	pi->WriteLoHook(0x5F488A, gem_Dlg_CreatureInfo_DescriptionCreate); //Buy dlg 
 	pi->WriteLoHook(0x5F3E44, gem_Dlg_CreatureInfo_DescriptionCreate); //Combat Dlg 
 	pi->WriteLoHook(0x5F446F, gem_Dlg_CreatureInfo_DescriptionCreate); // non combat dlg
@@ -331,13 +384,6 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteDword(0x5F6C69 + 1, yOk - 1); // set new yPos for frame
 
 
-
-	//non combat dlg
-	pi->WriteDword(0x5F3F1B + 1, DLG_HEIGHT); // set non battle dlg height
-	pi->WriteDword(0x5F3F20 + 1, DLG_WIDTH); // set non battle dlg width
-	pi->WriteDword(0x5F406B + 1, DLG_HEIGHT); // set non battle bg_pcx height
-	pi->WriteDword(0x5F4070 + 1, DLG_WIDTH); // set non battle bg_pcx width
-
 	// dismiss creature bttn
 	pi->WriteByte(0x5F71A6 + 1, 127); // set new xPos for bttn
 	pi->WriteDword(0x5F71A1 + 1, yOk); // set new yPos for bttn
@@ -357,10 +403,20 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteLoHook(0x5F3D9E, gem_Dlg_CreatureInfo_AddUpradeButton); //spell cast button frame for Battle
 
 	//hire creature dlg
-	pi->WriteDword(0x5F45D8 + 1, DLG_HEIGHT); // set non battle dlg height
-	pi->WriteDword(0x5F45DD + 1, DLG_WIDTH); // set non battle dlg width	
-	pi->WriteDword(0x5F4712 + 1, DLG_HEIGHT); // set non battle bg_pcx height
-	pi->WriteDword(0x5F4717 + 1, DLG_WIDTH); // set non battle bg_pcx width
+	pi->WriteDword(0x5F45D8 + 1, DLG_HEIGHT); // set dlg height
+	pi->WriteDword(0x5F45DD + 1, DLG_WIDTH); // set dlg width	
+	pi->WriteDword(0x5F4712 + 1, DLG_HEIGHT); // set bg_pcx height
+	pi->WriteDword(0x5F4717 + 1, DLG_WIDTH); // set bg_pcx width
+	pi->WriteDword(0x5F48E9 + 1, 336); // set hint pcx width
+
+	//non combat dlg
+	pi->WriteDword(0x5F3F1B + 1, DLG_HEIGHT); // set non battle dlg height
+	pi->WriteDword(0x5F3F20 + 1, DLG_WIDTH); // set non battle dlg width
+	pi->WriteDword(0x5F406B + 1, DLG_HEIGHT); // set non battle bg_pcx height
+	pi->WriteDword(0x5F4070 + 1, DLG_WIDTH); // set non battle bg_pcx width
+	pi->WriteDword(0x5F44CE + 1, 336); // set hint pcx width
+
+
 	//pi->WriteByte(0x5F4880 +1, 0x1); // set desciption item id in buy creature info dlg
 
 	// combat creature dlg
@@ -372,6 +428,7 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteByte(0x5F3DF2 + 1, defWidth); // set new width for castButton def
 	pi->WriteByte(0x5F3DF0 + 1, defHeight); // set new height for castButton def
 	pi->WriteDword(0x5F3DF4 + 1, yOk); // set new yPos for castButton def
+	pi->WriteDword(0x5F3CDF + 1, 336); // set hint pcx width
 
 
 }

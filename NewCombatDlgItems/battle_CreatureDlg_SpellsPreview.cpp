@@ -36,7 +36,7 @@ bool ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC)
             H3String str = "x";
             str.Append(dur);
             H3DlgText* text = H3DlgText::Create(x, y + 25, d_w, 14, str.String(), h3::NH3Dlg::Text::TINY, 1, 0, eTextAlignment::MIDDLE_RIGHT);
-            if (i != NH3Spells::eSpell::BERSERK && i != NH3Spells::eSpell::DISRUPTING_RAY)
+            if (i != NH3Spells::eSpell::BERSERK && i != NH3Spells::eSpell::DISRUPTING_RAY && i != NH3Spells::eSpell::BIND )
                 dlg->AddItem(text);
             if (++counter == columns)
             {
