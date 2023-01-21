@@ -6,20 +6,28 @@ using namespace h3;
 
 
 
-bool ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC)
+bool ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC, H3DlgItem* clickedItem = nullptr)
 {
 
-
 	int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-	int columns = 5 > stack->activeSpellNumber ? stack->activeSpellNumber : 5;
-	int rows = stack->activeSpellNumber / columns + (bool)(stack->activeSpellNumber % columns);
+	int activeSpellsNum = stack->activeSpellNumber;
+	int _sqrt = floor(sqrt(activeSpellsNum));
+	int columns = _sqrt;
 
+	int rows = activeSpellsNum / columns;
+	if (activeSpellsNum % columns)
+		rows++;
+	if (rows > columns)
+	{
+		rows--;
+		columns++;
+	}
 	int d_w = H3LoadedDef::Load("spellint.def")->widthDEF;
 	int d_h = H3LoadedDef::Load("spellint.def")->heightDEF;
 	int width = (d_w + 5) * columns + 35;
 	int height = (d_h + 5) * rows + 35;
 
-	H3Dlg* dlg = new SpellsDlg(width, height);
+	H3Dlg* dlg = new H3Dlg(width, height);
 
 
 	int x = 20, y = 20;
@@ -48,18 +56,19 @@ bool ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC)
 				x += d_w + 5;
 		}
 	}
-	dlg->PlaceAtMouse();
+	//
+
 
 	if (isRMC)
+		dlg->PlaceAtMouse();
+	else if (clickedItem != nullptr)
 	{
-		dlg->RMB_Show();
+		int xPos = clickedItem->GetAbsoluteX();
+		int yPos = clickedItem->GetAbsoluteY();
+		IntAt((int)dlg + 0x18) = Clamp(0, xPos, H3GameWidth::Get() - width - 200);  // 200 is width of adventure bar on right
+		IntAt((int)dlg + 0x1C) = Clamp(0, yPos, H3GameHeight::Get() - height - 48); // 48 is height of resource bar on bottom
 	}
-	else
-	{
-		//  dlg->CreateOKButton();
-
-		dlg->Start();
-	}
+	dlg->RMB_Show();
 
 	delete dlg;
 	return false;

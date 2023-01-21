@@ -13,7 +13,7 @@ using namespace h3;
 extern PatcherInstance* _PI;
 extern H3CombatCreature* creature_dlg_stack;
 
-#define WOG_STACK_EXPERIENCE_ON *(int*)0x02772730
+#define WOG_STACK_EXPERIENCE_ON *(bool*)0x02772730
 
 struct StackActiveSpells
 {
@@ -22,7 +22,6 @@ struct StackActiveSpells
 class CreatureDlgHandler
 {
 	H3CreatureInfoDlg* dlg = nullptr;
-	int dlgType = -1;
 	bool expOn = false;
 	H3CombatCreature* stack = nullptr;
 public:
@@ -38,9 +37,7 @@ public:
 				AddExperienceButton();
 			if (this->stack != nullptr)
 				AddSpellEfects();
-
 		}
-
 	}
 
 	bool SetWitdt;

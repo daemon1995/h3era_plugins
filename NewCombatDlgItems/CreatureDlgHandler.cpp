@@ -1,7 +1,7 @@
 #include "CreatureDlgHandler.h"
 
 using namespace h3;
-bool ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC);
+bool ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC, H3DlgItem* clickedItem = nullptr);
 
 
 bool main_isRMC = false;
@@ -34,64 +34,16 @@ int __stdcall gem_Dlg_CreatureInfo_BattleCtor(HiHook* hook, H3CreatureInfoDlg* d
 }
 
 
-int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3Msg* msg)
-{
-	int itemId = *(int*)0x68C6B0;
-	if ((itemId >= 1000 && itemId <= 1005
-		|| itemId == WOG_CREATURE_EXP_BUTTON_ID
-		|| itemId == DLG_SPELLS_BTTN_ID)
-		&& msg->command == eMsgCommand::MOUSE_OVER)
-	{
-		H3DlgTextPcx* hint = dlg->GetTextPcx(224);
-
-		if (hint)
-			hint->SetText(dlg->GetH3DlgItem(itemId)->GetHint());
-		//	
-	}
-
-	if (msg->itemId == WOG_CREATURE_EXP_BUTTON_ID
-		&& msg->command == eMsgCommand::MOUSE_BUTTON) // if mouse ckick then call exp dlg
-	{
-		if (msg->subtype == h3::eMsgSubtype::LBUTTON_CLICK) // 
-			main_isRMC = false;
-		else if (msg->subtype == h3::eMsgSubtype::RBUTTON_DOWN)
-		{
-			main_isRMC = true;
-			msg->itemId = -1;
-		}
-		THISCALL_0(signed int, 0x7645BB); // call wog creature dlg
-	}
-
-	return THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
-}
-
-
-
 bool CreatureDlgHandler::AlignItems()
 {
 
 	H3DlgTextPcx* hint = dlg->GetTextPcx(224); //
 	if (hint)
-	{
-		//hint->d
 		hint->SetY(DLG_HEIGHT - hint->GetHeight() - 7); //set new hint yPos
-		//hint->SetX((DLG_WIDTH - hint->GetWidth()) / 2); // align center
-	}
 
 	H3DlgText* name = dlg->GetText(203); //set new description pos
 	if (name)
 		name->SetX((DLG_WIDTH - name->GetWidth()) / 2); // align center
-
-	H3DlgText* description = dlg->GetText(-1); //set new description pos
-	if (description)
-		description->SetY(189); //set new description yPos
-	else
-	{
-		description = dlg->GetText(1);
-		if (description)
-			description->SetY(185);
-	}
-
 
 	H3DlgDef* morale = dlg->GetDef(219); //set new morale postion
 	if (morale)
@@ -117,6 +69,31 @@ bool CreatureDlgHandler::AlignItems()
 		upgrade->SetY(307);
 	}
 
+	H3DlgText* description = dlg->GetText(-1); //set new description pos
+	if (!description)
+		description = dlg->GetText(1);
+
+
+	int x = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.x"));
+	int y = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.y"));
+	int width = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.width"));
+	int height = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.height"));
+	eTextAlignment align = (eTextAlignment)std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.alignment"));
+	if (!x)			x = 24;
+	if (!y)			y = 189;
+	if (!width)			width = 250;
+	if (!height)		height = 55;
+
+	if (description)
+	{
+		description->SetWidth(width); //set new description yPos
+		description->SetHeight(height); //set new description yPos
+		description->SetX(x); //set new description xPos
+		description->SetY(y); //set new description xPos
+		description->SetAlignment(align);
+	}
+
+
 	H3DlgCustomButton* creatureCast = dlg->GetCustomButton(301);//set new cast button postion like for faerie dragons
 	if (creatureCast) // if creature can cast
 	{
@@ -124,15 +101,16 @@ bool CreatureDlgHandler::AlignItems()
 		//creatureCast->SetY(309);
 		if (!description && H3CreatureInformation::Get()[dlg->creatureId].description) // create description field
 		{
-			description = H3DlgText::Create(22,
-				189,
-				255,
-				55,
+			description = H3DlgText::Create(
+				x,
+				y,
+				width,
+				height,
 				H3CreatureInformation::Get()[dlg->creatureId].description,
 				NH3Dlg::Text::TINY,
 				4,
 				-1,
-				eTextAlignment::HLEFT);
+				align);
 			dlg->AddItem(description);
 		}
 	}
@@ -153,20 +131,11 @@ bool CreatureDlgHandler::AddExperienceButton()
 
 
 		H3DlgDefButton* bttn = H3DlgDefButton::Create(x_pos, y_pos, WOG_CREATURE_EXP_BUTTON_ID, "CrExpBut.def", 0, 1, false, h3::eVKey::H3VK_E);
-
-
 		H3String hint = isNPC ? Era::tr("gem_plugin.combat_dlg.creature_info.npc_hint") : Era::tr("gem_plugin.combat_dlg.creature_info.stack_exp_hint");
-		//H3Messagebox(hint.String());
 		bttn->SetHints(hint.String(), h3_NullString, true);
 		dlg->AddItem(bttn);
 	}
 
-	return false;
-}
-
-int __fastcall CallSpellsDlg(H3Msg* msg)
-{
-	ShowStackAvtiveSpells(creature_dlg_stack, true);
 	return false;
 }
 
@@ -196,7 +165,7 @@ bool CreatureDlgHandler::AddSpellEfects()
 	//int x = 283
 	H3DlgDef* spellDef;
 	H3DlgText* durTextItem;
-	for (size_t i = 0; i < spellsToShow; i++)
+	for (INT32 i = 0; i < spellsToShow; i++)
 	{
 		int yPos = 42 * i + 47;
 		int defId = 1000 + i;
@@ -245,13 +214,11 @@ bool CreatureDlgHandler::AddSpellEfects()
 			durTextItem->SetHints(h3_TextBuffer, spellDesc.String(), true);
 			dlg->AddItem(durTextItem);
 		}
-		
+
 
 		if (i == 4 && needToExpnd)
 		{
-			H3DlgButton_proc callback = CallSpellsDlg;
-			H3DlgCustomButton* dlgCallBttn = H3DlgCustomButton::Create(283, yPos + 42, DLG_SPELLS_BTTN_ID, spellListBtn, callback, 0, 1);
-			dlgCallBttn->AddHotkey(h3::eVKey::H3VK_S);
+			H3DlgDefButton* dlgCallBttn = H3DlgDefButton::Create(283, yPos + 42, DLG_SPELLS_BTTN_ID, spellListBtn, 0, 1, false, eVKey::H3VK_S);
 			dlgCallBttn->SetHints(Era::tr("gem_plugin.combat_dlg.creature_info.spell_list_hint"), h3_NullString, true);
 			dlg->AddItem(dlgCallBttn);
 		}
@@ -260,10 +227,36 @@ bool CreatureDlgHandler::AddSpellEfects()
 	return false;
 }
 
-//bool CreatureDlgHandler::AddCommanderSkills()
-//{
-//	return false;
-//}
+
+int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3Msg* msg)
+{
+	int lastHoverdItemId = *(int*)0x68C6B0; // needed for stting hints at button
+	if ((lastHoverdItemId >= 1000 && lastHoverdItemId <= 1005
+		|| lastHoverdItemId == WOG_CREATURE_EXP_BUTTON_ID
+		|| lastHoverdItemId == DLG_SPELLS_BTTN_ID)
+		&& msg->command == eMsgCommand::MOUSE_OVER)
+	{
+		H3DlgTextPcx* hint = dlg->GetTextPcx(224);
+
+		if (hint)
+			hint->SetText(dlg->GetH3DlgItem(lastHoverdItemId)->GetHint());
+	}
+
+	if (msg->command == eMsgCommand::MOUSE_BUTTON
+		&& msg->subtype != h3::eMsgSubtype::LBUTTON_DOWN)
+	{
+		main_isRMC = msg->subtype == h3::eMsgSubtype::RBUTTON_DOWN ? true : false;
+
+		if (msg->itemId == WOG_CREATURE_EXP_BUTTON_ID) // if mouse ckick then call exp dlg
+			THISCALL_0(signed int, 0x7645BB); // call wog creature dlg
+		else if (msg->itemId == DLG_SPELLS_BTTN_ID) // if clicked at spell list bttn
+			ShowStackAvtiveSpells(creature_dlg_stack, main_isRMC, dlg->GetH3DlgItem(DLG_SPELLS_BTTN_ID)); // call dlg with cliecked item
+	}
+
+	return THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
+}
+
+
 
 
 
@@ -276,19 +269,16 @@ _LHF_(gem_Dlg_CreatureInfo_AddUpradeButton)
 	return NO_EXEC_DEFAULT;
 }
 
-_LHF_(gem_Dlg_CreatureInfo_DescriptionCreate)
-{
-
-	c->Push(std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.height")));
-	c->Push(255);
-	c->return_address = h->GetAddress() + 0x7;
-	return NO_EXEC_DEFAULT;
-}
-
 
 _LHF_(gem_Dlg_CreatureInfo_notBattle_Created)
 {
-	CreatureDlgHandler handler((H3CreatureInfoDlg*)c->eax, nullptr);
+	H3CreatureInfoDlg* dlg = (H3CreatureInfoDlg*)c->eax;
+
+	CreatureDlgHandler handler(dlg, nullptr);
+
+	if (dlg->GetY() + DLG_HEIGHT > P_AdventureMgr->dlg->GetHeight())
+		IntAt((int)dlg + 0x1C) = P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT;
+
 	return EXEC_DEFAULT;
 }
 _LHF_(gem_Dlg_CreatureInfo_BuyCreature)
@@ -345,9 +335,9 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 
 	//_before description field create
 
-	pi->WriteLoHook(0x5F488A, gem_Dlg_CreatureInfo_DescriptionCreate); //Buy dlg 
-	pi->WriteLoHook(0x5F3E44, gem_Dlg_CreatureInfo_DescriptionCreate); //Combat Dlg 
-	pi->WriteLoHook(0x5F446F, gem_Dlg_CreatureInfo_DescriptionCreate); // non combat dlg
+	//pi->WriteLoHook(0x5F488A, gem_Dlg_CreatureInfo_DescriptionCreate); //Buy dlg 
+	//pi->WriteLoHook(0x5F3E44, gem_Dlg_CreatureInfo_DescriptionCreate); //Combat Dlg 
+	//pi->WriteLoHook(0x5F446F, gem_Dlg_CreatureInfo_DescriptionCreate); // non combat dlg
 
 	H3DLL wndPlugin = h3::H3DLL::H3DLL("wog native dialogs.era");
 	if (wndPlugin.dataSize)
@@ -360,6 +350,7 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 		if (pluginHookAddress)
 			_PI->WriteLoHook(pluginHookAddress, Before_WndNPC_DLG);
 	}
+
 
 
 	pi->WriteHexPatch(0x5F3C9E, "9090909090");//skip default adding spells view
