@@ -1,5 +1,5 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
-#include "pch.h"
+#include "Header.h"
 #include ".\headers\era.h"
 
 using namespace h3;
