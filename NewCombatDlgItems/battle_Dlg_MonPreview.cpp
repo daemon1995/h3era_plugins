@@ -5,12 +5,11 @@ using namespace h3;
 
 //int stack_dlg_ = 0;
 //H3LoadedPcx16* pcx_arr[79];
-
+extern Patcher* globalPatcher;
 
 H3Vector<H3LoadedPcx16*> smaller_spellint(0);
 H3LoadedPcx* creature_stat_bg[2];
 
-bool res_allocated[3] = { 0,0,0 };
 
 _LHF_(Battle_Dlg_Create)
 {
@@ -64,39 +63,18 @@ _LHF_(Battle_Dlg_Create)
 
 		item_id = 4004;
 		// add new actions picures && text
-		if (res_allocated[1])
+		for (int i = 0; i < 4; i++)
 		{
-			for (int i = 0; i < 4; i++)
-			{
-				y_pos = 134 + i / 2 * 28;
-				x_pos = 9 + (i & 1) * 32;
-				if (i == 3)
-					def = H3DlgDef::Create(x_pos, y_pos, item_id++, "WDWCint.def", 0);
-				else
-					def = H3DlgDef::Create(x_pos, y_pos, item_id++, "WDWCint.def", i);
-				dlg_panel->AddItem(def);
+			x_pos = 9;
+			y_pos = 12 * i + 74 + DLG_HEIGHT_ADD;
+			//json_name + i;Era::tr((json_name + i).String())
+			H3String temp = "gem_plugin.combat_dlg.";
+			temp.Append(i);
+			text = H3DlgText::Create(x_pos, y_pos, 30, 12, Era::tr(temp.String()), NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_LEFT);
+			dlg_panel->AddItem(text);
 
-				text = H3DlgText::Create(x_pos - 2, y_pos + 2, 30, 12, "", NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_RIGHT);
-				dlg_panel->AddItem(text);
-			}
-		}
-		else
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				x_pos = 9;
-				y_pos = 12 * i + 74 + DLG_HEIGHT_ADD;
-				//json_name + i;Era::tr((json_name + i).String())
-				H3String temp = "gem_plugin.combat_dlg.";
-				temp.Append(i);
-				text = H3DlgText::Create(x_pos, y_pos, 30, 12, Era::tr(temp.String()), NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_LEFT);
-				dlg_panel->AddItem(text);
-
-				text = H3DlgText::Create(x_pos, y_pos, 60, 12, "", NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_RIGHT);
-				dlg_panel->AddItem(text);
-			}
-			//H3Messagebox("0");
-
+			text = H3DlgText::Create(x_pos, y_pos, 60, 12, "", NH3Dlg::Text::TINY, 1, item_id++, eTextAlignment::MIDDLE_RIGHT);
+			dlg_panel->AddItem(text);
 		}
 		// add mew moral pictrures && text
 		item_id = 4012;
@@ -136,7 +114,7 @@ _LHF_(Battle_Dlg_Create)
 }
 
 
-void Hel_SetActionType(H3CombatCreature* stack, H3DlgDef* def, H3DlgText* text)
+void Hel_SetActionType(H3CombatCreature* stack, H3DlgText* text)
 {
 
 	if (stack->IsWaiting())
@@ -157,11 +135,11 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 		//stack_dlg_shown = true;
 
 
-		H3CombatMonsterPanel* dlg_panel = (H3CombatMonsterPanel*)c->edi;
+		H3CombatMonsterPanel* dlg_panel = reinterpret_cast<H3CombatMonsterPanel*>(c->edi);
 		if (dlg_panel)
 		{
-			H3CombatCreature* stack = (H3CombatCreature*)(c->esi);
-			H3Vector<INT16> active_spells(stack->activeSpellNumber);
+			H3CombatCreature* stack = reinterpret_cast<H3CombatCreature*>(c->esi);
+			H3Vector<INT32> active_spells(stack->activeSpellNumber);
 			int counter = 0;
 			if (stack->activeSpellNumber)
 			{
@@ -194,8 +172,10 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 
 					if (stack->type == eCreature::BALLISTA && hero)
 					{
-						str.Append((hero->primarySkill[0] + 1) * stack->info.damageLow);
-						if (stack->info.damageLow != stack->info.damageHigh) str.Append("-").Append((hero->primarySkill[0] + 1) * stack->info.damageHigh);
+						UINT8 unsignAttack = static_cast<UINT8>(hero->primarySkill[0]);
+						str.Append((unsignAttack + 1) * stack->info.damageLow);
+						if (stack->info.damageLow != stack->info.damageHigh)
+							str.Append("-").Append((unsignAttack + 1) * stack->info.damageHigh);
 						it->Cast<H3DlgText>()->SetText(str.String());
 					}
 					break;
@@ -207,15 +187,14 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 					break;
 				case 2212:
 					losses = stack->numberAtStart - stack->numberAlive;
-					str.Append(losses);
-					it->Cast<H3DlgText>()->SetText(str.String());
+					//str = std::to_string(losses).c_str();
+					it->Cast<H3DlgText>()->SetText(std::to_string(losses).c_str());
 
 					break;
 				case 4005:
 					//def = it->Cast<H3DlgDef>();
-					def = nullptr;
 					text = it->Cast<H3DlgText>();
-					Hel_SetActionType(stack, def, text);
+					Hel_SetActionType(stack, text);
 					break;
 				case 4007:
 					text = it->Cast<H3DlgText>();
@@ -235,8 +214,6 @@ _LHF_(Battle_Dlg_StackInfo_Show)
 				case 4012:
 					def = it->Cast<H3DlgDef>();
 					morale = stack->morale;
-					//if (res_allocated[2])	frame_id = morale > 0 ? 1 : morale < 0 ? 0 : 2;
-					//else
 					frame_id = std::min(std::max(morale, -3), 3) + 3;
 
 					def->SetFrame(frame_id);
@@ -331,13 +308,13 @@ void CreateSmallerPics(H3LoadedDef* src, H3Vector<H3LoadedPcx16*>& dst_vec, INT3
 void CreateResources()
 {
 
-	//int game_version = globalPatcher->VarGetValue<int>("HD.ExeVersion", 1);
-	//if (game_version > 30)
-	//{
-	//	res_allocated[0] = H3LoadedDef::Load("Primint.def")->GetName()[0] == 'P';
-	//	res_allocated[1] = H3LoadedDef::Load("WDWCint.def")->GetName()[0] == 'W';
-	//	res_allocated[2] = H3LoadedDef::Load("MrlLcki.def")->GetName()[0] == 'M';
-	//}
+	int game_version = globalPatcher->VarGetValue<int>("HD.ExeVersion", 1);
+	if (game_version > 30)
+	{
+		//res_allocated[0] = H3LoadedDef::Load("Primint.def")->GetName()[0] == 'P';
+		//res_allocated[1] = H3LoadedDef::Load("WDWCint.def")->GetName()[0] == 'W';
+		//res_allocated[2] = H3LoadedDef::Load("MrlLcki.def")->GetName()[0] == 'M';
+	}
 
 
 //	H3Lod::

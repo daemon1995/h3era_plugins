@@ -48,7 +48,8 @@ bool CreatureDlgHandler::AlignItems()
 	H3DlgDef* morale = dlg->GetDef(219); //set new morale postion
 	if (morale)
 	{
-		morale->SetY(DLG_HEIGHT - morale->GetHeight() - 48);
+		morale->SetY(DLG_HEIGHT - morale->GetHeight() - 46);
+		morale->SetX(morale->GetX() + 1);
 		H3DlgText* _m = dlg->GetText(3006);
 		if (_m) // if creature stats text dlg is active
 			_m->SetY(morale->GetY() + morale->GetHeight() - _m->GetHeight());
@@ -56,7 +57,9 @@ bool CreatureDlgHandler::AlignItems()
 	H3DlgDef* luck = dlg->GetDef(220);//set new luck postion
 	if (luck)
 	{
-		luck->SetY(DLG_HEIGHT - luck->GetHeight() - 48);
+		luck->SetY(DLG_HEIGHT - luck->GetHeight() - 46);
+		luck->SetX(luck->GetX() + 1);
+
 		H3DlgText* _l = dlg->GetText(3007);
 		if (_l)// if creature stats text dlg is active
 			_l->SetY(luck->GetY() + luck->GetHeight() - _l->GetHeight());
@@ -65,7 +68,7 @@ bool CreatureDlgHandler::AlignItems()
 	H3DlgDefButton* upgrade = dlg->GetDefButton(300);//set new upgrade bttn postion
 	if (upgrade)
 	{
-		upgrade->SetX(180);
+		upgrade->SetX(233);
 		upgrade->SetY(307);
 	}
 
@@ -97,7 +100,7 @@ bool CreatureDlgHandler::AlignItems()
 	H3DlgCustomButton* creatureCast = dlg->GetCustomButton(301);//set new cast button postion like for faerie dragons
 	if (creatureCast) // if creature can cast
 	{
-		creatureCast->SetX(180); // 
+		creatureCast->SetX(126); // 
 		//creatureCast->SetY(309);
 		if (!description && H3CreatureInformation::Get()[dlg->creatureId].description) // create description field
 		{
@@ -123,7 +126,7 @@ bool CreatureDlgHandler::AddExperienceButton()
 	bool isNPC = !(dlg->creatureId < 174 || dlg->creatureId > 191);
 	if (!isNPC || stack != nullptr)
 	{
-		constexpr int x_pos = 233;
+		constexpr int x_pos = 180;
 		constexpr int y_pos = 307;
 
 		H3DlgPcx* frame = H3DlgPcx::Create(x_pos - 1, y_pos - 1, -1, "box46x32.pcx");
@@ -174,7 +177,8 @@ bool CreatureDlgHandler::AddSpellEfects()
 		H3String hint = H3GeneralText::Get()->GetText(612);
 		H3String spellName = H3Spell::Get()[active_spells[i]].name;
 		H3String spellDesc = H3Spell::Get()[active_spells[i]].description[0];
-
+		if (spellDesc == h3_NullString)
+			spellDesc = spellName;
 		switch (active_spells[i])
 		{
 		case h3::eSpell::BIND:
@@ -261,10 +265,18 @@ int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3
 
 
 
-_LHF_(gem_Dlg_CreatureInfo_AddUpradeButton)
+_LHF_(gem_Dlg_CreatureInfo_AddCreatureCastButton)
 {
-	c->Push(306); //set yPos for upgrade/cast_bttn frame
-	c->Push(179);//set xPos for upgrade/cast_bttn frame
+	c->Push(306); //set yPos for cast_bttn frame
+	c->Push(125);//set xPos for cast_bttn frame
+	c->return_address = h->GetAddress() + 0x7;
+	return NO_EXEC_DEFAULT;
+}
+
+_LHF_(gem_Dlg_CreatureInfo_AddCreatureUpradeButton)
+{
+	c->Push(306); //set yPos for upgrade frame
+	c->Push(232);//set xPos for upgrade frame
 	c->return_address = h->GetAddress() + 0x7;
 	return NO_EXEC_DEFAULT;
 }
@@ -302,6 +314,8 @@ _LHF_(Wnd_BeforeExpoDlgShow)
 		main_isRMC = false;
 		return NO_EXEC_DEFAULT;
 	}
+
+
 	return EXEC_DEFAULT;
 }
 
@@ -399,8 +413,8 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteWord(0x5F4439, 0x9090); //skip LMC check
 
 	//change frame pos for cast in combat or upgrade dlg
-	pi->WriteLoHook(0x5F6ED8, gem_Dlg_CreatureInfo_AddUpradeButton); // uprade button frame for non Battle
-	pi->WriteLoHook(0x5F3D9E, gem_Dlg_CreatureInfo_AddUpradeButton); //spell cast button frame for Battle
+	pi->WriteLoHook(0x5F6ED8, gem_Dlg_CreatureInfo_AddCreatureUpradeButton); // uprade button frame for non Battle
+	pi->WriteLoHook(0x5F3D9E, gem_Dlg_CreatureInfo_AddCreatureCastButton); //spell cast button frame for Battle
 
 	//hire creature dlg
 	pi->WriteDword(0x5F45D8 + 1, DLG_HEIGHT); // set dlg height
@@ -420,10 +434,10 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	//pi->WriteByte(0x5F4880 +1, 0x1); // set desciption item id in buy creature info dlg
 
 	// combat creature dlg
-	pi->WriteDword(0x5F3728 + 1, DLG_HEIGHT); // set non battle dlg height
-	pi->WriteDword(0x5F372D + 1, DLG_WIDTH); // set non battle dlg width	
-	pi->WriteDword(0x5F38CF + 1, DLG_HEIGHT); // set non battle bg_pcx height
-	pi->WriteDword(0x5F38D4 + 1, DLG_WIDTH); // set non battle bg_pcx width
+	pi->WriteDword(0x5F3728 + 1, DLG_HEIGHT); // set battle dlg height
+	pi->WriteDword(0x5F372D + 1, DLG_WIDTH); // set battle dlg width	
+	pi->WriteDword(0x5F38CF + 1, DLG_HEIGHT); // set battle bg_pcx height
+	pi->WriteDword(0x5F38D4 + 1, DLG_WIDTH); // set battle bg_pcx width
 	pi->WriteDword(0x5F3DE6 + 1, newCastBtn); // castButton is now from resources
 	pi->WriteByte(0x5F3DF2 + 1, defWidth); // set new width for castButton def
 	pi->WriteByte(0x5F3DF0 + 1, defHeight); // set new height for castButton def
