@@ -1,8 +1,8 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 
 #include "pch.h"
-#include ".\headers\era.h"
-#include ".\headers\HoMM3.h"
+#include "..\..\headers\era.h"
+#include "..\..\headers\HoMM3\HoMM3.h"
 /*#include "..\oldHeroesHeaders\headers\patcher_x86.hpp"
 #include "..\oldHeroesHeaders\headers\HoMM3_ids.h"
 #include "..\oldHeroesHeaders\headers\HoMM3_Base.h"
@@ -55,7 +55,7 @@ NewHeroLook heroDoll[HEROES_MAX_AMOUNT];
 
 //int myArr[HID_XERON + 1];
 Patcher* globalPatcher;
-PatcherInstance* _GEM;
+PatcherInstance* _PI;
 char* GetEraJSON(const char* json_string_name) {
     return tr(json_string_name);
 }
@@ -64,7 +64,7 @@ int GetHeroId(_Hero_* heroPtr)
     unsigned char* bytePtr = reinterpret_cast<unsigned char*>(heroPtr);
     bytePtr += 26;
     int HeroId = *(int*)(bytePtr);
-
+    _DefFrame_;
     return HeroId;
 }
 
@@ -141,7 +141,9 @@ void HeroSwapDlgAddNewItems(_Dlg_* dlg, string jsonSubStr, int side, int heroId)
 
         int xPos = std::atoi(GetEraJSON(("nhd.artifacts_slots.slot_" + std::to_string(i) + ".x").c_str())) + mainXPos;
         int yPos = std::atoi(GetEraJSON(("nhd.artifacts_slots.slot_" + std::to_string(i) + ".y").c_str())) + mainYPos;
-
+        _DlgItem_* it1 = _DlgButton_::Create(xPos, yPos, artSlotBgId, (char*)"artifact.def", 0, 0, 0, 0);
+      //  dlg->AddItem()
+        ///it1.
         dlg->AddItem(_DlgStaticDef_::Create(xPos, yPos, 44, 44, artSlotBgId, (char*)"artifact.def", 4, FALSE, 16)); //add new items to list
         dlg->AddItem(_DlgStaticDef_::Create(xPos, yPos, 44, 44, artSlotId, (char*)"artifact.def", 4, FALSE, 16)); //add new items to list
         dlg->GetItem(artSlotId - idOffset)->Hide();
@@ -149,6 +151,7 @@ void HeroSwapDlgAddNewItems(_Dlg_* dlg, string jsonSubStr, int side, int heroId)
 
         dlg->GetItem(artSlotId)->id -= idOffset;
         dlg->GetItem(artSlotBgId)->id -= idOffset;
+
 
     }
 
@@ -238,7 +241,11 @@ int __stdcall OnBeforeHeroDlgArtifactPlace(LoHook* h, HookContext* c)
     }
     _int8_ nymOffset = playerHasNewInterFaceMod[o_GameMgr->GetMeID()] *2;
     //if
-    dlg->AddItemToOwnArrayList(_DlgButton_::Create(xPos, yPos, btnId, (char*)"BttnMAN.def", 0 + nymOffset, 1 + nymOffset, 0, NULL));
+    _DlgButton_* manager_button = _DlgButton_::Create(xPos, yPos, btnId, (char*)"BttnMAN.def", 0 + nymOffset, 1 + nymOffset, 0, NULL);
+    manager_button->full_tip_text =GetEraJSON("nhd.button.manager");
+    manager_button->short_tip_text = GetEraJSON("nhd.button.manager");
+
+    dlg->AddItemToOwnArrayList(manager_button);
 
     //  y[1] = btnId;
      // y[2] = xPos;
@@ -403,17 +410,17 @@ void NewSacrifaceDlgWidgetsPosition(int xOffset, int yOffset)
         k_newSacrificeWindowArtifactSlotPositions[i] = { xPos, yPos };
     }
 
-    _GEM->WriteDword(0x560761 + 0x3, (int)&k_newSacrificeWindowArtifactSlotPositions[0].y); //replace artifacts.def original pos
+    _PI->WriteDword(0x560761 + 0x3, (int)&k_newSacrificeWindowArtifactSlotPositions[0].y); //replace artifacts.def original pos
 
-    _GEM->WriteDword(0x5609B6 + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.left_arrow.y"))); //replace left arrow original y pos
-    _GEM->WriteByte(0x5609BB + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.left_arrow.x")));  //replace left arrow original x pos
+    _PI->WriteDword(0x5609B6 + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.left_arrow.y"))); //replace left arrow original y pos
+    _PI->WriteByte(0x5609BB + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.left_arrow.x")));  //replace left arrow original x pos
 
-    _GEM->WriteDword(0x560A39 + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.right_arrow.y"))); //replace right_arrow arrow original x pos
-    _GEM->WriteDword(0x560A3E + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.right_arrow.x"))); //replace right_arrow arrow original y pos
+    _PI->WriteDword(0x560A39 + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.right_arrow.y"))); //replace right_arrow arrow original x pos
+    _PI->WriteDword(0x560A3E + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.right_arrow.x"))); //replace right_arrow arrow original y pos
 
-    _GEM->WriteDword(0x5608FB + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.backpack.y"))); //replace bacpack artifacts.def original y pos
-    _GEM->WriteDword(0x5608B6 + 3, std::atoi(GetEraJSON("nhd.altar_of_sacr.backpack.x"))); //replace bacpack artifacts.def original start x pos
-    _GEM->WriteByte(0x560921 + 2, std::atoi(GetEraJSON("nhd.altar_of_sacr.backpack.interval"))); //replace bacpack artifacts.def x interval
+    _PI->WriteDword(0x5608FB + 1, std::atoi(GetEraJSON("nhd.altar_of_sacr.backpack.y"))); //replace bacpack artifacts.def original y pos
+    _PI->WriteDword(0x5608B6 + 3, std::atoi(GetEraJSON("nhd.altar_of_sacr.backpack.x"))); //replace bacpack artifacts.def original start x pos
+    _PI->WriteByte(0x560921 + 2, std::atoi(GetEraJSON("nhd.altar_of_sacr.backpack.interval"))); //replace bacpack artifacts.def x interval
     return;
 }
 
@@ -703,28 +710,28 @@ void __stdcall OnSavegameWrite(TEvent* Event) {
 //////////////////////////////////////////////////////////////////////////////////
 void HooksInit()
 {
-  //  _GEM->WriteLoHook(0x4F9D79, OnHeroLvlUpDlgShow);
+  //  _PI->WriteLoHook(0x4F9D79, OnHeroLvlUpDlgShow);
 
 
 
 
-     _GEM->WriteLoHook(0x5AEAF0, OnBeforeHeroSwapDlgShow);
-   // _GEM->WriteLoHook(0x5AEB81, OnBeforeHeroSwapDlgShow);
+     _PI->WriteLoHook(0x5AEAF0, OnBeforeHeroSwapDlgShow);
+   // _PI->WriteLoHook(0x5AEB81, OnBeforeHeroSwapDlgShow);
         
-  //  _GEM->WriteLoHook(0x4E1A70, OnBefore_HeroDlg_Create);
+  //  _PI->WriteLoHook(0x4E1A70, OnBefore_HeroDlg_Create);
 
-    _GEM->WriteLoHook(0x4DEF7A, OnBeforeHeroDlgArtifactPlace);
+    _PI->WriteLoHook(0x4DEF7A, OnBeforeHeroDlgArtifactPlace);
 
-    _GEM->WriteLoHook(0x4E15BF, OnAfter_HeroDlg_Create);
+    _PI->WriteLoHook(0x4E15BF, OnAfter_HeroDlg_Create);
     RegisterHandler(OnPreHeroScreen, "OnPreHeroScreen");
-    _GEM->WriteHiHook(0x4DD540, SPLICE_, EXTENDED_, THISCALL_, Y_HeroDlg_Proc);
+   // _PI->WriteHiHook(0x4DD540, SPLICE_, EXTENDED_, THISCALL_, Y_HeroDlg_Proc);
 
 
 
-    _GEM->WriteLoHook(0x5E5D64, OnBeforeMarketDlgArtifactPlace);
-    _GEM->WriteLoHook(0x5EC280, OnAfterMarketDlgArtifactPlace);
+    _PI->WriteLoHook(0x5E5D64, OnBeforeMarketDlgArtifactPlace);
+    _PI->WriteLoHook(0x5EC280, OnAfterMarketDlgArtifactPlace);
 
-    _GEM->WriteLoHook(0x56073A, OnBeforeSacrDlgArtifactPlace);
+    _PI->WriteLoHook(0x56073A, OnBeforeSacrDlgArtifactPlace);
 
 
     RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
@@ -736,7 +743,7 @@ void HooksInit()
     {
         playerBackPackSettings[i] = -1;
     }
-  //  _GEM->WriteLoHook(0x4BFB30, StartNewGame);
+  //  _PI->WriteLoHook(0x4BFB30, StartNewGame);
 
    // Era::TEventHandler(OnAfterErmIsntructions, "OnAfterErmInstructions");
    // Era::TEventHandler(OnAfterErmIsntructions(), "OnAfterErmInstructions");
@@ -766,7 +773,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             //RegisterHandler(OnBattleReplay, "OnBattleReplay");
 
             globalPatcher = GetPatcher();
-            _GEM = globalPatcher->CreateInstance((char*)SAVEGAME_SECTION);
+            _PI = globalPatcher->CreateInstance((char*)SAVEGAME_SECTION);
             HooksInit();
 
 
