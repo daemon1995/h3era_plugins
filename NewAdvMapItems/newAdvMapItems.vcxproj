@@ -38,7 +38,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -75,14 +75,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\VIP_era_scripts\eraplugins\</OutDir>
     <TargetName>NewAdvDlgItems</TargetName>
     <TargetExt>.era</TargetExt>
     <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\VIP_era_scripts\eraplugins\</OutDir>
     <TargetName>NewAdvDlgItems</TargetName>
     <TargetExt>.era</TargetExt>
     <IncludePath>$(IncludePath)</IncludePath>
@@ -104,6 +104,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,6 +128,7 @@
       <StructMemberAlignment>Default</StructMemberAlignment>
       <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -180,16 +182,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AdventureMapHints.h" />
+    <ClInclude Include="CombatHints.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ISettings.h" />
     <ClInclude Include="MapScroller.h" />
-    <ClInclude Include="MitrilDisplay.h" />
+    <ClInclude Include="MithrilDisplay.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AdventureMapHints.cpp" />
+    <ClCompile Include="CombatHints.cpp" />
     <ClCompile Include="expFix.cpp" />
     <ClCompile Include="h3ApiStyle.cpp" />
+    <ClCompile Include="ISettings.cpp" />
     <ClCompile Include="MapScroller.cpp" />
-    <ClCompile Include="MitrilDisplay.cpp" />
+    <ClCompile Include="MithrilDisplay.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

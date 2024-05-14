@@ -14,5 +14,9 @@
 
 #include "..\..\headers\header.h"
 
-
+#include "ISettings.h"
+#include "AdventureMapHints.h"
+#include "MithrilDisplay.h"
+#include "MapScroller.h"
+#include "CombatHints.h"
 #endif //PCH_H

@@ -1,14 +1,49 @@
-#include "CreatureDlgHandler.h"
+#include "pch.h"
+
+constexpr int DLG_SPELLS_BTTN_ID = 4443;
+constexpr int WOG_CREATURE_EXP_BUTTON_ID = 4444;
+constexpr int DLG_WIDTH = 350;
+constexpr int DLG_HEIGHT = 387;
+
+const char* newOkBtn = "iOkay2.def";
+const char* newCastBtn = "iMagic.def";
+const char* spellListBtn = "iBaff.def";
+const char* gCreatureDlgBgName = "gemCrIBg.pcx";
+const char* gCreatureDlgHintBarName = "gemCrVar.pcx";
+const char* n_DlgExpMon = "DlgCrExp.def";
+const char* n_SkillSlotPcx = "skillslt.pcx";
+
+extern H3CombatCreature* creature_dlg_stack;
+#define WOG_STACK_EXPERIENCE_ON *(bool*)0x02772730
 
 using namespace h3;
 bool ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC, H3DlgItem* clickedItem = nullptr);
-
+void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi);
 
 bool main_isRMC = false;
 H3CombatCreature* currentStack = nullptr;
+bool DrawCreatureSkillsList(int firstSkillIndex = 0);
 
-int __stdcall gem_Dlg_CreatureInfo_BattleCtor(HiHook* hook, H3CreatureInfoDlg* dlg, H3CombatCreature* mon, int x, int y, bool isLMC)
+
+CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg* dlg, H3CombatCreature* stack, H3Army* army , int armySlotIndex ) :
+	dlg(dlg),  stack(stack), army(army), armySlotIndex(armySlotIndex), wogStackExperience(WOG_STACK_EXPERIENCE_ON)
 {
+	if (dlg)
+	{
+		//dlg->AddItem(H3DlgDef::Create(220, 220, "iokay32.def"),false);
+		AlignItems();
+		if (wogStackExperience && dlg->GetDefButton(30722))
+			AddExperienceButton();
+		if (this->stack != nullptr)
+			AddSpellEfects();
+	}
+}
+
+_LHF_(gem_Dlg_CreatureInfo_BattleCtor)// (HiHook* hook, H3CreatureInfoDlg* dlg, H3CombatCreature* mon, int x, int y, int isLMC)
+{
+
+	int x = IntAt(c->ebp + 0xC);
+	int y = IntAt(c->ebp + 0x10);
 
 	y -= 30; // make dlg start higher cause of new size
 
@@ -28,9 +63,20 @@ int __stdcall gem_Dlg_CreatureInfo_BattleCtor(HiHook* hook, H3CreatureInfoDlg* d
 		x = 0;
 	if (600 - y < DLG_HEIGHT)
 		y = 600 - DLG_HEIGHT;
+	IntAt(c->ebp + 0xC) = x;
+	IntAt(c->ebp + 0x10) = y;
+	currentStack = *reinterpret_cast<H3CombatCreature**>(c->ebp + 0x8);
 
-	currentStack = mon;
-	return THISCALL_5(int, hook->GetDefaultFunc(), dlg, mon, x, y, isLMC);
+	return EXEC_DEFAULT;
+}
+
+
+
+void __fastcall CreatureDlgSrollbar_Proc(INT32 tickId, H3BaseDlg* dlg)
+{
+
+	DrawCreatureSkillsList(tickId);
+
 }
 
 
@@ -116,6 +162,61 @@ bool CreatureDlgHandler::AlignItems()
 				align);
 			dlg->AddItem(description);
 		}
+	}
+
+
+
+
+
+
+	// JackSlater block - adds a panel for creature skills
+	if (description)
+	{
+
+		if (CreateCreatureSkillsList())
+		{
+
+
+
+		}
+
+		if (auto* pcx = H3LoadedPcx16::Load(n_SkillSlotPcx))
+		{
+			int skill_width = pcx->width;
+			int skill_height = pcx->height;
+
+			constexpr int SKILLS_VIEW_LIMIT = 6;
+			dlgSkillPcx.clear();
+			dlgSkillPcx.reserve(SKILLS_VIEW_LIMIT);
+
+			for (INT32 i = 0; i < SKILLS_VIEW_LIMIT; i++)
+			{
+				if (H3DlgPcx16* creature_skill_slot = H3DlgPcx16::Create(x + i * skill_width - 4, y - 6, skill_width, skill_height, -1, pcx->GetName()))
+				{
+					dlg->AddItem(creature_skill_slot);
+					dlgSkillPcx.push_back(creature_skill_slot);
+				}
+			}
+
+			int creature_skills_number = creatureSkills.size();
+			int scroll_height = 0;
+
+			if (creature_skills_number > SKILLS_VIEW_LIMIT)
+			{
+				// scroll
+				scroll_height = 16;
+				auto* scroll = H3DlgScrollbar::Create(x - 4, y + skill_height - 6, skill_width * SKILLS_VIEW_LIMIT, scroll_height, 2020, creature_skills_number - dlgSkillPcx.size() +1, CreatureDlgSrollbar_Proc, false, 1, true);
+				dlg->AddItem(scroll);
+			}
+
+			// skill desc
+			description->SetY(y + scroll_height + skill_height + 2);
+
+			pcx->Dereference();
+
+			DrawCreatureSkillsList();
+		}
+
 	}
 
 	return false;
@@ -231,6 +332,12 @@ bool CreatureDlgHandler::AddSpellEfects()
 	return false;
 }
 
+CreatureDlgHandler::~CreatureDlgHandler()
+{
+//	creatureSkills.clear();
+	
+}
+
 
 int __stdcall gem_Dlg_CreatureInfo_Proc(HiHook* hook, H3CreatureInfoDlg* dlg, H3Msg* msg)
 {
@@ -281,26 +388,34 @@ _LHF_(gem_Dlg_CreatureInfo_AddCreatureUpradeButton)
 	return NO_EXEC_DEFAULT;
 }
 
+// combat cr expo stack 0071B748
+
 
 _LHF_(gem_Dlg_CreatureInfo_notBattle_Created)
 {
-	H3CreatureInfoDlg* dlg = (H3CreatureInfoDlg*)c->eax;
-
-	CreatureDlgHandler handler(dlg, nullptr);
+	H3CreatureInfoDlg* dlg =  reinterpret_cast<H3CreatureInfoDlg*>(c->eax);
+	H3Army* army = *reinterpret_cast<H3Army**>(c->ebp + 0x8);
+	int armySlotIndex = IntAt(c->ebp + 0xC);
+	CreatureDlgHandler handler(dlg, nullptr, army, armySlotIndex);
 
 	if (dlg->GetY() + DLG_HEIGHT > P_AdventureMgr->dlg->GetHeight())
 		IntAt((int)dlg + 0x1C) = P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT;
 
 	return EXEC_DEFAULT;
 }
+
+
 _LHF_(gem_Dlg_CreatureInfo_BuyCreature)
 {
-	CreatureDlgHandler handler((H3CreatureInfoDlg*)c->eax, nullptr);
+	H3CreatureInfoDlg* dlg = reinterpret_cast<H3CreatureInfoDlg*>(c->eax);
+	CreatureDlgHandler handler(dlg);
 	return EXEC_DEFAULT;
 }
 _LHF_(gem_Dlg_BatttleCreatureInfo_Create)
 {
-	CreatureDlgHandler handler((H3CreatureInfoDlg*)c->eax, currentStack);
+	H3CreatureInfoDlg* dlg = reinterpret_cast<H3CreatureInfoDlg*>(c->eax);
+	CreatureDlgHandler handler(dlg,currentStack);
+
 	return EXEC_DEFAULT;
 }
 
@@ -314,7 +429,6 @@ _LHF_(Wnd_BeforeExpoDlgShow)
 		main_isRMC = false;
 		return NO_EXEC_DEFAULT;
 	}
-
 
 	return EXEC_DEFAULT;
 }
@@ -333,19 +447,17 @@ _LHF_(Before_WndNPC_DLG)
 	return EXEC_DEFAULT;
 }
 
-
 void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 {
 	pi->WriteLoHook(0x5F4961, gem_Dlg_CreatureInfo_BuyCreature); //BuyCreatureInfoDlg
 	pi->WriteLoHook(0x4C6B5B, gem_Dlg_CreatureInfo_notBattle_Created); //not BattleCreatureInfo
 	pi->WriteLoHook(0x5F3EA5, gem_Dlg_BatttleCreatureInfo_Create); //BattleCreatureInfo
 
+	pi->WriteLoHook(0x5F3711, gem_Dlg_CreatureInfo_BattleCtor);
 
-	pi->WriteHiHook(0x5F3700, SPLICE_, EXTENDED_, THISCALL_, gem_Dlg_CreatureInfo_BattleCtor);
+	//pi->WriteHiHook(0x5F3700, SPLICE_, EXTENDED_, THISCALL_, gem_Dlg_CreatureInfo_BattleCtor);
 	pi->WriteHiHook(0x5F4C00, SPLICE_, EXTENDED_, THISCALL_, gem_Dlg_CreatureInfo_Proc); // dlg proc
 //	pi->WriteLoHook(0x5F5327, gem_Dlg_CreatureInfo_SetHint); //BattleCreatureInfo
-
-
 
 	//_before description field create
 
@@ -365,10 +477,7 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 			_PI->WriteLoHook(pluginHookAddress, Before_WndNPC_DLG);
 	}
 
-
-
 	pi->WriteHexPatch(0x5F3C9E, "9090909090");//skip default adding spells view
-
 
 	//pi->WriteWord(0x5F3E10, 0x9090); //allow Faerie Dragon description at LMC in combat creature info dlg -- failed, so added it in handler
 
@@ -397,7 +506,6 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteDword(0x5F6C6E + 1, xOK - 1); // set new xPos for frame
 	pi->WriteDword(0x5F6C69 + 1, yOk - 1); // set new yPos for frame
 
-
 	// dismiss creature bttn
 	pi->WriteByte(0x5F71A6 + 1, 127); // set new xPos for bttn
 	pi->WriteDword(0x5F71A1 + 1, yOk); // set new yPos for bttn
@@ -422,6 +530,8 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteDword(0x5F4712 + 1, DLG_HEIGHT); // set bg_pcx height
 	pi->WriteDword(0x5F4717 + 1, DLG_WIDTH); // set bg_pcx width
 	pi->WriteDword(0x5F48E9 + 1, 336); // set hint pcx width
+	pi->WriteDword(0x5F4708 + 1, gCreatureDlgBgName); // set new BG name
+	pi->WriteDword(0x5F48DB + 1, gCreatureDlgHintBarName); // set new hintBAr name
 
 	//non combat dlg
 	pi->WriteDword(0x5F3F1B + 1, DLG_HEIGHT); // set non battle dlg height
@@ -429,6 +539,8 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteDword(0x5F406B + 1, DLG_HEIGHT); // set non battle bg_pcx height
 	pi->WriteDword(0x5F4070 + 1, DLG_WIDTH); // set non battle bg_pcx width
 	pi->WriteDword(0x5F44CE + 1, 336); // set hint pcx width
+	pi->WriteDword(0x5F4061 + 1, gCreatureDlgBgName); // set new BG name
+	pi->WriteDword(0x5F44C0 + 1, gCreatureDlgHintBarName); // set new hintBAr name
 
 
 	//pi->WriteByte(0x5F4880 +1, 0x1); // set desciption item id in buy creature info dlg
@@ -443,7 +555,158 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 	pi->WriteByte(0x5F3DF0 + 1, defHeight); // set new height for castButton def
 	pi->WriteDword(0x5F3DF4 + 1, yOk); // set new yPos for castButton def
 	pi->WriteDword(0x5F3CDF + 1, 336); // set hint pcx width
-
+	pi->WriteDword(0x5F38C5 + 1, gCreatureDlgBgName); // set new BG name
+	pi->WriteDword(0x5F3CD1 + 1, gCreatureDlgHintBarName); // set new hintBAr name
 
 }
 
+
+
+
+
+
+
+
+
+std::vector<H3DlgPcx16*> CreatureDlgHandler::dlgSkillPcx = {};
+std::vector<CreatureSkill> CreatureDlgHandler::creatureSkills = {};
+
+
+bool CreatureDlgHandler::CreateCreatureSkillsList()
+{
+
+	int montype = dlg->creatureId;
+
+	// make dlg creature active for wog creature expo bonuses
+
+	int expoCreatureType = CDECL_1(int, 0x716C8E, stack);
+
+	// call fucntion that writes experience bonus into buffer
+	CDECL_2(void, 0x728120, expoCreatureType, montype);
+	//CrExpBonLine* creatureWogExpBonuses = reinterpret_cast<CrExpBonLine*>(0x0847D98);
+	DWORD crExpo = 0;
+	if (stack)
+	{
+		crExpo = CDECL_1(DWORD, 0x728110, expoCreatureType);
+	}
+	else if (army && armySlotIndex >= 0 && armySlotIndex <= 6)
+	{
+		DWORD expType =0;
+		DWORD expData =0;
+
+		// try to find this creature type
+		if (CDECL_4(int, 0x71A1B7,army,armySlotIndex,&expType,&expData))
+		{
+			crExpo = CDECL_2(DWORD, 0x718617, expType, expData);
+		}
+	}
+
+
+
+	int experience = 0;
+	if (crExpo)
+	{
+		experience = IntAt(crExpo);
+	}
+
+	CDECL_5(void, 0x71EF2B, montype, dlg->numberCreatures, experience, crExpo, 0);
+	_DlgCreatureExpoInfo_* dlgCreatureExpoInfo = reinterpret_cast<_DlgCreatureExpoInfo_*>(0x845880);
+
+	creatureSkills.clear();
+	UINT32 picsCount = dlgCreatureExpoInfo->IcoPropertiesCount;
+	creatureSkills.reserve(picsCount);
+
+	if (auto* skillsDef = H3LoadedDef::Load(n_DlgExpMon))
+	{
+
+		if (auto* skillSlt = H3LoadedPcx16::Load(n_SkillSlotPcx))
+		{
+			
+
+			H3LoadedPcx16* tempPcx = H3LoadedPcx16::Create(skillsDef->widthDEF, skillsDef->heightDEF);
+			for (size_t i = 0; i < picsCount; i++)
+			{
+				int skillPicIndex = (int)dlgCreatureExpoInfo->IcoProperties[i];
+				H3LoadedPcx16* skillPic = H3LoadedPcx16::Create(skillSlt->width, skillSlt->height);
+
+				memcpy(skillPic->buffer, skillSlt->buffer, skillPic->buffSize);
+				memset(skillPic->buffer, 0, skillPic->buffSize);
+
+			//	skillsDef->DrawToPcx16(0, 159, skillPic, 0, 0);
+
+				skillsDef->DrawToPcx16(0, skillPicIndex, tempPcx, 0, 0);
+				
+
+				DrawPcx16ResizedBicubic(skillPic, tempPcx, tempPcx->width, tempPcx->height, 2, 2, skillPic->width - 4, skillPic->height - 4);
+
+				creatureSkills.emplace_back(*new CreatureSkill{ 0,0,0,0,skillPic });
+			}
+			tempPcx->Destroy();
+			//H3Messagebox::RMB(Era::IntToStr(type).c_str());
+			for (size_t k = 0; k < 20; k++)
+			{
+				CrExpBonLine* line = reinterpret_cast<CrExpBonLine*>(0x847D98 + k * 17);
+				Era::y[12] = line->Type;
+			}
+
+			skillSlt->Dereference();
+		}
+
+
+
+		skillsDef->Dereference();
+
+
+	}
+
+
+
+	// JackSlater block - trying to access an army stack and exp
+//	H3Hero* hero = reinterpret_cast <H3Hero*>(c->esi);
+//int army_slot = IntAt(c->ebp + 0xC);
+//DWORD creature_exp_struct = CDECL_2(DWORD, 0x718617, 1, hero->id + (army_slot << 16)); // it works
+//H3Messagebox::RMB(Era::IntToStr(hero->id).c_str());
+//H3Messagebox::RMB(Era::IntToStr(army_slot).c_str());
+
+
+
+
+	return 0;
+}
+
+bool DrawCreatureSkillsList(int firstSkillIndex)
+{
+	auto& skillsPictures = CreatureDlgHandler::dlgSkillPcx;
+	auto& skills = CreatureDlgHandler::creatureSkills;
+	int picNum = skillsPictures.size() > skills.size() ? skills.size() : skillsPictures.size();
+
+	for (int i = 0; i < picNum; i++)
+	{
+
+		int skillIndex = firstSkillIndex + i;
+		skillsPictures[i]->SetPcx(skills[skillIndex].pcx16);
+		skillsPictures[i]->Refresh();
+		
+	}
+	//Era::ExecErmCmd("IF:L^^");
+	//skillsPictures[0]->GetParent()->Redraw();
+	return false;
+}
+
+
+
+
+
+
+
+
+
+
+CreatureSkill::~CreatureSkill()
+{
+	if (pcx16)
+	{
+		//pcx16->Destroy();
+	//	pcx16 = nullptr;
+	}
+}

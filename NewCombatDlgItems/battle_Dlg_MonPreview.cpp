@@ -1,7 +1,11 @@
-#include "battle_Dlg_MonPreview.h"
-
+#include "pch.h"
 
 using namespace h3;
+
+#define o_BPP ByteAt(0x5FA228 + 3) << 3
+#define DLG_HEIGHT_ADD 86
+
+void Dlg_MonPreview_HooksInit(PatcherInstance* pi);
 
 //int stack_dlg_ = 0;
 //H3LoadedPcx16* pcx_arr[79];

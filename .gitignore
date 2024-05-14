@@ -12,10 +12,15 @@
 *.vcxproj
 *.filters
 *.sln
+*.vcxproj
+*.zip
+*.7z
 */*.vcxproj
 */*.sln
 */pch.*
 */framework.*
+
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

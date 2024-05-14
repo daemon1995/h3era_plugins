@@ -1,55 +1,86 @@
 #pragma once
-#include "header.h"
-constexpr int DLG_SPELLS_BTTN_ID = 4443;
-constexpr int WOG_CREATURE_EXP_BUTTON_ID = 4444;
-constexpr int DLG_WIDTH = 350;
-constexpr int DLG_HEIGHT = 387;
+#include "pch.h"
 
-const char* newOkBtn = "iOkay2.def";
-const char* newCastBtn = "iMagic.def";
-const char* spellListBtn = "iBaff.def";
 
-using namespace h3;
-extern PatcherInstance* _PI;
-extern H3CombatCreature* creature_dlg_stack;
+struct _DlgCreatureExpoInfo_
+{
+	char* Caption;         // заголовок диалога
+	char* Info;            // информация о твари
+	char* Picture;         // изображение твари
+	char* PictureHint;     // хинт к изображению твари
+	char** TxtProperties;  // [6] текстовые доп. свойства
+	char** IcoProperties;  // [6] иконки доп. свойств, "NONE" - для отображения заглушки
+	char** HintProperties; // [6] подсказки к  доп. свойствам
+	char* ColCaptions;     // заголовки столбцов - одна строка, по 7 символов на столбец (11*7)
+	char* ColHint;         // заголовки столбцов - подсказки
+	char** RowCaptions;    // [16] заголовки строк
+	char** RowCaptionHints;// [16] заголовки строк, подсказки
+	char** Rows;           // [16] значения ячеек таблицы - 16 строк по 7 символов на столбец (11*7)
+	char** RowHints;       // [16] подсказки к строкам
+	int IcoPropertiesCount; // [0 - 6] количество иконок доп. свойств
+	int ShowSpecButton;     // показывать кнопку
+	char* SpecButtonHint;   // подсказка к кнопке
+	int CurPropColLeft;     // начало столбца с текущими координатами твари в символах
+	int CurPropColRight;    // конец столбца с текущими координатами твари в символах
+	char* ArtIcon;          // иконка артифакта ("NONE" - пустой)
+	char* ArtHint;          // хинт для иконки артифакта
+	int ArtOutput;          // артифакт отдается - 1, оставляется - 0
+	int Flags;              // флаги - см. ниже
+							// Flags & 0x00000001 - можно передавать артефакт
+	int ArtCopy;            // значения:
+							// 0,... - значения
+							// <0 - скрыть
 
-#define WOG_STACK_EXPERIENCE_ON *(bool*)0x02772730
+};
 
 struct StackActiveSpells
 {
 	H3Vector<INT32> activeSpellsId;
 };
+
+struct CrExpBonLine
+{
+
+	unsigned __int32 Act : 1;
+	unsigned __int32 _un : 31;
+	char Type;
+	char Mod;
+	char Lvls[11];
+};
+
+struct CreatureSkill
+{
+	int expId;
+	const char* name;
+	const char* description;
+	const char* pcx16Name;
+	H3LoadedPcx16* pcx16;
+	~CreatureSkill();
+
+};
 class CreatureDlgHandler
 {
 	H3CreatureInfoDlg* dlg = nullptr;
-	bool expOn = false;
 	H3CombatCreature* stack = nullptr;
+	H3Army* army = nullptr;
+	int armySlotIndex = -1;
+	bool wogStackExperience = false;
+
 public:
 
-	CreatureDlgHandler(H3CreatureInfoDlg* dlg, H3CombatCreature* stack) :
-		dlg(dlg), stack(stack), expOn(WOG_STACK_EXPERIENCE_ON)
-	{
-		if (dlg)
-		{
-			//dlg->AddItem(H3DlgDef::Create(220, 220, "iokay32.def"),false);
-			AlignItems();
-			if (expOn && dlg->GetDefButton(30722))
-				AddExperienceButton();
-			if (this->stack != nullptr)
-				AddSpellEfects();
-		}
-	}
+	CreatureDlgHandler(H3CreatureInfoDlg* dlg, H3CombatCreature* stack = nullptr, H3Army * army = nullptr, int armySlotIndex =-1);
 
 	bool SetWitdt;
-
 	bool AlignItems();
-
 	bool AddExperienceButton();
 	bool AddSpellEfects();
+	~CreatureDlgHandler();
+
 	bool AddCommanderSkills();
 
+	bool CreateCreatureSkillsList();
+
+	//bool Adjust(Crex,
+	static std::vector<H3DlgPcx16*> dlgSkillPcx;
+	static std::vector<CreatureSkill> creatureSkills;
 };
-
-
-
-void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi);

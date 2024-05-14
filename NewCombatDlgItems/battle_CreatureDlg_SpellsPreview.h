@@ -1,8 +1,8 @@
 #pragma once
-#include "header.h"
+#include "pch.h"
 
 using namespace h3;
-H3CombatCreature* creature_dlg_stack = nullptr;
+
 //
 //class SpellsDlg
 //	:public H3Dlg
@@ -33,7 +33,3 @@ H3CombatCreature* creature_dlg_stack = nullptr;
 //	}
 //
 //};
-
-
-
-void Dlg_CreatureSpellInfo_HooksInit(PatcherInstance* _PI);

@@ -1,6 +1,5 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
-#include "header.h"
-#include "..\..\oldHeroesHeaders\headers\era.h"
+#include "pch.h"
 
 Patcher* globalPatcher;
 PatcherInstance* _PI;
@@ -58,4 +57,3 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	}
 	return TRUE;
 }
-

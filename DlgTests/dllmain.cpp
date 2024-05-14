@@ -4,7 +4,7 @@
 
 #include "pch.h"
 //#include "..\..\headers\era.h"
-#include "..\..\headers\era.cpp"
+#include "..\..\headers\Era\era.h"
 
 #include "TestDlg.h"
 //#include "..\..\headers\H3API_RK\single_header\H3API.hpp"
@@ -147,6 +147,29 @@ _LHF_(HooksInit)
 	return EXEC_DEFAULT;
 }
 
+
+static _LHF_(NewScenarioDlg_Create);
+
+
+void __stdcall NewScenarioDlg_Create(HiHook* hook, H3SelectScenarioDialog* dlg, H3Msg* msg)
+{
+	THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
+
+	H3DlgCaptionButton* bttn = dlg->GetCaptionButton(4444);
+	if (bttn)
+	{
+		bttn->AddHotkey(h3::eVKey::H3VK_W);
+
+
+	}
+	bttn = dlg->CreateCaptionButton(bttn->GetX(), bttn->GetY() + 45, bttn->GetWidth(), bttn->GetHeight(), 4500, bttn->GetDef()->GetName(), "ERA options", h3::NH3Dlg::Text::SMALL, 0);
+	if (bttn)
+	{
+		bttn->SetClickFrame(1);
+		bttn->AddHotkey(h3::eVKey::H3VK_E);
+	}
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved
@@ -166,7 +189,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		// if (ver.era()      )
 		{
 			Era::ConnectEra();
-
+			H3TownDependencies::Get()->m_dependency->castle
 		}
 
 

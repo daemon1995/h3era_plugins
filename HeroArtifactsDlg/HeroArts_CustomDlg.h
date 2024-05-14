@@ -1,7 +1,8 @@
 #pragma once
-#include "header.h"
+#include "..\..\headers\header.h"
 #include "map"
 using namespace h3;
+constexpr int MAX_BP_ARTIFACTS = 64;
 
 
 class HeroArts_CustomDlg :public H3Dlg

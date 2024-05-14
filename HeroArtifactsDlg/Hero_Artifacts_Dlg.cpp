@@ -1,12 +1,12 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
-
-#include "header.h"
-
+#include "HeroArts_CustomDlg.h"
+//#include "..\..\headers\header.h"
 Patcher* globalPatcher;
 PatcherInstance* _PI;
 using namespace h3;
 
-
+constexpr int ART_NOT_PLACED = 0;
+constexpr int ART_PLACED = 1;
 int PrepareAndShowArtifactsDlg(H3Hero*hero, int slot, H3DlgItem* it, std::vector<H3Artifact>& heroArts, int scrollsNum)
 {
 
@@ -31,8 +31,8 @@ int PrepareAndShowArtifactsDlg(H3Hero*hero, int slot, H3DlgItem* it, std::vector
     
     //create new dlg, calss derived from H3Dlg, see HeroArts_CustomDlg.hpp
 
-    int xOffset = o_HD_X - width - newDlgX -5;
-    int yOffset = o_HD_Y - height - newDlgY -5;
+    int xOffset = H3GameWidth::Get() - width - newDlgX -5;
+    int yOffset = H3GameHeight::Get() - height - newDlgY -5;
 
     // adjust dlg pos to game window borders
     if (xOffset < 0)

@@ -1,64 +1,43 @@
 #define _H3API_PLUGINS_
 #define H3API_SINGLE_HEADER
 #include "pch.h"
-#include "MitrilDisplay.h"
-#include "MapScroller.h"
+
+
 using namespace h3;
-#include "..\..\headers\era.cpp"   
+//#include "..\..\headers\era.cpp"   
 
 Patcher* globalPatcher;
 PatcherInstance* _PI;
-//MithrilDisplay mithrilDisplay;
 
-void __stdcall DoSth(const char*)
-{
 
-}
 
-namespace db
-{
-	void echoB(int a)
-	{
-		Era::y[1] = a;
-
-		Era::ExecErmCmd("IF:L^%y1^;");
-	}
-
-	void echo(const char* a)
-	{
-		sprintf(Era::z[1], a);
-		Era::ExecErmCmd("IF:L^%z1^;");
-	}
-	void echoA(float a)
-	{
-		Era::e[1] = a;
-		Era::ExecErmCmd("IF:L^%e1^;");
-	}
-
-	void dump(int a)
-	{
-		Era::y[1] = a;
-		Era::ExecErmCmd("IF:M^%y1^;");
-	}
-	void dump(const char* a)
-	{
-		sprintf(Era::z[1], a);
-		Era::ExecErmCmd("IF:M^%z1^;");
-	}
-
-}
 
 
 void CreExpoFix_Apply();
+void DrawPcx16ResizedBicubic(H3LoadedPcx16* _this, H3LoadedPcx16* src_pcx, int s_w, int s_h, int d_x, int d_y, int d_w, int d_h);
+
+
+
 
 _LHF_(HooksInit)
 {
 
 	if (H3GameWidth::Get() >= 840)
-		new MithrilDisplay(_PI, Era::ExecErmCmd, Era::tr("gem_plugin.mithril_display.popup_hint")); // one of the best crutch
-	//new MapScroller(_PI, Era::ExecErmCmd, db::echo); // one of the best crutch
+		new MithrilDisplay(_PI, Era::tr("gem_plugin.mithril_display.popup_hint")); // one of the best crutch
+	//new MapScroller(globalPatcher->CreateInstance("MapScroll.ERA.daemon_n.plugin"));
+	MapScroller::Init(globalPatcher->CreateInstance("MapScroll.ERA.daemon_n.plugin"));
+	AdventureMapHints::Init(globalPatcher->CreateInstance("Pickup.daemon_n.plugin"));
 
-	CreExpoFix_Apply();
+	//if (1)
+		//CombatHints::instance(globalPatcher->CreateInstance("CombatHints.ERA.daemon_n.plugin"));
+	
+
+	
+
+
+//	_PI->WriteLoHook(0x4EF32A, gem_Dlg_MainMenu_Create);
+//	_PI->WriteHiHook(0x412164, THISCALL_, FooBar);
+	//CreExpoFix_Apply();
 
 
 
@@ -82,11 +61,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		{
 			plugin_On = 1;
 			Era::ConnectEra();
-
+			
 			globalPatcher = GetPatcher();
-
-			_PI = globalPatcher->CreateInstance(const_cast<char*>("ERA.daemon_n.NewAdvMapItems"));
+			
+			_PI = globalPatcher->CreateInstance("ERA.daemon_n.NewAdvMapItems");
 			_PI->WriteLoHook(0x4EEAF2, HooksInit);
+
 		}
 		break;
 

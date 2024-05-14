@@ -1,7 +1,6 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #define _H3API_PLUGINS_
 #include "pch.h"
-#include "..\..\headers\era.cpp"
 
 Patcher* globalPatcher;
 PatcherInstance* _PI;
@@ -9,14 +8,14 @@ using namespace h3;
 
 //H3String jsonKeys[12] = {"hasSpellBook",};
 
-constexpr int MAX_CREATURE_ID = 196;
-
+constexpr int HEROES_COUNT = 156;
 void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 {
 	
 	//std::string jsonKeyStart = "gem.%d";
 
-
+	heroInfo.campaignHero = false;
+	heroInfo.expansionHero = true;
 	sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.hasSpellBook", id);
 	std::string trResult = Era::tr(h3_TextBuffer);
 
@@ -58,6 +57,8 @@ void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 			}
 		}
 	}
+
+	const int MAX_CREATURE_ID = IntAt(0x4A1657);
 
 	for (size_t i = 0; i < 3; i++)
 	{
@@ -107,14 +108,14 @@ _LHF_(HooksInit)
 
 	hero_info_table[eHero::DEEMER].sskills[1].level = eSecSkillLevel::BASIC;
 
-	for (size_t i = 0; i < 156; i++)
+	for (size_t i = 0; i < HEROES_COUNT; i++)
 	{
 		ChangeHeroStartingParameters(hero_info_table[i], i);
-
 	}
+
+
 	return EXEC_DEFAULT;
 }
-
 
 
 BOOL APIENTRY DllMain(HMODULE hModule,
