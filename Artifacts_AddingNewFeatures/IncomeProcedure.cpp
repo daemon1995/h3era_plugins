@@ -70,7 +70,7 @@ void IncomeProcedure::SetPatches(PatcherInstance* _PI)
 {
 
 	//_PI->WriteHiHook(0x4C75F0, THISCALL_, Game__GetPlayerGoldIncome);
-	if (artifactsData.artifactsWhichAddGold.size())
+	if (!artifactsData.artifactsWhichAddGold.empty())
 	{
 		_PI->WriteLoHook(0x4C77A3, Game__GetPlayerGoldIncome_Low);
 		_PI->WriteLoHook(0x4C7EE7, Game__NewDay);

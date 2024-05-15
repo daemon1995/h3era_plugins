@@ -86,7 +86,7 @@ _LHF_(Hero__GetLandMovepoints)
 
 }
 
-int main( int argc , char** argv)
+int main(int argc, char** argv)
 {
 	return 0;
 }
@@ -113,15 +113,17 @@ _LHF_(Hero__GetWaterMovepoints)
 void MovementProcedure::SetPatches(PatcherInstance* _PI)
 {
 
-	if (artifactsData.pathFindingData.size() + artifactsData.landMultiplierData.size() + artifactsData.waterMultiplierData.size())
+	if (!artifactsData.pathFindingData.empty()
+		|| !artifactsData.landMultiplierData.empty()
+		|| !artifactsData.waterMultiplierData.empty())
 	{
 		_PI->WriteHiHook(0x4B14A0, FASTCALL_, GetStepCost);
 	}
 
-	if (artifactsData.landMovepointsBonus.size())
+	if (!artifactsData.landMovepointsBonus.empty())
 		_PI->WriteLoHook(0x4E4F47, Hero__GetLandMovepoints);
 
-	if (artifactsData.waterMovepointsBonus.size())
+	if (!artifactsData.waterMovepointsBonus.empty())
 		_PI->WriteLoHook(0x4E4C7E, Hero__GetWaterMovepoints);
 
 }

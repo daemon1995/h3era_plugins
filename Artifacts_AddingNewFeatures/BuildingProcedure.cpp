@@ -71,7 +71,7 @@ int* __stdcall AITown_GetBuildingCost(HiHook* h, H3Town* town, int* build_id)
 void BuildingProcedure::SetPatches(PatcherInstance* _PI)
 {
 
-	if (artifactsData.buildingCostChanger.size())
+	if (!artifactsData.buildingCostChanger.empty())
 	{
 		_PI->WriteHiHook(0x5C14F0, THISCALL_, Town_GetBuildingCost);
 		_PI->WriteHiHook(0x5C1580, THISCALL_, Town_GetDisplayedBuildingCost);

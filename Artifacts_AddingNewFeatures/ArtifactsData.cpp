@@ -186,13 +186,17 @@ int ArtifactsData::LoadJsonData()
 		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.combat.additionalShot", artId).String(), readSuccess);
 		if (readSuccess && readResult)
 			artifactsThatGiveAdditionalShot.emplace_back(artId);
-		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.combat.fullTentHealt", artId).String(), readSuccess);
+		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.combat.fullTentHeal", artId).String(), readSuccess);
 		if (readSuccess && readResult)
 			artifactsThatGiveFullTentHeal.emplace_back(artId);
 
+		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.combat.additionalHeal", artId).String(), readSuccess);
+		if (readSuccess && readResult)
+			artifactsWhichIncreaseTentHealing.insert(std::make_pair(artId, readResult));
+
 
 	}
-	if (spellsAddedByArtifactsId.size())
+	if (!spellsAddedByArtifactsId.empty())
 	{
 		UINT16 freeUse = false;
 
@@ -209,7 +213,7 @@ int ArtifactsData::LoadJsonData()
 	//artifactsWhichBanSpell.insert(std::make_pair(eSpell::SLOW, eArtifact::ANGEL_WINGS));
 	//artifactsWhichBanSpell.insert(std::make_pair(eSpell::AIR_ELEMENTAL, eArtifact::ANGEL_WINGS));
 
-	return pathFindingData.size() + landMultiplierData.size() + waterMultiplierData.size();
+	return false;
 }
 
 void ArtifactsData::Clear()
@@ -234,7 +238,7 @@ void ArtifactsData::Clear()
 
 	artifactsThatGiveAdditionalShot.clear();
 	artifactsThatGiveFullTentHeal.clear();
-
+	artifactsWhichIncreaseTentHealing.clear();
 
 	autoCastedSpellsByArtifactId.clear();
 
@@ -242,6 +246,8 @@ void ArtifactsData::Clear()
 	artifactsWhichScaleResurrection.clear();
 	artifactsWhichScaleCure.clear();
 	artifactsWhichDecreaseResistance.clear();
+
+	artifactsWhichAddGold.clear();
 
 
 }

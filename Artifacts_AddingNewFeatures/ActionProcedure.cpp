@@ -33,16 +33,29 @@ _LHF_(BattleManager_TentHeal)
 	{
 		if (auto* hero = stack->GetOwner())
 		{
+			bool stackIsFullHealed = false;
 			for (auto it: artifactsData.artifactsThatGiveFullTentHeal)
 			{
-				int it = eArtifact::ANGEL_WINGS;
 				if (hero->WearsArtifact(it))
 				{
 					c->ecx = stack->healthLost;
 					c->edx = stack->healthLost;
+					stackIsFullHealed = true;
 					break;
 				}
 			}
+			if (!stackIsFullHealed)
+			{
+				for (auto& it : artifactsData.artifactsWhichIncreaseTentHealing)
+				{
+					if (hero->WearsArtifact(it.first))
+					{
+						c->ecx += it.second;
+						c->edx += it.second;
+					}
+				}
+			}
+
 		}
 	}
 
@@ -50,12 +63,13 @@ _LHF_(BattleManager_TentHeal)
 }
 void ActionProcedure::SetPatches(PatcherInstance* _PI)
 {
-	if (artifactsData.artifactsThatGiveAdditionalShot.size())
+	if (!artifactsData.artifactsThatGiveAdditionalShot.empty())
 	{
 		_PI->WriteHiHook(0x43FF79, THISCALL_, BattleStack_Shoot);
 
 	}
-	if (artifactsData.artifactsThatGiveFullTentHeal.size())
+	if (!artifactsData.artifactsThatGiveFullTentHeal.empty()
+		|| !artifactsData.artifactsWhichIncreaseTentHealing.empty())
 	{
 		_PI->WriteLoHook(0x478533, BattleManager_TentHeal);
 

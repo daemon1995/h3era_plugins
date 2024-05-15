@@ -1,4 +1,5 @@
 #pragma once
+#include "pch.h"
 
 #include "map"
 #include "set"
@@ -28,6 +29,8 @@ struct alignas(8) ArtifactsData
 	
 	std::vector<UINT> artifactsThatGiveAdditionalShot;
 	std::vector<UINT> artifactsThatGiveFullTentHeal;
+	std::map<UINT, int> artifactsWhichIncreaseTentHealing;
+
 	struct AutoCastSpell
 	{
 		UINT spellID;
@@ -46,6 +49,7 @@ struct alignas(8) ArtifactsData
 	std::map<UINT, double> artifactsWhichScaleDamage;
 	std::map<UINT, double> artifactsWhichScaleResurrection;
 	std::map<UINT, double> artifactsWhichScaleCure;
+
 	std::map<UINT, double> artifactsWhichDecreaseResistance;
 
 
