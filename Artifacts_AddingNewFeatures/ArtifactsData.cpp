@@ -2,6 +2,7 @@
 #include "sstream"
 
 constexpr UINT MAX_SKILL_LEVEL = eSecSkillLevel::EXPERT;
+constexpr UINT MAX_ARIFACT_ID = 1024;
 
 int ArtifactsData::LoadJsonData()
 {
@@ -16,7 +17,7 @@ int ArtifactsData::LoadJsonData()
 	Clear();
 
 	std::string str;
-	for (size_t artId = 0; artId < 1024; artId++)
+	for (size_t artId = 0; artId < MAX_ARIFACT_ID; artId++)
 	{
 		std::string lands = EraJS::read(H3String::Format("era.artifacts.%d.pathfinding.ignorePenaltyLands", artId).String(), readSuccess);
 		if (readSuccess)
@@ -65,7 +66,7 @@ int ArtifactsData::LoadJsonData()
 
 		UINT16 freeUse = false;
 
-		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.spells.freeUse", artId).String(), readSuccess);
+		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.spells.give.freeUse", artId).String(), readSuccess);
 		if (readSuccess && readResult)
 			freeUse = true;
 
@@ -105,24 +106,31 @@ int ArtifactsData::LoadJsonData()
 			}
 		}
 
-		std::string levels = EraJS::read(H3String::Format("era.artifacts.%d.spells.block.levels", artId).String(), readSuccess);
-
-		if (readSuccess)
+		constexpr const char* keyNames[2] = {"block","immunities"};
+		std::vector<UINT> *containers[2]  =  {artifactsWhichBanSpellLevel,	artifactsWhichSetLevelImmunities};
+		for (size_t i = 0; i < 2; ++i)
 		{
+			std::string levels = EraJS::read(H3String::Format("era.artifacts.%d.spells.%s.levels", artId,keyNames[i]).String(), readSuccess);
 
-			str = levels;
-
-			std::stringstream ss(str);
-			UINT16 spellLevel;
-			//	
-			while (ss >> spellLevel)
+			if (readSuccess)
 			{
-				if (spellLevel >= 0 && spellLevel < 6)
-					artifactsWhichBanSpellLevel[spellLevel].emplace_back(artId);
-				if (ss.peek() == ',')
-					ss.ignore();
+
+				str = levels;
+
+				std::stringstream ss(str);
+				UINT16 spellLevel;
+				//	
+				while (ss >> spellLevel)
+				{
+					if (spellLevel >= 0 && spellLevel < 6)
+						containers[i][spellLevel].emplace_back(artId);
+					if (ss.peek() == ',')
+						ss.ignore();
+				}
 			}
 		}
+		
+
 
 		std::string spells = EraJS::read(H3String::Format("era.artifacts.%d.spells.block.ids", artId).String(), readSuccess);
 
@@ -204,11 +212,16 @@ int ArtifactsData::LoadJsonData()
 		{
 			UINT artId = pair.first;
 			readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.spells.freeUse", artId).String(), readSuccess);
+
 			if (readSuccess && readResult)
+			{
 				artifactsWhichMakeThatSpellFree.insert(std::make_pair(pair.second, artId));
+
+			}
 		}
 
 	}
+
 	//artifactsWhichBanSpell.insert(std::make_pair(eSpell::ARMAGEDDON, eArtifact::ANGEL_WINGS));
 	//artifactsWhichBanSpell.insert(std::make_pair(eSpell::SLOW, eArtifact::ANGEL_WINGS));
 	//artifactsWhichBanSpell.insert(std::make_pair(eSpell::AIR_ELEMENTAL, eArtifact::ANGEL_WINGS));
@@ -234,7 +247,10 @@ void ArtifactsData::Clear()
 	artifactsWhichBanSpell.clear();
 
 	for (size_t i = 0; i < 6; i++)
+	{
 		artifactsWhichBanSpellLevel[i].clear();
+		artifactsWhichSetLevelImmunities[i].clear();
+	}
 
 	artifactsThatGiveAdditionalShot.clear();
 	artifactsThatGiveFullTentHeal.clear();
@@ -249,8 +265,9 @@ void ArtifactsData::Clear()
 
 	artifactsWhichAddGold.clear();
 
-
+	
 }
+
 
 
 int PluginText::LoadText()

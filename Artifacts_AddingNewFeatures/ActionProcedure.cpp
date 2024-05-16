@@ -52,6 +52,7 @@ _LHF_(BattleManager_TentHeal)
 					{
 						c->ecx += it.second;
 						c->edx += it.second;
+						
 					}
 				}
 			}

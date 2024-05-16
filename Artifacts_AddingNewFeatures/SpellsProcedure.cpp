@@ -7,11 +7,13 @@ int SpellsProcedure::autoCastSpellArtID = eArtifact::NONE;
 bool SpellsProcedure::ignoreAutoCastSelfDamage = false;
 bool SpellsProcedure::spellSpecialityAlreadyAffected = false;
 
+
+
 bool SpellBannedByArtifact(const int spellId, H3String *msg = nullptr)
 {
 	bool artIsFound = false;
 
-	if (artifactsData.artifactsWhichBanSpell.count(spellId) > 0)
+	//if (artifactsData.artifactsWhichBanSpell.count(spellId) > 0)
 	{
 		for (size_t i = 0; i < 2; ++i)
 		{
@@ -77,6 +79,35 @@ double Hero__GetResurrectionPowerMultiplier(H3Hero *hero)
 
 	return resurrectionPowerBonus;
 }
+/// @brief iterate array of artifacts which make that spell free
+/// @param spellLevel 
+/// @return 
+
+
+
+bool SpellLevelImmunities(const int spellLevel)
+{
+	bool result = false;
+	
+	if (!artifactsData.artifactsWhichSetLevelImmunities[spellLevel].empty())
+
+		for (size_t i = 0; i < 2; ++i)
+		{
+			if (auto *hero = P_CombatManager->hero[i]) 
+			{
+				for (auto it : artifactsData.artifactsWhichSetLevelImmunities[spellLevel])
+				{
+					if (hero->WearsArtifact(it))
+					{
+						result = true;
+						break;
+					}
+				}
+			}
+		}
+
+	return result;
+}
 
 
 double __stdcall BattleMgr__BattleStack__GetMagicResistance(HiHook *h, H3CombatManager *cmbMgr,
@@ -97,7 +128,7 @@ double __stdcall BattleMgr__BattleStack__GetMagicResistance(HiHook *h, H3CombatM
 		if (SpellsProcedure::ignoreAutoCastSelfDamage && stack->side == side)
 			result = 0.f;
 		// check spells
-		else if (SpellBannedByArtifact(spellId) || SpellLevelBannedByArtifact(P_Spell[spellId].level))
+		else if (SpellBannedByArtifact(spellId) || SpellLevelBannedByArtifact(P_Spell[spellId].level) || SpellLevelImmunities(P_Spell[spellId].level))
 			result = 0.f;
 	}
 
@@ -108,14 +139,14 @@ int __stdcall Hero__GetSpellCost(HiHook *h, H3Hero *hero, const int spell, const
 {
 
 	int spellCost = THISCALL_4(int, h->GetDefaultFunc(), hero, spell, army, ground);
-	if (spellCost > 0 && artifactsData.artifactsWhichMakeThatSpellFree.count(spell))
+	if (spellCost > 0)// && artifactsData.artifactsWhichMakeThatSpellFree.count(spell))
 	{
 		auto range = artifactsData.artifactsWhichMakeThatSpellFree.equal_range(spell);
 		for (auto &it = range.first; it != range.second; ++it)
 		{
 			if (hero->WearsArtifact(it->second))
 			{
-				spellCost = NULL;
+				spellCost = 1;
 				break;
 			}
 		}
@@ -177,6 +208,14 @@ int __stdcall Hero__GetSchoolLevelOfSpell(HiHook *h, H3Hero *hero, const eSpell 
 {
 
 	int schoolLevel = THISCALL_3(int, h->GetDefaultFunc(), hero, spell, ground);
+	//artifactsData.spellsByArt[1022][spell] = ground;
+	
+	
+
+	
+	
+	//return schoolLevel;
+
 	const UINT MAX_LEVEL = artifactsData.MAX_SKILL_LEVEL;
 
 	if (schoolLevel < MAX_LEVEL)
@@ -186,7 +225,7 @@ int __stdcall Hero__GetSchoolLevelOfSpell(HiHook *h, H3Hero *hero, const eSpell 
 		{
 
 			UINT schoolSpellBitSet = (static_cast<UINT>(i) << 16) | spell16;
-			if (artifactsData.artifactsBySpellSchoolBitSet.count(schoolSpellBitSet) > 0)
+		//	if (artifactsData.artifactsBySpellSchoolBitSet.count(schoolSpellBitSet) > 0)
 			{
 				auto range = artifactsData.artifactsBySpellSchoolBitSet.equal_range(schoolSpellBitSet);
 				for (auto &it = range.first; it != range.second; ++it)
@@ -209,7 +248,7 @@ _LHF_(Art__GetSpellsList)
 
 	bool returnType = EXEC_DEFAULT;
 	UINT artId = c->esi;
-	if (artId && artifactsData.spellsAddedByArtifactsId.count(artId) > 0)
+	//if (artId && artifactsData.spellsAddedByArtifactsId.count(artId) > 0)
 	{
 		const H3SpellsBitset *s = reinterpret_cast<H3SpellsBitset *>(c->ebp - 0x1C);
 
@@ -376,8 +415,12 @@ void SpellsProcedure::SetPatches(PatcherInstance *_PI)
 
 	bool dontSetSpellBansHooks = artifactsData.artifactsWhichBanSpell.empty();
 	if (dontSetSpellBansHooks)
-		for (size_t i = 0; i < 6 && dontSetSpellBansHooks; i++)
+		for (size_t i = 0; i < 6 && dontSetSpellBansHooks ; i++)
+		{
 			dontSetSpellBansHooks = artifactsData.artifactsWhichBanSpellLevel[i].empty();
+			if (dontSetSpellBansHooks)
+				dontSetSpellBansHooks = artifactsData.artifactsWhichSetLevelImmunities[i].empty();
+		}
 
 
 	if (!dontSetSpellBansHooks)

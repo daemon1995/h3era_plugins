@@ -26,7 +26,7 @@ struct alignas(8) ArtifactsData
 	std::multimap<UINT, UINT> artifactsWhichBanSpell;
 
 	std::vector<UINT> artifactsWhichBanSpellLevel[6];
-	
+	std::vector<UINT> artifactsWhichSetLevelImmunities[6];
 	std::vector<UINT> artifactsThatGiveAdditionalShot;
 	std::vector<UINT> artifactsThatGiveFullTentHeal;
 	std::map<UINT, int> artifactsWhichIncreaseTentHealing;
