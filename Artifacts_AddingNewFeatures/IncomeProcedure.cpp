@@ -3,7 +3,7 @@
 extern ArtifactsData artifactsData;
 
 
-int __stdcall Game__GetPlayerGoldIncome(HiHook*h, const H3Game* game, const UINT playerId, char newWeek)
+int __stdcall Game__GetPlayerGoldIncome(HiHook* h, const H3Game* game, const UINT playerId, char newWeek)
 {
 
 	int income = THISCALL_3(int, h->GetDefaultFunc(), game, playerId, newWeek);
@@ -15,7 +15,7 @@ int __stdcall Game__GetPlayerGoldIncome(HiHook*h, const H3Game* game, const UINT
 _LHF_(Game__GetPlayerGoldIncome_Low)
 {
 	int currentIncome = IntAt(c->ebp - 0x4);
-	if (currentIncome>0)
+	if (currentIncome > 0)
 	{
 		int newIncome = 0;
 
@@ -74,8 +74,8 @@ void IncomeProcedure::SetPatches(PatcherInstance* _PI)
 	{
 		_PI->WriteLoHook(0x4C77A3, Game__GetPlayerGoldIncome_Low);
 		_PI->WriteLoHook(0x4C7EE7, Game__NewDay);
-	
+
 	}
 
-	
+
 }

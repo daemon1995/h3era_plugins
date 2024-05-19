@@ -9,7 +9,7 @@ bool SpellsProcedure::spellSpecialityAlreadyAffected = false;
 
 
 
-bool SpellBannedByArtifact(const int spellId, H3String *msg = nullptr)
+bool SpellBannedByArtifact(const int spellId, H3String* msg = nullptr)
 {
 	bool artIsFound = false;
 
@@ -17,10 +17,10 @@ bool SpellBannedByArtifact(const int spellId, H3String *msg = nullptr)
 	{
 		for (size_t i = 0; i < 2; ++i)
 		{
-			if (auto *hero = P_CombatManager->hero[i])
+			if (auto* hero = P_CombatManager->hero[i])
 			{
 				auto range = artifactsData.artifactsWhichBanSpell.equal_range(spellId);
-				for (auto &it = range.first; it != range.second; it++)
+				for (auto& it = range.first; it != range.second; it++)
 				{
 					if (hero->WearsArtifact(it->second))
 					{
@@ -37,7 +37,7 @@ bool SpellBannedByArtifact(const int spellId, H3String *msg = nullptr)
 	return artIsFound;
 }
 
-bool SpellLevelBannedByArtifact(const int spellLevel, H3String *msg = nullptr)
+bool SpellLevelBannedByArtifact(const int spellLevel, H3String* msg = nullptr)
 {
 
 	bool artIsFound = false;
@@ -46,7 +46,7 @@ bool SpellLevelBannedByArtifact(const int spellLevel, H3String *msg = nullptr)
 	{
 		for (size_t i = 0; i < 2; ++i)
 		{
-			if (auto *hero = P_CombatManager->hero[i])
+			if (auto* hero = P_CombatManager->hero[i])
 			{
 				for (auto it : artifactsData.artifactsWhichBanSpellLevel[spellLevel]) // range.first; it != range.second; it++)
 				{
@@ -65,11 +65,11 @@ bool SpellLevelBannedByArtifact(const int spellLevel, H3String *msg = nullptr)
 	return artIsFound;
 }
 
-double Hero__GetResurrectionPowerMultiplier(H3Hero *hero)
+double Hero__GetResurrectionPowerMultiplier(H3Hero* hero)
 {
 
 	float resurrectionPowerBonus = 1.f;
-	for (auto &it : artifactsData.artifactsWhichScaleResurrection)
+	for (auto& it : artifactsData.artifactsWhichScaleResurrection)
 	{
 		if (hero->WearsArtifact(it.first))
 		{
@@ -88,12 +88,12 @@ double Hero__GetResurrectionPowerMultiplier(H3Hero *hero)
 bool SpellLevelImmunities(const int spellLevel)
 {
 	bool result = false;
-	
+
 	if (!artifactsData.artifactsWhichSetLevelImmunities[spellLevel].empty())
 
 		for (size_t i = 0; i < 2; ++i)
 		{
-			if (auto *hero = P_CombatManager->hero[i]) 
+			if (auto* hero = P_CombatManager->hero[i])
 			{
 				for (auto it : artifactsData.artifactsWhichSetLevelImmunities[spellLevel])
 				{
@@ -110,13 +110,13 @@ bool SpellLevelImmunities(const int spellLevel)
 }
 
 
-double __stdcall BattleMgr__BattleStack__GetMagicResistance(HiHook *h, H3CombatManager *cmbMgr,
-															int spellId,
-															int side,
-															H3CombatCreature *stack,
-															char a5,
-															char a6,
-															int noHero)
+double __stdcall BattleMgr__BattleStack__GetMagicResistance(HiHook* h, H3CombatManager* cmbMgr,
+	int spellId,
+	int side,
+	H3CombatCreature* stack,
+	char a5,
+	char a6,
+	int noHero)
 {
 	// call native function
 	double result = THISCALL_7(double, h->GetDefaultFunc(), cmbMgr, spellId, side, stack, a5, a6, noHero);
@@ -134,15 +134,40 @@ double __stdcall BattleMgr__BattleStack__GetMagicResistance(HiHook *h, H3CombatM
 
 	return result;
 }
+double __stdcall Hero__GetResistancePower(HiHook* h, H3Hero* hero)
+{
+	double result = THISCALL_1(double, h->GetDefaultFunc(), hero);
+	if (result > 0)
+	{
+		int bonus = 0;
+		for (auto& it : artifactsData.artifactsWhichGiveResistance)
+			if (hero->WearsArtifact(it.first))
+				bonus += it.second;
 
-int __stdcall Hero__GetSpellCost(HiHook *h, H3Hero *hero, const int spell, const H3Army *army, const int ground)
+		if (bonus)
+		{
+			result -= static_cast<double>(bonus) / 100;
+			if (result < 0)
+				result = 0;
+		}
+	}
+	return result;
+
+}
+
+
+
+int __stdcall Hero__GetSpellCost(HiHook* h, H3Hero* hero, const int spell, const H3Army* hostileArmy, const int ground)
 {
 
-	int spellCost = THISCALL_4(int, h->GetDefaultFunc(), hero, spell, army, ground);
+	int spellCost = THISCALL_4(int, h->GetDefaultFunc(), hero, spell, hostileArmy, ground);
+
+
+
 	if (spellCost > 0)// && artifactsData.artifactsWhichMakeThatSpellFree.count(spell))
 	{
 		auto range = artifactsData.artifactsWhichMakeThatSpellFree.equal_range(spell);
-		for (auto &it = range.first; it != range.second; ++it)
+		for (auto& it = range.first; it != range.second; ++it)
 		{
 			if (hero->WearsArtifact(it->second))
 			{
@@ -150,6 +175,34 @@ int __stdcall Hero__GetSpellCost(HiHook *h, H3Hero *hero, const int spell, const
 				break;
 			}
 		}
+		if (spellCost)
+		{
+
+			H3Hero* heroes[2] = { hero ,nullptr };
+			if (hostileArmy)
+				for (size_t i = 0; i < 2; i++)
+					if (P_CombatManager->army[i] == hostileArmy)
+						heroes[1] = P_CombatManager->hero[i];
+
+			int costChanger = 0;
+
+			for (auto& it : artifactsData.artifactsWhichAffectAllSpellCost)
+			{
+
+				H3Hero* heroThatWearsArtiffact = it.second >= 0 ? heroes[1] : heroes[0];
+				if (heroThatWearsArtiffact->WearsArtifact(it.first))
+					costChanger += it.second;
+			}
+
+			if (costChanger)
+			{
+				spellCost += costChanger;
+				if (spellCost < 1)
+					spellCost = 1;
+			}
+
+		}
+
 	}
 
 	return spellCost;
@@ -179,18 +232,18 @@ _LHF_(SpellBookDlg__AfterClose)
 	return retrunType;
 }
 
-void __stdcall BattleMgr__CastResurrection(HiHook *h, H3CombatManager *cmbMgr, int pos, int power, DWORD a4)
+void __stdcall BattleMgr__CastResurrection(HiHook* h, H3CombatManager* cmbMgr, int pos, int power, DWORD a4)
 {
 	// 005A1C6F
-	THISCALL_4(void, h->GetDefaultFunc(), cmbMgr, pos, power , a4);
+	THISCALL_4(void, h->GetDefaultFunc(), cmbMgr, pos, power, a4);
 }
 
-void __stdcall BattleMgr__UseCureSpell(HiHook *h, H3CombatManager *cmbMgr, int SchoolLevel, int SpellPower, H3Hero *Hero)
+void __stdcall BattleMgr__UseCureSpell(HiHook* h, H3CombatManager* cmbMgr, int SchoolLevel, int SpellPower, H3Hero* Hero)
 {
 
 	int storeValue = P_Spell[eSpell::CURE].baseValue[SchoolLevel];
 
-	H3Hero *_hero = Hero ? Hero : cmbMgr->hero[cmbMgr->currentActiveSide];
+	H3Hero* _hero = Hero ? Hero : cmbMgr->hero[cmbMgr->currentActiveSide];
 
 	if (_hero)
 	{
@@ -204,16 +257,41 @@ void __stdcall BattleMgr__UseCureSpell(HiHook *h, H3CombatManager *cmbMgr, int S
 	P_Spell[eSpell::CURE].baseValue[SchoolLevel] = storeValue;
 }
 
-int __stdcall Hero__GetSchoolLevelOfSpell(HiHook *h, H3Hero *hero, const eSpell spell, const int ground)
+int __stdcall Hero__GetMagicSchoollMasteryLevel(HiHook* h, H3Hero* hero, const eSpellchool spellSchool, const int ground)
+{
+
+	int schoolLevel = THISCALL_3(int, h->GetDefaultFunc(), hero, spellSchool, ground);
+	//artifactsData.spellsByArt[1022][spell] = ground;
+
+	//return schoolLevel;
+
+	const UINT MAX_LEVEL = artifactsData.MAX_SKILL_LEVEL;
+
+	if (schoolLevel < MAX_LEVEL)
+	{
+		for (auto it : artifactsData.artifactsWhichSetExpertMagiclevel)
+		{
+
+			if (hero->WearsArtifact(it))
+			{
+				schoolLevel = MAX_LEVEL;
+				break;
+			}
+
+		}
+	}
+
+	return schoolLevel;
+}
+
+
+int __stdcall Hero__GetSpellMasteryLevel(HiHook* h, H3Hero* hero, const eSpell spell, const int ground)
 {
 
 	int schoolLevel = THISCALL_3(int, h->GetDefaultFunc(), hero, spell, ground);
 	//artifactsData.spellsByArt[1022][spell] = ground;
-	
-	
 
-	
-	
+
 	//return schoolLevel;
 
 	const UINT MAX_LEVEL = artifactsData.MAX_SKILL_LEVEL;
@@ -225,10 +303,10 @@ int __stdcall Hero__GetSchoolLevelOfSpell(HiHook *h, H3Hero *hero, const eSpell 
 		{
 
 			UINT schoolSpellBitSet = (static_cast<UINT>(i) << 16) | spell16;
-		//	if (artifactsData.artifactsBySpellSchoolBitSet.count(schoolSpellBitSet) > 0)
+			//	if (artifactsData.artifactsBySpellSchoolBitSet.count(schoolSpellBitSet) > 0)
 			{
 				auto range = artifactsData.artifactsBySpellSchoolBitSet.equal_range(schoolSpellBitSet);
-				for (auto &it = range.first; it != range.second; ++it)
+				for (auto& it = range.first; it != range.second; ++it)
 				{
 					if (hero->WearsArtifact(it->second))
 					{
@@ -250,10 +328,10 @@ _LHF_(Art__GetSpellsList)
 	UINT artId = c->esi;
 	//if (artId && artifactsData.spellsAddedByArtifactsId.count(artId) > 0)
 	{
-		const H3SpellsBitset *s = reinterpret_cast<H3SpellsBitset *>(c->ebp - 0x1C);
+		const H3SpellsBitset* s = reinterpret_cast<H3SpellsBitset*>(c->ebp - 0x1C);
 
 		auto range = artifactsData.spellsAddedByArtifactsId.equal_range(artId);
-		for (auto &it = range.first; it != range.second; ++it)
+		for (auto& it = range.first; it != range.second; ++it)
 		{
 			int spell = it->second;
 			THISCALL_3(void, 0x4E67A0, s, it->second, 1);
@@ -269,18 +347,18 @@ _LHF_(Art__GetSpellsList)
 _LHF_(BattleMgr__BeforeArtifactAutoCast)
 {
 
-	H3Hero *hero = reinterpret_cast<H3Hero *>(c->edi);
+	H3Hero* hero = reinterpret_cast<H3Hero*>(c->edi);
 	if (hero && !artifactsData.autoCastedSpellsByArtifactId.empty())
 	{
 		int side = c->eax;
-		auto &container = artifactsData.autoCastedSpellsByArtifactId;
+		auto& container = artifactsData.autoCastedSpellsByArtifactId;
 		bool addCasterSideImmunity = false;
 		for (auto it = container.begin(); it != container.end(); ++it)
 		{
 			int artID = it->first;
 			if (hero->WearsArtifact(artID))
 			{
-				auto &spell = it->second;
+				auto& spell = it->second;
 				addCasterSideImmunity = spell.affectOnlyEnemy;
 
 				int spellId = spell.spellID;
@@ -357,7 +435,7 @@ float Hero__GetAdvancedSpellMultiplierBonus(H3Hero* hero, const eSpell spell)
 
 
 
-signed __int64 __stdcall Hero__GetSorceryEffect(HiHook *h, H3Hero *hero, const eSpell spell, const int damage, const H3CombatCreature *stack)
+signed __int64 __stdcall Hero__GetSorceryEffect(HiHook* h, H3Hero* hero, const eSpell spell, const int damage, const H3CombatCreature* stack)
 {
 
 
@@ -368,7 +446,7 @@ signed __int64 __stdcall Hero__GetSorceryEffect(HiHook *h, H3Hero *hero, const e
 
 	SpellsProcedure::spellSpecialityAlreadyAffected = false;
 
-	for (auto &it : artifactsData.artifactsWhichScaleDamage)
+	for (auto& it : artifactsData.artifactsWhichScaleDamage)
 	{
 		if (hero->WearsArtifact(it.first))
 		{
@@ -381,7 +459,7 @@ signed __int64 __stdcall Hero__GetSorceryEffect(HiHook *h, H3Hero *hero, const e
 
 
 
-int __stdcall Hero__GetSpellSpecialityEffect(HiHook *h, H3Hero *hero, const eSpell spell, const int monLevel, int effect)
+int __stdcall Hero__GetSpellSpecialityEffect(HiHook* h, H3Hero* hero, const eSpell spell, const int monLevel, int effect)
 {
 
 	int additionalOriginalEffect = 0;
@@ -390,7 +468,7 @@ int __stdcall Hero__GetSpellSpecialityEffect(HiHook *h, H3Hero *hero, const eSpe
 	{
 		float bonus = 1.f;
 		bonus = Hero__GetAdvancedSpellMultiplierBonus(hero, spell);
-		if (bonus !=1.f)
+		if (bonus != 1.f)
 		{
 			additionalOriginalEffect = effect * (bonus - 1.f);
 			effect += additionalOriginalEffect;
@@ -405,7 +483,7 @@ int __stdcall Hero__GetSpellSpecialityEffect(HiHook *h, H3Hero *hero, const eSpe
 }
 
 
-void SpellsProcedure::SetPatches(PatcherInstance *_PI)
+void SpellsProcedure::SetPatches(PatcherInstance* _PI)
 {
 	if (!artifactsData.autoCastedSpellsByArtifactId.empty())
 	{
@@ -415,7 +493,7 @@ void SpellsProcedure::SetPatches(PatcherInstance *_PI)
 
 	bool dontSetSpellBansHooks = artifactsData.artifactsWhichBanSpell.empty();
 	if (dontSetSpellBansHooks)
-		for (size_t i = 0; i < 6 && dontSetSpellBansHooks ; i++)
+		for (size_t i = 0; i < 6 && dontSetSpellBansHooks; i++)
 		{
 			dontSetSpellBansHooks = artifactsData.artifactsWhichBanSpellLevel[i].empty();
 			if (dontSetSpellBansHooks)
@@ -429,6 +507,9 @@ void SpellsProcedure::SetPatches(PatcherInstance *_PI)
 		_PI->WriteLoHook(0x59EE0B, SpellBookDlg__AfterClose);
 
 	}
+	if (!artifactsData.artifactsWhichGiveResistance.empty())
+		_PI->WriteHiHook(0x4E4950, THISCALL_, Hero__GetResistancePower);
+
 
 
 
@@ -443,18 +524,20 @@ void SpellsProcedure::SetPatches(PatcherInstance *_PI)
 		// if there is hook from Game Bug Fixes then place another hook to adjust resurrection over it
 		if (globalPatcher->GetLastHiHookAt(0x5A1C7B))
 			_PI->WriteHiHook(0x5A1C7B, THISCALL_, Hero__GetSpellSpecialityEffect);
-		
+
 	}
 
-
+	if (!artifactsData.artifactsWhichSetExpertMagiclevel.empty())
+		_PI->WriteHiHook(0x4E5370, THISCALL_, Hero__GetMagicSchoollMasteryLevel);
 
 	if (!artifactsData.artifactsBySpellSchoolBitSet.empty())
 	{
-		_PI->WriteHiHook(0x4E52F0, THISCALL_, Hero__GetSchoolLevelOfSpell);
+		_PI->WriteHiHook(0x4E52F0, THISCALL_, Hero__GetSpellMasteryLevel);
+
 		_PI->WriteLoHook(0x4D95DB, Art__GetSpellsList);
 
 		// if we have any arts that make cost free
-		if (!artifactsData.artifactsWhichMakeThatSpellFree.empty())
+		if (!artifactsData.artifactsWhichMakeThatSpellFree.empty() || !artifactsData.artifactsWhichAffectAllSpellCost.empty())
 			_PI->WriteHiHook(0x4E54B0, THISCALL_, Hero__GetSpellCost);
 	}
 }

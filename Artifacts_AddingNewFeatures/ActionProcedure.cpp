@@ -34,7 +34,7 @@ _LHF_(BattleManager_TentHeal)
 		if (auto* hero = stack->GetOwner())
 		{
 			bool stackIsFullHealed = false;
-			for (auto it: artifactsData.artifactsThatGiveFullTentHeal)
+			for (auto it : artifactsData.artifactsThatGiveFullTentHeal)
 			{
 				if (hero->WearsArtifact(it))
 				{
@@ -52,7 +52,7 @@ _LHF_(BattleManager_TentHeal)
 					{
 						c->ecx += it.second;
 						c->edx += it.second;
-						
+
 					}
 				}
 			}
@@ -76,5 +76,5 @@ void ActionProcedure::SetPatches(PatcherInstance* _PI)
 
 	}
 
-	
+
 }

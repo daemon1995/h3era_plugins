@@ -23,6 +23,10 @@ struct alignas(8) ArtifactsData
 	// first arg is spell id, second arts id
 	std::multimap<UINT, UINT> artifactsWhichMakeThatSpellFree;
 
+	// first arg is art id, second cost changer; +increase for enemy , - descrease for you id
+
+	std::map<UINT, int> artifactsWhichAffectAllSpellCost;
+	std::vector<UINT> artifactsWhichSetExpertMagiclevel;
 	std::multimap<UINT, UINT> artifactsWhichBanSpell;
 
 	std::vector<UINT> artifactsWhichBanSpellLevel[6];
@@ -49,8 +53,9 @@ struct alignas(8) ArtifactsData
 	std::map<UINT, double> artifactsWhichScaleDamage;
 	std::map<UINT, double> artifactsWhichScaleResurrection;
 	std::map<UINT, double> artifactsWhichScaleCure;
+	std::map<UINT, int> artifactsWhichGiveResistance;
 
-	std::map<UINT, double> artifactsWhichDecreaseResistance;
+	//std::map<UINT, double> artifactsWhichDecreaseResistance;
 
 
 	const UINT MAX_SKILL_LEVEL = eSecSkillLevel::EXPERT;

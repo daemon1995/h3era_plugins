@@ -70,6 +70,11 @@ int ArtifactsData::LoadJsonData()
 		if (readSuccess && readResult)
 			freeUse = true;
 
+
+		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.spells.maximumExpertize", artId).String(), readSuccess);
+		if (readSuccess && readResult)
+			artifactsWhichSetExpertMagiclevel.emplace_back(artId);
+
 		for (INT16 schoolLevel = MAX_SKILL_LEVEL; schoolLevel > -1; --schoolLevel)
 		{
 
@@ -106,11 +111,12 @@ int ArtifactsData::LoadJsonData()
 			}
 		}
 
-		constexpr const char* keyNames[2] = {"block","immunities"};
-		std::vector<UINT> *containers[2]  =  {artifactsWhichBanSpellLevel,	artifactsWhichSetLevelImmunities};
+
+		constexpr const char* keyNames[2] = { "block","immunities" };
+		std::vector<UINT>* containers[2] = { artifactsWhichBanSpellLevel,	artifactsWhichSetLevelImmunities };
 		for (size_t i = 0; i < 2; ++i)
 		{
-			std::string levels = EraJS::read(H3String::Format("era.artifacts.%d.spells.%s.levels", artId,keyNames[i]).String(), readSuccess);
+			std::string levels = EraJS::read(H3String::Format("era.artifacts.%d.spells.%s.levels", artId, keyNames[i]).String(), readSuccess);
 
 			if (readSuccess)
 			{
@@ -129,7 +135,7 @@ int ArtifactsData::LoadJsonData()
 				}
 			}
 		}
-		
+
 
 
 		std::string spells = EraJS::read(H3String::Format("era.artifacts.%d.spells.block.ids", artId).String(), readSuccess);
@@ -174,7 +180,7 @@ int ArtifactsData::LoadJsonData()
 		} while (readSuccess);
 
 		tempDouble = EraJS::readFloat(H3String::Format("era.artifacts.%d.spells.scaling.damage", artId).String(), readSuccess);
-		if (readSuccess && tempDouble !=1)
+		if (readSuccess && tempDouble != 1)
 			artifactsWhichScaleDamage.insert(std::make_pair(artId, tempDouble));
 
 		tempDouble = EraJS::readFloat(H3String::Format("era.artifacts.%d.spells.scaling.resurrection", artId).String(), readSuccess);
@@ -189,7 +195,11 @@ int ArtifactsData::LoadJsonData()
 		int goldAdded = EraJS::readInt(H3String::Format("era.artifacts.%d.income", artId).String(), readSuccess);
 		if (readSuccess && goldAdded)
 			artifactsWhichAddGold.insert(std::make_pair(artId, goldAdded));
-		
+
+		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.spells.resistance", artId).String(), readSuccess);
+		if (readSuccess && readResult)
+			artifactsWhichGiveResistance.insert(std::make_pair(artId, readResult));
+
 
 		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.combat.additionalShot", artId).String(), readSuccess);
 		if (readSuccess && readResult)
@@ -201,6 +211,11 @@ int ArtifactsData::LoadJsonData()
 		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.combat.additionalHeal", artId).String(), readSuccess);
 		if (readSuccess && readResult)
 			artifactsWhichIncreaseTentHealing.insert(std::make_pair(artId, readResult));
+
+		readResult = EraJS::readInt(H3String::Format("era.artifacts.%d.spells.costChanger", artId).String(), readSuccess);
+
+		if (readSuccess && readResult)
+			artifactsWhichAffectAllSpellCost.insert(std::make_pair(artId, readResult));
 
 
 	}
@@ -243,6 +258,8 @@ void ArtifactsData::Clear()
 	spellsAddedByArtifactsId.clear();
 
 	artifactsWhichMakeThatSpellFree.clear();
+	artifactsWhichAffectAllSpellCost.clear();
+	artifactsWhichSetExpertMagiclevel.clear();
 
 	artifactsWhichBanSpell.clear();
 
@@ -261,11 +278,11 @@ void ArtifactsData::Clear()
 	artifactsWhichScaleDamage.clear();
 	artifactsWhichScaleResurrection.clear();
 	artifactsWhichScaleCure.clear();
-	artifactsWhichDecreaseResistance.clear();
+	artifactsWhichGiveResistance.clear();
 
 	artifactsWhichAddGold.clear();
 
-	
+
 }
 
 
