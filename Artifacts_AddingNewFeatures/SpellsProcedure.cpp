@@ -171,7 +171,7 @@ int __stdcall Hero__GetSpellCost(HiHook* h, H3Hero* hero, const int spell, const
 		{
 			if (hero->WearsArtifact(it->second))
 			{
-				spellCost = 1;
+				spellCost = 0;
 				break;
 			}
 		}
@@ -324,9 +324,8 @@ int __stdcall Hero__GetSpellMasteryLevel(HiHook* h, H3Hero* hero, const eSpell s
 _LHF_(Art__GetSpellsList)
 {
 
-	bool returnType = EXEC_DEFAULT;
 	UINT artId = c->esi;
-	//if (artId && artifactsData.spellsAddedByArtifactsId.count(artId) > 0)
+	if (artId && artifactsData.spellsAddedByArtifactsId.find(artId) != artifactsData.spellsAddedByArtifactsId.end())
 	{
 		const H3SpellsBitset* s = reinterpret_cast<H3SpellsBitset*>(c->ebp - 0x1C);
 
@@ -336,12 +335,9 @@ _LHF_(Art__GetSpellsList)
 			int spell = it->second;
 			THISCALL_3(void, 0x4E67A0, s, it->second, 1);
 		}
-
-		returnType = NO_EXEC_DEFAULT;
-		c->return_address = 0x4D979D;
 	}
 
-	return returnType;
+	return EXEC_DEFAULT;
 }
 
 _LHF_(BattleMgr__BeforeArtifactAutoCast)
