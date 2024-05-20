@@ -4,6 +4,8 @@ class LocaleHandler
 {
 private:
 
+	LocaleHandler();
+
 	Locale* m_current;// Locale;
 	const Locale* m_seleted; //Locale;
 	//Locale* m_default;
@@ -21,13 +23,13 @@ public:
 	const BOOL LocaleExists(const char* other) const noexcept;
 	const Locale* LocaleAt(int id) const noexcept;
 
-	LocaleHandler();
 	const UINT32 GetCount() const noexcept;
-	BOOL ChangeLocale(const Locale* locale) const;
+	BOOL SetForUser(const Locale* locale) const;
 	void SetSelected(const Locale* locale) noexcept;
 	const Locale* CurrentLocale() const noexcept;
 	const Locale* SelectedLocale() const noexcept;
 	//const Locale* DefaultLocale() const noexcept;
+	static LocaleHandler& Get()  noexcept;
 	virtual ~LocaleHandler();
 
 

@@ -1,40 +1,44 @@
 #include "pch.h"
 #include "LanguageSelectionDlg.h"
 
-constexpr UINT32 WIDGET_WIDTH = 213;
-constexpr UINT32 WIDGET_HEIGHT = 23;
-constexpr UINT16 FRAME_WIDGET_ID= 2;
+//constexpr UINT32 WIDGET_WIDTH = 213;
+//constexpr UINT32 WIDGET_HEIGHT = 23;
+constexpr UINT16 FRAME_WIDGET_ID = 2;
 constexpr UINT16 FIRST_SELECTION_WIDGET_ID = 3;
-constexpr UINT16 MAX_ITEMS_PER_HEIGHT = 9;
 
 H3LoadedPcx* LanguageSelectionDlg::m_widgetBackground = nullptr;
 
-LanguageSelectionDlg::LanguageSelectionDlg(int width, int height, int x , int y, BOOL statusBar, BOOL makeBackground )
-	: H3Dlg(WIDGET_WIDTH , MAX_ITEMS_PER_HEIGHT * WIDGET_HEIGHT, x, y, statusBar, makeBackground), m_localeHandler(nullptr)
+LanguageSelectionDlg::LanguageSelectionDlg(int width, int height, int x, int y, BOOL statusBar, BOOL makeBackground)
+	: H3Dlg(width, height, x, y, false, false), m_localeHandler(nullptr)
 {
-//	
-	//this->widthDlg = 2;
-	flags ^=0x10; // disable dlg shadow
-	m_localeHandler = new LocaleHandler();
-	CreateDlgItems();
+	//	m_style
+		//this->widthDlg = 2;
+	flags ^= 0x10; // disable dlg shadow
+	m_localeHandler = &LocaleHandler::Get();
 }
-LanguageSelectionDlg::LanguageSelectionDlg(const H3DlgItem* calledItem)
-	:LanguageSelectionDlg(WIDGET_WIDTH + 16, WIDGET_HEIGHT, calledItem->GetAbsoluteX(), calledItem->GetAbsoluteY())
+LanguageSelectionDlg::LanguageSelectionDlg(const H3DlgItem* calledItem, const DlgStyle* style, const UINT itemsToDraw)
+	:LanguageSelectionDlg(style->WIDGET_WIDTH + 16 * (itemsToDraw > style->MAXIMUM_ROWS), style->WIDGET_HEIGHT* itemsToDraw, calledItem->GetAbsoluteX(), calledItem->GetAbsoluteY())
 {
+	m_style = style;
+	CreateDlgItems();
 
 }
 void __fastcall DlgSroll_Proc(INT32 tickId, H3BaseDlg* dlg)
 {
-	
+
+
+
 	// try to cast dlg to our dlg
 	if (auto localeDlg = dynamic_cast<LanguageSelectionDlg*>(dlg))
 	{
+		const UINT16 MAX_ITEMS_PER_HEIGHT = localeDlg->Style()->MAXIMUM_ROWS;
+
 		//localeDlg->HideFrame();
 		// iterate all items by id
 		for (size_t i = 0; i < MAX_ITEMS_PER_HEIGHT; i++)
 		{
 			// assure those support lcoale edits
-			auto selectionWidget = dlg->Get<H3DlgTextPcxLocale>(i  + FIRST_SELECTION_WIDGET_ID);
+			auto selectionWidget = dlg->Get<H3DlgTextPcxLocale>(i + FIRST_SELECTION_WIDGET_ID);
 			if (selectionWidget)
 			{	// set new locale according on the scroll offset
 				auto locale = localeDlg->Handler()->LocaleAt(i + tickId);
@@ -71,30 +75,29 @@ void __fastcall DlgSroll_Proc(INT32 tickId, H3BaseDlg* dlg)
 }
 void LanguageSelectionDlg::CreateDlgItems()
 {
+	const UINT WIDGET_WIDTH = m_style->WIDGET_WIDTH;
+	const UINT WIDGET_HEIGHT = m_style->WIDGET_HEIGHT;
 
-	// here create items
-
-	// get number of the locales
 	const UINT SIZE = m_localeHandler->GetCount();
-	
+
+	const UINT16 MAX_ITEMS_PER_HEIGHT = m_style->MAXIMUM_ROWS;
 	// if items more than need
 	const int overload = SIZE - MAX_ITEMS_PER_HEIGHT;
 	if (overload > 0)
 	{
+		// create Scroll Bar
 		constexpr int SCROLLBAR_WIDTH = 16;
-		CreateScrollbar(widthDlg, 0, SCROLLBAR_WIDTH, heightDlg, 1, overload, DlgSroll_Proc);
-		widthDlg += SCROLLBAR_WIDTH;
+		CreateScrollbar(WIDGET_WIDTH, 0, SCROLLBAR_WIDTH, heightDlg, 1, overload, DlgSroll_Proc);
 	}
 
 	const int ITEMS_NUM = SIZE < MAX_ITEMS_PER_HEIGHT ? SIZE : MAX_ITEMS_PER_HEIGHT;
 
-	// change dlg height accordingly
-	heightDlg = ITEMS_NUM * WIDGET_HEIGHT;
+
 
 	for (size_t i = 0; i < ITEMS_NUM; i++)
 	{
 		const int y = i * WIDGET_HEIGHT;
-		auto textPcx = H3DlgTextPcxLocale::Create(0, y, WIDGET_WIDTH, WIDGET_HEIGHT, m_localeHandler->LocaleAt(i), h3::NH3Dlg::Text::MEDIUM, m_widgetBackground, 1, i + FIRST_SELECTION_WIDGET_ID);
+		auto textPcx = H3DlgTextPcxLocale::Create(0, y, WIDGET_WIDTH, WIDGET_HEIGHT, m_localeHandler->LocaleAt(i), h3::NH3Dlg::Text::MEDIUM, m_style->localeBackgroundLoadedPcx, 1, i + FIRST_SELECTION_WIDGET_ID);
 		AddItem(textPcx);
 	}
 
@@ -107,9 +110,9 @@ void LanguageSelectionDlg::CreateDlgItems()
 }
 BOOL LanguageSelectionDlg::OnMouseHover(H3DlgItem* it)
 {
-	if (it->GetID()>= FIRST_SELECTION_WIDGET_ID)
+	if (it->GetID() >= FIRST_SELECTION_WIDGET_ID)
 	{
-		if (auto pcxLocale = it->Cast<H3DlgTextPcxLocale>() )
+		if (auto pcxLocale = it->Cast<H3DlgTextPcxLocale>())
 		{
 			m_localeHandler->SetSelected(pcxLocale->GetLocale());
 
@@ -149,7 +152,7 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg& msg)
 			//ask question
 			if (H3Messagebox::Choice())
 			{
-				m_localeHandler->ChangeLocale(locale);
+				m_localeHandler->SetForUser(locale);
 				Stop();
 			}
 		}
@@ -158,28 +161,11 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg& msg)
 	}
 
 	if (msg.ClickOutside())
-	{
 		Stop();
-	}
 
 	return 0;
 }
 
-
-
-
-void LanguageSelectionDlg::CreateAssets()
-{
-
-	if (!m_widgetBackground)
-	{
-		// create pcx for back
-		m_widgetBackground = H3LoadedPcx::Create(h3_NullString, WIDGET_WIDTH, WIDGET_HEIGHT);
-		auto basePcx = H3LoadedPcx::Load("comopbck.pcx");
-		basePcx->DrawToPcx(245, 253, 245 + WIDGET_WIDTH, 253 + WIDGET_HEIGHT, m_widgetBackground, 0, 0, 1);
-		basePcx->Dereference();
-	}
-}
 
 
 
@@ -189,34 +175,36 @@ const LocaleHandler* LanguageSelectionDlg::Handler() const noexcept
 	return m_localeHandler;
 }
 
+const DlgStyle* LanguageSelectionDlg::Style() const noexcept
+{
+	return m_style;
+}
+
 LanguageSelectionDlg::~LanguageSelectionDlg()
 {
-	if (m_localeHandler)
-	{
-		delete m_localeHandler;
-		m_localeHandler = nullptr;
-	}
+
 }
 
 constexpr UINT16 LOCALEDLG_BUTTON_ID = 4445;
-void CreateDlgButton(H3BaseDlg* dlg, int x, int y)
+void CreateDlgButton(H3BaseDlg* dlg, int x, int y, const DlgStyle* style)
 {
 
-	auto def = H3LoadedDef::Load("OVBUTN3.def");
-	auto captionButton = H3DlgCaptionButton::Create(x, y, def->widthDEF, def->heightDEF, LOCALEDLG_BUTTON_ID, "OVBUTN3.def", "text", h3::NH3Dlg::Text::SMALL, 0, 0, 0, 0, 0);
+	auto def = H3LoadedDef::Load(style->dlgCallButtonName);
+	auto captionButton = H3DlgCaptionButton::Create(x, y, def->widthDEF, def->heightDEF, LOCALEDLG_BUTTON_ID, style->dlgCallButtonName, "text", h3::NH3Dlg::Text::SMALL, 0, 0, 0, 0, 0);
 	captionButton->SetClickFrame(1);
 
 	dlg->AddItem(captionButton);
 	def->Dereference();
 }
+
+
 _LHF_(DlgMainMenu_BeforeRun)
 {
 	auto dlg = reinterpret_cast<H3Dlg*>(c->ecx);    // before any dlg run get dlg
 
-	//H3Messagebox(Era::IntToStr((int)H3CreatureInformation::Get()).c_str());
-	//H3Messagebox(Era::IntToStr((int)P_CreatureInformation).c_str());
+
 	if (dlg) // if exists
-		CreateDlgButton(dlg, 0, 0);
+		CreateDlgButton(dlg, 0, 0, &DlgStyle::styles[0]);
 
 	return EXEC_DEFAULT;
 }
@@ -225,18 +213,25 @@ _LHF_(DlgSystemOptions_AtCreate)
 	H3Dlg* dlg = *reinterpret_cast<H3Dlg**>(c->ebp - 0x20);    // before any dlg run get dlg
 
 	if (dlg) // if exists
-		CreateDlgButton(dlg, 235, 270);
+		CreateDlgButton(dlg, 235, 269, &DlgStyle::styles[1]);
 	return EXEC_DEFAULT;
 }
 
-void HandleDlgButton(const H3Msg* msg)
+void HandleDlgButton(const H3Msg* msg, const DlgStyle* style)
 {
 	if (msg->IsLeftClick() && msg->itemId == LOCALEDLG_BUTTON_ID)
 	{
 		auto bttn = msg->GetDlg()->GetCaptionButton(msg->itemId);
 		if (bttn)
 		{
-			LanguageSelectionDlg langDlg(bttn);// = direction ? {500, 500} : {0};
+
+			const UINT SIZE = LocaleHandler::Get().GetCount();
+
+			const UINT16 MAX_ITEMS_PER_HEIGHT  = style->MAXIMUM_ROWS;
+			const int ITEMS_NUM = SIZE < MAX_ITEMS_PER_HEIGHT ? SIZE : MAX_ITEMS_PER_HEIGHT;
+
+			//auto& style = DlgStyle::styles[0];
+			LanguageSelectionDlg langDlg(bttn, style, ITEMS_NUM);// = direction ? {500, 500} : {0};
 			langDlg.Start();
 		}
 	}
@@ -244,32 +239,33 @@ void HandleDlgButton(const H3Msg* msg)
 
 int __stdcall DlgSystemOption_Proc(HiHook* h, H3BaseDlg* dlg, H3Msg* msg)
 {
-	HandleDlgButton(msg);
+	HandleDlgButton(msg, &DlgStyle::styles[0]);
 	return THISCALL_2(int, h->GetDefaultFunc(), dlg, msg);;
 }
 
 int __stdcall DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 {
-	HandleDlgButton(msg);
+	HandleDlgButton(msg, &DlgStyle::styles[1]);
 	return FASTCALL_1(int, h->GetDefaultFunc(), msg);;
 }
 
 
 
-
-
 void LanguageSelectionDlg::Init()
 {
-	LanguageSelectionDlg::CreateAssets();
-	//Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
-	_PI->WriteLoHook(0x5B2F9B, DlgSystemOptions_AtCreate); //System options dlg from Adventure Mgr and Main Menu (by HD mod only - RMB or MRM)
+	if (DlgStyle::CreateAssets())
+	{
+		//Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
+		_PI->WriteLoHook(0x5B2F9B, DlgSystemOptions_AtCreate); //System options dlg from Adventure Mgr and Main Menu (by HD mod only - RMB or MRM)
 
-	_PI->WriteLoHook(0x4EF259, DlgMainMenu_BeforeRun); //MAIN Main Menu Dlg Run
-  //  _PI->WriteLoHook(0x4EF331, DlgMainMenu_BeforeRun); // New Game Main Menu Dlg Run
-  //  _PI->WriteLoHook(0x4EF668, DlgMainMenu_BeforeRun); // Load Game Main Menu Dlg Run
-   // _PI->WriteLoHook(0x4F0799, DlgMainMenu_BeforeRun);// Campaign Game Main Menu Dlg Run
-	_PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc);
-	_PI->WriteHiHook(0x5B3450, THISCALL_, DlgSystemOption_Proc);
+		_PI->WriteLoHook(0x4EF259, DlgMainMenu_BeforeRun); //MAIN Main Menu Dlg Run
+		//_PI->WriteLoHook(0x4EF331, DlgMainMenu_BeforeRun); // New Game Main Menu Dlg Run
+		//_PI->WriteLoHook(0x4EF668, DlgMainMenu_BeforeRun); // Load Game Main Menu Dlg Run
+		//_PI->WriteLoHook(0x4F0799, DlgMainMenu_BeforeRun);// Campaign Game Main Menu Dlg Run
+		_PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc);
+		_PI->WriteHiHook(0x5B3450, THISCALL_, DlgSystemOption_Proc);
+	}
+
 }
 
 

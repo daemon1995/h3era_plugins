@@ -10,7 +10,7 @@ LocaleHandler::LocaleHandler()
 
 
 
-
+	m_locales.clear();
 	// 1. Read if default locale exists
 	//;
 	//m_locales.comp = &LocaleComparator;
@@ -63,7 +63,7 @@ LocaleHandler::LocaleHandler()
 
 		m_current = new Locale(str.c_str(), EraJS::read(h3_TextBuffer));
 	}
-	
+
 	m_locales.shrink_to_fit();
 
 }
@@ -83,10 +83,10 @@ const BOOL LocaleHandler::LocaleExists(const char* other) const noexcept
 			return !_strcmpi(locale->name.c_str(), other);
 		}) != m_locales.end();
 
-	return compareResult;
+		return compareResult;
 }
 
-BOOL LocaleHandler::ChangeLocale(const Locale* locale) const
+BOOL LocaleHandler::SetForUser(const Locale* locale) const
 {
 	Era::SetLanguage(locale->name.c_str());
 	Era::ReloadLanguageData();
@@ -132,13 +132,15 @@ const UINT32 LocaleHandler::GetCount() const noexcept
 {
 	return m_locales.size();
 }
+LocaleHandler& LocaleHandler::Get() noexcept
+{
+	static LocaleHandler instance;
+	return instance;
+	// TODO: insert return statement here
+}
 LocaleHandler::~LocaleHandler()
 {
 
-
-	for (auto& l : m_locales)
-		l->~Locale();
-		m_locales.clear();
 	if (m_current)
 	{
 		delete m_current;
