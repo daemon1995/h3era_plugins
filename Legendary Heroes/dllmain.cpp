@@ -7,9 +7,9 @@ namespace dllText
 {
     constexpr const char* PLUGIN_NAME = "Legend_Heroes.era";
     constexpr const char* PLUGIN_AUTHOR = "daemon_n";
-    constexpr const char* PLUGIN_DATA = "19.12.2023";
-    constexpr const char* INSTANCE_NAME = "LegendHeroes.HeroDoll.daemon_n";
-    constexpr const char* PLUGIN_VERSION = "1.0";
+    constexpr const char* PLUGIN_DATA = __DATE__;
+    constexpr const char* INSTANCE_NAME = "EraPlugin.LegendHeroes.daemon_n";
+    constexpr const char* PLUGIN_VERSION = "1.1";
 }
 
 Patcher* globalPatcher;

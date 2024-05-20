@@ -1,17 +1,11 @@
 #pragma once
-
-#include <string>
-#include <iostream>
-#include <tchar.h>
+#include "pch.h"
 #include <atlstr.h>
-#include <fstream>
-#include <urlmon.h> 
 #include <wininet.h>
 
 #pragma comment( lib, "urlmon.lib" )
-#pragma comment( lib, "Wininet.lib" )
+#pragma comment( lib, "wininet.lib" )
 
-void GetOnlineVersion(std::string fileLink, std::string & resultRef);
 
 struct ComInit
 {
