@@ -41,8 +41,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
             // hero update screen proc -> setting class name; CALL_ hook type, CDECL cause this is sprintf C-lib   
             _PI->WriteHiHook(0x4E1DFB, CDECL_, DlgHeroUpdate_OnSettingClassName);
-            // set new class nam y pos
-            _PI->WriteByte(0x04DEB45 + 1, 49);
+            // set hero class name y pos
+            _PI->WriteByte(0x04DEB45 + 1, 44);
+            // set hero name y pos
+            _PI->WriteByte(0x04DEAF1 + 1, 24);
+
+            
+            
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
