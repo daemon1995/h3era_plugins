@@ -30,6 +30,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
     switch (ul_reason_for_call)
     {
+
+    case DLL_PROCESS_ATTACH:
         if (!plugin_On)
         {
             plugin_On = 1;
@@ -42,7 +44,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             // set new class nam y pos
             _PI->WriteByte(0x04DEB45 + 1, 49);
         }
-    case DLL_PROCESS_ATTACH:
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
