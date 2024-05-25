@@ -6,6 +6,7 @@ LegendHeroes* LegendHeroes::instance = nullptr;
 H3LoadedPcx16* LegendHeroes::m_drawBuffer[] = {};
 
 LegendHeroes::LegendHeroes(PatcherInstance* pi)
+	:IGamePatch(pi)
 {
 
 	WgtSettings::loadArtSettings();
@@ -59,7 +60,6 @@ void LegendHeroes::CreatePatches() noexcept
 //	Era::RegisterHandler(OnGameLeave, "OnGameLeave");
 	Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
 
-	
 	//_pi->WriteHiHook(0x4E1CC0, THISCALL_, H3HeroDlgUodate);
 	_pi->WriteHiHook(0x4DD540, THISCALL_, DlgHero_Proc);
 

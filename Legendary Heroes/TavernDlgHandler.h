@@ -6,7 +6,7 @@ class TavernDlgHandler : public IGamePatch
 	static _LHF_(AfterCreate);
 	H3LoadedPcx16* m_drawBuffer[2];
 
-
+	TavernDlgHandler( PatcherInstance *pi);
 public:
 	static TavernDlgHandler* instance;
 

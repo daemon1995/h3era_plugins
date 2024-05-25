@@ -4,7 +4,7 @@
 std::vector<DlgStyle> DlgStyle::styles;
 
 DlgStyle::DlgStyle(const char* pcxName, const RECT rect, const UINT16 maxRows, const char* defName)
-	:localeBackgroundPcxName(pcxName), WIDGET_WIDTH(rect.right - rect.left), WIDGET_HEIGHT(rect.bottom - rect.top), MAXIMUM_ROWS(maxRows), dlgCallButtonName(defName)
+	: WIDGET_WIDTH(rect.right - rect.left), WIDGET_HEIGHT(rect.bottom - rect.top), MAXIMUM_ROWS(maxRows), dlgCallButtonName(defName)
 {
 
 	auto pcx = H3LoadedPcx::Load(pcxName);
@@ -27,8 +27,8 @@ bool DlgStyle::CreateAssets(bool forceRecreate)
 
 	if (styles.empty())
 	{
-		DlgStyle::Create("comopbck.pcx", { 245, 253,365,277 }, 15, "OVBUTN3.def");
-		DlgStyle::Create("ADOPYPNL.PCX", { 4,1,102,19 }, 9, "OVBUTN3.def");
+		Create("comopbck.pcx", { 245, 253,365,277 }, 3, "OVBUTN3.def");
+		Create("ADOPYPNL.PCX", { 4,1,102,19 }, 12123, "OVBUTN3.def");
 
 	}
 	return !styles.empty();

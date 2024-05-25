@@ -6,7 +6,6 @@
 constexpr UINT16 FRAME_WIDGET_ID = 2;
 constexpr UINT16 FIRST_SELECTION_WIDGET_ID = 3;
 
-H3LoadedPcx* LanguageSelectionDlg::m_widgetBackground = nullptr;
 
 LanguageSelectionDlg::LanguageSelectionDlg(int width, int height, int x, int y, BOOL statusBar, BOOL makeBackground)
 	: H3Dlg(width, height, x, y, false, false), m_localeHandler(nullptr)
@@ -23,6 +22,14 @@ LanguageSelectionDlg::LanguageSelectionDlg(const H3DlgItem* calledItem, const Dl
 	CreateDlgItems();
 
 }
+
+/// function to get last locale from vector
+// write commentaries
+	
+
+
+
+
 void __fastcall DlgSroll_Proc(INT32 tickId, H3BaseDlg* dlg)
 {
 
@@ -239,6 +246,7 @@ void HandleDlgButton(const H3Msg* msg, const DlgStyle* style)
 
 int __stdcall DlgSystemOption_Proc(HiHook* h, H3BaseDlg* dlg, H3Msg* msg)
 {
+
 	HandleDlgButton(msg, &DlgStyle::styles[0]);
 	return THISCALL_2(int, h->GetDefaultFunc(), dlg, msg);;
 }
@@ -249,15 +257,19 @@ int __stdcall DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 	return FASTCALL_1(int, h->GetDefaultFunc(), msg);;
 }
 
+_LHF_(LanguageSelectionDlg::MyClassLoHook)
+{
+	
 
-
+	return EXEC_DEFAULT;
+}
 void LanguageSelectionDlg::Init()
 {
 	if (DlgStyle::CreateAssets())
 	{
 		//Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
 		_PI->WriteLoHook(0x5B2F9B, DlgSystemOptions_AtCreate); //System options dlg from Adventure Mgr and Main Menu (by HD mod only - RMB or MRM)
-
+		_PI->WriteLoHook(0x5B2F9B, MyClassLoHook);
 		_PI->WriteLoHook(0x4EF259, DlgMainMenu_BeforeRun); //MAIN Main Menu Dlg Run
 		//_PI->WriteLoHook(0x4EF331, DlgMainMenu_BeforeRun); // New Game Main Menu Dlg Run
 		//_PI->WriteLoHook(0x4EF668, DlgMainMenu_BeforeRun); // Load Game Main Menu Dlg Run

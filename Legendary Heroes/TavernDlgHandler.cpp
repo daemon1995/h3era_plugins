@@ -15,19 +15,24 @@ namespace lh
 
 TavernDlgHandler* TavernDlgHandler::instance = nullptr;
 
+TavernDlgHandler::TavernDlgHandler(PatcherInstance* pi)
+	:IGamePatch(pi)
+{
 
+}
 
 void TavernDlgHandler::Init(PatcherInstance* _pi, H3LoadedPcx16* drawBuffer[2])  noexcept
 {
 	if (!instance)
 	{
-		instance = new TavernDlgHandler();
-		if (!instance)
-			return;
-		instance->_pi = _pi;
-		instance->m_drawBuffer[0] = drawBuffer[0];
-		instance->m_drawBuffer[1] = drawBuffer[1];
-		instance->CreatePatches();
+		instance = new TavernDlgHandler(_pi);
+		if (instance)
+
+		{
+			instance->m_drawBuffer[0] = drawBuffer[0];
+			instance->m_drawBuffer[1] = drawBuffer[1];
+			instance->CreatePatches();
+		}
 	}
 }
 void  TavernDlgHandler::CreatePatches() noexcept

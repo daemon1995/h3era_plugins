@@ -562,14 +562,19 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 
 
 
-
-
-
-
-
-
 std::vector<H3DlgPcx16*> CreatureDlgHandler::dlgSkillPcx = {};
 std::vector<CreatureSkill> CreatureDlgHandler::creatureSkills = {};
+
+
+EXTERN_C __declspec(dllexport) void AddExternalCreatureSkill(const char* name, const char* description, const char* pcx16Name)
+{
+	//const int expId;
+
+
+	
+
+
+}
 
 
 bool CreatureDlgHandler::CreateCreatureSkillsList()
@@ -612,9 +617,20 @@ bool CreatureDlgHandler::CreateCreatureSkillsList()
 	CDECL_5(void, 0x71EF2B, montype, dlg->numberCreatures, experience, crExpo, 0);
 	_DlgCreatureExpoInfo_* dlgCreatureExpoInfo = reinterpret_cast<_DlgCreatureExpoInfo_*>(0x845880);
 
+	UINT storeY1= Era::y[1];
+	Era::y[2] = dlg->creatureId;
+
+	Era::ExecErmCmd("VRy1:Si^gem_TestEventId^");
+	Era::ExecErmCmd("FUy1:Py2");
+	UINT ermEvent =Era::y[1];
+
+	Era::x[1] = dlg->creatureId;
+
+	Era::y[1] = storeY1;
+
 	creatureSkills.clear();
 	UINT32 picsCount = dlgCreatureExpoInfo->IcoPropertiesCount;
-	creatureSkills.reserve(picsCount);
+	creatureSkills.reserve(picsCount*2);
 
 	if (auto* skillsDef = H3LoadedDef::Load(n_DlgExpMon))
 	{
@@ -636,7 +652,6 @@ bool CreatureDlgHandler::CreateCreatureSkillsList()
 
 				skillsDef->DrawToPcx16(0, skillPicIndex, tempPcx, 0, 0);
 				
-
 				DrawPcx16ResizedBicubic(skillPic, tempPcx, tempPcx->width, tempPcx->height, 2, 2, skillPic->width - 4, skillPic->height - 4);
 
 				creatureSkills.emplace_back(*new CreatureSkill{ 0,0,0,0,skillPic });
@@ -656,11 +671,8 @@ bool CreatureDlgHandler::CreateCreatureSkillsList()
 
 		skillsDef->Dereference();
 
-
 	}
-
-
-
+	
 	// JackSlater block - trying to access an army stack and exp
 //	H3Hero* hero = reinterpret_cast <H3Hero*>(c->esi);
 //int army_slot = IntAt(c->ebp + 0xC);

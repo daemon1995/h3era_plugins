@@ -9,8 +9,7 @@ public:
 	const UINT16 MAXIMUM_ROWS;
 
 
-	const char* dlgCallButtonName = nullptr;
-	const char* localeBackgroundPcxName;
+	const const char* dlgCallButtonName = nullptr;
 	H3LoadedPcx* localeBackgroundLoadedPcx = nullptr;
 
 public:

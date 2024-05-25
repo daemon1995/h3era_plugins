@@ -8,7 +8,6 @@ class LanguageSelectionDlg :
     BOOL DialogProc(H3Msg& msg) override;
 
     void CreateDlgItems();
-    static H3LoadedPcx* m_widgetBackground;
     BOOL OnMouseHover(H3DlgItem* it) override;
     H3DlgFrame* m_selectionFrame;
 
@@ -22,6 +21,7 @@ public:
     const DlgStyle* Style() const noexcept;
     virtual ~LanguageSelectionDlg();
 
+    static _LHF_(MyClassLoHook);
     static void Init();
 
 };
