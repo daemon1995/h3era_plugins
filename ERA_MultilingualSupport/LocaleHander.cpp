@@ -1,24 +1,29 @@
 #include "pch.h"
 #include "LocaleHander.h"
 #include <sstream>
-constexpr const char* ini = "";
 
-constexpr LPCSTR defaultLocaleNames[4] = { "ru","en","cn","ua" };//, "kr", ""}
+constexpr LPCSTR defaultLocaleNames = ",ru,en,cn,ua,pl,kr";
 H3String LocaleHandler::m_displayedName{};
 
 LocaleHandler::LocaleHandler()
 	:m_current(nullptr), m_seleted(nullptr)//,m_default(nullptr)
 {
 
-
-
 	m_locales.clear();
 
 	m_locales.reserve(25);
 
 	//  Read list of available locales
+	bool readSuccess = false;
 
-	std::stringstream ss(EraJS::read("era.locale.list"));
+	std::string localeList = EraJS::read("era.locale.list", readSuccess);
+	if (readSuccess)
+		localeList.append(defaultLocaleNames);
+	else
+		localeList = defaultLocaleNames;
+
+	std::stringstream ss(localeList);
+
 	int counter = 0;// {};
 
 	while (ss.good() && counter++ < 512)
@@ -33,10 +38,9 @@ LocaleHandler::LocaleHandler()
 			{
 
 				sprintf(h3_TextBuffer, m_localeFormat, localeName);
-				bool readSuccess = false;
+				readSuccess = false;
 				Locale* locale = new Locale(localeName, EraJS::read(h3_TextBuffer, readSuccess));
 				locale->hasDescription = readSuccess && !locale->displayedName.empty();
-				//tempSet.insert({ counter++,locale });
 				m_locales.emplace_back(locale);
 
 			}
@@ -60,7 +64,7 @@ LocaleHandler::LocaleHandler()
 		{
 			// otherwise create new locale
 			//sprintf(h3_TextBuffer, m_localeFormat, localeName);
-			bool readSuccess = false;
+			readSuccess = false;
 			m_current = new Locale(localeName, EraJS::read(H3String::Format(m_localeFormat, localeName).String(), readSuccess));
 			m_current->hasDescription = readSuccess && !m_current->displayedName.empty();
 			// and add into vector

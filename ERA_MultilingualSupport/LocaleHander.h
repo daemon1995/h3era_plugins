@@ -8,7 +8,7 @@ private:
 	Locale* m_current;// Locale;
 	const Locale* m_seleted; //Locale;
 	//Locale* m_default;
-	const char* m_localeFormat = "era.locale.dlg.%s";
+	const char* m_localeFormat = "era.locale.name.%s";
 	static H3String m_displayedName;
 	std::vector<Locale*> m_locales;
 
