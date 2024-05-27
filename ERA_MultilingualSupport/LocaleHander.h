@@ -4,32 +4,34 @@ class LocaleHandler
 {
 private:
 
-	LocaleHandler();
 
 	Locale* m_current;// Locale;
 	const Locale* m_seleted; //Locale;
 	//Locale* m_default;
-
+	const char* m_localeFormat = "era.locale.dlg.%s";
+	static H3String m_displayedName;
 	std::vector<Locale*> m_locales;
 
 private:
-//	void GetDefaultLocale();
-	void GetCurrentLocale();
-	char* ReadLocaleFromIni(const char* iniPath);
 
+	const std::vector<Locale*>::const_iterator FindLocale(const char* other) const noexcept;
 
 public:
 
-	const BOOL LocaleExists(const char* other) const noexcept;
+	LocaleHandler();
+
+	static const char* ReadLocaleFromIni(const char* iniPath);
+	static const char* GetDisplayedName();
+	const char* const LocaleFormat() const noexcept;
+
 	const Locale* LocaleAt(int id) const noexcept;
 
 	const UINT32 GetCount() const noexcept;
 	BOOL SetForUser(const Locale* locale) const;
 	void SetSelected(const Locale* locale) noexcept;
-	const Locale* CurrentLocale() const noexcept;
-	const Locale* SelectedLocale() const noexcept;
+	const Locale* GetCurrent() const noexcept;
+	const Locale* GetSelected() const noexcept;
 	//const Locale* DefaultLocale() const noexcept;
-	static LocaleHandler& Get()  noexcept;
 	virtual ~LocaleHandler();
 
 

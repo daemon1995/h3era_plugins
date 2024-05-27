@@ -1,28 +1,44 @@
 #pragma once
 class LanguageSelectionDlg :
-    public H3Dlg
+	public H3Dlg
 {
 
-    const DlgStyle* m_style;
-    LocaleHandler* m_localeHandler;
-    BOOL DialogProc(H3Msg& msg) override;
+	const DlgStyle* m_style;
+	LocaleHandler* m_localeHandler;
 
-    void CreateDlgItems();
-    BOOL OnMouseHover(H3DlgItem* it) override;
-    H3DlgFrame* m_selectionFrame;
+	UINT m_LOCALES_TO_DRAW{};
+
+	BOOL DialogProc(H3Msg& msg) override;
+
+	struct DlgText :public IPluginText
+	{
+		H3String localeHasNoDescriptionFormat;
+
+		const char* questionformat = nullptr;
+		const char* sameLocaleFormat = nullptr;
+		void Load() noexcept override;
+	} m_text;
+
+
+private:
+	void CreateDlgItems();
+	BOOL OnMouseHover(H3DlgItem* it) override;
+	H3DlgFrame* m_selectionFrame;
+
+
 
 public:
 
-    LanguageSelectionDlg(int width, int height, int x = -1, int y = -1, BOOL statusBar = false, BOOL makeBackground = false);
-    LanguageSelectionDlg(const H3DlgItem* calledItem, const DlgStyle* style, const UINT itemsToDraw);
-    const void HideFrame() const noexcept;
-    void PlaceFrameAtWidget(const H3DlgTextPcxLocale* it) const noexcept;
-    const LocaleHandler* Handler() const noexcept;
-    const DlgStyle* Style() const noexcept;
-    virtual ~LanguageSelectionDlg();
+	void RedrawLocales(UINT32 firstItemId = 0)  noexcept;
+	LanguageSelectionDlg(const int width, const int height, const int x, const int y, const DlgStyle* style, LocaleHandler* handler);
+	void HideFrame() const noexcept;
+	void PlaceFrameAtWidget(const H3DlgTextPcxLocale* it) const noexcept;
+	const LocaleHandler* Handler() const noexcept;
+	const DlgStyle* Style() const noexcept;
+	virtual ~LanguageSelectionDlg();
 
-    static _LHF_(MyClassLoHook);
-    static void Init();
+	static _LHF_(MyClassLoHook);
+	static void Init();
 
 };
 

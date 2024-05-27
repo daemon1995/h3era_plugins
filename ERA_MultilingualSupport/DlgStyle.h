@@ -9,16 +9,22 @@ public:
 	const UINT16 MAXIMUM_ROWS;
 
 
-	const const char* dlgCallButtonName = nullptr;
+	const const char* dlgCallAssetPcxName = nullptr;
+	static struct StyleText :public IPluginText
+	{
+		const char* displayNameFormat;
+		void Load() override;
+	}text;
+
 	H3LoadedPcx* localeBackgroundLoadedPcx = nullptr;
 
 public:
 
-	DlgStyle(const char* sourcePcxName, const RECT rect, const UINT16 maxRows, const char* defNam);
-	static bool CreateAssets(bool forceRecreate=false);
+	DlgStyle(const char* sourcePcxName, const RECT rect, const UINT16 maxRows);
+	static bool CreateAssets(bool forceRecreate = false);
 	~DlgStyle();
 
 	static std::vector<DlgStyle> styles;
-	static DlgStyle* Create(const char* pcxName, const RECT rect, const UINT16 maxRow,const char* defName);
+	static DlgStyle* Create(const char* pcxName, const RECT rect, const UINT16 maxRow);
 };
 
