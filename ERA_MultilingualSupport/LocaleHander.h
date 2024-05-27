@@ -20,7 +20,7 @@ public:
 
 	LocaleHandler();
 
-	static const char* ReadLocaleFromIni(const char* iniPath);
+	static std::string ReadLocaleFromIni(const char* iniPath);
 	static const char* GetDisplayedName();
 	const char* const LocaleFormat() const noexcept;
 
