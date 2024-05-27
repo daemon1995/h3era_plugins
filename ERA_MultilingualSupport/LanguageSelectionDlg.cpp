@@ -116,10 +116,10 @@ BOOL LanguageSelectionDlg::OnMouseHover(H3DlgItem* it)
 	return 0;
 }
 
-void LanguageSelectionDlg::RedrawLocales(UINT32 firstItemId)  noexcept
+void LanguageSelectionDlg::RedrawLocales(UINT16 firstItemId)  noexcept
 {
 	// iterate all items by id
-	for (size_t i = 0; i < m_LOCALES_TO_DRAW; i++)
+	for (uint16_t i = 0; i < m_LOCALES_TO_DRAW; i++)
 	{
 		// assure those support lcoale edits
 		if (auto selectionWidget = Get<H3DlgTextPcxLocale>(i + FIRST_SELECTION_WIDGET_ID))
@@ -127,7 +127,6 @@ void LanguageSelectionDlg::RedrawLocales(UINT32 firstItemId)  noexcept
 			auto locale = Handler()->LocaleAt(i + firstItemId);
 			selectionWidget->SetLocale(locale);
 			if (selectionWidget->GetX() == m_selectionFrame->GetX()
-
 				&& selectionWidget->GetY() == m_selectionFrame->GetY())
 			{
 				PlaceFrameAtWidget(selectionWidget);

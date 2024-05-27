@@ -29,7 +29,7 @@ private:
 
 public:
 
-	void RedrawLocales(UINT32 firstItemId = 0)  noexcept;
+	void RedrawLocales(UINT16 firstItemId = 0)  noexcept;
 	LanguageSelectionDlg(const int width, const int height, const int x, const int y, const DlgStyle* style, LocaleHandler* handler);
 	void HideFrame() const noexcept;
 	void PlaceFrameAtWidget(const H3DlgTextPcxLocale* it) const noexcept;
