@@ -168,7 +168,7 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg& msg)
 			LPCSTR keyName = H3String::Format(m_localeHandler->LocaleFormat(), locale->name.c_str()).String();
 			comment = H3String::Format(m_text.localeHasNoDescriptionFormat.String(), locale->name.c_str(), keyName).String();
 		}
-		sprintf(h3_TextBuffer, formatPtr, locale->displayedName.c_str(), locale->name.c_str(), comment);
+		sprintf(h3_TextBuffer, formatPtr, locale->name.c_str(), locale->displayedName.c_str(), comment);
 
 
 		if (samelocale)

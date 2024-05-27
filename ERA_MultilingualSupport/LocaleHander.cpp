@@ -127,6 +127,7 @@ void LocaleHandler::SetSelected(const Locale* locale) noexcept { m_seleted = loc
 
 const char* LocaleHandler::GetDisplayedName()
 {
+	DlgStyle::text.Load();
 	sprintf(h3_TextBuffer, DlgStyle::text.displayNameFormat, ReadLocaleFromIni("heroes3.ini").c_str());
 	m_displayedName = h3_TextBuffer;
 	return m_displayedName.String();
