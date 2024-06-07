@@ -86,7 +86,6 @@ _LHF_(HooksInit)
 }
 
 
-
 void __stdcall Dlg_WoG_Options_Show(HiHook* hook, int a1);
 
 BOOL APIENTRY DllMain( HMODULE hModule,

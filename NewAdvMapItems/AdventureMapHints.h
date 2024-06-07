@@ -73,7 +73,7 @@ class AdventureMapHints :
     std::set<UINT16> m_drawnOjects;
 
 
-    AdventureMapHints();
+    AdventureMapHints(PatcherInstance *pi);
 
 private:
     static LPCSTR GetHintText(H3MapItem* mapItem)  noexcept;

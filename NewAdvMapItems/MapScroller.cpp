@@ -74,9 +74,12 @@ _LHF_(MapScroller::BaseDlg_OnRightClickHold)
 int __stdcall MapScroller::AdvMgr_MapScreenProcedure(HiHook* h, H3AdventureManager* adv, H3Msg* msg) noexcept
 {
 	//char middleMouse = GetAsyncKeyState(VK_MBUTTON);// &0x1;
+	int mapViewW = H3GameWidth::Get() - (800 - 592); // right panel
+	int mapViewH = H3GameHeight::Get() - (600 - 544); // bottom panel
 
+	mapScroller.isMapView = msg->GetX() >= 8 && msg->GetX() <= 8 + mapViewW && msg->position.x >= 8 && msg->position.y <= 8 + mapViewH;
 
-	if ((msg->itemId == 37 || msg->itemId == 0)
+	if (mapScroller.isMapView
 		&&
 		(msg->command == eMsgCommand::MOUSE_BUTTON
 		&& msg->subtype == eMsgSubtype::RBUTTON_DOWN
@@ -124,10 +127,7 @@ int __stdcall MapScroller::AdvMgr_MapScreenProcedure(HiHook* h, H3AdventureManag
 	if (msg->command == eMsgCommand::MOUSE_OVER
 		|| msg->command == eMsgCommand::MOUSE_BUTTON)
 	{
-		int mapViewW = H3GameWidth::Get() - (800 - 592); // right panel
-		int mapViewH = H3GameHeight::Get() - (600 - 544); // bottom panel
 
-		mapScroller.isMapView = msg->GetX() >= 8 && msg->GetX() <= 8 + mapViewW && msg->position.x >= 8 && msg->position.y <= 8 + mapViewH;
 		// if mapView Zone then send wrong coordinates for map items under mouse 
 		if (mapScroller.isMapView)
 		{

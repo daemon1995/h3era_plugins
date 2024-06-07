@@ -2,7 +2,7 @@
 #include "LocaleHander.h"
 #include <sstream>
 
-constexpr LPCSTR defaultLocaleNames = ",ru,en,cn,ua,pl,kr";
+constexpr LPCSTR defaultLocaleNames = ",en,ru,cn,ua,pl,kr";
 H3String LocaleHandler::m_displayedName{};
 
 LocaleHandler::LocaleHandler()

@@ -29,7 +29,7 @@ public:
 		std::vector<int> densities;
 		std::vector<int> cbId;
 		std::vector<int> isNotBank;
-		std::multimap<int, LPCSTR> properties;
+		std::multimap<int, std::string> properties;
 
 
 		std::vector<int> types;

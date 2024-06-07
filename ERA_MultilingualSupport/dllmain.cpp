@@ -45,12 +45,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 				globalPatcher = GetPatcher();
 				_PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 				_PI->WriteLoHook(0x4EEAF2, HooksInit);
-				//Era::RegisterHandler(OnAfterWog, "OnAfterWog ");
-				//  _PI->WriteLoHook(0x4EDE9D, Crtraits_RightAfterLoad);
+
 
 			}
-
-
 		}
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:

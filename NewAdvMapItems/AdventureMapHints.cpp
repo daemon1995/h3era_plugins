@@ -8,7 +8,7 @@ void AdventureMapHints::Init(PatcherInstance* pi)
 {
 	if (!instance)
 	{
-		instance = new AdventureMapHints();
+		instance = new AdventureMapHints(pi);
 		if (instance)
 		{
 			instance->_pi = pi;
@@ -39,7 +39,8 @@ void echo(const char* a)
 void echo(H3String& a) { echo(a.String()); }
 void echo(std::string& a) { echo(a.c_str()); }
 
-AdventureMapHints::AdventureMapHints()
+AdventureMapHints::AdventureMapHints(PatcherInstance* pi)
+	:IGamePatch(pi)
 {
 	m_mapView.left =8; // right panel
 	m_mapView.top =8; // bottom panel
@@ -64,6 +65,7 @@ void AdventureMapHints::CreatePatches() noexcept
 	//_pi->WriteLoHook(0x4122B0, AdvMgr_DrawFogOfWar);
 	
 }
+
 _LHF_(AdventureMapHints::AdvMgr_AfterObjectDraw)
 {
 	if (instance->m_drawnOjects.size())
@@ -92,8 +94,8 @@ _LHF_(AdventureMapHints::AdvMgr_AfterObjectDraw)
 
 		int minX = adv->dlg->GetX() + 8;
 		int minY = adv->dlg->GetY() + 8;
-		int maxX = minX + adv->dlg->widthDlg;
-		int maxY = minY + adv->dlg->heightDlg;
+		int maxX = minX + adv->dlg->GetWidth();
+		int maxY = minY + adv->dlg->GetHeight();
 		//	if (x> 1)
 		{
 
@@ -168,10 +170,9 @@ _LHF_(AdventureMapHints::AdvMgr_AfterObjectDraw)
 				}
 			}
 		}
-
 		
 		def->Dereference();
-
+		Era::z[1];
 		//echo(1);
 		//adv->dlg->Redraw();
 		//CDECL_0(int, 0x4EDB20);

@@ -1,236 +1,142 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 
 #include "pch.h"
-#include ".\headers\era.h"
-#include ".\headers\HoMM3.h"
 
-#include <iostream>
-
-
+H3DlgPcx* H3BaseDlg__CreateLogo(H3BaseDlg* dlg, const int x = 23, const int y = 23);
+void H3SelectScenarioDlg__HandleLogo(H3BaseDlg* dlg, const int loopCounter);
 using namespace Era;
 // функция получения JSON строк методом ERA
-
-char* GetEraJSON(const char* json_string_name) {
-    return tr(json_string_name);
-
-}
 
 Patcher* _P;
 PatcherInstance* _PI;
 
 namespace dllText
 {
-    const char* PLUGIN_NAME = "New Main Menu Items";
-    const char* PLUGIN_AUTHOR = "daemon_n";
-    const char* PLUGIN_DATA = "30.12.2021";
+	constexpr const char* PLUGIN_AUTHOR = "daemon_n";
+	constexpr const char* PLUGIN_VERSION = "1.2";
+	constexpr const char* PLUGIN_DATA = __DATE__;
+	constexpr const char* INSTANCE_NAME = "EraPlugin.MainMenuLogo.daemon_n";
 }
 
 int lobbyMenuCounter = 0;
 
-const int logoId = 666;
-void Dlg_NewLogo_Create(_Dlg_* dlg)
+constexpr int logoId = 666;
+
+
+_LHF_(gem_Dlg_LobbyMenu_NewGame)
 {
-    const char* pcxName = "hmm3logo.pcx";
+	if (auto dlg = reinterpret_cast<H3BaseDlg*>(c->ecx))
+		H3BaseDlg__CreateLogo(dlg, 23, 23);
+	lobbyMenuCounter = 0;
 
-
-    sprintf(o_TextBuffer, pcxName);
-    int xPos = atoi(GetEraJSON("nmmi.pos.xPos"));
-    int yPos = atoi(GetEraJSON("nmmi.pos.yPos"));
-    
-    dlg->AddItem(_DlgStaticPcx8_::Create(xPos, yPos, logoId, o_TextBuffer)); // add pcx8
- 
+	return EXEC_DEFAULT;
 }
-int __stdcall gem_Dlg_MainMenu_Create(LoHook* hook, HookContext* c) //at the and of the Create function
+_LHF_(gem_Dlg_LobbyMenu_ShowAvailableScenarios)
 {
-
-    _Dlg_* dlg = (_Dlg_*)c->ecx;// -0x280); //edi - from IDA //changed to ecx cause i like ecx
-    _DlgItem_* it = dlg->GetItem(33);
-
-    if (dlg)
-    {
-        Dlg_NewLogo_Create(dlg);
-
-    }
-   // hook->Undo();
-    return EXEC_DEFAULT;
+	H3SelectScenarioDlg__HandleLogo(reinterpret_cast<H3BaseDlg*>(c->ecx), 1);
+	return EXEC_DEFAULT;
 }
 
-int __stdcall gem_Dlg_MainMenu_NewGame(LoHook* hook, HookContext* c)// before 
+_LHF_(gem_Dlg_LobbyMenu_ShowRandomMap) //call RMG dlg,
 {
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    Dlg_NewLogo_Create(dlg);
-    return EXEC_DEFAULT;
+	H3SelectScenarioDlg__HandleLogo(reinterpret_cast<H3BaseDlg*>(c->ecx), 2);
+	return EXEC_DEFAULT;
 }
-
-int __stdcall gem_Dlg_MainMenu_Bik(LoHook* hook, HookContext* c)// before 
+_LHF_(gem_Dlg_LobbyMenu_ShowAdvancedOptions)
 {
-    Era::ExecErmCmd("IF:L^^");
-    return 0x4EEF3F;
-
+	H3SelectScenarioDlg__HandleLogo(reinterpret_cast<H3BaseDlg*>(c->ecx), 3);
+	return EXEC_DEFAULT;
 }
-int __stdcall gem_Dlg_MainMenu_LoadGame(LoHook* hook, HookContext* c)
+H3DlgPcx* H3BaseDlg__CreateLogo(H3BaseDlg* dlg, const int x, const int y)
 {
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    Dlg_NewLogo_Create(dlg);
-    lobbyMenuCounter = 1;
+	constexpr const char* pcxName = "hmm3logo.pcx";
 
-    return EXEC_DEFAULT;
+	return dlg->CreatePcx(x, y, logoId, pcxName);
+
 }
-
-int __stdcall gem_Dlg_MainMenu_CampaignGame(LoHook* hook, HookContext* c)
+void H3SelectScenarioDlg__HandleLogo(H3BaseDlg* dlg, const int loopCounter)
 {
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    Dlg_NewLogo_Create(dlg);
-    return EXEC_DEFAULT;
-}
+	auto* logo = dlg->GetPcx(logoId);
 
-int __stdcall gem_Dlg_LobbyMenu_NewGame(LoHook* hook, HookContext* c)
+	if (lobbyMenuCounter == loopCounter)
+	{
+		if (logo)
+		{
+			logo->Show();
+			lobbyMenuCounter = 0;
+		}
+		else
+		{
+			if (logo = H3BaseDlg__CreateLogo(dlg))
+				logo->Hide();
+		}
+	}
+	else
+	{
+		if (logo)  logo->Hide(); 
+		else
+		{
+			if (logo = H3BaseDlg__CreateLogo(dlg))
+				logo->Hide();
+		}
+		lobbyMenuCounter = loopCounter;
+	}
+
+}
+_LHF_(DlgMainMenu_Create)
 {
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    Dlg_NewLogo_Create(dlg);
-    lobbyMenuCounter = 0;
+	if (auto dlg = reinterpret_cast<H3BaseDlg*>(c->ecx))
+		H3BaseDlg__CreateLogo(reinterpret_cast<H3BaseDlg*>(c->ecx));
 
-    return EXEC_DEFAULT;
+	return EXEC_DEFAULT;
 }
-int __stdcall gem_Dlg_LobbyMenu_ShowAvailableScenarios(LoHook* hook, HookContext* c)
-{
-   // Era::ExecErmCmd("IF:L^^");
-
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    _DlgItem_* logo = dlg->GetItem(logoId);
-
-
-
-    if (lobbyMenuCounter == 1)
-    {
-        if (logo) { logo->Show(); }
-        else
-        {
-            Dlg_NewLogo_Create(dlg);
-            logo = dlg->GetItem(logoId);
-            logo->Hide();
-            return EXEC_DEFAULT;
-
-        }
-        lobbyMenuCounter = 0;
-    }
-    else
-    {
-        if (logo) { logo->Hide(); }
-        else
-        {
-            Dlg_NewLogo_Create(dlg);
-            logo = dlg->GetItem(logoId);
-            logo->Hide();
-        }
-        lobbyMenuCounter = 1;
-    }
-
-    return EXEC_DEFAULT;
-}
-
-int __stdcall gem_Dlg_LobbyMenu_ShowRandomMap(LoHook* hook, HookContext* c) //call RMG dlg,
-{
-  //  Era::ExecErmCmd("IF:L^^");
-
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    _DlgItem_* logo = dlg->GetItem(logoId);
-    
-
-    if (lobbyMenuCounter == 2)
-    {
-        if (logo) { logo->Show(); }
-        lobbyMenuCounter = 0;
-    }
-    else
-    {
-        if (logo) { logo->Hide(); }
-
-        lobbyMenuCounter = 2;
-    }
-
-    return EXEC_DEFAULT;
-}
-int __stdcall gem_Dlg_LobbyMenu_ShowAdvancedOptions(LoHook* hook, HookContext* c)
-{
-    //Era::ExecErmCmd("IF:L^^");
-
-    _Dlg_* dlg = (_Dlg_*)c->ecx; //ecx  because it's a class method call - by Strigo
-    _DlgItem_* logo = dlg->GetItem(logoId);
-
-    if (!logo)
-    {
-        return EXEC_DEFAULT;
-    }
-
-    if (lobbyMenuCounter == 3)
-    {
-        if (logo) { logo->Show(); }
-        lobbyMenuCounter = 0;
-    }
-    else
-    {
-        if (logo) { logo->Hide(); }
-        lobbyMenuCounter = 3;
-    }
-
-    return EXEC_DEFAULT;
-}
-
 
 void HooksInit()
-{   
-  //  _PI->WriteLoHook(0x4EEEFD, gem_Dlg_MainMenu_Bik);
+{
 
-    //Dlg's
-   // _PI->WriteLoHook(0x4FBCA4, gem_Dlg_MainMenu_Create);
-    _PI->WriteLoHook(0x4FBD71, gem_Dlg_MainMenu_Create);
-    _PI->WriteLoHook(0x4EF32A, gem_Dlg_MainMenu_NewGame);
-    _PI->WriteLoHook(0x4EF665, gem_Dlg_MainMenu_LoadGame);
-    _PI->WriteLoHook(0x4F0799, gem_Dlg_MainMenu_CampaignGame); //goes from new game
+	_PI->WriteLoHook(0x4EF259, DlgMainMenu_Create);
+	_PI->WriteLoHook(0x4EF331, DlgMainMenu_Create);
+	_PI->WriteLoHook(0x4EF668, DlgMainMenu_Create);
+	_PI->WriteLoHook(0x4F0799, DlgMainMenu_Create); //goes from new game
 
-    _PI->WriteLoHook(0x4F0B63, gem_Dlg_LobbyMenu_NewGame); //goes from new game
-    _PI->WriteLoHook(0x580180, gem_Dlg_LobbyMenu_ShowAdvancedOptions); //goes from new game, tnx too RK
-    _PI->WriteLoHook(0x5813D0, gem_Dlg_LobbyMenu_ShowRandomMap); //goes from new game, tnx too RK
-    _PI->WriteLoHook(0x580D40, gem_Dlg_LobbyMenu_ShowAvailableScenarios); //goes from new game, tnx too RK
+	_PI->WriteLoHook(0x4F0B63, gem_Dlg_LobbyMenu_NewGame); //goes from new game
+	_PI->WriteLoHook(0x580180, gem_Dlg_LobbyMenu_ShowAdvancedOptions); //goes from new game, tnx too RK
+	_PI->WriteLoHook(0x5813D0, gem_Dlg_LobbyMenu_ShowRandomMap); //goes from new game, tnx too RK
+	_PI->WriteLoHook(0x580D40, gem_Dlg_LobbyMenu_ShowAvailableScenarios); //goes from new game, tnx too RK
 
-   //_PI->WriteLoHook(0x57A29B, gem_Dlg_LobbyMenu_LoadGame); //goes from new game
-
-    return;
+	return;
 
 }
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule,
+	DWORD  ul_reason_for_call,
+	LPVOID lpReserved
+)
 {
 
-    static _bool_ plugin_On = 0;
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
+	static _bool_ plugin_On = 0;
+	switch (ul_reason_for_call)
+	{
+	case DLL_PROCESS_ATTACH:
 
-        //if (ul_reason_for_call == DLL_PROCESS_ATTACH)
-        if (!plugin_On)
+		if (!plugin_On)
 
-        {
-            plugin_On = 1;
-            ConnectEra();
-            //RegisterHandler(OnBattleReplay, "OnBattleReplay");
+		{
+			plugin_On = 1;
+			//ConnectEra();
 
-            _P = GetPatcher();
-            _PI = _P->CreateInstance((char*)"ERA.NewMainMenuItems");
-            HooksInit();
-        }
-        break;
+			_P = GetPatcher();
+			_PI = _P->CreateInstance(dllText::INSTANCE_NAME);
+			HooksInit();
+		}
+		break;
 
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-        break;
-    }
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+	case DLL_PROCESS_DETACH:
+		break;
+	}
 
-    return TRUE;
+	return TRUE;
 }
 

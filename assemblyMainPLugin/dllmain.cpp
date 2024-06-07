@@ -16,13 +16,12 @@ int __stdcall GameStart(LoHook* h, HookContext* c)
 {
 	auto* info = &AssemblyInformation::Get();
 	info->LoadDataFromJson();
-
+	UserNotification::Get();
 	h->Undo();
 
 
 	return EXEC_DEFAULT;
 }
-
 
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
@@ -43,6 +42,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 			globalPatcher = GetPatcher();
 			_PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 			_PI->WriteLoHook(0x597870, GameStart);
+			
+
 		}
 		break;
 

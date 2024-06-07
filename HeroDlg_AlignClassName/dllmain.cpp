@@ -12,7 +12,7 @@ int __cdecl DlgHeroUpdate_OnSettingClassName(HiHook* h, char* buffer, char* text
     std::size_t pos = currentText.find(" %s");
     if (pos != std::string::npos)
     {
-        std::string newStr("%s\n");
+        std::string newStr("Custom Class Name and %s\n");
         currentText.erase(pos, 3);
         return CDECL_4(int, h->GetDefaultFunc(), buffer, newStr.append(currentText).c_str(), className, level);
     }
@@ -45,7 +45,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             _PI->WriteByte(0x04DEB45 + 1, 44);
             // set hero name y pos
             _PI->WriteByte(0x04DEAF1 + 1, 24);
-
+           // _PI->WriteByte(0x4DEB3E + 1, 46);
+            
             
             
         }

@@ -231,6 +231,11 @@ struct RMGLimit
 
 // SOUND FIND HERE 00418BB6
 bool ss = 0;
+
+int Foo()
+{
+	return 1;
+}
 _LHF_(CreatureBanksExtender::LoadObjectsTxt)
 {
 
@@ -246,7 +251,7 @@ _LHF_(CreatureBanksExtender::LoadObjectsTxt)
 			//if (it->first == instance->banks.cbId[bankId])
 			{
 
-				objectTxt->AddLine(it->second);				// add new txt entry
+				objectTxt->AddLine(it->second.c_str());				// add new txt entry
 
 			}
 		}
@@ -318,11 +323,11 @@ int CreatureBanksExtender::GetBanksSetupFromJson()
 			int counter{};
 			do
 			{
-				H3String str = EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.properties.%d", i, counter++).String(), propSuccess);
+				std::string str = EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.properties.%d", i, counter++).String(), propSuccess);
 				if (propSuccess)
 				{
-					char* sharedMemoryString = _strdup(str.String()); //_strdup(H3String::Format(str.String(), vId).String());
-					b.properties.insert(std::make_pair(i, sharedMemoryString));
+				//	char* sharedMemoryString = _strdup(str.String()); //_strdup(H3String::Format(str.String(), vId).String());
+					b.properties.insert(std::make_pair(i, str));
 				}
 			} while (propSuccess);
 
@@ -427,10 +432,10 @@ _LHF_(CreatureBanksExtender::CrBanksTxt_BeforeLoad)
 
 		IntAt(0x47A3C1 + 1) = (int)instance->banks.setups.data();
 		IntAt(0x47A3EC + 1) = (int)instance->banks.setups.data();
-		IntAt(0x47A4B6 + 3) = (int)&instance->banks.setups[0].name.m_string;
+		IntAt(0x47A4B6 + 3) = (int)instance->banks.setups[0].name.String();
 		//ByteAt(0x47A362 + 2) = instance->defaultBanksNumber;
 		//CDECL_0(void, 0x47A350);
-		IntAt(0x47A68F + 1) = (int)(&instance->banks.setups[instance->defaultBanksNumber].name.m_string);
+		IntAt(0x47A68F + 1) = (int)(instance->banks.setups[instance->defaultBanksNumber].name.String());
 
 		IntAt(0x67029C) = (int)instance->banks.setups.data();
 
