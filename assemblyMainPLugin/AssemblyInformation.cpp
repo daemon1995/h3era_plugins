@@ -89,8 +89,7 @@ void AssemblyInformation::LocalVersion::AdjustItemText() noexcept
 void AssemblyInformation::RemoteVersion::GetJsonData(const char* jsonSubKey)
 {
 	Version::GetJsonData(jsonSubKey);
-	//sprintf(h3_TextBuffer, "%s.%s.remote_file", BASE_JSON_KEY, jsonSubKey);
-	//bool readSuccess = false;
+
 	Era::ReadStrFromIni("ReleaseURL", "GitHub", m_iniPath, h3_TextBuffer);
 	remoteFileUrl = h3_TextBuffer;
 	workDone = false;
