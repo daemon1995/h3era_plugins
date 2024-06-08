@@ -160,7 +160,7 @@ _LHF_(AdventureMapHints::AdvMgr_AfterObjectDraw)
 					//tempBuffer->DrawToPcx16(x, _y, 1, P_WindowManager->GetDrawBuffer(), 0, 1);
 					sprintf(h3_TextBuffer, "+%d", obj->m_value);
 					fnt->TextDraw(drawBuffer, h3_TextBuffer, x - 25, y, 25, 20, eTextColor::WHITE, eTextAlignment::MIDDLE_RIGHT);
-					echo(h3_TextBuffer);
+					//echo(h3_TextBuffer);
 					def->DrawToPcx16(0, obj->m_subType, drawBuffer, x, y);
 					//tempBuffer->Destroy();
 

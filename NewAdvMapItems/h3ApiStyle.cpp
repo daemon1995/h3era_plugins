@@ -29,7 +29,7 @@ _LHF_(HooksInit)
 	AdventureMapHints::Init(globalPatcher->CreateInstance("Pickup.daemon_n.plugin"));
 
 	//if (1)
-		//CombatHints::instance(globalPatcher->CreateInstance("CombatHints.ERA.daemon_n.plugin"));
+		CombatHints::instance(globalPatcher->CreateInstance("CombatHints.ERA.daemon_n.plugin"));
 	
 
 	

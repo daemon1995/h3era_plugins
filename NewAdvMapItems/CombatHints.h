@@ -41,6 +41,7 @@ struct DlgText
 	LPCSTR setHk;
 	LPCSTR press;
 	LPCSTR held;
+	LPCSTR warMachines;
 
 };
 

@@ -44,7 +44,7 @@ void AssemblyInformation::Version::GetJsonData(const char* jsonSubKey)
 		UINT lenFromJson = EraJS::readInt(h3_TextBuffer, readSuccess);
 		if (readSuccess && lenFromJson > 0)
 			characterLength = lenFromJson;
-	
+
 	}
 
 }
@@ -89,19 +89,23 @@ void AssemblyInformation::LocalVersion::AdjustItemText() noexcept
 void AssemblyInformation::RemoteVersion::GetJsonData(const char* jsonSubKey)
 {
 	Version::GetJsonData(jsonSubKey);
+	if (show && !customText)
+	{
+		Era::ReadStrFromIni("ReleaseURL", "GitHub", m_iniPath, h3_TextBuffer);
+		remoteFileUrl = h3_TextBuffer;
 
-	Era::ReadStrFromIni("ReleaseURL", "GitHub", m_iniPath, h3_TextBuffer);
-	remoteFileUrl = h3_TextBuffer;
-	workDone = false;
-	std::thread th(&AssemblyInformation::RemoteVersion::GetVersion,this);
-	th.detach();
+		workDone = false;
+		std::thread th(&AssemblyInformation::RemoteVersion::GetVersion, this);
+		th.detach();
+	}
+
 }
 
 void AssemblyInformation::RemoteVersion::GetVersion() noexcept
 {
 	// reset buffer
 	sprintf(h3_TextBuffer, "%s", "");
-	
+
 	// create WideStringsPtr
 	Era::ReadStrFromIni("API", "GitHub", m_iniPath, h3_TextBuffer);
 	std::string narrowString = h3_TextBuffer;
@@ -232,53 +236,57 @@ _LHF_(AssemblyInformation::DlgMainMenu_Create)
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 {
 	AssemblyInformation::RemoteVersion& remoteVersion = Get().m_remoteVersion;
-	auto it = remoteVersion.dlgItem;
-
-	if (remoteVersion.workDone.load())
+	H3DlgText* it = remoteVersion.dlgItem;
+	if (it && it->IsVisible())
 	{
-
-		remoteVersion.AdjustItemText();
-		it->SetText(remoteVersion.text);
-		it->SetWidth((remoteVersion.text.Length() + 1) * remoteVersion.characterLength);
-		it->Draw();
-		it->Refresh();
-
-		AssemblyInformation::LocalVersion& localVersion = Get().m_localVersion;
-
-		if (localVersion.dlgItem&& remoteVersion.text.String() > localVersion.text.String())
+		if (remoteVersion.workDone.load())
 		{
-			localVersion.AdjustItemText();
 
-			localVersion.text = H3String::Format("{~r}%s}", localVersion.text.String());
-			localVersion.dlgItem->SetText(remoteVersion.text);
+			remoteVersion.AdjustItemText();
+			it->SetText(remoteVersion.text);
+			it->SetWidth((remoteVersion.text.Length() + 1) * remoteVersion.characterLength);
+			it->Draw();
+			it->Refresh();
 
-			localVersion.dlgItem->Draw();
-			localVersion.dlgItem->Refresh();
+			////	AssemblyInformation::LocalVersion& localVersion = Get().m_localVersion;
+
+			//	//if (localVersion.dlgItem&& remoteVersion.text.String() > localVersion.text.String())
+			//	//{
+			//	//	localVersion.AdjustItemText();
+
+			//	//	localVersion.text = H3String::Format("{~r}%s}", localVersion.text.String());
+			//	//	localVersion.dlgItem->SetText(remoteVersion.text);
+
+			//	//	localVersion.dlgItem->Draw();
+			//	//	localVersion.dlgItem->Refresh();
+			//	//}
+			//	//remoteVersion.workDone.store(false);
+			//	
 		}
-		remoteVersion.workDone.store(false);
-		
-	}
-	H3POINT mousePos = msg->GetCoords().GetCurrentCursorPosition();
-	RECT rect = { it->GetAbsoluteX() ,it->GetAbsoluteY() ,it->GetAbsoluteX() + it->GetWidth(),it->GetAbsoluteY() + it->GetHeight() };
+		H3POINT mousePos = msg->GetCoords().GetCurrentCursorPosition();
+		RECT rect = { it->GetAbsoluteX() ,it->GetAbsoluteY() ,it->GetAbsoluteX() + it->GetWidth(),it->GetAbsoluteY() + it->GetHeight() };
 
-	if (rect.left <= mousePos.x && mousePos.x <= rect.right
-		&& rect.top <= mousePos.y && mousePos.y <= rect.bottom)
-	{
-		P_MouseManager->SetCursor(41, 1);
-		if (msg->IsLeftDown())
+		if (rect.left <= mousePos.x && mousePos.x <= rect.right
+			&& rect.top <= mousePos.y && mousePos.y <= rect.bottom)
 		{
-			P_SoundManager->ClickSound();
-			ShellExecuteA(NULL, "open", remoteVersion.remoteFileUrl.String(), NULL, NULL, SW_SHOWNORMAL);
+			P_MouseManager->SetCursor(41, 1);
+			if (msg->IsLeftDown())
+			{
+				P_SoundManager->ClickSound();
+				ShellExecuteA(NULL, "open", remoteVersion.remoteFileUrl.String(), NULL, NULL, SW_SHOWNORMAL);
+			}
+
 		}
+		else
+			P_MouseManager->SetCursor(0, 0);
 
 	}
 	else
-		P_MouseManager->SetCursor(0, 0);
+	{
+		h->Undo();
+	}
 
-
-	int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
-
-	return result;
+	return FASTCALL_1(int, h->GetDefaultFunc(), msg);
 }
 
 void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent* e)
@@ -304,6 +312,10 @@ void AssemblyInformation::CreatePatches()  noexcept
 		_PI->WriteLoHook(0x4EF331, DlgMainMenu_Create);
 		_PI->WriteLoHook(0x4EF668, DlgMainMenu_Create);
 		_PI->WriteLoHook(0x4F0799, DlgMainMenu_Create); //goes from new game
+
+		// move and resize iam00.def (next hero buttn)
+		_PI->WriteByte(0x401A85 + 1, 32); // set width
+		_PI->WriteDword(0x401A8C + 1, 679 + 32); // set y
 
 		_PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
 	//	Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");

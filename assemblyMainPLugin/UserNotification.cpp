@@ -106,6 +106,5 @@ void UserNotification::CreatePatches() noexcept
 		m_isEnabled = true;
 	}
 
-	_pi->WriteHiHook(0x468CE2, THISCALL_, OnDrawActionPlayCastSpell);
 
 }

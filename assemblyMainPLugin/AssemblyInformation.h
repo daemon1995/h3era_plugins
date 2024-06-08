@@ -22,8 +22,8 @@ class AssemblyInformation :
 		UINT16 itemId = -1;
 		UINT characterLength = 7;
 		const char* format = 0;
-		H3String version {};
-		H3String text{};
+		H3String version = h3_NullString;
+		H3String text =h3_NullString;
 
 		bool customText = false;
 		bool show = false;
