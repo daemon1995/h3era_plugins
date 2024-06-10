@@ -210,7 +210,7 @@ void CurrentDlg_CreateDlgCallPcx(H3BaseDlg* dlg, int x, int y, const DlgStyle* s
 
 	// set nop for loading pcx to skip default proc
 	auto* blockLoadingPcx = _PI->WriteHexPatch(0x5BCBD0, "90 90 90 90 90");
-	auto* captionPcx = H3DlgTextPcx::Create(x, y, style->WIDGET_WIDTH, style->WIDGET_HEIGHT, LocaleHandler::GetDisplayedName(), h3::NH3Dlg::Text::SMALL, nullptr, 7, LOCALEDLG_BUTTON_ID);
+	auto* captionPcx = H3DlgTextPcx::Create(x, y, style->WIDGET_WIDTH, style->WIDGET_HEIGHT, LocaleHandler::GetDisplayedName(), style->font, nullptr, 7, LOCALEDLG_BUTTON_ID);
 
 	//restore orginal code;
 	blockLoadingPcx->Undo();
@@ -342,7 +342,7 @@ void LanguageSelectionDlg::CreateDlgItems()
 	for (size_t i = 0; i < m_LOCALES_TO_DRAW; i++)
 	{
 		const int y = i * WIDGET_HEIGHT;
-		auto textPcx = H3DlgTextPcxLocale::Create(0, y, WIDGET_WIDTH, WIDGET_HEIGHT, m_localeHandler->LocaleAt(i), h3::NH3Dlg::Text::MEDIUM, m_style->localeBackgroundLoadedPcx, 1, i + FIRST_SELECTION_WIDGET_ID);
+		auto textPcx = H3DlgTextPcxLocale::Create(0, y, WIDGET_WIDTH, WIDGET_HEIGHT, m_localeHandler->LocaleAt(i), m_style->font, m_style->localeBackgroundLoadedPcx, 1, i + FIRST_SELECTION_WIDGET_ID);
 		AddItem(textPcx);
 	}
 

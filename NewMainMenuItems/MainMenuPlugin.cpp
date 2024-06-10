@@ -88,10 +88,12 @@ int __stdcall MainMenuPlugin::DlgMainMenu_NewLoad_Create(HiHook* h, H3BaseDlg* d
 
 int __stdcall MainMenuPlugin::DlgMainMenu_Campaign_Run(HiHook* h, H3BaseDlg* dlg)
 {
-	H3BaseDlg__CreateLogo(dlg, Get().mainMenu);
-	auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+	auto& mm = Get().mainMenu;
+	H3BaseDlg__CreateLogo(dlg, mm);
+	auto* _h = mm.alwaysDraw ? _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc) : nullptr;
+
 	int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
-	_h->Destroy();
+	if(_h) _h->Destroy();
 	return result;
 }
 
@@ -118,7 +120,7 @@ void MainMenuPlugin::CreatePatches()
 			_PI->WriteHiHook(0x4FB930, THISCALL_, DlgMainMenu_Create);
 			_PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
 			_PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); //goes from new game
-			//if (mainMenu.alwaysDraw)
+			if (mainMenu.alwaysDraw)
 			{
 				_PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
 				_PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
