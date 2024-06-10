@@ -7,7 +7,8 @@ constexpr const char* BASE_JSON_KEY = "gem_plugin.main_menu";
 
 const char* AssemblyInformation::m_iniPath = "ERA_Project.ini";
 // @todo // add red color for different versions
-AssemblyInformation::AssemblyInformation(PatcherInstance* _pi) :IGamePatch(_pi)
+AssemblyInformation::AssemblyInformation(PatcherInstance* _pi) :IGamePatch(_pi),
+versions{ &m_eraVersion,&m_localVersion,&m_remoteVersion }
 {
 
 
@@ -44,6 +45,9 @@ void AssemblyInformation::Version::GetJsonData(const char* jsonSubKey)
 		UINT lenFromJson = EraJS::readInt(h3_TextBuffer, readSuccess);
 		if (readSuccess && lenFromJson > 0)
 			characterLength = lenFromJson;
+
+		alwaysDraw = EraJS::read("nmmi.menu_info.main.always_draw");
+
 
 	}
 
@@ -207,18 +211,32 @@ bool AssemblyInformation::LocalVersion::ReadRgistry(const char* registryKey)
 }
 
 
-_LHF_(AssemblyInformation::DlgMainMenu_Create)
+int __stdcall AssemblyInformation::DlgMainMenu_Create(HiHook* h, H3BaseDlg* dlg)
 {
-
-
-	H3BaseDlg* dlg = reinterpret_cast<H3BaseDlg*>(c->ecx);// -0x280); //edi - from IDA //changed to ecx cause i like ecx
-
-
-	// hidw wnd version hint
+	int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
+	Get().CreateDlgItems(dlg);
+	return result;
+}
+int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook* h, H3BaseDlg* dlg, const int val)
+{
+	int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
+	Get().CreateDlgItems(dlg);
+	return result;
+}
+int __stdcall AssemblyInformation::DlgMainMenu_Campaign_Run(HiHook* h, H3BaseDlg* dlg)
+{
+	Get().CreateDlgItems(dlg);
+	auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+	int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
+	_h->Destroy();
+	return result;
+}
+void AssemblyInformation::CreateDlgItems(H3BaseDlg* dlg)
+{
+	// hide wnd version hint
 	if (auto* it = dlg->GetH3DlgItem(545))
 		it->Hide();
 
-	Version* versions[3] = { &Get().m_eraVersion,&Get().m_localVersion,&Get().m_remoteVersion };
 	for (const auto it : versions)
 	{
 		if (it->show)
@@ -227,16 +245,24 @@ _LHF_(AssemblyInformation::DlgMainMenu_Create)
 			it->dlgItem = it->AddToDlg(dlg);
 		}
 	}
-
-
-	return EXEC_DEFAULT;
 }
 #include <ShellAPI.h>;
 
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 {
 	AssemblyInformation::RemoteVersion& remoteVersion = Get().m_remoteVersion;
+
+	for (const auto* ver : Get().versions)
+	{
+		H3DlgText* it = ver->dlgItem;
+		if (it && it->IsVisible() && ver->alwaysDraw)
+		{
+			it->Draw();
+		}
+	}
+
 	H3DlgText* it = remoteVersion.dlgItem;
+
 	if (it && it->IsVisible())
 	{
 		if (remoteVersion.workDone.load())
@@ -260,7 +286,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 			//	//	localVersion.dlgItem->Draw();
 			//	//	localVersion.dlgItem->Refresh();
 			//	//}
-			//	//remoteVersion.workDone.store(false);
+			remoteVersion.workDone.store(false);
 			//	
 		}
 		H3POINT mousePos = msg->GetCoords().GetCurrentCursorPosition();
@@ -283,7 +309,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 	}
 	else
 	{
-		h->Undo();
+		//h->Undo();
 	}
 
 	return FASTCALL_1(int, h->GetDefaultFunc(), msg);
@@ -292,8 +318,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent* e)
 {
 	Get().LoadDataFromJson();
-	Version* versions[3] = { &Get().m_eraVersion,&Get().m_localVersion,&Get().m_remoteVersion };
-	for (const auto it : versions)
+	for (const auto it : Get().versions)
 	{
 		if (it && it->show)
 		{
@@ -303,22 +328,22 @@ void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent* e)
 }
 
 
-
 void AssemblyInformation::CreatePatches()  noexcept
 {
 	if (!m_isEnabled)
 	{
-		_PI->WriteLoHook(0x4EF259, DlgMainMenu_Create);
-		_PI->WriteLoHook(0x4EF331, DlgMainMenu_Create);
-		_PI->WriteLoHook(0x4EF668, DlgMainMenu_Create);
-		_PI->WriteLoHook(0x4F0799, DlgMainMenu_Create); //goes from new game
-
+		_PI->WriteHiHook(0x4FB930, THISCALL_, DlgMainMenu_Create);
+		_PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
+		_PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); //goes from new game
 		// move and resize iam00.def (next hero buttn)
 		_PI->WriteByte(0x401A85 + 1, 32); // set width
 		_PI->WriteDword(0x401A8C + 1, 679 + 32); // set y
 
+
 		_PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
-	//	Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
+		_PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+
+																 //	Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 
 		m_isEnabled = true;
 	}
@@ -338,6 +363,8 @@ void AssemblyInformation::LoadDataFromJson()
 	m_eraVersion.GetJsonData("era_version");
 	m_localVersion.GetJsonData("current_version");
 	m_remoteVersion.GetJsonData("online_version");
+
+
 	m_eraVersion.version = Era::GetEraVersion();
 	if (m_eraVersion.show || m_localVersion.show || m_remoteVersion.show)
 		CreatePatches();

@@ -37,7 +37,6 @@ public:
 	const DlgStyle* Style() const noexcept;
 	virtual ~LanguageSelectionDlg();
 
-	static _LHF_(MyClassLoHook);
 	static void Init();
 
 };

@@ -27,6 +27,7 @@ class AssemblyInformation :
 
 		bool customText = false;
 		bool show = false;
+		bool alwaysDraw = false;
 
 		virtual void GetVersion() noexcept;
 		virtual void GetJsonData(const char*jsonSubKey);
@@ -63,12 +64,17 @@ class AssemblyInformation :
 
 	} m_remoteVersion;
 
+	Version* versions[3];
 
+	void CreateDlgItems(H3BaseDlg* dlg);
 	AssemblyInformation(PatcherInstance* _pi);
 
 	static int __stdcall DlgMainMenu_Proc(HiHook* h, H3Msg* msg);
 	static void __stdcall OnAfterReloadLanguageData(Era::TEvent* e);
-	static _LHF_(DlgMainMenu_Create);
+	static int __stdcall DlgMainMenu_Campaign_Run(HiHook* h, H3BaseDlg* dlg);
+	static int __stdcall DlgMainMenu_NewLoad_Create(HiHook* h, H3BaseDlg* dlg, const int val);
+	static int __stdcall DlgMainMenu_Create(HiHook* h, H3BaseDlg* dlg);
+
 	void CreatePatches()  noexcept override;
 	
 public:

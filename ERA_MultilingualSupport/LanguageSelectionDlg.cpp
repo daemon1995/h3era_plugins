@@ -230,14 +230,13 @@ H3BaseDlg* DlgSystemOptions_Create(HiHook* h, H3BaseDlg* dlg)
 	return dlg;
 }
 
-_LHF_(DlgMainMenu_BeforeRun)
+void AddButtonToMainMenuDlg(H3BaseDlg* dlg)
 {
-	if (auto dlg = reinterpret_cast<H3Dlg*>(c->ecx))    // before any dlg run get dlg) // if exists
+	if (dlg)    // before any dlg run get dlg) // if exists
 	{
 
 		const DlgStyle* style = &DlgStyle::styles[2];
 		const auto pcx = style->localeBackgroundLoadedPcx;
-		//auto def = H3LoadedDef::Load(style->dlgCallAssetPcxName);
 		if (pcx)
 		{
 			const int x = dlg->GetWidth() - pcx->width;
@@ -249,8 +248,11 @@ _LHF_(DlgMainMenu_BeforeRun)
 		}
 
 	}
-	return EXEC_DEFAULT;
 }
+
+
+
+
 _LHF_(DlgSystemOptions_AtCreate)
 {
 	if (H3Dlg* dlg = *reinterpret_cast<H3Dlg**>(c->ebp - 0x20))    // before any dlg run get dlg
@@ -274,7 +276,26 @@ int __stdcall DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 	return FASTCALL_1(int, h->GetDefaultFunc(), msg);
 
 }
-
+int __stdcall DlgMainMenu_Create(HiHook* h, H3BaseDlg* dlg)
+{
+	int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
+	AddButtonToMainMenuDlg(dlg);
+	return result;
+}
+int __stdcall DlgMainMenu_NewLoad_Create(HiHook* h, H3BaseDlg* dlg, const int val)
+{
+	int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
+	AddButtonToMainMenuDlg(dlg);
+	return result;
+}
+int __stdcall DlgMainMenu_Campaign_Run(HiHook* h, H3BaseDlg* dlg)
+{
+	AddButtonToMainMenuDlg(dlg);
+	auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+	int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
+	_h->Destroy();
+	return result;
+}
 
 void LanguageSelectionDlg::Init()
 {
@@ -283,10 +304,12 @@ void LanguageSelectionDlg::Init()
 		//Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
 		//_PI->WriteLoHook(0x5B2F9B, DlgSystemOptions_AtCreate); //System options dlg from Adventure Mgr and Main Menu (by HD mod only - RMB or MRM)
 		//_PI->WriteLoHook(0x4EF259, DlgMainMenu_BeforeRun); //MAIN Main Menu Dlg Run
-		_PI->WriteLoHook(0x4EF259, DlgMainMenu_BeforeRun); // Main Main Menu
-		_PI->WriteLoHook(0x4EF331, DlgMainMenu_BeforeRun); // New Game
-		_PI->WriteLoHook(0x4EF668, DlgMainMenu_BeforeRun); // Load Game
-		//_PI->WriteLoHook(0x4F0799, DlgMainMenu_BeforeRun); // Campaign
+
+
+		_PI->WriteHiHook(0x4FB930, THISCALL_, DlgMainMenu_Create);
+		_PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
+	//	_PI->WriteHiHook(0x456BA0, THISCALL_, DlgMainMenu_Campaign_Create); //goes from new game
+		_PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); //goes from new game
 
 		_PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
 		_PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // New/ Load Game Menu Dlg Proc
