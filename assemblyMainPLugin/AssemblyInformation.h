@@ -47,7 +47,7 @@ class AssemblyInformation :
 		void GetJsonData(const char* jsonSubKey) override;
 		void GetVersion() noexcept override;
 
-		bool ReadRgistry(const char* registryKey);
+		bool ReadRegistry(const char* registryKey);
 
 		bool remoteVersionIsHigher = false;
 		virtual void AdjustItemText() noexcept final override;

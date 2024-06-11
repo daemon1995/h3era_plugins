@@ -157,6 +157,7 @@ void AssemblyInformation::LocalVersion::GetJsonData(const char* jsonSubKey)
 	readRegistry = EraJS::readInt(h3_TextBuffer);
 	if (!customText)
 		GetVersion();
+	eObject;
 
 }
 
@@ -176,7 +177,7 @@ void AssemblyInformation::LocalVersion::GetVersion()noexcept
 	if (!customVersion)
 	{
 		Era::ReadStrFromIni("key", "Registry", m_iniPath, h3_TextBuffer);
-		if (ReadRgistry(h3_TextBuffer))
+		if (ReadRegistry(h3_TextBuffer))
 		{
 
 		}
@@ -187,7 +188,7 @@ void AssemblyInformation::LocalVersion::GetVersion()noexcept
 
 }
 
-bool AssemblyInformation::LocalVersion::ReadRgistry(const char* registryKey)
+bool AssemblyInformation::LocalVersion::ReadRegistry(const char* registryKey)
 {
 	HKEY hKey;
 

@@ -8,7 +8,7 @@ public:
 	const UINT16 WIDGET_HEIGHT;
 	const UINT16 MAXIMUM_ROWS;
 
-	const LPCSTR font;
+	LPCSTR font;
 	const const char* dlgCallAssetPcxName = nullptr;
 	static struct StyleText :public IPluginText
 	{

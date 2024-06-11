@@ -45,7 +45,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
                 globalPatcher = GetPatcher();
 
                 //! Create an instance of the plugin
-                _PI = globalPatcher->CreateInstance("Objects.Era.daemon_n.plugin");
+                _PI = globalPatcher->CreateInstance("Objects.EraPlugin.daemon_n.plugin");
 
                 //! Get the CreatureBanksExtender and initialize it
                 CreatureBanksExtender::Get(
