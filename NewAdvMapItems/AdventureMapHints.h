@@ -35,7 +35,7 @@ namespace rs
 
        // static H3LoadedPcx16* CreateAsset(const H3String& srcName,int )
         virtual ~CustomObjectFloatingHint();
-        static std::set<H3LoadedPcx16Resized*> assets;
+        static std::set<resized::H3LoadedPcx16Resized*> assets;
 
     };
 
@@ -60,38 +60,53 @@ class AdventureMapHints :
     public IGamePatch
 {
 
-    static AdventureMapHints* instance;
     static RECT m_mapView;
-    bool m_objectsToDraw[232];
+    //bool m_objectsToDraw[232];
 
+    bool onHint = false;
 
-
+    Patch* blockAdventureHintDraw = nullptr;
     std::vector<rs::ResourceFloatingHint*> m_pickupResources;
-    AdventureHintsSettings* settings;
-    bool IsNeedDraw(H3MapItem* mIt);
+    AdventureHintsSettings* settings = nullptr;
+
+
+    bool IsNeedDraw(const H3MapItem* mIt)const noexcept;
 
     std::set<UINT16> m_drawnOjects;
-
+    struct AccessableH3GeneralText :public H3GeneralText
+    {
+        //void
+       LPCSTR* GetStringAdddres( const int row);
+        //ADDRESS
+    };
 
     AdventureMapHints(PatcherInstance *pi);
 
 private:
-    static LPCSTR GetHintText(H3MapItem* mapItem)  noexcept;
+    static LPCSTR GetHintText(const H3AdventureManager* adv, const H3MapItem* mapItem, const int mapX, const int mapY, const int mapZ )  noexcept;
 
 public:
+    static AdventureMapHints* instance;
+
+    H3LoadedPcx* glBackPtr = nullptr;
+
 
 
     static void Init(PatcherInstance * pi);
     
 
     void  CreatePatches() noexcept override;
-    bool * ObjectsToDraw()  noexcept;
+   // bool * ObjectsToDraw()  noexcept;
     virtual ~AdventureMapHints();
     static _LHF_(Hero_AddPickupResource);
     static _LHF_(AdvMgr_DrawFogOfWar);
     static _LHF_(AdvMgr_AfterObjectDraw);
     static void __stdcall Enter2Object(HiHook* h, H3AdventureManager* advMan, H3Hero* hero, H3MapItem* mapItem, __int64 pos);
+  
     static void __stdcall AdvMgr_ObjectDraw(HiHook* h, H3AdventureManager* advMan, int mapX, int mapY, int mapZ, int screenX, int screenY);
+
+    
+    static void __stdcall AdvMgr_DrawMap(HiHook* h, H3AdventureManager* advMan, const int mapX, const int mapY, const int mapZ, const int hotSeat, char updateInfoPanel);
     static void __stdcall AdvMgr_BeforeDrawPath(HiHook* h, H3AdventureManager* advMan, int mapX, int mapY, int mapZ, int screenX, int screenY);
 };
 

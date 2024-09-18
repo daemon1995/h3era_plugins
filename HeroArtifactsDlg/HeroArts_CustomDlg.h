@@ -12,8 +12,8 @@ class HeroArts_CustomDlg :public H3Dlg
     int selectedArt = eArtifact::NONE;
 
 public:
-    HeroArts_CustomDlg::HeroArts_CustomDlg(int a, int b, int x, int y, H3Hero* heroA, int slot) :H3Dlg(a, b, x, y), hero(heroA), slot(slot) {} // delegate size to H3Dlg, clear map
-
+    HeroArts_CustomDlg(int a, int b, int x, int y, H3Hero* heroA, int slot) :H3Dlg(a, b, x, y), hero(heroA), slot(slot) {} // delegate size to H3Dlg, clear map
+    virtual  ~HeroArts_CustomDlg();
     BOOL DialogProc(H3Msg& msg) override;
 
     int GetSelectedArtd() { return selectedArt; }

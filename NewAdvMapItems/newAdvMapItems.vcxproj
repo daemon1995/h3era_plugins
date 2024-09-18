@@ -24,6 +24,7 @@
     <ProjectGuid>{DEBF775B-C08E-4A22-8870-B05D4AFF461E}</ProjectGuid>
     <RootNamespace>newAdvMapItems</RootNamespace>
     <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
+    <ProjectName>NewAdvMapItems</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -100,11 +101,11 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;newAdvMapItems_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,12 +124,12 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;newAdvMapItems_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -183,27 +184,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AdventureMapHints.h" />
-    <ClInclude Include="CombatHints.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ISettings.h" />
-    <ClInclude Include="MapScroller.h" />
     <ClInclude Include="MithrilDisplay.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\headers\DrawPcx16ResizedBicubic.cpp" />
+    <ClCompile Include="..\..\headers\Era\era.cpp" />
     <ClCompile Include="AdventureMapHints.cpp" />
-    <ClCompile Include="CombatHints.cpp" />
     <ClCompile Include="expFix.cpp" />
-    <ClCompile Include="h3ApiStyle.cpp" />
+    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ISettings.cpp" />
-    <ClCompile Include="MapScroller.cpp" />
     <ClCompile Include="MithrilDisplay.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

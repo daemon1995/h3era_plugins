@@ -1,4 +1,5 @@
 #pragma once
+#include "framework.h"
 using namespace h3;
 
 class TestDlg :

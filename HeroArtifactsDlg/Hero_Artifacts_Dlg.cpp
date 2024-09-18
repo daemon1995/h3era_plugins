@@ -62,7 +62,7 @@ int PrepareAndShowArtifactsDlg(H3Hero*hero, int slot, H3DlgItem* it, std::vector
         }
     }
 
-    if (globalPatcher->VarFind("HD.def.SpScrArt")!=NULL)
+    if (globalPatcher->VarFind("HD.def.SpScrArt") != NULL)
         defName = "def.SpScrArt";
 
     x = 20; // go to new line for scrolls

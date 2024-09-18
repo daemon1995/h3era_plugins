@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "TestDlg.h"
 
 TestDlg::TestDlg(int width, int height, int x, int y)

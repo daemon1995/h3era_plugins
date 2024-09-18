@@ -12,6 +12,7 @@
 *.vcxproj
 *.filters
 *.sln
+*.json
 *.vcxproj
 *.zip
 *.7z

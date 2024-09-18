@@ -1,20 +1,22 @@
 ﻿//#include "Header.h"
-#include "creature_info_dlg.cpp"
+#include "framework.h"
 
+void SSS_CreateResources( const char* src_def);
 
 using namespace h3;
-using namespace Era;
 
 
+Patcher* globalPatcher;
+PatcherInstance* _PI;
 //struct _DlgNPC_;
 
 
-_Npc_* GetNpc(int hero_id) { return ((_Npc_*)(0x28620C0 + 296 * hero_id)); }
 
 std::vector<INT8> npcSSVec(0);
 
-int GetWoGOptionsStatus(int option_id) { return DwordAt(0x2771920 + (option_id * 4)); }
+int GetWoGOptionsStatus(int option_id){ return DwordAt(0x2771920 + (option_id * 4)); }
 char* Get_ITxt(int StrNum, int ColNum) { return CDECL_3(char*, 0x77710B, StrNum, ColNum, 0x2860724); }
+
 int GetTxtStringIdBySkillId(int skillId)
 {
 	int strId = 0;
@@ -98,7 +100,7 @@ void SetNewSecSkillsFrames(H3BaseDlg* dlg, int increment = 0)
 	return;
 }
 
-bool NPC_CalcSkillMayBe(_Npc_* npc, int ind)
+bool NPC_CalcSkillMayBe(WoG::NPC* npc, int ind)
 {
 	bool canSkillBeLearned = false;
 	int firstAbil = 0, secondAbil = 0;
@@ -141,10 +143,10 @@ bool NPC_CalcSkillMayBe(_Npc_* npc, int ind)
 	return canSkillBeLearned;
 }
 
-int GetNpcSSkills(_Npc_* npc)
+int GetNpcSSkills(WoG::NPC* npc)
 {
-	INT npcSecSkillsBits = *(INT*)((INT)npc + 0x120);
-	INT npcBannedSecSkillsBits = *(INT*)((INT)npc + 0x124);
+	DWORD npcSecSkillsBits = npc->abilities.bits;// *(INT*)((INT)npc + 0x120);
+	DWORD npcBannedSecSkillsBits = npc->bannedAbilities.bits;
 
 	npcSSVec.clear();
 	npcSSVec.reserve(NPC_MAX_SKILLS);
@@ -198,9 +200,9 @@ int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
 {
 
 	_DlgNPC_* npcDlg = o_dlgNPC;
-	_Npc_* npc = (_Npc_*)o_dlgNPC->DlgTop;
+	WoG::NPC* npc =reinterpret_cast<WoG::NPC*>(npcDlg->DlgTop);
 
-	HDDlg* dlg = (HDDlg*)c->esi;
+	H3BaseDlg* dlg = (H3BaseDlg*)c->esi;
 
 	GetNpcSSkills(npc); // place new skills into vector
 
@@ -229,7 +231,10 @@ int __stdcall Before_WndNPC_DLG(LoHook* h, HookContext* c) //before dlg run
 
 	return EXEC_DEFAULT;
 }
-
+_LHF_(Dlg_CreatureInfo_Battle_AfterSettingText);
+_LHF_(Dlg_CreatureInfo_HintProc);
+////extern H3LoadedPcx16* npc_abils[NPC_MAX_SKILLS];
+//
 _LHF_(HooksInit)
 {
 
@@ -241,19 +246,13 @@ _LHF_(HooksInit)
 	if (pluginHookAddress)
 	{
 		_PI->WriteLoHook(pluginHookAddress, Before_WndNPC_DLG);
-		SSS_CreateResources(npc_abils, "dlg_npc3.def");
+		SSS_CreateResources("dlg_npc3.def");
 		_PI->WriteLoHook(0x5F3EA0, Dlg_CreatureInfo_Battle_AfterSettingText);
 		_PI->WriteLoHook(0x5F51F8, Dlg_CreatureInfo_HintProc);
 
 	}
 
-	// _PI->WriteLoHook(0x4FBDA0, GameStart);
 
-
-
-	// _PI->WriteDword(0x5F3728 + 1, 350); //dlg height
-	// _PI->WriteDword(0x5F3CE4 + 1, 324); // dlg hint bar pos
-   //  _PI->WriteLoHook(0x5F3CB1, Dlg_CreatureInfo_Battle_BeforeSettingText);
 
 	return EXEC_DEFAULT;
 }
@@ -280,7 +279,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 			globalPatcher = GetPatcher();
 
-			_PI = globalPatcher->CreateInstance("NPC_SSS.daemon.plugin");
+			_PI = globalPatcher->CreateInstance("EraPlugin.NPC_AbilitiesScrolling.daemon_n");
 
 			_PI->WriteLoHook(0x4EEAF2, HooksInit);
 

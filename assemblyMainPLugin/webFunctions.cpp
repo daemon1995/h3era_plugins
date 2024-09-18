@@ -1,7 +1,6 @@
-#pragma once
-#include "pch.h"
+//#pragma once
+#include <Windows.h>
 #include <sstream>
-
 #include <winhttp.h>
 #pragma comment(lib, "winhttp.lib")
 
@@ -9,6 +8,7 @@
 std::string PerformWinHTTPRequest(const wchar_t* api, const wchar_t* host, const wchar_t* path)
 {
 
+	
 	std::string result{};
 
 	HINTERNET hSession = WinHttpOpen(api,

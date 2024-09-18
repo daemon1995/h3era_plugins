@@ -2,6 +2,10 @@
 
 using namespace h3;
 
+HeroArts_CustomDlg::~HeroArts_CustomDlg()
+{
+}
+
 BOOL HeroArts_CustomDlg::DialogProc(H3Msg& msg)
 {
     if (msg.subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_DOWN && msg.command == eMsgCommand::WHEEL_BUTTON
@@ -45,8 +49,12 @@ void HeroArts_CustomDlg::ShowArtifactDescription(const H3Artifact* art)
         else
             pic = H3PictureCategories::Spell(art->ScrollSpell());
             
+        H3String artDescription;
+        // call "BuildUpArtDescription"
+        THISCALL_2(H3String*, 0x4DB650, art, &artDescription);
+
         //show msg
-        H3Messagebox::RMB(art->GetDescription(), pic);
+        H3Messagebox::RMB(artDescription.String(), pic);
 }
 
 void SortHeroBackPackArtfacts(H3Hero* hero)

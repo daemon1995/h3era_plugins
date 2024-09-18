@@ -2,10 +2,7 @@
 //#define _H3API_PLUGINS_
 #define _H3API_PLUGINS_
 
-#include "pch.h"
-//#include "..\..\headers\era.h"
-#include "..\..\headers\Era\era.h"
-
+#include "framework.h"
 #include "TestDlg.h"
 //#include "..\..\headers\H3API_RK\single_header\H3API.hpp"
 
@@ -17,34 +14,34 @@ PatcherInstance* _PI;
 
 namespace db
 {
-	void echo(int a)
-	{
-		Era::y[1] = a;
+	//void echo(int a)
+	//{
+	//	Era::y[1] = a;
 
-		Era::ExecErmCmd("IF:L^%y1^;");
-	}
+	//	Era::ExecErmCmd("IF:L^%y1^;");
+	//}
 
-	void echo(const char* a)
-	{
-		sprintf(Era::z[1], a);
-		Era::ExecErmCmd("IF:L^%z1^;");
-	}
-	void echo(float a)
-	{
-		Era::e[1] = a;
-		Era::ExecErmCmd("IF:L^%e1^;");
-	}
+	//void echo(const char* a)
+	//{
+	//	sprintf(Era::z[1], a);
+	//	Era::ExecErmCmd("IF:L^%z1^;");
+	//}
+	//void echo(float a)
+	//{
+	//	Era::e[1] = a;
+	//	Era::ExecErmCmd("IF:L^%e1^;");
+	//}
 
-	void dump(int a)
-	{
-		Era::y[1] = a;
-		Era::ExecErmCmd("IF:M^%y1^;");
-	}
-	void dump(const char* a)
-	{
-		sprintf(Era::z[1], a);
-		Era::ExecErmCmd("IF:M^%z1^;");
-	}
+	//void dump(int a)
+	//{
+	//	Era::y[1] = a;
+	//	Era::ExecErmCmd("IF:M^%y1^;");
+	//}
+	//void dump(const char* a)
+	//{
+	//	sprintf(Era::z[1], a);
+	//	Era::ExecErmCmd("IF:M^%z1^;");
+	//}
 
 }
 
@@ -108,17 +105,20 @@ _LHF_(TownScreen_EndOfRedraw)
 }
 _LHF_(DlgTown_AfterCreate)
 {
-	H3Dlg* dlg = reinterpret_cast<H3Dlg*>(c->eax);
-	if (dlg)
-	{
-		dlg->xDlg = 8;
-		dlg->yDlg = 8;
-	}
+
 	return EXEC_DEFAULT;
-
-
 }
 
+_LHF_(MainWindow_F1)
+{
+
+	c->return_address = 0x4F877D;
+	return NO_EXEC_DEFAULT;
+
+
+	return EXEC_DEFAULT;
+
+}
 _LHF_(HooksInit)
 {
 
@@ -126,8 +126,8 @@ _LHF_(HooksInit)
 	//_PI->WriteLoHook(0x4EA8B5, DlgDef_Dtor);
 	// 
 	//_PI->WriteLoHook(0x5FE9F9, DlgItem_Dtor);
-	_PI->WriteLoHook(0x5D5926, TownScreen_EndOfRedraw);
-	_PI->WriteLoHook(0x5C681E, DlgTown_AfterCreate);
+	//_PI->WriteLoHook(0x5D5926, TownScreen_EndOfRedraw);
+	//_PI->WriteLoHook(0x5C681E, DlgTown_AfterCreate);
 
 	dlgWidth = H3GameWidth::Get() - 100;
 	dlgHeight = IntAt(0x5C38EF + 1);
@@ -139,11 +139,12 @@ _LHF_(HooksInit)
 
 	//_PI->WriteDword(0x5C38F6 +1, )
 	
-	drawBuffer = H3LoadedPcx16::Create(P_WindowManager->screenPcx16->width, P_WindowManager->screenPcx16->width);
-	drawBuffer = H3LoadedPcx16::Create(dlgWidth, dlgHeight);
+	//drawBuffer = H3LoadedPcx16::Create(P_WindowManager->screenPcx16->width, P_WindowManager->screenPcx16->width);
+	//drawBuffer = H3LoadedPcx16::Create(dlgWidth, dlgHeight);
+	
+	//_PI->WriteLoHook(0x4F8767, MainWindow_F1);
 
-
-
+	_PI->WriteWord(0x4F870B, 0x9090);
 	return EXEC_DEFAULT;
 }
 
@@ -184,12 +185,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 		globalPatcher = GetPatcher();
 		_PI = globalPatcher->CreateInstance("ERA.daemon_n.testDlg");
-		//_PI->WriteLoHook(0x4EEAF2, HooksInit);
+		_PI->WriteLoHook(0x4EEAF2, HooksInit);
 
 		// if (ver.era()      )
 		{
 			Era::ConnectEra();
-			H3TownDependencies::Get()->m_dependency->castle
 		}
 
 

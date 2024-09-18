@@ -4,7 +4,7 @@
 std::vector<DlgStyle> DlgStyle::styles;
 
 DlgStyle::DlgStyle(const char* pcxName, const RECT rect, const UINT16 maxRows, const LPCSTR f)
-	: WIDGET_WIDTH(rect.right - rect.left), WIDGET_HEIGHT(rect.bottom - rect.top), MAXIMUM_ROWS(maxRows),font(f)
+	: WIDGET_WIDTH(rect.right - rect.left), WIDGET_HEIGHT(rect.bottom - rect.top), MAXIMUM_ROWS(maxRows), fontName(f)
 {
 
 	auto pcx = H3LoadedPcx::Load(pcxName);

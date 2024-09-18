@@ -15,12 +15,16 @@ using namespace h3;
 _LHF_(HooksInit)
 {
 
-	if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.popup"))) // if json is active
-		Dlg_MonPreview_HooksInit(_PI);
-	if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.creature_info"))) // if json is active
+	if (EraJS::readInt("gem_plugin.combat_dlg.enable.popup")) // if json is active
+	{
+		//Dlg_MonPreview_HooksInit(_PI);
+		preview::MonPreview::Get();
+	}
+
+	if (EraJS::readInt("gem_plugin.combat_dlg.enable.creature_info")) // if json is active
 		Dlg_CreatureInfo_HooksInit(_PI);
 
-	if (std::atoi(Era::tr("gem_plugin.combat_dlg.enable.spells"))) // if json is active
+	if (EraJS::readInt("gem_plugin.combat_dlg.enable.spells")) // if json is active
 		Dlg_CreatureSpellInfo_HooksInit(_PI);
 
 	return EXEC_DEFAULT;
@@ -45,7 +49,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 			plugin_On = 1;
 
 			globalPatcher = GetPatcher();
-			_PI = globalPatcher->CreateInstance("battle_dlg.daemon.plugin");
+			_PI = globalPatcher->CreateInstance("EraPlugins.CreatureInformation.daemon_n");
 			Era::ConnectEra();
 			_PI->WriteLoHook(0x4EEAF2, HooksInit);
 

@@ -144,16 +144,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 			globalPatcher = GetPatcher();
 			_PI = globalPatcher->CreateInstance("test.plugin.totest");
 
-			//_PI->WriteHiHook(0x44A950, SPLICE_, EXTENDED_, THISCALL_, Army_Get_AI_Value);
-		//	_PI->WriteHiHook(0x528520,  FASTCALL_, AICalculateMapPosWeight);
-
-			
-			//Era::ConnectEra();
-		   //auto p = _PI->WriteLoHook(0x4629DA, arch_OnCombatCreaturePanel_Create);
-
-
-
-
 		}
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:

@@ -1,4 +1,6 @@
-#include "pch.h"
+#include <experimental/filesystem>
+
+#include "framework.h"
 
 UserNotification::UserNotification(PatcherInstance* _pi) :IGamePatch(_pi)
 {
@@ -12,12 +14,11 @@ UserNotification::UserNotification(PatcherInstance* _pi) :IGamePatch(_pi)
 
 
 
-#include <experimental/filesystem>
 
 namespace fs = std::experimental::filesystem;
-bool Game__CheckWogOptionsFileExists()
+BOOL Game__CheckWogOptionsFileExists()
 {
-	bool result = false;
+	BOOL result = false;
 	H3String settingsfileName;
 	H3String settingsfilePath;
 
@@ -25,7 +26,7 @@ bool Game__CheckWogOptionsFileExists()
 	if (result = Era::ReadStrFromIni("Options_File_Name", "WoGification", "WoG.ini", h3_TextBuffer))
 	{
 		settingsfileName = h3_TextBuffer;
-	
+
 		if (result = Era::ReadStrFromIni("Options_File_Path", "WoGification", "WoG.ini", h3_TextBuffer))
 		{
 			settingsfilePath = h3_TextBuffer;
@@ -38,15 +39,19 @@ bool Game__CheckWogOptionsFileExists()
 		settingsfilePath.Append(settingsfileName);
 		fs::path path(settingsfilePath.String());
 		result = fs::exists(path) && !fs::is_directory(path);
-		
+
 	}
 
 	return result;
 }
 
 
+
 _LHF_(UserNotification::H3SelectScenarioDialog__StartButtonClick)
 {
+
+
+
 	auto dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->ebx);
 	if (!Get().m_ignore)
 	{
@@ -79,6 +84,49 @@ void __stdcall UserNotification::OnAfterReloadLanguageData(Era::TEvent* e)
 
 }
 
+void __stdcall UserNotification::AdvMgrDlg_RedrawLog(HiHook* h, H3AdventureMgrDlg* dlg, bool redrawLog)
+{
+	THISCALL_2(void, h->GetDefaultFunc(), dlg, redrawLog);
+	auto* updateInfo = &Get().m_updateInfo;
+
+	if (updateInfo->m_needToCheck)
+	{
+		//Era::ExecErmCmd("IF:L^It's time^");
+
+		const DWORD timeDifference = GetTime() - updateInfo->m_lastCheckTime;
+		// check if time to update
+
+		if (timeDifference >= updateInfo->m_chechInterval)
+		{
+
+			updateInfo->m_lastCheckTime += timeDifference;
+			AssemblyInformation::Get().CheckOnlineVersion();
+
+		}
+		if (timeDifference >= 5000
+			&& AssemblyInformation::Get().CompareVersions())
+		{
+
+			//	Era::ExecErmCmd("IF:L^ThereIsNewer version^");
+
+		}
+
+	}
+
+}
+#include <chrono>
+char __stdcall UserNotification::AdvMgr_DrawMap(HiHook* h, H3AdventureManager* advMan, const __int16 mapX, const __int16 mapY, const __int16 mapZ, const int hotSeat, char updateInfoPanel)
+{
+	// call default function - we don't need to affect it
+	char result = THISCALL_6(char, h->GetDefaultFunc(), advMan, mapX, mapY, mapY, hotSeat, updateInfoPanel);
+
+
+
+
+	return result;
+
+}
+
 void UserNotification::PluginText::Load() noexcept
 {
 	startGameWithoutOptionsFile = EraJS::read("gem_plugin.user_notification.no_dat_settings");
@@ -103,8 +151,17 @@ void UserNotification::CreatePatches() noexcept
 		_pi->WriteLoHook(0x58698B, H3SelectScenarioDialog__StartButtonClick);
 		Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 
+		// set notification for incoming version check
+		//_pi->WriteHiHook(0x40F350, THISCALL_, AdvMgr_DrawMap);
+		// 
+#ifdef _DEBUG
+		_pi->WriteHiHook(0x40F7AD, THISCALL_, AdvMgrDlg_RedrawLog);
+#endif // _DEBUG
+
+
 		m_isEnabled = true;
 	}
 
 
 }
+

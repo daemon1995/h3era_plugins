@@ -1,7 +1,6 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #define _H3API_PLUGINS_
-#include "pch.h"
-
+#include "framework.h"
 Patcher* globalPatcher;
 PatcherInstance* _PI;
 using namespace h3;
@@ -11,7 +10,7 @@ using namespace h3;
 constexpr int HEROES_COUNT = 156;
 void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 {
-	
+
 	//std::string jsonKeyStart = "gem.%d";
 
 	heroInfo.campaignHero = false;
@@ -35,7 +34,7 @@ void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 
 	for (size_t i = 0; i < 2; i++)
 	{
-		sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.skill%d.type", id,i);
+		sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.skill%d.type", id, i);
 		trResult = Era::tr(h3_TextBuffer);
 		if (trResult != h3_TextBuffer)
 		{
@@ -53,7 +52,7 @@ void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 					skillLvl = Clamp(eSecSkillLevel::BASIC, skillLvl, eSecSkillLevel::EXPERT);
 
 				}
-				heroInfo.sskills[i].level =(eSecSkillLevel)skillLvl;
+				heroInfo.sskills[i].level = (eSecSkillLevel)skillLvl;
 			}
 		}
 	}
@@ -79,7 +78,7 @@ void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 					low = atoi(trResult.c_str());
 					low = Clamp(1, low, INT32_MAX);
 				}
-				heroInfo.creatureAmount[i].lowAmount = low; 
+				heroInfo.creatureAmount[i].lowAmount = low;
 				sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.army%d.high", id, i);
 				int high = heroInfo.creatureAmount[i].highAmount;
 				trResult = Era::tr(h3_TextBuffer);
@@ -95,12 +94,86 @@ void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 		}
 	}
 
-
-
-
 	return;
 }
 
+typedef typename WoG::NPC NPC;
+constexpr DWORD NPC_BASE_STATS_ADDRESSES[7] = { 0x769B01,0x769B0B,0x769B33,0x769B1F,0x769B29,0x769B15,0x769B3D };
+
+struct NPCStats
+{
+private:
+	int stats[7];
+
+public:
+
+	NPCStats(const UINT id)
+	{
+
+		for (size_t i = 0; i < 7; i++)
+		{
+			stats[i] = IntAt(NPC_BASE_STATS_ADDRESSES[i]);
+		}
+
+		ReadJsonData(id);
+	}
+public:
+
+	void Assign(NPC* npc)
+	{
+		libc::memcpy(&(npc->parameters), stats, sizeof(stats));
+	}
+
+	void ReadJsonData(const UINT id)
+	{
+		bool readSucces = false;
+		for (size_t i = 0; i < 7; i++)
+		{
+			sprintf(h3_TextBuffer, "gem.NPCStartingParameters.%d.%d", id, i);
+			const int value = EraJS::readInt(h3_TextBuffer, readSucces);
+
+			if (readSucces && value >= 0)
+			{
+				stats[i] = value;
+
+			}
+		}
+	}
+
+public:
+	static void SetDefault()
+	{
+		bool readSucces = false;
+
+		for (size_t i = 0; i < 7; i++)
+		{
+			sprintf(h3_TextBuffer, "gem.NPCStartingParameters.-1.%d", i);
+			const int value = EraJS::readInt(h3_TextBuffer, readSucces);
+
+			if (readSucces && value >= 0)
+			{
+				_PI->WriteDword(NPC_BASE_STATS_ADDRESSES[i], value);
+
+			}
+		}
+	}
+};
+std::vector< NPCStats> npcStatsVec;
+
+NPC* __stdcall NPC__Init(HiHook* h, NPC* npc)
+{
+
+	auto result = THISCALL_1(NPC*, h->GetDefaultFunc(), npc); // get default function
+
+
+	if (npc->id != eHero::RANDOM)
+	{
+		npcStatsVec.at(npc->id).Assign(npc);
+	}
+
+	return result;
+
+}
 _LHF_(HooksInit)
 {
 	// Фикс Димера - герой имеет продвинутую разведку на старте
@@ -108,9 +181,14 @@ _LHF_(HooksInit)
 
 	hero_info_table[eHero::DEEMER].sskills[1].level = eSecSkillLevel::BASIC;
 
+	NPCStats::SetDefault();
+	npcStatsVec.reserve(HEROES_COUNT);
+
 	for (size_t i = 0; i < HEROES_COUNT; i++)
 	{
 		ChangeHeroStartingParameters(hero_info_table[i], i);
+		npcStatsVec.emplace_back(NPCStats{ i });
+
 	}
 
 
@@ -135,9 +213,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 			plugin_On = 1;
 
 			globalPatcher = GetPatcher();
-			_PI = globalPatcher->CreateInstance("ERA.heroesStartingParameters.plugin");
+			_PI = globalPatcher->CreateInstance("EraPlugin.HeroesStartingParameters.daemon_n");
 			Era::ConnectEra();
 			_PI->WriteLoHook(0x4EEAF2, HooksInit);
+			_PI->WriteHiHook(0x769AB4, THISCALL_, NPC__Init);
+
 		}
 
 	case DLL_THREAD_ATTACH:

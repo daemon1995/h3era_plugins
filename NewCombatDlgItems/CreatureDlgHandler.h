@@ -70,15 +70,14 @@ public:
 
 	CreatureDlgHandler(H3CreatureInfoDlg* dlg, H3CombatCreature* stack = nullptr, H3Army * army = nullptr, int armySlotIndex =-1);
 
-	bool SetWitdt;
-	bool AlignItems();
-	bool AddExperienceButton();
-	bool AddSpellEfects();
+	BOOL AlignItems();
+	BOOL AddExperienceButton();
+	BOOL AddSpellEfects();
 	~CreatureDlgHandler();
 
-	bool AddCommanderSkills();
+	BOOL AddCommanderSkills();
 
-	bool CreateCreatureSkillsList();
+	BOOL CreateCreatureSkillsList();
 
 	//bool Adjust(Crex,
 	static std::vector<H3DlgPcx16*> dlgSkillPcx;

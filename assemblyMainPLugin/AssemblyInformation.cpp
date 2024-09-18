@@ -1,16 +1,24 @@
-#include "pch.h"
-#include "AssemblyInformation.h"
+#include <thread>
+#include "framework.h"
+//#include "webFunctions.cpp"
 
-#include "webFunctions.h"
+#include "Shlwapi.h"
 
-constexpr const char* BASE_JSON_KEY = "gem_plugin.main_menu";
+#pragma comment (lib, "Shlwapi.lib")
 
-const char* AssemblyInformation::m_iniPath = "ERA_Project.ini";
+std::string PerformWinHTTPRequest(const wchar_t* api, const wchar_t* host, const wchar_t* path);
+
+
+//constexpr const char* BASE_JSON_KEY = "gem_plugin.main_menu";
+
+const char* AssemblyInformation::BASE_JSON_KEY = "gem_plugin.main_menu";
+const char* AssemblyInformation::ASSEMBLY_INI_FILE = "ERA_Project.ini";
+
 // @todo // add red color for different versions
 AssemblyInformation::AssemblyInformation(PatcherInstance* _pi) :IGamePatch(_pi),
 versions{ &m_eraVersion,&m_localVersion,&m_remoteVersion }
 {
-
+	LoadDataFromJson();
 
 }
 void AssemblyInformation::Version::GetVersion() noexcept
@@ -35,19 +43,24 @@ void AssemblyInformation::Version::GetJsonData(const char* jsonSubKey)
 
 		sprintf(h3_TextBuffer, "%s.%s.custom_text", BASE_JSON_KEY, jsonSubKey);
 		text = EraJS::read(h3_TextBuffer, readSuccess);
-		if (text.Empty())
-			customText = false;
+
+		customText = readSuccess && !text.Empty();
 
 		sprintf(h3_TextBuffer, "%s.%s.format", BASE_JSON_KEY, jsonSubKey);
 		format = EraJS::read(h3_TextBuffer);
 
+		sprintf(h3_TextBuffer, "%s.%s.font", BASE_JSON_KEY, jsonSubKey);
+		LPCSTR fName = EraJS::read(h3_TextBuffer, readSuccess);
+		fontName = readSuccess ? fName : h3::NH3Dlg::Text::MEDIUM;
 		sprintf(h3_TextBuffer, "%s.%s.length_in_px", BASE_JSON_KEY, jsonSubKey);
 		UINT lenFromJson = EraJS::readInt(h3_TextBuffer, readSuccess);
 		if (readSuccess && lenFromJson > 0)
 			characterLength = lenFromJson;
 
-		alwaysDraw = EraJS::read("nmmi.menu_info.main.always_draw");
+		alwaysDraw = EraJS::readInt("nmmi.menu_info.main.always_draw");
 
+		Era::ReadStrFromIni("ERA", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
+		shellExecutePath = h3_TextBuffer;
 
 	}
 
@@ -55,14 +68,18 @@ void AssemblyInformation::Version::GetJsonData(const char* jsonSubKey)
 
 H3DlgText* AssemblyInformation::Version::AddToDlg(H3BaseDlg* dlg)  noexcept
 {
-	const int itemWidth = text.Length() * characterLength;
+
+	H3FontLoader fnt(this->fontName);// = H3Font::Load(h3::NH3Dlg::Text::MEDIUM);
+	const int itemWidth = fnt->GetMaxLineWidth(text.String());// text.Length()* characterLength;
 	if (800 - x < itemWidth)
 		x = 800 - itemWidth;
 	if (600 - y < 16)
 		y = 600 - 16;
-	auto it = dlg->CreateText(x, y, itemWidth, 16, text.String(), h3::NH3Dlg::Text::MEDIUM, 7, itemId, eTextAlignment::HLEFT);
-	//if (it)
-	//	*reinterpret_cast<int*>(*reinterpret_cast<int*>(it) +0x44) = eTextColor::RED;
+	auto it = dlg->CreateText(x, y, itemWidth, fnt->height, text.String(), fnt->GetName(), 7, itemId, eTextAlignment::HLEFT);
+
+	//fnt->Dereference();
+	//if (versions)
+	//	*reinterpret_cast<int*>(*reinterpret_cast<int*>(versions) +0x44) = eTextColor::RED;
 	return it;
 }
 
@@ -72,6 +89,61 @@ void AssemblyInformation::Version::AdjustItemText() noexcept
 	{
 		sprintf(h3_TextBuffer, format, version.String());
 		text = h3_TextBuffer;
+
+	}
+
+}
+void AssemblyInformation::Version::ClickProcedure() const noexcept
+{
+
+	if (shellExecutePath.Empty())
+	{
+
+
+	}
+	else
+	{
+		P_SoundManager->ClickSound();
+
+		// check if we open file or the link
+		bool isUrl = PathIsURL(shellExecutePath.String());
+
+		LPCSTR jsonKey = isUrl ? "gem_plugin.user_notification.open_web_page" : "gem_plugin.user_notification.open_external_file";
+		libc::sprintf(h3_TextBuffer, EraJS::read(jsonKey), shellExecutePath.String());
+		BOOL isOk = H3Messagebox::Choice(h3_TextBuffer);
+		if (isOk)
+		{
+			// call ShellExecuteA from exe to open github download page
+			INT_PTR intRes = STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", shellExecutePath.String(), NULL, NULL, SW_SHOWNORMAL);
+
+			/** https://learn.microsoft.com/ru-ru/windows/win32/api/shellapi/nf-shellapi-shellexecutea */
+			if (intRes <= 32)
+			{
+
+
+				LPSTR messageBuffer = nullptr;
+
+				// Форматирование сообщения об ошибке
+				size_t size = FormatMessageA(
+					FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+					nullptr,
+					intRes,
+					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					(LPSTR)&messageBuffer,
+					0,
+					nullptr
+				);
+
+				std::string message(messageBuffer, size);
+				H3Messagebox(message.c_str());
+
+				// Освобождение буфера
+				LocalFree(messageBuffer);
+
+			}
+
+
+		}
 
 	}
 
@@ -88,16 +160,14 @@ void AssemblyInformation::LocalVersion::AdjustItemText() noexcept
 }
 
 
-#include <thread>
-#include "webFunctions.h"
 void AssemblyInformation::RemoteVersion::GetJsonData(const char* jsonSubKey)
 {
 	Version::GetJsonData(jsonSubKey);
-	if (show && !customText)
-	{
-		Era::ReadStrFromIni("ReleaseURL", "GitHub", m_iniPath, h3_TextBuffer);
-		remoteFileUrl = h3_TextBuffer;
+	Era::ReadStrFromIni("Remote", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
+	shellExecutePath = h3_TextBuffer;
 
+	if (show && !customText && !workDone.load())
+	{
 		workDone = false;
 		std::thread th(&AssemblyInformation::RemoteVersion::GetVersion, this);
 		th.detach();
@@ -111,15 +181,15 @@ void AssemblyInformation::RemoteVersion::GetVersion() noexcept
 	sprintf(h3_TextBuffer, "%s", "");
 
 	// create WideStringsPtr
-	Era::ReadStrFromIni("API", "GitHub", m_iniPath, h3_TextBuffer);
+	Era::ReadStrFromIni("API", "GitHub", ASSEMBLY_INI_FILE, h3_TextBuffer);
 	std::string narrowString = h3_TextBuffer;
 	std::wstring api(narrowString.begin(), narrowString.end());
 
-	Era::ReadStrFromIni("Host", "GitHub", m_iniPath, h3_TextBuffer);
+	Era::ReadStrFromIni("Host", "GitHub", ASSEMBLY_INI_FILE, h3_TextBuffer);
 	narrowString = h3_TextBuffer;
 	std::wstring host(narrowString.begin(), narrowString.end());
 
-	Era::ReadStrFromIni("Path", "GitHub", m_iniPath, h3_TextBuffer);
+	Era::ReadStrFromIni("Path", "GitHub", ASSEMBLY_INI_FILE, h3_TextBuffer);
 	narrowString = h3_TextBuffer;
 	std::wstring path(narrowString.begin(), narrowString.end());
 
@@ -132,7 +202,7 @@ void AssemblyInformation::RemoteVersion::GetVersion() noexcept
 		{
 			// parse json (thanks to nlohmann)
 			nlohmann::json j = nlohmann::json::parse(requestResponce, nullptr, false);
-			// get object and check if it is correct
+			// get object and check if versions is correct
 			auto& obj = j["tag_name"];
 			if (!obj.is_null() && obj.is_string())
 				version = obj.get<std::string>().c_str();
@@ -143,6 +213,11 @@ void AssemblyInformation::RemoteVersion::GetVersion() noexcept
 
 
 }
+//void AssemblyInformation::RemoteVersion::ClickProcedure() noexcept
+//{
+//
+//
+//}
 void AssemblyInformation::LocalVersion::GetJsonData(const char* jsonSubKey)
 {
 	Version::GetJsonData(jsonSubKey);
@@ -157,7 +232,9 @@ void AssemblyInformation::LocalVersion::GetJsonData(const char* jsonSubKey)
 	readRegistry = EraJS::readInt(h3_TextBuffer);
 	if (!customText)
 		GetVersion();
-	eObject;
+
+	Era::ReadStrFromIni("Assembly", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
+	shellExecutePath = h3_TextBuffer;
 
 }
 
@@ -171,12 +248,32 @@ const char* AssemblyInformation::GetAssemblyVesrion()
 	return AssemblyInformation::Get().m_localVersion.version.String();
 }
 
+void AssemblyInformation::CheckOnlineVersion()
+{
+	m_remoteVersion.GetJsonData("online_version");
+}
+
+const BOOL AssemblyInformation::CompareVersions()
+{
+	// if there is process run then start to compare locale and remote
+	if (m_remoteVersion.workDone.load())
+	{
+
+		m_remoteVersion.version.ToDouble();
+		m_remoteVersion.workDone = false;
+
+		return m_remoteVersion.version.ToDouble() > m_localVersion.version.ToDouble();
+	}
+
+	return false;
+}
+
 void AssemblyInformation::LocalVersion::GetVersion()noexcept
 {
 
 	if (!customVersion)
 	{
-		Era::ReadStrFromIni("key", "Registry", m_iniPath, h3_TextBuffer);
+		Era::ReadStrFromIni("key", "Registry", ASSEMBLY_INI_FILE, h3_TextBuffer);
 		if (ReadRegistry(h3_TextBuffer))
 		{
 
@@ -188,7 +285,7 @@ void AssemblyInformation::LocalVersion::GetVersion()noexcept
 
 }
 
-bool AssemblyInformation::LocalVersion::ReadRegistry(const char* registryKey)
+BOOL AssemblyInformation::LocalVersion::ReadRegistry(const char* registryKey)
 {
 	HKEY hKey;
 
@@ -238,79 +335,73 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg* dlg)
 	if (auto* it = dlg->GetH3DlgItem(545))
 		it->Hide();
 
-	for (const auto it : versions)
+	for (const auto version : versions)
 	{
-		if (it->show)
+		if (version->show)
 		{
-			it->AdjustItemText();
-			it->dlgItem = it->AddToDlg(dlg);
+			version->AdjustItemText();
+			version->dlgItem = version->AddToDlg(dlg);
 		}
 	}
 }
-#include <ShellAPI.h>;
 
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook* h, H3Msg* msg)
 {
-	AssemblyInformation::RemoteVersion& remoteVersion = Get().m_remoteVersion;
 
-	for (const auto* ver : Get().versions)
+	H3DlgText* visibleItem = nullptr;
+	const AssemblyInformation::Version* activeVersion = nullptr;
+	for (auto* ver : Get().versions)
 	{
 		H3DlgText* it = ver->dlgItem;
-		if (it && it->IsVisible() && ver->alwaysDraw)
+		if (it && it->IsVisible())
 		{
-			it->Draw();
+
+			if (it == msg->ItemAtPosition(msg->GetDlg()))
+			{
+				activeVersion = ver;
+			}
+
+			if (ver->alwaysDraw)
+			{
+				it->Draw();
+			}
 		}
 	}
+
+
+	if (activeVersion)
+	{
+		P_MouseManager->SetCursor(3, 0);
+
+		if (msg->IsLeftDown())
+		{
+			activeVersion->ClickProcedure();
+		}
+
+	}
+	else if (msg->GetX()) // check if mouse isn't reset
+	{
+		P_MouseManager->DefaultCursor();
+
+	}
+
+
+	AssemblyInformation::RemoteVersion& remoteVersion = Get().m_remoteVersion;
 
 	H3DlgText* it = remoteVersion.dlgItem;
 
-	if (it && it->IsVisible())
+	if (remoteVersion.workDone.load()
+		&& it
+		&& it->IsVisible())
 	{
-		if (remoteVersion.workDone.load())
-		{
 
-			remoteVersion.AdjustItemText();
-			it->SetText(remoteVersion.text);
-			it->SetWidth((remoteVersion.text.Length() + 1) * remoteVersion.characterLength);
-			it->Draw();
-			it->Refresh();
-
-			////	AssemblyInformation::LocalVersion& localVersion = Get().m_localVersion;
-
-			//	//if (localVersion.dlgItem&& remoteVersion.text.String() > localVersion.text.String())
-			//	//{
-			//	//	localVersion.AdjustItemText();
-
-			//	//	localVersion.text = H3String::Format("{~r}%s}", localVersion.text.String());
-			//	//	localVersion.dlgItem->SetText(remoteVersion.text);
-
-			//	//	localVersion.dlgItem->Draw();
-			//	//	localVersion.dlgItem->Refresh();
-			//	//}
-			remoteVersion.workDone.store(false);
-			//	
-		}
-		H3POINT mousePos = msg->GetCoords().GetCurrentCursorPosition();
-		RECT rect = { it->GetAbsoluteX() ,it->GetAbsoluteY() ,it->GetAbsoluteX() + it->GetWidth(),it->GetAbsoluteY() + it->GetHeight() };
-
-		if (rect.left <= mousePos.x && mousePos.x <= rect.right
-			&& rect.top <= mousePos.y && mousePos.y <= rect.bottom)
-		{
-			P_MouseManager->SetCursor(41, 1);
-			if (msg->IsLeftDown())
-			{
-				P_SoundManager->ClickSound();
-				ShellExecuteA(NULL, "open", remoteVersion.remoteFileUrl.String(), NULL, NULL, SW_SHOWNORMAL);
-			}
-
-		}
-		else
-			P_MouseManager->SetCursor(0, 0);
-
-	}
-	else
-	{
-		//h->Undo();
+		remoteVersion.AdjustItemText();
+		it->SetText(remoteVersion.text);
+		H3FontLoader fn(remoteVersion.fontName);
+		it->SetWidth(fn->GetMaxLineWidth(remoteVersion.text.String()));// (remoteVersion.text.Length() + 1)* remoteVersion.characterLength);
+		it->Draw();
+		it->Refresh();
+		remoteVersion.workDone.store(false);
 	}
 
 	return FASTCALL_1(int, h->GetDefaultFunc(), msg);
@@ -337,8 +428,9 @@ void AssemblyInformation::CreatePatches()  noexcept
 		_PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
 		_PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); //goes from new game
 		// move and resize iam00.def (next hero buttn)
-		_PI->WriteByte(0x401A85 + 1, 32); // set width
-		_PI->WriteDword(0x401A8C + 1, 679 + 32); // set y
+		constexpr BYTE defWidth = 32;
+		_PI->WriteByte(0x401A85 + 1, defWidth); // set width
+		_PI->WriteDword(0x401A8C + 1, 679 + defWidth); // set y
 
 
 		_PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
@@ -361,16 +453,19 @@ AssemblyInformation& AssemblyInformation::Get()
 
 void AssemblyInformation::LoadDataFromJson()
 {
-	m_eraVersion.GetJsonData("era_version");
-	m_localVersion.GetJsonData("current_version");
-	m_remoteVersion.GetJsonData("online_version");
+	if (!m_isInited)
+	{
+		m_eraVersion.GetJsonData("era_version");
+		m_localVersion.GetJsonData("current_version");
+		m_remoteVersion.GetJsonData("online_version");
 
 
-	m_eraVersion.version = Era::GetEraVersion();
-	if (m_eraVersion.show || m_localVersion.show || m_remoteVersion.show)
-		CreatePatches();
+		m_eraVersion.version = Era::GetEraVersion();
+		if (m_eraVersion.show || m_localVersion.show || m_remoteVersion.show)
+			CreatePatches();
+		m_isInited = true;
+	}
 
-	m_isInited = true;
 
 }
 
