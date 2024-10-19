@@ -11,10 +11,7 @@
 #define _H3API_PATCHER_X86_
 #define _H3API_PLUGINS_
 
-namespace Era
-{
-	char* tr(const char* key);
-}
-#include "..\..\oldHeroesHeaders\h3api_single\H3API.hpp"
+
+//#include "..\..\oldHeroesHeaders\h3api_single\H3API.hpp"
 
 #endif // !HEADER_H

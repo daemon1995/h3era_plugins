@@ -82,7 +82,7 @@ namespace cmbhints
 		SettingsDlg(int width, int height, Settings* incomingSettings, DlgText* text);
 		virtual ~SettingsDlg();
 	private:
-
+		Settings* settings = nullptr;
 		//BOOL needKeyBoardListen;
 		BOOL DialogProc(H3Msg& msg) override;
 
@@ -99,8 +99,8 @@ namespace cmbhints
 
 		static  int __fastcall SettingsHotkeyCallback(H3Msg* msg) noexcept;
 
-		static void HitPointsBarDraw(H3DlgItem* labelForHp)noexcept;
-		static void LabelBarDraw(H3DlgItem* originalLabel) noexcept;
+		void HitPointsBarDraw() noexcept;
+		void LabelBarDraw() noexcept;
 
 
 	};
@@ -111,6 +111,7 @@ namespace cmbhints
 
 		BOOL needRedraw = false;
 		BOOL isEnabled = false;
+		Settings settings;
 
 
 	private:
@@ -118,7 +119,7 @@ namespace cmbhints
 		virtual void CreatePatches() noexcept final;
 
 	private:
-		static _LHF_(BeforebattleStackHintDraw);
+		static _LHF_(BeforeBattleStackHintDraw);
 		//	static _LHF_(BattleOptionsDlg);
 		static _LHF_(BattleMgr_ProcessActionL);
 		static void __stdcall BattleOptionsDlg_Show(HiHook* h, H3BaseDlg* dlg);// 004682C0
@@ -128,7 +129,7 @@ namespace cmbhints
 		static  int __fastcall CombatOptionsCallback(H3Msg* msg) noexcept;
 
 		//static void Init();
-		static void WindMgr_DrawColoredRect(const int x, const int y, const  int width, const  int height, const  Settings* settings, const  bool lost = false)noexcept;
+		static void WindMgr_DrawColoredRect(const int x, const int y, const  int width, const  int height, const  Settings* settings, const BOOL lost = false)noexcept;
 
 		static CombatHints& Get();// (PatcherInstance* _PI);
 

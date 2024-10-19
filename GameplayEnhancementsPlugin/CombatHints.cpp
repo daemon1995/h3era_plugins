@@ -4,7 +4,6 @@
 
 namespace cmbhints
 {
-	Settings settings;
 
 
 	CombatHints::CombatHints() :IGamePatch(globalPatcher->CreateInstance("EraPlugin.CombatHints.daemon_n"))
@@ -21,6 +20,7 @@ namespace cmbhints
 	constexpr float HP_LABEL_LOSS = 0.975f;
 	constexpr float HP_LABEL_SATURATION = 0.8f; // idk.mb set 1
 
+	constexpr int HP_LABEL_MAX_OFFSET = 18;
 
 
 	CombatHints& CombatHints::Get()
@@ -31,13 +31,12 @@ namespace cmbhints
 	}
 
 
-
 	void CombatHints::CreatePatches() noexcept
 	{
 		if (!m_isInited)
 		{
 
-			this->_pi->WriteLoHook(0x43E38B, BeforebattleStackHintDraw);
+			this->_pi->WriteLoHook(0x43E38B, BeforeBattleStackHintDraw);
 			//_PI->WriteLoHook(0x4682C0, BattleOptionsDlg);
 			this->_pi->WriteHiHook(0x4682C0, THISCALL_, BattleOptionsDlg_Show);
 
@@ -53,10 +52,10 @@ namespace cmbhints
 	_LHF_(CombatHints::BattleMgr_ProcessActionL)
 	{
 		H3Msg* msg = reinterpret_cast<H3Msg*>(c->eax);
+		auto& settings = Get().settings;
 		if (msg && settings.isHeld)
 		{
-			using namespace Era;
-			//Era::y[23] = msg->IsKeyPress();
+
 			auto* combatHints = &Get();
 
 
@@ -81,77 +80,120 @@ namespace cmbhints
 		return EXEC_DEFAULT;
 	}
 
-	_LHF_(CombatHints::BeforebattleStackHintDraw)
+
+
+
+
+	_LHF_(CombatHints::BeforeBattleStackHintDraw)
 	{
 		H3CombatCreature* stack = reinterpret_cast<H3CombatCreature*>(c->ebx);
+		auto& settings = Get().settings;
 
 		if (stack && stack->numberAlive && settings.isEnabled)
 		{
 
 			// GetKeyState Call
 			if (settings.isHeld && !(STDCALL_1(SHORT, PtrAt(0x63A294), settings.vKey) & 0x800))
-
-				return EXEC_DEFAULT; // return
-
-			int height = static_cast<int>(settings.height);
-
-			int x = c->edi;
-			int y = c->esi;
-			int s = y - height - 1;
-
-			H3CombatManager* cmb = H3CombatManager::Get();
-
-			bool needToDraw = THISCALL_4(bool, 0x495460, cmb, cmb->cmNumWinPcxLoaded, x, s);// draw hint back
-			if (!needToDraw) return EXEC_DEFAULT;
-
-			x += cmb->dlg->GetX() + 1;
-			y += cmb->dlg->GetY() - height;
-			int maxHp = stack->MaxHitPoints();
-
-			if (maxHp)
+				// if key is required and isnt' pressed
 			{
-				float fillPartF = static_cast<float>((maxHp - stack->healthLost)) * 28 / maxHp * 10;
-				bool remainder = fillPartF > 4;
-
-				int filledPart = static_cast<int>(fillPartF / 10 + remainder);
-				int hpBarLimit = CharAt(0x43E45B + 1);
-				filledPart = Clamp(0, filledPart, hpBarLimit);
-
-
-				const int height = Clamp(0, static_cast<int>(settings.height), cmb->cmNumWinPcxLoaded->height - 2);
-
-
-				WindMgr_DrawColoredRect(x, y, filledPart, height, &settings);
-
-				if (filledPart < hpBarLimit)
-				{
-					WindMgr_DrawColoredRect(x + filledPart, y, filledPart * -1 + hpBarLimit, height, &settings, true);
-				}
-				auto* combatHints = &Get();
-
-				if (settings.isHeld && combatHints->needRedraw > 0)
-				{
-					combatHints->needRedraw = -1;
-					THISCALL_1(void, 0x477C00, cmb);
-				}
-
+				return EXEC_DEFAULT; // return
 			}
 
+			// if position is out of the original label - when 0 then pos is same
+			// also reverse value from the settings cause yPos is ascending
+			if (const int labelYOffset = static_cast<int>(settings.height) * -1)
+			{
+
+				const int nativeLabelX = c->edi;
+				const int nativeLabelY = c->esi;
+
+				const int newLabelX = nativeLabelX;
+
+				const int newLabelY = nativeLabelY + labelYOffset; // add border
+
+
+				const H3CombatManager* cmbMgr = H3CombatManager::Get();
+
+				const BOOL labelDrawn = THISCALL_4(BOOL, 0x495460, cmbMgr, cmbMgr->cmNumWinPcxLoaded, newLabelX, newLabelY);// draw label pcx
+				const int maxHp = stack->MaxHitPoints();
+
+				// if origial hint was drawn this one will appear too
+				if (labelDrawn && maxHp)
+				{
+					const int labelHeight = cmbMgr->cmNumWinPcxLoaded->height;
+
+					// difference between
+					const int protrusionSize = std::abs(labelYOffset);// std::abs(nativeLabelY + labelYOffset - nativeLabelY);
+
+					//const int newLabelHeight = Clamp(0, protrusionSize, labelHeight);
+					const int drawHeightMax = labelHeight - 2;
+					const int labelBorderHeight = protrusionSize >= labelHeight ? 2 : 1;
+
+
+					int drawHeight = Clamp(0, protrusionSize - labelBorderHeight, drawHeightMax);
+
+					// if draw area displayed at all
+					if (drawHeight > 0)
+					{
+
+						const int dlgX = cmbMgr->dlg->GetX();
+						const int dlgY = cmbMgr->dlg->GetY();
+						// count if it makes sense to draw health
+						float fillPartF = static_cast<float>((maxHp - stack->healthLost)) * 28 / maxHp * 10;
+						bool hpRemainder = fillPartF > 4;
+
+						int drawWidth = static_cast<int>(fillPartF / 10 + hpRemainder);
+
+						const int hpBarLimit = CharAt(0x43E45B + 1);
+						drawWidth = Clamp(0, drawWidth, hpBarLimit);
+
+						// init real draw postion cause of an hd mod offsets
+						const int drawX = newLabelX + dlgX + 1; // add 1px offsets for the borders
+
+						// fix for the drawing bar under the amount
+						const BOOL isBottomDrawing = nativeLabelY < newLabelY&& protrusionSize <= drawHeightMax;
+
+						const int drawY = dlgY + (isBottomDrawing ? nativeLabelY + labelHeight : newLabelY + 1);
+
+						// set draw limits for bottom panel top border
+						if (const auto bottomPanel = P_CombatManager->dlg->bottomPanel)
+						{
+							const int panelAbsY = bottomPanel->GetY() + dlgY;
+							if (panelAbsY < drawY - 1 + drawHeight)
+							{
+								drawHeight = panelAbsY - drawY;
+							}
+						}
+						//assert(P_CombatManager->updateRect.bottom < 800);
+						WindMgr_DrawColoredRect(drawX, drawY, drawWidth, drawHeight, &settings);
+
+						if (drawWidth < hpBarLimit)
+						{
+							// draw lost hp part
+							WindMgr_DrawColoredRect(drawX + drawWidth, drawY, hpBarLimit - drawWidth, drawHeight, &settings, true);
+						}
+
+						auto* combatHints = &Get();
+
+						// redraw dlg
+						if (settings.isHeld && combatHints->needRedraw > 0)
+						{
+							combatHints->needRedraw = -1;
+							THISCALL_1(void, 0x477C00, cmbMgr);
+						}
+					}
+				}
+			}
 		}
 
 		return EXEC_DEFAULT;
 	}
 
 
-
-
-
-
-
 	int __fastcall CombatHints::CombatOptionsCallback(H3Msg* msg)noexcept
 	{
 
-		if (msg->subtype == eMsgSubtype::LBUTTON_CLICK)
+		if (msg->IsLeftClick())
 		{
 			//	using namespace Era;
 
@@ -172,6 +214,8 @@ namespace cmbhints
 	  EraJS::read("gem_plugin.combat_hints.text.press_any"),
 	  EraJS::read("gem_plugin.combat_hints.text.held")
 			};
+			auto& settings = Get().settings;
+
 			SettingsDlg dlg(450, 450, &settings, &dlgText);
 
 			dlg.Start();
@@ -181,20 +225,17 @@ namespace cmbhints
 		}
 
 		return false;
-
 	}
-
-
 
 
 	//	_LHF_(CombatHints::BattleOptionsDlg)
 	void __stdcall CombatHints::BattleOptionsDlg_Show(HiHook* h, H3BaseDlg* dlg)
-
 	{
 		//	H3BaseDlg* dlg = reinterpret_cast<H3BaseDlg*>(c->ecx);
 		if (dlg)
 		{
 			int x, y;
+
 			if (IntAt(0x46DF20 + 1) == dlg->GetHeight())
 			{
 				auto def = dlg->GetDefButton(30722);
@@ -209,6 +250,7 @@ namespace cmbhints
 			}
 			x += 3;
 			y += 5;
+
 			H3DlgCustomButton* bttn = H3DlgCustomButton::Create(x, y + 5, "HpSttngs.DEF", CombatOptionsCallback, 0, 1);
 			bttn->AddHotkey(eVKey::H3VK_H);
 			dlg->CreatePcx(bttn->GetX() - 1, bttn->GetY() - 1, 15, NH3Dlg::Assets::BOX_64_32_PCX);
@@ -224,15 +266,10 @@ namespace cmbhints
 		//	return EXEC_DEFAULT;
 	}
 
-	void CombatHints::WindMgr_DrawColoredRect(const int x, const int y, const  int width, const  int height, const  Settings* stg, bool lost) noexcept
+	void CombatHints::WindMgr_DrawColoredRect(const int x, const int y, const  int width, const  int height, const  Settings* stg, const BOOL lost) noexcept
 	{
 		P_WindowManager->GetDrawBuffer()->AdjustHueSaturation(x, y, width, height, lost ? stg->fcolorLoss : stg->fcolorFill, stg->fsaturation);
 	}
-
-
-
-
-
 
 
 
@@ -246,31 +283,70 @@ namespace cmbhints
 		{
 			float tick = static_cast<float>(scroll->GetTick());
 			//set new settings value
-			valuePtr = scrollBarId < 103 ? tick / scroll->GetTicksCount() : tick;
+			valuePtr = tick / scroll->GetTicksCount();// scrollBarId < 103 ? tick / scroll->GetTicksCount() : tick;
 			// draw label changes
-			HitPointsBarDraw(label);
+			if (auto stnngsDlg = dynamic_cast<SettingsDlg*>(dlg))
+			{
+				stnngsDlg->HitPointsBarDraw();
+			}
 		}
 	}
 
-	void SettingsDlg::HitPointsBarDraw(H3DlgItem* label)noexcept
+	void SettingsDlg::HitPointsBarDraw()noexcept
 	{
-		constexpr int lossValue = 16;
 		//draw label colors
-		const int height = Clamp(0, settings.height, label->GetHeight() - 2);
-		CombatHints::WindMgr_DrawColoredRect(label->GetAbsoluteX() + 1, label->GetAbsoluteY() + 1, lossValue - 1, height, &settings);
-		CombatHints::WindMgr_DrawColoredRect(label->GetAbsoluteX() + lossValue, label->GetAbsoluteY() + 1, label->GetWidth() - lossValue - 1, height, &settings, true);
 
-		// show changes
-		label->Refresh();
-		label->ParentRedraw();
+		const int labelYOffset = static_cast<int>(settings->height) * -1;
+
+		const int nativeLabelY = originalLabel->GetY();
+
+		//const int newLabelX = labelForHp->GetX();
+		const int newLabelY = nativeLabelY + labelYOffset; // add border
+		//labelForHp->SetY(newLabelY);
+		const H3CombatManager* cmbMgr = H3CombatManager::Get();
+		const int labelHeight = labelForHp->GetHeight();
+		const int protrusionSize = std::abs(labelYOffset);
+		const int drawHeightMax = labelHeight - 2;
+		const int labelBorderHeight = protrusionSize >= labelHeight ? 2 : 1;
+		int drawHeight = Clamp(0, protrusionSize - labelBorderHeight, drawHeightMax);
+
+		//	const int newLabelHeight = Clamp(0, std::abs(newLabelY - nativeLabelY), labelForHp->GetHeight());
+			//if (newLabelHeight > 1)
+		{
+
+
+			const int drawHeightLimit = labelForHp->GetHeight() - 2;
+
+			const int drawX = labelForHp->GetAbsoluteX() + 1; // add 1px offsets for the borders
+			//const int drawY = originalLabel->GetAbsoluteY() + originalLabel->GetHeight() + 1;
+			int drawHeight = Clamp(0, protrusionSize - labelBorderHeight, drawHeightMax);
+			// if draw area displayed at all
+			if (drawHeight > 0)
+			{
+
+				//	const int newLabelHeight = Clamp(0, std::abs(newLabelY - nativeLabelY), originalLabel->GetHeight());
+				const BOOL isBottomDrawing = nativeLabelY < newLabelY&& protrusionSize <= drawHeightMax;
+
+				const int drawY = this->yDlg + (isBottomDrawing ? nativeLabelY + labelHeight : newLabelY + 1);
+
+				constexpr int filledHp = 16;
+
+				// draw hp
+				CombatHints::WindMgr_DrawColoredRect(drawX, drawY, filledHp, drawHeight, settings);
+				CombatHints::WindMgr_DrawColoredRect(drawX + filledHp, drawY, labelForHp->GetWidth() - filledHp - 2, drawHeight, settings, true);
+				labelForHp->Refresh();
+				labelForHp->ParentRedraw();
+				// show changes
+			}
+		}
 
 	}
 
-	void SettingsDlg::LabelBarDraw(H3DlgItem* originalLabel)noexcept
+	void SettingsDlg::LabelBarDraw()noexcept
 	{
-		int x = originalLabel->GetAbsoluteX();
-		int y = originalLabel->GetAbsoluteY();
-		int width = originalLabel->GetWidth();
+		const int x = originalLabel->GetAbsoluteX();
+		const int y = originalLabel->GetAbsoluteY();
+		const int width = originalLabel->GetWidth();
 		// draw label colors
 		THISCALL_7(void, 0x44E610, P_WindowManager->GetDrawBuffer(), x + 1, y + 1, width - 2, originalLabel->GetHeight() - 2, FloatAt(0x43E3AC + 1), FloatAt(0x43E3A7 + 1));
 		//draw text over the color
@@ -278,35 +354,50 @@ namespace cmbhints
 
 		// show changes
 		originalLabel->Refresh();
-		originalLabel->ParentRedraw();
+		//	originalLabel->ParentRedraw();
 	}
 
 	void __fastcall SettingsDlg::ColorFillScrollBarProc(INT32 value, H3BaseDlg* dlg)
 	{
-		ScrollBarGeneralProc(dlg, 100, settings.fcolorFill);
+		if (auto sDlg = dynamic_cast<SettingsDlg*>(dlg))
+		{
+			ScrollBarGeneralProc(dlg, 100, sDlg->settings->fcolorFill);
+
+		}
 	}
 
 	void __fastcall SettingsDlg::ColorLossScrollBarProc(INT32 value, H3BaseDlg* dlg)
 	{
-		ScrollBarGeneralProc(dlg, 101, settings.fcolorLoss);
+		if (auto sDlg = dynamic_cast<SettingsDlg*>(dlg))
+
+			ScrollBarGeneralProc(dlg, 101, sDlg->settings->fcolorLoss);
 	}
 
 	void __fastcall SettingsDlg::SaturationScrollBarProc(INT32 value, H3BaseDlg* dlg)
 	{
-		ScrollBarGeneralProc(dlg, 102, settings.fsaturation);
+		if (auto sDlg = dynamic_cast<SettingsDlg*>(dlg))
+
+			ScrollBarGeneralProc(dlg, 102, sDlg->settings->fsaturation);
 	}
 
 	void __fastcall SettingsDlg::HeightScrollBarProc(INT32 value, H3BaseDlg* dlg)
 	{
-		auto hpBar = dlg->GetPcx(5);
-		auto label = dlg->GetPcx(6);
-		if (hpBar && label)
+
+		if (auto stnngsDlg = dynamic_cast<SettingsDlg*>(dlg))
 		{
-			hpBar->SetY(label->GetY() - 1 - value);
+			stnngsDlg->settings->height = value - HP_LABEL_MAX_OFFSET;
+
+			stnngsDlg->labelForHp->SetY(stnngsDlg->originalLabel->GetY() - stnngsDlg->settings->height);
 			dlg->Redraw();
-			ScrollBarGeneralProc(dlg, 103, settings.height);
-			LabelBarDraw(label);
+
+			stnngsDlg->HitPointsBarDraw();
+			stnngsDlg->LabelBarDraw();
 		}
+		//ScrollBarGeneralProc(dlg, 103, settings.height);
+		//HitPointsBarDraw(hpBar);
+
+	//	LabelBarDraw(label);
+
 	}
 
 
@@ -317,8 +408,8 @@ namespace cmbhints
 		if (needRedraw)
 		{
 			needRedraw = false;
-			HitPointsBarDraw(labelForHp);
-			LabelBarDraw(originalLabel);
+			HitPointsBarDraw();
+			LabelBarDraw();
 		}
 
 
@@ -332,12 +423,12 @@ namespace cmbhints
 
 				eVKey scanCode = msg.GetKey();
 
-				if (settings.validateScanCode(scanCode))
+				if (settings->validateScanCode(scanCode))
 				{
-					settings.vKey = MapVirtualKeyA(scanCode, MAPVK_VSC_TO_VK);
-					settings.scanCode = scanCode;
+					settings->vKey = MapVirtualKeyA(scanCode, MAPVK_VSC_TO_VK);
+					settings->scanCode = scanCode;
 					//	str = H3String::Format("\'{%s}\'", getVirtualKeyName(settings.vKey).String());
-					hk.name->SetText(getVirtualKeyName(settings.vKey));
+					hk.name->SetText(getVirtualKeyName(settings->vKey));
 				}
 				else
 				{
@@ -368,7 +459,7 @@ namespace cmbhints
 
 				if (itemId == 7 || itemId == 8)
 				{
-					BOOL* optionPtr = itemId == 7 ? &settings.isEnabled : &settings.isHeld;
+					BOOL* optionPtr = itemId == 7 ? &settings->isEnabled : &settings->isHeld;
 					*optionPtr ^= 1;
 					bttn->SetFrame(*optionPtr);
 					bttn->SetClickFrame(*optionPtr);
@@ -379,33 +470,40 @@ namespace cmbhints
 				{
 
 					//reset settings values
-					settings.reset();
+					settings->reset();
 					constexpr UINT16 SIZE = 4;
-					float values[SIZE] = { settings.fcolorFill ,settings.fcolorLoss ,settings.fsaturation, settings.height };
+					float values[SIZE] = { settings->fcolorFill ,settings->fcolorLoss ,settings->fsaturation, settings->height + HP_LABEL_MAX_OFFSET };
 					H3DlgScrollbar_proc procs[SIZE] = { ColorFillScrollBarProc ,ColorLossScrollBarProc,SaturationScrollBarProc, HeightScrollBarProc };
 
 					// set correct postitions
 					for (UINT16 i = 0; i < SIZE; i++)
 					{
 						auto scrollBar = GetScrollbar(100 + i);
-						scrollBar->SetTick(static_cast<int>(values[i] * static_cast<float>(scrollBar->GetTicksCount())));
-						if (i == 3) (scrollBar->SetTick(static_cast<int>(values[i])));
+						if (i == 3)
+						{
+							scrollBar->SetTick(static_cast<int>(values[i]));
+						}
+						else
+						{
+							scrollBar->SetTick(static_cast<int>(values[i] * static_cast<float>(scrollBar->GetTicksCount())));
+						}
+
 						scrollBar->SetButtonPosition();
 						procs[i](scrollBar->GetTick(), this);
 						scrollBar->ParentRedraw();
 					}
 					bttn = GetDefButton(7);
-					bttn->SetFrame(settings.isEnabled);
-					bttn->SetClickFrame(settings.isEnabled);
+					bttn->SetFrame(settings->isEnabled);
+					bttn->SetClickFrame(settings->isEnabled);
 
 					//bttn->Draw();
 					//bttn->Refresh();
 
 					bttn = GetDefButton(8);
-					bttn->SetFrame(settings.isHeld);
-					bttn->SetClickFrame(settings.isHeld);
+					bttn->SetFrame(settings->isHeld);
+					bttn->SetClickFrame(settings->isHeld);
 
-					hk.name->SetText(getVirtualKeyName(settings.vKey));
+					hk.name->SetText(getVirtualKeyName(settings->vKey));
 					Redraw();
 					needRedraw = true;
 				}
@@ -427,6 +525,7 @@ namespace cmbhints
 	SettingsDlg::SettingsDlg(int width, int height, Settings* incomingSettings, DlgText* text)
 		:H3Dlg(width, height, -1, -1, true), text(text), needRedraw(true)
 	{
+		settings = incomingSettings;
 		auto okBttn = CreateOK32Button(widthDlg - 100, heightDlg - 80);
 		okBttn->AddHotkey(eVKey::H3VK_ESCAPE);
 		okBttn->AddHotkey(eVKey::H3VK_H);
@@ -446,14 +545,17 @@ namespace cmbhints
 		background->SinkArea(creatureDef->GetX() - 5, creatureDef->GetY() + 11, creatureDef->GetWidth() + 25, creatureDef->GetHeight() - 10);
 		eTextColor textColor = eTextColor::WHITE;
 
-		labelForHp = H3DlgPcx::Create(creatureDef->GetX() + creatureDef->GetWidth() - 25, creatureDef->GetY() + creatureDef->GetHeight() - 30, 5, barPcxName);
-		if (labelForHp)
+		originalLabel = H3DlgPcx::Create(creatureDef->GetX() + creatureDef->GetWidth() - 25, creatureDef->GetY() + creatureDef->GetHeight() - 30, 5, barPcxName);
+		if (originalLabel)
 		{
 			//H3RGB888 color{ 12,12,12 };
-			AddItem(labelForHp);
 
-			originalLabel = H3DlgPcx::Create(labelForHp->GetX(), labelForHp->GetY() + 1 + static_cast<int>(settings.height), 6, barPcxName);
-			if (originalLabel) AddItem(originalLabel);
+			labelForHp = H3DlgPcx::Create(originalLabel->GetX(), originalLabel->GetY() - static_cast<int>(settings->height), 6, barPcxName);
+			if (labelForHp)
+			{
+				AddItem(labelForHp);
+			}
+			AddItem(originalLabel);
 
 			//glob = new Settings{};
 
@@ -462,13 +564,13 @@ namespace cmbhints
 
 
 			textColor = eTextColor::REGULAR;
-			H3DlgDefButton* enabledChebox = H3DlgDefButton::Create(160, 30, 7, NH3Dlg::Assets::ON_OFF_CHECKBOX, settings.isEnabled, settings.isEnabled, false, -1);
+			H3DlgDefButton* enabledChebox = H3DlgDefButton::Create(160, 30, 7, NH3Dlg::Assets::ON_OFF_CHECKBOX, settings->isEnabled, settings->isEnabled, false, -1);
 			AddItem(enabledChebox);
 
 			H3DlgText* enabledText = CreateText(enabledChebox->GetX() + enabledChebox->GetWidth() + 12, enabledChebox->GetY() - 7, 200, 40, text->enable, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
 			SinkItem(background, enabledText);
 
-			H3DlgDefButton* onlyHeldCheckBox = CreateButton(enabledChebox->GetX(), enabledChebox->GetY() + enabledText->GetHeight(), 8, NH3Dlg::Assets::ON_OFF_CHECKBOX, settings.isHeld, settings.isHeld, false, -1);
+			H3DlgDefButton* onlyHeldCheckBox = CreateButton(enabledChebox->GetX(), enabledChebox->GetY() + enabledText->GetHeight(), 8, NH3Dlg::Assets::ON_OFF_CHECKBOX, settings->isHeld, settings->isHeld, false, -1);
 
 			H3DlgText* onlyHeldText = CreateText(enabledText->GetX(), enabledText->GetY() + enabledText->GetHeight(), enabledText->GetWidth(), 40, text->held, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
 			SinkItem(background, onlyHeldText);
@@ -490,7 +592,7 @@ namespace cmbhints
 			//SinkItem(background, hk.name);
 
 			CreateBlackBox(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(), enabledText->GetHeight());
-			hk.name = CreateText(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(), enabledText->GetHeight(), getVirtualKeyName(settings.vKey).String(), fnt->GetName(), eTextColor::WHITE, 17);
+			hk.name = CreateText(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(), enabledText->GetHeight(), getVirtualKeyName(settings->vKey).String(), fnt->GetName(), eTextColor::WHITE, 17);
 
 			// create default bttn
 			bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12, 13, false, -1);
@@ -502,8 +604,9 @@ namespace cmbhints
 			}
 
 			constexpr int SIZE = 4;
-			float values[SIZE] = { settings.fcolorFill ,settings.fcolorLoss ,settings.fsaturation, settings.height };
-			int ticks[SIZE] = { 100, 100, 10, labelForHp->GetHeight() + 2 };
+			int ticks[SIZE] = { 100, 100, 10, HP_LABEL_MAX_OFFSET * 2 + 1 };
+			float values[SIZE] = { settings->fcolorFill ,settings->fcolorLoss ,settings->fsaturation, settings->height + HP_LABEL_MAX_OFFSET };
+
 			LPCSTR hints[SIZE] = { text->health,text->loss, text->density,text->height };
 			H3DlgScrollbar_proc procs[SIZE] = { ColorFillScrollBarProc ,ColorLossScrollBarProc,SaturationScrollBarProc, HeightScrollBarProc };
 			H3DlgText* description;
@@ -515,7 +618,7 @@ namespace cmbhints
 
 			for (size_t i = 0; i < SIZE; i++)
 			{
-				H3DlgScrollbar* scrollBar = H3DlgScrollbar::Create(20, 30 * i + dlgText->GetY() + 25, 148, 16, i + 100, ticks[i], procs[i], false, 2, true);
+				H3DlgScrollbar* scrollBar = H3DlgScrollbar::Create(20, 34 * i + dlgText->GetY() + 27, 148, 16, i + 100, ticks[i], procs[i], false, 2, true);
 
 				//disable catch keys
 				if (scrollBar)
@@ -533,7 +636,7 @@ namespace cmbhints
 
 				}
 
-				description = H3DlgText::Create(scrollBar->GetX() + scrollBar->GetWidth() + 12, scrollBar->GetY(), 224, 16, hints[i], NH3Dlg::Text::MEDIUM, textColor, i + 100, eTextAlignment::MIDDLE_LEFT);
+				description = H3DlgText::Create(scrollBar->GetX() + scrollBar->GetWidth() + 12, scrollBar->GetY() - 2, 224, 20, hints[i], NH3Dlg::Text::MEDIUM, textColor, i + 100, eTextAlignment::MIDDLE_LEFT);
 				if (description)
 				{
 					background->SinkArea(description->GetX() - 5, description->GetY(), description->GetWidth() + 10, description->GetHeight());
@@ -640,7 +743,7 @@ namespace cmbhints
 	{
 		constexpr int SIZE = 4;
 		constexpr const char* keys[SIZE] = { "fillColor","lossColor", "colorSaturation","yLabelShift" };
-		float values[SIZE] = { settings.fcolorFill ,settings.fcolorLoss ,settings.fsaturation, settings.height };
+		float values[SIZE] = { fcolorFill ,fcolorLoss ,fsaturation, height };
 
 		//char buf[15];
 
@@ -686,7 +789,7 @@ namespace cmbhints
 
 		constexpr int SIZE = 4;
 		constexpr const char* keys[SIZE] = { "fillColor","lossColor", "colorSaturation","yLabelShift" };
-		float* values[SIZE] = { &settings.fcolorFill , &settings.fcolorLoss, &settings.fsaturation, &settings.height };
+		float* values[SIZE] = { &fcolorFill , &fcolorLoss, &fsaturation, &height };
 		//Era::ReadStrFromIni("1", "12","Runtime/game_enhancement_mod.ini", "12");
 		sprintf(h3_TextBuffer, "%.2f", -1.0f); // set default buffer
 
@@ -695,10 +798,20 @@ namespace cmbhints
 			if (Era::ReadStrFromIni(keys[i], section, iniPath, h3_TextBuffer))
 			{
 				double temp = atof(h3_TextBuffer);
-				if (temp >= 0.0f && temp < (i == 3 ? 18 : 1.f))
+				if (i == 3)
 				{
-					*values[i] = temp;
+					if (temp >= -HP_LABEL_MAX_OFFSET && temp <= HP_LABEL_MAX_OFFSET)
+					{
+						*values[i] = temp;
+					}
+				}
+				else
+				{
+					if (temp >= 0.0f && temp <= 1.f)
+					{
+						*values[i] = temp;
 
+					}
 				}
 			}
 
