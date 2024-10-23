@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MainMenuPlugin.h"
+
 MainMenuPlugin::MainMenuPlugin(PatcherInstance* pi)
 	:IGamePatch(pi)
 {

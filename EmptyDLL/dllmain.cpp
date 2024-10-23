@@ -1,9 +1,9 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
+#include "framework.h"
 
 
 
 
-#include "pch.h"
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -19,7 +19,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
         {
             pluginIsOn = true;
 
-            Era::ConnectEra();
 
         }
     case DLL_THREAD_ATTACH:

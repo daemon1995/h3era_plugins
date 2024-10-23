@@ -378,7 +378,7 @@ namespace extender
 			//_PI->WriteLoHook(0x414F66, H3AdventureManager__GetPyramidObjectClickHint);
 
 			_PI->WriteHiHook(0x4EE01C, THISCALL_, H3GameMainSetup__LoadObjects);
-
+			
 			//	Era::RegisterHandler(OnWogObjectHint, "OnWogObjectHint");
 		}
 	}

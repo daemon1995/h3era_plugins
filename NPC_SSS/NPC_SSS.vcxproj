@@ -160,6 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\headers\Era\era.cpp" />
+    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="creature_info_dlg.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>

@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "HeroLook.h"
 #define DllImport extern "C" __declspec( dllimport )
 #define DllExport extern "C" __declspec( dllexport )
 UINT16 HeroLook::ornament;

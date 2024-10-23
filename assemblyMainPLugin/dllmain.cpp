@@ -26,10 +26,6 @@ void __stdcall OnReportVersion(Era::TEvent* e)
 	sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __TIME__);
 	std::string temp(h3_TextBuffer);
 	Era::ReportPluginVersion(temp.c_str());
-
-	//const int artsNum = yuri::GetArtsNum();
-
-	//P_ArtifactSetup[23].disabled;
 }
 
 BOOL __stdcall _IsIconic(HWND hwnd)

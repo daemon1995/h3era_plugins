@@ -1,5 +1,4 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
-#define _H3API_PLUGINS_
 #include "framework.h"
 Patcher* globalPatcher;
 PatcherInstance* _PI;
@@ -7,7 +6,7 @@ using namespace h3;
 
 //H3String jsonKeys[12] = {"hasSpellBook",};
 
-constexpr int HEROES_COUNT = 156;
+constexpr int HEROES_COUNT = h3::limits::HEROES;
 void ChangeHeroStartingParameters(H3HeroInfo& heroInfo, int id)
 {
 

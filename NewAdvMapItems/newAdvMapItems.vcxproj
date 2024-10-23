@@ -184,7 +184,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AdventureMapHints.h" />
-    <ClInclude Include="framework.h" />
     <ClInclude Include="ISettings.h" />
     <ClInclude Include="MithrilDisplay.h" />
     <ClInclude Include="pch.h" />

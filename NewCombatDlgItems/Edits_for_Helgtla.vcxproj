@@ -168,7 +168,6 @@
     <ClInclude Include="battle_CreatureDlg_SpellsPreview.h" />
     <ClInclude Include="MonPreview.h" />
     <ClInclude Include="CreatureDlgHandler.h" />
-    <ClInclude Include="header.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\headers\DrawPcx16ResizedBicubic.cpp" />

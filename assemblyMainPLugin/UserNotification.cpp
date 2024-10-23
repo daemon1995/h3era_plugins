@@ -1,4 +1,5 @@
 #include <experimental/filesystem>
+#include <chrono>
 
 #include "framework.h"
 
@@ -114,7 +115,7 @@ void __stdcall UserNotification::AdvMgrDlg_RedrawLog(HiHook* h, H3AdventureMgrDl
 	}
 
 }
-#include <chrono>
+
 char __stdcall UserNotification::AdvMgr_DrawMap(HiHook* h, H3AdventureManager* advMan, const __int16 mapX, const __int16 mapY, const __int16 mapZ, const int hotSeat, char updateInfoPanel)
 {
 	// call default function - we don't need to affect it
