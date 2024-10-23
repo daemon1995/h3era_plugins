@@ -12,13 +12,20 @@ namespace extender
 	{
 		this->text.Add(txt);
 	}
+	//int ObjectsExtender::AiMapItemWeightFunction(HookContext* c, const H3MapItem* mapItem, H3Player* player)
+	//{
+	//	return 0;
+	//}
+	//BOOL ObjectsExtender::HeroMapItemVisitFunction(HookContext* c, const H3Hero* hero, const H3MapItem* mapItem, const BOOL isPlayer, const BOOL skipMapMessage)
+	//{
+	//	return 0;
+	//}
 	ObjectsExtender::ObjectsExtender(PatcherInstance* pi)
 		:IGamePatch(pi)
 	{
 
 		CreatePatches();
 		extenders.insert(this);
-
 	}
 
 
@@ -59,15 +66,7 @@ namespace extender
 
 
 
-	void __stdcall DlgMainMenu_Create(HiHook* h, const DWORD setup)
-	{
 
-		THISCALL_1(void, h->GetDefaultFunc(), setup);
-
-
-		h->Undo();
-
-	}
 	void __stdcall OnWogObjectHint(Era::TEvent* e)
 	{
 
@@ -75,54 +74,8 @@ namespace extender
 
 
 	}
-	_LHF_(H3AdventureManager__GetPyramidHint)
-	{
-		bool readSucces = false;
-
-		const H3MapItem* mapItem = reinterpret_cast<H3MapItem*>(c->ebx);
-		LPCSTR objName = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.name", mapItem->objectType, mapItem->objectSubtype).String(), readSucces);
-
-		int eventId = 3433444;
-		Era::AllocErmFunc("OnWogObjectHint", eventId);
-
-		auto p = mapItem->GetCoordinates();
-
-		Era::TXVars* xVars = Era::GetArgXVars();
-
-		(*xVars)[0] = mapItem->objectSubtype;
-		(*xVars)[1] = (int)objName;
-		(*xVars)[2] = p.x;
-		(*xVars)[3] = p.y;
-		(*xVars)[4] = p.z;
-
-		Era::FireErmEvent(eventId);
-
-		Era::TXVars* retXVars = Era::GetRetXVars();
-		retXVars[1];
-		if (readSucces)
-		{
-			libc::sprintf(h3_TextBuffer, *(LPCSTR*)(retXVars[1]));
-		}
 
 
-		return EXEC_DEFAULT;
-	}
-	void ObjectsExtender::CreatePatches()
-	{
-		// before any of extenders is inited
-		if (extenders.empty())
-		{
-			//Era::RegisterHandler(OnWogObjectHint);
-			_PI->WriteLoHook(0x515038, LoadObjectsTxt);
-			_PI->WriteLoHook(0x4AA757, H3AdventureManager__ObjectVisit_SoundPlay);
-			//	_PI->WriteLoHook(0x40C5A1, H3AdventureManager__GetPyramidHint);
-			//	_PI->WriteLoHook(0x414F66, H3AdventureManager__GetPyramidHint);
-
-			_PI->WriteHiHook(0x4EE01C, THISCALL_, H3GameMainSetup__LoadObjects);
-
-			//	Era::RegisterHandler(OnWogObjectHint, "OnWogObjectHint");
-		}
-	}
 
 
 	ObjectsExtender::~ObjectsExtender()
@@ -219,7 +172,7 @@ namespace extender
 		for (auto& extender : extenders)
 		{
 			// call additional data loading from json
-			extender->AferLoadingObjectTxtProc(maxSubtypes);
+			extender->AfterLoadingObjectTxtProc(maxSubtypes);
 		}
 		editor::RMGObjectsEditor::Init(maxSubtypes);
 
@@ -248,6 +201,7 @@ namespace extender
 				break;
 			case eObject::CREATURE_BANK:
 			case eObject::PYRAMID:
+				// hota's warehouses
 			case 142:
 
 				objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
@@ -271,7 +225,7 @@ namespace extender
 
 	}
 
-	bool RMGSetObject::operator<(const RMGSetObject& other) const
+	bool RMGObjectSetable::operator<(const RMGObjectSetable& other) const
 	{
 		return type != other.type ? type < other.type : subtype < other.subtype;
 	}
@@ -281,7 +235,7 @@ namespace extender
 		// check if there are any object properties extenders
 		if (extenders.size())
 		{
-			std::set<RMGSetObject> objectsSet;
+			std::set<RMGObjectSetable> objectsSet;
 			// create set of the objects to add only unique objects
 			for (auto rmgObj : *rmgObjecsList)
 			{
@@ -337,5 +291,98 @@ namespace extender
 
 		return EXEC_DEFAULT;
 
+	}
+
+
+
+	_LHF_(H3AdventureManager__GetPyramidObjectHoverHint)
+	{
+		bool readSucces = false;
+
+		const H3MapItem* mapItem = reinterpret_cast<H3MapItem*>(c->ebx);
+		LPCSTR objName = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.name", mapItem->objectType, mapItem->objectSubtype).String(), readSucces);
+
+		int eventId = 3433444;
+		Era::AllocErmFunc("OnWogObjectHint", eventId);
+
+		auto p = mapItem->GetCoordinates();
+
+		Era::TXVars* xVars = Era::GetArgXVars();
+
+		(*xVars)[0] = mapItem->objectSubtype;
+		(*xVars)[1] = (int)objName;
+		(*xVars)[2] = p.x;
+		(*xVars)[3] = p.y;
+		(*xVars)[4] = p.z;
+
+		Era::FireErmEvent(eventId);
+
+		Era::TXVars* retXVars = Era::GetRetXVars();
+		retXVars[1];
+		if (readSucces)
+		{
+			libc::sprintf(h3_TextBuffer, *(LPCSTR*)(retXVars[1]));
+		}
+
+
+		return EXEC_DEFAULT;
+	}
+
+
+	_LHF_(H3AdventureManager__GetPyramidObjectClickHint)
+	{
+		bool readSucces = false;
+
+		const H3MapItem* mapItem = reinterpret_cast<H3MapItem*>(c->ebx);
+		LPCSTR objName = RMGObjectInfo::GetObjectName(mapItem);// EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.name", mapItem->objectType, mapItem->objectSubtype).String(), readSucces);
+
+		int eventId = 3433444;
+		Era::AllocErmFunc("OnWogObjectHint", eventId);
+
+		auto p = mapItem->GetCoordinates();
+
+		Era::TXVars* xVars = Era::GetArgXVars();
+
+		(*xVars)[0] = mapItem->objectSubtype;
+		(*xVars)[1] = (int)objName;
+		(*xVars)[2] = p.x;
+		(*xVars)[3] = p.y;
+		(*xVars)[4] = p.z;
+
+		Era::FireErmEvent(eventId);
+
+		Era::TXVars* retXVars = Era::GetRetXVars();
+		retXVars[1];
+		if (readSucces)
+		{
+			libc::sprintf(h3_TextBuffer, *(LPCSTR*)(retXVars[1]));
+		}
+
+
+		return EXEC_DEFAULT;
+	}
+
+
+	void ObjectsExtender::CreatePatches()
+	{
+		// before any of extenders is inited
+		if (extenders.empty())
+		{
+			//Era::RegisterHandler(OnWogObjectHint);
+			_PI->WriteLoHook(0x515038, LoadObjectsTxt);
+			_PI->WriteLoHook(0x4AA757, H3AdventureManager__ObjectVisit_SoundPlay);
+
+
+
+			//_PI->WriteLoHook(0x40C5A1, H3AdventureManager__GetPyramidObjectHoverHint);
+			//_PI->WriteLoHook(0x414F66, H3AdventureManager__GetPyramidObjectClickHint);
+
+			_PI->WriteHiHook(0x4EE01C, THISCALL_, H3GameMainSetup__LoadObjects);
+
+			//	Era::RegisterHandler(OnWogObjectHint, "OnWogObjectHint");
+		}
+	}
+	void ObjectsExtender::AfterLoadingObjectTxtProc(const INT16* maxSubtypes)
+	{
 	}
 }

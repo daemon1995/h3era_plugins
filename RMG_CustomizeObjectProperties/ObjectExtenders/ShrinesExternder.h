@@ -1,23 +1,22 @@
 #pragma once
-#include "ObjectsExtender.h"
-namespace shrine
+namespace shrines
 {
 
-	class ShrineManager :
+	class ShrinesExternder :
 		public extender::ObjectsExtender
 	{
 
-		ShrineManager();
+		ShrinesExternder();
 
-		virtual ~ShrineManager();
+		virtual ~ShrinesExternder();
 
 	private:
 		virtual void CreatePatches()  override;
-		virtual void AferLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
+	//	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
 	//	virtual void GetObjectPreperties() noexcept override final;
 	private:
 
-		void SetRmgObjectGenData(const int objectSubtype)  noexcept;
+	//	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
 
 	private:
 
@@ -26,7 +25,7 @@ namespace shrine
 
 
 	public:
-		static ShrineManager& Get();
+		static ShrinesExternder& Get();
 
 	};
 

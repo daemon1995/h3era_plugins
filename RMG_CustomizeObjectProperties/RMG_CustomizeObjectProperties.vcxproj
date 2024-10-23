@@ -174,25 +174,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CreatureBanksManager.h" />
-    <ClInclude Include="framework.h" />
+    <ClInclude Include="ObjectExtenders\CreatureBanksExtender.h" />
+    <ClInclude Include="ObjectExtenders\ShrinesExternder.h" />
+    <ClInclude Include="ObjectExtenders\WarehousesExtender.h" />
     <ClInclude Include="ObjectsExtender.h" />
     <ClInclude Include="RMGObjectsEditor.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="RMG_ObjectsSettings.h" />
     <ClInclude Include="RMG_SettingsDlg.h" />
-    <ClInclude Include="ShrineManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="..\..\headers\Era\era.cpp" />
-    <ClCompile Include="CreatureBanksManager.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ObjectExtenders\CreatureBanksExtender.cpp" />
+    <ClCompile Include="ObjectExtenders\ShrinesExternder.cpp" />
+    <ClCompile Include="ObjectExtenders\WarehousesExtender.cpp" />
     <ClCompile Include="ObjectsExtender.cpp" />
     <ClCompile Include="RMGObjectsEditor.cpp" />
-    <ClCompile Include="RMG_ObjectsSettings.cpp" />
     <ClCompile Include="RMG_SettingsDlg.cpp" />
-    <ClCompile Include="ShrineManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

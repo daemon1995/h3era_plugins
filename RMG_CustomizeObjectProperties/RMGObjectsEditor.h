@@ -1,5 +1,5 @@
 #pragma once
-
+//#include "pch.h"
 
 
 struct RMGObjectInfo
@@ -32,7 +32,11 @@ public:
 	void RestoreDefault() noexcept;
 	void SetRandom() noexcept;
 	void MakeReal() const noexcept;
-	LPCSTR GetObjectName() const noexcept;
+	LPCSTR GetName() const noexcept;
+
+public:
+	static LPCSTR GetObjectName(const INT32 type, const INT32 subtype);
+	static LPCSTR GetObjectName(const H3MapItem* mapItem);
 };
 
 struct GeneratedInfo

@@ -67,8 +67,8 @@ namespace rmgdlg
 
 			std::sort(objVector.begin(), objVector.end(), [&](const RMGObject& first, const RMGObject& second) -> bool
 				{
-					const int cbIdFirst = CreatureBanksManager::GetCreatureBankId(first.objectInfo.type, first.objectInfo.subtype);
-					const int cbIdSecond = CreatureBanksManager::GetCreatureBankId(second.objectInfo.type, second.objectInfo.subtype);
+					const int cbIdFirst = cbanks::CreatureBanksExtender::GetCreatureBankId(first.objectInfo.type, first.objectInfo.subtype);
+					const int cbIdSecond = cbanks::CreatureBanksExtender::GetCreatureBankId(second.objectInfo.type, second.objectInfo.subtype);
 
 
 					H3String str, str2;
@@ -90,7 +90,7 @@ namespace rmgdlg
 						//return first.objectInfo.subtype < second.objectInfo.subtype;
 
 					case BY_NAME:
-						return libc::strcmpi(first.objectInfo.GetObjectName(), second.objectInfo.GetObjectName()) < 0;
+						return libc::strcmpi(first.objectInfo.GetName(), second.objectInfo.GetName()) < 0;
 
 
 					case BY_MAP:
@@ -522,7 +522,7 @@ namespace rmgdlg
 		{
 			//H3Messagebox();
 			if (!SaveObjects(true))
-				H3Messagebox(PluginText::text().iniError);
+				H3Messagebox(EraJS::read("RMG.text.dlg.iniError"));
 			WriteIniDlgSettings();
 
 			this->Stop();
@@ -776,7 +776,7 @@ namespace rmgdlg
 		{
 			rmgObject = mapObject;
 			pictureItem->SetPcx(rmgObject->objectPcx);
-			objectNameItem->SetText(rmgObject->objectInfo.GetObjectName());
+			objectNameItem->SetText(rmgObject->objectInfo.GetName());
 		}
 
 		// refresh displayed info
@@ -1122,7 +1122,7 @@ namespace rmgdlg
 			H3DefLoader def(defName);
 
 			str += H3String::Format("{~>%s:0:%d block}", defName, rand() % def->groups[0]->count);// .Append(defPic);
-			str += rmgObject->objectInfo.GetObjectName();
+			str += rmgObject->objectInfo.GetName();
 			str.Append(H3String::Format(" (%d/%d)", rmgObject->attributes->type, rmgObject->attributes->subtype));
 
 			H3Messagebox::RMB(str.String());
@@ -1141,11 +1141,11 @@ namespace rmgdlg
 		return result;
 
 		const auto rmgObject = panel->rmgObject;
-		const int cbID = CreatureBanksManager::GetCreatureBankId(rmgObject->objectInfo.type, rmgObject->objectInfo.subtype);
+		const int cbID = cbanks::CreatureBanksExtender::GetCreatureBankId(rmgObject->objectInfo.type, rmgObject->objectInfo.subtype);
 
 		if (cbID != eObject::NO_OBJ)
 		{
-			const auto& cbSetup = CreatureBanksManager::Get().creatureBanks.setups[cbID];
+			const auto& cbSetup = H3CreatureBankSetup::Get()[cbID];
 
 			H3Dlg ddl(500, 500);
 
@@ -1169,7 +1169,7 @@ namespace rmgdlg
 					}
 				}
 			}
-			ddl.CreateText(50, 400, 400, 20, rmgObject->objectInfo.GetObjectName(), NH3Dlg::Text::SMALL, eTextColor::WHITE, -1);
+			ddl.CreateText(50, 400, 400, 20, rmgObject->objectInfo.GetName(), NH3Dlg::Text::SMALL, eTextColor::WHITE, -1);
 
 			ddl.RMB_Show();
 		}

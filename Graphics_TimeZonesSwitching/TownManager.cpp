@@ -23,23 +23,28 @@ namespace timezone
 
 		if (townType < h3::limits::TOWNS)
 		{
-			static LPCSTR townTypeNames[h3::limits::TOWNS] = { "Castle","Rampart","Tower","Inferno","Necropolis","Dungeon","Stronghold","Fortress","Conflux" };
+			//static LPCSTR townTypeNames[h3::limits::TOWNS] = { "Castle","Rampart","Tower","Inferno","Necropolis","Dungeon","Stronghold","Fortress","Conflux" };
 
 			LPCSTR townPrefix = reinterpret_cast<LPCSTR*>(0x643050)[townType];
-			H3String townDateFolderName = H3String::Format("%s_%d", townPrefix, time);
-
-			for (size_t buildingId = 0; buildingId < h3::limits::BUILDINGS; buildingId++)
+			bool readSucces = false;
+			LPCSTR townFolderName = EraJS::read(H3String::Format("todan.townTypeNames.%s", townPrefix).String(), readSucces);
+			// check if prefix exists and folder isn't empty
+			if (readSucces && libc::strcmp(townFolderName,""))
 			{
-				LPCSTR buildingDefName = reinterpret_cast<LPCSTR*>(0x643074)[townType * h3::limits::BUILDINGS + buildingId];
-				for (size_t frameId = 0; frameId < 100; frameId++)
+				for (size_t buildingId = 0; buildingId < h3::limits::BUILDINGS; buildingId++)
 				{
-					H3String oldDefFrameName = H3String::Format("%s.def:0_%d.png", buildingDefName, frameId);
+					LPCSTR buildingDefName = reinterpret_cast<LPCSTR*>(0x643074)[townType * h3::limits::BUILDINGS + buildingId];
+					for (size_t frameId = 0; frameId < 100; frameId++)
+					{
+						H3String oldDefFrameName = H3String::Format("%s.def:0_%d.png", buildingDefName, frameId);
 
-					H3String newDefFrameName = H3String::Format("Data\\Defs\\%s\\%s\\%s.def\\0_%d.png", townTypeNames[townType], townDateFolderName.String(), buildingDefName, frameId);
+						H3String newDefFrameName = H3String::Format("Data\\Defs\\Buildings\\%s\\%d\\%s.def\\0_%d.png", townFolderName, time, buildingDefName, frameId);
 
-					Era::RedirectFile(oldDefFrameName.String(), newDefFrameName.String());
+						Era::RedirectFile(oldDefFrameName.String(), newDefFrameName.String());
+					}
 				}
 			}
+
 		}
 
 	}
@@ -69,35 +74,28 @@ namespace timezone
 
 	}
 
-	void __stdcall OnAfterErmInstructions(Era::TEvent* e)
-	{
-		for (size_t i = 0; i < h3::limits::TOWNS_ON_MAP; i++)
-		{
-			Era::SetAssocVarIntValue(H3String::Format("DoT_town_%d_MG_id", i).String(), rand() % 4 + 1);
-		}
 
-		//Era::GetAssocVarIntValue("DoT_town_")
-	}
-	H3NetworkDlg* __stdcall MageGuildDlg_Create(HiHook* h, H3NetworkDlg* dlg)
-	{
+	// not used
+	//H3NetworkDlg* __stdcall MageGuildDlg_Create(HiHook* h, H3NetworkDlg* dlg)
+	//{
 
-		auto result = THISCALL_1(H3NetworkDlg*, h->GetDefaultFunc(), dlg);
+	//	auto result = THISCALL_1(H3NetworkDlg*, h->GetDefaultFunc(), dlg);
 
-		//const int time = GetTownTime(P_TownManager->town);
-		const int index = Era::GetAssocVarIntValue(H3String::Format("DoT_town_%d_MG_id", P_TownManager->town->number).String());
-		LPCSTR townPrefix = reinterpret_cast<LPCSTR*>(0x643050)[P_TownManager->town->type];
+	//	//const int time = GetTownTime(P_TownManager->town);
+	//	const int index = Era::GetAssocVarIntValue(H3String::Format("DoT_town_%d_MG_id", P_TownManager->town->number).String());
+	//	LPCSTR townPrefix = reinterpret_cast<LPCSTR*>(0x643050)[P_TownManager->town->type];
 
-		H3String bgName = H3String::Format("%sMG_%d.pcx", townPrefix, index);
+	//	H3String bgName = H3String::Format("%sMG_%d.pcx", townPrefix, index);
 
-		if (auto pcx = dlg->GetPcx16(0))
-		{
-			pcx->SendCommand(11,reinterpret_cast<DWORD>(bgName.String()));
-		}
-		//Era::RedirectFile();
+	//	if (auto pcx = dlg->GetPcx16(0))
+	//	{
+	//		pcx->SendCommand(11,reinterpret_cast<DWORD>(bgName.String()));
+	//	}
+	//	//Era::RedirectFile();
 
-		return result;
+	//	return result;
 
-	}
+	//}
 	int __cdecl TownManager::TownMgrDlg_CreateBackgroundImageName(HiHook* h, char* buffer, char* formatName, char* townPrefixName)
 	{
 		int result = CDECL_3(int, h->GetDefaultFunc(), buffer, formatName, townPrefixName);
@@ -149,9 +147,9 @@ namespace timezone
 			{
 				if (dlgDefButton->defButton->IsVisible())
 				{
-					const int currentFrameId = dlgDefButton->defButton->GetFrame();
+					const int nextFrameId = dlgDefButton->defButton->GetFrame() +1;
 					// set next frame to draw
-					dlgDefButton->defButton->SetFrame(currentFrameId + 1 < dlgDefButton->framesNumber ? currentFrameId + 1 : 0);
+					dlgDefButton->defButton->SetFrame(nextFrameId < dlgDefButton->framesNumber ? nextFrameId : 0);
 					dlgDefButton->defButton->Draw();
 				}
 			}
@@ -211,7 +209,7 @@ namespace timezone
 		{
 			if (!data.defButton->IsVisible())
 			{
-				h3::libc::sprintf(h3_TextBuffer, "tod.animations.%s.%d.%d", townPrefixName, thisTownTime, counter++);
+				h3::libc::sprintf(h3_TextBuffer, "todan.animations.%s.%d.%d", townPrefixName, thisTownTime, counter++);
 				H3String defName = EraJS::read(h3_TextBuffer, readSucces);
 				if (readSucces && !defName.Empty())
 				{

@@ -1,6 +1,6 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #include "pch.h"
-
+//#include "framework.h"
 using namespace h3;
 Patcher* globalPatcher;
 PatcherInstance* _PI;
@@ -43,10 +43,12 @@ PatcherInstance* _PI;
 _LHF_(CrBanksTxt_AfterLoad)
 {
 	editor::RMGObjectsEditor::Get();
-	//! Get the CreatureBanksManager and initialize it
-	CreatureBanksManager::Get();
 
-	shrine::ShrineManager::Get();
+	//! Get the CreatureBanksManager and initialize it
+	cbanks::CreatureBanksExtender::Get();
+	shrines::ShrinesExternder::Get();
+	warehouses::WarehousesExtender::Get();
+
 	//! Set patches for the RMG_SettingsDlg
 	rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
 

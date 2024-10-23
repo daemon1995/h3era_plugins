@@ -142,7 +142,7 @@ namespace editor
 		}
 
 		// init pseudoGanerator
-		auto patch =_pi->WriteByte(0x5390B7, 0xEB);
+		auto patch = _pi->WriteByte(0x5390B7, 0xEB);
 		pseudoH3RmgRandomMapGenerator._f_1100.RemoveAll();
 
 		isPseudoGeneration = true;
@@ -262,7 +262,7 @@ namespace editor
 
 				// check if we have full random
 				BOOL result = Era::ReadStrFromIni("DlgSettings", "alwaysRandom", rmgdlg::RMG_SettingsDlg::dlgIniPath, h3_TextBuffer);
-				
+
 				if (result && atoi(h3_TextBuffer))
 				{
 					// and start to make dirt
@@ -497,7 +497,7 @@ const BOOL RMGObjectInfo::Clamp() noexcept
 		dataChanged = true;
 
 	}
-	if (!zoneLimit|| !mapLimit)
+	if (!zoneLimit || !mapLimit)
 	{
 		zoneLimit = mapLimit = 0;
 		enabled = false;
@@ -604,15 +604,31 @@ RMGObjectInfo::RMGObjectInfo()
 {
 
 }
-LPCSTR RMGObjectInfo::GetObjectName() const noexcept
+LPCSTR RMGObjectInfo::GetName() const noexcept
+{
+	return GetObjectName(type, subtype);
+}
+LPCSTR RMGObjectInfo::GetObjectName(const H3MapItem* mapItem)
+{
+	if (mapItem)
+	{
+		return GetObjectName(mapItem->objectType, mapItem->objectSubtype);
+	}
+	return h3_NullString;
+
+}
+LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 {
 	LPCSTR result = h3_NullString;
 
 
-	const int cbId = CreatureBanksManager::GetCreatureBankId(type, subtype);
+	const int cbId = cbanks::CreatureBanksExtender::GetCreatureBankId(type, subtype);
 	if (cbId >= 0)
-		return CreatureBanksManager::Get().creatureBanks.setups[cbId].name.String();
+	{
+		return H3CreatureBankSetup::Get()[cbId].name.String();
+		//return cbanks::CreatureBanksExtender::Get().creatureBanks.setups[cbId].name.String();
 
+	}
 	switch (type)
 	{
 	case eObject::ARTIFACT:
