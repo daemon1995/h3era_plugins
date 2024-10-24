@@ -183,14 +183,14 @@ namespace rmgdlg
 	EXTERN_C __declspec(dllexport) const BOOL RMGObjectSupportsGeneration(const int objType, const int objSubtype = -1)
 	{
 		BOOL result = false;
-		if (objType> eObject::NO_OBJ && objType<H3_MAX_OBJECTS)
+		if (objType > eObject::NO_OBJ && objType < H3_MAX_OBJECTS)
 		{
-			auto & attr  = RMG_SettingsDlg::GetObjectAttributes();
+			auto& attr = RMG_SettingsDlg::GetObjectAttributes();
 			for (auto vec : attr)
 			{
-				for (auto &prop : *vec)
+				for (auto& prop : *vec)
 				{
-					if (prop.first.type== objType)
+					if (prop.first.type == objType)
 					{
 						result = true;
 						break;
@@ -273,7 +273,7 @@ namespace rmgdlg
 		H3DlgDefButton* bttns[5]{};// = nullptr;
 
 		H3RGB565 color(H3RGB888::Highlight());
-	//	H3RGB565 color(H3RGB888(0xA8, 0x8D, 0x44));
+		//	H3RGB565 color(H3RGB888(0xA8, 0x8D, 0x44));
 
 		for (size_t i = 0; i < 5; ++i)
 		{
@@ -1677,6 +1677,9 @@ namespace rmgdlg
 		},
 		{
 			eObject::ARENA,
+			/*
+			* eObject::KEYMASTER, @todo: place into another page
+			*/
 			eObject::MARLETTO_TOWER,
 			eObject::GARDEN_OF_REVELATION,
 			eObject::SCHOOL_OF_MAGIC ,
@@ -1712,7 +1715,7 @@ namespace rmgdlg
 			eObject::SHRINE_OF_MAGIC_INCANTATION ,
 			eObject::SHRINE_OF_MAGIC_THOUGHT ,
 			eObject::CARTOGRAPHER,
-			142
+			warehouses::WAREHOUSE_OBJECT_TYPE
 		},
 		{
 			eObject::CREATURE_GENERATOR1,
@@ -1789,8 +1792,8 @@ namespace rmgdlg
 			if (randomGameButton)
 			{
 				const int currentFrame = randomGameButton->GetFrame();
-				randomGameButton->SetFrame(currentFrame ^2);
-				const bool enabelFullRandom = randomGameButton->GetFrame() ==2;
+				randomGameButton->SetFrame(currentFrame ^ 2);
+				const bool enabelFullRandom = randomGameButton->GetFrame() == 2;
 				randomGameButton->Draw();
 				randomGameButton->ParentRedraw();
 				static bool firstLaunch = true;
@@ -1804,7 +1807,7 @@ namespace rmgdlg
 					}
 				}
 
-				Era::WriteStrToIni("DlgSettings", Era::IntToStr(enabelFullRandom).c_str(),"alwaysRandom", RMG_SettingsDlg::dlgIniPath);
+				Era::WriteStrToIni("DlgSettings", Era::IntToStr(enabelFullRandom).c_str(), "alwaysRandom", RMG_SettingsDlg::dlgIniPath);
 				Era::SaveIni(RMG_SettingsDlg::dlgIniPath);
 			}
 		}
@@ -1815,7 +1818,7 @@ namespace rmgdlg
 	void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook* hook, H3SelectScenarioDialog* dlg, const DWORD dlgCallType)
 	{
 		THISCALL_2(int, hook->GetDefaultFunc(), dlg, dlgCallType);
-		if (dlgCallType ==0) // 0 new/ 1 load/2 from map
+		if (dlgCallType == 0) // 0 new/ 1 load/2 from map
 		{
 			// create text over button near at team setups (HD mod only)
 			if (H3DlgText* text = dlg->CreateText(248, 264, 128, 20, EraJS::read("RMG.text.title"), h3::NH3Dlg::Text::SMALL, eTextColor::HIGHLIGHT, SELECTION_DLG_RMG_SETTINGS_TEXT_ID, eTextAlignment::MIDDLE_RIGHT))

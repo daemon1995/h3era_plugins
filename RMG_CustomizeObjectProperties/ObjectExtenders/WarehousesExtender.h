@@ -2,6 +2,7 @@
 
 namespace warehouses
 {
+	constexpr int WAREHOUSE_OBJECT_TYPE = 142;
 
 	struct H3MapItemWarehouse
 	{

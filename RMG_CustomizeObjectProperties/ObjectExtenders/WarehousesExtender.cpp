@@ -1,7 +1,6 @@
 #include "../pch.h"
 namespace warehouses
 {
-	constexpr int WAREHOUSE_OBJECT_TYPE = 142;
 
 
 	WarehousesExtender::WarehousesExtender()

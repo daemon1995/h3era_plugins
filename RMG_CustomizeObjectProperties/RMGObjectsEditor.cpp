@@ -29,11 +29,11 @@ namespace editor
 	{
 		return currentRMGObjectsInfoByType[objType][subtype];
 	}
-	const int RMGObjectsEditor::MaxMapTypeLimit(const UINT objType) const noexcept
+	int RMGObjectsEditor::MaxMapTypeLimit(const UINT objType) const noexcept
 	{
 		return objType < H3_MAX_OBJECTS ? limitsInfo.mapTypesLimit[objType] : 0;
 	}
-	void RMGObjectsEditor::SetCurrentInfo(const RMGObjectInfo& info) noexcept
+	void RMGObjectsEditor::SetObjectInfoAsCurrent(const RMGObjectInfo& info) noexcept
 	{
 		currentRMGObjectsInfoByType[info.type][info.subtype] = info;
 	}
@@ -142,14 +142,18 @@ namespace editor
 		}
 
 		// init pseudoGanerator
+
+		// skip pandora monster generation
 		auto patch = _pi->WriteByte(0x5390B7, 0xEB);
-		pseudoH3RmgRandomMapGenerator._f_1100.RemoveAll();
+		pseudoH3RmgRandomMapGenerator.keyMasters.RemoveAll();
 
 		isPseudoGeneration = true;
+		//pseudoH3RmgRandomMapGenerator.objectPrototypes[eObject::KEYMASTER] = P_Game->mainSetup.objectLists[eObject::KEYMASTER];
 
 		THISCALL_1(void, 0x539000, &pseudoH3RmgRandomMapGenerator);
 
-		defaultObjectGenerators = pseudoH3RmgRandomMapGenerator.objectGenerators;
+		defaultObjectGenerators = &pseudoH3RmgRandomMapGenerator.objectGenerators;
+
 		isPseudoGeneration = false;
 		patch->Destroy();
 	}
@@ -157,7 +161,7 @@ namespace editor
 
 	const H3Vector<H3RmgObjectGenerator*>& RMGObjectsEditor::GetObjectGeneratorsList() const noexcept
 	{
-		return defaultObjectGenerators;// .objectGenerators;
+		return *defaultObjectGenerators;// .objectGenerators;
 	}
 
 
@@ -363,7 +367,7 @@ namespace editor
 	// Placed objects counter
 	_LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
 	{
-		if (generatedInfo.isInited)
+		if (generatedInfo.Inited())
 		{
 			// Get generated and placed RMG object from stack
 			const H3RmgObject* obj = *reinterpret_cast<H3RmgObject**>(c->ebp + 0x8);
@@ -395,9 +399,8 @@ namespace editor
 	void __stdcall RMGObjectsEditor::RMG__AfterMapGenerated(HiHook* h, H3RmgRandomMapGenerator* rmgStruct)
 	{
 		// swap generators list back 
-		if (generatedInfo.isInited)
+		if (generatedInfo.Inited())
 		{
-
 			generatedInfo.Clear(rmgStruct);
 		}
 		auto& editedGeneratorsList = Get().editedObjectGenerators;
@@ -418,7 +421,7 @@ namespace editor
 
 		if (!m_isInited)
 		{
-
+			// hook used to edit generate objects list data
 			_PI->WriteHiHook(0x539000, THISCALL_, RMG__CreateObjectGenerators);
 
 			// hook is used to block object generation
@@ -450,11 +453,11 @@ inline int index2D(const int objType, const int objSubtype, const int lineSize)
 void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties* prop, const int zoneId)
 {
 	// increment number of zone generated subtypes of that obj type 
-	int index3 = index3D(zoneId, prop->type, prop->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
+	const int index3 = index3D(zoneId, prop->type, prop->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
 	eachZoneGeneratedBySubtype[index3]++;
 
 	// increment number of map generated subtypes of that obj type 
-	int index2 = index2D(prop->type, prop->subtype, maxObjectSubtype);
+	const int index2 = index2D(prop->type, prop->subtype, maxObjectSubtype);
 	mapGeneratedBySubtype[index2]++;
 
 }
@@ -462,24 +465,24 @@ void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties* prop, c
 
 
 
-const BOOL RMGObjectInfo::SetEnabled(const BOOL state) noexcept
-{
-	//if (!enabled)
-	{
-		enabled = state;
-		int temp = enabled;
-		Clamp();
-		if (true)
-		{
+//BOOL RMGObjectInfo::SetEnabled(const BOOL state) noexcept
+//{
+//	//if (!enabled)
+//	{
+//		enabled = state;
+//		int temp = enabled;
+//		Clamp();
+//		if (true)
+//		{
+//
+//		}
+//	}
+//
+//
+//	return 0;
+//}
 
-		}
-	}
-
-
-	return 0;
-}
-
-const BOOL RMGObjectInfo::Clamp() noexcept
+BOOL RMGObjectInfo::Clamp() noexcept
 {
 	BOOL dataChanged = false;
 
@@ -588,7 +591,7 @@ void RMGObjectInfo::MakeReal() const noexcept
 	if (type != eObject::NO_OBJ
 		&& subtype != eObject::NO_OBJ)
 	{
-		editor::RMGObjectsEditor::Get().SetCurrentInfo(*this);
+		editor::RMGObjectsEditor::Get().SetObjectInfoAsCurrent(*this);
 	}
 }
 
@@ -724,7 +727,7 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator* rmg, const std::vector
 		{
 			for (const auto& info : vec)
 			{
-				int index2 = index2D(info.type, info.subtype, maxObjectSubtype);
+				const int index2 = index2D(info.type, info.subtype, maxObjectSubtype);
 				mapLimitsBySubtype[index2] = info.mapLimit;
 				zoneLimitsBySubtype[index2] = info.zoneLimit;
 			}
@@ -737,6 +740,15 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator* rmg, const std::vector
 
 
 
+BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator* objGen, const int zoneId) const
+{
+	// increment number of map generated subtypes of that obj type 
+	const int index2 = index2D(objGen->type, objGen->subtype, maxObjectSubtype);
+	// increment number of zone generated subtypes of that obj type 
+	const int index3 = index3D(zoneId, objGen->type, objGen->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
+	// return with that simple comparison function
+	return mapGeneratedBySubtype[index2] >= mapLimitsBySubtype[index2] ? true : eachZoneGeneratedBySubtype[index3] >= zoneLimitsBySubtype[index2];
+}
 void GeneratedInfo::Clear(const H3RmgRandomMapGenerator* rmgStruct)
 {
 	// delete all the allocated arrays
@@ -755,26 +767,7 @@ void GeneratedInfo::Clear(const H3RmgRandomMapGenerator* rmgStruct)
 	}
 }
 
-
-
-
-const BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator* objGen, const int zoneId) const
+BOOL GeneratedInfo::Inited() const noexcept
 {
-
-
-
-	// increment number of map generated subtypes of that obj type 
-	int index2 = index2D(objGen->type, objGen->subtype, maxObjectSubtype);
-	// increment number of zone generated subtypes of that obj type 
-	int index3 = index3D(zoneId, objGen->type, objGen->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
-	if (objGen->type == 16
-		&& mapGeneratedBySubtype[index2] >= 1)
-	{
-		//H3Messagebox(Era::IntToStr(mapGeneratedBySubtype[index2]).c_str());
-	}
-	// return with that simple comparison function
-	return mapGeneratedBySubtype[index2] >= mapLimitsBySubtype[index2] ? true : eachZoneGeneratedBySubtype[index3] >= zoneLimitsBySubtype[index2];
-
+	return isInited;
 }
-
-
