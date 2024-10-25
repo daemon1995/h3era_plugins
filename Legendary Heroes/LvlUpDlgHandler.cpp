@@ -154,8 +154,8 @@ _LHF_(LvlUpDlgHandler::AfterCreate)
 		if (auto txt = dlg->GetText(2005))
 		{
 			txt->SetWidth(dlg->GetWidth() - 82);
-			txt->SetHeight(46);
-			txt->SetY(346);
+			txt->SetHeight(60);
+			txt->SetY(334);
 			txt->SetX(46);
 			txt->SetAlignment(eTextAlignment::MIDDLE_CENTER);
 		}
