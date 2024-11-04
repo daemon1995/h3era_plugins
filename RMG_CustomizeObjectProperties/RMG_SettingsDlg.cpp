@@ -1680,42 +1680,78 @@ namespace rmgdlg
 			/*
 			* eObject::KEYMASTER, @todo: place into another page
 			*/
+			eObject::BLACK_MARKET,
+
+			eObject::CARTOGRAPHER,
+			eObject::SWAN_POND,
+
+			eObject::CORPSE,
 			eObject::MARLETTO_TOWER,
+
+			eObject::FAERIE_RING ,
+
 			eObject::GARDEN_OF_REVELATION,
+			eObject::IDOL_OF_FORTUNE ,
+
+			eObject::LIBRARY_OF_ENLIGHTENMENT ,
+
 			eObject::SCHOOL_OF_MAGIC ,
+
+			eObject::MAGIC_WELL,
+
 			eObject::MERCENARY_CAMP,
 			eObject::STAR_AXIS ,
-			eObject::LEARNING_STONE,
-			eObject::TREE_OF_KNOWLEDGE,
-			eObject::SCHOOL_OF_WAR,
-			eObject::IDOL_OF_FORTUNE ,
-			eObject::SCHOLAR ,
-			eObject::WITCH_HUT ,
-			eObject::LIBRARY_OF_ENLIGHTENMENT ,
-			eObject::MAGIC_WELL,
-			eObject::UNIVERSITY,
-			eObject::FAERIE_RING ,
+
+
+			eObject::FOUNTAIN_OF_FORTUNE,
+			eObject::FOUNTAIN_OF_YOUTH,
+
+			eObject::HILL_FORT,
+
+			eObject::LEAN_TO,
+			eObject::MAGIC_SPRING,
+
+			eObject::MYSTICAL_GARDEN,
+			eObject::OASIS,
+			eObject::OBELISK,
+			eObject::REDWOOD_OBSERVATORY,
+
+			eObject::PILLAR_OF_FIRE,
+
 			eObject::RALLY_FLAG ,
-			eObject::STABLES ,
-			eObject::SWAN_POND,
+
+			eObject::REFUGEE_CAMP,
+
+			eObject::SCHOLAR ,
+
+			eObject::SHRINE_OF_MAGIC_INCANTATION ,
+			eObject::SHRINE_OF_MAGIC_GESTURE ,
+			eObject::SHRINE_OF_MAGIC_THOUGHT ,
+
 			eObject::SIRENS,
+
+			eObject::STABLES ,
+			eObject::TAVERN,
 			eObject::TEMPLE,
 			eObject::DEN_OF_THIEVES,
-			eObject::WATERING_HOLE,
-			eObject::OBELISK,
-			eObject::BLACK_MARKET,
-			eObject::HILL_FORT,
-			eObject::OASIS,
-			eObject::REDWOOD_OBSERVATORY,
-			eObject::PILLAR_OF_FIRE,
-			eObject::WINDMILL,
+
+			eObject::LEARNING_STONE,
+
+			eObject::TREE_OF_KNOWLEDGE,
+
+			eObject::UNIVERSITY,
+			eObject::WAGON,
+			eObject::WAR_MACHINE_FACTORY,
+			eObject::SCHOOL_OF_WAR,
+			eObject::WARRIORS_TOMB,
 			eObject::WATER_WHEEL,
-			eObject::MYSTICAL_GARDEN,
-			eObject::SHRINE_OF_MAGIC_GESTURE ,
-			eObject::SHRINE_OF_MAGIC_INCANTATION ,
-			eObject::SHRINE_OF_MAGIC_THOUGHT ,
-			eObject::CARTOGRAPHER,
-			warehouses::WAREHOUSE_OBJECT_TYPE
+			eObject::WATERING_HOLE,
+
+			eObject::WINDMILL,
+			eObject::WITCH_HUT ,
+
+			warehouses::WAREHOUSE_OBJECT_TYPE,
+			eObject::FREELANCERS_GUILD
 		},
 		{
 			eObject::CREATURE_GENERATOR1,

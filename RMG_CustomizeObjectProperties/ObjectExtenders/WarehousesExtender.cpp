@@ -240,8 +240,11 @@ namespace warehouses
 			break;
 		case eResource::GOLD:
 			resourceAmount = 4; // *500 when used
-
 			break;
+		////mithril
+		//case 7:
+		//	resourceAmount = 2; // 
+		//	break;
 		default:
 			break;
 		}
