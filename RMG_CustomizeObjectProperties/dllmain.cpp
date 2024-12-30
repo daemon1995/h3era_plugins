@@ -2,6 +2,23 @@
 #include "pch.h"
 // #include "framework.h"
 using namespace h3;
+
+namespace dllText
+{
+const char *PLUGIN_VERSION = "1.01";
+const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
+const char *PLUGIN_AUTHOR = "daemon_n";
+// const char* PROJECT_NAME = "$(ProjectName)";
+const char *PLUGIN_DATA = __DATE__;
+} // namespace dllText
+void __stdcall OnReportVersion(Era::TEvent *e)
+{
+
+    // show plugin name, version and compilation time
+    sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
+    std::string temp(h3_TextBuffer);
+    Era::ReportPluginVersion(temp.c_str());
+}
 Patcher *globalPatcher;
 PatcherInstance *_PI;
 
@@ -71,12 +88,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
             //! Connect to the Era framework
             Era::ConnectEra();
+            Era::RegisterHandler(OnReportVersion, "OnReportVersion");
 
             //! Get the global patcher
             globalPatcher = GetPatcher();
 
             //! Create an instance of the plugin
-            _PI = globalPatcher->CreateInstance("EraPlugin.ObjectsExtender.daemon_n");
+            _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
             _PI->WriteLoHook(0x4EDE42, CrBanksTxt_AfterLoad);
         }
         break;

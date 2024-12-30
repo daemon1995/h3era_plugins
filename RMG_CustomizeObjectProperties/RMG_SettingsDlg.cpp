@@ -1,6 +1,4 @@
 #include <thread>
-
-#include "RMG_SettingsDlg.h"
 #include "pch.h"
 // void CreateGraphics(const H3Vector<H3RmgObjectGenerator*>& rmgObjList);
 

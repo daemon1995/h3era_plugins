@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <thread>
 
 namespace editor
 {
@@ -11,13 +12,14 @@ RMGObjectsEditor::RMGObjectsEditor() : IGamePatch(globalPatcher->CreateInstance(
 
 void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
 {
-
     auto &editor = RMGObjectsEditor::Get();
 
+    // init data in the main
     editor.InitDefaults(maxSubtypes);
 
-    // std::thre
-    editor.InitLoading(maxSubtypes);
+    // load ini data in the separate thread
+    std::thread th(&RMGObjectsEditor::InitLoading, &editor, maxSubtypes);
+    th.detach();
 }
 
 const RMGObjectInfo &RMGObjectsEditor::DefaultObjectInfo(const int objType, const int subtype) const noexcept

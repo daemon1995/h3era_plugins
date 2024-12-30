@@ -119,7 +119,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;RMGCUSTOMIZEOBJECTPROPERTIES_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;RMGCUSTOMIZEOBJECTPROPERTIES_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -183,8 +183,8 @@
     <ClInclude Include="RMG_SettingsDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\headers\DrawPcx16ResizedBicubic.cpp" />
-    <ClCompile Include="..\..\headers\Era\era.cpp" />
+    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
+    <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ObjectExtenders\CreatureBanksExtender.cpp" />
     <ClCompile Include="ObjectExtenders\ShrinesExternder.cpp" />

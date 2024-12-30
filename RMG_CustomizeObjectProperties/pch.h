@@ -16,8 +16,8 @@
 #include "..\headers\header.h"
 constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 
-#include "ObjectsExtender.h"
 #include "RMGObjectsEditor.h"
+#include "ObjectsExtender.h"
 
 // #include "CreatureBanksExtender.h"
 // #include "ShrinesExternder.h"
