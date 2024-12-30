@@ -56,7 +56,7 @@ public:
 	{
 		_pi->UndoAll();
 	}
-	//BOOL Ena;bled() const noexcept;
+
 	//static IGamePatch * Get()  noexcept;
 	virtual void CreatePatches() = 0;
 };
