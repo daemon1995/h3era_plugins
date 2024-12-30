@@ -1,10 +1,9 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #include "pch.h"
-//#include "framework.h"
+// #include "framework.h"
 using namespace h3;
-Patcher* globalPatcher;
-PatcherInstance* _PI;
-
+Patcher *globalPatcher;
+PatcherInstance *_PI;
 
 /*!
   \brief Entry point of the DLL.
@@ -19,7 +18,6 @@ PatcherInstance* _PI;
   reasons for calling the function and initializes the plugin if it
   hasn't been initialized before.
 */
-
 
 /*
 
@@ -42,59 +40,52 @@ PatcherInstance* _PI;
 
 _LHF_(CrBanksTxt_AfterLoad)
 {
-	editor::RMGObjectsEditor::Get();
+    editor::RMGObjectsEditor::Get();
 
-	//! Get the CreatureBanksManager and initialize it
-	cbanks::CreatureBanksExtender::Get();
-	shrines::ShrinesExternder::Get();
-	warehouses::WarehousesExtender::Get();
+    //! Get the CreatureBanksManager and initialize it
+    cbanks::CreatureBanksExtender::Get();
+    shrines::ShrinesExternder::Get();
+    warehouses::WarehousesExtender::Get();
 
-	//! Set patches for the RMG_SettingsDlg
-	rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
+    //! Set patches for the RMG_SettingsDlg
+    rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
 
-	return EXEC_DEFAULT;
+    return EXEC_DEFAULT;
 }
 
-
-
-BOOL APIENTRY DllMain(HMODULE hModule,
-	DWORD ul_reason_for_call,
-	LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-	static BOOL plugin_On = 0;  //!< Flag to indicate if the plugin is on
+    static BOOL plugin_On = 0; //!< Flag to indicate if the plugin is on
 
-	// TODO: Perform actions based on the reason for calling
+    // TODO: Perform actions based on the reason for calling
 
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-	{
-		//!< Attach process, initialize the plugin if it hasn't been initialized before
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH: {
+        //!< Attach process, initialize the plugin if it hasn't been initialized before
 
-		//! Check if the plugin is already on
-		if (!plugin_On)
-		{
-			plugin_On = 1;
+        //! Check if the plugin is already on
+        if (!plugin_On)
+        {
+            plugin_On = 1;
 
-			//! Connect to the Era framework
-			Era::ConnectEra();
+            //! Connect to the Era framework
+            Era::ConnectEra();
 
-			//! Get the global patcher
-			globalPatcher = GetPatcher();
+            //! Get the global patcher
+            globalPatcher = GetPatcher();
 
-			//! Create an instance of the plugin
-			_PI = globalPatcher->CreateInstance("EraPlugin.ObjectsExtender.daemon_n");
-			_PI->WriteLoHook(0x4EDE42, CrBanksTxt_AfterLoad);
+            //! Create an instance of the plugin
+            _PI = globalPatcher->CreateInstance("EraPlugin.ObjectsExtender.daemon_n");
+            _PI->WriteLoHook(0x4EDE42, CrBanksTxt_AfterLoad);
+        }
+        break;
+    }
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
 
-		}
-		break;
-	}
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-
-	return TRUE;
+    return TRUE;
 }
-
