@@ -151,20 +151,38 @@ namespace extender
 				}
 			}
 
+			// first check only object type value/density
+
+			const int objectTypeValue = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.value", objType).String());
+			const int objectTypeDensity = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.density", objType).String());
+
+
+			// next check each object subtype value/density
 			for (size_t objSubtype = 0; objSubtype < maxSubtypes[objType]; objSubtype++)
 			{
 
 
-				const int value = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.value", objType, objSubtype).String());
-				const int density = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.density", objType, objSubtype).String());
+				const int objectSubtypeValue = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.value", objType, objSubtype).String());
+				const int objectSubtypeDensity = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.density", objType, objSubtype).String());
 
-				if (value || density)
+				// if we have any value/density
+				// create rmgObjectInfo object
+				if (objectSubtypeValue || objectSubtypeDensity|| objectTypeValue || objectTypeDensity)
 				{
 					RMGObjectInfo rmgObjectInfo(objType, objSubtype);
-					rmgObjectInfo.value = value;
-					rmgObjectInfo.density = density;
+					rmgObjectInfo.value = objectSubtypeValue;
+					rmgObjectInfo.density = objectSubtypeDensity;
 					additionalRmgObjects.emplace_back(rmgObjectInfo);
+
 				}
+
+				//if (objectSubtypeValue || objectSubtypeDensity)
+				//{
+				//	RMGObjectInfo rmgObjectInfo(objType, objSubtype);
+				//	rmgObjectInfo.value = objectSubtypeValue;
+				//	rmgObjectInfo.density = objectSubtypeDensity;
+				//	additionalRmgObjects.emplace_back(rmgObjectInfo);
+				//}
 			}
 		}
 
@@ -373,7 +391,7 @@ namespace extender
 			_PI->WriteLoHook(0x4AA757, H3AdventureManager__ObjectVisit_SoundPlay);
 
 
-
+			
 			//_PI->WriteLoHook(0x40C5A1, H3AdventureManager__GetPyramidObjectHoverHint);
 			//_PI->WriteLoHook(0x414F66, H3AdventureManager__GetPyramidObjectClickHint);
 

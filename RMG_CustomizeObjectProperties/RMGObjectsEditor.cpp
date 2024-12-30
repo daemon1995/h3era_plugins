@@ -1,11 +1,12 @@
 #include "pch.h"
 
 
-GeneratedInfo generatedInfo;
 
 
 namespace editor
 {
+	GeneratedInfo RMGObjectsEditor::generatedInfo;
+
 	RMGObjectsEditor::RMGObjectsEditor()
 		:IGamePatch(globalPatcher->CreateInstance("EraPlugin.RMG.ObjectEditor.daemon_n"))
 	{
@@ -18,6 +19,8 @@ namespace editor
 		auto& editor = RMGObjectsEditor::Get();
 
 		editor.InitDefaults(maxSubtypes);
+
+		//std::thre
 		editor.InitLoading(maxSubtypes);
 	}
 
@@ -38,19 +41,6 @@ namespace editor
 		currentRMGObjectsInfoByType[info.type][info.subtype] = info;
 	}
 
-
-
-
-	void RMGObjectsEditor::CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg)
-	{
-
-		//const char* iniPath = "Runtime/test_ovj_limits.ini";
-		//eachZoneGeneratedBySubtype.resize(rmg->zoneGenerators.Size());
-
-		//if (generatedInfo == nullptr)
-
-
-	}
 
 	void RMGObjectsEditor::InitDefaults(const INT16* maxSubtypes)
 	{
@@ -94,21 +84,20 @@ namespace editor
 
 		constexpr int INFO_PROPERTIES_NUMBER = 5;
 
-		static constexpr const char* keyNames[INFO_PROPERTIES_NUMBER] = { "enabled","map","zone","value","density" };
-
+		constexpr int UNDEFINED = -1;
 
 		for (size_t objType = 0; objType < H3_MAX_OBJECTS; objType++)
 		{
 			const int maxSubtype = maxSubtypes[objType];
 			defaultRMGObjectsInfoByType[objType].resize(maxSubtype);
 
-			int typeData[5] = { true, limitsInfo.mapTypesLimit[objType],limitsInfo.zoneTypeLimits[objType], -1, -1 };
+			int typeData[5] = { true, limitsInfo.mapTypesLimit[objType],limitsInfo.zoneTypeLimits[objType], UNDEFINED, UNDEFINED };
 
 			for (size_t keyIndex = 0; keyIndex < INFO_PROPERTIES_NUMBER; keyIndex++)
 			{
 
 				// read default data from json for objTypes only
-				const int data = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%s", objType, keyNames[keyIndex]).String(), readSucces);
+				const int data = EraJS::readInt(H3String::Format(RMGObjectInfo::objectTypeJsonKeyFormat, objType, RMGObjectInfo::propertyNames[keyIndex]).String(), readSucces);
 
 				// and if succes
 				if (readSucces)
@@ -132,13 +121,22 @@ namespace editor
 				for (size_t keyIndex = 0; keyIndex < INFO_PROPERTIES_NUMBER; keyIndex++)
 				{
 					// read default data from json for the exact subtype
-					const int subtypeData = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.%s", objType, objSubtype, keyNames[keyIndex]).String(), readSucces);
+					const int subtypeData = EraJS::readInt(H3String::Format(RMGObjectInfo::objectSubtypeJsonKeyFormat, objType, objSubtype, RMGObjectInfo::propertyNames[keyIndex]).String(), readSucces);
 
 					// set data according to struct offset
 					objInfo->data[keyIndex] = readSucces ? subtypeData : typeData[keyIndex];
+
 				}
-				//objInfo->Clamp();
 			}
+		}
+
+		// dwellings value calculation
+		const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
+		for (auto&dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR1])
+		{
+			const int dwellingCreatureType = DwordAt(dwellingsPtr + (dwellingObjInfo.subtype << 2));
+			const int creatureAIValue = P_CreatureInformation[dwellingCreatureType].aiValue;
+			dwellingObjInfo.value = creatureAIValue;
 		}
 
 		// init pseudoGanerator
@@ -150,7 +148,7 @@ namespace editor
 		isPseudoGeneration = true;
 		//pseudoH3RmgRandomMapGenerator.objectPrototypes[eObject::KEYMASTER] = P_Game->mainSetup.objectLists[eObject::KEYMASTER];
 
-		THISCALL_1(void, 0x539000, &pseudoH3RmgRandomMapGenerator);
+		THISCALL_1(void, 0x539000, &pseudoH3RmgRandomMapGenerator); //RMG__CreateObjectGenerators
 
 		defaultObjectGenerators = &pseudoH3RmgRandomMapGenerator.objectGenerators;
 
@@ -171,14 +169,8 @@ namespace editor
 		currentRMGObjectsInfoByType = defaultRMGObjectsInfoByType;// curentSettings;
 
 
-
-
-		const int zoneType = 0;
+		constexpr int zoneType = 0;
 		constexpr int SIZE = 5;
-
-		constexpr const char* keyNames[SIZE] = { "enabled", "map", "zone", "value", "density" };
-
-		constexpr const char* iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
 
 
 		for (auto& objInfoVec : currentRMGObjectsInfoByType)
@@ -186,12 +178,11 @@ namespace editor
 			for (auto& objectInfo : objInfoVec)
 			{
 
-
 				H3String sectionName = H3String::Format("%d_%d_%d", objectInfo.type, objectInfo.subtype, zoneType);// , obj.attributes->defName.String());
 
 				for (size_t i = 0; i < SIZE; i++)
 				{
-					if (Era::ReadStrFromIni(keyNames[i], sectionName.String(), iniPath, h3_TextBuffer))
+					if (Era::ReadStrFromIni(RMGObjectInfo::propertyNames[i], sectionName.String(), RMGObjectInfo::iniFilePath, h3_TextBuffer))
 						// assign values from ini to object
 						objectInfo.data[i] = atoi(h3_TextBuffer);
 				}
@@ -232,6 +223,7 @@ namespace editor
 
 		// check WoG Dwellings
 		const int dwellingsNumber = IntAt(0x0539C76 + 1);
+
 		// if value is 80 (SoD value)
 		if (dwellingsNumber == 80)
 		{
@@ -302,10 +294,19 @@ namespace editor
 				// we collect data
 				if (!isRealGeneration)
 				{
+					constexpr int UNDEFINED = -1;
 
+					// only if data isn't taken from json before
+					if (rmgObjInfo.density == UNDEFINED)
+					{
+						rmgObjInfo.density = rmgObj->density;
+					}
 
-					rmgObjInfo.density = rmgObj->density;
-					rmgObjInfo.value = rmgObj->value;
+					if (rmgObjInfo.value == UNDEFINED)
+					{
+						rmgObjInfo.value = rmgObj->value;
+					}
+
 					rmgObjInfo.Clamp();
 				}
 				// otherwise we set data
@@ -313,14 +314,15 @@ namespace editor
 				{
 
 
-					if (rmgObjInfo.density > 0)
-						rmgObj->density = rmgObjInfo.density;
-					if (rmgObjInfo.value != -1)
-						rmgObj->value = rmgObjInfo.value;
-
 					// if object is enabled
 					if (rmgObjInfo.enabled)
 					{
+
+						if (rmgObjInfo.density > 0)
+							rmgObj->density = rmgObjInfo.density;
+						if (rmgObjInfo.value != -1)
+							rmgObj->value = rmgObjInfo.value;
+
 						// add into list generated list
 						editor.editedObjectGenerators.Add(rmgObj);
 					}
@@ -378,15 +380,31 @@ namespace editor
 		return EXEC_DEFAULT;
 	}
 
+	int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook* h, const H3RmgObjectGenerator* objGen, const H3RmgZoneGenerator* zoneGen, const H3RmgRandomMapGenerator* rmg)
+	{
+		const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
+		const int creatureType = DwordAt(dwellingsPtr + 4 * objGen->subtype);
+
+		const int storedCreatureAIValue = P_CreatureInformation[creatureType].aiValue;
+		
+		P_CreatureInformation[creatureType].aiValue = RMGObjectsEditor::Get().CurrentObjectInfo(objGen->type, objGen->subtype).value;
+
+		const int objectValue = THISCALL_3(int, h->GetDefaultFunc(), objGen, zoneGen, rmg);
+
+		P_CreatureInformation[creatureType].aiValue = storedCreatureAIValue;
+
+		return objectValue;
+	}
 
 
 	void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook* h, const H3RmgRandomMapGenerator* rmg, const H3RmgTemplate* RmgTemplate)
 	{
 
 #ifdef _DEBUG
-		const_cast<H3RmgRandomMapGenerator*>(rmg)->randomSeed = 23432434;
-		//H3Random::SetRandomSeed(rmg->randomSeed);
-		CDECL_1(void, 0x61841F, 23432434);
+		constexpr int TEST_SEED = 23432434;
+		const_cast<H3RmgRandomMapGenerator*>(rmg)->randomSeed = TEST_SEED;
+		H3Random::SetRandomSeed(rmg->randomSeed);
+		CDECL_1(void, 0x61841F, TEST_SEED);
 #endif // _DEBUG
 
 
@@ -431,6 +449,7 @@ namespace editor
 			_pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);
 
 			_pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
+			_pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
 			// Hook for the setting defaults
 
 			m_isInited = true;
@@ -515,7 +534,7 @@ BOOL RMGObjectInfo::Clamp() noexcept
 		dataChanged = true;
 
 	}
-	if (value < -1 || (type == eObject::CREATURE_GENERATOR1 && value != -1))
+	if (value < -1 )
 	{
 		value = -1;
 		dataChanged = true;
@@ -620,16 +639,27 @@ LPCSTR RMGObjectInfo::GetObjectName(const H3MapItem* mapItem)
 	return h3_NullString;
 
 }
+
+extern "C" __declspec(dllexport) void Name(size_t id, char* buff)
+{
+
+
+	if (id <  cbanks::CreatureBanksExtender::Get().Size())
+	{
+		sprintf(buff, "%s", RMGObjectInfo::GetObjectName(16, id));
+	}
+	//return creatureBankExtender.m_size;
+}
 LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 {
 	LPCSTR result = h3_NullString;
 
 
-	const int cbId = cbanks::CreatureBanksExtender::GetCreatureBankId(type, subtype);
-	if (cbId >= 0)
+	const int creatureBankId = cbanks::CreatureBanksExtender::GetCreatureBankId(type, subtype);
+	if (creatureBankId >= 0)
 	{
-		return H3CreatureBankSetup::Get()[cbId].name.String();
-		//return cbanks::CreatureBanksExtender::Get().creatureBanks.setups[cbId].name.String();
+		return H3CreatureBankSetup::Get()[creatureBankId].name.String();
+		//return cbanks::CreatureBanksExtender::Get().creatureBanks.setups[creatureBankId].name.String();
 
 	}
 	switch (type)
@@ -650,13 +680,20 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 	case eObject::RANDOM_MONSTER:
 		result = P_Creatures[subtype].namePlural;
 	case eObject::PYRAMID:
-	case 142:
-		libc::sprintf(h3_TextBuffer, "RMG.objectGeneration.%d.%d.name", type, subtype);
+	case warehouses::WAREHOUSE_OBJECT_TYPE:
+		libc::sprintf(h3_TextBuffer, objectSubtypeNameJsonKeyFormat, type, subtype);
 		result = EraJS::read(h3_TextBuffer);
 		break;
 	case eObject::RESOURCE:
 		result = P_ResourceName[subtype];
 		break;
+	case eObject::SHRINE_OF_MAGIC_INCANTATION:
+		if (subtype)
+		{
+			libc::sprintf(h3_TextBuffer, objectSubtypeNameJsonKeyFormat, type, subtype);
+			result = EraJS::read(h3_TextBuffer);
+			break;
+		}
 	case eObject::TOWN:
 		result = P_TownNames[subtype];
 		break;

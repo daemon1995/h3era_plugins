@@ -58,7 +58,7 @@ namespace cbanks
 		virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
 		//virtual void GetObjectPreperties() noexcept override  final;
 	private:
-		const int GetBanksSetupFromJson(const INT16 maxSubtype);
+		const int GetBankSetupsNumberFromJson(const INT16 maxSubtype);
 	//	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
 		void Resize(UINT16 m_size) noexcept;
 		void Reserve(UINT16 m_size) noexcept;
@@ -70,14 +70,15 @@ namespace cbanks
 		static _LHF_(CrBank_BeforeCombatStart);
 		static signed int __stdcall CrBank_CombatStart(HiHook* h, UINT AdvMan, UINT PisMixed, UINT attHero, UINT attArmy, int PlayerIndex, UINT defTown, UINT defHero, UINT defArmy, int seed, signed int a10, int isBank);
 
+		static void __stdcall OnAfterReloadLanguageData(Era::TEvent* event);
 		//	static int __stdcall CretureBankSetups__Ctor(HiHook*h);
 	public:
 
-		const UINT Size() const noexcept;
+		UINT Size() const noexcept;
 
 	public:
-		static const int GetCreatureBankId(const int objType, const int objSubtype) noexcept;
-		static const int GetCreatureBankObjectType(const int cbId) noexcept;
+		static int GetCreatureBankId(const int objType, const int objSubtype) noexcept;
+		static int GetCreatureBankObjectType(const int cbId) noexcept;
 
 		static CreatureBanksExtender& Get();
 

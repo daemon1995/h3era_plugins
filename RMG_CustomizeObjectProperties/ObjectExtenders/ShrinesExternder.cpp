@@ -3,7 +3,7 @@ namespace shrines
 
 {
 
-
+	const H3MapItem*  ShrinesExternder::currentShrineHint = nullptr;
 	ShrinesExternder::ShrinesExternder()
 		:ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
 	{
@@ -31,15 +31,16 @@ namespace shrines
 		return EXEC_DEFAULT;
 	}
 
-
 	_LHF_(ShrinesExternder::Shrine__AtGetName)
 	{
-		if (const H3MapItem* shrines = reinterpret_cast<H3MapItem*>(c->edx))
+		if (const H3MapItem* shrine = *reinterpret_cast<H3MapItem**>(c->ebp + 0x8))
 		{
-			if (shrines->objectSubtype != 0)
+			currentShrineHint = nullptr;
+			if (shrine->objectSubtype != 0)
 			{
+				currentShrineHint = shrine;
 				bool readSucces = false;
-				int strPtr = int(EraJS::read(H3String::Format("RMG.objectGeneration.88.%d.name", shrines->objectSubtype).String(), readSucces));
+				int strPtr = int(EraJS::read(H3String::Format("RMG.objectGeneration.88.%d.name", shrine->objectSubtype).String(), readSucces));
 
 				if (readSucces)
 				{
@@ -54,6 +55,27 @@ namespace shrines
 		return EXEC_DEFAULT;
 	}
 
+	_LHF_(ShrinesExternder::Shrine__AtGetHint)
+	{
+		if (currentShrineHint)
+		{
+			//if (_shrine->objectSubtype != 0)
+			{
+				bool readSucces = false;
+				int strPtr = int(EraJS::read(H3String::Format("RMG.objectGeneration.88.%d.hint", currentShrineHint->objectSubtype).String(), readSucces));
+
+				if (readSucces)
+				{
+					c->edi = strPtr;
+					// return after original text set
+					c->return_address = 0x040DA2B;
+					return NO_EXEC_DEFAULT;
+				}
+			}
+		}
+
+		return EXEC_DEFAULT;
+	}
 	void ShrinesExternder::CreatePatches()
 	{
 		if (!m_isInited)
@@ -61,6 +83,7 @@ namespace shrines
 
 			_pi->WriteLoHook(0x4C1974, Game__AtShrineOfMagicIncantationSettingSpell);
 			_pi->WriteLoHook(0x40D858, Shrine__AtGetName);
+			_pi->WriteLoHook(0x40DA24, Shrine__AtGetHint);
 
 			m_isInited = true;
 		}

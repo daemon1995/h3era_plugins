@@ -26,6 +26,27 @@ namespace cbanks
 		return EXEC_DEFAULT;
 	}
 
+	void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent* event)
+	{
+		
+		auto& creatureBanks = Get().creatureBanks;
+
+		const int defaultBanksNumber = Get().defaultBanksNumber;
+		const int lastBankId = defaultBanksNumber + Get().addedBanksNumber;
+		for (INT16 creatureBankId = defaultBanksNumber; creatureBankId < lastBankId; creatureBankId++)
+		{
+			bool trSuccess = false;
+			auto& bankSetup = Get().creatureBanks.setups[creatureBankId];
+
+			// assign new CB name from json/default
+			H3String name = EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.name", creatureBankId).String(), trSuccess);
+			//H3Messagebox::Show(name);
+			if (!trSuccess || bankSetup.name.Empty())
+				name = H3ObjectName::Get()[eObject::CREATURE_BANK];
+			bankSetup.name = name;
+		}
+
+	}
 
 	void CreatureBanksExtender::CreatePatches()
 	{
@@ -44,6 +65,8 @@ namespace cbanks
 
 		_PI->WriteLoHook(0x4ABAD3, CrBank_BeforeCombatStart);
 		_PI->WriteHiHook(0x4ABBCB, THISCALL_, CrBank_CombatStart);
+
+		Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 
 
 		_PI->WriteHiHook(0x418580, THISCALL_, LoopSoundManager::AdvMgr_MapItem_Select_Sound);
@@ -80,7 +103,7 @@ namespace cbanks
 
 
 
-		int crBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
+		const int crBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
 		if (crBankId >= Get().defaultBanksNumber
 			&& Get().soundManager.loopSoundNames[crBankId] != h3_NullString)
 		{
@@ -134,13 +157,16 @@ namespace cbanks
 		return  THISCALL_11(signed int, h->GetDefaultFunc(), AdvMan, PosMixed, attHero, attArmy, PlayerIndex, defTown, defHero, defArmy, seed, a10, isBank);
 	}
 
-	const int CreatureBanksExtender::GetCreatureBankId(const int objType, const int objSubtype) noexcept
+	int CreatureBanksExtender::GetCreatureBankId(const int objType, const int objSubtype) noexcept
 	{
 		int cbId = -1;
 		switch (objType)
 		{
 		case	eObject::CREATURE_BANK:
-			cbId = objSubtype;
+			if (objSubtype >= 0 && objSubtype < Get().addedBanksNumber + Get().defaultBanksNumber)
+			{
+				cbId = objSubtype;
+			}
 			break;
 		case	eObject::DERELICT_SHIP:
 			cbId = 8;
@@ -161,7 +187,7 @@ namespace cbanks
 		return cbId;
 	}
 
-	const int CreatureBanksExtender::GetCreatureBankObjectType(const int cbId) noexcept
+	int CreatureBanksExtender::GetCreatureBankObjectType(const int cbId) noexcept
 	{
 
 		// get CB object type for some edits later
@@ -193,16 +219,6 @@ namespace cbanks
 
 
 
-	extern "C" __declspec(dllexport) void Name(size_t id, char* buff)
-	{
-
-		;
-		if (id < CreatureBanksExtender::Get().Size())
-		{
-			sprintf(buff, "%s", H3CreatureBankSetup::Get()[id].name.String());
-		}
-		//return creatureBankExtender.m_size;
-	}
 
 
 	// SOUND FIND HERE 00418BB6
@@ -224,15 +240,18 @@ namespace cbanks
 
 
 		// init vector sizes!
-		int banksAdded = GetBanksSetupFromJson(maxCreatureBankSubtype);
+		const int banksAdded = GetBankSetupsNumberFromJson(maxCreatureBankSubtype);
 
 		if (banksAdded)
 		{		// set new Creature Bank Setups data at native array address
 			//IntAt(0x67029C) = (int)instance->creatureBanks.setups.data();
 			const DWORD newCbArrayAddress = DWORD(Get().creatureBanks.setups.data());
 			// set new address for the using CB array ptr
-			_pi->WriteDword(0x67029C, newCbArrayAddress);
 
+			_pi->WriteDword(0x67029C, newCbArrayAddress);
+			//_pi->WriteDword(0x047A4B6 +3, newCbArrayAddress + 4);
+			
+			//_pi->WriteByte(0x47A3BA +1, defaultBanksNumber + banksAdded);
 			// set new address for the H3CreatureBankSetup init vector to use H3CreatureBankSetup::Get(); properly with new setup
 			_pi->WriteDword(0x47A3C1 + 1, newCbArrayAddress);
 		}
@@ -241,88 +260,76 @@ namespace cbanks
 
 
 
-	const int CreatureBanksExtender::GetBanksSetupFromJson(const INT16 maxSubtype)
+	const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
 	{
 
 		addedBanksNumber = 0;
 
 
-		auto& b = creatureBanks;
+		auto& banks = creatureBanks;
 		//const int MAX_MON_ID = IntAt(0x4A1657);
 
 		Reserve(30);
-		//const H3String baseKey = "RMG.objectGeneration.16.%s.";
 
-		H3String key;
 		bool trSuccess = false;
-		//return EXEC_DEFAULT;
 
 
 		//// change rmg data
-		//for (INT16 i = 0; i < maxSubtype; i++)
-		//	SetRmgObjectGenData(i);
 
-		for (INT16 i = defaultBanksNumber; i < maxSubtype; i++)
+		for (INT16 creatureBankId = defaultBanksNumber; creatureBankId < maxSubtype; creatureBankId++)
 		{
-			key = H3String::Format("RMG.objectGeneration.16.%d.isEnabled", i);
 
-			int isEnabled = EraJS::readInt(key.String(), trSuccess);
+			LPCSTR loooSoundName = EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.sound.loop", creatureBankId).String(), trSuccess);
+			soundManager.loopSoundNames.emplace_back(trSuccess ? loooSoundName : h3_NullString);
 
-			//if (isEnabled)
+			H3WavFile* ptr = nullptr;
+			soundManager.loopSounds.emplace_back(ptr);
+
+
+			// states
+
+			H3CreatureBankSetup setup;
+
+
+			// assign new CB name from json/default
+			H3String name = EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.name", creatureBankId).String(), trSuccess);
+			if (!trSuccess && setup.name.Empty())
+				name = H3ObjectName::Get()[eObject::CREATURE_BANK];
+			setup.name = name;
+
+			for (size_t state = 0; state < 4; state++)
 			{
 
-				//SetRmgObjectGenData(i);
+				setup.states[state].creatureRewardType = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.creatureRewardType", creatureBankId, state).String());
+				setup.states[state].creatureRewardCount = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.creatureRewardCount", creatureBankId, state).String());
+				setup.states[state].chance = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.chance", creatureBankId, state).String());
+				setup.states[state].upgrade = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.upgrade", creatureBankId, state).String());
 
-				LPCSTR loooSoundName = EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.sound.loop", i).String(), trSuccess);
-				soundManager.loopSoundNames.emplace_back(trSuccess ? loooSoundName : h3_NullString);
+				for (size_t artLvl = 0; artLvl < 4; artLvl++)
+					setup.states[state].artifactTypeCounts[artLvl] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifactTypeCounts.%d", creatureBankId, state, artLvl).String());
 
-				H3WavFile* ptr = nullptr;
-				soundManager.loopSounds.emplace_back(ptr);
-
-
-				// states
-
-				H3CreatureBankSetup setup;
-
-
-				// assign new CB name from json/default
-				H3String name = EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.name", i).String(), trSuccess);
-				if (!trSuccess && setup.name.Empty())
-					name = H3ObjectName::Get()[eObject::CREATURE_BANK];
-				setup.name = name;
-
-				for (size_t state = 0; state < 4; state++)
+				for (size_t j = 0; j < 7; j++)
 				{
 
-					setup.states[state].creatureRewardType = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.creatureRewardType", i, state).String());
-					setup.states[state].creatureRewardCount = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.creatureRewardCount", i, state).String());
-					setup.states[state].chance = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.chance", i, state).String());
-					setup.states[state].upgrade = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.upgrade", i, state).String());
-
-					for (size_t artLvl = 0; artLvl < 4; artLvl++)
-						setup.states[state].artifactTypeCounts[artLvl] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifactTypeCounts.%d", i, state, artLvl).String());
-
-					for (size_t j = 0; j < 7; j++)
-					{
-
-						setup.states[state].guardians.type[j] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.guardians.type.%d", i, state, j).String());
-						setup.states[state].guardians.count[j] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.guardians.count.%d", i, state, j).String());
-						setup.states[state].resources.asArray[j] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.resources.%d", i, state, j).String());
-					}
-
+					setup.states[state].guardians.type[j] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.guardians.type.%d", creatureBankId, state, j).String());
+					setup.states[state].guardians.count[j] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.guardians.count.%d", creatureBankId, state, j).String());
+					setup.states[state].resources.asArray[j] = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankId, state, j).String());
 				}
 
-				int isNotBank = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.isNotBank", i).String());
-				b.isNotBank.emplace_back(isNotBank);
-				b.setups.emplace_back(setup);
-				b.monsterAwards.emplace_back(setup.states[0].creatureRewardType);
-
-				std::array<int, 5> tempArr = { -1,-1,-1,-1,-1 };
-				memcpy(&tempArr[0], &setup.states[0].guardians.type[0], sizeof(tempArr));
-
-				b.monsterGuards.emplace_back(tempArr);
-				addedBanksNumber++;
 			}
+
+			int isNotBank = EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.isNotBank", creatureBankId).String());
+			
+			creatureBanks.isNotBank.emplace_back(isNotBank);
+			creatureBanks.setups.emplace_back(setup);
+			creatureBanks.monsterAwards.emplace_back(setup.states[0].creatureRewardType);
+
+			std::array<int, 5> tempArr = { -1,-1,-1,-1,-1 };
+			memcpy(&tempArr[0], &setup.states[0].guardians.type[0], sizeof(tempArr));
+
+			creatureBanks.monsterGuards.emplace_back(tempArr);
+			
+			addedBanksNumber++;
 
 		}
 
@@ -334,7 +341,7 @@ namespace cbanks
 	}
 
 
-	const UINT CreatureBanksExtender::Size() const noexcept
+	 UINT CreatureBanksExtender::Size() const noexcept
 	{
 		return creatureBanks.m_size;
 	}
@@ -414,7 +421,7 @@ namespace cbanks
 
 		soundManager.loopSoundNames.shrink_to_fit();
 		soundManager.loopSounds.shrink_to_fit();
-
+		creatureBanks.m_size = creatureBanks.monsterAwards.size();
 	}
 
 }

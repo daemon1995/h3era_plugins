@@ -581,7 +581,6 @@ namespace rmgdlg
 
 
 		constexpr int SIZE = 5;
-		constexpr const char* keyNames[SIZE] = { "enabled", "map", "zone", "value", "density" };
 
 		bool success = true;
 
@@ -605,7 +604,7 @@ namespace rmgdlg
 
 						for (size_t i = 0; i < SIZE; i++)
 						{
-							if (!Era::WriteStrToIni(keyNames[i], std::to_string(info.data[i]).c_str(), sectionName.String(), dlgIniPath))
+							if (!Era::WriteStrToIni(RMGObjectInfo::propertyNames[i], std::to_string(info.data[i]).c_str(), sectionName.String(), dlgIniPath))
 								success = false;
 						}
 					}
@@ -1734,7 +1733,7 @@ namespace rmgdlg
 			eObject::TAVERN,
 			eObject::TEMPLE,
 			eObject::DEN_OF_THIEVES,
-
+			eObject::TRADING_POST,
 			eObject::LEARNING_STONE,
 
 			eObject::TREE_OF_KNOWLEDGE,

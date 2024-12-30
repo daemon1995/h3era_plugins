@@ -19,9 +19,17 @@ struct RMGObjectInfo
 		};
 		INT32 data[5] = {};
 	};
-	BOOL fromTxt = false;
+	//BOOL fromTxt = false;
 
 
+public:
+	static constexpr const char* propertyNames[] = { "enabled", "map", "zone", "value", "density" };
+	static constexpr const char* iniFilePath = "Runtime/RMG_CustomizeObjectsProperties.ini";
+	static constexpr const char* objectTypeJsonKeyFormat = "RMG.objectGeneration.%d.%s";
+	static constexpr const char* objectSubtypeJsonKeyFormat = "RMG.objectGeneration.%d.%d.%s";
+	static constexpr const char* objectSubtypeNameJsonKeyFormat = "RMG.objectGeneration.%d.%d.name";
+
+public:
 	RMGObjectInfo(const INT32 type, const INT32 subtype);
 	RMGObjectInfo();
 public:
@@ -117,7 +125,7 @@ namespace editor
 {
 	class RMGObjectsEditor : public IGamePatch
 	{
-
+		static GeneratedInfo generatedInfo;
 	private:
 		// used to store default generated data
 		PseudoH3RmgRandomMapGenerator pseudoH3RmgRandomMapGenerator;
@@ -141,7 +149,7 @@ namespace editor
 	private:
 		void InitDefaults(const INT16* maxSubtypes);
 		void InitLoading(const INT16* maxSubtypes);
-		void CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg);
+//		void CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg);
 
 	private:
 		static _LHF_(RMG_OnBeforeMapGeneration);
