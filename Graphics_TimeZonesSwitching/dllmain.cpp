@@ -1,20 +1,16 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
-Patcher* globalPatcher = nullptr;
-PatcherInstance* _PI = nullptr;
+Patcher *globalPatcher = nullptr;
+PatcherInstance *_PI = nullptr;
 
-
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 
     static bool pluginIsOn = false;
     switch (ul_reason_for_call)
     {
-        
+
     case DLL_PROCESS_ATTACH:
         if (!pluginIsOn)
         {
@@ -25,8 +21,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
             timezone::TownManager::Get();
             Era::ConnectEra();
-
-
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -35,4 +29,3 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
-
