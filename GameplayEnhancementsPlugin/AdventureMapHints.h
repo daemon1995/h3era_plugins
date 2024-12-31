@@ -56,8 +56,10 @@ class AdventureMapHints : public IGamePatch
     // bool * ObjectsToDraw()  noexcept;
     virtual ~AdventureMapHints();
 
+  protected:
     static void __stdcall AdvMgr_ObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,
                                             int screenX, int screenY);
+    static void __stdcall AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *advMan);
 };
 
 } // namespace advMapHints

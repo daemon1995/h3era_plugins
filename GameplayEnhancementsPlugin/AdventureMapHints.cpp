@@ -42,6 +42,7 @@ void AdventureMapHints::CreatePatches() noexcept
         blockAdventureHintDraw = _pi->CreateHexPatch(0x40D0D8, const_cast<char *>("EB 5F 90"));
 
         _pi->WriteHiHook(0x40F5D7, THISCALL_, AdvMgr_ObjectDraw);
+        _pi->WriteHiHook(0x040F6C4, THISCALL_, AdvMgr_DrawCornerFrames);
 
         m_isInited = true;
     }
@@ -279,20 +280,20 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
         }
     }
 }
+void __stdcall AdventureMapHints::AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *adv)
+{
+    THISCALL_1(void, h->GetDefaultFunc(), adv);
+    if (instance->m_drawnOjects.size())
+    {
+        instance->m_drawnOjects.clear();
+    }
+}
 
 bool AdventureMapHints::IsNeedDraw(const H3MapItem *mIt) const noexcept
 {
     if (mIt)
         return settings->m_objectsToDraw[mIt->objectType];
     return false;
-}
-
-EXTERN_C __declspec(dllexport) bool CreateFloatingHint(int x)
-{
-
-    bool result = false;
-
-    return result;
 }
 
 AdventureMapHints::~AdventureMapHints()
