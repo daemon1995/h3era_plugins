@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "MapScroller.h"
 
 namespace scroll
 {
@@ -43,7 +42,7 @@ namespace scroll
 			{
 				H3Msg* msg = reinterpret_cast<H3Msg*>(c->ebp - 0x34); // get mouse pos
 				// check if more than 25 px move
-				if (msg->GetX() && (abs(msg->GetX() - mapScroller.startMousePoint.x) > 25 || abs(msg->GetY() - mapScroller.startMousePoint.y) > 25))
+				if (msg->GetX() && (Abs(msg->GetX() - mapScroller.startMousePoint.x) > 25 || Abs(msg->GetY() - mapScroller.startMousePoint.y) > 25))
 				{
 					mapScroller.SetMapEdgeScrollStatus(false); // disable map edge scroll
 					c->eax = 16; // close dlg (send click)

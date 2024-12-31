@@ -12,7 +12,7 @@
 #define RESIZED_PCX
 // Добавьте сюда заголовочные файлы для предварительной компиляции
 
-#include "..\headers\header.h"
+#include "../headers/header.h"
 
 #include "ISettings.h"
 #include "AdventureMapHints.h"

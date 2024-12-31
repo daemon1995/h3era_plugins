@@ -1,5 +1,4 @@
 #define _H3API_PLUGINS_
-#define H3API_SINGLE_HEADER
 #include "pch.h"
 
 

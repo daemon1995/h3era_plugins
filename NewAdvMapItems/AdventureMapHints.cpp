@@ -24,17 +24,17 @@ UINT time = 0;
 #define Z1 (char*)(0x9271E8 +512)
 void echo(int a, int b, int c)
 {
-	sprintf(Z1, "x = %d, y = %d, z = %d", a,b,c);
+	libc::sprintf(Z1, "x = %d, y = %d, z = %d", a,b,c);
 	Era::ExecErmCmd("IF:L^%z1^;");
 }
 void echo(int a)
 {
-	sprintf(Z1, "%d", a);
+	libc::sprintf(Z1, "%d", a);
 	Era::ExecErmCmd("IF:L^%z1^;");
 }
 void echo(const char* a)
 {
-	sprintf(Z1, "%s", a);
+	libc::sprintf(Z1, "%s", a);
 	Era::ExecErmCmd("IF:L^%z1^;");
 }
 void echo(H3String& a) { echo(a.String()); }

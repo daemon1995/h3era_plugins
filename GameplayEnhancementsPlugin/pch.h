@@ -10,8 +10,9 @@
 
 // add headers that you want to pre-compile here
 #include "..\headers\header.h"
+#include "ISettings.h"
 
-
+#include "AdventureMapHints.h"
 #include "MapScroller.h"
 #include "CombatHints.h"
 #include "GameplayFeature.h"

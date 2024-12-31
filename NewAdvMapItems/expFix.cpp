@@ -1,6 +1,5 @@
 #include "pch.h"
 
-#include "..\..\headers\header.h"
 using namespace h3;
 typedef  int _DWORD;
 extern PatcherInstance* _PI;
