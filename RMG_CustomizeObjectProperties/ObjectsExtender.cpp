@@ -200,6 +200,7 @@ H3RmgObjectGenerator *CreateRmgObjectGen(const RMGObjectInfo &info)
         case eObject::PYRAMID:
             // hota's warehouses
         case warehouses::WAREHOUSE_OBJECT_TYPE:
+		case gazebo::GAZEBO_OBJECT_TYPE:
 
             objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
             THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, info.type, info.subtype, info.value, info.density);
