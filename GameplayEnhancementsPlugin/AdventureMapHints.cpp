@@ -32,6 +32,36 @@ DWORD lastTime = 0;
 RECT rect{200, 100, 200, 24};
 RECT _rect{rect};
 
+_LHF_(WoG_AdvMapSetHint)
+{
+    const PCHAR text = *reinterpret_cast<PCHAR *>(c->ebp + 0x14);
+
+    // sprintf(h3_TextBuffer, "%s = %d", "tetats" , text);
+    if (text)
+    {
+        {
+            text;
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+
+void __stdcall AdvMgrDlg_SetHintText(HiHook *h, H3AdventureMgrDlg *dlg, const int cmdType, const int a3, const int a4,
+                                     LPCSTR buffer)
+{
+
+    buffer;
+    THISCALL_5(void, h->GetDefaultFunc(), dlg, cmdType, a3, a4, buffer);
+    buffer;
+    auto hint = P_AdventureManager->dlg->GetTextPcx(200);
+    if (hint)
+    {
+        sprintf(h3_TextBuffer, "%s", hint->GetH3String().String());
+    }
+    // buffer;
+    return;
+}
 void AdventureMapHints::CreatePatches() noexcept
 {
 
@@ -43,6 +73,9 @@ void AdventureMapHints::CreatePatches() noexcept
 
         _pi->WriteHiHook(0x40F5D7, THISCALL_, AdvMgr_ObjectDraw);
         _pi->WriteHiHook(0x040F6C4, THISCALL_, AdvMgr_DrawCornerFrames);
+        //   _pi->WriteHiHook(0x040D0EF, THISCALL_, AdvMgrDlg_SetHintText);
+
+        //  _pi->WriteLoHook(0x074E037, WoG_AdvMapSetHint);
 
         m_isInited = true;
     }
@@ -75,9 +108,11 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
 
     *p_visited = changedVisitedText.String();
     *p_notVisited = changedNotVisitedText.String();
-
+    instance->isWogObject = mapItem->objectType;
     instance->blockAdventureHintDraw->Apply();
     THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
+    instance->isWogObject = false;
+
     instance->blockAdventureHintDraw->Undo();
 
     *p_visited = visitedText;
@@ -88,7 +123,12 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
         // sprintf(h3_TextBuffer, "{~>cprsmall.def:0:%d}\n%d", mapItem->objectSubtype +2,
         // mapItem->wanderingCreature.count); h3_TextBuffer = "";
     }
-
+    auto hint = P_AdventureManager->dlg->GetTextPcx(200);
+    if (hint)
+    {
+        //  sprintf(h3_TextBuffer, "%s", hint->GetH3String().String());
+    }
+    // sprintf(h3_TextBuffer, "%s", P_AdventureManager->dlg->GetHintBar()->GetHint());
     return h3_TextBuffer;
 }
 char ermVariableNameBuffer[64];
@@ -108,8 +148,8 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
         {
             return;
         }
+
         H3MapItem *currentItem = nullptr;
-        // UINT32 pos = mapX *
 
         H3Position pos(mapX, mapY, mapZ);
         if (mapX >= 0 && mapY >= 0 && mapX < *P_MapSize && mapY < *P_MapSize && H3TileVision::CanViewTile(pos))
@@ -118,13 +158,7 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
 
         if (currentItem &&
             instance->m_drawnOjects.find(currentItem->drawnObjectIndex) == instance->m_drawnOjects.cend() &&
-            instance->IsNeedDraw(currentItem)
-
-            //	&& currentItem->access  &6// ==0
-            //&&
-            //&& currentItem->GetEntrance() == currentItem
-
-        )
+            instance->NeedDrawMapItem(currentItem))
         {
 
             // echo(currentItem->GetCoordinates().x, currentItem->GetCoordinates().y, currentItem->GetCoordinates().z);
@@ -145,8 +179,7 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             //	instance->onHint = false;
             // sprintf(const_cast<LPSTR>(p_visited), "%s", nativeText.String());
 
-            LPCSTR hintText =
-                GetHintText(adv, currentItem, mapX, mapY, mapZ); // h3::H3ObjectName::Get()[currentItem->objectType];
+            LPCSTR hintText = GetHintText(adv, currentItem, mapX, mapY, mapZ);
 
             // LPCSTR hintText = h3_TextBuffer;//instance->GetHintText(currentItem);//
             // h3::H3ObjectName::Get()[currentItem->objectType]; echo(hintText); echo(name); LPCSTR hintText =
@@ -190,53 +223,42 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
 
             // FASTCALL_3(UINT8, 0x55D2E0, &attributes, &attributes.width, 1);
 
-            const int MAX_TEXT_WIDTH = OBJECT_WIDTH + TILE_WIDTH; // +(isCreature ? TILE_WIDTH : 0);
+            constexpr int MAX_TEXT_WIDTH = TILE_WIDTH * 3; // +(isCreature ? TILE_WIDTH : 0);
 
-            const int MIN_TEXT_HEIGHT = fnt->height + 2;
             //  const int MAX_TEXT_HEIGHT = TILE_WIDTH * 2;
 
-            int textWidth = OBJECT_WIDTH;
-            int textHeight = MIN_TEXT_HEIGHT;
+            // int textWidth = MIN_TEXT_WIDTH;
             int outOfWidthBorder = 0;
-            // const int HINT_MAX_
-            //  check if hint text reserve < x2 object size
-            //	if (MAX_TEXT_WIDTH > OBJECT_WIDTH)
-            {
 
-                const int HINT_MAX_WORD_WIDTH = fnt->GetMaxWordWidth(hintText);
+            const int textWidth = Clamp(MIN_TEXT_WIDTH, HINT_MAX_LINE_WIDTH, MAX_TEXT_WIDTH);
 
-                if (HINT_MAX_WORD_WIDTH >= 0 && HINT_MAX_WORD_WIDTH < HINT_MAX_LINE_WIDTH)
-                {
-                    // outOfWidthBorder = HINT_MAX_LINE_WIDTH - HINT_MAX_WORD_WIDTH;
-                    //   textWidth = HINT_MAX_WORD_WIDTH;
-                    textWidth = Clamp(HINT_MAX_LINE_WIDTH, textWidth, MAX_TEXT_WIDTH);
-                    // if (textWidth < MIN_TEXT_WIDTH)
-                    //{
-                    //     textWidth = MIN_TEXT_WIDTH;
-                    // }
-                    const int HINT_MAX_LINE_COUNT = fnt->GetLinesCountInText(hintText, textWidth);
-                    if (HINT_MAX_LINE_COUNT > 1)
-                    {
-                        textHeight *= HINT_MAX_LINE_COUNT; // fnt->GetLinesCountInText(hintText, textWidth);
-                        textHeight += HINT_MAX_LINE_COUNT - 1;
-                        //  textHeight = Clamp(MIN_TEXT_HEIGHT, textHeight, fnt->height * HINT_MAX_LINE_COUNT +
-                        //  HINT_MAX_LINE_COUNT 1);
-                    }
-                }
-                // textFieldWidth =
-                // if (currentItem->objectType == eObject::SPELL_SCROLL)
-                //{
-                //    libc::sprintf(Era::z[1], "%s", hintText);
+            const int HINT_LINES_COUNT = fnt->GetLinesCountInText(hintText, textWidth);
 
-                //    // Era::y[1] = TEMP_PCX_WIDTH;
-                //    Era::y[2] = textWidth;
-                //    Era::y[3] = HINT_MAX_LINE_WIDTH;
-                //    Era::y[4] = HINT_MAX_WORD_WIDTH;
-                //    Era::ExecErmCmd("IF:L^text = %z1, textWidth = %y2, HINT_MAX_LINE_WIDTH = %y3, HINT_MAX_WORD_WIDTH
-                //    "
-                //                    "width = %y4^");
-                //}
-            }
+            const int MIN_TEXT_HEIGHT = fnt->height + 2;
+
+            const int textHeight = HINT_LINES_COUNT * (MIN_TEXT_HEIGHT - 1); // HINT_LINES_COUNT - 1;
+
+            // if (HINT_LINES_COUNT > 1)
+            //{
+            //     textHeight *= HINT_LINES_COUNT; // fnt->GetLinesCountInText(hintText, textWidth);
+            //     textHeight += HINT_LINES_COUNT - 1;
+            //     //  textHeight = Clamp(MIN_TEXT_HEIGHT, textHeight, fnt->height * HINT_LINES_COUNT +
+            //     //  HINT_LINES_COUNT 1);
+            // }
+
+            // textFieldWidth =
+            // if (currentItem->objectType == eObject::SPELL_SCROLL)
+            //{
+            //    libc::sprintf(Era::z[1], "%s", hintText);
+
+            //    // Era::y[1] = TEMP_PCX_WIDTH;
+            //    Era::y[2] = textWidth;
+            //    Era::y[3] = HINT_MAX_LINE_WIDTH;
+            //    Era::y[4] = HINT_MAX_WORD_WIDTH;
+            //    Era::ExecErmCmd("IF:L^text = %z1, textWidth = %y2, HINT_MAX_LINE_WIDTH = %y3, HINT_MAX_WORD_WIDTH
+            //    "
+            //                    "width = %y4^");
+            //}
 
             constexpr INT START_DRAW_X = 8;
 
@@ -251,21 +273,11 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             const int TEMP_PCX_HEIGHT = textHeight + 2;
 
             auto tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
-            //	backPcx->DrawToPcx16(0, 0, true, tempBuffer, 30, 20);
-            // if (currentItem->objectType == eObject::RESOURCE)
-            //{
-            //    Era::y[1] = TEMP_PCX_WIDTH;
-            //    Era::y[2] = currentItem->objectSubtype;
-            //    Era::y[3] = HINT_MAX_LINE_WIDTH;
-            //    Era::y[4] = HINT_MAX_WORD_WIDTH;
-            //    Era::ExecErmCmd("IF:L^res %y2 len = %y3 px\
-            //        pcx width  = %y1^");
-            //}
+
             memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
             // backPcx->DrawToPcx16(30, 150, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, tempBuffer, 0, 0, 1);
             // H3RGB565 rgb(20, 24, 29);
 
-            // H3RGB565 ()
             // memset(tempBuffer->buffer, rand() %255, tempBuffer->buffSize);
             //  create golden frame
             tempBuffer->DrawThickFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 1, 189, 149, 57);
@@ -344,7 +356,7 @@ void __stdcall AdventureMapHints::AdvMgr_DrawCornerFrames(HiHook *h, const H3Adv
     }
 }
 
-bool AdventureMapHints::IsNeedDraw(const H3MapItem *mIt) const noexcept
+bool AdventureMapHints::NeedDrawMapItem(const H3MapItem *mIt) const noexcept
 {
     if (mIt)
         return settings->m_objectsToDraw[mIt->objectType];
@@ -402,6 +414,8 @@ void AdventureHintsSettings::reset()
     m_objectsToDraw[eObject::WINDMILL] = true;
     m_objectsToDraw[eObject::ARENA] = true;
     m_objectsToDraw[eObject::CAMPFIRE] = true;
+    m_objectsToDraw[eObject::FLOTSAM] = true;
+    m_objectsToDraw[eObject::SHIPWRECK_SURVIVOR] = true;
 
     // m_objectsToDraw[eObject::MONSTER] = true;
 }

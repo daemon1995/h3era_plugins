@@ -9,6 +9,7 @@ struct AdventureHintsSettings : public ISettings
     bool isHeld;
     int vKey;
     H3String fontName;
+
     UINT borderSize;
     bool m_objectsToDraw[232];
 
@@ -29,7 +30,10 @@ class AdventureMapHints : public IGamePatch
     Patch *blockAdventureHintDraw = nullptr;
     AdventureHintsSettings *settings = nullptr;
 
-    bool IsNeedDraw(const H3MapItem *mIt) const noexcept;
+    BOOL isWogObject = false;
+
+public:
+    bool NeedDrawMapItem(const H3MapItem *mIt) const noexcept;
 
     std::set<UINT16> m_drawnOjects;
     struct AccessableH3GeneralText : public H3GeneralText

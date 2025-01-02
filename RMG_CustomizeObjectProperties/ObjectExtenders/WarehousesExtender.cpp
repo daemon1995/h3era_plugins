@@ -228,9 +228,9 @@ void H3MapItemWarehouse::Reset()
         resourceAmount = 4; // *500 when used
         break;
     ////mithril
-    // case 7:
-    //	resourceAmount = 2; //
-    //	break;
+     case 7:
+    	resourceAmount = 2; //
+    	break;
     default:
         break;
     }

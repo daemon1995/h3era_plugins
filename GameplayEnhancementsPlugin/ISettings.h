@@ -6,6 +6,8 @@ class ISettings
     const char *sectionName;
     int scanCode;
     int vKey;
+    LPCSTR settingsVersion = "1.0";
+
     ISettings(const char *filePath, const char *sectionName);
 
   public:
