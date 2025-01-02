@@ -66,8 +66,8 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
     Patch *armySizeNameBracketsPatch = nullptr;
     if (mapItem->objectType == eObject::MONSTER)
     {
-        LPCSTR brackets = "{%s} %s";
-        armySizeNameBracketsPatch = instance->_pi->WriteDword(0x40C2E7 + 1, brackets);
+        LPCSTR advMapCreatureHintFormat = "{%s}\n%s";
+        armySizeNameBracketsPatch = instance->_pi->WriteDword(0x40C2E7 + 1, advMapCreatureHintFormat);
     }
 
     auto p_visited = generalTextPtr->At(VISITED_TEXT_ID);
@@ -91,17 +91,23 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
 
     return h3_TextBuffer;
 }
+char ermVariableNameBuffer[64];
+
 void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManager *adv, int mapX, int mapY, int mapZ,
                                                     int screenX, int screenY)
 {
 
     THISCALL_6(void, h->GetDefaultFunc(), adv, mapX, mapY, mapZ, screenX, screenY);
 
-    if (STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings->vKey) & 0x800 && instance->settings->isHeld
-        //&&0
-    )
+    if (STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings->vKey) & 0x800 && instance->settings->isHeld)
     {
-
+        const int playerId = P_CurrentPlayerID;
+        sprintf(ermVariableNameBuffer, "gem_adventure_map_object_hints_option_%d", playerId); // ;
+        const int optionIsEnabled = Era::GetAssocVarIntValue(ermVariableNameBuffer);
+        if (optionIsEnabled == 0)
+        {
+            return;
+        }
         H3MapItem *currentItem = nullptr;
         // UINT32 pos = mapX *
 
@@ -145,7 +151,7 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             // LPCSTR hintText = h3_TextBuffer;//instance->GetHintText(currentItem);//
             // h3::H3ObjectName::Get()[currentItem->objectType]; echo(hintText); echo(name); LPCSTR hintText =
             // "{~>smalres.def:0:0}";
-            if (hintText)
+            //   if (hintText)
             {
                 // currentItem->drawnObjectIndex;
             }
@@ -166,31 +172,70 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             // fnt = H3Font::Load("medfont.fnt");
             // fnt = H3Font::Load("smalfont.fnt");
             fnt = H3Font::Load(NH3Dlg::Text::TINY);
-            const int HINT_MAX_LINE_WIDTH = fnt->GetMaxLineWidth(hintText);
+
             //	const int OBJECT_WIDTH = GetObjectWidth(currentItem);
 
-            const int OBJECT_WIDTH = 1 * TILE_WIDTH;
+            constexpr int OBJECT_WIDTH = 1 * TILE_WIDTH;
+
+            const BOOL isCreature = currentItem->objectType == eObject::MONSTER;
+            // int armySizeTextWidth = 0;
+            // if (isCreature)
+            //{
+            //     armySizeTextWidth =
+            //         fnt->GetMaxLineWidth(H3Creature::GroupName(currentItem->wanderingCreature.count, 1));
+            // }
+            const int MIN_TEXT_WIDTH = OBJECT_WIDTH; // < armySizeTextWidth ? OBJECT_WIDTH : OBJECT_WIDTH;
+
+            const int HINT_MAX_LINE_WIDTH = fnt->GetMaxLineWidth(hintText);
 
             // FASTCALL_3(UINT8, 0x55D2E0, &attributes, &attributes.width, 1);
 
-            const int TEXT_MAX_ALLOWED_WIDTH = OBJECT_WIDTH + TILE_WIDTH;
+            const int MAX_TEXT_WIDTH = OBJECT_WIDTH + TILE_WIDTH; // +(isCreature ? TILE_WIDTH : 0);
+
+            const int MIN_TEXT_HEIGHT = fnt->height + 2;
+            //  const int MAX_TEXT_HEIGHT = TILE_WIDTH * 2;
 
             int textWidth = OBJECT_WIDTH;
-            int textHeight = fnt->height + 2;
+            int textHeight = MIN_TEXT_HEIGHT;
             int outOfWidthBorder = 0;
             // const int HINT_MAX_
             //  check if hint text reserve < x2 object size
-            //	if (TEXT_MAX_ALLOWED_WIDTH > OBJECT_WIDTH)
+            //	if (MAX_TEXT_WIDTH > OBJECT_WIDTH)
             {
 
                 const int HINT_MAX_WORD_WIDTH = fnt->GetMaxWordWidth(hintText);
-                if (HINT_MAX_WORD_WIDTH < HINT_MAX_LINE_WIDTH)
+
+                if (HINT_MAX_WORD_WIDTH >= 0 && HINT_MAX_WORD_WIDTH < HINT_MAX_LINE_WIDTH)
                 {
                     // outOfWidthBorder = HINT_MAX_LINE_WIDTH - HINT_MAX_WORD_WIDTH;
-                    textWidth = HINT_MAX_WORD_WIDTH;
-                    textHeight *= fnt->GetLinesCountInText(hintText, textWidth);
+                    //   textWidth = HINT_MAX_WORD_WIDTH;
+                    textWidth = Clamp(HINT_MAX_LINE_WIDTH, textWidth, MAX_TEXT_WIDTH);
+                    // if (textWidth < MIN_TEXT_WIDTH)
+                    //{
+                    //     textWidth = MIN_TEXT_WIDTH;
+                    // }
+                    const int HINT_MAX_LINE_COUNT = fnt->GetLinesCountInText(hintText, textWidth);
+                    if (HINT_MAX_LINE_COUNT > 1)
+                    {
+                        textHeight *= HINT_MAX_LINE_COUNT; // fnt->GetLinesCountInText(hintText, textWidth);
+                        textHeight += HINT_MAX_LINE_COUNT - 1;
+                        //  textHeight = Clamp(MIN_TEXT_HEIGHT, textHeight, fnt->height * HINT_MAX_LINE_COUNT +
+                        //  HINT_MAX_LINE_COUNT 1);
+                    }
                 }
                 // textFieldWidth =
+                // if (currentItem->objectType == eObject::SPELL_SCROLL)
+                //{
+                //    libc::sprintf(Era::z[1], "%s", hintText);
+
+                //    // Era::y[1] = TEMP_PCX_WIDTH;
+                //    Era::y[2] = textWidth;
+                //    Era::y[3] = HINT_MAX_LINE_WIDTH;
+                //    Era::y[4] = HINT_MAX_WORD_WIDTH;
+                //    Era::ExecErmCmd("IF:L^text = %z1, textWidth = %y2, HINT_MAX_LINE_WIDTH = %y3, HINT_MAX_WORD_WIDTH
+                //    "
+                //                    "width = %y4^");
+                //}
             }
 
             constexpr INT START_DRAW_X = 8;
@@ -200,12 +245,22 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             //	auto backPcx = H3LoadedPcx::Load("GSelPop1.pcx"); // load std dlgBox bg pcx
             //	auto backPcx = H3LoadedPcx::Load("DiBoxBck.PCX"); // load std dlgBox bg pcx
 
+            constexpr int textMargin = 2;
+
             const int TEMP_PCX_WIDTH = textWidth + 10;
             const int TEMP_PCX_HEIGHT = textHeight + 2;
 
             auto tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
             //	backPcx->DrawToPcx16(0, 0, true, tempBuffer, 30, 20);
-
+            // if (currentItem->objectType == eObject::RESOURCE)
+            //{
+            //    Era::y[1] = TEMP_PCX_WIDTH;
+            //    Era::y[2] = currentItem->objectSubtype;
+            //    Era::y[3] = HINT_MAX_LINE_WIDTH;
+            //    Era::y[4] = HINT_MAX_WORD_WIDTH;
+            //    Era::ExecErmCmd("IF:L^res %y2 len = %y3 px\
+            //        pcx width  = %y1^");
+            //}
             memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
             // backPcx->DrawToPcx16(30, 150, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, tempBuffer, 0, 0, 1);
             // H3RGB565 rgb(20, 24, 29);
@@ -215,7 +270,7 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             //  create golden frame
             tempBuffer->DrawThickFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 1, 189, 149, 57);
             // draw text to temp buffer
-            fnt->TextDraw(tempBuffer, hintText, 0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
+            fnt->TextDraw(tempBuffer, hintText, textMargin, 0, TEMP_PCX_WIDTH - textMargin, TEMP_PCX_HEIGHT);
 
             // resize tempBuffer to align text for screen borders
 
