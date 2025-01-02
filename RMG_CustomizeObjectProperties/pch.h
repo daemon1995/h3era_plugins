@@ -28,6 +28,7 @@ constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 #include "ObjectExtenders/ShrinesExternder.h"
 #include "ObjectExtenders/WarehousesExtender.h"
 #include "ObjectExtenders/GazeboExtender.h"
+#include "ObjectExtenders/WateringPlaceExtender.h"
 #include "RMG_SettingsDlg.h"
 
 // 1. Place all the obj props into mod/data/objects/*.txt and parse all the mods
