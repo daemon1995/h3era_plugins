@@ -1,5 +1,5 @@
-#include <thread>
 #include "pch.h"
+#include <thread>
 // void CreateGraphics(const H3Vector<H3RmgObjectGenerator*>& rmgObjList);
 
 #ifdef _DEBUG
@@ -198,7 +198,7 @@ const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *>
 }
 
 RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
-    : H3Dlg(width, height, x, y, false, false), m_settings(nullptr), m_currentPage(nullptr)
+    : H3Dlg(width, height, x, y, false, false), m_currentPage(nullptr)
 {
 
     // Era::ReloadLanguageData();
@@ -330,7 +330,6 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
 VOID RMG_SettingsDlg::OnHelp()
 {
     H3String mes = EraJS::read("RMG.text.dlg.buttons.help.help");
-    ;
 
     // mes.Append
     for (size_t i = 0; i < m_pages.size(); i++)
@@ -506,6 +505,15 @@ const BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
     {
         m_lastPageId = atoi(h3_TextBuffer);
     }
+    //  Era::ReadStrFromIni("DlgSettings", "settingsVersion", dlgIniPath, h3_TextBuffer);
+    //  {
+    //      float localVersion = atof(h3_TextBuffer);
+    //      float dlgSettingsVersion = EraJS::readFloat("RMG.dlg.settingsVersion");
+    // if (localVersion != dlgSettingsVersion)
+    //{
+    //	result = false;
+    //}
+    //  }
     for (size_t i = 0; i < 4; i++)
     {
         // if (Era::ReadStrFromIni("DlgSettings", "lastPageId", m_iniPath, h3_TextBuffer))
@@ -1203,7 +1211,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                         for (size_t i = 0; i < SIZE; ++i)
                         {
                             //	dlgPanel->rmgObject->objectInfo.data[i + 1] =
-                            //dlgPanel->edits[i]->GetH3String().ToSigned();
+                            // dlgPanel->edits[i]->GetH3String().ToSigned();
                         }
 
                         if (msg.IsRightClick())
@@ -1378,7 +1386,7 @@ RMGObject::RMGObject(const H3ObjectAttributes &attributes, H3LoadedPcx16 *object
         const int dstY = (PCX_HEIGHT - dstHeight) >> 1;
 
         //			resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(resizedPcx, tempPcx, srcWidth, srcHeight,
-        //dstX, dstY, dstWidth, dstHeight);
+        // dstX, dstY, dstWidth, dstHeight);
 
         objectPcx = tempPcx;
 

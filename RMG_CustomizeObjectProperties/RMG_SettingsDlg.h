@@ -211,7 +211,6 @@ class RMG_SettingsDlg : public H3Dlg
     };
 
   private:
-    RMG_Settings *m_settings;
     // static constexpr const char* m_iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
 
     UINT m_lastPageId = 0;
