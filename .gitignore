@@ -18,7 +18,8 @@
 *.7z
 */*.vcxproj
 */*.sln
-
+RMG_CustomizeObjectProperties/RMG_CustomizeObjectProperties.vcxproj
+RMG_CustomizeObjectProperties/RMG_CustomizeObjectProperties
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
