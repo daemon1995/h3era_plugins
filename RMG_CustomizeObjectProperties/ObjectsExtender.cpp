@@ -393,10 +393,11 @@ _LHF_(ObjectsExtender::H3AdventureManager__GetDefaultObjectHoverHint)
 
 _LHF_(ObjectsExtender::AIHero_GetObjectPosWeight)
 {
+
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
     {
 
-        const H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp - 0x10);
+        const H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
         const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
 
         INT aiResWeight = 0;

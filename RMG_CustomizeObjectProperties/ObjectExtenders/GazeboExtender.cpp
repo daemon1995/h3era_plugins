@@ -17,27 +17,26 @@ GazeboExtender::~GazeboExtender()
 BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
                                         int &aiMapItemWeight) const noexcept
 {
+
+    if (auto gazebo = H3MapItemGazebo::GetFromMapItem(mapItem))
     {
-        if (auto gazebo = H3MapItemGazebo::GetFromMapItem(mapItem))
+        const bool isVistedByHero = H3MapItemGazebo::IsVisitedByHero(*gazebo, hero);
+
+        if (!isVistedByHero)
         {
-            const bool isVistedByHero = H3MapItemGazebo::IsVisitedByHero(*gazebo, hero);
-
-            if (!isVistedByHero)
+            if (P_ActivePlayer->playerResources.gold >= GOLD_REQUIRED)
             {
-                if (P_ActivePlayer->playerResources.gold >= GOLD_REQUIRED)
-                {
-                    // адрес похожего псевдокода 0052BB89
-                    const __int64 aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
-                    aiMapItemWeight =
-                        (__int64)((double)aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
+                // адрес похожего псевдокода 0052BB89
+                const __int64 aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
+                aiMapItemWeight =
+                    (__int64)((double)aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
 
-                    return true;
-                }
+                return true;
             }
         }
     }
 
-    return EXEC_DEFAULT;
+    return false;
 }
 
 BOOL H3MapItemGazebo::IsVisitedByHero(const H3MapItemGazebo gazebo, const H3Hero *hero) noexcept

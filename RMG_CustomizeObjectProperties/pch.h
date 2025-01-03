@@ -16,8 +16,8 @@
 #include "..\headers\header.h"
 constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 
-#include "RMGObjectsEditor.h"
 #include "ObjectsExtender.h"
+// #include "RMGObjectsEditor.h"
 
 // #include "CreatureBanksExtender.h"
 // #include "ShrinesExternder.h"
@@ -25,9 +25,10 @@ constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 // #include "ShrinesExternder.h"
 // #include "WarehousesExtender.h"
 #include "ObjectExtenders/CreatureBanksExtender.h"
+#include "ObjectExtenders/GazeboExtender.h"
 #include "ObjectExtenders/ShrinesExternder.h"
 #include "ObjectExtenders/WarehousesExtender.h"
-#include "ObjectExtenders/GazeboExtender.h"
+#include "ObjectExtenders/WateringPlaceExtender.h"
 #include "RMG_SettingsDlg.h"
 
 // 1. Place all the obj props into mod/data/objects/*.txt and parse all the mods
@@ -37,7 +38,7 @@ constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 // 3. only 2 GENERAL json keys (objectsRmgListEditor and objectsToAddInRmgList)
 //	3.1 objectsRmgListEditor handles all RMG add/set/get info;
 //	3.2 objectsToAddInRmgList is actuallyabout objects extensios adds new objects and allows generation if data is
-//properly set; 	3.3 display data from default.exe/json files 	3.4
+// properly set; 	3.3 display data from default.exe/json files 	3.4
 // 3. Setting Gen Data first from New objects data
 // 4. Get data from object Editor and merge/override data if contains same json fields
 // 5. In dlg show in one line info about / gen data

@@ -127,6 +127,7 @@ BOOL WarehousesExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3
 BOOL WarehousesExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *player,
                                             int &aiMapItemWeight) const noexcept
 {
+
     // for hota warehouse
     if (auto objSetup = H3MapItemWarehouse::GetWarehouse(mapItem))
     {
