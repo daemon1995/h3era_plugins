@@ -6,6 +6,10 @@ namespace help
 	{
 
 
+		// create okay button with hotkeys
+		auto okBttn=CreateOKButton();
+		okBttn->AddHotkey(eVKey::H3VK_H);
+		okBttn->AddHotkey(eVKey::H3VK_ESCAPE);
 	}
 
 	HelpInHelpDlg::~HelpInHelpDlg()

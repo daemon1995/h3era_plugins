@@ -5,6 +5,8 @@ namespace list
 		:H3Dlg(width, height, x, y, 1, 0)
 	{
 
+		CreateOKButton();
+
 
 	}
 
@@ -17,6 +19,11 @@ namespace list
 	{
 
 		return 0;
+	}
+
+	main::Mod* ModListDlg::ResultMod() const noexcept
+	{
+		return nullptr;
 	}
 
 }

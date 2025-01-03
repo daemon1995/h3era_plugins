@@ -85,7 +85,6 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
         {
             bool readSuccess = false;
             int propertyIdCounter = 0;
-            ;
 
             do
             {
@@ -298,6 +297,8 @@ _LHF_(H3AdventureManager__GetPyramidObjectHoverHint)
     LPCSTR objName = EraJS::read(
         H3String::Format("RMG.objectGeneration.%d.%d.name", mapItem->objectType, mapItem->objectSubtype).String(),
         readSucces);
+    libc::sprintf(h3_TextBuffer, objName);
+    return EXEC_DEFAULT;
 
     int eventId = 3433444;
     Era::AllocErmFunc("OnWogObjectHint", eventId);
@@ -367,7 +368,7 @@ void ObjectsExtender::CreatePatches()
         _PI->WriteLoHook(0x515038, LoadObjectsTxt);
         _PI->WriteLoHook(0x4AA757, H3AdventureManager__ObjectVisit_SoundPlay);
 
-        //_PI->WriteLoHook(0x40C5A1, H3AdventureManager__GetPyramidObjectHoverHint);
+        _PI->WriteLoHook(0x40C5A1, H3AdventureManager__GetPyramidObjectHoverHint);
         //_PI->WriteLoHook(0x414F66, H3AdventureManager__GetPyramidObjectClickHint);
 
         _PI->WriteHiHook(0x4EE01C, THISCALL_, H3GameMainSetup__LoadObjects);
