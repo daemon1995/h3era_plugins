@@ -85,7 +85,7 @@ int __stdcall CreatureBanksExtender::LoopSoundManager::AdvMgr_MapItem_Select_Sou
 
     int result = THISCALL_4(int, h->GetDefaultFunc(), adv, x, y, z);
 
-    if (result == -1 && mapItem->objectType == 16)
+    if (result == -1 && mapItem->objectType == eObject::CREATURE_BANK)
     {
     }
 

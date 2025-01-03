@@ -2,7 +2,7 @@
 
 struct RMGObjectInfo
 {
-
+    
     //	zoneType 0..3 human-computer-treasure-junction*/
 
     INT type = eObject::NO_OBJ;
@@ -21,12 +21,13 @@ struct RMGObjectInfo
     // BOOL fromTxt = false;
 
   public:
-    static constexpr const char *propertyNames[] = {"enabled", "map", "zone", "value", "density"};
-    static constexpr const char *iniFilePath = "Runtime/RMG_CustomizeObjectsProperties.ini";
-    static constexpr const char *objectTypeJsonKeyFormat = "RMG.objectGeneration.%d.%s";
-    static constexpr const char *objectSubtypeJsonKeyFormat = "RMG.objectGeneration.%d.%d.%s";
-    static constexpr const char *objectSubtypeNameJsonKeyFormat = "RMG.objectGeneration.%d.%d.name";
+    static constexpr LPCSTR PROPERTY_NAMES[] = {"enabled", "map", "zone", "value", "density"};
+    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
+    static constexpr LPCSTR OBJECT_INFO_INI_FORMAT = "%d_%d_%d";
 
+    static constexpr LPCSTR OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%s";
+    static constexpr LPCSTR OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%d.%s";
+    static constexpr LPCSTR OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%d.name";
   public:
     RMGObjectInfo(const INT32 type, const INT32 subtype);
     RMGObjectInfo();

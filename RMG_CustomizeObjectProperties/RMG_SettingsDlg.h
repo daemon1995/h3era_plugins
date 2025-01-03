@@ -1,5 +1,4 @@
 #pragma once
-struct RMG_Settings;
 namespace rmgdlg
 {
 
@@ -42,6 +41,10 @@ class RMGObject
 class RMG_SettingsDlg : public H3Dlg
 {
 
+    static constexpr float SETTINGS_VERSION = .1f;
+public:
+    static constexpr LPCSTR SETTINGS_INI_SECTION = "DlgSettings";
+    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
     // std::vector<H3CreatureBankSetup> &creatureBanks;
 
   private:
@@ -93,6 +96,8 @@ class RMG_SettingsDlg : public H3Dlg
 
     struct Page
     {
+        static RMG_SettingsDlg* dlg;
+
         const char *name;
         UINT id;
         BOOL visible;
@@ -101,7 +106,6 @@ class RMG_SettingsDlg : public H3Dlg
         H3DlgScrollbar *verticalScrollBar = nullptr;
         H3DlgScrollbar *horizontalScrollBar = nullptr;
 
-        static RMG_SettingsDlg *dlg;
 
         Page(H3DlgCaptionButton *captionbttn);
         virtual ~Page();
@@ -229,8 +233,7 @@ class RMG_SettingsDlg : public H3Dlg
     static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_wogObjects;
     static const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> m_objectAttributes;
 
-  public:
-    static constexpr const char *dlgIniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
+
 
     // ctors
   public:

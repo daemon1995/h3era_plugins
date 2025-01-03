@@ -500,12 +500,13 @@ VOID RMG_SettingsDlg::OnCancel()
 }
 const BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
 {
-    BOOL result = Era::ReadStrFromIni("DlgSettings", "lastPageId", dlgIniPath, h3_TextBuffer);
+
+    BOOL result = Era::ReadStrFromIni("lastPageId", SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
     if (result)
     {
         m_lastPageId = atoi(h3_TextBuffer);
     }
-    //  Era::ReadStrFromIni("DlgSettings", "settingsVersion", dlgIniPath, h3_TextBuffer);
+    //  Era::ReadStrFromIni("DlgSettings", "settingsVersion", INI_FILE_PATH, h3_TextBuffer);
     //  {
     //      float localVersion = atof(h3_TextBuffer);
     //      float dlgSettingsVersion = EraJS::readFloat("RMG.dlg.settingsVersion");
@@ -527,10 +528,11 @@ const BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
 const BOOL RMG_SettingsDlg::WriteIniDlgSettings() const noexcept
 {
 
-    BOOL result = Era::WriteStrToIni("DlgSettings", std::to_string(m_lastPageId).c_str(), "lastPageId", dlgIniPath);
+    BOOL result =
+        Era::WriteStrToIni("lastPageId", std::to_string(m_lastPageId).c_str(), SETTINGS_INI_SECTION, INI_FILE_PATH);
     if (result)
     {
-        result = Era::SaveIni(dlgIniPath);
+        result = Era::SaveIni(INI_FILE_PATH);
     }
 
     return result;
@@ -544,7 +546,7 @@ BOOL RMG_SettingsDlg::SaveObjects(const BOOL saveIni)
     bool success = true;
 
     const int zoneType = 0;
-
+    const auto editor = &editor::RMGObjectsEditor::Get();
     for (auto &page : m_pages)
     {
         // iterate pages
@@ -562,18 +564,23 @@ BOOL RMG_SettingsDlg::SaveObjects(const BOOL saveIni)
                     H3String sectionName = H3String::Format("%d_%d_%d", info.type, info.subtype,
                                                             zoneType); // , obj.attributes->defName.String());
 
+                    // save changed settings only
                     for (size_t i = 0; i < SIZE; i++)
                     {
-                        if (!Era::WriteStrToIni(RMGObjectInfo::propertyNames[i], std::to_string(info.data[i]).c_str(),
-                                                sectionName.String(), dlgIniPath))
-                            success = false;
+                        if (editor->DefaultObjectInfo(info.type, info.subtype).data[i] != info.data[i])
+                        {
+                            if (!Era::WriteStrToIni(RMGObjectInfo::PROPERTY_NAMES[i],
+                                                    std::to_string(info.data[i]).c_str(), sectionName.String(),
+                                                    INI_FILE_PATH))
+                                success = false;
+                        }
                     }
                 }
             }
         }
     }
 
-    return saveIni ? Era::SaveIni(dlgIniPath) : success;
+    return saveIni ? Era::SaveIni(INI_FILE_PATH) : success;
 }
 
 void RMG_SettingsDlg::ObjectsPage::CreateVerticalScrollBar()
@@ -634,7 +641,6 @@ RMG_SettingsDlg::BanksPage::BanksPage(H3DlgCaptionButton *captionbttn,
                                       const BOOL ignoreSubtypes)
     : ObjectsPage(captionbttn, data, ignoreSubtypes)
 {
-    // dlg->m_pages[id]->name;
 }
 
 RMG_SettingsDlg::ObjectsPanel::ObjectsPanel(const int x, const int y, Page *parent)
@@ -1301,6 +1307,18 @@ BOOL RMG_SettingsDlg::OnCreate()
         SetActivePage(page);
     }
 
+    // remove local settings for the objects that have same data as in default
+    Era::ReadStrFromIni("version", SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
+    {
+        float localVersion = atof(h3_TextBuffer);
+
+        if (localVersion != SETTINGS_VERSION)
+        {
+            //     H3Messagebox();
+            // return false;
+        }
+    }
+
     return true;
 }
 BOOL RMG_SettingsDlg::SetActivePage(Page *page) noexcept
@@ -1682,9 +1700,9 @@ int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
                 }
             }
 
-            Era::WriteStrToIni("DlgSettings", Era::IntToStr(enabelFullRandom).c_str(), "alwaysRandom",
-                               RMG_SettingsDlg::dlgIniPath);
-            Era::SaveIni(RMG_SettingsDlg::dlgIniPath);
+            Era::WriteStrToIni("alwaysRandom", Era::IntToStr(enabelFullRandom).c_str(),
+                               RMG_SettingsDlg::SETTINGS_INI_SECTION, RMG_SettingsDlg::INI_FILE_PATH);
+            Era::SaveIni(RMG_SettingsDlg::INI_FILE_PATH);
         }
     }
 
@@ -1724,7 +1742,7 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
         {
             randomGameButton->SetHint(EraJS::read("RMG.text.buttons.random.rmc"));
 
-            BOOL result = Era::ReadStrFromIni("DlgSettings", "alwaysRandom", dlgIniPath, h3_TextBuffer);
+            BOOL result = Era::ReadStrFromIni("alwaysRandom", SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
             if (result && atoi(h3_TextBuffer))
             {
                 randomGameButton->SetFrame(2);

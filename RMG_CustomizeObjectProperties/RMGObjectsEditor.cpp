@@ -89,8 +89,8 @@ void RMGObjectsEditor::InitDefaults(const INT16 *maxSubtypes)
         {
 
             // read default data from json for objTypes only
-            const int data = EraJS::readInt(H3String::Format(RMGObjectInfo::objectTypeJsonKeyFormat, objType,
-                                                             RMGObjectInfo::propertyNames[keyIndex])
+            const int data = EraJS::readInt(H3String::Format(RMGObjectInfo::OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, objType,
+                                                             RMGObjectInfo::PROPERTY_NAMES[keyIndex])
                                                 .String(),
                                             readSucces);
 
@@ -116,8 +116,8 @@ void RMGObjectsEditor::InitDefaults(const INT16 *maxSubtypes)
             {
                 // read default data from json for the exact subtype
                 const int subtypeData =
-                    EraJS::readInt(H3String::Format(RMGObjectInfo::objectSubtypeJsonKeyFormat, objType, objSubtype,
-                                                    RMGObjectInfo::propertyNames[keyIndex])
+                    EraJS::readInt(H3String::Format(RMGObjectInfo::OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT, objType, objSubtype,
+                                                    RMGObjectInfo::PROPERTY_NAMES[keyIndex])
                                        .String(),
                                    readSucces);
 
@@ -140,7 +140,7 @@ void RMGObjectsEditor::InitDefaults(const INT16 *maxSubtypes)
 
     // skip pandora monster generation
     auto patch = _pi->WriteByte(0x5390B7, 0xEB);
-    pseudoH3RmgRandomMapGenerator.keyMasters.RemoveAll();
+    // pseudoH3RmgRandomMapGenerator.keyMasters.RemoveAll();
 
     isPseudoGeneration = true;
     // pseudoH3RmgRandomMapGenerator.objectPrototypes[eObject::KEYMASTER] =
@@ -172,15 +172,22 @@ void RMGObjectsEditor::InitLoading(const INT16 *maxSubtypes)
         for (auto &objectInfo : objInfoVec)
         {
 
-            H3String sectionName = H3String::Format("%d_%d_%d", objectInfo.type, objectInfo.subtype,
-                                                    zoneType); // , obj.attributes->defName.String());
+            H3String sectionName =
+                H3String::Format(RMGObjectInfo::OBJECT_INFO_INI_FORMAT, objectInfo.type, objectInfo.subtype,
+                                 zoneType); // , obj.attributes->defName.String());
 
             for (size_t i = 0; i < SIZE; i++)
             {
-                if (Era::ReadStrFromIni(RMGObjectInfo::propertyNames[i], sectionName.String(),
-                                        RMGObjectInfo::iniFilePath, h3_TextBuffer))
-                    // assign values from ini to object
-                    objectInfo.data[i] = atoi(h3_TextBuffer);
+                if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], sectionName.String(),
+                                        RMGObjectInfo::INI_FILE_PATH, h3_TextBuffer))
+                {
+                    const int value = atoi(h3_TextBuffer);
+                    if (objectInfo.data[i] != value)
+                    {
+                        objectInfo.data[i] = value;
+                    }
+                }
+                // assign values from ini to object
             }
 
             objectInfo.Clamp();
@@ -237,7 +244,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
             // check if we have full random
             BOOL result =
-                Era::ReadStrFromIni("DlgSettings", "alwaysRandom", rmgdlg::RMG_SettingsDlg::dlgIniPath, h3_TextBuffer);
+                Era::ReadStrFromIni("alwaysRandom", rmgdlg::RMG_SettingsDlg::SETTINGS_INI_SECTION, rmgdlg::RMG_SettingsDlg::INI_FILE_PATH, h3_TextBuffer);
 
             if (result && atoi(h3_TextBuffer))
             {
@@ -255,7 +262,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 }
             }
         }
-
+        rmgObjecsList;
         for (auto &rmgObj : *rmgObjecsList)
         {
 
@@ -307,6 +314,23 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
         // aftere list is created
         if (isRealGeneration)
         {
+            for (const auto &rmgObj : rmgStruct->objectGenerators)
+            {
+                if (rmgObj->type == eObject::SEER_HUT)
+                {
+                    //  H3Messagebox("native");
+                    break;
+                }
+            }
+            for (const auto &rmgObj : editor.editedObjectGenerators)
+            {
+                if (rmgObj->type == eObject::SEER_HUT)
+                {
+                    //       H3Messagebox("editedObjectGenerators");
+                    break;
+                }
+            }
+
             // swap vectors between each other to use edited values
             std::swap(rmgStruct->objectGenerators, editor.editedObjectGenerators);
         }
@@ -321,6 +345,10 @@ _LHF_(RMGObjectsEditor::RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck)
     {
         if (auto *objGen = reinterpret_cast<H3RmgObjectGenerator *>(c->ecx))
         {
+            if (objGen->type == eObject::SEER_HUT)
+            {
+                // H3Messagebox("editedObjectGenerators");
+            }
             // zone id where assumed to generate that object
             const int zoneId = IntAt(c->ebp - 0x34);
 
@@ -406,7 +434,7 @@ void __stdcall RMGObjectsEditor::RMG__AfterMapGenerated(HiHook *h, H3RmgRandomMa
 void RMGObjectsEditor::CreatePatches()
 {
 
-    //	m_isInited = true;
+    // m_isInited = true;
 
     if (!m_isInited)
     {
@@ -630,7 +658,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     case eObject::PYRAMID:
     case warehouses::WAREHOUSE_OBJECT_TYPE:
     case extender::HOTA_OBJECT_TYPE:
-        libc::sprintf(h3_TextBuffer, objectSubtypeNameJsonKeyFormat, type, subtype);
+        libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
         result = EraJS::read(h3_TextBuffer);
         break;
     case eObject::RESOURCE:
@@ -639,7 +667,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     case eObject::SHRINE_OF_MAGIC_INCANTATION:
         if (subtype)
         {
-            libc::sprintf(h3_TextBuffer, objectSubtypeNameJsonKeyFormat, type, subtype);
+            libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
             result = EraJS::read(h3_TextBuffer);
             break;
         }
