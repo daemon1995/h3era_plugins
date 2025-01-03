@@ -233,6 +233,17 @@ void CreatureBanksExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
     }
 }
 
+H3RmgObjectGenerator *CreatureBanksExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+{
+    // TEMPORARY
+    if (objectInfo.type == eObject::CREATURE_BANK || objectInfo.type == eObject::PYRAMID && objectInfo.subtype > 0)
+    {
+
+        return ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+    }
+    return nullptr;
+}
+
 const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
 {
 

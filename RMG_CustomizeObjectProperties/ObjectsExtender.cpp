@@ -15,8 +15,8 @@ void EditableH3TextFile::AddLine(LPCSTR txt)
 //{
 //	return 0;
 // }
-// BOOL ObjectsExtender::HeroMapItemVisitFunction(HookContext* c, const H3Hero* hero, const H3MapItem* mapItem, const
-// BOOL isPlayer, const BOOL skipMapMessage)
+// BOOL ObjectsExtender::HeroMapItemVisitFunction(HookContext* c, const H3Hero* currentHero, const H3MapItem* mapItem,
+// const BOOL isPlayer, const BOOL skipMapMessage)
 //{
 //	return 0;
 // }
@@ -89,8 +89,8 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
             do
             {
                 //				std::string str =
-                //EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.properties.%d", objType, objSubtype,
-                //propertyIdCounter++).String(), readSuccess);
+                // EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.properties.%d", objType, objSubtype,
+                // propertyIdCounter++).String(), readSuccess);
                 LPCSTR str = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.properties.%d", objType,
                                                           objSubtype, propertyIdCounter++)
                                              .String(),
@@ -157,14 +157,6 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
                 rmgObjectInfo.density = objectSubtypeDensity;
                 additionalRmgObjects.emplace_back(rmgObjectInfo);
             }
-
-            // if (objectSubtypeValue || objectSubtypeDensity)
-            //{
-            //	RMGObjectInfo rmgObjectInfo(objType, objSubtype);
-            //	rmgObjectInfo.value = objectSubtypeValue;
-            //	rmgObjectInfo.density = objectSubtypeDensity;
-            //	additionalRmgObjects.emplace_back(rmgObjectInfo);
-            // }
         }
     }
 
@@ -177,45 +169,25 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     editor::RMGObjectsEditor::Init(maxSubtypes);
 }
 
-H3RmgObjectGenerator *CreateRmgObjectGen(const RMGObjectInfo &info)
+H3RmgObjectGenerator *ObjectsExtender::CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &objectInfo) noexcept
 {
 
-    // iterate vector with objects Info and generate
+    H3RmgObjectGenerator *objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
+    THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
+               objectInfo.density);
+
+    return objGen;
+}
+H3RmgObjectGenerator *ObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+{
+
     H3RmgObjectGenerator *objGen = nullptr;
-    // if (info.Clamp())
+
+    if (objectInfo.type == eObject::PYRAMID && objectInfo.subtype > 0)
     {
-        switch (info.type)
-        {
-        case eObject::SHRINE_OF_MAGIC_INCANTATION:
-        case eObject::SHRINE_OF_MAGIC_GESTURE:
-        case eObject::SHRINE_OF_MAGIC_THOUGHT:
-
-            objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
-
-            objGen = THISCALL_3(H3RmgObjectGenerator *, 0x534EC0, objGen, info.type, info.value);
-            objGen->subtype = info.subtype;
-
-            break;
-        case eObject::CREATURE_BANK:
-        case eObject::PYRAMID:
-            // hota's warehouses
-        case warehouses::WAREHOUSE_OBJECT_TYPE:
-
-            objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
-            THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, info.type, info.subtype, info.value, info.density);
-            break;
-        case eObject::CREATURE_GENERATOR1:
-
-            // objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
-            // THISCALL_5(H3RmgObjectGenerator*, 0x534640, objGen, info.type, info.subtype, info.value, info.density);
-            //// set dwellings vTable
-            //*reinterpret_cast<uintptr_t*>(objGen) = 0x640BC8;
-            break;
-
-        default:
-            break;
-        }
+        objGen = ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
+
     return objGen;
 }
 
@@ -236,16 +208,19 @@ void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
             objectsSet.insert({rmgObj->type, rmgObj->subtype});
         }
         // iterate all extenders container
-        for (auto &extender : extenders)
+        for (auto &info : additionalRmgObjects)
         {
+            if (objectsSet.insert({info.type, info.subtype}).second)
+
             // iterate each added RMG INFO
-            for (auto &info : extender->additionalRmgObjects)
             {
+                for (auto &extender : extenders)
+
                 // check if it is possible to add object into the list
-                if (objectsSet.insert({info.type, info.subtype}).second)
                 {
+
                     // if yes then create obj gen
-                    H3RmgObjectGenerator *objGen = CreateRmgObjectGen(info);
+                    H3RmgObjectGenerator *objGen = extender->CreateRMGObjectGen(info);
                     // and return to add into the list
                     if (objGen)
                     {
@@ -283,6 +258,27 @@ _LHF_(ObjectsExtender::H3AdventureManager__ObjectVisit_SoundPlay) // (HiHook* h,
             c->return_address = 0x4AA75C;
             // jump after native function
             return NO_EXEC_DEFAULT;
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+_LHF_(ObjectsExtender::H3AdventureManager__ObjectVisit)
+{
+    if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->edi))
+    {
+
+        H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
+
+        const H3Position position = DwordAt(c->ebp + 0x10);
+        const bool isHuman = DwordAt(c->ebp + 0x14);
+
+        for (const auto &extender : extenders)
+        {
+            if (extender->VisitMapItem(currentHero, mapItem, position, isHuman))
+            {
+                return EXEC_DEFAULT;
+            }
         }
     }
 
@@ -359,6 +355,92 @@ _LHF_(H3AdventureManager__GetPyramidObjectClickHint)
     return EXEC_DEFAULT;
 }
 
+int ObjectsExtender::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRighClick)
+{
+    const H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ebx);
+    const H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp - 0x10);
+
+    BOOL hintIsSet = false;
+    for (auto &extender : extenders)
+    {
+        hintIsSet = extender->SetHintInH3TextBuffer(mapItem, currentHero, P_ActivePlayer->Get(), isRighClick);
+
+        if (hintIsSet)
+        {
+            break;
+        }
+    }
+    if (!hintIsSet)
+    {
+        H3String objName = RMGObjectInfo::GetObjectName(mapItem);
+        sprintf(h3_TextBuffer, "%s", objName.String());
+    }
+
+    c->edi = (int)h3_TextBuffer;
+    c->return_address = h->GetAddress() + 7;
+
+    return NO_EXEC_DEFAULT;
+}
+
+_LHF_(ObjectsExtender::H3AdventureManager__GetDefaultObjectClickHint)
+{
+    return ShowObjectHint(h, c, true);
+}
+_LHF_(ObjectsExtender::H3AdventureManager__GetDefaultObjectHoverHint)
+{
+    return ShowObjectHint(h, c, false);
+}
+
+_LHF_(ObjectsExtender::AIHero_GetObjectPosWeight)
+{
+    if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
+    {
+
+        const H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp - 0x10);
+        const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
+
+        INT aiResWeight = 0;
+
+        for (const auto &extender : extenders)
+        {
+            if (extender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight))
+            {
+
+                c->eax = aiResWeight;
+                c->return_address = 0x05285A1;
+                return NO_EXEC_DEFAULT;
+            }
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+
+_LHF_(ObjectsExtender::Game__NewGameObjectIteration)
+{
+    auto mapItem = reinterpret_cast<H3MapItem *>(c->esi);
+    for (const auto &extender : extenders)
+    {
+        if (extender->InitNewGameMapItemSetup(mapItem))
+        {
+            return EXEC_DEFAULT;
+        }
+    }
+    return EXEC_DEFAULT;
+}
+_LHF_(ObjectsExtender::Game__NewWeekObjectIteration)
+{
+    auto mapItem = reinterpret_cast<H3MapItem *>(c->esi);
+    for (const auto &extender : extenders)
+    {
+        if (extender->InitNewWeekMapItemSetup(mapItem))
+        {
+            return EXEC_DEFAULT;
+        }
+    }
+    return EXEC_DEFAULT;
+}
+
 void ObjectsExtender::CreatePatches()
 {
     // before any of extenders is inited
@@ -368,8 +450,17 @@ void ObjectsExtender::CreatePatches()
         _PI->WriteLoHook(0x515038, LoadObjectsTxt);
         _PI->WriteLoHook(0x4AA757, H3AdventureManager__ObjectVisit_SoundPlay);
 
-        _PI->WriteLoHook(0x40C5A1, H3AdventureManager__GetPyramidObjectHoverHint);
+        // _PI->WriteLoHook(0x40C5A1, H3AdventureManager__GetPyramidObjectHoverHint);
         //_PI->WriteLoHook(0x414F66, H3AdventureManager__GetPyramidObjectClickHint);
+        _pi->WriteLoHook(0x04C0A5F, Game__NewGameObjectIteration);
+        _pi->WriteLoHook(0x04C8847, Game__NewWeekObjectIteration);
+
+        _PI->WriteLoHook(0x4A819C, H3AdventureManager__ObjectVisit);
+
+        _PI->WriteLoHook(0x40D052, H3AdventureManager__GetDefaultObjectHoverHint); // mouse over hint
+        _PI->WriteLoHook(0x415999, H3AdventureManager__GetDefaultObjectClickHint); // rmc hint
+
+        _PI->WriteLoHook(0x528559, AIHero_GetObjectPosWeight); // AI object visit stuff
 
         _PI->WriteHiHook(0x4EE01C, THISCALL_, H3GameMainSetup__LoadObjects);
 
@@ -378,5 +469,28 @@ void ObjectsExtender::CreatePatches()
 }
 void ObjectsExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
 {
+}
+BOOL ObjectsExtender::SetHintInH3TextBuffer(const H3MapItem *mapItem, const H3Hero *currentHero,
+                                            const H3Player *activePlayer, const BOOL isRightClick) const noexcept
+{
+    return false;
+}
+BOOL ObjectsExtender::SetAiMapItemWeight(const H3MapItem *mapItem, const H3Hero *currentHero,
+                                         const H3Player *activePlayer, int &aiResWeight) const noexcept
+{
+    return false;
+}
+BOOL ObjectsExtender::InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept
+{
+    return false;
+}
+BOOL ObjectsExtender::InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept
+{
+    return false;
+}
+BOOL ObjectsExtender::VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
+                                   const BOOL isHuman) const noexcept
+{
+    return false;
 }
 } // namespace extender

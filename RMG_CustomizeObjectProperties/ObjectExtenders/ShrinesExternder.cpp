@@ -89,6 +89,20 @@ void ShrinesExternder::CreatePatches()
     }
 }
 
+H3RmgObjectGenerator *ShrinesExternder::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+{
+    H3RmgObjectGenerator *objGen = nullptr;
+
+    if (objectInfo.type == eObject::SHRINE_OF_MAGIC_INCANTATION ||
+        objectInfo.type == eObject::SHRINE_OF_MAGIC_GESTURE || objectInfo.type == eObject::SHRINE_OF_MAGIC_THOUGHT)
+    {
+        objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
+        objGen = THISCALL_3(H3RmgObjectGenerator *, 0x534EC0, objGen, objectInfo.type, objectInfo.value);
+        objGen->subtype = objectInfo.subtype;
+    }
+    return objGen;
+}
+
 ShrinesExternder &ShrinesExternder::Get()
 {
     // TODO: insert return statement here

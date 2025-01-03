@@ -4,19 +4,20 @@ namespace shrines
 
 class ShrinesExternder : public extender::ObjectsExtender
 {
-
-    ShrinesExternder();
-
-    virtual ~ShrinesExternder();
-
   private:
     static const H3MapItem *currentShrineHint;
 
   private:
+    ShrinesExternder();
+    virtual ~ShrinesExternder();
+
+  protected:
     virtual void CreatePatches() override;
+
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
+
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
-  private:
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
 
   private:

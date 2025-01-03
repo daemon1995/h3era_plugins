@@ -16,7 +16,7 @@ struct H3MapItemWarehouse
 
   public:
     void Reset();
-    static inline H3MapItemWarehouse *GetWarehouse(H3MapItem *mapItem) noexcept;
+    static inline H3MapItemWarehouse *GetWarehouse(const H3MapItem *mapItem) noexcept;
 };
 
 class WarehousesExtender : public extender::ObjectsExtender
@@ -30,14 +30,17 @@ class WarehousesExtender : public extender::ObjectsExtender
     virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
+    virtual BOOL SetHintInH3TextBuffer(const H3MapItem *mapItem, const H3Hero *currentHero,
+                                       const H3Player *activePlayer,
+                                       const BOOL isRightClick) const noexcept override final;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept override final;
+    virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept override final;
+    virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
+                              const BOOL isHuman) const noexcept override final;
+    virtual BOOL SetAiMapItemWeight(const H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+                                    int &aiMapItemWeight) const noexcept override final;
 
-  private:
-    static _LHF_(H3AdventureManager__ObjectVisit);
-    static _LHF_(AIHero_GetObjectPosWeight);
-    static _LHF_(Game__NewGameObjectIteration);
-    static _LHF_(Game__NewWeekObjectIteration);
-    static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
-    static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
 
   private:
     //	static _LHF_(Game__AtShrineOfMagicIncantationSettingSpell);

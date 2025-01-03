@@ -51,6 +51,11 @@ class CreatureBanksExtender : public extender::ObjectsExtender
   private:
     virtual void CreatePatches() override;
     virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes) override final;
+
+  protected:
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept;
+    ;
+
     // virtual void GetObjectPreperties() noexcept override  final;
   private:
     const int GetBankSetupsNumberFromJson(const INT16 maxSubtype);
