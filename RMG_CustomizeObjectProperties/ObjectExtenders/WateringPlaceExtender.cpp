@@ -167,9 +167,8 @@ void __stdcall OnEveryDay(Era::TEvent* event)
         if (H3MapItemWateringPlace::IsVisitedByHero(hero))
         {
             hero->movement += MOVE_POINTS_GIVEN;
-            // НЕ РАБОТАЕТ, НУЖНО ОБНОВЛЕНИЕ ЭКРАНА
-            //hero->maxMovement -= MOVE_POINTS_GIVEN;
             //hero->RecalculateMovement();
+            THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // update screen
             sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // получение имени переменной
             Era::SetAssocVarIntValue(h3_TextBuffer, 0); // обнулить переменную
         }
