@@ -1,84 +1,80 @@
 #pragma once
+#include "pch.h"
 
 class WgtSettings
 {
-	//const std::string jsonKy;
-	WgtSettings();
-public:
-	POINT startPos;
-	POINT arrows[2];
-	int width;
-	int height;
+    // const std::string jsonKy;
+    WgtSettings();
 
-	struct Backpack
-	{
-		POINT pos;
-		int altitude;
-		int interval;
+  public:
+    POINT startPos;
+    POINT arrows[2];
+    int width;
+    int height;
 
-	} backpack;
+    struct Backpack
+    {
+        POINT pos;
+        int altitude;
+        int interval;
 
-	int bgId;
+    } backpack;
 
+    int bgId;
 
-	static void loadArtSettings() noexcept;
-	//void loadSettings(std::string jsonKey);
+    static void loadArtSettings() noexcept;
+    // void loadSettings(std::string jsonKey);
 
-	//virtual void loadAdvSettings(std::string jsonKey);
-	static POINT artSlotPositions[19];
-	static POINT sacrifaceArtSlotPositions[19];
+    // virtual void loadAdvSettings(std::string jsonKey);
+    static POINT artSlotPositions[19];
+    static POINT sacrifaceArtSlotPositions[19];
 
-	struct ButtonsAlignment
-	{
-		int x;
-		int y;
-		int width;
-		int height;
-		int totalWidth;
-		H3Vector<std::string> buttonsToAline;
+    struct ButtonsAlignment
+    {
+        int x;
+        int y;
+        int width;
+        int height;
+        int totalWidth;
+        H3Vector<std::string> buttonsToAline;
 
-	} static buttonsAlignment;
-	WgtSettings(const std::string& jsonKey);
-
+    } static buttonsAlignment;
+    WgtSettings(const std::string &jsonKey);
 };
 
-class HeroWgt :public WgtSettings
+class HeroWgt : public WgtSettings
 {
-public:
+  public:
+    struct Bttn
+    {
+        POINT pos;
+        int id;
+        bool isOn;
+        char *defName;
 
-	struct Bttn
-	{
-		POINT pos;
-		int id;
-		bool isOn;
-		char* defName;
+    } npcBttn;
 
-	} npcBttn;
+    struct MgrBttn : public Bttn
+    {
+        POINT altPos;
+        char *hint;
+    } mgrBttn;
 
-	struct MgrBttn :public Bttn
-	{
-		POINT altPos;
-		char* hint;
-	} mgrBttn;
+    HeroWgt(const std::string &jsonKey);
 
-	HeroWgt(const std::string& jsonKey);
-
-	//void loadAdvSettings(std::string jsonKey) override ;
-
+    // void loadAdvSettings(std::string jsonKey) override ;
 };
 
-class MeetWgt :public WgtSettings
+class MeetWgt : public WgtSettings
 {
-public:
+  public:
+    struct Bg
+    {
+        POINT pos;
+        int width;
+        int height;
+    } bg;
+    MeetWgt(const std::string &jsonKey);
 
-	struct Bg
-	{
-		POINT pos;
-		int width;
-		int height;
-	} bg;
-	MeetWgt(const std::string& jsonKey);
-
-	//void loadAdvSettings(std::string jsonKey) override;
-
+    // void loadAdvSettings(std::string jsonKey) override;
 };

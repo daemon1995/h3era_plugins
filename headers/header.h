@@ -3,6 +3,9 @@
 
 #define HEADER_H_
 
+#define DllImport extern "C" __declspec(dllimport)
+#define DllExport extern "C" __declspec(dllexport)
+
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
