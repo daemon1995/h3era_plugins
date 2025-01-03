@@ -629,6 +629,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
         result = P_Creatures[subtype].namePlural;
     case eObject::PYRAMID:
     case warehouses::WAREHOUSE_OBJECT_TYPE:
+    case extender::HOTA_OBJECT_TYPE:
         libc::sprintf(h3_TextBuffer, objectSubtypeNameJsonKeyFormat, type, subtype);
         result = EraJS::read(h3_TextBuffer);
         break;

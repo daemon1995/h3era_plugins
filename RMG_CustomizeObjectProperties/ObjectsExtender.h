@@ -3,6 +3,8 @@
 
 namespace extender
 {
+    constexpr int HOTA_OBJECT_TYPE = 144;
+
 // temp struct to allow add line into protected field "H3Vector<LPCSTR> text;" at 0x1C
 struct EditableH3TextFile : public H3TextFile
 {
@@ -38,9 +40,9 @@ class ObjectsExtender : public IGamePatch
     virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept;
-    virtual BOOL SetHintInH3TextBuffer(const H3MapItem *mapItem, const H3Hero *currentHero,
+    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
                                        const H3Player *activePlayer, const BOOL isRightClick) const noexcept;
-    virtual BOOL SetAiMapItemWeight(const H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+    virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiResWeight) const noexcept;
 
     //	virtual int AiMapItemWeightFunction(HookContext* c, const H3MapItem* mapItem, H3Player* player);

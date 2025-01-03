@@ -41,7 +41,7 @@ void ShowMessage(const H3MapItem *mapItem, const int resType, const int resNum)
     }
 }
 
-BOOL WarehousesExtender::SetHintInH3TextBuffer(const H3MapItem *mapItem, const H3Hero *currentHero,
+BOOL WarehousesExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
                                                const H3Player *activePlayer, const BOOL isRightClick) const noexcept
 {
     if (const auto warehouse = H3MapItemWarehouse::GetWarehouse(mapItem))
@@ -124,7 +124,7 @@ BOOL WarehousesExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3
     return false;
 }
 
-BOOL WarehousesExtender::SetAiMapItemWeight(const H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *player,
+BOOL WarehousesExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *player,
                                             int &aiMapItemWeight) const noexcept
 {
     // for hota warehouse
@@ -168,11 +168,11 @@ void WarehousesExtender::CreatePatches()
     }
 }
 
-inline H3MapItemWarehouse *H3MapItemWarehouse::GetWarehouse(const H3MapItem *mapItem) noexcept
+inline H3MapItemWarehouse *H3MapItemWarehouse::GetWarehouse(H3MapItem *mapItem) noexcept
 {
     if (mapItem && mapItem->objectType == WAREHOUSE_OBJECT_TYPE)
     {
-        return const_cast<H3MapItemWarehouse *>(reinterpret_cast<const H3MapItemWarehouse *>(&mapItem->setup));
+        return reinterpret_cast<H3MapItemWarehouse *>(&mapItem->setup);
     }
 
     return nullptr;

@@ -357,7 +357,7 @@ _LHF_(H3AdventureManager__GetPyramidObjectClickHint)
 
 int ObjectsExtender::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRighClick)
 {
-    const H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ebx);
+    H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ebx);
     const H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp - 0x10);
 
     BOOL hintIsSet = false;
@@ -470,13 +470,13 @@ void ObjectsExtender::CreatePatches()
 void ObjectsExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
 {
 }
-BOOL ObjectsExtender::SetHintInH3TextBuffer(const H3MapItem *mapItem, const H3Hero *currentHero,
-                                            const H3Player *activePlayer, const BOOL isRightClick) const noexcept
+BOOL ObjectsExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+                                            const BOOL isRightClick) const noexcept
 {
     return false;
 }
-BOOL ObjectsExtender::SetAiMapItemWeight(const H3MapItem *mapItem, const H3Hero *currentHero,
-                                         const H3Player *activePlayer, int &aiResWeight) const noexcept
+BOOL ObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+                                         int &aiResWeight) const noexcept
 {
     return false;
 }
