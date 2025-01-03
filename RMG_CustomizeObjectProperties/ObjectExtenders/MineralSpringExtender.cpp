@@ -1,7 +1,8 @@
 #include "../pch.h"
 namespace mineralSpring
 {
-MineralSpringExtender::MineralSpringExtender() : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.WateringPlaceExtender.daemon_n"))
+MineralSpringExtender::MineralSpringExtender()
+    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.WateringPlaceExtender.daemon_n"))
 {
 
     CreatePatches();
@@ -15,12 +16,12 @@ _LHF_(MineralSpringExtender::AIHero_GetObjectPosWeight)
 {
     // TODO: use OASIS???? 00528567; FOUNTAIN_OF_FORTUNE 00528567
 
-    //if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
+    // if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
     //{
-    //    if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
-    //    {
-    //        const H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
-    //        const bool isVistedByHero = H3MapItemWateringPlace::IsVisitedByHero(*wateringPlace, hero);
+    //     if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
+    //     {
+    //         const H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
+    //         const bool isVistedByHero = H3MapItemWateringPlace::IsVisitedByHero(*wateringPlace, hero);
 
     //        if (!isVistedByHero)
     //        {
@@ -63,7 +64,7 @@ void ShowMessage(const H3MapItem *mapItem, const bool isVisitedByHero)
     {
         objName.Append(EraJS::read(
             H3String::Format("RMG.objectGeneration.%d.%d.text.visited", mapItem->objectType, mapItem->objectSubtype)
-            .String()));
+                .String()));
 
         if (skipMapMessage)
         {
@@ -78,7 +79,7 @@ void ShowMessage(const H3MapItem *mapItem, const bool isVisitedByHero)
     {
         objName.Append(EraJS::read(
             H3String::Format("RMG.objectGeneration.%d.%d.text.visit", mapItem->objectType, mapItem->objectSubtype)
-            .String()));
+                .String()));
 
         if (skipMapMessage)
         {
@@ -100,7 +101,7 @@ _LHF_(MineralSpringExtender::H3AdventureManager__ObjectVisit)
     {
         if (auto mineralSpring = H3MapItemMineralSpring::GetFromMapItem(mapItem))
         {
-            H3Hero* hero = *reinterpret_cast<H3Hero**>(c->ebp + 0x8);
+            H3Hero *hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
             const char isHuman = CharAt(c->ebp + 0x14);
             const bool isVisitedByHero = H3MapItemMineralSpring::IsVisitedByHero(hero);
 
@@ -109,10 +110,11 @@ _LHF_(MineralSpringExtender::H3AdventureManager__ObjectVisit)
                 hero->movement += MOVE_POINTS_GIVEN;
                 hero->luckBonus += LUCK_GIVEN;
                 THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // update screen
-                sprintf(h3_TextBuffer, H3MapItemMineralSpring::ErmVariableFormat, hero->id); // получение имени переменной
+                sprintf(h3_TextBuffer, H3MapItemMineralSpring::ErmVariableFormat,
+                        hero->id);                          // получение имени переменной
                 Era::SetAssocVarIntValue(h3_TextBuffer, 1); // отметить переменную, что объект посещен
-                
-                //return EXEC_DEFAULT;
+
+                // return EXEC_DEFAULT;
             }
 
             if (isHuman)
@@ -159,24 +161,24 @@ _LHF_(MineralSpringExtender::H3AdventureManager__GetDefaultObjectHoverHint)
     return ShowHint(h, c, " ");
 }
 
-void __stdcall OnAfterBattleUniversal(Era::TEvent* event)
+void __stdcall OnAfterBattleUniversal(Era::TEvent *event)
 {
     for (size_t i = 0; i < 2; i++)
     {
-        H3Hero * hero = P_CombatMgr->hero[i];
+        H3Hero *hero = P_CombatMgr->hero[i];
         if (hero)
         {
             sprintf(h3_TextBuffer, H3MapItemMineralSpring::ErmVariableFormat, hero->id); // получение имени переменной
-            Era::SetAssocVarIntValue(h3_TextBuffer, 0); // обнулить переменную
+            Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                  // обнулить переменную
         }
     }
 }
 
 _LHF_(MineralSpring_HeroReset)
 {
-    int heroId = c->edx;  // !!UN:C(hook)/(STRUCT_HOOK_CONTEXT_EDX)/4/?(heroId:y);
+    int heroId = c->edx; // !!UN:C(hook)/(STRUCT_HOOK_CONTEXT_EDX)/4/?(heroId:y);
     sprintf(h3_TextBuffer, H3MapItemMineralSpring::ErmVariableFormat, heroId); // получение имени переменной
-    Era::SetAssocVarIntValue(h3_TextBuffer, 0); // обнулить переменную
+    Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                // обнулить переменную
 
     return EXEC_DEFAULT;
 }
@@ -200,8 +202,9 @@ void MineralSpringExtender::CreatePatches()
         //_pi->WriteLoHook(0x4C1974, Game__AtShrineOfMagicIncantationSettingSpell);
         //_pi->WriteLoHook(0x40D858, Shrine__AtGetName);
 
-        Era::RegisterHandler(OnAfterBattleUniversal, "OnAfterBattleUniversal"); // строка должна совпадать с неймингом триггера в ERA
-        _pi->WriteLoHook(0x4D89B8, MineralSpring_HeroReset); //5081528 = 4D89B8 - hero reset // Обнуляем посещение
+        Era::RegisterHandler(OnAfterBattleUniversal,
+                             "OnAfterBattleUniversal");      // строка должна совпадать с неймингом триггера в ERA
+        _pi->WriteLoHook(0x4D89B8, MineralSpring_HeroReset); // 5081528 = 4D89B8 - hero reset // Обнуляем посещение
 
         m_isInited = true;
     }
@@ -209,17 +212,18 @@ void MineralSpringExtender::CreatePatches()
 
 inline H3MapItemMineralSpring *H3MapItemMineralSpring::GetFromMapItem(H3MapItem *mapItem) noexcept
 {
-    if (mapItem && mapItem->objectType == MINERAL_SPRING_OBJECT_TYPE && mapItem->objectSubtype == MINERAL_SPRING_OBJECT_SUBTYPE)
+    if (mapItem && mapItem->objectType == MINERAL_SPRING_OBJECT_TYPE &&
+        mapItem->objectSubtype == MINERAL_SPRING_OBJECT_SUBTYPE)
     {
-        return reinterpret_cast<H3MapItemMineralSpring*>(&mapItem->setup);
+        return reinterpret_cast<H3MapItemMineralSpring *>(&mapItem->setup);
     }
 
     return nullptr;
 }
 
-MineralSpringExtender & MineralSpringExtender::Get()
+MineralSpringExtender &MineralSpringExtender::Get()
 {
     static MineralSpringExtender _instance;
     return _instance;
 }
-}
+} // namespace mineralSpring

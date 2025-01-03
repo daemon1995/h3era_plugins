@@ -11,8 +11,8 @@ struct H3MapItemMineralSpring
 {
     static constexpr LPCSTR ErmVariableFormat = "mineralSpring_%d";
 
-  //public:
-    //INT32 id;
+    // public:
+    // INT32 id;
 
   public:
     void Reset();
@@ -47,4 +47,4 @@ class MineralSpringExtender : public extender::ObjectsExtender
     static MineralSpringExtender &Get();
 };
 
-}
+} // namespace mineralSpring

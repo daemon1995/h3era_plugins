@@ -10,8 +10,8 @@ struct H3MapItemWateringPlace
 {
     static constexpr LPCSTR ErmVariableFormat = "wateringPlace_%d";
 
-  //public:
-    //INT32 id;
+    // public:
+    // INT32 id;
 
   public:
     void Reset();
@@ -46,4 +46,4 @@ class WateringPlaceExtender : public extender::ObjectsExtender
     static WateringPlaceExtender &Get();
 };
 
-}
+} // namespace wateringPlace
