@@ -24,6 +24,10 @@
 
 #include "Era/era.h"
 #include "Era/eraJson.hpp"
+#ifdef ERA_MODLIST
+#include "Era/eraModList.hpp"
+#endif // ERA_MOD_LIST
+
 
 #ifdef _WOG_
 #include "WoG/NPC.h"
