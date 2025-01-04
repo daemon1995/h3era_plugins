@@ -1,8 +1,11 @@
 #pragma once
+struct ObjectLimitsInfo;
 
 struct RMGObjectInfo
 {
-    
+
+    constexpr static int SIZE = 5;
+
     //	zoneType 0..3 human-computer-treasure-junction*/
 
     INT type = eObject::NO_OBJ;
@@ -22,12 +25,17 @@ struct RMGObjectInfo
 
   public:
     static constexpr LPCSTR PROPERTY_NAMES[] = {"enabled", "map", "zone", "value", "density"};
-    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
+    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties1.ini";
     static constexpr LPCSTR OBJECT_INFO_INI_FORMAT = "%d_%d_%d";
 
     static constexpr LPCSTR OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%s";
     static constexpr LPCSTR OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%d.%s";
     static constexpr LPCSTR OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%d.name";
+
+  public:
+    static std::vector<RMGObjectInfo> currentRMGObjectsInfoByType[h3::limits::OBJECTS];
+    static std::vector<RMGObjectInfo> defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
+
   public:
     RMGObjectInfo(const INT32 type, const INT32 subtype);
     RMGObjectInfo();
@@ -40,7 +48,17 @@ struct RMGObjectInfo
     void MakeReal() const noexcept;
     LPCSTR GetName() const noexcept;
 
+    BOOL WriteToINI() const noexcept;
+    inline void ReadFromINI() noexcept;
+
   public:
+    static const RMGObjectInfo &DefaultObjectInfo(const int objType, const int subtype) noexcept;
+    static const RMGObjectInfo &CurrentObjectInfo(const int objType, const int subtype) noexcept;
+    static const std::vector<RMGObjectInfo> (&CurrentObjectInfo())[limits::OBJECTS];
+
+    static void InitFromRmgObjectGenerator(const H3RmgObjectGenerator &);
+    static void InitDefaultProperties(const ObjectLimitsInfo &limitInfo, const INT16 *maxSubtypes);
+    static void LoadUserProperties(const INT16 *maxSubtypes);
     static LPCSTR GetObjectName(const INT32 type, const INT32 subtype);
     static LPCSTR GetObjectName(const H3MapItem *mapItem);
 };
@@ -64,7 +82,8 @@ struct GeneratedInfo
 
   public:
     void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId);
-    void Assign(const H3RmgRandomMapGenerator *rmg, const std::vector<std::vector<RMGObjectInfo>> &userRmgInfoSet);
+    void Assign(const H3RmgRandomMapGenerator *rmg,
+                const std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS]);
     void Clear(const H3RmgRandomMapGenerator *rmgStruct);
     BOOL Inited() const noexcept;
 
@@ -81,6 +100,8 @@ struct ObjectLimitsInfo
     ADDRESS RMG_ObjectTypeMapLimit = 0x69CE9C;
 };
 
+namespace editor
+{
 struct PseudoH3RmgRandomMapGenerator
 {
     h3func *vTable{};      /**< @brief [00]*/
@@ -117,8 +138,6 @@ struct PseudoH3RmgRandomMapGenerator
     H3Vector<DWORD> keyMasters;                        /**< @brief [1100]*/
 };
 
-namespace editor
-{
 class RMGObjectsEditor : public IGamePatch
 {
     static GeneratedInfo generatedInfo;
@@ -130,11 +149,13 @@ class RMGObjectsEditor : public IGamePatch
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
 
-    std::vector<std::vector<RMGObjectInfo>> currentRMGObjectsInfoByType;
-    std::vector<std::vector<RMGObjectInfo>> defaultRMGObjectsInfoByType;
+    std::vector<RMGObjectInfo> currentRMGObjectsInfoByType[h3::limits::OBJECTS];
+    // std::vector<RMGObjectInfo> defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
+    // std::array<std::vector<RMGObjectInfo>, h3::limits::OBJECTS> defaultRMGObjectsInfoByType;
+
     // PseudoH3RmgRandomMapGenerator randomMapGenerator;
-    H3Vector<H3RmgObjectGenerator *> *defaultObjectGenerators;
-    H3Vector<H3RmgObjectGenerator *> editedObjectGenerators;
+    H3Vector<H3RmgObjectGenerator *> *originalRMGObjectGenerators;
+    H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
 
   private:
     RMGObjectsEditor();
@@ -144,8 +165,7 @@ class RMGObjectsEditor : public IGamePatch
     virtual void CreatePatches() override;
 
   private:
-    void InitDefaults(const INT16 *maxSubtypes);
-    void InitLoading(const INT16 *maxSubtypes);
+    void InitDefaultProperties(const INT16 *maxSubtypes);
     //		void CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg);
 
   private:
@@ -163,10 +183,8 @@ class RMGObjectsEditor : public IGamePatch
     const H3Vector<H3RmgObjectGenerator *> &GetObjectGeneratorsList() const noexcept;
 
     // Get vector of the information for all subtypes of that type
-    const RMGObjectInfo &DefaultObjectInfo(const int objType, const int subtype) const noexcept;
-    const RMGObjectInfo &CurrentObjectInfo(const int objType, const int subtype) const noexcept;
+
     int MaxMapTypeLimit(const UINT objType) const noexcept;
-    void SetObjectInfoAsCurrent(const RMGObjectInfo &info) noexcept;
 
   public:
     static void Init(const INT16 *maxSubtypes);

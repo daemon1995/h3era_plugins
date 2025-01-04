@@ -60,59 +60,10 @@ void CreatureBanksExtender::CreatePatches()
 
     Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 
-    _PI->WriteHiHook(0x418580, THISCALL_, LoopSoundManager::AdvMgr_MapItem_Select_Sound);
-    Era::RegisterHandler(LoopSoundManager::OnGameLeave, "OnGameLeave");
 }
 // #define _UNIQUE
 
-void __stdcall CreatureBanksExtender::LoopSoundManager::OnGameLeave(Era::TEvent *event)
-{
 
-    // if (instance->soundManager.loopSoundChanged)
-    {
-        P_AdventureManager->loopSounds[7] = Get().soundManager.defaultWav;
-        Get().soundManager.defaultWav = nullptr;
-        Get().soundManager.loopSoundChanged = false;
-    }
-}
-
-int __stdcall CreatureBanksExtender::LoopSoundManager::AdvMgr_MapItem_Select_Sound(HiHook *h, H3AdventureManager *adv,
-                                                                                   const int x, const int y,
-                                                                                   const int z)
-{
-
-    H3MapItem *mapItem = adv->GetMapItem(x, y, z);
-
-    int result = THISCALL_4(int, h->GetDefaultFunc(), adv, x, y, z);
-
-    if (result == -1 && mapItem->objectType == eObject::CREATURE_BANK)
-    {
-    }
-
-    const int crBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
-    if (crBankId >= Get().defaultBanksNumber && Get().soundManager.loopSoundNames[crBankId] != h3_NullString)
-    {
-
-        if (!Get().soundManager.loopSounds[crBankId])
-            Get().soundManager.loopSounds[crBankId] = H3WavFile::Load(Get().soundManager.loopSoundNames[crBankId]);
-
-        P_AdventureManager->loopSounds[7] = Get().soundManager.loopSounds[crBankId];
-        result = 7;
-        Get().soundManager.loopSoundChanged = true;
-
-        return result;
-    }
-    else if (Get().soundManager.loopSoundChanged)
-    {
-        if (!Get().soundManager.defaultWav)
-            Get().soundManager.defaultWav = H3WavFile::Load("LoopCave.wav");
-        P_AdventureManager->loopSounds[7] = Get().soundManager.defaultWav; // H3WavFile::Load("LoopCave.wav");
-        Get().soundManager.loopSoundChanged = false;
-    }
-    return result;
-
-    return EXEC_DEFAULT;
-}
 
 _LHF_(CreatureBanksExtender::CrBank_BeforeCombatStart)
 {
@@ -235,8 +186,7 @@ void CreatureBanksExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
 
 H3RmgObjectGenerator *CreatureBanksExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
 {
-    // TEMPORARY
-    if (objectInfo.type == eObject::CREATURE_BANK || objectInfo.type == eObject::PYRAMID && objectInfo.subtype > 0)
+    if (objectInfo.type == eObject::CREATURE_BANK)
     {
 
         return ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
@@ -261,12 +211,7 @@ const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubt
     for (INT16 creatureBankId = defaultBanksNumber; creatureBankId < maxSubtype; creatureBankId++)
     {
 
-        LPCSTR loooSoundName =
-            EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.sound.loop", creatureBankId).String(), trSuccess);
-        soundManager.loopSoundNames.emplace_back(trSuccess ? loooSoundName : h3_NullString);
 
-        H3WavFile *ptr = nullptr;
-        soundManager.loopSounds.emplace_back(ptr);
 
         // states
 
@@ -371,8 +316,8 @@ CreatureBanksExtender::~CreatureBanksExtender()
     creatureBanks.setups.clear();
     creatureBanks.isNotBank.clear();
 
-    soundManager.loopSoundNames.clear();
-    soundManager.loopSounds.clear();
+  //  soundManager.loopSoundNames.clear();
+  //  soundManager.loopSounds.clear();
 }
 
 void CreatureBanksExtender::Resize(UINT16 m_size) noexcept
@@ -384,8 +329,8 @@ void CreatureBanksExtender::Resize(UINT16 m_size) noexcept
 
     creatureBanks.m_size = m_size;
 
-    soundManager.loopSoundNames.resize(m_size);
-    soundManager.loopSounds.resize(m_size);
+ //   soundManager.loopSoundNames.resize(m_size);
+ //   soundManager.loopSounds.resize(m_size);
 }
 
 void CreatureBanksExtender::Reserve(UINT16 m_size) noexcept
@@ -395,8 +340,8 @@ void CreatureBanksExtender::Reserve(UINT16 m_size) noexcept
     creatureBanks.setups.reserve(m_size);
     creatureBanks.isNotBank.reserve(m_size);
 
-    soundManager.loopSoundNames.reserve(m_size);
-    soundManager.loopSounds.reserve(m_size);
+  //  soundManager.loopSoundNames.reserve(m_size);
+  //  soundManager.loopSounds.reserve(m_size);
 }
 
 void CreatureBanksExtender::ShrinkToFit() noexcept
@@ -406,8 +351,8 @@ void CreatureBanksExtender::ShrinkToFit() noexcept
     creatureBanks.setups.shrink_to_fit();
     creatureBanks.isNotBank.shrink_to_fit();
 
-    soundManager.loopSoundNames.shrink_to_fit();
-    soundManager.loopSounds.shrink_to_fit();
+  //  soundManager.loopSoundNames.shrink_to_fit();
+   // soundManager.loopSounds.shrink_to_fit();
     creatureBanks.m_size = creatureBanks.monsterAwards.size();
 }
 

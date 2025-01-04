@@ -42,7 +42,8 @@ class RMG_SettingsDlg : public H3Dlg
 {
 
     static constexpr float SETTINGS_VERSION = .1f;
-public:
+
+  public:
     static constexpr LPCSTR SETTINGS_INI_SECTION = "DlgSettings";
     static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
     // std::vector<H3CreatureBankSetup> &creatureBanks;
@@ -96,7 +97,7 @@ public:
 
     struct Page
     {
-        static RMG_SettingsDlg* dlg;
+        static RMG_SettingsDlg *dlg;
 
         const char *name;
         UINT id;
@@ -105,7 +106,6 @@ public:
         H3DlgCaptionButton *captionbttn = nullptr;
         H3DlgScrollbar *verticalScrollBar = nullptr;
         H3DlgScrollbar *horizontalScrollBar = nullptr;
-
 
         Page(H3DlgCaptionButton *captionbttn);
         virtual ~Page();
@@ -233,8 +233,6 @@ public:
     static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_wogObjects;
     static const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> m_objectAttributes;
 
-
-
     // ctors
   public:
     RMG_SettingsDlg(int width, int height, int x, int y);
@@ -252,9 +250,9 @@ public:
     const BOOL WriteIniDlgSettings() const noexcept;
 
     BOOL SetActivePage(Page *page) noexcept;
-    BOOL SaveObjects(const BOOL saveIni = true);
+    BOOL SaveRMGObjectsInfo(const BOOL saveIni = true) const noexcept;
 
-    VOID OnHelp();
+    VOID OnHelp() const noexcept;
 
     const BOOL RemoveEditsFocus(const BOOL save) const noexcept;
 

@@ -8,6 +8,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define RESIZED_PCX
 #define ERA4
+#define ERA_MODLIST
+
 #ifndef PCH_H
 #define PCH_H
 // Добавьте сюда заголовочные файлы для предварительной компиляции
@@ -29,6 +31,9 @@ constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 #include "ObjectExtenders/ShrinesExternder.h"
 #include "ObjectExtenders/WarehousesExtender.h"
 #include "ObjectExtenders/WateringPlaceExtender.h"
+#include "ObjectExtenders/WoGObjectsExtender.h"
+
+#include "ObjectExtenders/WoGObjectsExtender.h"
 #include "RMG_SettingsDlg.h"
 
 // 1. Place all the obj props into mod/data/objects/*.txt and parse all the mods

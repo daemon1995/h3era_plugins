@@ -327,7 +327,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     ReadIniDlgSettings();
 }
 
-VOID RMG_SettingsDlg::OnHelp()
+VOID RMG_SettingsDlg::OnHelp() const noexcept
 {
     H3String mes = EraJS::read("RMG.text.dlg.buttons.help.help");
 
@@ -474,7 +474,7 @@ VOID RMG_SettingsDlg::OnOK()
     if (!RemoveEditsFocus(true))
     {
         // H3Messagebox();
-        if (!SaveObjects(true))
+        if (!SaveRMGObjectsInfo(true))
             H3Messagebox(EraJS::read("RMG.text.dlg.iniError"));
         WriteIniDlgSettings();
 
@@ -538,7 +538,7 @@ const BOOL RMG_SettingsDlg::WriteIniDlgSettings() const noexcept
     return result;
 }
 
-BOOL RMG_SettingsDlg::SaveObjects(const BOOL saveIni)
+BOOL RMG_SettingsDlg::SaveRMGObjectsInfo(const BOOL saveIni) const noexcept
 {
 
     constexpr int SIZE = 5;
@@ -561,20 +561,7 @@ BOOL RMG_SettingsDlg::SaveObjects(const BOOL saveIni)
 
                 if (saveIni)
                 {
-                    H3String sectionName = H3String::Format("%d_%d_%d", info.type, info.subtype,
-                                                            zoneType); // , obj.attributes->defName.String());
-
-                    // save changed settings only
-                    for (size_t i = 0; i < SIZE; i++)
-                    {
-                        if (editor->DefaultObjectInfo(info.type, info.subtype).data[i] != info.data[i])
-                        {
-                            if (!Era::WriteStrToIni(RMGObjectInfo::PROPERTY_NAMES[i],
-                                                    std::to_string(info.data[i]).c_str(), sectionName.String(),
-                                                    INI_FILE_PATH))
-                                success = false;
-                        }
-                    }
+                    success = info.WriteToINI();
                 }
             }
         }
@@ -1361,7 +1348,7 @@ RMGObject::RMGObject(const H3ObjectAttributes &attributes, H3LoadedPcx16 *object
 {
     // Get data from global array
 
-    objectInfo = editor::RMGObjectsEditor::Get().CurrentObjectInfo(attributes.type, attributes.subtype);
+    objectInfo = RMGObjectInfo::CurrentObjectInfo(attributes.type, attributes.subtype);
     return;
 
     constexpr int PCX_WIDTH = 44;
@@ -1607,6 +1594,8 @@ void GetObjectPrototypesLists()
          eObject::REFUGEE_CAMP,
 
          eObject::SCHOLAR,
+
+         eObject::SEER_HUT,
 
          eObject::SHRINE_OF_MAGIC_INCANTATION, eObject::SHRINE_OF_MAGIC_GESTURE, eObject::SHRINE_OF_MAGIC_THOUGHT,
 

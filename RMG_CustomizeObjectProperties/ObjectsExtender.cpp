@@ -1,11 +1,11 @@
 #include "pch.h"
-
 namespace extender
 {
 
 std::set<ObjectsExtender *> ObjectsExtender::extenders;
 std::vector<std::string> ObjectsExtender::additionalProperties;
 std::vector<RMGObjectInfo> ObjectsExtender::additionalRmgObjects;
+LoopSoundManager ObjectsExtender::soundManager;
 
 void EditableH3TextFile::AddLine(LPCSTR txt)
 {
@@ -71,26 +71,23 @@ ObjectsExtender::~ObjectsExtender()
     additionalProperties.clear();
 }
 
-void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3MainSetup *setup)
+void ObjectsExtender::LoadMapObjectPropertiesByTypeSubtypes() noexcept
 {
+    bool readSuccess = false;
 
-    // get Additional Propertise  <-  R E W R I T E   L A T E R   W I T H   N L O H M A N
-
-    for (size_t objType = 0; objType < H3_MAX_OBJECTS; objType++)
+    // load properties for direct type/subtype objects
+    for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     { // iterate all the objects types entries
 
-        const int maxSubtype = objType == eObject::ARTIFACT || objType == eObject::CREATURE_GENERATOR1 ? 1024 : 255;
+        const int maxSubtype =
+            objType == eObject::ARTIFACT || objType == eObject::CREATURE_GENERATOR1 ? limits::EXTENDED : limits::COMMON;
 
         for (size_t objSubtype = 0; objSubtype < maxSubtype; objSubtype++)
         {
-            bool readSuccess = false;
             int propertyIdCounter = 0;
 
             do
             {
-                //				std::string str =
-                // EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.properties.%d", objType, objSubtype,
-                // propertyIdCounter++).String(), readSuccess);
                 LPCSTR str = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.properties.%d", objType,
                                                           objSubtype, propertyIdCounter++)
                                              .String(),
@@ -102,6 +99,100 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
             } while (readSuccess);
         }
     }
+}
+
+void ObjectsExtender::LoadMapObjectPropertiesFromLoadedMods() noexcept
+{
+
+    std::vector<std::string> modList;
+    modList::GetEraModList(modList);
+
+    for (const auto &modName : modList)
+    {
+
+        bool readSuccess = false;
+
+        int propertyIdCounter = 0;
+
+        do
+        {
+            LPCSTR str = EraJS::read(
+                H3String::Format("RMG.%s.properties.%d", modName.c_str(), propertyIdCounter++).String(), readSuccess);
+            if (readSuccess)
+            {
+                additionalProperties.emplace_back(str);
+            }
+        } while (readSuccess);
+    }
+    /* LPCSTR loooSoundName =
+         EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.sound.loop", creatureBankId).String(), trSuccess);
+     soundManager.loopSoundNames.emplace_back(trSuccess ? loooSoundName : h3_NullString);*/
+}
+
+void __stdcall LoopSoundManager::OnGameLeave(Era::TEvent *event)
+{
+
+    // if (instance->soundManager.loopSoundChanged)
+    {
+        // P_AdventureManager->loopSounds[7] = soundManager.defaultWav;
+        // soundManager.defaultWav = nullptr;
+        // soundManager.loopSoundChanged = false;
+    }
+}
+
+int __stdcall LoopSoundManager::AdvMgr_MapItem_Select_Sound(HiHook *h, H3AdventureManager *adv, const int x,
+                                                            const int y, const int z)
+{
+
+    H3MapItem *mapItem = adv->GetMapItem(x, y, z);
+
+    int result = THISCALL_4(int, h->GetDefaultFunc(), adv, x, y, z);
+
+    if (result == -1 && mapItem->objectType == eObject::CREATURE_BANK)
+    {
+    }
+
+    const int crBankId = cbanks::CreatureBanksExtender::GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
+    // if (crBankId >= cbanks::CreatureBanksExtender::Get().defaultBanksNumber &&
+    // Get().soundManager.loopSoundNames[crBankId] != h3_NullString)
+    //{
+
+    //    if (!Get().soundManager.loopSounds[crBankId])
+    //        Get().soundManager.loopSounds[crBankId] = H3WavFile::Load(Get().soundManager.loopSoundNames[crBankId]);
+
+    //    P_AdventureManager->loopSounds[7] = Get().soundManager.loopSounds[crBankId];
+    //    result = 7;
+    //    Get().soundManager.loopSoundChanged = true;
+
+    //    return result;
+    //}
+    // else if (Get().soundManager.loopSoundChanged)
+    //{
+    //    if (!Get().soundManager.defaultWav)
+    //        Get().soundManager.defaultWav = H3WavFile::Load("LoopCave.wav");
+    //    P_AdventureManager->loopSounds[7] = Get().soundManager.defaultWav; // H3WavFile::Load("LoopCave.wav");
+    //    Get().soundManager.loopSoundChanged = false;
+    //}
+    // return result;
+
+    return EXEC_DEFAULT;
+}
+
+void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3MainSetup *setup)
+{
+
+    // get Additional Propertise  <-  R E W R I T E   L A T E R   W I T H   N L O H M A N
+
+    LoadMapObjectPropertiesByTypeSubtypes();
+
+    LoadMapObjectPropertiesFromLoadedMods();
+
+    // load additional unique objects properties from each loaded mod json key
+
+    for (auto &obj : additionalRmgObjects)
+    {
+        //	setup->objectLists[obj.type][obj.subtype] = obj;
+    }
 
     // Get All The Extenders we have
 
@@ -112,15 +203,18 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
         // extender->GetObjectPreperties();
     }
 
+    H3WavFile *ptr = nullptr;
+    soundManager.loopSounds.emplace_back(ptr);
+
     // call native fucntion to load objects.txt (0x515038)
     THISCALL_1(void, h->GetDefaultFunc(), setup);
 
     // create max subtype value for all object gens
-    INT16 maxSubtypes[H3_MAX_OBJECTS] = {};
+    INT16 maxSubtypes[h3::limits::OBJECTS] = {};
 
     auto objList = setup->objectLists;
 
-    for (size_t objType = 0; objType < H3_MAX_OBJECTS; objType++)
+    for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     { // iterate all the objects types entries
 
         for (const auto &obj : objList[objType])
@@ -465,6 +559,8 @@ void ObjectsExtender::CreatePatches()
 
         _PI->WriteHiHook(0x4EE01C, THISCALL_, H3GameMainSetup__LoadObjects);
 
+        _PI->WriteHiHook(0x418580, THISCALL_, LoopSoundManager::AdvMgr_MapItem_Select_Sound);
+        Era::RegisterHandler(LoopSoundManager::OnGameLeave, "OnGameLeave");
         //	Era::RegisterHandler(OnWogObjectHint, "OnWogObjectHint");
     }
 }

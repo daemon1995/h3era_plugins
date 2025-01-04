@@ -27,22 +27,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
 
     } creatureBanks;
 
-    struct LoopSoundManager
-    {
-        BOOL enterSoundChanged = false;
-        BOOL loopSoundChanged = false;
-        H3WavFile *defaultWav = nullptr;
 
-        std::vector<H3WavFile *> loopSounds;
-
-        std::vector<LPCSTR> loopSoundNames;
-
-      public:
-        static int __stdcall AdvMgr_MapItem_Select_Sound(HiHook *h, H3AdventureManager *adv, const int x, const int y,
-                                                         const int z);
-        static void __stdcall OnGameLeave(Era::TEvent *event);
-
-    } soundManager;
 
   private:
     CreatureBanksExtender();

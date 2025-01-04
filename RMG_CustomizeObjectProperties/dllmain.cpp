@@ -65,6 +65,7 @@ _LHF_(CrBanksTxt_AfterLoad)
     warehouses::WarehousesExtender::Get();
     gazebo::GazeboExtender::Get();
     wateringPlace::WateringPlaceExtender::Get();
+    wog::WoGObjectsExtender::Get();
     //! Set patches for the RMG_SettingsDlg
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
 
