@@ -27,9 +27,9 @@ BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, 
             if (P_ActivePlayer->playerResources.gold >= GOLD_REQUIRED)
             {
                 // адрес похожего псевдокода 0052BB89
-                const __int64 aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
+                const float aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
                 aiMapItemWeight =
-                    (__int64)((double)aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
+                    static_cast<int>(aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
 
                 return true;
             }
@@ -103,7 +103,7 @@ BOOL GazeboExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Posi
             {
                 // Calculate exp given considering the learning power
                 float heroLearningPower = GetHeroLearningPower(hero);
-                const int expGiven = EXP_GIVEN * heroLearningPower;
+                const int expGiven = static_cast<int>(EXP_GIVEN * heroLearningPower);
 
                 BOOL agreed = !isHuman;
                 if (isHuman)
