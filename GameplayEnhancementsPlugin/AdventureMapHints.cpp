@@ -217,34 +217,16 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             //     armySizeTextWidth =
             //         fnt->GetMaxLineWidth(H3Creature::GroupName(currentItem->wanderingCreature.count, 1));
             // }
-            const int MIN_TEXT_WIDTH = OBJECT_WIDTH; // < armySizeTextWidth ? OBJECT_WIDTH : OBJECT_WIDTH;
-
-            const int HINT_MAX_LINE_WIDTH = fnt->GetMaxLineWidth(hintText);
-
             // FASTCALL_3(UINT8, 0x55D2E0, &attributes, &attributes.width, 1);
 
-            constexpr int MAX_TEXT_WIDTH = TILE_WIDTH * 3; // +(isCreature ? TILE_WIDTH : 0);
+            constexpr int minTextFieldWidth = OBJECT_WIDTH;
+            const int maxHintTextWidth = fnt->GetMaxLineWidth(hintText);
+            constexpr int maxTextFieldWidth = TILE_WIDTH * 3;
+            const int textWidth = Clamp(minTextFieldWidth, maxHintTextWidth, maxTextFieldWidth);
 
-            //  const int MAX_TEXT_HEIGHT = TILE_WIDTH * 2;
-
-            // int textWidth = MIN_TEXT_WIDTH;
-            int outOfWidthBorder = 0;
-
-            const int textWidth = Clamp(MIN_TEXT_WIDTH, HINT_MAX_LINE_WIDTH, MAX_TEXT_WIDTH);
-
-            const int HINT_LINES_COUNT = fnt->GetLinesCountInText(hintText, textWidth);
-
-            const int MIN_TEXT_HEIGHT = fnt->height + 2;
-
-            const int textHeight = HINT_LINES_COUNT * (MIN_TEXT_HEIGHT - 1); // HINT_LINES_COUNT - 1;
-
-            // if (HINT_LINES_COUNT > 1)
-            //{
-            //     textHeight *= HINT_LINES_COUNT; // fnt->GetLinesCountInText(hintText, textWidth);
-            //     textHeight += HINT_LINES_COUNT - 1;
-            //     //  textHeight = Clamp(MIN_TEXT_HEIGHT, textHeight, fnt->height * HINT_LINES_COUNT +
-            //     //  HINT_LINES_COUNT 1);
-            // }
+            const int hintTextLines = fnt->GetLinesCountInText(hintText, textWidth);
+            const int minTextFieldHeight = fnt->height + 2;
+            const int textHeight = hintTextLines * (minTextFieldHeight - 1);
 
             // textFieldWidth =
             // if (currentItem->objectType == eObject::SPELL_SCROLL)
@@ -253,9 +235,9 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
 
             //    // Era::y[1] = TEMP_PCX_WIDTH;
             //    Era::y[2] = textWidth;
-            //    Era::y[3] = HINT_MAX_LINE_WIDTH;
+            //    Era::y[3] = maxHintTextWidth;
             //    Era::y[4] = HINT_MAX_WORD_WIDTH;
-            //    Era::ExecErmCmd("IF:L^text = %z1, textWidth = %y2, HINT_MAX_LINE_WIDTH = %y3, HINT_MAX_WORD_WIDTH
+            //    Era::ExecErmCmd("IF:L^text = %z1, textWidth = %y2, maxHintTextWidth = %y3, HINT_MAX_WORD_WIDTH
             //    "
             //                    "width = %y4^");
             //}
@@ -278,7 +260,6 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             // backPcx->DrawToPcx16(30, 150, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, tempBuffer, 0, 0, 1);
             // H3RGB565 rgb(20, 24, 29);
 
-            // memset(tempBuffer->buffer, rand() %255, tempBuffer->buffSize);
             //  create golden frame
             tempBuffer->DrawThickFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 1, 189, 149, 57);
             // draw text to temp buffer
@@ -287,7 +268,9 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
             // resize tempBuffer to align text for screen borders
 
             int objectWidth = 1 * TILE_WIDTH;
-            int destPcxX = screenX * TILE_WIDTH + adv->screenDrawOffset.x - outOfWidthBorder / 2;
+            const int outOfWidthBorder = (TEMP_PCX_WIDTH - objectWidth) >> 1;
+
+            int destPcxX = screenX * TILE_WIDTH + adv->screenDrawOffset.x - outOfWidthBorder;
             int destPcxY = screenY * TILE_WIDTH + adv->screenDrawOffset.y - TEMP_PCX_HEIGHT;
 
             // adjust left border draw
