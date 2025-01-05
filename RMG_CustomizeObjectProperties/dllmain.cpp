@@ -57,6 +57,7 @@ PatcherInstance *_PI;
 
 _LHF_(CrBanksTxt_AfterLoad)
 {
+
     editor::RMGObjectsEditor::Get();
 
     //! Get the CreatureBanksManager and initialize it
@@ -64,7 +65,8 @@ _LHF_(CrBanksTxt_AfterLoad)
     shrines::ShrinesExternder::Get();
     warehouses::WarehousesExtender::Get();
     gazebo::GazeboExtender::Get();
-    wateringPlace::WateringPlaceExtender::Get();
+    colosseumOfTheMagi::ColosseumOfTheMagiExtender::Get();
+    // wateringPlace::WateringPlaceExtender::Get();
     wog::WoGObjectsExtender::Get();
     //! Set patches for the RMG_SettingsDlg
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);

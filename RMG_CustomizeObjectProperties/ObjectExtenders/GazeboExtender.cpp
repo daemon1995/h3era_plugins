@@ -30,11 +30,9 @@ BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, 
                 const float aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
                 aiMapItemWeight =
                     static_cast<int>(aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
-
             }
         }
         return true;
-
     }
 
     return false;

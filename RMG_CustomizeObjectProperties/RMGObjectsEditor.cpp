@@ -29,10 +29,11 @@ int RMGObjectsEditor::MaxMapTypeLimit(const UINT objType) const noexcept
 {
     return objType < H3_MAX_OBJECTS ? limitsInfo.mapTypesLimit[objType] : 0;
 }
-inline BOOL DisableWoGObjects(H3RmgObjectGenerator *p_ObjGen)
+inline BOOL ObjectMayBeGenerated(H3RmgObjectGenerator *p_ObjGen)
 {
-    return wog::WoGObjectsExtender::IsWoGObject(p_ObjGen) &&
-           wog::WoGObjectsExtender::WoGObjectHasOptionEnabled(p_ObjGen);
+
+    return wog::WoGObjectsExtender::IsWoGObject(p_ObjGen) ? wog::WoGObjectsExtender::WoGObjectHasOptionEnabled(p_ObjGen)
+                                                          : true;
 }
 void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 {
@@ -173,7 +174,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 // we collect data
 
                 // if object is enabled
-                if (rmgObjInfo.enabled && !DisableWoGObjects(rmgObjGen))
+                if (rmgObjInfo.enabled && ObjectMayBeGenerated(rmgObjGen))
                 {
 
                     if (rmgObjInfo.density > 0)
