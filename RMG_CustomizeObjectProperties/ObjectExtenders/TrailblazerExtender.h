@@ -1,39 +1,36 @@
 #pragma once
 
-namespace wateringPlace
+namespace trailblazer
 {
-constexpr int WATERING_PLACE_OBJECT_SUBTYPE = 3;
-constexpr int MOVE_POINTS_GIVEN = 1000;
+constexpr int ART_WAYFARERS_BOOTS = 260;
+static constexpr LPCSTR HOTA_PATHFINDING_OPT = "js_hota_pathfinding"; // global var in erm file
+constexpr int TRAILBLAZER_OBJECT_SUBTYPE = 11;
+constexpr int TRAILBLAZER_TERRAIN_TYPE = 5; // Rough terrain
 
-struct H3MapItemWateringPlace
+struct H3MapItemTrailblazer
 {
-    static constexpr LPCSTR ErmVariableFormat = "wateringPlace_%d";
+    static constexpr LPCSTR ErmVariableFormat = "trailblazer_%d"; // heroid
 
     // public:
     // INT32 id;
 
   public:
+    // void Reset();
     static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
-    static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    static inline H3MapItemTrailblazer *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class WateringPlaceExtender : public extender::ObjectsExtender
+class TrailblazerExtender : public extender::ObjectsExtender
 {
 
-    WateringPlaceExtender();
+    TrailblazerExtender();
 
-    virtual ~WateringPlaceExtender();
+    virtual ~TrailblazerExtender();
 
   private:
     virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
-
-    // static _LHF_(H3AdventureManager__ObjectVisit);
-    // static _LHF_(AIHero_GetObjectPosWeight);
-    // static _LHF_(Game__NewGameObjectIteration);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
 
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept override final;
@@ -49,7 +46,7 @@ class WateringPlaceExtender : public extender::ObjectsExtender
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static WateringPlaceExtender &Get();
+    static TrailblazerExtender &Get();
 };
 
-} // namespace wateringPlace
+} // namespace trailblazer

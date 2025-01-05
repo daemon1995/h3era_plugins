@@ -5,9 +5,9 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.10";
-const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
-const char *PLUGIN_AUTHOR = "daemon_n";
+const char *PLUGIN_VERSION = "1.01";
+const char *INSTANCE_NAME = "EraPlugin.HotA_AI_Value.jackslater";
+const char *PLUGIN_AUTHOR = "jackslater";
 // const char* PROJECT_NAME = "$(ProjectName)";
 const char *PLUGIN_DATA = __DATE__;
 } // namespace dllText
@@ -55,35 +55,55 @@ PatcherInstance *_PI;
 
 */
 
-_LHF_(CrBanksTxt_AfterLoad)
+_LHF_(CrTraitsTxt_AfterLoad)
 {
+    // AI_Value (done in RMG_CustomizeObjectProperties)
+    //P_CreatureInformation[eCreature::MONK].aiValue = 582 / 5;
+    //P_CreatureInformation->Get()[eCreature::MONK].aiValue = 116;
+    // монах 485 -> 582
+    // нага 2016 -> 1814
+    // ифрит-султан 1848 -> 2343 (fight_value 1584 -> 1802)
+    // Призрачный Дракон 4696 -> 4919 (fight_value 3228 -> 3346)
+    // Скорпикора 1589 -> 1685
+    // Красный Дракон 4702 -> 5003
+    // Циклоп-Король 1443 -> 1544
+    // Ящер 126 -> 151 (fight_value 115 -> 137)
+    // Ящер-Воин 156 -> 209 (fight_value 130 -> 174)
+    // Огненная Птица 4547 -> 4336 (fight_value 3248 -> 3097)
+    // Сказочный дракон 19580 -> 30501
 
-    editor::RMGObjectsEditor::Get();
+    // TODO: Adv.Map - low 0x6C, high 0x70
+    // горгона low 12 -> 8, high 25 -> 16
+    // могучая горгона low 12 -> 8, high 20 -> 12
+    // змии low 10 -> 12, high 20 -> 25
+    // змии-дракон low 10 -> 12, high 16 -> 20
+    // василиск low 8 -> 10, high 16 -> 20
+    // великий василиск low 8 -> 10, high 12 -> 16
+    // Огненный Элементаль low 16 -> 10, high 25 -> 20
+    // Психический Элементаль low 8 -> 5, high 16 -> 12
+    // Элементаль Магии low 8 -> 5, high 12 -> 10
+    // Энергетический элементаль low 12 -> 10, high 25 -> 16
+    // Феникс low 4 -> 3, high 10 -> 8
+    // Снайперы low 5 -> 10, high 12 -> 16
 
-    //! Get the CreatureBanksManager and initialize it
-    cbanks::CreatureBanksExtender::Get();
-    hillFort::HillFortExtender::Get();
-    wog::WoGObjectsExtender::Get();
-    shrines::ShrinesExternder::Get();
-    dreamTeacher::DreamTeacherExtender::Get();
-    grave::GraveExtender::Get();
-    warehouses::WarehousesExtender::Get();
-    templeOfLoyalty::TempleOfLoyaltyExtender::Get();
-    skeletonTransformer::SkeletonTransformerExtender::Get();
-    colosseumOfTheMagi::ColosseumOfTheMagiExtender::Get();
-    wateringPlace::WateringPlaceExtender::Get();
-    mineralSpring::MineralSpringExtender::Get();
-    hermitsShack::HermitsShackExtender::Get();
-    gazebo::GazeboExtender::Get();
-    junkman::JunkmanExtender::Get();
-    trailblazer::TrailblazerExtender::Get();
-    ancientLamp::AncientLampExtender::Get();
-    observatory::ObservatoryExtender::Get();
-    //! Set patches for the RMG_SettingsDlg
-    rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
+
+    //H3CreatureInformation* crInfoTable = *reinterpret_cast<H3CreatureInformation**>(0x06747B0);
+    //crInfoTable[eCreature::MONK].aiValue = 582;
+    
+
 
     return EXEC_DEFAULT;
 }
+
+
+void __stdcall OnAfterWog(Era::TEvent* event)
+{
+    //_PI->WriteLoHook(0x04EEAF2, CrTraitsTxt_AfterLoad);
+    //_PI->WriteLoHook(0x04EF247, CrTraitsTxt_AfterLoad);
+    P_CreatureInformation->Get()[eCreature::MONK].aiValue = 582;
+}
+
+
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -110,7 +130,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
             //! Create an instance of the plugin
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
-            _PI->WriteLoHook(0x4EDE42, CrBanksTxt_AfterLoad);
+            //_PI->WriteLoHook(0x04EDE90, CrTraitsTxt_AfterLoad);
+            //_PI->WriteLoHook(0x04EDE97, CrTraitsTxt_AfterLoad);
+            //_PI->WriteLoHook(0x04EEAF2, CrTraitsTxt_AfterLoad);
+
+
+            Era::RegisterHandler(OnAfterWog, "OnAfterWog");
+            //_PI->WriteLoHook(0x04EF247, CrTraitsTxt_AfterLoad);
         }
         break;
     }

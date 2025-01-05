@@ -1,39 +1,35 @@
 #pragma once
 
-namespace wateringPlace
+namespace mineralSpring
 {
-constexpr int WATERING_PLACE_OBJECT_SUBTYPE = 3;
-constexpr int MOVE_POINTS_GIVEN = 1000;
+constexpr int MINERAL_SPRING_OBJECT_SUBTYPE = 4;
+constexpr int MOVE_POINTS_GIVEN = 600;
+constexpr int LUCK_GIVEN = 1;
 
-struct H3MapItemWateringPlace
+struct H3MapItemMineralSpring
 {
-    static constexpr LPCSTR ErmVariableFormat = "wateringPlace_%d";
+    static constexpr LPCSTR ErmVariableFormat = "mineralSpring_%d";
 
     // public:
     // INT32 id;
 
   public:
+    // void Reset();
     static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
-    static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    static inline H3MapItemMineralSpring *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class WateringPlaceExtender : public extender::ObjectsExtender
+class MineralSpringExtender : public extender::ObjectsExtender
 {
 
-    WateringPlaceExtender();
+    MineralSpringExtender();
 
-    virtual ~WateringPlaceExtender();
+    virtual ~MineralSpringExtender();
 
   private:
     virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
-
-    // static _LHF_(H3AdventureManager__ObjectVisit);
-    // static _LHF_(AIHero_GetObjectPosWeight);
-    // static _LHF_(Game__NewGameObjectIteration);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
 
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept override final;
@@ -49,7 +45,7 @@ class WateringPlaceExtender : public extender::ObjectsExtender
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static WateringPlaceExtender &Get();
+    static MineralSpringExtender &Get();
 };
 
-} // namespace wateringPlace
+} // namespace mineralSpring

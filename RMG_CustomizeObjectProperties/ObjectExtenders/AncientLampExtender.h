@@ -1,43 +1,49 @@
 #pragma once
 
-namespace wateringPlace
+namespace ancientLamp
 {
-constexpr int WATERING_PLACE_OBJECT_SUBTYPE = 3;
-constexpr int MOVE_POINTS_GIVEN = 1000;
+constexpr int ANCIENT_LAMP_OBJECT_SUBTYPE = 0;
+constexpr int ANCIENT_LAMP_CREATURE_TYPE = 37;
+constexpr int ANCIENT_LAMP_MIN_CREATURE_COUNT = 4;
+constexpr int ANCIENT_LAMP_MAX_CREATURE_COUNT = 6;
 
-struct H3MapItemWateringPlace
+
+struct H3MapItemAncientLamp
 {
-    static constexpr LPCSTR ErmVariableFormat = "wateringPlace_%d";
+    //static int ancientLampCounter;
 
-    // public:
-    // INT32 id;
+    //static constexpr LPCSTR ErmVariableFormat = "ancientLamp_%d_%d"; // ancienLampId, playerId
 
   public:
-    static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
-    static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    unsigned _u1 : 5;
+    /** @brief [05] which players have come by*/
+    unsigned visited : 8;
+    /** @brief [13]*/
+    unsigned creatureType : 10;
+    /** @brief [23]*/
+    unsigned creatureCount : 9;
+
+  public:
+    void Reset();
+    //static inline BOOL IsVisitedByPlayer(const H3MapItemAncientLamp ancientLamp, const H3Hero* hero) noexcept;
+    static inline H3MapItemAncientLamp *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class WateringPlaceExtender : public extender::ObjectsExtender
+class AncientLampExtender : public extender::ObjectsExtender
 {
 
-    WateringPlaceExtender();
+    AncientLampExtender();
 
-    virtual ~WateringPlaceExtender();
+    virtual ~AncientLampExtender();
 
   private:
     virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 
-    // static _LHF_(H3AdventureManager__ObjectVisit);
-    // static _LHF_(AIHero_GetObjectPosWeight);
-    // static _LHF_(Game__NewGameObjectIteration);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
-
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept override final;
-    // virtual BOOL InitNewGameMapItemSetup(H3MapItem* mapItem) const noexcept override final;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept override final;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
@@ -49,7 +55,7 @@ class WateringPlaceExtender : public extender::ObjectsExtender
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static WateringPlaceExtender &Get();
+    static AncientLampExtender&Get();
 };
 
-} // namespace wateringPlace
+} // namespace ancientLamp

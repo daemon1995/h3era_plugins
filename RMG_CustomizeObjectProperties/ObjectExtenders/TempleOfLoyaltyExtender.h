@@ -1,28 +1,27 @@
 #pragma once
 
-namespace wateringPlace
+namespace templeOfLoyalty
 {
-constexpr int WATERING_PLACE_OBJECT_SUBTYPE = 3;
-constexpr int MOVE_POINTS_GIVEN = 1000;
+constexpr int TEMPLE_OF_LOYALTY_OBJECT_SUBTYPE = 0;
 
-struct H3MapItemWateringPlace
+struct H3MapItemTempleOfLoyalty
 {
-    static constexpr LPCSTR ErmVariableFormat = "wateringPlace_%d";
+    static constexpr LPCSTR ErmVariableFormat = "templeOfLoyalty_%d";
 
     // public:
     // INT32 id;
 
   public:
     static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
-    static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    static inline H3MapItemTempleOfLoyalty *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class WateringPlaceExtender : public extender::ObjectsExtender
+class TempleOfLoyaltyExtender : public extender::ObjectsExtender
 {
 
-    WateringPlaceExtender();
+    TempleOfLoyaltyExtender();
 
-    virtual ~WateringPlaceExtender();
+    virtual ~TempleOfLoyaltyExtender();
 
   private:
     virtual void CreatePatches() override;
@@ -49,7 +48,7 @@ class WateringPlaceExtender : public extender::ObjectsExtender
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static WateringPlaceExtender &Get();
+    static TempleOfLoyaltyExtender &Get();
 };
 
-} // namespace wateringPlace
+} // namespace templeOfLoyalty

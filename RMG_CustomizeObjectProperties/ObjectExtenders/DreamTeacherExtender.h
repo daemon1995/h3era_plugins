@@ -1,31 +1,33 @@
 #pragma once
 
-namespace gazebo
+namespace dreamTeacher
 {
-constexpr int GAZEBO_OBJECT_SUBTYPE = 6;
-constexpr float EXP_GIVEN = 2000;
-constexpr int GOLD_REQUIRED = 1000;
+constexpr int DREAM_TEACHER_OBJECT_SUBTYPE = 0;
+constexpr float EXP_GIVEN = 500;
+constexpr float ADDITIONAL_EXP_GIVEN_FOR_EACH_VISIT = 500;
 
-struct H3MapItemGazebo
+struct H3MapItemDreamTeacher
 {
-    static int gazeboCounter;
+    static int dreamTeacherCounter;
 
-    static constexpr LPCSTR ErmVariableFormat = "gazebo_%d_%d";
+    static constexpr LPCSTR ErmVariableFormat = "dreamTeacher_%d_%d"; // visited or not
+    static constexpr LPCSTR VisitedObjectsCount = "dreamTeacher_%d"; // heroId
 
   public:
     INT32 id;
 
   public:
-    static inline BOOL IsVisitedByHero(const H3MapItemGazebo *gazebo, const H3Hero *hero) noexcept;
-    static inline H3MapItemGazebo *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    static inline BOOL IsVisitedByHero(const H3MapItemDreamTeacher * dreamTeacher, const H3Hero *hero) noexcept;
+    static inline int GetVisitedObjectsCountByHero(const H3Hero* hero) noexcept;
+    static inline H3MapItemDreamTeacher *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class GazeboExtender : public extender::ObjectsExtender
+class DreamTeacherExtender : public extender::ObjectsExtender
 {
 
-    GazeboExtender();
+    DreamTeacherExtender();
 
-    virtual ~GazeboExtender();
+    virtual ~DreamTeacherExtender();
 
   private:
     virtual void CreatePatches() override;
@@ -41,12 +43,8 @@ class GazeboExtender : public extender::ObjectsExtender
                                     int &aiMapItemWeight, int* moveDistance, const H3Position pos) const noexcept override final;
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
 
-  private:
-    //	static _LHF_(Game__AtShrineOfMagicIncantationSettingSpell);
-    //	static _LHF_(Shrine__AtGetName);
-
   public:
-    static GazeboExtender &Get();
+    static DreamTeacherExtender &Get();
 };
 
-} // namespace gazebo
+} // namespace dreamTeacher

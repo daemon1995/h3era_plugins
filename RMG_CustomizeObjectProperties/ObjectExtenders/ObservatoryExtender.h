@@ -1,39 +1,34 @@
 #pragma once
 
-namespace wateringPlace
+namespace observatory
 {
-constexpr int WATERING_PLACE_OBJECT_SUBTYPE = 3;
-constexpr int MOVE_POINTS_GIVEN = 1000;
+constexpr int OBSERVATORY_OBJECT_SUBTYPE = 1;
+constexpr int VISION_RADIUS_GIVEN = 2;
 
-struct H3MapItemWateringPlace
+struct H3MapItemObservatory
 {
-    static constexpr LPCSTR ErmVariableFormat = "wateringPlace_%d";
+    static constexpr LPCSTR ErmVariableFormat = "observatory_%d"; //heroid
 
     // public:
     // INT32 id;
 
   public:
+    // void Reset();
     static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
-    static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    static inline H3MapItemObservatory *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class WateringPlaceExtender : public extender::ObjectsExtender
+class ObservatoryExtender : public extender::ObjectsExtender
 {
 
-    WateringPlaceExtender();
+    ObservatoryExtender();
 
-    virtual ~WateringPlaceExtender();
+    virtual ~ObservatoryExtender();
 
   private:
     virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
-
-    // static _LHF_(H3AdventureManager__ObjectVisit);
-    // static _LHF_(AIHero_GetObjectPosWeight);
-    // static _LHF_(Game__NewGameObjectIteration);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
 
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept override final;
@@ -49,7 +44,7 @@ class WateringPlaceExtender : public extender::ObjectsExtender
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static WateringPlaceExtender &Get();
+    static ObservatoryExtender &Get();
 };
 
-} // namespace wateringPlace
+} // namespace observatory

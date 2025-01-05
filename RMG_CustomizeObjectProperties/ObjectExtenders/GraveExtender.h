@@ -1,43 +1,42 @@
 #pragma once
 
-namespace wateringPlace
+namespace grave
 {
-constexpr int WATERING_PLACE_OBJECT_SUBTYPE = 3;
-constexpr int MOVE_POINTS_GIVEN = 1000;
+constexpr int GRAVE_OBJECT_SUBTYPE = 1;
 
-struct H3MapItemWateringPlace
+struct H3MapItemGrave
 {
-    static constexpr LPCSTR ErmVariableFormat = "wateringPlace_%d";
-
-    // public:
-    // INT32 id;
+  //static constexpr LPCSTR ErmVariableFormat = "grave_%d";
 
   public:
-    static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
-    static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+      /** @brief [00] 0..1023 artifact ID*/
+      unsigned  artifactID : 10;
+      /** @brief [10] 0..1023 goldAmount*/
+      unsigned goldAmount : 10;
+      /** @brief [20]*/
+      unsigned _u1 : 12;
+
+  public:
+    //void Reset();
+    //static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
+    static inline H3MapItemGrave*GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class WateringPlaceExtender : public extender::ObjectsExtender
+class GraveExtender : public extender::ObjectsExtender
 {
 
-    WateringPlaceExtender();
+    GraveExtender();
 
-    virtual ~WateringPlaceExtender();
+    virtual ~GraveExtender();
 
   private:
     virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 
-    // static _LHF_(H3AdventureManager__ObjectVisit);
-    // static _LHF_(AIHero_GetObjectPosWeight);
-    // static _LHF_(Game__NewGameObjectIteration);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
-    // static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
-
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept override final;
-    // virtual BOOL InitNewGameMapItemSetup(H3MapItem* mapItem) const noexcept override final;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem* mapItem) const noexcept override final;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
@@ -49,7 +48,7 @@ class WateringPlaceExtender : public extender::ObjectsExtender
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static WateringPlaceExtender &Get();
+    static GraveExtender&Get();
 };
 
-} // namespace wateringPlace
+} // namespace grave

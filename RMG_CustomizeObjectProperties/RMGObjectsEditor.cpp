@@ -172,9 +172,9 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 {
 
                 case eObject::PANDORAS_BOX:
-                case eObject::KEYMASTER:
+                //case eObject::KEYMASTER:
                 case eObject::PRISON:
-                case eObject::SEER_HUT:
+                //case eObject::SEER_HUT:
                 case eObject::SPELL_SCROLL:
 
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
@@ -264,15 +264,15 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
         const int totalTownsCount = rmg->townsCount;
         for (size_t i = 0; i < 4; i++)
         {
-            const int creatureType = DwordAt(dwellings4Ptr + (i << 2));
+            const int creatureType = DwordAt(dwellings4Ptr + (i << 2) + 16 * objGen->subtype);
 
             if (creatureType != eCreature::UNDEFINED)
             {
                 auto &info = P_CreatureInformation[creatureType];
                 const int creatureTown = info.town;
-                if (creatureTown != zoneGen->townType2)
+                if (creatureTown != zoneGen->townType2 && i == 0) // define town association by first creature in dwelling
                 {
-                    continue;
+                    return resultValue; // -1
                 }
                 if (const int aiValue = info.aiValue)
                 {
@@ -285,8 +285,12 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
                         {
                             dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
                         }
+                        resultValue += dwellingSlotValue + (totalTownsCount * aiValue >> 1);
                     }
-                    resultValue += dwellingSlotValue + (totalTownsCount * aiValue >> 1);
+                    if (creatureTown == eTown::NEUTRAL)
+                    {
+                        resultValue += dwellingSlotValue;
+                    }
                 }
             }
         }
@@ -767,7 +771,8 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     case warehouses::WAREHOUSE_OBJECT_TYPE:
     case extender::HOTA_OBJECT_TYPE:
     case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
-    case 146:
+    case extender::HOTA_UNREACHABLE_YT_OBJECT_TYPE:
+    case extender::ERA_OBJECT_TYPE:
         libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
         result = EraJS::read(h3_TextBuffer);
         break;
