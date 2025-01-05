@@ -551,8 +551,8 @@ void ObjectsExtender::CreatePatches()
 
         _PI->WriteHiHook(0x4EE01C, THISCALL_, H3GameMainSetup__LoadObjects);
 
-        _PI->WriteHiHook(0x418580, THISCALL_, LoopSoundManager::AdvMgr_MapItem_Select_Sound);
-        Era::RegisterHandler(LoopSoundManager::OnGameLeave, "OnGameLeave");
+        //   _PI->WriteHiHook(0x418580, THISCALL_, LoopSoundManager::AdvMgr_MapItem_Select_Sound);
+        // Era::RegisterHandler(LoopSoundManager::OnGameLeave, "OnGameLeave");
         //	Era::RegisterHandler(OnWogObjectHint, "OnWogObjectHint");
     }
 }
