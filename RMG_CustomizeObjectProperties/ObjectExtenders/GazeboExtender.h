@@ -16,8 +16,7 @@ struct H3MapItemGazebo
     INT32 id;
 
   public:
-    void Reset();
-    static inline BOOL IsVisitedByHero(const H3MapItemGazebo gazebo, const H3Hero *hero) noexcept;
+    static inline BOOL IsVisitedByHero(const H3MapItemGazebo *gazebo, const H3Hero *hero) noexcept;
     static inline H3MapItemGazebo *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
@@ -38,8 +37,8 @@ class GazeboExtender : public extender::ObjectsExtender
     virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept override final;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;
-    virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
-                                    int &aiMapItemWeight) const noexcept override final;
+    virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
+                                    int &aiMapItemWeight, int* moveDistance, const H3Position pos) const noexcept override final;
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
 
   private:

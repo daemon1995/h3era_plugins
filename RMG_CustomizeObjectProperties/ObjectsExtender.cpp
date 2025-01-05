@@ -269,16 +269,19 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
 
     struct MapItemSettings
     {
-        char yellowTileNonPassability;
-        char unkknownTileNonPassability[2];
+        char yellowTileNonPaasability;
+        char unkknownTileNonPaasability[2];
         char data[9];
         eObject type;
     };
 
     MapItemSettings *settingsTable = *reinterpret_cast<MapItemSettings **>(0x0660428);
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].yellowTileNonPassability = true;
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPassability[0] = true;
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPassability[1] = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].yellowTileNonPaasability = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPaasability[0] = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPaasability[1] = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].yellowTileNonPaasability = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unkknownTileNonPaasability[0] = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unkknownTileNonPaasability[1] = true;
 
     // Get All The Extenders we have
     for (auto &extender : extenders)
@@ -512,17 +515,18 @@ _LHF_(ObjectsExtender::H3AdventureManager__GetDefaultObjectHoverHint)
 _LHF_(ObjectsExtender::AIHero_GetObjectPosWeight)
 {
 
-    if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
+    if (H3MapItem* mapItem = reinterpret_cast<H3MapItem*>(c->esi))
     {
 
-        const H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
-        const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
-
+        H3Hero* currentHero = reinterpret_cast<H3Hero*>(c->ebx);
+        const H3Player* player = *reinterpret_cast<H3Player**>(c->ebp - 0x4);
+        int* moveDistance = reinterpret_cast<int*>(c->edi);
+        const H3Position pos = *reinterpret_cast<H3Position*>(c->ebp + 0x8);
         INT aiResWeight = 0;
 
-        for (const auto &extender : extenders)
+        for (const auto& extender : extenders)
         {
-            if (extender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight))
+            if (extender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight, moveDistance, pos))
             {
 
                 c->eax = aiResWeight;
@@ -594,8 +598,8 @@ BOOL ObjectsExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *cu
 {
     return false;
 }
-BOOL ObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
-                                         int &aiResWeight) const noexcept
+BOOL ObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
+                                         int &aiResWeight, int* moveDistance, const H3Position pos) const noexcept
 {
     return false;
 }
@@ -624,7 +628,7 @@ std::string ObjectProperty::GetMapKey(LPCSTR propertyString) noexcept
     static std::vector<std::string> words;
     std::string word;
     words.reserve(9);
-    // Разбиваем строку на слова и добавляем их в вектор
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     while (stream >> word)
     {
         words.emplace_back(word);

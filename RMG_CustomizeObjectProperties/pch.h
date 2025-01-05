@@ -39,6 +39,19 @@ constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 #include "ObjectExtenders/WoGObjectsExtender.h"
 #include "RMG_SettingsDlg.h"
 
+// Objects added by JackSlater
+#include "ObjectExtenders/AncientLampExtender.h"
+#include "ObjectExtenders/DreamTeacherExtender.h"
+#include "ObjectExtenders/GraveExtender.h"
+#include "ObjectExtenders/HermitsShackExtender.h"
+#include "ObjectExtenders/HillFortExtender.h"
+#include "ObjectExtenders/JunkmanExtender.h"
+#include "ObjectExtenders/MineralSpringExtender.h"
+#include "ObjectExtenders/ObservatoryExtender.h"
+#include "ObjectExtenders/SkeletonTransformerExtender.h"
+#include "ObjectExtenders/TempleOfLoyaltyExtender.h"
+#include "ObjectExtenders/TrailblazerExtender.h"
+
 // 1. Place all the obj props into mod/data/objects/*.txt and parse all the mods
 
 // 2. Add read data and add all new objects to game objects list (if insert == true);

@@ -26,8 +26,8 @@ void SpellMarketExtender::CreatePatches()
         m_isInited = true;
     }
 }
-BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
-                                             int &aiMapItemWeight) const noexcept
+BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *player,
+                                             int &aiMapItemWeight, int* moveDistance, const H3Position pos) const noexcept
 {
 
     if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))

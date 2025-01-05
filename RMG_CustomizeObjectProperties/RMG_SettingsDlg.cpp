@@ -1687,7 +1687,7 @@ void GetObjectPrototypesLists()
          eObject::RALLY_FLAG,
 
          eObject::REFUGEE_CAMP,
-
+         eObject::SANCTUARY,
          eObject::SCHOLAR,
 
          eObject::SEER_HUT,
@@ -1706,8 +1706,8 @@ void GetObjectPrototypesLists()
 
          eObject::WINDMILL, eObject::WITCH_HUT,
 
-         warehouses::WAREHOUSE_OBJECT_TYPE, extender::HOTA_OBJECT_TYPE, extender::HOTA_PICKUPABLE_OBJECT_TYPE, 146,
-         eObject::FREELANCERS_GUILD},
+         extender::ERA_OBJECT_TYPE, warehouses::WAREHOUSE_OBJECT_TYPE, extender::HOTA_OBJECT_TYPE,
+         extender::HOTA_PICKUPABLE_OBJECT_TYPE, extender::HOTA_UNREACHABLE_YT_OBJECT_TYPE, eObject::FREELANCERS_GUILD},
         {eObject::CREATURE_GENERATOR1, eObject::CREATURE_GENERATOR4},
         {eObject::PYRAMID}
 

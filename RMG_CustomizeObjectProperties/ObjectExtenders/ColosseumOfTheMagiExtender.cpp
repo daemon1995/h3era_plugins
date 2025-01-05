@@ -14,8 +14,8 @@ ColosseumOfTheMagiExtender::~ColosseumOfTheMagiExtender()
 {
 }
 
-BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
-                                                    int &aiMapItemWeight) const noexcept
+BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *player,
+                                                    int &aiMapItemWeight, int* moveDistance, const H3Position pos) const noexcept
 {
 
     if (auto colosseumOfTheMagi = H3MapItemColosseumOfTheMagi::GetFromMapItem(mapItem))
@@ -24,10 +24,13 @@ BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3
 
         if (!isVisitedByHero)
         {
-            // Код из арены для ИИ
-            int needExpoToNextLvl = h3functions::NeedExpoToNextLevel(hero->level);
-            float moveDist = (float)(2 * needExpoToNextLvl);
-            aiMapItemWeight = static_cast<int>(moveDist * hero->AI_experienceEffectiveness);
+            // Pattern used: visit ARENA 00528571
+
+            // *(float *)&pos = (float)(2 * NeedExpoToNextLevel(hero->Level));
+            float needExpoToNextLvl = static_cast<float> (2 * h3functions::NeedExpoToNextLevel(hero->level));
+            // *(_QWORD *)&v8 = (__int64)(*(float *)&pos * hero->turnExperienceToRVRatio);
+            // return v8;
+            aiMapItemWeight = static_cast<int>(needExpoToNextLvl * hero->AI_experienceEffectiveness);
         }
 
         return true;
@@ -44,7 +47,7 @@ BOOL H3MapItemColosseumOfTheMagi::IsVisitedByHero(const H3MapItemColosseumOfTheM
     return Era::GetAssocVarIntValue(h3_TextBuffer);
 }
 
-void ShowMessage(const H3MapItem *mapItem) // , const int playerGoldAmount, const bool isVisitedByHero)
+void ShowMessage(const H3MapItem *mapItem)
 {
     const bool skipMapMessage = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
 
