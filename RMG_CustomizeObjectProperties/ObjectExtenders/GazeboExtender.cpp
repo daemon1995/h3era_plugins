@@ -111,8 +111,9 @@ BOOL GazeboExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Posi
                     objName.Append(EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.visit",
                                                                 mapItem->objectType, mapItem->objectSubtype)
                                                    .String()));
-                    H3PictureCategories pics(ePictureCategories::EXPERIENCE, expGiven);
-                    agreed = H3Messagebox::Choice(objName, pics);
+                    H3PictureCategories experiencePic(ePictureCategories::EXPERIENCE, expGiven);
+                    H3PictureCategories pricePic(ePictureCategories::GOLD, -GOLD_REQUIRED - 100000);
+                    agreed = H3Messagebox::Choice(objName, experiencePic, pricePic);
                 }
                 if (agreed)
                 {
