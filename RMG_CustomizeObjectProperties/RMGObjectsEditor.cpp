@@ -750,7 +750,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     case warehouses::WAREHOUSE_OBJECT_TYPE:
     case extender::HOTA_OBJECT_TYPE:
     case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
-    case 146:
+    case extender::ERA_OBJECT_TYPE:
         libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
         result = EraJS::read(h3_TextBuffer);
         break;

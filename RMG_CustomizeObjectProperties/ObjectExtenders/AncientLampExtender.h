@@ -1,31 +1,40 @@
 #pragma once
 
-namespace gazebo
+namespace ancientLamp
 {
-constexpr int GAZEBO_OBJECT_SUBTYPE = 6;
-constexpr float EXP_GIVEN = 2000;
-constexpr int GOLD_REQUIRED = 1000;
+constexpr int ANCIENT_LAMP_OBJECT_SUBTYPE = 0;
+constexpr int ANCIENT_LAMP_CREATURE_TYPE = 37;
+constexpr int ANCIENT_LAMP_MIN_CREATURE_COUNT = 4;
+constexpr int ANCIENT_LAMP_MAX_CREATURE_COUNT = 6;
 
-struct H3MapItemGazebo
+
+struct H3MapItemAncientLamp
 {
-    static int gazeboCounter;
+    //static int ancientLampCounter;
 
-    static constexpr LPCSTR ErmVariableFormat = "gazebo_%d_%d";
+    //static constexpr LPCSTR ErmVariableFormat = "ancientLamp_%d_%d"; // ancienLampId, playerId
 
   public:
-    INT32 id;
+    unsigned _u1 : 5;
+    /** @brief [05] which players have come by*/
+    unsigned visited : 8;
+    /** @brief [13]*/
+    unsigned creatureType : 10;
+    /** @brief [23]*/
+    unsigned creatureCount : 9;
 
   public:
-    static inline BOOL IsVisitedByHero(const H3MapItemGazebo *gazebo, const H3Hero *hero) noexcept;
-    static inline H3MapItemGazebo *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    void Reset();
+    //static inline BOOL IsVisitedByPlayer(const H3MapItemAncientLamp ancientLamp, const H3Hero* hero) noexcept;
+    static inline H3MapItemAncientLamp *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class GazeboExtender : public extender::ObjectsExtender
+class AncientLampExtender : public extender::ObjectsExtender
 {
 
-    GazeboExtender();
+    AncientLampExtender();
 
-    virtual ~GazeboExtender();
+    virtual ~AncientLampExtender();
 
   private:
     virtual void CreatePatches() override;
@@ -46,7 +55,7 @@ class GazeboExtender : public extender::ObjectsExtender
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static GazeboExtender &Get();
+    static AncientLampExtender&Get();
 };
 
-} // namespace gazebo
+} // namespace ancientLamp

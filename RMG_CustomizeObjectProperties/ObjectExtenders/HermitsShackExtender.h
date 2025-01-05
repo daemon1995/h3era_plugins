@@ -1,31 +1,29 @@
 #pragma once
 
-namespace gazebo
+namespace hermitsShack
 {
-constexpr int GAZEBO_OBJECT_SUBTYPE = 6;
-constexpr float EXP_GIVEN = 2000;
-constexpr int GOLD_REQUIRED = 1000;
+constexpr int HERMITS_SHACK_OBJECT_SUBTYPE = 5;
 
-struct H3MapItemGazebo
+struct H3MapItemHermitsShack
 {
-    static int gazeboCounter;
+    static int hermitsShackCounter;
 
-    static constexpr LPCSTR ErmVariableFormat = "gazebo_%d_%d";
+    static constexpr LPCSTR ErmVariableFormat = "hermitsShack_%d_%d";
 
   public:
     INT32 id;
 
   public:
-    static inline BOOL IsVisitedByHero(const H3MapItemGazebo *gazebo, const H3Hero *hero) noexcept;
-    static inline H3MapItemGazebo *GetFromMapItem(const H3MapItem *mapItem) noexcept;
+    static inline BOOL IsVisitedByHero(const H3MapItemHermitsShack *hermitsShack, const H3Hero *hero) noexcept;
+    static inline H3MapItemHermitsShack *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class GazeboExtender : public extender::ObjectsExtender
+class HermitsShackExtender : public extender::ObjectsExtender
 {
 
-    GazeboExtender();
+    HermitsShackExtender();
 
-    virtual ~GazeboExtender();
+    virtual ~HermitsShackExtender();
 
   private:
     virtual void CreatePatches() override;
@@ -41,12 +39,8 @@ class GazeboExtender : public extender::ObjectsExtender
                                     int &aiMapItemWeight) const noexcept override final;
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
 
-  private:
-    //	static _LHF_(Game__AtShrineOfMagicIncantationSettingSpell);
-    //	static _LHF_(Shrine__AtGetName);
-
   public:
-    static GazeboExtender &Get();
+    static HermitsShackExtender &Get();
 };
 
-} // namespace gazebo
+} // namespace hermitsShack

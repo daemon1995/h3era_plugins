@@ -15,35 +15,34 @@ WateringPlaceExtender::~WateringPlaceExtender()
 BOOL WateringPlaceExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
                                                int &aiMapItemWeight) const noexcept
 {
-    // TODO: use SWAN POND???? 00528567
+    if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
+    {
+        const bool isVisitedByHero = H3MapItemWateringPlace::IsVisitedByHero(hero);
 
-    // if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
-    //{
-    //     if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
-    //     {
-    //         const H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
-    //         const bool isVisitedByHero = H3MapItemWateringPlace::IsVisitedByHero(*wateringPlace, hero);
+        if (!isVisitedByHero)
+        {
+            if (hero->movement > MOVE_POINTS_GIVEN)
+            {
+                return false;
+            }
+            //if (hero->movement < MOVE_POINTS_GIVEN) // TODO: need distance instead of hero->movement
+            //{
+            //  distance = 0;
+            //aiMapItemWeight = 10000;
+            //    return true;
+            //}
+            //else
+            //{
+            else if (hero->movement == 0) // prevent to divide by zero
+            {
+                return false;
+            }
+            aiMapItemWeight = MOVE_POINTS_GIVEN / hero->movement;
+            //}
+        }
 
-    //        if (!isVisitedByHero)
-    //        {
-    //            if (P_ActivePlayer->playerResources.gold >= GOLD_REQUIRED)
-    //            {
-    //                // адрес похожего псевдокода 0052BB89
-    //                const __int64 aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
-    //                const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
-    //                const int aiResWeight =
-    //                    (__int64)((double)aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
-
-    //                if (aiResWeight)
-    //                {
-    //                    c->eax = aiResWeight;
-    //                    c->return_address = 0x05285A1;
-    //                    return NO_EXEC_DEFAULT;
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+        return true;
+    }
 
     return false;
 }
@@ -155,11 +154,18 @@ void __stdcall OnEveryDay(Era::TEvent *event)
 
         if (H3MapItemWateringPlace::IsVisitedByHero(hero))
         {
-            hero->movement += MOVE_POINTS_GIVEN;
+            
             // hero->RecalculateMovement();
-            THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
+            //THISCALL_4(void, 0x0415D40, P_AdventureManager->Get(), 1, 0, 0); // AdvMgr_UpdateInfoPanel
+            //THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
             sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // получение имени переменной
             Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                  // обнулить переменную
+            hero->movement += MOVE_POINTS_GIVEN;
+            //THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
+            P_AdventureManager->FullUpdate();
+            // DlgHeroInfo_Update 004E247A
+            // DlgHeroInfo_ProcessAction 004DD5CE
+            // Dlg_HeroInfo_Main 004E1CBC
         }
     }
     // Для вообще всех героев (в тюрьмах, таверне и т.д.)

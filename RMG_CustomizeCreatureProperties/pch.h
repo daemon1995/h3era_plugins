@@ -16,27 +16,8 @@
 // #include "framework.h"
 
 #include "..\headers\header.h"
-#include "h3functions.hpp"
-constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
-
-#include "ObjectsExtender.h"
-// #include "RMGObjectsEditor.h"
-
-#include "ObjectExtenders/AncientLampExtender.h"
-#include "ObjectExtenders/ColosseumOfTheMagiExtender.h"
-#include "ObjectExtenders/CreatureBanksExtender.h"
-#include "ObjectExtenders/DreamTeacherExtender.h"
-#include "ObjectExtenders/GazeboExtender.h"
-#include "ObjectExtenders/HermitsShackExtender.h"
-#include "ObjectExtenders/HillFortExtender.h"
-#include "ObjectExtenders/JunkmanExtender.h"
-#include "ObjectExtenders/MineralSpringExtender.h"
-#include "ObjectExtenders/ShrinesExternder.h"
-#include "ObjectExtenders/SkeletonTransformerExtender.h"
-#include "ObjectExtenders/WarehousesExtender.h"
-#include "ObjectExtenders/WateringPlaceExtender.h"
-#include "ObjectExtenders/WoGObjectsExtender.h"
-#include "RMG_SettingsDlg.h"
+//#include "h3functions.hpp"
+//constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 
 // 1. Place all the obj props into mod/data/objects/*.txt and parse all the mods
 

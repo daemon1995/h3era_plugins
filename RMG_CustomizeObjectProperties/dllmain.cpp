@@ -62,12 +62,19 @@ _LHF_(CrBanksTxt_AfterLoad)
 
     //! Get the CreatureBanksManager and initialize it
     cbanks::CreatureBanksExtender::Get();
+    wog::WoGObjectsExtender::Get();
     shrines::ShrinesExternder::Get();
     warehouses::WarehousesExtender::Get();
-    gazebo::GazeboExtender::Get();
+    skeletonTransformer::SkeletonTransformerExtender::Get();
     colosseumOfTheMagi::ColosseumOfTheMagiExtender::Get();
-    // wateringPlace::WateringPlaceExtender::Get();
-    wog::WoGObjectsExtender::Get();
+    wateringPlace::WateringPlaceExtender::Get();
+    mineralSpring::MineralSpringExtender::Get();
+    hermitsShack::HermitsShackExtender::Get();
+    gazebo::GazeboExtender::Get();
+    junkman::JunkmanExtender::Get();
+    ancientLamp::AncientLampExtender::Get();
+    dreamTeacher::DreamTeacherExtender::Get();
+    hillFort::HillFortExtender::Get();
     //! Set patches for the RMG_SettingsDlg
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
 

@@ -44,7 +44,7 @@ BOOL H3MapItemColosseumOfTheMagi::IsVisitedByHero(const H3MapItemColosseumOfTheM
     return Era::GetAssocVarIntValue(h3_TextBuffer);
 }
 
-void ShowMessage(const H3MapItem *mapItem) // , const int playerGoldAmount, const bool isVisitedByHero)
+void ShowMessage(const H3MapItem *mapItem)
 {
     const bool skipMapMessage = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
 
