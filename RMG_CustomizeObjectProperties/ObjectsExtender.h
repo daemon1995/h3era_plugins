@@ -3,8 +3,11 @@
 #include <unordered_set>
 namespace extender
 {
+constexpr int ERA_OBJECT_TYPE = 141;
 constexpr int HOTA_OBJECT_TYPE = 144;
 constexpr int HOTA_PICKUPABLE_OBJECT_TYPE = 145;
+constexpr int HOTA_UNREACHABLE_YT_OBJECT_TYPE = 146;
+
 namespace limits
 {
 constexpr int EXTENDED = 1024;
@@ -64,8 +67,8 @@ class ObjectsExtender : public IGamePatch
                               const BOOL isHuman) const noexcept;
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept;
-    virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
-                                    int &aiResWeight) const noexcept;
+    virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
+                                    int &aiResWeight, int* moveDistance, const H3Position pos) const noexcept;
 
     //	virtual int AiMapItemWeightFunction(HookContext* c, const H3MapItem* mapItem, H3Player* player);
     // returns if object was visited by some of derived classes
