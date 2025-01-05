@@ -124,8 +124,8 @@ BOOL WateringPlaceExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const
                 hero->maxMovement += MOVE_POINTS_GIVEN;
                 hero->RecalculateMovement();
                 sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat,
-                        hero->id);                          // получение имени переменной
-                Era::SetAssocVarIntValue(h3_TextBuffer, 1); // отметить переменную, что объект посещен
+                        hero->id);                          // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                Era::SetAssocVarIntValue(h3_TextBuffer, 1); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             }
 
             return true;
@@ -164,7 +164,7 @@ BOOL WateringPlaceExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3He
     return false;
 }
 
-// TODO: Нужно использовать хук в функции перерасчета мув поинтов
+// TODO: пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 void __stdcall OnEveryDay(Era::TEvent *event)
 {
     for (const auto heroId : P_Game->players[P_CurrentPlayerID].heroIDs)
@@ -177,8 +177,8 @@ void __stdcall OnEveryDay(Era::TEvent *event)
             // hero->RecalculateMovement();
             // THISCALL_4(void, 0x0415D40, P_AdventureManager->Get(), 1, 0, 0); // AdvMgr_UpdateInfoPanel
             // THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
-            sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // получение имени переменной
-            Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                  // обнулить переменную
+            sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+            Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             hero->movement += MOVE_POINTS_GIVEN;
             // THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
             P_AdventureManager->FullUpdate();
@@ -187,7 +187,7 @@ void __stdcall OnEveryDay(Era::TEvent *event)
             // Dlg_HeroInfo_Main 004E1CBC
         }
     }
-    // Для вообще всех героев (в тюрьмах, таверне и т.д.)
+    // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅ.пїЅ.)
     // for (size_t i = 0; i < h3::limits::HEROES; i++)
     //{
     //    auto hero = &P_Game->heroes[i];
@@ -195,12 +195,12 @@ void __stdcall OnEveryDay(Era::TEvent *event)
     //    {
     //        if (H3MapItemWateringPlace::IsVisitedByHero(hero))
     //        {
-    //            //hero->maxMovement += MOVE_POINTS_GIVEN; // не работает
-    //            //hero->movement += 456456;// MOVE_POINTS_GIVEN; // не работает
+    //            //hero->maxMovement += MOVE_POINTS_GIVEN; // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    //            //hero->movement += 456456;// MOVE_POINTS_GIVEN; // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     //            hero->maxMovement = 213123;
-    //            //hero->RecalculateMovement(); // не работает
-    //            sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // получение имени
-    //            переменной Era::SetAssocVarIntValue(h3_TextBuffer, 0); // обнулить переменную
+    //            //hero->RecalculateMovement(); // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    //            sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+    //            пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Era::SetAssocVarIntValue(h3_TextBuffer, 0); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     //        }
     //    }
     //}
@@ -209,8 +209,8 @@ void __stdcall OnEveryDay(Era::TEvent *event)
 _LHF_(WateringPlace_HeroReset)
 {
     int heroId = c->edx; // !!UN:C(hook)/(STRUCT_HOOK_CONTEXT_EDX)/4/?(heroId:y);
-    sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, heroId); // получение имени переменной
-    Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                // обнулить переменную
+    sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, heroId); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
     return EXEC_DEFAULT;
 }
@@ -219,8 +219,8 @@ void WateringPlaceExtender::CreatePatches()
 {
     if (!m_isInited)
     {
-        Era::RegisterHandler(OnEveryDay, "OnEveryDay");      // строка должна совпадать с неймингом триггера в ERA
-        _pi->WriteLoHook(0x4D89B8, WateringPlace_HeroReset); // 5081528 = 4D89B8 - hero reset // Обнуляем посещение
+        Era::RegisterHandler(OnEveryDay, "OnEveryDay");      // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ ERA
+        _pi->WriteLoHook(0x4D89B8, WateringPlace_HeroReset); // 5081528 = 4D89B8 - hero reset // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
         m_isInited = true;
     }

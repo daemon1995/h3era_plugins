@@ -16,41 +16,8 @@
 // #include "framework.h"
 
 #include "..\headers\header.h"
-#include "h3functions.hpp"
-constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
-#include "SoundManager.h"
-
-#include "ObjectsExtender.h"
-// #include "RMGObjectsEditor.h"
-
-// #include "CreatureBanksExtender.h"
-// #include "ShrinesExternder.h"
-// #include "WarehousesExtender.h"
-// #include "ShrinesExternder.h"
-// #include "WarehousesExtender.h"
-#include "ObjectExtenders/ColosseumOfTheMagiExtender.h"
-#include "ObjectExtenders/CreatureBanksExtender.h"
-#include "ObjectExtenders/GazeboExtender.h"
-#include "ObjectExtenders/ShrinesExternder.h"
-#include "ObjectExtenders/SpellMarketExtender.h"
-#include "ObjectExtenders/UniversityExtender.h"
-#include "ObjectExtenders/WarehousesExtender.h"
-#include "ObjectExtenders/WateringPlaceExtender.h"
-#include "ObjectExtenders/WoGObjectsExtender.h"
-#include "RMG_SettingsDlg.h"
-
-// Objects added by JackSlater
-#include "ObjectExtenders/AncientLampExtender.h"
-#include "ObjectExtenders/DreamTeacherExtender.h"
-#include "ObjectExtenders/GraveExtender.h"
-#include "ObjectExtenders/HermitsShackExtender.h"
-#include "ObjectExtenders/HillFortExtender.h"
-#include "ObjectExtenders/JunkmanExtender.h"
-#include "ObjectExtenders/MineralSpringExtender.h"
-#include "ObjectExtenders/ObservatoryExtender.h"
-#include "ObjectExtenders/SkeletonTransformerExtender.h"
-#include "ObjectExtenders/TempleOfLoyaltyExtender.h"
-#include "ObjectExtenders/TrailblazerExtender.h"
+//#include "h3functions.hpp"
+//constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 
 // 1. Place all the obj props into mod/data/objects/*.txt and parse all the mods
 

@@ -217,9 +217,9 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 {
                     // add these objects w/o any restrictions
                 case eObject::PANDORAS_BOX:
-                case eObject::KEYMASTER:
+                //case eObject::KEYMASTER:
                 case eObject::PRISON:
-                case eObject::SEER_HUT:
+                //case eObject::SEER_HUT:
 
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
                     continue;
@@ -394,16 +394,9 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
             {
                 auto &info = P_CreatureInformation[creatureType];
                 const int creatureTown = info.town;
-                if (creatureTown != zoneGen->townType2 && i == 0)
+                if (creatureTown != zoneGen->townType2 && i == 0) // define town association by first creature in dwelling
                 {
-                    if (i == 0)
-                    {
-                        return resultValue;
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                    return resultValue; // -1
                 }
 
                 if (const int aiValue = info.aiValue)
@@ -417,18 +410,17 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
                         {
                             dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
                         }
+                        resultValue += dwellingSlotValue + (totalTownsCount * aiValue >> 1);
                     }
-                    resultValue += dwellingSlotValue;
-
-                    if (creatureTown != eTown::NEUTRAL)
+                    if (creatureTown == eTown::NEUTRAL)
                     {
-                        resultValue += totalTownsCount * aiValue >> 1;
+                        resultValue += dwellingSlotValue;
                     }
                 }
             }
         }
 
-        return resultValue;
+        return resultValue >> 2; // resultValue / 2;
     }
 
     const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
@@ -1075,7 +1067,8 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
         case warehouses::WAREHOUSE_OBJECT_TYPE:
         case extender::HOTA_OBJECT_TYPE:
         case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
-        case 146:
+        case extender::HOTA_UNREACHABLE_YT_OBJECT_TYPE:
+        case extender::ERA_OBJECT_TYPE:
             result = jsonString;
             break;
         case eObject::RESOURCE:

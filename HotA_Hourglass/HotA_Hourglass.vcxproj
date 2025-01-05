@@ -19,31 +19,32 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>16.0</VCProjectVersion>
+    <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{01700c95-8606-446e-aab8-96975f7b1761}</ProjectGuid>
-    <RootNamespace>RMGCustomizeObjectProperties</RootNamespace>
+    <ProjectGuid>{E3193CA2-5829-482D-88CC-5196D53CB3F9}</ProjectGuid>
+    <RootNamespace>WayfarersBoots</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>HotA_Hourglass</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <UseOfMfc>false</UseOfMfc>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -51,7 +52,6 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -72,46 +72,27 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>E:\Games\HoMM 3 ERA\Mods\JS - new objects\EraPlugins\</OutDir>
+    <OutDir>E:\Games\HoMM 3 ERA\Mods\Slater777 Scripts and Fixes\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
-    <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>E:\Games\HoMM 3 ERA\Mods\JS - new objects\EraPlugins\</OutDir>
+    <OutDir>E:\Games\HoMM 3 ERA\Mods\Slater777 Scripts and Fixes\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
-    <IncludePath>$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
-    <TargetExt>.era</TargetExt>
-    <IncludePath>C:\Users\dimon\source\repos\heroes\oldHeroesHeaders\;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
-    <TargetExt>.era</TargetExt>
-    <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;RMGCUSTOMIZEOBJECTPROPERTIES_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;WAYFARERSBOOTS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>Default</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <GenerateMapFile>true</GenerateMapFile>
-      <MapFileName>D:\games\HoMM 3 ERA\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,16 +100,12 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>
-      </SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;RMGCUSTOMIZEOBJECTPROPERTIES_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>false</ConformanceMode>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;WAYFARERSBOOTS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>Default</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
-      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,22 +113,16 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <GenerateMapFile>true</GenerateMapFile>
-      <MapFileName>D:\SW\ExeMapCompiler\$(ProjectName).map</MapFileName>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy "$(TargetPath)" "D:\games\HoMM 3 ERA test\Mods\wog\eraplugins\" /Y /I</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;RMGCUSTOMIZEOBJECTPROPERTIES_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WAYFARERSBOOTS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,11 +136,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;RMGCUSTOMIZEOBJECTPROPERTIES_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WAYFARERSBOOTS_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -180,60 +150,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ObjectExtenders\AncientLampExtender.h" />
-    <ClInclude Include="ObjectExtenders\DreamTeacherExtender.h" />
-    <ClInclude Include="ObjectExtenders\GraveExtender.h" />
-    <ClInclude Include="ObjectExtenders\HermitsShackExtender.h" />
-    <ClInclude Include="ObjectExtenders\HillFortExtender.h" />
-    <ClInclude Include="ObjectExtenders\JunkmanExtender.h" />
-    <ClInclude Include="ObjectExtenders\MineralSpringExtender.h" />
-    <ClInclude Include="ObjectExtenders\ObservatoryExtender.h" />
-    <ClInclude Include="ObjectExtenders\SkeletonTransformerExtender.h" />
-    <ClInclude Include="ObjectExtenders\SpellMarketExtender.h" />
-    <ClInclude Include="ObjectExtenders\TempleOfLoyaltyExtender.h" />
-    <ClInclude Include="ObjectExtenders\TrailblazerExtender.h" />
-    <ClInclude Include="ObjectExtenders\UniversityExtender.h" />
-    <ClInclude Include="SoundManager.h" />
-    <ClInclude Include="ObjectExtenders\ColosseumOfTheMagiExtender.h" />
-    <ClInclude Include="ObjectExtenders\CreatureBanksExtender.h" />
-    <ClInclude Include="ObjectExtenders\GazeboExtender.h" />
-    <ClInclude Include="ObjectExtenders\ShrinesExternder.h" />
-    <ClInclude Include="ObjectExtenders\WarehousesExtender.h" />
-    <ClInclude Include="ObjectExtenders\WateringPlaceExtender.h" />
-    <ClInclude Include="ObjectExtenders\WoGObjectsExtender.h" />
-    <ClInclude Include="ObjectsExtender.h" />
-    <ClInclude Include="RMGObjectsEditor.h" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="RMG_SettingsDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="ObjectExtenders\AncientLampExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\DreamTeacherExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\GraveExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\HermitsShackExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\HillFortExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\JunkmanExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\MineralSpringExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\ObservatoryExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\SkeletonTransformerExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\TempleOfLoyaltyExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\TrailblazerExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\UniversityExtender.cpp" />
-    <ClCompile Include="SoundManager.cpp" />
-    <ClCompile Include="ObjectExtenders\ColosseumOfTheMagiExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\CreatureBanksExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\GazeboExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\ShrinesExternder.cpp" />
-    <ClCompile Include="ObjectExtenders\WarehousesExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\WateringPlaceExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\WoGObjectsExtender.cpp" />
-    <ClCompile Include="ObjectsExtender.cpp" />
-    <ClCompile Include="RMGObjectsEditor.cpp" />
-    <ClCompile Include="RMG_SettingsDlg.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

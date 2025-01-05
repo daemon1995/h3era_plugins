@@ -80,6 +80,20 @@ _LHF_(CrBanksTxt_AfterLoad)
     spellmarket::SpellMarketExtender::Get();
     university::UniversityExtender::Get();
 
+    // Objects added by JackSlater (alfabet order)
+    ancientLamp::AncientLampExtender::Get();
+    dreamTeacher::DreamTeacherExtender::Get();
+    grave::GraveExtender::Get();
+    hermitsShack::HermitsShackExtender::Get();
+    hillFort::HillFortExtender::Get();
+    junkman::JunkmanExtender::Get();
+    mineralSpring::MineralSpringExtender::Get();
+    observatory::ObservatoryExtender::Get();
+    skeletonTransformer::SkeletonTransformerExtender::Get();
+    templeOfLoyalty::TempleOfLoyaltyExtender::Get();
+    trailblazer::TrailblazerExtender::Get();
+    wateringPlace::WateringPlaceExtender::Get();
+
     //! Set patches for the RMG_SettingsDlg
 
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
