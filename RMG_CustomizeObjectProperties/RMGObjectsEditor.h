@@ -25,7 +25,7 @@ struct RMGObjectInfo
 
   public:
     static constexpr LPCSTR PROPERTY_NAMES[] = {"enabled", "map", "zone", "value", "density"};
-    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties1.ini";
+    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
     static constexpr LPCSTR OBJECT_INFO_INI_FORMAT = "%d_%d_%d";
 
     static constexpr LPCSTR OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%s";

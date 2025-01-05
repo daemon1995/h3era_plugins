@@ -29,7 +29,11 @@ int RMGObjectsEditor::MaxMapTypeLimit(const UINT objType) const noexcept
 {
     return objType < H3_MAX_OBJECTS ? limitsInfo.mapTypesLimit[objType] : 0;
 }
-
+inline BOOL DisableWoGObjects(H3RmgObjectGenerator *p_ObjGen)
+{
+    return wog::WoGObjectsExtender::IsWoGObject(p_ObjGen) &&
+           wog::WoGObjectsExtender::WoGObjectHasOptionEnabled(p_ObjGen);
+}
 void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 {
 
@@ -164,12 +168,12 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             for (auto &rmgObjGen : *rmgObjectsList)
             {
 
-                const auto &rmgObjInfo = RMGObjectInfo::DefaultObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
+                const auto &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
                 // if this is first fucntion call with pseudo generator
                 // we collect data
 
                 // if object is enabled
-                if (rmgObjInfo.enabled)
+                if (rmgObjInfo.enabled && !DisableWoGObjects(rmgObjGen))
                 {
 
                     if (rmgObjInfo.density > 0)
@@ -259,7 +263,7 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 
     THISCALL_2(void, h->GetDefaultFunc(), rmg, RmgTemplate);
 
-    auto var = RMGObjectInfo::currentRMGObjectsInfoByType;
+    // auto var = RMGObjectInfo::currentRMGObjectsInfoByType;
     // create limits counters
     generatedInfo.Assign(rmg, RMGObjectInfo::CurrentObjectInfo());
 }
@@ -493,6 +497,7 @@ BOOL RMGObjectInfo::WriteToINI() const noexcept
 
 inline void RMGObjectInfo::ReadFromINI() noexcept
 {
+
     constexpr int zoneType = 0;
 
     H3String sectionName = H3String::Format(OBJECT_INFO_INI_FORMAT, type, subtype, zoneType);
@@ -504,7 +509,7 @@ inline void RMGObjectInfo::ReadFromINI() noexcept
             const int iniValue = atoi(h3_TextBuffer);
             if (data[i] != iniValue)
             {
-                //   data[i] = iniValue;
+                data[i] = iniValue;
             }
         }
     }
@@ -628,6 +633,43 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         dwellingObjInfo.value = creatureAIValue;
     }
 }
+
+void RemoveExtraIniKeys(LPCSTR INI_FILE_PATH)
+{
+
+    // std::ifstream infile(filename);
+    // std::ofstream outfile("temp.ini"); //temp file for writing
+    // std::string line;
+    // bool inSection = false;
+
+    // while (std::getline(infile, line)) {
+    //     // if string starts with section header
+    //     if (line == "[" + section + "]") {
+    //         inSection = true;
+    //         outfile << line << std::endl; //write section header
+    //         continue;
+    //     }
+
+    //    // if we are in section and line starts with key
+    //    if (inSection && line.find(key + "=") == 0) {
+    //        continue; // skip this line
+    //    }
+
+    //    // if we out of section then just write the line
+    //    if (inSection && line.empty()) {
+    //        inSection = false; // leave section if string is empty
+    //    }
+
+    //    outfile << line << std::endl; // write all the other lines
+    //}
+    // infile.close();
+    // outfile.close();
+
+    //// replace original file
+    // std::remove(filename.c_str());
+    // std::rename("temp.ini", filename.c_str());
+}
+
 void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
 {
     // copy default objects to the current one
@@ -648,7 +690,11 @@ void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
             objectInfo.Clamp();
         }
     }
+    Era::ClearIniCache(INI_FILE_PATH);
+
+    RemoveExtraIniKeys(INI_FILE_PATH);
 }
+
 LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 {
     LPCSTR result = h3_NullString;
@@ -713,18 +759,6 @@ int *create2DArray(int X, int Y)
     return new int[X * Y];
 }
 
-struct WoGObjectData
-{
-};
-
-void DisableWoGObjects(H3RmgObjectGenerator *p_ObjGen)
-{
-    if (wog::WoGObjectsExtender::IsWoGObject(p_ObjGen) && wog::WoGObjectsExtender::WoGObjectHasOptionEnabled(p_ObjGen))
-    {
-        p_ObjGen->value = 0;
-        p_ObjGen->density = 0;
-    }
-}
 void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
                            const std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS])
 {
@@ -751,7 +785,6 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
             {
                 maxObjectSubtype = p_ObjGen->subtype + 1;
             }
-            DisableWoGObjects(p_ObjGen);
         }
 
         // create conters and limits

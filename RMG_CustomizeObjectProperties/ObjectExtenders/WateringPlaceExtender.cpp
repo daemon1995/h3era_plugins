@@ -22,9 +22,9 @@ BOOL WateringPlaceExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero 
     //     if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
     //     {
     //         const H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
-    //         const bool isVistedByHero = H3MapItemWateringPlace::IsVisitedByHero(*wateringPlace, hero);
+    //         const bool isVisitedByHero = H3MapItemWateringPlace::IsVisitedByHero(*wateringPlace, hero);
 
-    //        if (!isVistedByHero)
+    //        if (!isVisitedByHero)
     //        {
     //            if (P_ActivePlayer->playerResources.gold >= GOLD_REQUIRED)
     //            {
@@ -55,33 +55,35 @@ BOOL H3MapItemWateringPlace::IsVisitedByHero(const H3Hero *hero) noexcept
     return Era::GetAssocVarIntValue(h3_TextBuffer);
 }
 
-void ShowMessage(const H3MapItem *mapItem, const bool isVistedByHero)
+void ShowMessage(const H3MapItem *mapItem)
 {
     const bool skipMapMessage = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
 
     H3String objName = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
 
+    objName.Append(EraJS::read(
+        H3String::Format("RMG.objectGeneration.%d.%d.text.visited", mapItem->objectType, mapItem->objectSubtype)
+            .String()));
+
     if (skipMapMessage)
     {
-        if (isVistedByHero)
-        {
-            objName.Append(EraJS::read(
-                H3String::Format("RMG.objectGeneration.%d.%d.text.visited", mapItem->objectType, mapItem->objectSubtype)
-                    .String()));
-        }
         THISCALL_4(void, 0x415FC0, P_AdventureMgr->Get(), objName.String(), -1, -1);
     }
-
     else
     {
-        if (isVistedByHero)
-        {
-            objName.Append(EraJS::read(
-                H3String::Format("RMG.objectGeneration.%d.%d.text.visited", mapItem->objectType, mapItem->objectSubtype)
-                    .String()));
-        }
         H3Messagebox::Show(objName);
     }
+}
+
+BOOL AskQuestion(const H3MapItem *mapItem)
+{
+    H3String objName = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
+
+    objName.Append(EraJS::read(
+        H3String::Format("RMG.objectGeneration.%d.%d.text.visit", mapItem->objectType, mapItem->objectSubtype)
+            .String()));
+
+    return H3Messagebox::Choice(objName);
 }
 
 BOOL WateringPlaceExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Position pos,
@@ -96,11 +98,7 @@ BOOL WateringPlaceExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const
             BOOL agreed = !isHuman;
             if (isHuman)
             {
-                H3String objName = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
-                objName.Append(EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.visit",
-                                                            mapItem->objectType, mapItem->objectSubtype)
-                                               .String()));
-                agreed = H3Messagebox::Choice(objName);
+                agreed = AskQuestion(mapItem);
             }
             if (agreed)
             {
@@ -111,12 +109,13 @@ BOOL WateringPlaceExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const
                         hero->id);                          // получение имени переменной
                 Era::SetAssocVarIntValue(h3_TextBuffer, 1); // отметить переменную, что объект посещен
             }
+
             return true;
         }
 
         if (isHuman)
         {
-            ShowMessage(mapItem, isVisitedByHero);
+            ShowMessage(mapItem);
         }
     }
 
@@ -133,9 +132,9 @@ BOOL WateringPlaceExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3He
 
         if (const H3Hero *hero = P_ActivePlayer->GetActiveHero())
         {
-            const bool isVistedByHero = H3MapItemWateringPlace::IsVisitedByHero(hero);
+            const bool isVisitedByHero = H3MapItemWateringPlace::IsVisitedByHero(hero);
             sprintf(h3_TextBuffer, "%s%s", isRightClick ? "\n\n" : " ",
-                    P_GeneralText->GetText(isVistedByHero ? 354 : 355));
+                    P_GeneralText->GetText(isVisitedByHero ? 354 : 355));
             objName.Append(h3_TextBuffer);
         }
 
@@ -147,6 +146,7 @@ BOOL WateringPlaceExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3He
     return false;
 }
 
+// TODO: Нужно использовать хук в функции перерасчета мув поинтов
 void __stdcall OnEveryDay(Era::TEvent *event)
 {
     for (const auto heroId : P_Game->players[P_CurrentPlayerID].heroIDs)
@@ -157,7 +157,7 @@ void __stdcall OnEveryDay(Era::TEvent *event)
         {
             hero->movement += MOVE_POINTS_GIVEN;
             // hero->RecalculateMovement();
-            THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1);              // update screen
+            THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
             sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // получение имени переменной
             Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                  // обнулить переменную
         }

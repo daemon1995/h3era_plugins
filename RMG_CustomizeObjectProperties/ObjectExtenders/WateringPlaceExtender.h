@@ -13,7 +13,7 @@ struct H3MapItemWateringPlace
     // INT32 id;
 
   public:
-    //void Reset();
+    // void Reset();
     static inline BOOL IsVisitedByHero(const H3Hero *hero) noexcept;
     static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };

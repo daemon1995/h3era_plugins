@@ -546,7 +546,13 @@ BOOL RMG_SettingsDlg::SaveRMGObjectsInfo(const BOOL saveIni) const noexcept
     bool success = true;
 
     const int zoneType = 0;
-    const auto editor = &editor::RMGObjectsEditor::Get();
+
+    if (saveIni)
+    {
+        Era::ClearIniCache(RMGObjectInfo::INI_FILE_PATH);
+        DeleteFileA(RMGObjectInfo::INI_FILE_PATH);
+    }
+
     for (auto &page : m_pages)
     {
         // iterate pages
@@ -567,7 +573,7 @@ BOOL RMG_SettingsDlg::SaveRMGObjectsInfo(const BOOL saveIni) const noexcept
         }
     }
 
-    return saveIni ? Era::SaveIni(INI_FILE_PATH) : success;
+    return saveIni ? Era::SaveIni(RMGObjectInfo::INI_FILE_PATH) : success;
 }
 
 void RMG_SettingsDlg::ObjectsPage::CreateVerticalScrollBar()

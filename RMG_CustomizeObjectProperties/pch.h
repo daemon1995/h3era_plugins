@@ -26,6 +26,7 @@ constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 // #include "WarehousesExtender.h"
 // #include "ShrinesExternder.h"
 // #include "WarehousesExtender.h"
+#include "ObjectExtenders/ColosseumOfTheMagiExtender.h"
 #include "ObjectExtenders/CreatureBanksExtender.h"
 #include "ObjectExtenders/GazeboExtender.h"
 #include "ObjectExtenders/ShrinesExternder.h"

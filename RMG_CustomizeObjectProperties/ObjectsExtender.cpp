@@ -2,7 +2,7 @@
 namespace extender
 {
 
-std::set<ObjectsExtender *> ObjectsExtender::extenders;
+std::vector<ObjectsExtender *> ObjectsExtender::extenders;
 std::vector<std::string> ObjectsExtender::additionalProperties;
 std::vector<RMGObjectInfo> ObjectsExtender::additionalRmgObjects;
 LoopSoundManager ObjectsExtender::soundManager;
@@ -24,7 +24,7 @@ ObjectsExtender::ObjectsExtender(PatcherInstance *pi) : IGamePatch(pi)
 {
 
     CreatePatches();
-    extenders.insert(this);
+    extenders.emplace_back(this);
 }
 
 // call atoi for hte first txt file
@@ -67,7 +67,7 @@ void __stdcall OnWogObjectHint(Era::TEvent *e)
 
 ObjectsExtender::~ObjectsExtender()
 {
-    extenders.erase(this);
+    // extenders.erase(this);
     additionalProperties.clear();
 }
 
@@ -274,15 +274,7 @@ H3RmgObjectGenerator *ObjectsExtender::CreateDefaultH3RmgObjectGenerator(const R
 }
 H3RmgObjectGenerator *ObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
 {
-
-    H3RmgObjectGenerator *objGen = nullptr;
-
-    if (objectInfo.type == eObject::PYRAMID && objectInfo.subtype > 0)
-    {
-        objGen = ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
-    }
-
-    return objGen;
+    return CreateDefaultH3RmgObjectGenerator(objectInfo);
 }
 
 bool RMGObjectSetable::operator<(const RMGObjectSetable &other) const

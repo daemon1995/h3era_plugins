@@ -44,7 +44,7 @@ class ObjectsExtender : public IGamePatch
 {
 
     static LoopSoundManager soundManager;
-    static std::set<ObjectsExtender *> extenders;
+    static std::vector<ObjectsExtender *> extenders;
 
   protected:
     static std::vector<std::string> additionalProperties;
@@ -94,7 +94,8 @@ class ObjectsExtender : public IGamePatch
     static void LoadMapObjectPropertiesByTypeSubtypes() noexcept;
     static void LoadMapObjectPropertiesFromLoadedMods() noexcept;
 public:
-    static void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList);
+    static void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
+   // static void HandleRmgOjectGeneratorBeforeAdding(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
 
     // static void __stdcall H3AdventureManager__ObjectVisit_SoundPlay(HiHook* h, const int objType, const int
     // objSetup);
