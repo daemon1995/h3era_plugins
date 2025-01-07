@@ -399,6 +399,8 @@ void AdventureHintsSettings::reset()
     m_objectsToDraw[eObject::CAMPFIRE] = true;
     m_objectsToDraw[eObject::FLOTSAM] = true;
     m_objectsToDraw[eObject::SHIPWRECK_SURVIVOR] = true;
+    m_objectsToDraw[142] = true;
+    m_objectsToDraw[144] = true;
 
     // m_objectsToDraw[eObject::MONSTER] = true;
 }
