@@ -39,7 +39,6 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 {
 
     // set globalData array default size
-    // defaultRMGObjectsInfoByType.resize(H3_MAX_OBJECTS);
 
     // get default limit from original code
     const int defaultLimit = IntAt(0x538232 + 1);
@@ -168,6 +167,10 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
             for (auto &rmgObjGen : *rmgObjectsList)
             {
+                if (rmgObjGen->type == eObject::SEER_HUT)
+                {
+                    continue;
+                }
 
                 const auto &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
                 // if this is first fucntion call with pseudo generator
@@ -257,6 +260,11 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 
 #ifdef _DEBUG
     constexpr int TEST_SEED = 23432434;
+    srand(GetTime());
+    const unsigned char objectGenAttemps = rand() % 100 + 3;
+    ByteAt(0x0546A6F + 2) = objectGenAttemps;
+    H3Messagebox(Era::IntToStr(objectGenAttemps).c_str());
+
     const_cast<H3RmgRandomMapGenerator *>(rmg)->randomSeed = TEST_SEED;
     H3Random::SetRandomSeed(rmg->randomSeed);
     CDECL_1(void, 0x61841F, TEST_SEED);
@@ -635,42 +643,6 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     }
 }
 
-void RemoveExtraIniKeys(LPCSTR INI_FILE_PATH)
-{
-
-    // std::ifstream infile(filename);
-    // std::ofstream outfile("temp.ini"); //temp file for writing
-    // std::string line;
-    // bool inSection = false;
-
-    // while (std::getline(infile, line)) {
-    //     // if string starts with section header
-    //     if (line == "[" + section + "]") {
-    //         inSection = true;
-    //         outfile << line << std::endl; //write section header
-    //         continue;
-    //     }
-
-    //    // if we are in section and line starts with key
-    //    if (inSection && line.find(key + "=") == 0) {
-    //        continue; // skip this line
-    //    }
-
-    //    // if we out of section then just write the line
-    //    if (inSection && line.empty()) {
-    //        inSection = false; // leave section if string is empty
-    //    }
-
-    //    outfile << line << std::endl; // write all the other lines
-    //}
-    // infile.close();
-    // outfile.close();
-
-    //// replace original file
-    // std::remove(filename.c_str());
-    // std::rename("temp.ini", filename.c_str());
-}
-
 void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
 {
     // copy default objects to the current one
@@ -692,8 +664,6 @@ void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
         }
     }
     Era::ClearIniCache(INI_FILE_PATH);
-
-    RemoveExtraIniKeys(INI_FILE_PATH);
 }
 
 LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)

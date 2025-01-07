@@ -20,12 +20,12 @@ BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3
 
     if (auto colosseumOfTheMagi = H3MapItemColosseumOfTheMagi::GetFromMapItem(mapItem))
     {
-        const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(*colosseumOfTheMagi, hero);
+        const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(colosseumOfTheMagi, hero);
 
         if (!isVisitedByHero)
         {
             // Код из арены для ИИ
-            int needExpoToNextLvl = FASTCALL_1(int, 0x04DA690, hero->level);
+            int needExpoToNextLvl = h3functions::NeedExpoToNextLevel(hero->level);
             float moveDist = (float)(2 * needExpoToNextLvl);
             aiMapItemWeight = static_cast<int>(moveDist * hero->AI_experienceEffectiveness);
         }
@@ -36,10 +36,10 @@ BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3
     return false;
 }
 
-BOOL H3MapItemColosseumOfTheMagi::IsVisitedByHero(const H3MapItemColosseumOfTheMagi colosseumOfTheMagi,
+BOOL H3MapItemColosseumOfTheMagi::IsVisitedByHero(const H3MapItemColosseumOfTheMagi *colosseumOfTheMagi,
                                                   const H3Hero *hero) noexcept
 {
-    sprintf(h3_TextBuffer, ErmVariableFormat, colosseumOfTheMagi.id, hero->id);
+    sprintf(h3_TextBuffer, ErmVariableFormat, colosseumOfTheMagi->id, hero->id);
 
     return Era::GetAssocVarIntValue(h3_TextBuffer);
 }
@@ -84,7 +84,7 @@ BOOL ColosseumOfTheMagiExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, 
     if (auto colosseumOfTheMagi = H3MapItemColosseumOfTheMagi::GetFromMapItem(mapItem))
     {
 
-        const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(*colosseumOfTheMagi, hero);
+        const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(colosseumOfTheMagi, hero);
 
         if (!isVisitedByHero)
         {
@@ -165,7 +165,7 @@ BOOL ColosseumOfTheMagiExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const
 
         if (const H3Hero *hero = P_ActivePlayer->GetActiveHero())
         {
-            const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(*colosseumOfTheMagi, hero);
+            const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(colosseumOfTheMagi, hero);
             sprintf(h3_TextBuffer, "%s%s", isRightClick ? "\n\n" : " ",
                     P_GeneralText->GetText(isVisitedByHero ? 354 : 355));
             objName.Append(h3_TextBuffer);

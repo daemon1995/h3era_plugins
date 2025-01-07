@@ -3,12 +3,13 @@
 #include <set>
 namespace extender
 {
-    constexpr int HOTA_OBJECT_TYPE = 144;
-    namespace limits
-    {
-        constexpr int EXTENDED = 1024;
-        constexpr int COMMON = 255;
-    }
+constexpr int HOTA_OBJECT_TYPE = 144;
+constexpr int HOTA_PICKUPABLE_OBJECT_TYPE = 145;
+namespace limits
+{
+constexpr int EXTENDED = 1024;
+constexpr int COMMON = 255;
+} // namespace limits
 
 // temp struct to allow add line into protected field "H3Vector<LPCSTR> text;" at 0x1C
 struct EditableH3TextFile : public H3TextFile
@@ -22,22 +23,20 @@ struct RMGObjectSetable
     bool operator<(const RMGObjectSetable &other) const;
 };
 
-
 struct LoopSoundManager
 {
     BOOL enterSoundChanged = false;
     BOOL loopSoundChanged = false;
-    H3WavFile* defaultWav = nullptr;
+    H3WavFile *defaultWav = nullptr;
 
-    std::vector<H3WavFile*> loopSounds;
+    std::vector<H3WavFile *> loopSounds;
 
     std::vector<LPCSTR> loopSoundNames;
 
-public:
-    static int __stdcall AdvMgr_MapItem_Select_Sound(HiHook* h, H3AdventureManager* adv, const int x, const int y,
-        const int z);
-    static void __stdcall OnGameLeave(Era::TEvent* event);
-
+  public:
+    static int __stdcall AdvMgr_MapItem_Select_Sound(HiHook *h, H3AdventureManager *adv, const int x, const int y,
+                                                     const int z);
+    static void __stdcall OnGameLeave(Era::TEvent *event);
 };
 
 class ObjectsExtender : public IGamePatch
@@ -93,9 +92,10 @@ class ObjectsExtender : public IGamePatch
     static INT ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRightClick);
     static void LoadMapObjectPropertiesByTypeSubtypes() noexcept;
     static void LoadMapObjectPropertiesFromLoadedMods() noexcept;
-public:
-    static void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
-   // static void HandleRmgOjectGeneratorBeforeAdding(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
+
+  public:
+    static void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList);
+    // static void HandleRmgOjectGeneratorBeforeAdding(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
 
     // static void __stdcall H3AdventureManager__ObjectVisit_SoundPlay(HiHook* h, const int objType, const int
     // objSetup);

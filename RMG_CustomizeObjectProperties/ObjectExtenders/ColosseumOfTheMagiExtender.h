@@ -14,8 +14,7 @@ struct H3MapItemColosseumOfTheMagi
     INT32 id;
 
   public:
-    void Reset();
-    static inline BOOL IsVisitedByHero(const H3MapItemColosseumOfTheMagi colosseumOfTheMagi,
+    static inline BOOL IsVisitedByHero(const H3MapItemColosseumOfTheMagi *colosseumOfTheMagi,
                                        const H3Hero *hero) noexcept;
     static inline H3MapItemColosseumOfTheMagi *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };

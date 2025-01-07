@@ -80,7 +80,7 @@ BOOL WarehousesExtender::InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexc
 {
     if (const auto warehouse = H3MapItemWarehouse::GetWarehouse(mapItem))
     {
-        *warehouse = {};
+        
         warehouse->Reset();
         return true;
     }
