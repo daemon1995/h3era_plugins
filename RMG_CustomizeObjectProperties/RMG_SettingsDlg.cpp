@@ -36,8 +36,18 @@
     -- Add categories for the all pages as dropdown list
 */
 
-constexpr INT16 SELECTION_DLG_RMG_SETTINGS_BUTTON_ID = 1221;
-constexpr INT16 SELECTION_DLG_RMG_SETTINGS_TEXT_ID = 1222;
+namespace itemIds
+{
+
+constexpr INT16 FIRST = 1221;
+constexpr INT16 DLG_SETTINGS_BUTTON_ID = FIRST;
+constexpr INT16 RMG_SETTINGS_TEXT_ID = FIRST + 1;
+constexpr INT16 RMG_SEED_TEXTEDIT_ID = FIRST + 2;
+constexpr INT16 RMG_SEED_TEXT_ID = FIRST + 3;
+constexpr INT16 RMG_RANDOMIZE_BUTTON_ID = FIRST + 4;
+constexpr INT16 LAST = RMG_RANDOMIZE_BUTTON_ID;
+
+} // namespace itemIds
 
 UINT rmgdlg::RMG_SettingsDlg::ObjectsPanel::id = 0;
 
@@ -154,6 +164,7 @@ enum eZoneType : INT
 
 namespace rmgdlg
 {
+DWORD RMG_SettingsDlg::userRandSeed = 0;
 
 std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> RMG_SettingsDlg::m_banks;
 std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> RMG_SettingsDlg::m_commonObjects;
@@ -195,6 +206,12 @@ const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *>
     GetObjectAttributes() noexcept
 {
     return m_objectAttributes;
+}
+
+DWORD RMG_SettingsDlg::GetUserRandSeedInput() noexcept
+{
+
+    return userRandSeed;
 }
 
 RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
@@ -700,7 +717,15 @@ RMG_SettingsDlg::ObjectsPanel::ObjectsPanel(const int x, const int y, Page *pare
                                          "RMG_edit.pcx", itemId++, 4, 1, 1))
             items.emplace_back(edits[i]);
     }
+    const int defaultButtonX = items.back()->GetX() + items.back()->GetWidth() + 8;
+    //    const int defaultButtonX = items.back()->GetX() + 100;
+    defaultButton = H3DlgDefButton::Create(defaultButtonX, y + 15, itemId++, "RMG_dfmn.def", 0, 1, false, false);
+    defaultButton->SetHints(EraJS::read("RMG.text.dlg.objectPanel.default.hint"),
+                            EraJS::read("RMG.text.dlg.objectPanel.default.rmc"), false);
 
+    // items.emplace_back(H3DlgFrame::Create(setDefaultButton, color, itemId++, 1));
+
+    items.emplace_back(defaultButton);
     for (auto &wgt : items)
         dlg->AddItem(wgt);
 }
@@ -1212,7 +1237,14 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                             //	dlgPanel->rmgObject->objectInfo.data[i + 1] =
                             // dlgPanel->edits[i]->GetH3String().ToSigned();
                         }
+                        if (msg.subtype == eMsgSubtype::LBUTTON_CLICK && clickedItem == dlgPanel->defaultButton)
+                        {
 
+                            dlgPanel->UnfocusEdits(true);
+                            dlgPanel->rmgObject->objectInfo.RestoreDefault();
+                            dlgPanel->ObjectInfoToPanelInfo();
+                            needDlgRedraw = true;
+                        }
                         if (msg.IsRightClick())
                             result = this->ShowObjectExtendedInfo(dlgPanel, msg);
                     }
@@ -1547,15 +1579,6 @@ void FindDataInObjectGeneratorsList(std::vector<std::pair<H3ObjectAttributes, H3
     }
 }
 
-/**
-
-
-    // actual hooks aka static functions
-
-
-
-*/
-
 void GetObjectPrototypesLists()
 {
     // get all creature creatureBanks by type/subptye
@@ -1636,15 +1659,62 @@ void GetObjectPrototypesLists()
 _LHF_(RMG_SettingsDlg::Dlg_SelectScenario_Proc)
 {
     //	THISCALL_1(int, h->GetDefaultFunc(), msg);
-    H3Msg *msg = reinterpret_cast<H3Msg *>(c->esi);
-    if (msg && msg->itemId == SELECTION_DLG_RMG_SETTINGS_BUTTON_ID && msg->subtype == eMsgSubtype::LBUTTON_CLICK)
+
+    if (H3Msg *msg = reinterpret_cast<H3Msg *>(c->ebx))
     {
-        //	H3BaseDlg* parent = H3SelectScenarioDialog::Get();
-        // RMG_SettingsDlg dlg(parent->GetWidth() - 11, parent->GetHeight() - 11);
-        RMG_SettingsDlg dlg(800, 600);
-        dlg.Start();
+        const int itemId = msg->itemId;
+        const int subtype = msg->subtype;
+
+        if (itemId == itemIds::DLG_SETTINGS_BUTTON_ID && subtype == eMsgSubtype::LBUTTON_CLICK)
+        {
+            RMG_SettingsDlg dlg(800, 600);
+            dlg.Start();
+        }
+
+        if (auto dlg = msg->GetDlg())
+        {
+
+            if (auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID))
+            {
+                //                userRandSeed = atol(edit->GetText());
+                const long inputNumber = atol(edit->GetText());
+
+                if (itemId == itemIds::RMG_SEED_TEXTEDIT_ID)
+                {
+                    if (!inputNumber)
+                    {
+                        edit->SetText(h3_NullString);
+                    }
+                    edit->SetFocus(true);
+                }
+                else
+                {
+                    if (!inputNumber)
+                    {
+                        edit->SetText(EraJS::read("RMG.text.seed.edit"));
+                    }
+                    else
+                    {
+                        edit->SetText(Era::IntToStr(inputNumber).c_str());
+                    }
+                    edit->SetFocus(false);
+                }
+            }
+        }
     }
 
+    return EXEC_DEFAULT;
+}
+
+_LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_StartButtonClick)
+{
+
+    auto dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
+
+    if (auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID))
+    {
+        userRandSeed = atol(edit->GetText());
+    }
     return EXEC_DEFAULT;
 }
 
@@ -1653,10 +1723,24 @@ _LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_ShowRandomMapsSettings)
     H3Dlg *dlg = reinterpret_cast<H3Dlg *>(c->esi);
     if (dlg)
     {
-        if (H3DlgItem *it = dlg->GetH3DlgItem(SELECTION_DLG_RMG_SETTINGS_TEXT_ID))
-            it->ShowActivate();
-        if (H3DlgItem *it = dlg->GetH3DlgItem(SELECTION_DLG_RMG_SETTINGS_BUTTON_ID))
-            it->ShowActivate();
+        for (INT16 i = itemIds::FIRST; i <= itemIds::LAST; i++)
+        {
+            if (H3DlgItem *it = dlg->GetH3DlgItem(i))
+                it->ShowActivate();
+        }
+        auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID);
+        if (edit)
+        {
+            const long inputNumber = atol(edit->GetText());
+            if (!inputNumber)
+            {
+                edit->SetText(EraJS::read("RMG.text.seed.edit"));
+            }
+            else
+            {
+                edit->SetText(Era::IntToStr(inputNumber).c_str());
+            }
+        }
     }
 
     return EXEC_DEFAULT;
@@ -1666,12 +1750,23 @@ _LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_HideRandomMapsSettings)
     H3Dlg *dlg = reinterpret_cast<H3Dlg *>(c->esi);
     if (dlg)
     {
-        if (H3DlgItem *it = dlg->GetH3DlgItem(SELECTION_DLG_RMG_SETTINGS_TEXT_ID))
-            it->HideDeactivate();
-        if (H3DlgItem *it = dlg->GetH3DlgItem(SELECTION_DLG_RMG_SETTINGS_BUTTON_ID))
-            it->HideDeactivate();
+        for (INT16 i = itemIds::FIRST; i <= itemIds::LAST; i++)
+        {
+            if (H3DlgItem *it = dlg->GetH3DlgItem(i))
+                it->HideDeactivate();
+        }
     }
     return EXEC_DEFAULT;
+}
+
+void __stdcall RMG_SetRandSeed(HiHook *h, DWORD *rmgSeed)
+{
+
+    CDECL_1(void, h->GetDefaultFunc(), rmgSeed);
+    if (const DWORD userSeed = RMG_SettingsDlg::GetUserRandSeedInput())
+    {
+        *rmgSeed = userSeed;
+    }
 }
 
 int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
@@ -1712,9 +1807,9 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
     if (dlgCallType == 0) // 0 new/ 1 load/2 from map
     {
         // create text over button near at team setups (HD mod only)
-        if (H3DlgText *text = dlg->CreateText(248, 264, 128, 20, EraJS::read("RMG.text.title"), h3::NH3Dlg::Text::SMALL,
-                                              eTextColor::HIGHLIGHT, SELECTION_DLG_RMG_SETTINGS_TEXT_ID,
-                                              eTextAlignment::MIDDLE_RIGHT))
+        if (H3DlgText *text =
+                dlg->CreateText(248, 264, 128, 20, EraJS::read("RMG.text.title"), h3::NH3Dlg::Text::SMALL,
+                                eTextColor::HIGHLIGHT, itemIds::RMG_SETTINGS_TEXT_ID, eTextAlignment::MIDDLE_RIGHT))
         {
             // hide button cause we assume it is not in the list of the items to display
             text->HideDeactivate();
@@ -1722,7 +1817,7 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
 
         // create clicl button that calls the dlg
         if (H3DlgCaptionButton *bttn = dlg->CreateCaptionButton(
-                246, 291, 128, 20, SELECTION_DLG_RMG_SETTINGS_BUTTON_ID, *reinterpret_cast<char **>(0x57A93B + 1),
+                246, 291, 128, 20, itemIds::DLG_SETTINGS_BUTTON_ID, *reinterpret_cast<char **>(0x57A93B + 1),
                 EraJS::read("RMG.text.buttons.setup.name"), h3::NH3Dlg::Text::SMALL, 0, 0, 0, 0, eTextColor::HIGHLIGHT))
         {
             bttn->SetClickFrame(1);
@@ -1733,8 +1828,12 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
             // hide button cause we assume it is not in the list of the items to display
             bttn->HideDeactivate();
         }
-        if (H3DlgCustomButton *randomGameButton = H3DlgCustomButton::Create(
-                dlg->GetWidth() - 120, dlg->GetHeight() - 88, "RanRand.def", SelectScenarioDlgRandomizeProc, 0, 1))
+
+        // create randomize button
+        H3DefLoader def("RMG_Dice.def");
+        if (H3DlgCustomButton *randomGameButton =
+                H3DlgCustomButton::Create(208, 286, def->widthDEF, def->heightDEF, itemIds::RMG_RANDOMIZE_BUTTON_ID,
+                                          def->GetName(), SelectScenarioDlgRandomizeProc, 0, 1))
         {
             randomGameButton->SetHint(EraJS::read("RMG.text.buttons.random.rmc"));
 
@@ -1743,10 +1842,28 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
             {
                 randomGameButton->SetFrame(2);
             }
-
+            randomGameButton->HideDeactivate();
             dlg->AddItem(randomGameButton);
         }
+
+        // create text over button near at team setups (HD mod only)
+        if (H3DlgText *text = dlg->CreateText(210, 328, def->widthDEF, 20, EraJS::read("RMG.text.seed.title"),
+                                              h3::NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemIds::RMG_SEED_TEXT_ID,
+                                              eTextAlignment::MIDDLE_CENTER))
+        {
+            text->HideDeactivate();
+        }
+        if (H3DlgEdit *textEdit = dlg->CreateEdit(
+                246, 328, 128, 20, 11, EraJS::read("RMG.text.seed.edit"), h3::NH3Dlg::Text::SMALL, eTextColor::REGULAR,
+                eTextAlignment::MIDDLE_CENTER, "rmg_sedt.pcx", itemIds::RMG_SEED_TEXTEDIT_ID, true, 1, 1))
+        {
+            textEdit->SetAutoredraw(true);
+            textEdit->SetHint(EraJS::read("RMG.text.seed.rmc"));
+
+            textEdit->HideDeactivate();
+        }
     }
+    userRandSeed = 0;
 }
 
 void CreateResizedObjectPcx()
@@ -1845,9 +1962,13 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
         {
             _pi->WriteHiHook(0x579CE0, THISCALL_, NewScenarioDlg_Create);
 
+            _pi->WriteHiHook(0x0536630, CDECL_, RMG_SetRandSeed);
+            _pi->WriteLoHook(0x58698B, H3SelectScenarioDialog_StartButtonClick);
+
             _pi->WriteLoHook(0x5806D4, H3SelectScenarioDialog_ShowRandomMapsSettings);
             _pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
-            _pi->WriteLoHook(0x586924, Dlg_SelectScenario_Proc);
+            _pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
+            _pi->WriteLoHook(0x0588469, Dlg_SelectScenario_Proc);
 
             _pi->WriteHiHook(0x4FB930, THISCALL_, GameStart);
 

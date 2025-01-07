@@ -23,6 +23,20 @@ _LHF_(HooksInit)
     return EXEC_DEFAULT;
 }
 
+const char *demoBttn = "iDEMO.def";
+Patch *demolishButtonPatch = nullptr;
+_LHF_(WoG_BeforeTownbuildingDemolishQuestion)
+{
+
+    demolishButtonPatch->Apply();
+    return EXEC_DEFAULT;
+}
+
+_LHF_(WoG_AfterTownbuildingDemolishQuestion)
+{
+    demolishButtonPatch->Undo();
+    return EXEC_DEFAULT;
+}
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     static bool pluginIsOn = false;
@@ -36,9 +50,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance("EraPlugin.GameplayFeatures.daemon_n");
             _PI->WriteLoHook(0x4EEAF2, HooksInit);
+            _PI->WriteLoHook(0x070AD9A, WoG_BeforeTownbuildingDemolishQuestion);
+            _PI->WriteLoHook(0x070C1A1, WoG_AfterTownbuildingDemolishQuestion);
+            demolishButtonPatch = _PI->CreateDwordPatch(0x04F738A + 1, (int)demoBttn);
             Era::ConnectEra();
         }
-
+        //  0x070C19C = _PI->WriteDword(0x04F738A + 1, (int)demoBttn);
+        // 0x070AD42
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:

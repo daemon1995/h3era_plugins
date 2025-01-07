@@ -42,6 +42,7 @@ class RMG_SettingsDlg : public H3Dlg
 {
 
     static constexpr float SETTINGS_VERSION = .1f;
+    static DWORD userRandSeed;
 
   public:
     static constexpr LPCSTR SETTINGS_INI_SECTION = "DlgSettings";
@@ -78,6 +79,7 @@ class RMG_SettingsDlg : public H3Dlg
         };
 
         H3DlgDef *enabledCheckBox = nullptr;
+        H3DlgDefButton *defaultButton = nullptr;
 
         std::vector<H3DlgItem *> items;
 
@@ -260,6 +262,7 @@ class RMG_SettingsDlg : public H3Dlg
   private:
     static _LHF_(H3SelectScenarioDialog_HideRandomMapsSettings);
     static _LHF_(H3SelectScenarioDialog_ShowRandomMapsSettings);
+    static _LHF_(H3SelectScenarioDialog_StartButtonClick);
 
     // static void __stdcall Dlg_SelectScenario_Proc(HiHook* hook, H3Msg* msg);
     static _LHF_(Dlg_SelectScenario_Proc);
@@ -271,6 +274,7 @@ class RMG_SettingsDlg : public H3Dlg
     static void SetPatches(PatcherInstance *_pi);
     static const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> &
     GetObjectAttributes() noexcept;
+    static DWORD GetUserRandSeedInput() noexcept;
 };
 
 } // namespace rmgdlg
