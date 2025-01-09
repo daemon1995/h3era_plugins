@@ -30,7 +30,6 @@ class AdventureMapHints : public IGamePatch
     Patch *blockAdventureHintDraw = nullptr;
     AdventureHintsSettings *settings = nullptr;
 
-    BOOL isWogObject = false;
 
 public:
     bool NeedDrawMapItem(const H3MapItem *mIt) const noexcept;
@@ -52,7 +51,6 @@ public:
   public:
     static AdventureMapHints *instance;
 
-    H3LoadedPcx *glBackPtr = nullptr;
 
     static void Init(PatcherInstance *pi);
 
