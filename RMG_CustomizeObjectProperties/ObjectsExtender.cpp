@@ -189,20 +189,6 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
 
     // load additional unique objects properties from each loaded mod json key
 
-    for (auto &obj : additionalRmgObjects)
-    {
-        //	setup->objectLists[obj.type][obj.subtype] = obj;
-    }
-
-    // Get All The Extenders we have
-
-    for (auto &extender : extenders)
-    {
-        // call additional data loading from json
-        // we call it once to later add into general objects.txt list
-        // extender->GetObjectPreperties();
-    }
-
     H3WavFile *ptr = nullptr;
     soundManager.loopSounds.emplace_back(ptr);
 
@@ -308,16 +294,18 @@ void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
         {
             objectsSet.insert({rmgObj->type, rmgObj->subtype});
         }
-        // iterate all extenders container
+        // iterate each added RMG INFO
+
         for (auto &info : additionalRmgObjects)
         {
-            if (objectsSet.insert({info.type, info.subtype}).second)
+            // check if it is possible to add object into the list
 
-            // iterate each added RMG INFO
+            if (objectsSet.insert({info.type, info.subtype}).second)
             {
+                // iterate all extenders container
+
                 for (auto &extender : extenders)
 
-                // check if it is possible to add object into the list
                 {
 
                     // if yes then create obj gen
@@ -327,6 +315,15 @@ void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
                     {
                         rmgObjecsList->Push(objGen);
                     }
+                }
+
+                if (info.type == eObject::CREATURE_GENERATOR4)
+                {
+                    H3RmgObjectGenerator *objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
+                    THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, info.type, info.subtype, info.value,
+                               info.density);
+                    objGen->vTable = (H3RmgObjectGenerator::VTable *)0x0640BC8;
+                    rmgObjecsList->Push(objGen);
                 }
             }
         }

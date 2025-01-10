@@ -7,7 +7,7 @@ bool HeroLook::needRedraw = false;
 bool HeroLook::changeButtons = false;
 
 H3String HeroLook::pcxNames[4];
-constexpr UINT16 HEROES_MAX_AMOUNT = 156;
+constexpr UINT16 HEROES_MAX_AMOUNT = h3::limits::HEROES;
 constexpr UINT16 CAMPAIGN_FACTION_ID = 99;
 HeroLook HeroLook::heroLook[HEROES_MAX_AMOUNT];
 
@@ -221,7 +221,7 @@ DllExport int SetPortraitName(const UINT heroId, LPCSTR large, LPCSTR small)
         // sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
         // heroLook[i].portraitIndex);
         //	sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
-        //heroLook[i].portraitIndex);
+        // heroLook[i].portraitIndex);
         //
         sprintf(h3_TextBuffer, large);
         //	P_HeroInfo[heroId].largePortrait = H3String(h3_TextBuffer).String();
@@ -273,7 +273,7 @@ void HeroLook::LoadIniSettings(HeroLook *heroes)
             //*values[1]).String();
 
             //	SetPortraitName(i, H3String::Format("nhl%d_%d.pcx", *values[0], *values[1]).String(),
-            //H3String::Format("nhl%d_%d.pcx", *values[0], *values[1]).String());
+            // H3String::Format("nhl%d_%d.pcx", *values[0], *values[1]).String());
         }
     }
 }

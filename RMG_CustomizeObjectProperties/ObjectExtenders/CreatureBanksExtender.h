@@ -27,7 +27,10 @@ class CreatureBanksExtender : public extender::ObjectsExtender
 
     } creatureBanks;
 
-
+    /*    static BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
+                                   const bool withoutBrackets = true) noexcept;
+       */ // static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, const int x, const int y,
+    // H3Army *army) noexcept;
 
   private:
     CreatureBanksExtender();
@@ -39,7 +42,6 @@ class CreatureBanksExtender : public extender::ObjectsExtender
 
   protected:
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept;
-    ;
 
     // virtual void GetObjectPreperties() noexcept override  final;
   private:
@@ -51,10 +53,17 @@ class CreatureBanksExtender : public extender::ObjectsExtender
 
   private:
     // static _LHF_(RMG__CreateObjectGenerators);
+    static _LHF_(CrBank_DisplayPreCombatMessage);
     static _LHF_(CrBank_BeforeCombatStart);
+    static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
+
     static signed int __stdcall CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PisMixed, UINT attHero, UINT attArmy,
                                                    int PlayerIndex, UINT defTown, UINT defHero, UINT defArmy, int seed,
                                                    signed int a10, int isBank);
+    static void __stdcall CrBank_AskForVisitMessage(HiHook *h, char *mes, const int messageType, const int x,
+                                                    const int y, const int picType1, const int picSubtype1,
+                                                    const int picType2, const int picSubtype2, const int par,
+                                                    const int time, const int picType3, const int picSubtype3);
 
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *event);
     //	static int __stdcall CretureBankSetups__Ctor(HiHook*h);
@@ -63,7 +72,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
 
   public:
     static int GetCreatureBankId(const int objType, const int objSubtype) noexcept;
-    static int GetCreatureBankObjectType(const int cbId) noexcept;
+    static eObject GetCreatureBankObjectType(const int cbId) noexcept;
 
     static CreatureBanksExtender &Get();
 };

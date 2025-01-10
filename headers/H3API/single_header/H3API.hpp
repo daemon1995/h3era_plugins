@@ -21674,8 +21674,7 @@ namespace h3
         INT32                          computerTeams;          /**< @brief [F54]*/
         h3unk                          _f_f58[8];              /**< @brief [F58]*/
         INT32                          townsCount;             /**< @brief [F60]*/
-        h3unk                          _f_f64[4];              /**< @brief [F64]*/
-        h3unk                          _f_f68[32];             /**< @brief [F68]*/
+		INT32                          townsCountByType[9];		/**< @brief [F64]*/
         BOOL8                          bannedHeroes[156];      /**< @brief [F88]*/
         BOOL8                          bannedArtifacts[144];   /**< @brief [1024]*/
         h3unk                          _f_10B4[4];             /**< @brief [10B4]*/

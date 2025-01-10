@@ -240,6 +240,47 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
                                                     const H3RmgZoneGenerator *zoneGen,
                                                     const H3RmgRandomMapGenerator *rmg)
 {
+
+    if (objGen->type == eObject::CREATURE_GENERATOR4)
+    {
+        // return -1; // resultValue / 2;
+
+        const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
+
+        const int creatureValue = RMGObjectInfo::CurrentObjectInfo(objGen->type, objGen->subtype).value;
+        int resultValue = -1;
+        const int totalTownsCount = rmg->townsCount;
+        for (size_t i = 0; i < 4; i++)
+        {
+            const int creatureType = DwordAt(dwellings4Ptr + (i << 2));
+
+            if (creatureType != eCreature::UNDEFINED)
+            {
+                auto &info = P_CreatureInformation[creatureType];
+                const int creatureTown = info.town;
+                if (creatureTown != zoneGen->townType)
+                {
+                    continue;
+                }
+                const int aiValue = info.aiValue;
+                int dwellingSlotValue = aiValue * info.grow;
+
+                if (totalTownsCount && creatureTown != eTown::NEUTRAL)
+                {
+
+                    if (const int totalCreatureTypeTowns = rmg->townsCountByType[creatureTown])
+                    {
+                        dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
+                    }
+                }
+
+                resultValue += dwellingSlotValue + totalTownsCount * aiValue / 2;
+            }
+        }
+
+        return resultValue >> 2; // resultValue / 2;
+    }
+
     const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
     const int creatureType = DwordAt(dwellingsPtr + 4 * objGen->subtype);
 
@@ -341,23 +382,6 @@ void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties *prop, c
     const int index2 = index2D(prop->type, prop->subtype, maxObjectSubtype);
     mapGeneratedBySubtype[index2]++;
 }
-
-// BOOL RMGObjectInfo::SetEnabled(const BOOL state) noexcept
-//{
-//	//if (!enabled)
-//	{
-//		enabled = state;
-//		int temp = enabled;
-//		Clamp();
-//		if (true)
-//		{
-//
-//		}
-//	}
-//
-//
-//	return 0;
-// }
 
 BOOL RMGObjectInfo::Clamp() noexcept
 {
@@ -634,12 +658,28 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     }
 
     // dwellings value calculation
-    const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
+    const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
     for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR1])
     {
-        const int dwellingCreatureType = DwordAt(dwellingsPtr + (dwellingObjInfo.subtype << 2));
+        const int dwellingCreatureType = DwordAt(dwellings1Ptr + (dwellingObjInfo.subtype << 2));
         const int creatureAIValue = P_CreatureInformation[dwellingCreatureType].aiValue;
         dwellingObjInfo.value = creatureAIValue;
+    }
+
+    const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
+
+    for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR4])
+    {
+        dwellingObjInfo.value = 0; // creatureAIValue;
+
+        for (size_t i = 0; i < 4; i++)
+        {
+            const int dwellingCreatureType = DwordAt(dwellings4Ptr + (i << 2));
+            if (dwellingCreatureType != eCreature::UNDEFINED)
+            {
+                dwellingObjInfo.value += P_CreatureInformation[dwellingCreatureType].aiValue;
+            }
+        }
     }
 }
 
@@ -674,7 +714,6 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     if (creatureBankId >= 0)
     {
         return H3CreatureBankSetup::Get()[creatureBankId].name.String();
-        // return cbanks::CreatureBanksExtender::Get().creatureBanks.setups[creatureBankId].name.String();
     }
 
     switch (type)
