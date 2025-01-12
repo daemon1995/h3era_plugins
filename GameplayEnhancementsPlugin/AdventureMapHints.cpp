@@ -61,6 +61,24 @@ void AdventureMapHints::CreatePatches() noexcept
     }
 }
 
+char changedData[32] = {};
+
+void GameManager_HidePlayersVisitedInfo(H3Main *game, const int playerID) noexcept
+{
+
+    const int withcHutData = game->visitedWitchHut.Status(playerID);
+    const int shrineData = game->visitedShrines.Status(playerID);
+    const int treeOfKnoledgeData = game->visitedTreeKnowledge.Status(playerID);
+
+    libc::memcpy(changedData, reinterpret_cast<char *>(game) + 0x4E344, 32 * sizeof(H3PlayersBitfield));
+    libc::memset(reinterpret_cast<char *>(game) + 0x4E344, 0, 32 * sizeof(H3PlayersBitfield));
+
+    game->visitedWitchHut.Set(withcHutData, playerID);
+    game->visitedShrines.Set(shrineData, playerID);
+    game->visitedTreeKnowledge.Set(treeOfKnoledgeData, playerID);
+
+    // return result;
+}
 LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3MapItem *mapItem, const int mapX,
                                       const int mapY, const int mapZ) noexcept
 {
@@ -91,10 +109,13 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
 
     *p_visited = changedVisitedText.String();
     *p_notVisited = changedNotVisitedText.String();
-    Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 1);
     instance->blockAdventureHintDraw->Apply();
+
+    Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 1);
+    GameManager_HidePlayersVisitedInfo(P_Game->Get(), H3CurrentPlayerID::Get());
     THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
     Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 0);
+    libc::memcpy(reinterpret_cast<char *>(P_Game->Get()) + 0x4E344, changedData, 32 * sizeof(H3PlayersBitfield));
 
     instance->blockAdventureHintDraw->Undo();
 
@@ -118,7 +139,7 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
     // check is key is held
     if (STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings->vKey) & 0x800 && instance->settings->isHeld)
     {
-        const int currentPlayerID = P_CurrentPlayerID;
+        const int currentPlayerID = P_Game->Get()->GetPlayerID();
         sprintf(ermVariableNameBuffer, "gem_adventure_map_object_hints_option_%d", currentPlayerID); // ;
         const int optionIsEnabled = Era::GetAssocVarIntValue(ermVariableNameBuffer);
         if (optionIsEnabled == 0)
@@ -130,7 +151,8 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
         //    return;
 
         H3Position pos(mapX, mapY, mapZ);
-        if (mapX >= 0 && mapY >= 0 && mapX < *P_MapSize && mapY < *P_MapSize && H3TileVision::CanViewTile(pos))
+        if (mapX >= 0 && mapY >= 0 && mapX < *P_MapSize && mapY < *P_MapSize &&
+            H3TileVision::CanViewTile(pos, currentPlayerID))
         {
             H3MapItem *currentItem = P_Game->GetMapItem(pos.Mixed());
             if (currentItem &&
@@ -270,7 +292,7 @@ void __stdcall AdventureMapHints::AdvMgr_DrawCornerFrames(HiHook *h, const H3Adv
 bool AdventureMapHints::NeedDrawMapItem(const H3MapItem *mIt) const noexcept
 {
     if (mIt)
-        return settings->m_objectsToDraw[mIt->objectType];
+        return settings->drawObjectHint[mIt->objectType].userValue;
     return false;
 }
 
@@ -291,44 +313,83 @@ void AdventureHintsSettings::reset()
 {
     vKey = VK_MENU;
 
-    memset(m_objectsToDraw, false, sizeof(m_objectsToDraw));
-    m_objectsToDraw[eObject::MONSTER] = true;
-    m_objectsToDraw[eObject::CREATURE_BANK] = true;
-    m_objectsToDraw[eObject::RESOURCE] = true;
-    m_objectsToDraw[eObject::ARTIFACT] = true;
-    m_objectsToDraw[eObject::DRAGON_UTOPIA] = true;
-    m_objectsToDraw[eObject::CRYPT] = true;
-    m_objectsToDraw[eObject::DERELICT_SHIP] = true;
-    m_objectsToDraw[eObject::SHIPWRECK] = true;
-    m_objectsToDraw[eObject::WITCH_HUT] = true;
-    m_objectsToDraw[eObject::MARLETTO_TOWER] = true;
-    m_objectsToDraw[eObject::GARDEN_OF_REVELATION] = true;
-    m_objectsToDraw[eObject::MYSTICAL_GARDEN] = true;
-    m_objectsToDraw[eObject::PYRAMID] = true;
-    m_objectsToDraw[eObject::SHRINE_OF_MAGIC_GESTURE] = true;
-    m_objectsToDraw[eObject::SHRINE_OF_MAGIC_INCANTATION] = true;
-    m_objectsToDraw[eObject::SHRINE_OF_MAGIC_THOUGHT] = true;
-    m_objectsToDraw[eObject::STABLES] = true;
-    m_objectsToDraw[eObject::LIBRARY_OF_ENLIGHTENMENT] = true;
-    m_objectsToDraw[eObject::SCHOOL_OF_MAGIC] = true;
-    m_objectsToDraw[eObject::SCHOOL_OF_WAR] = true;
-    m_objectsToDraw[eObject::MAGIC_SPRING] = true;
-    m_objectsToDraw[eObject::STAR_AXIS] = true;
-    m_objectsToDraw[eObject::TREASURE_CHEST] = true;
-    m_objectsToDraw[eObject::SEA_CHEST] = true;
-    m_objectsToDraw[eObject::PANDORAS_BOX] = true;
-    m_objectsToDraw[eObject::TREE_OF_KNOWLEDGE] = true;
-    m_objectsToDraw[eObject::SPELL_SCROLL] = true;
-    m_objectsToDraw[eObject::LEARNING_STONE] = true;
-    m_objectsToDraw[eObject::CORPSE] = true;
-    m_objectsToDraw[eObject::WATER_WHEEL] = true;
-    m_objectsToDraw[eObject::WINDMILL] = true;
-    m_objectsToDraw[eObject::ARENA] = true;
-    m_objectsToDraw[eObject::CAMPFIRE] = true;
-    m_objectsToDraw[eObject::FLOTSAM] = true;
-    m_objectsToDraw[eObject::SHIPWRECK_SURVIVOR] = true;
-    m_objectsToDraw[142] = true;
-    m_objectsToDraw[144] = true;
+    memset(drawObjectHint, false, sizeof(drawObjectHint));
+
+    drawObjectHint[eObject::ARENA].defaultValue = true;
+    drawObjectHint[eObject::ARTIFACT].defaultValue = true;
+    drawObjectHint[eObject::PANDORAS_BOX].defaultValue = true;
+    drawObjectHint[eObject::BLACK_MARKET].defaultValue = true;
+    drawObjectHint[eObject::BOAT].defaultValue = true;
+    drawObjectHint[eObject::BORDERGUARD].defaultValue = true;
+    drawObjectHint[eObject::KEYMASTER].defaultValue = true;
+    drawObjectHint[eObject::BUOY].defaultValue = true;
+    drawObjectHint[eObject::CAMPFIRE].defaultValue = true;
+    drawObjectHint[eObject::CARTOGRAPHER].defaultValue = true;
+    drawObjectHint[eObject::SWAN_POND].defaultValue = true;
+
+    drawObjectHint[eObject::CREATURE_BANK].defaultValue = true;
+
+    drawObjectHint[eObject::CORPSE].defaultValue = true;
+    drawObjectHint[eObject::MARLETTO_TOWER].defaultValue = true;
+    drawObjectHint[eObject::DERELICT_SHIP].defaultValue = true;
+    drawObjectHint[eObject::DRAGON_UTOPIA].defaultValue = true;
+
+    drawObjectHint[eObject::FLOTSAM].defaultValue = true;
+
+    drawObjectHint[eObject::GARDEN_OF_REVELATION].defaultValue = true;
+
+    // drawObjectHint[eObject::HERO].defaultValue = true;
+
+    drawObjectHint[eObject::LIBRARY_OF_ENLIGHTENMENT].defaultValue = true;
+
+    drawObjectHint[eObject::SCHOOL_OF_MAGIC].defaultValue = true;
+    drawObjectHint[eObject::MAGIC_SPRING].defaultValue = true;
+
+    drawObjectHint[eObject::MONSTER].defaultValue = true;
+    drawObjectHint[eObject::MYSTICAL_GARDEN].defaultValue = true;
+
+    drawObjectHint[eObject::STAR_AXIS].defaultValue = true;
+
+    drawObjectHint[eObject::PYRAMID].defaultValue = true;
+
+    drawObjectHint[eObject::RESOURCE].defaultValue = true;
+
+    drawObjectHint[eObject::SEA_CHEST].defaultValue = true;
+    drawObjectHint[eObject::SEER_HUT].defaultValue = true;
+    drawObjectHint[eObject::CRYPT].defaultValue = true;
+    drawObjectHint[eObject::SHIPWRECK].defaultValue = true;
+    drawObjectHint[eObject::SHIPWRECK_SURVIVOR].defaultValue = true;
+
+    drawObjectHint[eObject::SHRINE_OF_MAGIC_INCANTATION].defaultValue = true;
+    drawObjectHint[eObject::SHRINE_OF_MAGIC_GESTURE].defaultValue = true;
+    drawObjectHint[eObject::SHRINE_OF_MAGIC_THOUGHT].defaultValue = true;
+
+    drawObjectHint[eObject::SPELL_SCROLL].defaultValue = true;
+    drawObjectHint[eObject::STABLES].defaultValue = true;
+
+    drawObjectHint[eObject::LEARNING_STONE].defaultValue = true;
+    drawObjectHint[eObject::TREASURE_CHEST].defaultValue = true;
+    drawObjectHint[eObject::TREE_OF_KNOWLEDGE].defaultValue = true;
+
+    drawObjectHint[eObject::SCHOOL_OF_WAR].defaultValue = true;
+
+    drawObjectHint[eObject::WATER_WHEEL].defaultValue = true;
+
+    drawObjectHint[eObject::WINDMILL].defaultValue = true;
+    drawObjectHint[eObject::WITCH_HUT].defaultValue = true;
+
+    drawObjectHint[142].defaultValue = true;
+
+    drawObjectHint[144].defaultValue = true;
+
+    drawObjectHint[eObject::BORDER_GATE].defaultValue = true;
+    drawObjectHint[eObject::QUEST_GUARD].defaultValue = true;
+
+    // set all to default
+    for (auto &i : drawObjectHint)
+    {
+        i.userValue = i.defaultValue;
+    }
 }
 
 BOOL AdventureHintsSettings::load()
@@ -337,7 +398,13 @@ BOOL AdventureHintsSettings::load()
     {
 
         if (Era::ReadStrFromIni(Era::IntToStr(i).c_str(), sectionName, filePath, h3_TextBuffer))
-            m_objectsToDraw[i] = atoi(h3_TextBuffer);
+        {
+            const bool userValue = atoi(h3_TextBuffer);
+            if (userValue != drawObjectHint[i].defaultValue)
+            {
+                drawObjectHint[i].userValue = userValue;
+            }
+        }
     }
     if (Era::ReadStrFromIni("KeyCode", "ControlSettings", filePath, h3_TextBuffer))
         vKey = atoi(h3_TextBuffer);
@@ -346,14 +413,21 @@ BOOL AdventureHintsSettings::load()
 
 BOOL AdventureHintsSettings::save()
 {
+    Era::ClearIniCache(filePath);
+    DeleteFileA(filePath);
     for (UINT8 i = 0; i < limits::OBJECTS; ++i)
     {
-
-        Era::WriteStrToIni(Era::IntToStr(i).c_str(), Era::IntToStr(m_objectsToDraw[i]).c_str(), sectionName, filePath);
+        if (drawObjectHint[i].userValue != drawObjectHint[i].defaultValue)
+        {
+            Era::WriteStrToIni(Era::IntToStr(i).c_str(), Era::IntToStr(drawObjectHint[i].userValue).c_str(),
+                               sectionName, filePath);
+        }
     }
     Era::WriteStrToIni("KeyCode", Era::IntToStr(vKey).c_str(), "ControlSettings", filePath);
 
     Era::SaveIni(filePath);
+    Era::ClearIniCache(filePath);
+
     return 0;
 }
 

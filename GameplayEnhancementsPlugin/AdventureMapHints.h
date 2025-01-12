@@ -11,7 +11,11 @@ struct AdventureHintsSettings : public ISettings
     H3String fontName;
 
     UINT borderSize;
-    bool m_objectsToDraw[232];
+    struct
+    {
+        bool defaultValue = false;
+        bool userValue = false;
+    }drawObjectHint[232];
 
   public:
     AdventureHintsSettings(const char *filePath, const char *sectionName);
