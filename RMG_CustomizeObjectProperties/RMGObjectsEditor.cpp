@@ -169,6 +169,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             {
                 if (rmgObjGen->type == eObject::SEER_HUT)
                 {
+                    editor.editedRMGObjectGenerators.Add(rmgObjGen);
                     continue;
                 }
 

@@ -15889,7 +15889,7 @@ namespace h3
 		INT8 randomArtifacts[144];
 		/** @brief [4E2B4] */
 		INT8 artifactsAllowed[144];
-	protected:
+	//protected:
 		/**
 		 * When visiting one of these objects, whole team gets set as visited
 		 * Exists as an array[32] (Shrines are referred as index 19,20,21 ca. 4A9BAF, and save/read uses 32 bytes)
