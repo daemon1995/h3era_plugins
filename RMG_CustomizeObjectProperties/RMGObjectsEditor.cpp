@@ -270,23 +270,24 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
             {
                 auto &info = P_CreatureInformation[creatureType];
                 const int creatureTown = info.town;
-                if (creatureTown != zoneGen->townType)
+                if (creatureTown != zoneGen->townType2)
                 {
                     continue;
                 }
-                const int aiValue = info.aiValue;
-                int dwellingSlotValue = aiValue * info.grow;
-
-                if (totalTownsCount && creatureTown != eTown::NEUTRAL)
+                if (const int aiValue = info.aiValue)
                 {
+                    int dwellingSlotValue = aiValue * info.grow;
 
-                    if (const int totalCreatureTypeTowns = rmg->townsCountByType[creatureTown])
+                    if (totalTownsCount && creatureTown != eTown::NEUTRAL)
                     {
-                        dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
-                    }
-                }
 
-                resultValue += dwellingSlotValue + totalTownsCount * aiValue / 2;
+                        if (const int totalCreatureTypeTowns = rmg->townsCountByType[creatureTown])
+                        {
+                            dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
+                        }
+                    }
+                    resultValue += dwellingSlotValue + (totalTownsCount * aiValue >> 1);
+                }
             }
         }
 
