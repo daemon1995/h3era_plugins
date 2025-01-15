@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.03";
+const char *PLUGIN_VERSION = "1.04";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -91,7 +91,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             plugin_On = 1;
 
             //! Connect to the Era framework
-            Era::ConnectEra();
+            Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
             Era::RegisterHandler(OnReportVersion, "OnReportVersion");
 
             //! Get the global patcher

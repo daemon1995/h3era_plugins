@@ -167,10 +167,21 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
             for (auto &rmgObjGen : *rmgObjectsList)
             {
-                if (rmgObjGen->type == eObject::SEER_HUT)
+
+                switch (rmgObjGen->type)
                 {
+
+                case eObject::PANDORAS_BOX:
+                case eObject::KEYMASTER:
+                case eObject::PRISON:
+                case eObject::SEER_HUT:
+                case eObject::SPELL_SCROLL:
+
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
                     continue;
+
+                default:
+                    break;
                 }
 
                 const auto &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);

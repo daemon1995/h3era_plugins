@@ -107,12 +107,13 @@ void ObjectsExtender::LoadMapObjectPropertiesFromLoadedMods() noexcept
     std::vector<std::string> modList;
     modList::GetEraModList(modList);
 
-    for (const auto &modName : modList)
+    for (auto &modName : modList)
     {
 
         bool readSuccess = false;
 
         int propertyIdCounter = 0;
+        std::transform(modName.begin(), modName.end(), modName.begin(), ::tolower);
 
         do
         {
