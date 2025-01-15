@@ -80,7 +80,7 @@ inline std::string ExtractModNameFromPath(const std::string &input)
 
     return path.substr(first, last - first + 1);
 }
-inline int GetEraModList(std::vector<std::string> &modList)
+inline int GetEraModList(std::vector<std::string> &modList, const BOOL toLower = false)
 {
     modList.clear();
 
@@ -94,6 +94,13 @@ inline int GetEraModList(std::vector<std::string> &modList)
         if (!parsedLine.empty())
         {
             modList.emplace_back(parsedLine);
+        }
+    }
+    if (toLower)
+    {
+        for (auto &modName : modList)
+        {
+            std::transform(modName.begin(), modName.end(), modName.begin(), ::tolower);
         }
     }
     return modList.size();
