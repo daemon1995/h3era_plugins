@@ -6,16 +6,15 @@ namespace advMapHints
 
 struct AdventureHintsSettings : public ISettings
 {
-    bool isHeld;
+    BOOL isHeld;
     int vKey;
     H3String fontName;
-
     UINT borderSize;
     struct
     {
         bool defaultValue = false;
         bool userValue = false;
-    }drawObjectHint[232];
+    } drawObjectHint[232];
 
   public:
     AdventureHintsSettings(const char *filePath, const char *sectionName);
@@ -34,10 +33,10 @@ class AdventureMapHints : public IGamePatch
     Patch *blockAdventureHintDraw = nullptr;
     AdventureHintsSettings *settings = nullptr;
 
-
-public:
+  public:
     bool NeedDrawMapItem(const H3MapItem *mIt) const noexcept;
-
+    BOOL needDrawHints = false;
+    INT playerID = -1;
     std::set<UINT16> m_drawnOjects;
     struct AccessableH3GeneralText : public H3GeneralText
     {
@@ -55,7 +54,6 @@ public:
   public:
     static AdventureMapHints *instance;
 
-
     static void Init(PatcherInstance *pi);
 
     void CreatePatches() noexcept override;
@@ -66,6 +64,7 @@ public:
     static void __stdcall AdvMgr_ObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,
                                             int screenX, int screenY);
     static void __stdcall AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *advMan);
+    static _LHF_(AdvMgr_BeforeObjectDraw);
 };
 
 } // namespace advMapHints

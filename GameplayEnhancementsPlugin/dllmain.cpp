@@ -48,14 +48,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         {
             pluginIsOn = true;
 
+            static LPCSTR pluginInstanceName = "EraPlugin.GameplayFeatures.daemon_n";
             globalPatcher = GetPatcher();
-            _PI = globalPatcher->CreateInstance("EraPlugin.GameplayFeatures.daemon_n");
+            _PI = globalPatcher->CreateInstance(pluginInstanceName);
+
             _PI->WriteLoHook(0x4EEAF2, HooksInit);
             _PI->WriteLoHook(0x070AD9A, WoG_BeforeTownbuildingDemolishQuestion);
             _PI->WriteLoHook(0x070C1A1, WoG_AfterTownbuildingDemolishQuestion);
             demolishButtonPatch = _PI->CreateDwordPatch(0x04F738A + 1, (int)demoBttn);
-            Era::ConnectEra();
-
+            Era::ConnectEra(hModule, pluginInstanceName);
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:

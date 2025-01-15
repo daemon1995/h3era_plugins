@@ -27,25 +27,6 @@ AdventureMapHints::AdventureMapHints(PatcherInstance *pi) : IGamePatch(pi)
     settings = new AdventureHintsSettings("Runtime/gem_AdventureMapHints.ini", "StaticHintsDrawByType");
 }
 
-DWORD lastTime = 0;
-RECT rect{200, 100, 200, 24};
-RECT _rect{rect};
-
-_LHF_(WoG_AdvMapSetHint)
-{
-    const PCHAR text = *reinterpret_cast<PCHAR *>(c->ebp + 0x14);
-
-    // sprintf(h3_TextBuffer, "%s = %d", "tetats" , text);
-    if (text)
-    {
-        {
-            text;
-        }
-    }
-
-    return EXEC_DEFAULT;
-}
-
 void AdventureMapHints::CreatePatches() noexcept
 {
 
@@ -54,8 +35,8 @@ void AdventureMapHints::CreatePatches() noexcept
 
         blockAdventureHintDraw = _pi->CreateHexPatch(0x040D0F4, const_cast<char *>("EB 40 90"));
 
+        _pi->WriteLoHook(0x040F5AB, AdvMgr_BeforeObjectDraw);
         _pi->WriteHiHook(0x40F5D7, THISCALL_, AdvMgr_ObjectDraw);
-        _pi->WriteHiHook(0x040F6C4, THISCALL_, AdvMgr_DrawCornerFrames);
 
         m_isInited = true;
     }
@@ -128,31 +109,40 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
 
     return h3_TextBuffer;
 }
-char ermVariableNameBuffer[64];
 
+_LHF_(AdventureMapHints::AdvMgr_BeforeObjectDraw)
+{
+
+    instance->needDrawHints = false;
+    const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() &&
+                           STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings->vKey) & 0x800 &&
+                           instance->settings->isHeld;
+
+    if (keyIsHeld)
+    {
+        instance->playerID = P_Game->Get()->GetPlayerID();
+        static char ermVariableNameBuffer[64];
+
+        sprintf(ermVariableNameBuffer, "gem_adventure_map_object_hints_option_%d", instance->playerID); // ;
+        instance->needDrawHints = Era::GetAssocVarIntValue(ermVariableNameBuffer);
+    }
+
+    instance->m_drawnOjects.clear();
+
+    return EXEC_DEFAULT;
+}
 void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManager *adv, int mapX, int mapY, int mapZ,
                                                     int screenX, int screenY)
 {
 
     THISCALL_6(void, h->GetDefaultFunc(), adv, mapX, mapY, mapZ, screenX, screenY);
 
-    // check is key is held
-    if (STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings->vKey) & 0x800 && instance->settings->isHeld)
+    if (instance->needDrawHints)
     {
-        const int currentPlayerID = P_Game->Get()->GetPlayerID();
-        sprintf(ermVariableNameBuffer, "gem_adventure_map_object_hints_option_%d", currentPlayerID); // ;
-        const int optionIsEnabled = Era::GetAssocVarIntValue(ermVariableNameBuffer);
-        if (optionIsEnabled == 0)
-        {
-            return;
-        }
-        //  isIconic -- doesn't work smh
-        // if (STDCALL_1(BOOL, PtrAt(0x063A2A8), 0x699650) == false)
-        //    return;
 
         H3Position pos(mapX, mapY, mapZ);
         if (mapX >= 0 && mapY >= 0 && mapX < *P_MapSize && mapY < *P_MapSize &&
-            H3TileVision::CanViewTile(pos, currentPlayerID))
+            H3TileVision::CanViewTile(pos, instance->playerID))
         {
             H3MapItem *currentItem = P_Game->GetMapItem(pos.Mixed());
             if (currentItem &&
