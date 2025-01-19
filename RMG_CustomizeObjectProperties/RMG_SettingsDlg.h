@@ -46,7 +46,7 @@ class RMG_SettingsDlg : public H3Dlg
 
   public:
     static constexpr LPCSTR SETTINGS_INI_SECTION = "DlgSettings";
-    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
+    static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_Dlg.ini";
     // std::vector<H3CreatureBankSetup> &creatureBanks;
 
   private:
@@ -248,15 +248,15 @@ class RMG_SettingsDlg : public H3Dlg
     virtual ~RMG_SettingsDlg();
 
   private:
-    const BOOL ReadIniDlgSettings() noexcept;
-    const BOOL WriteIniDlgSettings() const noexcept;
+    BOOL ReadIniDlgSettings() noexcept;
+    BOOL WriteIniDlgSettings() const noexcept;
 
     BOOL SetActivePage(Page *page) noexcept;
     BOOL SaveRMGObjectsInfo(const BOOL saveIni = true) const noexcept;
 
     VOID OnHelp() const noexcept;
 
-    const BOOL RemoveEditsFocus(const BOOL save) const noexcept;
+    BOOL RemoveEditsFocus(const BOOL save) const noexcept;
 
     // hooks
   private:

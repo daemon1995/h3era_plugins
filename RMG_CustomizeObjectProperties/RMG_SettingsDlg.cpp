@@ -2,35 +2,6 @@
 #include <thread>
 // void CreateGraphics(const H3Vector<H3RmgObjectGenerator*>& rmgObjList);
 
-#ifdef _DEBUG
-
-#define GET_MACRO(_0, _1, _2, NAME, ...) NAME
-
-// #define ECHO  _DEBUG && Era::ExecErmCmd("IF:L^^");
-#define DUMP(x)                                                                                                        \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        Era::y[1] = (int)x;                                                                                            \
-        Era::ExecErmCmd("IF:M^%y1^");                                                                                  \
-    } while (0)
-
-#define ECHO0() Era::ExecErmCmd("IF:L^^");
-
-#define ECHO1(x)                                                                                                       \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        Era::y[1] = x;                                                                                                 \
-        Era::ExecErmCmd("IF:L^%y1^");                                                                                  \
-    } while (0)
-
-#define ECHO2(x, y)                                                                                                    \
-    do                                                                                                                 \
-    {                                                                                                                  \
-                                                                                                                       \
-    } while (0)
-#define ECHO(...) GET_MACRO(__VA_ARGS__, ECHO2, ECHO1, ECHO0)(__VA_ARGS__)
-
-#endif // DEBUG
 /**
 @TODO:
     -- Add categories for the all pages as dropdown list
@@ -467,7 +438,7 @@ BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
     return 0;
 }
 
-const BOOL RMG_SettingsDlg::RemoveEditsFocus(const BOOL save) const noexcept
+BOOL RMG_SettingsDlg::RemoveEditsFocus(const BOOL save) const noexcept
 {
     if (auto objPage = dynamic_cast<ObjectsPage *>(m_currentPage))
     {
@@ -515,9 +486,8 @@ VOID RMG_SettingsDlg::OnCancel()
         Redraw();
     }
 }
-const BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
+BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
 {
-
     BOOL result = Era::ReadStrFromIni("lastPageId", SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
     if (result)
     {
@@ -542,9 +512,8 @@ const BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
 
     return result;
 }
-const BOOL RMG_SettingsDlg::WriteIniDlgSettings() const noexcept
+BOOL RMG_SettingsDlg::WriteIniDlgSettings() const noexcept
 {
-
     BOOL result =
         Era::WriteStrToIni("lastPageId", std::to_string(m_lastPageId).c_str(), SETTINGS_INI_SECTION, INI_FILE_PATH);
     if (result)

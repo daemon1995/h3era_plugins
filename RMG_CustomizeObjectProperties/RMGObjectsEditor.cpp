@@ -716,7 +716,6 @@ void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
             objectInfo.Clamp();
         }
     }
-    Era::ClearIniCache(INI_FILE_PATH);
 }
 
 LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
@@ -818,7 +817,7 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
             }
         }
 
-        // create conters and limits
+        // create counters and limits
         eachZoneGeneratedBySubtype = create3DArray(zonesNum, H3_MAX_OBJECTS, maxObjectSubtype);
         mapGeneratedBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
         zoneLimitsBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
@@ -837,8 +836,8 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
             for (const auto &info : vec)
             {
                 const int index2 = index2D(info.type, info.subtype, maxObjectSubtype);
-                mapLimitsBySubtype[index2] = info.mapLimit;
                 zoneLimitsBySubtype[index2] = info.zoneLimit;
+                mapLimitsBySubtype[index2] = info.mapLimit;
             }
         }
 
