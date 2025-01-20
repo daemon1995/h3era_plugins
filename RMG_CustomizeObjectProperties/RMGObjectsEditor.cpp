@@ -358,16 +358,17 @@ void RMGObjectsEditor::CreatePatches()
     if (!m_isInited)
     {
         // hook used to edit generate objects list data
-        _PI->WriteHiHook(0x539000, THISCALL_, RMG__CreateObjectGenerators);
+        _pi->WriteHiHook(0x539000, THISCALL_, RMG__CreateObjectGenerators);
+        _pi->WriteHiHook(0x549FCE, THISCALL_, RMG__InitGenZones);
 
         // hook is used to block object generation
         _pi->WriteLoHook(0x54676B, RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck);
-
-        _pi->WriteHiHook(0x549FCE, THISCALL_, RMG__InitGenZones);
-        _pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);
+        _pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
 
         _pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
-        _pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
+
+        _pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);
+
         // Hook for the setting defaults
 
         m_isInited = true;
@@ -793,10 +794,31 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
                            const std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS])
 {
 
-    const UINT zonesNum = rmg->zoneGenerators.Size();
-
-    if (zonesNum)
+    const UINT templateBaseZoneAmount = rmg->zoneGenerators.Size();
+    if (templateBaseZoneAmount)
     {
+        UINT totalZoneConnectionsAmount = 0;
+
+        if (rmg->waterAmount)
+        {
+            // adding zone + totalZoneConnectionsAmount cause of water connections for the land zones creation
+            std::set<UINT> connectionZonesIdPairs;
+
+            for (const auto &zoneGen : rmg->zoneGenerators)
+            {
+                for (const auto &zoneConnection : zoneGen->zoneInfo->connections)
+                {
+                    const H3Position position(zoneConnection.zone->id, zoneGen->zoneInfo->id, 0);
+                    if (connectionZonesIdPairs.insert(position.Mixed()).second)
+                    {
+                        totalZoneConnectionsAmount++;
+                    }
+                }
+            }
+        }
+
+        const UINT zonesAmount = templateBaseZoneAmount + totalZoneConnectionsAmount;
+
         maxObjectSubtype = 0;
         // create max subtype value for all object gens
         INT16 maxSubtypes[H3_MAX_OBJECTS] = {};
@@ -818,14 +840,14 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         }
 
         // create counters and limits
-        eachZoneGeneratedBySubtype = create3DArray(zonesNum, H3_MAX_OBJECTS, maxObjectSubtype);
+        eachZoneGeneratedBySubtype = create3DArray(zonesAmount, H3_MAX_OBJECTS, maxObjectSubtype);
         mapGeneratedBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
         zoneLimitsBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
         mapLimitsBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
 
         const int arraylength = H3_MAX_OBJECTS * maxObjectSubtype * sizeof(int);
 
-        memset(eachZoneGeneratedBySubtype, 0, zonesNum * arraylength);
+        memset(eachZoneGeneratedBySubtype, 0, zonesAmount * arraylength);
         memset(mapGeneratedBySubtype, 0, arraylength);
         memset(zoneLimitsBySubtype, 0, arraylength);
         memset(mapLimitsBySubtype, 0, arraylength);

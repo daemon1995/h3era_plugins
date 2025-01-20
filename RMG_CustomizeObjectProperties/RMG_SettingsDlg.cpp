@@ -1936,7 +1936,7 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
 
             _pi->WriteLoHook(0x5806D4, H3SelectScenarioDialog_ShowRandomMapsSettings);
             _pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
-            _pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
+            //_pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
             _pi->WriteLoHook(0x0588469, Dlg_SelectScenario_Proc);
 
             _pi->WriteHiHook(0x4FB930, THISCALL_, GameStart);
