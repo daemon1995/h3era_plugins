@@ -212,9 +212,14 @@ _LHF_(TavernDlgHandler::AfterCreate) //(LoHook* hook, HookContext* c)
             portrait->SetY(230);
             if (portrait->IsVisible())
             {
-                int heroId = IntAt(reinterpret_cast<DWORD>(P_Game->GetPlayer()) + i * 4 + 0x28);
+                const int heroId = IntAt(reinterpret_cast<DWORD>(P_Game->GetPlayer()) + i * 4 + 0x28);
                 if (heroId >= 0)
-                    dlg->AddItem(instance->CreatePortraitPcx(portrait, heroId, instance->m_drawBuffer[i]));
+                {
+                    if (auto pcx = instance->CreatePortraitPcx(portrait, heroId, instance->m_drawBuffer[i]))
+                    {
+                        dlg->AddItem(pcx);
+                    }
+                }
             }
         }
         if (auto frame = dlg->GetPcx(8 + i))

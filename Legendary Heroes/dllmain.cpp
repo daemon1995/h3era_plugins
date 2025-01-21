@@ -32,7 +32,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         if (!plugin_On)
         {
             plugin_On = 1;
-            Era::ConnectEra();
+            //Era::ConnectEra();
 
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
