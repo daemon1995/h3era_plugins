@@ -39,7 +39,7 @@ _LHF_(ObjectsExtender::LoadObjectsTxt)
         EditableH3TextFile *objectTxt = *reinterpret_cast<EditableH3TextFile **>(c->ebp + 0x8);
 
         // copy original objects added list into set
-        std::set<LPCSTR> objectsSet(objectTxt->begin(), objectTxt->end());
+        std::unordered_set<LPCSTR> objectsSet(objectTxt->begin(), objectTxt->end());
 
         UINT32 newProperties = 0;
         // iterate each added property
@@ -278,17 +278,23 @@ H3RmgObjectGenerator *ObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo &o
     return CreateDefaultH3RmgObjectGenerator(objectInfo);
 }
 
-bool RMGObjectSetable::operator<(const RMGObjectSetable &other) const
+bool RMGObjectSetable::operator==(const RMGObjectSetable &other) const noexcept
 {
-    return type != other.type ? type < other.type : subtype < other.subtype;
+    return type == other.type && subtype == other.subtype; // ? type < other.type : subtype < other.subtype;
 }
-//
+
+size_t RMGObjectSetable::HashFunction::operator()(const RMGObjectSetable &obj) const noexcept
+{
+    size_t typeHash = std::hash<int>()(obj.type);
+    size_t subtypeHash = std::hash<int>()(obj.subtype) << 1;
+    return typeHash ^ subtypeHash;
+}
 void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList)
 {
     // check if there are any object properties extenders
     if (extenders.size())
     {
-        std::set<RMGObjectSetable> objectsSet;
+        std::unordered_set<RMGObjectSetable, RMGObjectSetable::HashFunction> objectsSet;
         // create set of the objects to add only unique objects
         for (auto rmgObj : *rmgObjecsList)
         {
@@ -305,7 +311,6 @@ void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
                 // iterate all extenders container
 
                 for (auto &extender : extenders)
-
                 {
 
                     // if yes then create obj gen

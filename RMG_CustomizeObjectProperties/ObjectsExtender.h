@@ -1,6 +1,6 @@
 #pragma once
 #include "RMGObjectsEditor.h"
-#include <set>
+#include <unordered_set>
 namespace extender
 {
 constexpr int HOTA_OBJECT_TYPE = 144;
@@ -16,11 +16,16 @@ struct EditableH3TextFile : public H3TextFile
 {
     void AddLine(LPCSTR txt);
 };
+
 struct RMGObjectSetable
 {
     int type;
     int subtype;
-    bool operator<(const RMGObjectSetable &other) const;
+    struct HashFunction
+    {
+        size_t operator()(const RMGObjectSetable &obj) const noexcept;
+    };
+    bool operator==(const RMGObjectSetable &other) const noexcept;
 };
 
 struct LoopSoundManager

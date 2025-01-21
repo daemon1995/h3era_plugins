@@ -802,7 +802,7 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         if (rmg->waterAmount)
         {
             // adding zone + totalZoneConnectionsAmount cause of water connections for the land zones creation
-            std::set<UINT> connectionZonesIdPairs;
+            std::unordered_set<UINT> connectionZonesIdPairs;
 
             for (const auto &zoneGen : rmg->zoneGenerators)
             {

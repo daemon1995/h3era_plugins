@@ -1,5 +1,5 @@
 #pragma once
-#include <set>
+#include <unordered_set>
 
 namespace advMapHints
 {
@@ -10,6 +10,7 @@ struct AdventureHintsSettings : public ISettings
     int vKey;
     H3String fontName;
     UINT borderSize;
+    BOOL drawOverFogOfWar = true;
     struct
     {
         bool defaultValue = false;
@@ -31,21 +32,15 @@ class AdventureMapHints : public IGamePatch
     // bool m_objectsToDraw[232];
 
     Patch *blockAdventureHintDraw = nullptr;
-    AdventureHintsSettings *settings = nullptr;
+    AdventureHintsSettings settings;
 
   public:
-    bool NeedDrawMapItem(const H3MapItem *mIt) const noexcept;
     BOOL needDrawHints = false;
     INT playerID = -1;
-    std::set<UINT16> m_drawnOjects;
-    struct AccessableH3GeneralText : public H3GeneralText
-    {
-        // void
-        LPCSTR *GetStringAdddres(const int row);
-        // ADDRESS
-    };
+    std::unordered_set<UINT16> drawnOjectIndexes;
 
     AdventureMapHints(PatcherInstance *pi);
+    bool NeedDrawMapItem(const H3MapItem *mIt) const noexcept;
 
   private:
     static LPCSTR GetHintText(const H3AdventureManager *adv, const H3MapItem *mapItem, const int mapX, const int mapY,
@@ -61,10 +56,10 @@ class AdventureMapHints : public IGamePatch
     virtual ~AdventureMapHints();
 
   protected:
-    static void __stdcall AdvMgr_ObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,
+    static void __stdcall AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,
                                             int screenX, int screenY);
     static void __stdcall AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *advMan);
-    static _LHF_(AdvMgr_BeforeObjectDraw);
+    static _LHF_(AdvMgr_BeforeObjectsDraw);
 };
 
 } // namespace advMapHints

@@ -28,11 +28,10 @@
 #include "Era/eraModList.hpp"
 #endif // ERA_MOD_LIST
 
-
 #ifdef _WOG_
 #include "WoG/NPC.h"
 #include "WoG/WogClasses.h"
-#endif // WOG
+#endif // _WOG_
 
 #ifdef NLOHMAN_JSON
 #include "json.hpp"
@@ -102,16 +101,5 @@ class IPluginText
 };
 
 // std::vector< IPluginText*>IPluginText::texts;
-
-#ifdef H3API_SINGLE_HEADER
-// #undef _H3API_LIBRARY_
-// #define _H3API_PLUGINS_
-
-// #include "H3API/single_header/H3API.hpp"
-
-#else
-// #include "H3API/include/H3API.hpp"
-
-#endif // H3API_SINGLE_HEADER
 
 #endif // !HEADER_H_

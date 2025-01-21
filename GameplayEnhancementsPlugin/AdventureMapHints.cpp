@@ -9,22 +9,19 @@ void AdventureMapHints::Init(PatcherInstance *pi)
 {
     if (!instance)
     {
-
-        if (instance = new AdventureMapHints(pi))
-        {
-            instance->_pi = pi;
-            instance->CreatePatches();
-        }
+        instance = new AdventureMapHints(pi);
     }
 }
 
-AdventureMapHints::AdventureMapHints(PatcherInstance *pi) : IGamePatch(pi)
+AdventureMapHints::AdventureMapHints(PatcherInstance *pi)
+    : IGamePatch(pi), settings("Runtime/gem_AdventureMapHints.ini", "StaticHintsDrawByType")
+
 {
     m_mapView.left = 8;                                   // right panel
     m_mapView.top = 8;                                    // bottom panel
     m_mapView.right = H3GameWidth::Get() - (800 - 592);   // right panel
     m_mapView.bottom = H3GameHeight::Get() - (600 - 544); // bottom panel
-    settings = new AdventureHintsSettings("Runtime/gem_AdventureMapHints.ini", "StaticHintsDrawByType");
+    CreatePatches();
 }
 
 void AdventureMapHints::CreatePatches() noexcept
@@ -35,8 +32,15 @@ void AdventureMapHints::CreatePatches() noexcept
 
         blockAdventureHintDraw = _pi->CreateHexPatch(0x040D0F4, const_cast<char *>("EB 40 90"));
 
-        _pi->WriteLoHook(0x040F5AB, AdvMgr_BeforeObjectDraw);
-        _pi->WriteHiHook(0x40F5D7, THISCALL_, AdvMgr_ObjectDraw);
+        _pi->WriteLoHook(0x040F5AB, AdvMgr_BeforeObjectsDraw);
+        if (settings.drawOverFogOfWar)
+        {
+            _pi->WriteHiHook(0x040F6A5, THISCALL_, AdvMgr_TileObjectDraw);
+        }
+        else
+        {
+            _pi->WriteHiHook(0x040F5D7, THISCALL_, AdvMgr_TileObjectDraw);
+        }
 
         m_isInited = true;
     }
@@ -110,13 +114,13 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
     return h3_TextBuffer;
 }
 
-_LHF_(AdventureMapHints::AdvMgr_BeforeObjectDraw)
+_LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
 {
 
     instance->needDrawHints = false;
     const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() &&
-                           STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings->vKey) & 0x800 &&
-                           instance->settings->isHeld;
+                           STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings.vKey) & 0x800 &&
+                           instance->settings.isHeld;
 
     if (keyIsHeld)
     {
@@ -127,30 +131,44 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectDraw)
         instance->needDrawHints = Era::GetAssocVarIntValue(ermVariableNameBuffer);
     }
 
-    instance->m_drawnOjects.clear();
+    instance->drawnOjectIndexes.clear();
 
     return EXEC_DEFAULT;
 }
-void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManager *adv, int mapX, int mapY, int mapZ,
-                                                    int screenX, int screenY)
+void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *adv, int mapX, int mapY,
+                                                        int mapZ, int screenX, int screenY)
 {
 
     THISCALL_6(void, h->GetDefaultFunc(), adv, mapX, mapY, mapZ, screenX, screenY);
 
     if (instance->needDrawHints)
     {
-
-        H3Position pos(mapX, mapY, mapZ);
+        // check if tile may have object and visible by user
         if (mapX >= 0 && mapY >= 0 && mapX < *P_MapSize && mapY < *P_MapSize &&
-            H3TileVision::CanViewTile(pos, instance->playerID))
+            H3TileVision::CanViewTile(mapX, mapY, mapZ, instance->playerID))
         {
-            H3MapItem *currentItem = P_Game->GetMapItem(pos.Mixed());
-            if (currentItem &&
-                instance->m_drawnOjects.find(currentItem->drawnObjectIndex) == instance->m_drawnOjects.cend() &&
-                instance->NeedDrawMapItem(currentItem))
-            {
 
-                instance->m_drawnOjects.insert(currentItem->drawnObjectIndex);
+            H3MapItem *currentItem = adv->GetMapItem(mapX, mapY, mapZ);
+            if (!currentItem)
+            {
+                return;
+            }
+
+            // if not entrance point find if it visible by player and don't draw current item
+            if (!currentItem->IsEntrance())
+            {
+                if (auto *entrance = currentItem->GetEntrance())
+                {
+                    if (H3TileVision::CanViewTile(entrance->GetCoordinates(), instance->playerID))
+                    {
+                        return;
+                    }
+                }
+            }
+
+            if (instance->NeedDrawMapItem(currentItem) &&
+                instance->drawnOjectIndexes.insert(currentItem->drawnObjectIndex).second)
+            {
 
                 LPCSTR hintText = GetHintText(adv, currentItem, mapX, mapY, mapZ);
 
@@ -158,8 +176,6 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
                 auto &passability = attributes.passability;
 
                 // passability;
-                // echo(passability.m_bits[0][0]);
-                // echo(P_Game->mainSetup.objectDetails.Size());
 
                 constexpr int TILE_WIDTH = 32;
 
@@ -202,9 +218,11 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
                 memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
 
                 //  create golden frame
-                tempBuffer->DrawFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 189, 149, 57);
                 // draw text to temp buffer
+                // H3String texts = H3String::Format("x = %d, y = %d ;  width = %d, height = $d", mapX, mapY,
+                // currentItem);
                 fnt->TextDraw(tempBuffer, hintText, TEXT_MARGIN, 0, TEMP_PCX_WIDTH - TEXT_MARGIN, TEMP_PCX_HEIGHT);
+                tempBuffer->DrawFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 189, 149, 57);
 
                 // resize tempBuffer to align text for screen borders
 
@@ -273,16 +291,16 @@ void __stdcall AdventureMapHints::AdvMgr_ObjectDraw(HiHook *h, H3AdventureManage
 void __stdcall AdventureMapHints::AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *adv)
 {
     THISCALL_1(void, h->GetDefaultFunc(), adv);
-    if (instance->m_drawnOjects.size())
+    if (instance->drawnOjectIndexes.size())
     {
-        instance->m_drawnOjects.clear();
+        instance->drawnOjectIndexes.clear();
     }
 }
 
 bool AdventureMapHints::NeedDrawMapItem(const H3MapItem *mIt) const noexcept
 {
     if (mIt)
-        return settings->drawObjectHint[mIt->objectType].userValue;
+        return settings.drawObjectHint[mIt->objectType].userValue;
     return false;
 }
 
@@ -404,7 +422,7 @@ BOOL AdventureHintsSettings::load()
 BOOL AdventureHintsSettings::save()
 {
     Era::ClearIniCache(filePath);
-    DeleteFileA(filePath);
+    // DeleteFileA(filePath);
     for (UINT8 i = 0; i < limits::OBJECTS; ++i)
     {
         if (drawObjectHint[i].userValue != drawObjectHint[i].defaultValue)
@@ -416,14 +434,7 @@ BOOL AdventureHintsSettings::save()
     Era::WriteStrToIni("KeyCode", Era::IntToStr(vKey).c_str(), "ControlSettings", filePath);
 
     Era::SaveIni(filePath);
-    Era::ClearIniCache(filePath);
 
     return 0;
-}
-
-LPCSTR *AdventureMapHints::AccessableH3GeneralText::GetStringAdddres(const int row)
-{
-
-    return &text[row - 1];
 }
 } // namespace advMapHints

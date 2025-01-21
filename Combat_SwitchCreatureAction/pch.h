@@ -8,6 +8,7 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+#define _WOG_
 #include "..\headers\header.h"
 #include "ActionSwitcher.h"
 #endif //PCH_H
