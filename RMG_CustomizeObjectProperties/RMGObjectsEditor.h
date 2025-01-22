@@ -5,6 +5,7 @@ struct RMGObjectInfo
 {
 
     constexpr static int SIZE = 5;
+    constexpr static int UNDEFINED = -1;
 
     //	zoneType 0..3 human-computer-treasure-junction*/
 
@@ -166,6 +167,9 @@ class RMGObjectsEditor : public IGamePatch
 
   private:
     void InitDefaultProperties(const INT16 *maxSubtypes);
+
+    void BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) const noexcept;
+    void AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept;
     //		void CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg);
 
   private:

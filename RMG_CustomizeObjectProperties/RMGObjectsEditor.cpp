@@ -326,26 +326,52 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 
     THISCALL_2(void, h->GetDefaultFunc(), rmg, RmgTemplate);
 
-    // auto var = RMGObjectInfo::currentRMGObjectsInfoByType;
-    // create limits counters
-    generatedInfo.Assign(rmg, RMGObjectInfo::CurrentObjectInfo());
+    Get().BeforeMapGeneration(rmg);
 }
 
+void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) const noexcept
+{
+    // create limits counters
+    generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfo());
+
+    // change guard ai values
+    auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
+    for (auto &info : monstersInfo)
+    {
+        if (info.value != RMGObjectInfo::UNDEFINED)
+        {
+            std::swap(info.value, P_CreatureInformation[info.subtype].aiValue);
+        }
+    }
+}
 void __stdcall RMGObjectsEditor::RMG__AfterMapGenerated(HiHook *h, H3RmgRandomMapGenerator *rmgStruct)
 {
+
+    Get().AfterMapGeneration(rmgStruct);
+    //  clear filled data;
+    THISCALL_1(void, h->GetDefaultFunc(), rmgStruct);
+}
+void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept
+{
+
     // swap generators list back
     if (generatedInfo.Inited())
     {
         generatedInfo.Clear(rmgStruct);
     }
-    auto &editedGeneratorsList = Get().editedRMGObjectGenerators;
 
     // swap rmgGenerators list back
-    std::swap(rmgStruct->objectGenerators, editedGeneratorsList);
-    editedGeneratorsList.RemoveAll();
+    std::swap(rmgStruct->objectGenerators, editedRMGObjectGenerators);
+    editedRMGObjectGenerators.RemoveAll();
 
-    //  clear filled data;
-    THISCALL_1(void, h->GetDefaultFunc(), rmgStruct);
+    auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
+    for (auto &info : monstersInfo)
+    {
+        if (P_CreatureInformation[info.subtype].aiValue != RMGObjectInfo::UNDEFINED)
+        {
+            std::swap(info.value, P_CreatureInformation[info.subtype].aiValue);
+        }
+    }
 }
 
 //
@@ -590,8 +616,6 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator &gener
     // if this is first fucntion call with pseudo generator
     // we collect data
 
-    constexpr int UNDEFINED = -1;
-
     // only if data isn't taken from json before
     if (rmgObjInfo.density == UNDEFINED)
     {
@@ -619,10 +643,6 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     RMGObjectInfo *objInfo = nullptr;
     bool readSucces = false;
 
-    constexpr int INFO_PROPERTIES_NUMBER = 5;
-
-    constexpr int UNDEFINED = -1;
-
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     {
         const int maxSubtype = maxSubtypes[objType];
@@ -631,7 +651,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         int typeData[5] = {true, limitsInfo.mapTypesLimit[objType], limitsInfo.zoneTypeLimits[objType], UNDEFINED,
                            UNDEFINED};
 
-        for (size_t keyIndex = 0; keyIndex < INFO_PROPERTIES_NUMBER; keyIndex++)
+        for (size_t keyIndex = 0; keyIndex < SIZE; keyIndex++)
         {
 
             // read default data from json for objTypes only
@@ -657,7 +677,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
             objInfo->type = objType;
             objInfo->subtype = objSubtype;
 
-            for (size_t keyIndex = 0; keyIndex < INFO_PROPERTIES_NUMBER; keyIndex++)
+            for (size_t keyIndex = 0; keyIndex < SIZE; keyIndex++)
             {
                 // read default data from json for the exact subtype
                 const int subtypeData = EraJS::readInt(H3String::Format(OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT,
@@ -704,9 +724,6 @@ void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
     {
         currentRMGObjectsInfoByType[i] = defaultRMGObjectsInfoByType[i]; // curentSettings;
     }
-
-    constexpr int zoneType = 0;
-    constexpr int SIZE = 5;
 
     for (auto &objInfoVec : currentRMGObjectsInfoByType)
     {
