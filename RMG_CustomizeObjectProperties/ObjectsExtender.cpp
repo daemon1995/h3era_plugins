@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <thread>
 namespace extender
 {
 
@@ -193,7 +194,9 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     }
     if (addedWavNames.size())
     {
-        sound::SoundManager::Init(addedWavNames);
+        std::thread th(&sound::SoundManager::Init, addedWavNames);
+        th.detach();
+      //  sound::SoundManager::Init(addedWavNames);
     }
 
     // block objec entry tile passability for HOTA_PICKUPABLE_OBJECT_TYPE
