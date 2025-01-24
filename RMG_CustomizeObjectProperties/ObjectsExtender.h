@@ -28,26 +28,9 @@ struct RMGObjectSetable
     bool operator==(const RMGObjectSetable &other) const noexcept;
 };
 
-struct LoopSoundManager
-{
-    BOOL enterSoundChanged = false;
-    BOOL loopSoundChanged = false;
-    H3WavFile *defaultWav = nullptr;
-
-    std::vector<H3WavFile *> loopSounds;
-
-    std::vector<LPCSTR> loopSoundNames;
-
-  public:
-    static int __stdcall AdvMgr_MapItem_Select_Sound(HiHook *h, H3AdventureManager *adv, const int x, const int y,
-                                                     const int z);
-    static void __stdcall OnGameLeave(Era::TEvent *event);
-};
-
 class ObjectsExtender : public IGamePatch
 {
 
-    static LoopSoundManager soundManager;
     static std::vector<ObjectsExtender *> extenders;
 
   protected:
@@ -81,7 +64,6 @@ class ObjectsExtender : public IGamePatch
   private:
     static _LHF_(Game__NewGameObjectIteration);
     static _LHF_(Game__NewWeekObjectIteration);
-    static _LHF_(H3AdventureManager__ObjectVisit_SoundPlay); // taken from json
     static _LHF_(H3AdventureManager__ObjectVisit);
     static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
     static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);

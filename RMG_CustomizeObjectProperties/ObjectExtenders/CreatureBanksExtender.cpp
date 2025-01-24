@@ -322,25 +322,26 @@ int CreatureBanksExtender::GetCreatureBankId(const int objType, const int objSub
     return cbId;
 }
 
-eObject CreatureBanksExtender::GetCreatureBankObjectType(const int cbId) noexcept
+eObject CreatureBanksExtender::GetCreatureBankObjectType(const int creatureBankId) noexcept
 {
 
     // get CB object type for some edits later
     eObject objectType = eObject::NO_OBJ;
-    if (cbId >= 0)
+    if (creatureBankId >= 0)
     {
-        switch (cbId)
+        switch (creatureBankId)
         {
-        case 7:
+
+        case eCrBank::SHIPWRECK:
             objectType = eObject::SHIPWRECK;
             break;
-        case 8:
+        case eCrBank::DERELICT_SHIP:
             objectType = eObject::DERELICT_SHIP;
             break;
-        case 9:
+        case eCrBank::CRYPT:
             objectType = eObject::CRYPT;
             break;
-        case 10:
+        case eCrBank::DRAGON_UTOPIA:
             objectType = eObject::DRAGON_UTOPIA;
             break;
         default:
@@ -351,10 +352,6 @@ eObject CreatureBanksExtender::GetCreatureBankObjectType(const int cbId) noexcep
 
     return objectType;
 }
-
-// SOUND FIND HERE 00418BB6
-
-// H3WavFile* loop = trSuccess ? H3WavFile::Load(loooSoundName.String()) : nullptr;
 
 void CreatureBanksExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
 {
@@ -390,10 +387,23 @@ H3RmgObjectGenerator *CreatureBanksExtender::CreateRMGObjectGen(const RMGObjectI
 {
     if (objectInfo.type == eObject::CREATURE_BANK)
     {
-
         return ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
+}
+inline int ReadJsonInt(LPCSTR format, const int arg)
+{
+
+    return EraJS::readInt(H3String::Format(format, arg).String());
+}
+inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2)
+{
+    return EraJS::readInt(H3String::Format(format, arg, arg2).String());
+}
+inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2, const int arg3)
+{
+
+    return EraJS::readInt(H3String::Format(format, arg, arg2, arg3).String());
 }
 
 const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
@@ -409,17 +419,14 @@ const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubt
     bool trSuccess = false;
 
     // @todo add default creature banks editor
-    //for (INT16 i = 0; i < defaultBanksNumber; i++)
+    // for (INT16 i = 0; i < defaultBanksNumber; i++)
     //{
     //}
-
-    //// read new creature banks Data
 
     for (INT16 creatureBankId = defaultBanksNumber; creatureBankId < maxSubtype; creatureBankId++)
     {
 
         // states
-
         H3CreatureBankSetup setup;
 
         // assign new CB name from json/default
@@ -429,44 +436,35 @@ const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubt
             name = H3ObjectName::Get()[eObject::CREATURE_BANK];
         setup.name = name;
 
-        for (size_t state = 0; state < 4; state++)
+        for (size_t i = 0; i < 4; i++)
         {
+            auto &state = setup.states[i];
 
-            setup.states[state].creatureRewardType = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.16.%d.states.%d.creatureRewardType", creatureBankId, state)
-                    .String());
-            setup.states[state].creatureRewardCount = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.16.%d.states.%d.creatureRewardCount", creatureBankId, state)
-                    .String());
-            setup.states[state].chance = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.16.%d.states.%d.chance", creatureBankId, state).String());
-            setup.states[state].upgrade = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.16.%d.states.%d.upgrade", creatureBankId, state).String());
+            state.creatureRewardType =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.creatureRewardType", creatureBankId, i);
+            state.creatureRewardCount =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.creatureRewardCount", creatureBankId, i);
+            state.chance = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.chance", creatureBankId, i);
+            state.upgrade = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.upgrade", creatureBankId, i);
 
             for (size_t artLvl = 0; artLvl < 4; artLvl++)
-                setup.states[state].artifactTypeCounts[artLvl] =
-                    EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifactTypeCounts.%d",
-                                                    creatureBankId, state, artLvl)
-                                       .String());
+            {
+                state.artifactTypeCounts[artLvl] = ReadJsonInt(
+                    "RMG.objectGeneration.16.%d.states.%d.artifactTypeCounts.%d", creatureBankId, i, artLvl);
+            }
 
             for (size_t j = 0; j < 7; j++)
             {
-
-                setup.states[state].guardians.type[j] = EraJS::readInt(
-                    H3String::Format("RMG.objectGeneration.16.%d.states.%d.guardians.type.%d", creatureBankId, state, j)
-                        .String());
-                setup.states[state].guardians.count[j] =
-                    EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.states.%d.guardians.count.%d",
-                                                    creatureBankId, state, j)
-                                       .String());
-                setup.states[state].resources.asArray[j] = EraJS::readInt(
-                    H3String::Format("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankId, state, j)
-                        .String());
+                state.guardians.type[j] =
+                    ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.guardians.type.%d", creatureBankId, i, j);
+                state.guardians.count[j] =
+                    ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.guardians.count.%d", creatureBankId, i, j);
+                state.resources.asArray[j] =
+                    ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankId, i, j);
             }
         }
 
-        int isNotBank =
-            EraJS::readInt(H3String::Format("RMG.objectGeneration.16.%d.isNotBank", creatureBankId).String());
+        int isNotBank = ReadJsonInt("RMG.objectGeneration.16.%d.isNotBank", creatureBankId);
 
         creatureBanks.isNotBank.emplace_back(isNotBank);
         creatureBanks.setups.emplace_back(setup);
@@ -496,7 +494,6 @@ void CreatureBanksExtender::CreatureBank::CopyDefaultData(const size_t defaultSi
     int *currentCreatureRewardsArray = reinterpret_cast<int *>(IntAt(0x47A4A8 + 3));
     memcpy(monsterAwards.data(), currentCreatureRewardsArray, sizeof(int) * defaultSize);
     IntAt(0x47A4A8 + 3) = (int)monsterAwards.data();
-    // instance->_pi->WriteWord(0x47A4A8 + 3, (int)monsterAwards.data());
 
     int *currentGuardiansArray = reinterpret_cast<int *>(IntAt(0x47A4AF + 3));
     memcpy(monsterGuards[0].data(), currentGuardiansArray, sizeof(int) * defaultSize * 5);
