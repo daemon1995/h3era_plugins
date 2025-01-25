@@ -58,6 +58,7 @@ void SoundManager::CreateNewLoopSoundsTable(const std::vector<ObjectSound> &addi
         // if we added new wav files into the table we should replace the original wav table
         // and patch Adventure manager to use extended wav table
         const size_t wavTableSize = loopWavNamesMap.size();
+        // return;
         if (wavTableSize > LOOP_SOUNDS_AMOUNT)
         {
 
@@ -77,6 +78,12 @@ void SoundManager::ReplaceAdventureManagerLoadedWavsArray()
 
     if (!patchesSet && loopSoundsWavTable.size())
     {
+        // check if somebody pathed native wav table
+        if (WordAt(0x041836E) != 0x8C8B || WordAt(0x041850F) != 0x948B || WordAt(0x041854D) != 0x848B)
+        {
+            return;
+        }
+        // globalPatcher->UndoAllAt(0x041836E);
 
         // patch AdventureManager::loopSounds[70] with our wavTable
         const DWORD soundNamesTable = DWORD(loopSoundNamePointers.data());
