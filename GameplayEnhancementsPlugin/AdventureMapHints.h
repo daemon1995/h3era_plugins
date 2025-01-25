@@ -15,7 +15,12 @@ struct AdventureHintsSettings : public ISettings
     {
         bool defaultValue = false;
         bool userValue = false;
+		INT16 yOffset = NULL;
     } drawObjectHint[232];
+
+    LPCSTR creatureHintFormat = nullptr;
+    LPCSTR visitedHintFormat = nullptr;
+    LPCSTR nonVisitedHintFormat = nullptr;
 
   public:
     AdventureHintsSettings(const char *filePath, const char *sectionName);
@@ -27,6 +32,7 @@ struct AdventureHintsSettings : public ISettings
 };
 class AdventureMapHints : public IGamePatch
 {
+    // static constexpr LPCSTR flagDefNAme = NH3Dlg::Assets::CREST58;
 
     static RECT m_mapView;
     // bool m_objectsToDraw[232];
@@ -43,8 +49,8 @@ class AdventureMapHints : public IGamePatch
     bool NeedDrawMapItem(const H3MapItem *mIt) const noexcept;
 
   private:
-    static LPCSTR GetHintText(const H3AdventureManager *adv, const H3MapItem *mapItem, const int mapX, const int mapY,
-                              const int mapZ) noexcept;
+    LPCSTR GetHintText(const H3AdventureManager *adv, const H3MapItem *mapItem, const int mapX, const int mapY,
+                       const int mapZ) noexcept;
 
   public:
     static AdventureMapHints *instance;
@@ -57,7 +63,7 @@ class AdventureMapHints : public IGamePatch
 
   protected:
     static void __stdcall AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,
-                                            int screenX, int screenY);
+                                                int screenX, int screenY);
     static void __stdcall AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *advMan);
     static _LHF_(AdvMgr_BeforeObjectsDraw);
 };

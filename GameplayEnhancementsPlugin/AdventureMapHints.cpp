@@ -74,19 +74,38 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
     auto visitedText = H3GeneralText::Get()->GetText(VISITED_TEXT_ID + 1);
     auto notVisitedText = H3GeneralText::Get()->GetText(NOT_VISITED_TEXT_ID + 1);
 
-    H3String changedVisitedText = H3String::Format("{~Green}\n%s}", visitedText).String();
-    H3String changedNotVisitedText = H3String::Format("{~Orange}\n%s}", notVisitedText).String();
+    H3String changedVisitedText = H3String::Format(settings.visitedHintFormat, visitedText).String();
+    H3String changedNotVisitedText = H3String::Format(settings.nonVisitedHintFormat, notVisitedText).String();
 
     H3Vector<LPCSTR> *generalTextPtr = reinterpret_cast<H3Vector<LPCSTR> *>(ADDRESS(H3GeneralText::Get()) + 0x1C);
 
-    const BOOL isCreature = mapItem->objectType == eObject::MONSTER;
     DWORD oldCreatureHintFormat = 0;
-    if (isCreature)
+    BYTE skipMineOwnershipHint = 0;
+
+    DWORD skipMineArmyHint = 0;
+
+    BOOL memoryPatchSet = true;
+    switch (mapItem->objectType)
     {
+    case ::eObject::CREATURE_GENERATOR1:
+    case ::eObject::CREATURE_GENERATOR4:
+
+        break;
+    case ::eObject::MINE:
+        skipMineOwnershipHint = ByteAt(0x040D635);
+        ByteAt(0x040D635) = 0xEB; // oldCreatureHintFormat;
+        skipMineArmyHint = DwordAt(0x040D77F);
+        DwordAt(0x040D77F) = 0x000096E9; // oldCreatureHintFormat;
+        break;
+    case ::eObject::MONSTER:
         oldCreatureHintFormat = DwordAt(0x40C2E7 + 1);
 
-        LPCSTR advMapCreatureHintFormat = "{%s}\n%s";
-        DwordAt(0x40C2E7 + 1) = reinterpret_cast<DWORD>(advMapCreatureHintFormat);
+        // LPCSTR advMapCreatureHintFormat = settings.creatureHintFormat;
+        DwordAt(0x40C2E7 + 1) = reinterpret_cast<DWORD>(settings.creatureHintFormat);
+        break;
+    default:
+        memoryPatchSet = false;
+        break;
     }
 
     auto p_visited = generalTextPtr->At(VISITED_TEXT_ID);
@@ -106,9 +125,25 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
 
     *p_visited = visitedText;
     *p_notVisited = notVisitedText;
-    if (oldCreatureHintFormat)
+
+    if (memoryPatchSet)
     {
-        DwordAt(0x40C2E7 + 1) = oldCreatureHintFormat;
+        switch (mapItem->objectType)
+        {
+        case ::eObject::CREATURE_GENERATOR1:
+        case ::eObject::CREATURE_GENERATOR4:
+
+            break;
+        case ::eObject::MINE:
+            ByteAt(0x040D635) = skipMineOwnershipHint;
+            DwordAt(0x040D77F) = skipMineArmyHint;
+            break;
+        case ::eObject::MONSTER:
+            DwordAt(0x40C2E7 + 1) = oldCreatureHintFormat;
+            break;
+        default:
+            break;
+        }
     }
 
     return h3_TextBuffer;
@@ -170,120 +205,140 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                 instance->drawnOjectIndexes.insert(currentItem->drawnObjectIndex).second)
             {
 
-                LPCSTR hintText = GetHintText(adv, currentItem, mapX, mapY, mapZ);
-
-                auto &attributes = P_Game->mainSetup.objectAttributes[currentItem->drawnObjectIndex];
-                auto &passability = attributes.passability;
-
-                // passability;
+                const bool isHero = currentItem->objectType == eObject::HERO;
 
                 constexpr int TILE_WIDTH = 32;
-
-                H3FontLoader fnt(NH3Dlg::Text::TINY);
+                constexpr int TEXT_MARGIN = 2;
 
                 constexpr int OBJECT_WIDTH = 1 * TILE_WIDTH;
 
-                constexpr int minTextFieldWidth = OBJECT_WIDTH;
-                const int maxHintTextWidth = fnt->GetMaxLineWidth(hintText);
-                constexpr int maxTextFieldWidth = TILE_WIDTH * 3;
-                const int textWidth = Clamp(minTextFieldWidth, maxHintTextWidth, maxTextFieldWidth);
-
-                const int hintTextLines = fnt->GetLinesCountInText(hintText, textWidth);
-                const int minTextFieldHeight = fnt->height + 2;
-                const int textHeight = hintTextLines * (minTextFieldHeight - 1);
-
-                // textFieldWidth =
-                // if (currentItem->objectType == eObject::SPELL_SCROLL)
-                //{
-                //    libc::sprintf(Era::z[1], "%s", hintText);
-
-                //    // Era::y[1] = TEMP_PCX_WIDTH;
-                //    Era::y[2] = textWidth;
-                //    Era::y[3] = maxHintTextWidth;
-                //    Era::y[4] = HINT_MAX_WORD_WIDTH;
-                //    Era::ExecErmCmd("IF:L^text = %z1, textWidth = %y2, maxHintTextWidth = %y3, HINT_MAX_WORD_WIDTH
-                //    "
-                //                    "width = %y4^");
-                //}
-
-                // constexpr INT START_DRAW_X = 8;
-
-                constexpr int TEXT_MARGIN = 2;
-
-                const int TEMP_PCX_WIDTH = textWidth + 10;
-                const int TEMP_PCX_HEIGHT = textHeight + TEXT_MARGIN;
-
-                auto tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
-
-                memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
-
-                //  create golden frame
-                // draw text to temp buffer
-                // H3String texts = H3String::Format("x = %d, y = %d ;  width = %d, height = $d", mapX, mapY,
-                // currentItem);
-                fnt->TextDraw(tempBuffer, hintText, TEXT_MARGIN, 0, TEMP_PCX_WIDTH - TEXT_MARGIN, TEMP_PCX_HEIGHT);
-                tempBuffer->DrawFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 189, 149, 57);
-
-                // resize tempBuffer to align text for screen borders
-
-                int objectWidth = 1 * TILE_WIDTH;
-                const int outOfWidthBorder = (TEMP_PCX_WIDTH - objectWidth) >> 1;
-
-                int destPcxX = screenX * TILE_WIDTH + adv->screenDrawOffset.x - outOfWidthBorder;
-                int destPcxY = screenY * TILE_WIDTH + adv->screenDrawOffset.y - TEMP_PCX_HEIGHT;
-
-                // adjust left border draw
-                UINT srcX = 0;
-                if (destPcxX < m_mapView.left)
+                H3LoadedPcx16 *tempBuffer = nullptr;
+                if (isHero)
                 {
-                    srcX = m_mapView.left - destPcxX;
-                    destPcxX = m_mapView.left;
-                    tempBuffer->width -= srcX;
+
+                    H3DefLoader flagDef(NH3Dlg::Assets::CREST58);
+
+                    const H3Hero &hero = P_Game->heroes[currentItem->hero.index];
+                    const int owner = hero.owner;
+                    const int frameId = owner >= 0 && owner < 8 ? owner : 8;
+                    H3PcxLoader portrait(P_HeroInfo[hero.id].smallPortrait);
+
+                    const int TEMP_PCX_WIDTH = portrait->width + TEXT_MARGIN;
+                    const int TEMP_PCX_HEIGHT = portrait->height + (flagDef->heightDEF >> 1) + TEXT_MARGIN;
+
+                    tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
+
+                    memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
+                    portrait->DrawToPcx16(tempBuffer, 1, 1, 1);
+
+                    flagDef->DrawToPcx16(0, frameId, ((flagDef->widthDEF - portrait->width) >> 1) - 1, 4,
+                                         portrait->width, (flagDef->heightDEF >> 1) - 1, tempBuffer, 1,
+                                         portrait->height + 1);
                 }
-                if (destPcxX + TEMP_PCX_WIDTH - m_mapView.left > m_mapView.right)
-                    tempBuffer->width = m_mapView.right + m_mapView.left - destPcxX;
-
-                UINT srcY = 0;
-                if (destPcxY < m_mapView.top)
+                else
                 {
-                    srcY = m_mapView.top - destPcxY;
-                    destPcxY = m_mapView.top;
-                    tempBuffer->height -= srcY;
-                }
-                if (destPcxY + TEMP_PCX_HEIGHT - m_mapView.top > m_mapView.bottom)
-                    tempBuffer->height = m_mapView.top + m_mapView.bottom - destPcxY;
 
-                // if need to draw any hint
-                if (tempBuffer->height > 0 && tempBuffer->width > 0)
-                {
-                    // get general Window draw buffer to draw temp pcx with x/y offsets
-                    auto drawBuffer = P_WindowManager->GetDrawBuffer();
-                    tempBuffer->DrawToPcx16(destPcxX, destPcxY, 1, drawBuffer, srcX, srcY);
+                    H3FontLoader fnt(NH3Dlg::Text::TINY);
 
-                    constexpr UINT SHADOW_SIZE = 3;
-                    int heightReserve = m_mapView.bottom - tempBuffer->height - destPcxY + m_mapView.top;
-                    UINT shadowWidth = 0;
+                    LPCSTR hintText = instance->GetHintText(adv, currentItem, mapX, mapY, mapZ);
+                    constexpr int minTextFieldWidth = OBJECT_WIDTH;
+                    const int maxHintTextWidth = fnt->GetMaxLineWidth(hintText);
+                    constexpr int maxTextFieldWidth = TILE_WIDTH * 3;
+                    const int textWidth = Clamp(minTextFieldWidth, maxHintTextWidth, maxTextFieldWidth);
 
-                    UINT shadowHeight = 0;
+                    const int hintTextLines = fnt->GetLinesCountInText(hintText, textWidth);
+                    const int minTextFieldHeight = fnt->height + 2;
+                    const int textHeight = hintTextLines * (minTextFieldHeight - 1);
+                    const int TEMP_PCX_WIDTH = textWidth + 10;
+                    const int TEMP_PCX_HEIGHT = textHeight + TEXT_MARGIN;
 
-                    if (heightReserve > 0)
-                        shadowHeight = heightReserve >= SHADOW_SIZE ? SHADOW_SIZE : heightReserve;
+                    tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
 
-                    int widthReserve = m_mapView.right - tempBuffer->width - destPcxX + m_mapView.left;
-                    if (widthReserve > 0)
-                        shadowWidth = widthReserve >= SHADOW_SIZE ? SHADOW_SIZE : widthReserve;
+                    memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
 
-                    if (shadowWidth)
-                        drawBuffer->DrawShadow(destPcxX + tempBuffer->width, destPcxY, shadowWidth,
-                                               tempBuffer->height + shadowHeight);
-
-                    if (shadowHeight)
-                        drawBuffer->DrawShadow(destPcxX, destPcxY + tempBuffer->height,
-                                               tempBuffer->width + (shadowHeight ? 0 : shadowWidth), shadowHeight);
+                    fnt->TextDraw(tempBuffer, hintText, TEXT_MARGIN, 0, TEMP_PCX_WIDTH - TEXT_MARGIN, TEMP_PCX_HEIGHT);
                 }
 
-                //	backPcx->Dereference();
-                tempBuffer->Destroy();
+                if (tempBuffer)
+                {
+                    //                    auto &attributes =
+                    //                    P_Game->mainSetup.objectAttributes[currentItem->drawnObjectIndex];
+                    // auto &passability = attributes.passability;
+
+                    // passability;
+
+                    //  create golden frame
+
+                    // draw text to temp buffer
+                    const int TEMP_PCX_WIDTH = tempBuffer->width;
+                    const int TEMP_PCX_HEIGHT = tempBuffer->height;
+
+                    tempBuffer->DrawFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 189, 149, 57);
+
+                    // resize tempBuffer to align text for screen borders
+
+                    int objectWidth = 1 * TILE_WIDTH;
+                    const int outOfWidthBorder = (TEMP_PCX_WIDTH - objectWidth) >> 1;
+
+                    int destPcxX = screenX * TILE_WIDTH + adv->screenDrawOffset.x - outOfWidthBorder;
+
+                    const int additionalYOffset = instance->settings.drawObjectHint[currentItem->objectType].yOffset;
+
+                    int destPcxY = screenY * TILE_WIDTH + adv->screenDrawOffset.y - TEMP_PCX_HEIGHT + additionalYOffset;
+
+                    // adjust left border draw
+                    UINT srcX = 0;
+                    if (destPcxX < m_mapView.left)
+                    {
+                        srcX = m_mapView.left - destPcxX;
+                        destPcxX = m_mapView.left;
+                        tempBuffer->width -= srcX;
+                    }
+                    if (destPcxX + TEMP_PCX_WIDTH - m_mapView.left > m_mapView.right)
+                        tempBuffer->width = m_mapView.right + m_mapView.left - destPcxX;
+
+                    UINT srcY = 0;
+                    if (destPcxY < m_mapView.top)
+                    {
+                        srcY = m_mapView.top - destPcxY;
+                        destPcxY = m_mapView.top;
+                        tempBuffer->height -= srcY;
+                    }
+                    if (destPcxY + TEMP_PCX_HEIGHT - m_mapView.top > m_mapView.bottom)
+                        tempBuffer->height = m_mapView.top + m_mapView.bottom - destPcxY;
+
+                    // if need to draw any hint
+                    if (tempBuffer->height > 0 && tempBuffer->width > 0)
+                    {
+                        // get general Window draw buffer to draw temp pcx with x/y offsets
+                        auto drawBuffer = P_WindowManager->GetDrawBuffer();
+                        tempBuffer->DrawToPcx16(destPcxX, destPcxY, 1, drawBuffer, srcX, srcY);
+
+                        constexpr UINT SHADOW_SIZE = 3;
+                        int heightReserve = m_mapView.bottom - tempBuffer->height - destPcxY + m_mapView.top;
+                        UINT shadowWidth = 0;
+
+                        UINT shadowHeight = 0;
+
+                        if (heightReserve > 0)
+                            shadowHeight = heightReserve >= SHADOW_SIZE ? SHADOW_SIZE : heightReserve;
+
+                        int widthReserve = m_mapView.right - tempBuffer->width - destPcxX + m_mapView.left;
+                        if (widthReserve > 0)
+                            shadowWidth = widthReserve >= SHADOW_SIZE ? SHADOW_SIZE : widthReserve;
+
+                        if (shadowWidth)
+                            drawBuffer->DrawShadow(destPcxX + tempBuffer->width, destPcxY, shadowWidth,
+                                                   tempBuffer->height + shadowHeight);
+
+                        if (shadowHeight)
+                            drawBuffer->DrawShadow(destPcxX, destPcxY + tempBuffer->height,
+                                                   tempBuffer->width + (shadowHeight ? 0 : shadowWidth), shadowHeight);
+                    }
+
+                    //	backPcx->Dereference();
+                    tempBuffer->Destroy();
+                }
             }
         }
     }
@@ -323,6 +378,13 @@ void AdventureHintsSettings::reset()
 
     memset(drawObjectHint, false, sizeof(drawObjectHint));
 
+    drawObjectHint[eObject::HERO].yOffset = 38;
+    drawObjectHint[eObject::ARTIFACT].yOffset = 16;
+    drawObjectHint[eObject::RESOURCE].yOffset = 16;
+    drawObjectHint[eObject::PANDORAS_BOX].yOffset = 16;
+    drawObjectHint[eObject::SPELL_SCROLL].yOffset = 16;
+    drawObjectHint[eObject::TREASURE_CHEST].yOffset = 16;
+
     drawObjectHint[eObject::ARENA].defaultValue = true;
     drawObjectHint[eObject::ARTIFACT].defaultValue = true;
     drawObjectHint[eObject::PANDORAS_BOX].defaultValue = true;
@@ -336,6 +398,9 @@ void AdventureHintsSettings::reset()
     drawObjectHint[eObject::SWAN_POND].defaultValue = true;
 
     drawObjectHint[eObject::CREATURE_BANK].defaultValue = true;
+    drawObjectHint[eObject::CREATURE_GENERATOR1].defaultValue = true;
+
+    drawObjectHint[eObject::CREATURE_GENERATOR4].defaultValue = true;
 
     drawObjectHint[eObject::CORPSE].defaultValue = true;
     drawObjectHint[eObject::MARLETTO_TOWER].defaultValue = true;
@@ -343,49 +408,70 @@ void AdventureHintsSettings::reset()
     drawObjectHint[eObject::DRAGON_UTOPIA].defaultValue = true;
 
     drawObjectHint[eObject::FLOTSAM].defaultValue = true;
+    drawObjectHint[eObject::FOUNTAIN_OF_FORTUNE].defaultValue = true;
 
     drawObjectHint[eObject::GARDEN_OF_REVELATION].defaultValue = true;
 
-    // drawObjectHint[eObject::HERO].defaultValue = true;
+    drawObjectHint[eObject::HERO].defaultValue = true;
+    drawObjectHint[eObject::HILL_FORT].defaultValue = true;
 
     drawObjectHint[eObject::LIBRARY_OF_ENLIGHTENMENT].defaultValue = true;
+    drawObjectHint[eObject::LIGHTHOUSE].defaultValue = true;
+    drawObjectHint[eObject::MONOLITH_ONE_WAY_ENTRANCE].defaultValue = true;
+    drawObjectHint[eObject::MONOLITH_ONE_WAY_EXIT].defaultValue = true;
+
+    drawObjectHint[eObject::MONOLITH_TWO_WAY].defaultValue = true;
 
     drawObjectHint[eObject::SCHOOL_OF_MAGIC].defaultValue = true;
     drawObjectHint[eObject::MAGIC_SPRING].defaultValue = true;
+    drawObjectHint[eObject::MAGIC_WELL].defaultValue = true;
 
+    drawObjectHint[eObject::MERCENARY_CAMP].defaultValue = true;
+    drawObjectHint[eObject::MERMAID].defaultValue = true;
+    drawObjectHint[eObject::MINE].defaultValue = true;
     drawObjectHint[eObject::MONSTER].defaultValue = true;
     drawObjectHint[eObject::MYSTICAL_GARDEN].defaultValue = true;
 
+    drawObjectHint[eObject::OBELISK].defaultValue = true;
+    drawObjectHint[eObject::REDWOOD_OBSERVATORY].defaultValue = true;
+
+    drawObjectHint[eObject::PILLAR_OF_FIRE].defaultValue = true;
     drawObjectHint[eObject::STAR_AXIS].defaultValue = true;
 
     drawObjectHint[eObject::PYRAMID].defaultValue = true;
 
     drawObjectHint[eObject::RESOURCE].defaultValue = true;
 
+    drawObjectHint[eObject::SCHOLAR].defaultValue = true;
     drawObjectHint[eObject::SEA_CHEST].defaultValue = true;
     drawObjectHint[eObject::SEER_HUT].defaultValue = true;
     drawObjectHint[eObject::CRYPT].defaultValue = true;
     drawObjectHint[eObject::SHIPWRECK].defaultValue = true;
     drawObjectHint[eObject::SHIPWRECK_SURVIVOR].defaultValue = true;
-
+    drawObjectHint[eObject::SHIPYARD].defaultValue = true;
     drawObjectHint[eObject::SHRINE_OF_MAGIC_INCANTATION].defaultValue = true;
     drawObjectHint[eObject::SHRINE_OF_MAGIC_GESTURE].defaultValue = true;
     drawObjectHint[eObject::SHRINE_OF_MAGIC_THOUGHT].defaultValue = true;
 
+    drawObjectHint[eObject::SIRENS].defaultValue = true;
     drawObjectHint[eObject::SPELL_SCROLL].defaultValue = true;
     drawObjectHint[eObject::STABLES].defaultValue = true;
+    drawObjectHint[eObject::TAVERN].defaultValue = true;
 
     drawObjectHint[eObject::LEARNING_STONE].defaultValue = true;
     drawObjectHint[eObject::TREASURE_CHEST].defaultValue = true;
     drawObjectHint[eObject::TREE_OF_KNOWLEDGE].defaultValue = true;
 
+    drawObjectHint[eObject::UNIVERSITY].defaultValue = true;
+    drawObjectHint[eObject::WAGON].defaultValue = true;
+    drawObjectHint[eObject::WAR_MACHINE_FACTORY].defaultValue = true;
     drawObjectHint[eObject::SCHOOL_OF_WAR].defaultValue = true;
+    drawObjectHint[eObject::WARRIORS_TOMB].defaultValue = true;
 
     drawObjectHint[eObject::WATER_WHEEL].defaultValue = true;
 
     drawObjectHint[eObject::WINDMILL].defaultValue = true;
     drawObjectHint[eObject::WITCH_HUT].defaultValue = true;
-
     drawObjectHint[142].defaultValue = true;
 
     drawObjectHint[144].defaultValue = true;
@@ -402,6 +488,22 @@ void AdventureHintsSettings::reset()
 
 BOOL AdventureHintsSettings::load()
 {
+    bool readSuccess = false;
+    creatureHintFormat = EraJS::read("gem_plugin.advneture_hints.creature_format", readSuccess);
+    if (!readSuccess)
+    {
+        creatureHintFormat = "{%s}\n{~r}%s}";
+    }
+    visitedHintFormat = EraJS::read("gem_plugin.advneture_hints.visited_format", readSuccess);
+    if (!readSuccess)
+    {
+        visitedHintFormat = "{~LightGreen}\n%s}";
+    }
+    nonVisitedHintFormat = EraJS::read("gem_plugin.advneture_hints.not_visited_format", readSuccess);
+    if (!readSuccess)
+    {
+        nonVisitedHintFormat = "{~Orange}\n%s}";
+    }
     for (UINT8 i = 0; i < limits::OBJECTS; ++i)
     {
 
