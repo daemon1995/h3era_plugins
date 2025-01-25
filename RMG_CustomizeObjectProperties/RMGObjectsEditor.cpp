@@ -314,10 +314,10 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 
 #ifdef _DEBUG
     constexpr int TEST_SEED = 23432434;
-    srand(GetTime());
-    const unsigned char objectGenAttemps = rand() % 100 + 3;
-    ByteAt(0x0546A6F + 2) = objectGenAttemps;
-    H3Messagebox(Era::IntToStr(objectGenAttemps).c_str());
+    // srand(GetTime());
+    // const unsigned char objectGenAttemps = rand() % 100 + 3;
+    // ByteAt(0x0546A6F + 2) = objectGenAttemps;
+    // H3Messagebox(Era::IntToStr(objectGenAttemps).c_str());
 
     const_cast<H3RmgRandomMapGenerator *>(rmg)->randomSeed = TEST_SEED;
     H3Random::SetRandomSeed(rmg->randomSeed);
@@ -367,7 +367,7 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
     auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
     for (auto &info : monstersInfo)
     {
-        if (P_CreatureInformation[info.subtype].aiValue != RMGObjectInfo::UNDEFINED)
+        if (info.value != RMGObjectInfo::UNDEFINED)
         {
             std::swap(info.value, P_CreatureInformation[info.subtype].aiValue);
         }

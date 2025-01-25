@@ -439,6 +439,7 @@ void AdventureHintsSettings::reset()
     drawObjectHint[eObject::STAR_AXIS].defaultValue = true;
 
     drawObjectHint[eObject::PYRAMID].defaultValue = true;
+    drawObjectHint[eObject::RALLY_FLAG].defaultValue = true;
 
     drawObjectHint[eObject::RESOURCE].defaultValue = true;
 
