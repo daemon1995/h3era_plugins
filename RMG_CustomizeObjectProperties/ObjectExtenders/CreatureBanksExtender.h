@@ -8,10 +8,13 @@ namespace cbanks
 class CreatureBanksExtender : public extender::ObjectsExtender
 {
 
+    static INT currentCreatureBankId;
+    static H3MapItem *currentMapItem;
+    static H3CreatureBank *currentCreatureBank;
+
   private:
     UINT16 defaultBanksNumber = 0;
     UINT16 addedBanksNumber = 0;
-    BOOL bankCombatCheck;
 
     struct CreatureBank
     {
@@ -21,6 +24,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         std::vector<std::array<int, 5>> monsterGuards;
         std::vector<H3CreatureBankSetup> setups;
         std::vector<int> isNotBank;
+        std::vector<std::array<int, 14>> customPositions;
 
       public:
         void CopyDefaultData(const size_t defaultSize);
@@ -45,7 +49,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
 
     // virtual void GetObjectPreperties() noexcept override  final;
   private:
-    const int GetBankSetupsNumberFromJson(const INT16 maxSubtype);
+    int GetBankSetupsNumberFromJson(const INT16 maxSubtype);
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
     void Resize(UINT16 m_size) noexcept;
     void Reserve(UINT16 m_size) noexcept;

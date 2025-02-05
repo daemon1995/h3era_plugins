@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.10";
+const char *PLUGIN_VERSION = "1.11";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -22,36 +22,38 @@ void __stdcall OnReportVersion(Era::TEvent *e)
 Patcher *globalPatcher;
 PatcherInstance *_PI;
 
-/*!
-  \brief Entry point of the DLL.
-
-  \param hModule Handle to the DLL module.
-  \param ul_reason_for_call Reason for calling the function.
-  \param lpReserved Reserved for future use.
-
-  \return TRUE if the function succeeds, FALSE otherwise.
-
-  This function is the entry point of the DLL. It handles the different
-  reasons for calling the function and initializes the plugin if it
-  hasn't been initialized before.
-*/
-
 /*
 
-1. Assign settings from settings dlg with lmitizer
-2. Make Dlg Scroll and Input text working;
-3. Add Default settings reset;
-4. Fix Resized Pictures and add new enabele button;
-5. Assign native global limit arrays with Object Limitizer
-6. Fix/Rewrite Loop sounds
-7. Check several objects.txt merging
-8. Dlg open is slow
+1. Assign settings from settings dlg with lmitizer - Done
+2. Make Dlg Scroll and Input text workin - Done
+3. Add Default settings reset - Done
+4. Fix Resized Pictures and add new enable button - Done
+5. Assign native global limit arrays with Object Limitizer - Done
+6. Fix/Rewrite Loop sounds - Done
+7. Check several objects.txt merging - Done
+8. Dlg open is slow - Done
 . ???
-. Remove Testing code;
-. Release;
+. Remove Testing code; Done
+. Release; Done
 
+9. Add each zone type settings:
+    a. horizontal scroll bar
+    b. ...
+10. Add saving/loading settings for users;
+11. Add default Creature banks support;
+12. Remove all extenders code from the plugin:
+    a. create API for ObjectExtender class
+    b. create unordered map<std::pair<int objectType, int objectSubtype>, std::shared_ptr<ObjectExtender>> of extenders
+    c. call events for all extenders from this plugin
 
-
+13. Create complex objects extender support:
+    a. spell scrolls
+    b. hero prisons;
+    c. pandora's box;
+14. Add object ONLY type settings:
+    a. create groups of subtypes general settings;
+    b. user can create custom groups of subtypes;
+    c. dlg should automatically create items but not remove current so reusing (limit number of the groups);
 
 */
 

@@ -1,6 +1,10 @@
 #include "..\pch.h"
 namespace cbanks
 {
+INT CreatureBanksExtender::currentCreatureBankId = -1;
+H3MapItem *CreatureBanksExtender::currentMapItem = nullptr;
+H3CreatureBank *CreatureBanksExtender::currentCreatureBank = nullptr;
+
 BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
                     const bool withoutBrackets = true) noexcept
 {
@@ -100,7 +104,7 @@ BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, con
 CreatureBanksExtender::CreatureBanksExtender()
     : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.CreatureBanksExtender.daemon_n"))
 {
-    bankCombatCheck = false;
+    // bankCombatCheck = false;
 
     CreatePatches();
 }
@@ -111,20 +115,14 @@ CreatureBanksExtender &CreatureBanksExtender::Get()
     return _instance;
 }
 
-_LHF_(CrBanksTxt_Ctor)
-{
-
-    return EXEC_DEFAULT;
-}
-
 void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *event)
 {
 
     auto &creatureBanks = Get().creatureBanks;
-    const int SZIE = Get().Size();
+    const int SIZE = creatureBanks.m_size;
     const int defaultBanksNumber = Get().defaultBanksNumber;
     const int lastBankId = defaultBanksNumber + Get().addedBanksNumber;
-    for (size_t i = 0; i < SZIE; i++)
+    for (size_t i = 0; i < SIZE; i++)
     {
         const int objectType = GetCreatureBankObjectType(i);
 
@@ -170,9 +168,7 @@ void CreatureBanksExtender::CreatePatches()
 
     Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 }
-// #define _UNIQUE
-H3CreatureBank *currentCreatureBank = nullptr;
-H3MapItem *currentMapItem = nullptr;
+
 _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 {
     currentCreatureBank = nullptr;
@@ -187,13 +183,12 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 
     return EXEC_DEFAULT;
 }
-
 _LHF_(CreatureBanksExtender::CrBank_BeforeCombatStart)
 {
-    H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ecx);
-    if (mapItem && mapItem->objectType == eObject::CREATURE_BANK &&
-        Get().creatureBanks.isNotBank[mapItem->objectSubtype])
-        Get().bankCombatCheck = true;
+    if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ecx))
+    {
+        currentCreatureBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
+    }
 
     return EXEC_DEFAULT;
 }
@@ -231,13 +226,27 @@ signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT A
                                                                int isBank)
 {
 
-    if (Get().bankCombatCheck)
+    static Patch *positionsPatch = nullptr;
+    if (currentCreatureBankId != -1)
     {
-        isBank = false;
-        Get().bankCombatCheck = false;
+        auto &banks = Get().creatureBanks;
+        isBank = ~(banks.isNotBank[currentCreatureBankId]);
+
+        positionsPatch = _PI->WriteDword(0x04632A9 + 3, (int)banks.customPositions[currentCreatureBankId].data());
+
+        currentCreatureBankId = -1;
     }
-    return THISCALL_11(signed int, h->GetDefaultFunc(), AdvMan, PosMixed, attHero, attArmy, PlayerIndex, defTown,
-                       defHero, defArmy, seed, a10, isBank);
+
+    const int result = THISCALL_11(signed int, h->GetDefaultFunc(), AdvMan, PosMixed, attHero, attArmy, PlayerIndex,
+                                   defTown, defHero, defArmy, seed, a10, isBank);
+
+    if (positionsPatch)
+    {
+        positionsPatch->Undo();
+        positionsPatch = nullptr;
+    }
+
+    return result;
 }
 
 void __stdcall CreatureBanksExtender::CrBank_AskForVisitMessage(HiHook *h, char *mes, const int messageType,
@@ -304,16 +313,16 @@ int CreatureBanksExtender::GetCreatureBankId(const int objType, const int objSub
         }
         break;
     case eObject::DERELICT_SHIP:
-        cbId = 8;
+        cbId = eCrBank::DERELICT_SHIP;
         break;
     case eObject::DRAGON_UTOPIA:
-        cbId = 10;
+        cbId = eCrBank::DRAGON_UTOPIA;
         break;
     case eObject::CRYPT:
-        cbId = 9;
+        cbId = eCrBank::CRYPT;
         break;
     case eObject::SHIPWRECK:
-        cbId = 7;
+        cbId = eCrBank::SHIPWRECK;
         break;
     default:
         break;
@@ -406,7 +415,7 @@ inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2, const int a
     return EraJS::readInt(H3String::Format(format, arg, arg2, arg3).String());
 }
 
-const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
+int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
 {
 
     addedBanksNumber = 0;
@@ -417,11 +426,17 @@ const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubt
     Reserve(30);
 
     bool trSuccess = false;
+    std::array<int, 14> defaultPositions;
+
+    constexpr int postionsAddress = 0x063D0E0;
+
+    libc::memcpy(defaultPositions.data(), reinterpret_cast<int *>(postionsAddress), sizeof(defaultPositions));
 
     // @todo add default creature banks editor
-    // for (INT16 i = 0; i < defaultBanksNumber; i++)
-    //{
-    //}
+    for (INT16 i = 0; i < defaultBanksNumber; i++)
+    {
+        creatureBanks.customPositions[i] = defaultPositions;
+    }
 
     for (INT16 creatureBankId = defaultBanksNumber; creatureBankId < maxSubtype; creatureBankId++)
     {
@@ -435,6 +450,29 @@ const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubt
         if (!trSuccess && setup.name.Empty())
             name = H3ObjectName::Get()[eObject::CREATURE_BANK];
         setup.name = name;
+
+        // read custom postions
+        std::array<int, 14> positions = defaultPositions;
+
+        for (size_t i = 0; i < 7; i++)
+        {
+            const int jsonAttackerPosition =
+                ReadJsonInt("RMG.objectGeneration.16.%d.customAttackerPositions.%d", creatureBankId, i);
+
+            const BOOL atackerPositionIsValid = !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 ||
+                                                  jsonAttackerPosition % 17 == 0 || jsonAttackerPosition % 17 == 16);
+
+            if (atackerPositionIsValid)
+                positions[i] = jsonAttackerPosition;
+
+            const int jsonDefenderPosition =
+                ReadJsonInt("RMG.objectGeneration.16.%d.customDefenderPositions.%d", creatureBankId, i);
+
+            const BOOL defenderPositionIsValid = !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 ||
+                                                   jsonDefenderPosition % 17 == 0 || jsonDefenderPosition % 17 == 16);
+            if (defenderPositionIsValid)
+                positions[i + 7] = jsonDefenderPosition;
+        }
 
         for (size_t i = 0; i < 4; i++)
         {
@@ -464,8 +502,9 @@ const int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubt
             }
         }
 
-        int isNotBank = ReadJsonInt("RMG.objectGeneration.16.%d.isNotBank", creatureBankId);
+        const int isNotBank = ReadJsonInt("RMG.objectGeneration.16.%d.isNotBank", creatureBankId);
 
+        creatureBanks.customPositions.emplace_back(positions);
         creatureBanks.isNotBank.emplace_back(isNotBank);
         creatureBanks.setups.emplace_back(setup);
         creatureBanks.monsterAwards.emplace_back(setup.states[0].creatureRewardType);
@@ -521,6 +560,7 @@ void CreatureBanksExtender::Resize(UINT16 m_size) noexcept
     creatureBanks.monsterGuards.resize(m_size);
     creatureBanks.setups.resize(m_size);
     creatureBanks.isNotBank.resize(m_size);
+    creatureBanks.customPositions.resize(m_size);
 
     creatureBanks.m_size = m_size;
 }
@@ -531,6 +571,7 @@ void CreatureBanksExtender::Reserve(UINT16 m_size) noexcept
     creatureBanks.monsterGuards.reserve(m_size);
     creatureBanks.setups.reserve(m_size);
     creatureBanks.isNotBank.reserve(m_size);
+    creatureBanks.customPositions.reserve(m_size);
 }
 
 void CreatureBanksExtender::ShrinkToFit() noexcept
@@ -539,6 +580,7 @@ void CreatureBanksExtender::ShrinkToFit() noexcept
     creatureBanks.monsterGuards.shrink_to_fit();
     creatureBanks.setups.shrink_to_fit();
     creatureBanks.isNotBank.shrink_to_fit();
+    creatureBanks.customPositions.shrink_to_fit();
 
     creatureBanks.m_size = creatureBanks.monsterAwards.size();
 }
