@@ -457,7 +457,7 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
         for (size_t i = 0; i < 7; i++)
         {
             const int jsonAttackerPosition =
-                ReadJsonInt("RMG.objectGeneration.16.%d.customAttackerPositions.%d", creatureBankId, i);
+                ReadJsonInt("RMG.objectGeneration.16.%d.attackerPositions.%d", creatureBankId, i);
 
             const BOOL atackerPositionIsValid = !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 ||
                                                   jsonAttackerPosition % 17 == 0 || jsonAttackerPosition % 17 == 16);
@@ -466,7 +466,7 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
                 positions[i] = jsonAttackerPosition;
 
             const int jsonDefenderPosition =
-                ReadJsonInt("RMG.objectGeneration.16.%d.customDefenderPositions.%d", creatureBankId, i);
+                ReadJsonInt("RMG.objectGeneration.16.%d.defenderPositions.%d", creatureBankId, i);
 
             const BOOL defenderPositionIsValid = !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 ||
                                                    jsonDefenderPosition % 17 == 0 || jsonDefenderPosition % 17 == 16);
