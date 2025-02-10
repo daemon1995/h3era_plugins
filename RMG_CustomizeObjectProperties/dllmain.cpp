@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.12";
+const char *PLUGIN_VERSION = "1.13";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -56,7 +56,7 @@ PatcherInstance *_PI;
     c. dlg should automatically create items but not remove current so reusing (limit number of the groups);
 15. Add properties replacer for existing objects by defName/type/subptype triple: Done
     a. load original list into set;
-    b. load new 
+    b. load new
 */
 
 _LHF_(CrBanksTxt_AfterLoad)

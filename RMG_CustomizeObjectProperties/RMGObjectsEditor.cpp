@@ -386,7 +386,65 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
     }
 }
 
+// fixes for different RMG bugs/stuff
+namespace fixes
+{
 //
+_LHF_(RMG__AtSubterranianGatesPrototypeGet)
+{
+
+    if (const auto genZone = *reinterpret_cast<H3RmgZoneGenerator **>(c->ebp + 0x8))
+    {
+        // _RMGObjectPrototypeRef_ *__thiscall RMG_FindObjectPrototype(_RMGStruct_ *this, int ground, eObject type, int
+        // subtype)
+        const DWORD correctObjectPrototypeRef =
+            THISCALL_4(DWORD, 0x546530, c->edi, genZone->ground, eObject::SUBTERRANEAN_GATE, 0);
+        if (correctObjectPrototypeRef)
+        {
+            c->eax = correctObjectPrototypeRef;
+            // skip random gate property selection
+            c->return_address = 0x005426BE;
+            return NO_EXEC_DEFAULT;
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+
+DWORD correctObjectPrototypeRef = 0;
+_LHF_(RMG__AtSecondSubterranianGatesPositioning)
+
+{
+    correctObjectPrototypeRef = 0;
+    if (const auto genZone = *reinterpret_cast<H3RmgZoneGenerator **>(c->ebp - 0x10))
+    {
+        // _RMGObjectPrototypeRef_ *__thiscall RMG_FindObjectPrototype(_RMGStruct_ *this, int ground, eObject type, int
+        // subtype)
+        correctObjectPrototypeRef =
+            THISCALL_4(DWORD, 0x546530, IntAt(c->ebp - 0x14), genZone->ground, eObject::SUBTERRANEAN_GATE, 0);
+
+        if (correctObjectPrototypeRef)
+        {
+            // remove original property
+            c->Pop();
+            c->Push(correctObjectPrototypeRef);
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+
+_LHF_(RMG__AtSecondSubterranianGatesPlacement)
+{
+    if (correctObjectPrototypeRef)
+    {
+        c->ecx = correctObjectPrototypeRef;
+        correctObjectPrototypeRef = 0;
+    }
+    return EXEC_DEFAULT;
+}
+
+} // namespace fixes
 
 void RMGObjectsEditor::CreatePatches()
 {
@@ -406,6 +464,15 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
 
         _pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);
+
+        // fixes for subterranian gates
+        using namespace fixes;
+        // skips random selsection of the gates subtype
+        _pi->WriteLoHook(0x05426B5, RMG__AtSubterranianGatesPrototypeGet);
+
+        // creates correct gates prototype corresponding to the ground of the 2nd subterranian gate
+        _pi->WriteLoHook(0x05427DA, RMG__AtSecondSubterranianGatesPositioning);
+        _pi->WriteLoHook(0x0542937, RMG__AtSecondSubterranianGatesPlacement);
 
         // Hook for the setting defaults
 
