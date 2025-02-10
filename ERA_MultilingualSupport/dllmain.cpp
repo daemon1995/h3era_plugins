@@ -39,13 +39,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		{
 			pluginIsOn = true;
 
-			Era::ConnectEra();
+			//Era::ConnectEra();
 			if (Era::GetVersionNum() >= 3906)
 			{
 				globalPatcher = GetPatcher();
 				_PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 				_PI->WriteLoHook(0x4EEAF2, HooksInit);
-
 
 			}
 		}

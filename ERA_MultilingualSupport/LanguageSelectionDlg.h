@@ -22,7 +22,7 @@ class LanguageSelectionDlg :
 
 private:
 	void CreateDlgItems();
-	BOOL OnMouseHover(H3DlgItem* it) override;
+	virtual BOOL OnMouseHover(H3DlgItem* it) override;
 	H3DlgFrame* m_selectionFrame;
 
 
