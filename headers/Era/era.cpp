@@ -111,6 +111,10 @@ void ConnectEra (HINSTANCE PluginDllHandle, const char* PluginName)
 {
   std::string finalPluginName = GetModuleFileName(PluginDllHandle);
 
+  if (CreatePlugin == nullptr) {
+      return;
+  }
+
   if (PluginName && *PluginName)
   {
     finalPluginName = PluginName;
