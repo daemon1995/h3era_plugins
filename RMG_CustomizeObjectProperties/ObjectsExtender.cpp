@@ -4,12 +4,16 @@ namespace extender
 {
 
 std::vector<ObjectsExtender *> ObjectsExtender::extenders;
-std::vector<std::string> ObjectsExtender::additionalProperties;
 std::vector<RMGObjectInfo> ObjectsExtender::additionalRmgObjects;
+std::unordered_map<std::string, std::string> ObjectProperty::additionalPropertiesMap;
 
 void EditableH3TextFile::AddLine(LPCSTR txt)
 {
     this->text.Add(txt);
+}
+size_t EditableH3TextFile::GetLineCount() const noexcept
+{
+    return this->text.Size();
 }
 ObjectsExtender::ObjectsExtender(PatcherInstance *pi) : IGamePatch(pi)
 {
@@ -24,23 +28,38 @@ ObjectsExtender::ObjectsExtender(PatcherInstance *pi) : IGamePatch(pi)
 _LHF_(ObjectsExtender::LoadObjectsTxt)
 {
     // check if there are any object properties extenders
-    if (additionalProperties.size())
+    if (ObjectProperty::additionalPropertiesMap.size())
     {
         // get objects added list
         EditableH3TextFile *objectTxt = *reinterpret_cast<EditableH3TextFile **>(c->ebp + 0x8);
+
+        const UINT linesCount = objectTxt->GetLineCount();
+        for (size_t i = 1; i < linesCount; i++)
+        {
+            // create buffer string to transform it
+            std::string txtPropertyString((*objectTxt)[i]);
+
+            // std::transform(txtPropertyString.begin(), txtPropertyString.end(), txtPropertyString.begin(), ::tolower);
+
+            if (std::string *propertyReplace = ObjectProperty::FindPropertyReplace(txtPropertyString.c_str()))
+            {
+                (*objectTxt)[i] = propertyReplace->data();
+            }
+        }
 
         // copy original objects added list into set
         std::unordered_set<LPCSTR> objectsSet(objectTxt->begin(), objectTxt->end());
 
         UINT32 newProperties = 0;
         // iterate each added property
-        for (auto &prop : additionalProperties)
+        for (auto &prop : ObjectProperty::additionalPropertiesMap)
         {
             // if possible to insert
-            if (objectsSet.insert(prop.c_str()).second)
+            if (objectsSet.insert(prop.second.c_str()).second)
             {
+
                 // add that property into main objects list
-                objectTxt->AddLine(prop.c_str()); // add new txt entry
+                objectTxt->AddLine(prop.second.c_str()); // add new txt entry
                 // increase added objects number
                 newProperties++;
             }
@@ -55,9 +74,7 @@ _LHF_(ObjectsExtender::LoadObjectsTxt)
 ObjectsExtender::~ObjectsExtender()
 {
     // extenders.erase(this);
-    additionalProperties.clear();
 }
-
 void ObjectsExtender::LoadMapObjectPropertiesByTypeSubtypes() noexcept
 {
     bool readSuccess = false;
@@ -66,22 +83,23 @@ void ObjectsExtender::LoadMapObjectPropertiesByTypeSubtypes() noexcept
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     { // iterate all the objects types entries
 
-        const int maxSubtype =
+        const size_t maxSubtype =
             objType == eObject::ARTIFACT || objType == eObject::CREATURE_GENERATOR1 ? limits::EXTENDED : limits::COMMON;
 
         for (size_t objSubtype = 0; objSubtype < maxSubtype; objSubtype++)
         {
-            int propertyIdCounter = 0;
+            size_t propertyIdCounter = 0;
 
             do
             {
-                LPCSTR str = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.properties.%d", objType,
-                                                          objSubtype, propertyIdCounter++)
-                                             .String(),
-                                         readSuccess);
+                std::string str = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.properties.%d", objType,
+                                                               objSubtype, propertyIdCounter++)
+                                                  .String(),
+                                              readSuccess);
+
                 if (readSuccess)
                 {
-                    additionalProperties.emplace_back(str);
+                    ObjectProperty::AddProperty(str);
                 }
             } while (readSuccess);
         }
@@ -103,11 +121,11 @@ void ObjectsExtender::LoadMapObjectPropertiesFromLoadedMods() noexcept
 
         do
         {
-            LPCSTR str = EraJS::read(
+            std::string str = EraJS::read(
                 H3String::Format("RMG.%s.properties.%d", modName.c_str(), propertyIdCounter++).String(), readSuccess);
             if (readSuccess)
             {
-                additionalProperties.emplace_back(str);
+                ObjectProperty::AddProperty(str);
             }
         } while (readSuccess);
     }
@@ -130,7 +148,7 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     // create max subtype value for all object gens
     INT16 maxSubtypes[h3::limits::OBJECTS] = {};
 
-    auto objList = setup->objectLists;
+    auto *objList = setup->objectLists;
 
     std::vector<sound::SoundManager::ObjectSound> addedWavNames;
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
@@ -196,7 +214,7 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     {
         std::thread th(&sound::SoundManager::Init, addedWavNames);
         th.detach();
-      //  sound::SoundManager::Init(addedWavNames);
+        //  sound::SoundManager::Init(addedWavNames);
     }
 
     // block objec entry tile passability for HOTA_PICKUPABLE_OBJECT_TYPE
@@ -523,5 +541,37 @@ BOOL ObjectsExtender::VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, cons
                                    const BOOL isHuman) const noexcept
 {
     return false;
+}
+
+std::string ObjectProperty::GetMapKey(LPCSTR propertyString) noexcept
+{
+    std::istringstream stream(propertyString);
+    static std::vector<std::string> words;
+    std::string word;
+    words.reserve(9);
+    // –азбиваем строку на слова и добавл€ем их в вектор
+    while (stream >> word)
+    {
+        words.emplace_back(word);
+    }
+    // get map key from def + object type + object subtype
+    std::transform(words[0].begin(), words[0].end(), words[0].begin(), ::tolower);
+    libc::sprintf(h3_TextBuffer, "%s_%s_%s", words[0].c_str(), words[5].c_str(), words[6].c_str());
+    words.clear();
+    return h3_TextBuffer;
+}
+// check if we have replaced property for that object
+std::string *ObjectProperty::FindPropertyReplace(LPCSTR other) noexcept
+{
+
+    auto it = additionalPropertiesMap.find(GetMapKey(other));
+    return it != additionalPropertiesMap.end() ? &it->second : nullptr;
+}
+
+BOOL ObjectProperty::AddProperty(std::string &other) noexcept
+{
+    std::transform(other.begin(), other.end(), other.begin(), ::tolower);
+
+    return additionalPropertiesMap.insert(std::make_pair(GetMapKey(other.data()), other)).second;
 }
 } // namespace extender

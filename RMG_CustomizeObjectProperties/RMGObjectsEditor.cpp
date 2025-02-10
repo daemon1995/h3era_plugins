@@ -167,7 +167,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
             for (auto &rmgObjGen : *rmgObjectsList)
             {
-
+                // skip changes for some objects to not break native map generation
                 switch (rmgObjGen->type)
                 {
 
@@ -333,6 +333,18 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
 {
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfo());
+    // _PI->WriteDword(0x0541013,)
+    // static BOOL firstRun = true;
+    // if (firstRun)
+    //{
+    //    constexpr int ADDED_MONSTERS_NUM = 29;
+    //    DwordAt(0x0541013 + 2) += ADDED_MONSTERS_NUM * 4;
+    //    DwordAt(0x0541063 + 1) += ADDED_MONSTERS_NUM;
+    //    DwordAt(0x05410B3 + 1) += ADDED_MONSTERS_NUM;
+    //    DwordAt(0x0541159 + 1) += ADDED_MONSTERS_NUM;
+
+    //    firstRun = false;
+    //}
 
     // change guard ai values
     auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];

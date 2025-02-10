@@ -172,7 +172,7 @@ _LHF_(SoundManager::H3AdventureManager__AtHide)
 _LHF_(SoundManager::H3AdventureManager__AtTrimSound)
 {
     const int soundsToPlay = c->ebx;
-    const int loopSoundsAmount = soundManager.loopSoundsWavTable.size();
+    const size_t loopSoundsAmount = soundManager.loopSoundsWavTable.size();
     if (soundsToPlay < loopSoundsAmount)
     {
         if (const H3AdventureManager *advManager = *reinterpret_cast<H3AdventureManager **>(c->ebp - 0x4))

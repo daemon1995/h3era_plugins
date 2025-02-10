@@ -15,6 +15,18 @@ constexpr int COMMON = 255;
 struct EditableH3TextFile : public H3TextFile
 {
     void AddLine(LPCSTR txt);
+    size_t GetLineCount() const noexcept;
+};
+
+struct ObjectProperty
+{
+
+    static std::unordered_map<std::string, std::string> additionalPropertiesMap;
+
+  public:
+    static std::string *FindPropertyReplace(LPCSTR other) noexcept;
+    static std::string GetMapKey(LPCSTR other) noexcept;
+    static BOOL AddProperty(std::string &other) noexcept;
 };
 
 struct RMGObjectSetable
@@ -34,7 +46,6 @@ class ObjectsExtender : public IGamePatch
     static std::vector<ObjectsExtender *> extenders;
 
   protected:
-    static std::vector<std::string> additionalProperties;
     static std::vector<RMGObjectInfo> additionalRmgObjects;
 
   protected:

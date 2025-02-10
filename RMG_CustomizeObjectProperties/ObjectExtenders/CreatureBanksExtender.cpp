@@ -119,9 +119,9 @@ void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *eve
 {
 
     auto &creatureBanks = Get().creatureBanks;
-    const int SIZE = creatureBanks.m_size;
-    const int defaultBanksNumber = Get().defaultBanksNumber;
-    const int lastBankId = defaultBanksNumber + Get().addedBanksNumber;
+    const size_t SIZE = creatureBanks.m_size;
+    const size_t defaultBanksNumber = Get().defaultBanksNumber;
+    const size_t lastBankId = defaultBanksNumber + Get().addedBanksNumber;
     for (size_t i = 0; i < SIZE; i++)
     {
         const int objectType = GetCreatureBankObjectType(i);
