@@ -15,7 +15,7 @@ struct AdventureHintsSettings : public ISettings
     {
         bool defaultValue = false;
         bool userValue = false;
-		INT16 yOffset = NULL;
+        INT16 yOffset = NULL;
     } drawObjectHint[232];
 
     LPCSTR creatureHintFormat = nullptr;
@@ -38,6 +38,8 @@ class AdventureMapHints : public IGamePatch
     // bool m_objectsToDraw[232];
 
     Patch *blockAdventureHintDraw = nullptr;
+    Patch *blockIgnoreHintBarFocus = nullptr;
+    H3PlayersBitfield playersVisitedObjectData[32];
     AdventureHintsSettings settings;
 
   public:

@@ -29,8 +29,8 @@ void AdventureMapHints::CreatePatches() noexcept
 
     if (!m_isInited)
     {
-
         blockAdventureHintDraw = _pi->CreateHexPatch(0x040D0F4, const_cast<char *>("EB 40 90"));
+        blockIgnoreHintBarFocus = _pi->CreateHexPatch(0x040B0DC, const_cast<char *>("90 90 90 90 90 90"));
 
         _pi->WriteLoHook(0x040F5AB, AdvMgr_BeforeObjectsDraw);
         if (settings.drawOverFogOfWar)
@@ -48,15 +48,16 @@ void AdventureMapHints::CreatePatches() noexcept
 
 char changedData[32] = {};
 
-void GameManager_HidePlayersVisitedInfo(H3Main *game, const int playerID) noexcept
+void GameManager_HidePlayersVisitedInfo(H3Main *game, const int playerID, H3PlayersBitfield (&changedData)[32]) noexcept
 {
 
     const int withcHutData = game->visitedWitchHut.Status(playerID);
     const int shrineData = game->visitedShrines.Status(playerID);
     const int treeOfKnoledgeData = game->visitedTreeKnowledge.Status(playerID);
 
-    libc::memcpy(changedData, reinterpret_cast<char *>(game) + 0x4E344, 32 * sizeof(H3PlayersBitfield));
-    libc::memset(reinterpret_cast<char *>(game) + 0x4E344, 0, 32 * sizeof(H3PlayersBitfield));
+    void *address = (void *)AddressOf(P_Game->Get()->visitedBuoy);
+    libc::memcpy(changedData, address, sizeof(changedData));
+    libc::memset(address, 0, sizeof(changedData));
 
     game->visitedWitchHut.Set(withcHutData, playerID);
     game->visitedShrines.Set(shrineData, playerID);
@@ -68,16 +69,7 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
                                       const int mapY, const int mapZ) noexcept
 {
 
-    constexpr UINT NOT_VISITED_TEXT_ID = 354;
-    constexpr UINT VISITED_TEXT_ID = 353;
-
-    auto visitedText = H3GeneralText::Get()->GetText(VISITED_TEXT_ID + 1);
-    auto notVisitedText = H3GeneralText::Get()->GetText(NOT_VISITED_TEXT_ID + 1);
-
-    H3String changedVisitedText = H3String::Format(settings.visitedHintFormat, visitedText).String();
-    H3String changedNotVisitedText = H3String::Format(settings.nonVisitedHintFormat, notVisitedText).String();
-
-    H3Vector<LPCSTR> *generalTextPtr = reinterpret_cast<H3Vector<LPCSTR> *>(ADDRESS(H3GeneralText::Get()) + 0x1C);
+    // create custom hints for some object types
 
     DWORD oldCreatureHintFormat = 0;
     BYTE skipMineOwnershipHint = 0;
@@ -108,24 +100,51 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
         break;
     }
 
+    constexpr UINT NOT_VISITED_TEXT_ID = 354;
+    constexpr UINT VISITED_TEXT_ID = 353;
+
+    // store old text pointers
+    auto visitedText = H3GeneralText::Get()->GetText(VISITED_TEXT_ID + 1);
+    auto notVisitedText = H3GeneralText::Get()->GetText(NOT_VISITED_TEXT_ID + 1);
+
+    H3String changedVisitedText = H3String::Format(settings.visitedHintFormat, visitedText).String();
+    H3String changedNotVisitedText = H3String::Format(settings.nonVisitedHintFormat, notVisitedText).String();
+
+    H3Vector<LPCSTR> *generalTextPtr = reinterpret_cast<H3Vector<LPCSTR> *>(ADDRESS(H3GeneralText::Get()) + 0x1C);
     auto p_visited = generalTextPtr->At(VISITED_TEXT_ID);
     auto p_notVisited = generalTextPtr->At(NOT_VISITED_TEXT_ID);
 
+    // replace "visited" and "not visited" text with own text pointers
     *p_visited = changedVisitedText.String();
     *p_notVisited = changedNotVisitedText.String();
-    instance->blockAdventureHintDraw->Apply();
 
+    instance->blockAdventureHintDraw->Apply();  // don't draw hint whne custom function call
+    instance->blockIgnoreHintBarFocus->Apply(); // don't skip hint creation when focus is on hint bar text edit
+
+    // hide "visited" info for objects by players
+    auto &visitedData = instance->playersVisitedObjectData;
+    GameManager_HidePlayersVisitedInfo(P_Game->Get(), H3CurrentPlayerID::Get(), visitedData);
+
+    // set "hint_from_plugin" flag
     Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 1);
-    GameManager_HidePlayersVisitedInfo(P_Game->Get(), H3CurrentPlayerID::Get());
-    THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
-    Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 0);
-    libc::memcpy(reinterpret_cast<char *>(P_Game->Get()) + 0x4E344, changedData, 32 * sizeof(H3PlayersBitfield));
 
+    THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
+
+    // remove "hint_from_plugin" flag
+    Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 0);
+
+    // restore "visited" info for objects by players
+    libc::memcpy((void *)AddressOf(P_Game->Get()->visitedBuoy), visitedData, sizeof(visitedData));
+
+    // undo patches
+    instance->blockIgnoreHintBarFocus->Undo();
     instance->blockAdventureHintDraw->Undo();
 
+    // restore "visited" and "not visited" text pointers
     *p_visited = visitedText;
     *p_notVisited = notVisitedText;
 
+    // restore memory patches for some object types
     if (memoryPatchSet)
     {
         switch (mapItem->objectType)
