@@ -13,7 +13,8 @@
 #include "ISettings.h"
 
 #include "AdventureMapHints.h"
-#include "MapScroller.h"
 #include "CombatHints.h"
 #include "GameplayFeature.h"
-#endif //PCH_H
+#include "GraphicsEnhancements.h"
+#include "MapScroller.h"
+#endif // PCH_H

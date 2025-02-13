@@ -509,17 +509,17 @@ void AdventureHintsSettings::reset()
 BOOL AdventureHintsSettings::load()
 {
     bool readSuccess = false;
-    creatureHintFormat = EraJS::read("gem_plugin.advneture_hints.creature_format", readSuccess);
+    creatureHintFormat = EraJS::read("gem_plugin.adventure_hints.creature_format", readSuccess);
     if (!readSuccess)
     {
         creatureHintFormat = "{%s}\n{~r}%s}";
     }
-    visitedHintFormat = EraJS::read("gem_plugin.advneture_hints.visited_format", readSuccess);
+    visitedHintFormat = EraJS::read("gem_plugin.adventure_hints.visited_format", readSuccess);
     if (!readSuccess)
     {
         visitedHintFormat = "{~LightGreen}\n%s}";
     }
-    nonVisitedHintFormat = EraJS::read("gem_plugin.advneture_hints.not_visited_format", readSuccess);
+    nonVisitedHintFormat = EraJS::read("gem_plugin.adventure_hints.not_visited_format", readSuccess);
     if (!readSuccess)
     {
         nonVisitedHintFormat = "{~Orange}\n%s}";

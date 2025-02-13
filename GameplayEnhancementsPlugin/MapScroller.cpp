@@ -194,7 +194,7 @@ int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, 
                 mapX = Clamp(mapScroller.scrollLimits.left, mapX, mapScroller.scrollLimits.right + *P_MapSize);
                 mapY = Clamp(mapScroller.scrollLimits.top, mapY, mapScroller.scrollLimits.bottom + *P_MapSize);
                 //	toEcho = H3String::Format(toEcho.String(), totalOffset.x, totalOffset.y, calc.pos.x, calc.pos.y,
-                //startScreenPosition.x, startScreenPosition.y,mapX,mapY);
+                // startScreenPosition.x, startScreenPosition.y,mapX,mapY);
 
                 // limit out of bounds for pixels
                 if (mapX == mapScroller.scrollLimits.left || mapX == mapScroller.scrollLimits.right + *P_MapSize)

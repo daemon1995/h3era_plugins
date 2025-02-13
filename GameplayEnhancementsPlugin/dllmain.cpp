@@ -9,7 +9,7 @@ _LHF_(HooksInit)
     scroll::MapScroller::Get();
 
     // if (EraJS::readInt("gem_plugin.combat_hints.enable"))
-
+    graphics::GraphicsEnhancements::Get();
     cmbhints::CombatHints::Get();
 
     features::GameplayFeature::Get();

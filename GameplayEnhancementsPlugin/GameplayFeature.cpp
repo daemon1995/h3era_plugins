@@ -8,7 +8,7 @@ GameplayFeature::GameplayFeature() : IGamePatch(_PI)
 }
 H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, int PosX, int PosY, int SizeX,
                                                int SizeY, int ItemInd, char *DefName, int cadre, int pressCadre,
-                                               int CloseDialog, int HotKey, int Flags)
+                                               int CloseDialog, int HotKey, int Flags) noexcept
 {
 
     H3DlgDefButton *result = THISCALL_12(H3DlgDefButton *, h->GetDefaultFunc(), bttn, PosX, PosY, SizeX, SizeY, ItemInd,
@@ -31,9 +31,9 @@ H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, 
 // }
 
 signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButton, int isKingdomOverView,
-                                    const int isRightClick)
+                                    const int isRightClick) noexcept
 {
-    H3Hero *hero = &P_Game->heroes[heroId];
+    const H3Hero *hero = &P_Game->heroes[heroId];
 
     const int prevOwner = hero->owner;
 
@@ -46,7 +46,7 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
     }
     // auto *patch = _PI->WriteHiHook(0x4DA401, THISCALL_, H3DlgHero__Dismiss__BeforeRedraw);
 
-    int result = FASTCALL_4(int, h->GetDefaultFunc(), heroId, hideDelButton, isKingdomOverView, isRightClick);
+    const int result = FASTCALL_4(int, h->GetDefaultFunc(), heroId, hideDelButton, isKingdomOverView, isRightClick);
 
     //  patch->Destroy();
 
@@ -72,7 +72,7 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
     return result;
 }
 
-_LHF_(DlgEdit_CorrectInpulSymbol)
+_LHF_(DlgEdit_CorrectInpulSymbol) noexcept
 {
     // skip select scenario dialog
     const auto dlgAddr = reinterpret_cast<DWORD>(P_WindowManager->Get()->lastDlg);
