@@ -24,7 +24,7 @@ class GraphicsEnhancements : public IGamePatch
   public:
     static GraphicsEnhancements *Get() noexcept;
     static H3LoadedDef *Hero_GetMapItemDef(const H3Hero *hero) noexcept;
-    H3LoadedDef *InitHeroData(const H3Hero *hero) noexcept;
+    H3LoadedDef *InitHeroData(const UINT heroId) noexcept;
     void InitHeroClassData(const UINT classId) noexcept;
     void CleanUpData() noexcept;
 };

@@ -3,6 +3,13 @@
 namespace graphics
 {
 GraphicsEnhancements *GraphicsEnhancements::instance = nullptr;
+
+// DllExport H3LoadedDef* SetMapHeroDefName(const UINT heroId, const char* const heroDefName)
+//{
+//
+//     return 0;
+// }
+
 _LHF_(Game_AtTownSettingMapItemDef)
 {
     if (const auto town = *reinterpret_cast<H3Town **>(c->ebp - 0x8))
@@ -37,17 +44,12 @@ _LHF_(Game_AtTownSettingMapItemDef)
     return EXEC_DEFAULT;
 }
 
-// DllExport H3LoadedDef *SetMapHeroDefName(const UINT heroId, const char *const heroDefName)
-//{
-//
-//     return 0;
-// }
-LPCSTR Hero_GetMapItemDefName(const H3Hero *hero)
+LPCSTR Hero_GetMapItemDefName(const UINT heroId)
 {
     bool readSuccess = false;
 
     // first check unique hero def name
-    LPCSTR defName = EraJS::read(H3String::Format("gem_plugin.map_item_view.54.id.%d", hero->id).String(), readSuccess);
+    LPCSTR defName = EraJS::read(H3String::Format("gem_plugin.map_item_view.54.id.%d", heroId).String(), readSuccess);
     // if name is read and not empty
     if (readSuccess && libc::strcmpi(defName, h3_NullString))
     {
@@ -89,18 +91,18 @@ H3LoadedDef *GraphicsEnhancements::Hero_GetMapItemDef(const H3Hero *hero) noexce
     }
     return result;
 }
-H3LoadedDef *GraphicsEnhancements::InitHeroData(const H3Hero *hero) noexcept
+H3LoadedDef *GraphicsEnhancements::InitHeroData(const UINT heroId) noexcept
 {
     H3LoadedDef *result = nullptr;
 
-    if (LPCSTR defNamePtr = Hero_GetMapItemDefName(hero))
+    if (LPCSTR defNamePtr = Hero_GetMapItemDefName(heroId))
     {
-        if (auto *defBefore = uniqueHeroDefs[hero->id])
+        if (auto *defBefore = uniqueHeroDefs[heroId])
         {
             defBefore->Dereference();
         }
 
-        result = uniqueHeroDefs[hero->id] = H3LoadedDef::Load(defNamePtr);
+        result = uniqueHeroDefs[heroId] = H3LoadedDef::Load(defNamePtr);
     }
 
     return result;
@@ -187,9 +189,9 @@ _LHF_(AdventureManager_Show)
 {
     if (auto instance = GraphicsEnhancements::Get())
     {
-        for (auto &i : P_Main->heroes)
+        for (size_t i = 0; i < GraphicsEnhancements::MAX_UNIQUE_HEROES; i++)
         {
-            instance->InitHeroData(&i);
+            instance->InitHeroData(i);
         }
         for (size_t i = 0; i < GraphicsEnhancements::MAX_UNIQUE_CLASSES; i++)
         {
