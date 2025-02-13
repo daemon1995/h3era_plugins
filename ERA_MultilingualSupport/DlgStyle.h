@@ -9,7 +9,7 @@ public:
 	const UINT16 MAXIMUM_ROWS;
 
 	H3String fontName;
-	const const char* dlgCallAssetPcxName = nullptr;
+	const  char* const dlgCallAssetPcxName = nullptr;
 	static struct StyleText :public IPluginText
 	{
 

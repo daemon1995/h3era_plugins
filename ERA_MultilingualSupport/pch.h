@@ -9,10 +9,11 @@
 #include "..\headers\header.h"
 // add headers that you want to pre-compile here
 #include "Locale.h"
-#include "LocaleHander.h"
-#include "H3DlgTextPcxLocale.h"
+
 #include "DlgStyle.h"
+#include "H3DlgTextPcxLocale.h"
+#include "LocaleManager.h"
 
 #include "LanguageSelectionDlg.h"
 #include "MonsterHandler.h"
-#endif //PCH_H
+#endif // PCH_H

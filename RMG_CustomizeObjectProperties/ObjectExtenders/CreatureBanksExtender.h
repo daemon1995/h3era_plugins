@@ -11,7 +11,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     static INT currentCreatureBankId;
     static H3MapItem *currentMapItem;
     static H3CreatureBank *currentCreatureBank;
-
+    static constexpr LPCSTR creatureBankStateFormat = "RMG_CreatureBankStateById_%d";
   private:
     UINT16 defaultBanksNumber = 0;
     UINT16 addedBanksNumber = 0;
@@ -56,7 +56,10 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     void ShrinkToFit() noexcept;
 
   private:
-    // static _LHF_(RMG__CreateObjectGenerators);
+    static _LHF_(CrBank_BeforeAddingToGameList);
+    static _LHF_(CrBank_BeforeSetupFromState);
+
+
     static _LHF_(CrBank_DisplayPreCombatMessage);
     static _LHF_(CrBank_BeforeCombatStart);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
@@ -69,6 +72,8 @@ class CreatureBanksExtender : public extender::ObjectsExtender
                                                     const int picType2, const int picSubtype2, const int par,
                                                     const int time, const int picType3, const int picSubtype3);
 
+    static _LHF_(CrBank_AfterDrawingResources);
+    static _LHF_(CrBank_BeforeGivingResources);
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *event);
     //	static int __stdcall CretureBankSetups__Ctor(HiHook*h);
   public:

@@ -140,6 +140,66 @@ void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *eve
     }
 }
 
+_LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
+{
+    if (c->esi == 7) // add one more iteration of next resource is mitrhil
+    {
+        if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+        {
+            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
+
+            const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
+            // if (stateId)
+            {
+                c->eax = stateId;
+                // return to one more iteration
+                c->return_address = 0x04ABDA6;
+                return NO_EXEC_DEFAULT;
+            }
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+_LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
+{
+
+    if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+    {
+        if (const auto hero = reinterpret_cast<H3Hero *>(c->edi))
+        {
+            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
+
+            const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
+            IntAt(0x27F9A00 + hero->owner * 4) += stateId;
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+int lastSetupFromState = -1;
+_LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
+{
+    lastSetupFromState = c->edx;
+
+    return EXEC_DEFAULT;
+}
+_LHF_(CreatureBanksExtender::CrBank_BeforeAddingToGameList)
+{
+    if (lastSetupFromState != -1)
+    {
+        if (const auto mapItem = reinterpret_cast<H3MapItem *>(c->esi))
+        {
+            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
+            Era::SetAssocVarIntValue(h3_TextBuffer, lastSetupFromState);
+        }
+
+        lastSetupFromState = -1;
+    }
+
+    return EXEC_DEFAULT;
+}
+
 void CreatureBanksExtender::CreatePatches()
 {
     // m_isInited = true;
@@ -148,6 +208,9 @@ void CreatureBanksExtender::CreatePatches()
         return;
 
     m_isInited = true;
+
+    _pi->WriteLoHook(0x04C0C5B, CrBank_BeforeAddingToGameList);
+    _pi->WriteLoHook(0x047A70D, CrBank_BeforeSetupFromState);
 
     _pi->WriteHiHook(0x04A13E6, FASTCALL_, CrBank_AskForVisitMessage); // 16 object type
     _pi->WriteHiHook(0x04A1E56, FASTCALL_, CrBank_AskForVisitMessage); // 25 object type
@@ -160,6 +223,8 @@ void CreatureBanksExtender::CreatePatches()
     _pi->WriteLoHook(0x4ABAD3, CrBank_BeforeCombatStart);
 
     _pi->WriteHiHook(0x4ABBCB, THISCALL_, CrBank_CombatStart);
+    _pi->WriteLoHook(0x04ABE3C, CrBank_AfterDrawingResources);
+    _pi->WriteLoHook(0x04AC13B, CrBank_BeforeGivingResources);
 
     _pi->WriteHexPatch(0x040ABDE, "EB0C90909090"); // remove extra space in the guard description start
     //  _pi->WriteHexPatch(0x040AC7D, "EB0C90909090"); // remove extra space in the guard description between creatures
@@ -197,7 +262,8 @@ void CustomAskForCombatStartDlg(char *originalText, H3MapItem *mapItem, const in
 {
 
     auto creatureBank = &P_Game->creatureBanks[mapItem->creatureBank.id];
-
+    //  Era::y[1] = creatureBank->c
+    //  Era::ExecErmCmd("IF:L^%y1^");
     ShowMultiplePicsArmyMessage(originalText, 2, -1, -1, &creatureBank->guardians);
 }
 _LHF_(CreatureBanksExtender::SpecialCrBank_DisplayPreCombatMessage)
