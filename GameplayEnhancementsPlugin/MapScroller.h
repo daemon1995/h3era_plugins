@@ -2,63 +2,70 @@
 
 namespace scroll
 {
-	using namespace h3;
-	class MapScroller :public IGamePatch
-	{
 
+using namespace h3;
+constexpr int DRAG_MOUSE_ACCESS = 25;
+constexpr int MAP_MARGIN = 8;
 
+struct Calculator
+{
+    H3POINT pos;
+    H3POINT point;
 
-	private:
+  public:
+    Calculator(const H3POINT &p = {0, 0}, const H3Position &pos = {0}) noexcept;
 
-		RECT scrollLimits;
+  public:
+    void operator+=(const H3POINT &other) noexcept;
+    void align() noexcept;
+};
+class MapScroller : public IGamePatch
+{
 
-		H3POINT startMousePoint;
-		H3Position startMousePosition;
-		H3POINT startScreenPosition;
-		H3POINT startScreenOffset;
-		DWORD sinceLastDrawTime = NULL;
+  private:
+    const RECT scrollLimits;
+    const UINT mapViewW;
+    const UINT mapViewH;
 
-		BOOL scrollingDone = FALSE;
-		BOOL rmcAtMapScreen = FALSE;
-		BOOL wheelButtonAtMapScreen = FALSE;
-		BOOL isMapView;
-		BOOL needToShowHdModDlg;
-		BOOL inMoveAction;
-		Patch* edgeScrollHook;
+    H3Position startMousePosition;
+    H3POINT startMousePoint;
+    H3POINT startScreenPosition;
+    H3POINT startScreenOffset;
+    DWORD sinceLastDrawTime = NULL;
 
+    BOOL isMapView = FALSE;
+    BOOL inMoveAction = FALSE;
+    BOOL scrollingDone = FALSE;
+    BOOL rmcAtMapScreen = FALSE;
+    BOOL wheelButtonAtMapScreen = FALSE;
 
+    const H3BaseDlg *lastAdddedDlg = nullptr;
+    Patch *edgeScrollHook = nullptr;
 
-		struct Calculator
-		{
-			H3POINT pos;
-			H3POINT point;
-			Calculator(const H3POINT& p = { 0,0 }, const H3Position& pos = { 0 });
+  private:
+    MapScroller() noexcept;
 
-			void operator+=(const H3POINT& other);
-			void align() noexcept;
+  protected:
+    virtual void CreatePatches() noexcept final;
 
-		} calculator;
+  private:
+    void Stop() noexcept;
+    void SetMapEdgeScrollStatus(const BOOL state) noexcept;
 
-	protected:
-		virtual void CreatePatches() noexcept final;
-	private:
+  private:
+    static int __stdcall AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, const int x, const int y) noexcept;
+    static int __stdcall AdvMgr_MapScreenProcedure(HiHook *h, H3AdventureManager *adv, H3Msg *msg) noexcept;
 
-		static _LHF_(BaseDlg_OnRightClickHold);
+    static void __stdcall AdvMgr_SetActiveHero(HiHook *h, H3AdventureManager *adv, const int heroIdx, const int a3,
+                                               const char a4, const char a5) noexcept;
+    static _LHF_(AdvMgr_MobilizeCurrentHero) noexcept;
 
-		static int __stdcall AdvMgr_MouseMove(HiHook* h, H3AdventureManager* adv, int x, int y) noexcept;
-		static int __stdcall AdvMgr_MapScreenProcedure(HiHook* h, H3AdventureManager* adv, H3Msg* msg) noexcept;
-		static void __stdcall AdvMgr_SetActiveHero(HiHook* h, H3AdventureManager* adv, int heroIdx, int a3, char a4, char a5) noexcept;
+    static _LHF_(BaseDlg_OnRightClickHold) noexcept;
+    static void __stdcall WndMgr_AddNewDlg(HiHook *h, const H3WindowManager *wm, const H3BaseDlg *dlg, const int index,
+                                           const int draw) noexcept;
 
-		static _LHF_(AdvMgr_MobilizeCurrentHero);
-		
-		MapScroller();
-	public:
-		void SetMapEdgeScrollStatus(const bool state);
-		static MapScroller& Get();// (PatcherInstance* _PI);
+  public:
+    static MapScroller &Get() noexcept; // (PatcherInstance* _PI);
+};
 
-	};
-
-
-
-
-}
+} // namespace scroll

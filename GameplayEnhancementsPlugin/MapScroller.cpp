@@ -3,52 +3,68 @@
 namespace scroll
 {
 
-void __stdcall MapScroller::AdvMgr_SetActiveHero(HiHook *h, H3AdventureManager *adv, int heroIdx, int a3, char a4,
-                                                 char a5) noexcept
+MapScroller::MapScroller() noexcept
+    : IGamePatch(globalPatcher->CreateInstance("EraPlugin.MapScrolling.daemon_n")),
+      scrollLimits{IntAt(0x4195F2 + 1), IntAt(0x41960A + 1), CharAt(0x4195FC + 2), // init screen size
+                   CharAt(0x419615 + 2)},
+      mapViewW(H3GameWidth::Get() - 208), mapViewH(H3GameHeight::Get() - 56) // bottom panel
 {
-    P_AdventureManager->screenDrawOffset.x = 0;
-    P_AdventureManager->screenDrawOffset.y = 0;
-    THISCALL_5(void, h->GetDefaultFunc(), adv, heroIdx, a3, a4, a5);
-}
 
-MapScroller::MapScroller() : IGamePatch(globalPatcher->CreateInstance("EraPlugin.MapScrolling.daemon_n"))
-{
     CreatePatches();
 }
-
-MapScroller &MapScroller::Get() // (PatcherInstance* _PI)
+MapScroller &MapScroller::Get() noexcept
 {
 
     static MapScroller instacne; // = MapScroller();
     return instacne;
 }
 
-_LHF_(MapScroller::BaseDlg_OnRightClickHold)
+void __stdcall MapScroller::WndMgr_AddNewDlg(HiHook *h, const H3WindowManager *wm, const H3BaseDlg *dlg,
+                                             const int index, const int draw) noexcept
+{
+
+    THISCALL_4(void, h->GetDefaultFunc(), wm, dlg, index, draw);
+    auto &mapScroller = Get();
+
+    if (mapScroller.rmcAtMapScreen)
+    {
+        if (mapScroller.lastAdddedDlg)
+        {
+            mapScroller.Stop();
+        }
+        else
+        {
+            mapScroller.lastAdddedDlg = dlg;
+        }
+    }
+}
+
+_LHF_(MapScroller::BaseDlg_OnRightClickHold) noexcept
 {
     auto &mapScroller = Get();
 
     if (mapScroller.rmcAtMapScreen) // only if rmc was inited
     {
-
         // get current dlg from stack
         H3BaseDlg *currentDlg = *reinterpret_cast<H3BaseDlg **>(c->ebp + 0x8);
         // find previous dlg
         H3BaseDlg *lastDlg = *reinterpret_cast<H3BaseDlg **>(reinterpret_cast<int>(currentDlg) + 0xC);
 
-        if (lastDlg == P_AdventureManager->dlg) // only if previous dlg is same as adventuremap
+        if (lastDlg == P_AdventureManager->dlg &&
+            mapScroller.lastAdddedDlg == currentDlg) // only if previous dlg is same as adventuremap
         {
             H3Msg *msg = reinterpret_cast<H3Msg *>(c->ebp - 0x34); // get mouse pos
             // check if more than 25 px move
-            if (msg->GetX() && (Abs(msg->GetX() - mapScroller.startMousePoint.x) > 25 ||
-                                Abs(msg->GetY() - mapScroller.startMousePoint.y) > 25))
+            if (msg->GetX() && (Abs(msg->GetX() - mapScroller.startMousePoint.x) > DRAG_MOUSE_ACCESS ||
+                                Abs(msg->GetY() - mapScroller.startMousePoint.y) > DRAG_MOUSE_ACCESS))
             {
                 mapScroller.SetMapEdgeScrollStatus(false); // disable map edge scroll
-                c->eax = 16;                               // close dlg (send click)
+                c->eax = eMsgCommand::LBUTTON_UP;          // close dlg (send click)
             }
         }
         else
         {
-            mapScroller.rmcAtMapScreen = false; // disable rmc flag to have some erm scripts compatibilityw
+            mapScroller.Stop(); // disable rmc flag to have some erm scripts compatibilityw
         }
     }
 
@@ -58,14 +74,13 @@ _LHF_(MapScroller::BaseDlg_OnRightClickHold)
 int __stdcall MapScroller::AdvMgr_MapScreenProcedure(HiHook *h, H3AdventureManager *adv, H3Msg *msg) noexcept
 {
     // char middleMouse = GetAsyncKeyState(VK_MBUTTON);// &0x1;
-    int mapViewW = H3GameWidth::Get() - (800 - 592);  // right panel
-    int mapViewH = H3GameHeight::Get() - (600 - 544); // bottom panel
-    auto &mapScroller = Get();
 
-    mapScroller.isMapView =
-        msg->GetX() >= 8 && msg->GetX() <= 8 + mapViewW && msg->position.x >= 8 && msg->position.y <= 8 + mapViewH;
+    auto &scroller = Get();
 
-    if (mapScroller.isMapView &&
+    scroller.isMapView = msg->GetX() >= MAP_MARGIN && msg->GetX() <= MAP_MARGIN + scroller.mapViewW &&
+                         msg->position.x >= MAP_MARGIN && msg->position.y <= MAP_MARGIN + scroller.mapViewH;
+
+    if (scroller.isMapView &&
         (msg->command == eMsgCommand::MOUSE_BUTTON && msg->subtype == eMsgSubtype::RBUTTON_DOWN ||
          msg->command == eMsgCommand::WHEEL_BUTTON && msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_DOWN)
 
@@ -79,20 +94,21 @@ int __stdcall MapScroller::AdvMgr_MapScreenProcedure(HiHook *h, H3AdventureManag
         int mapY = adv->screenPosition.GetY();
         H3POINT p(mapX, mapY);
 
-        mapScroller.startScreenPosition = p; // { adv->screenPosition.GetX(), adv->screenPosition.GetY() };
-        mapScroller.startScreenOffset = adv->screenDrawOffset;
+        scroller.startScreenPosition = p; // { adv->screenPosition.GetX(), adv->screenPosition.GetY() };
+        scroller.startScreenOffset = adv->screenDrawOffset;
 
-        mapScroller.startMousePosition = adv->mousePosition;
-        mapScroller.startMousePoint.x = msg->GetX();
-        mapScroller.startMousePoint.y = msg->GetY();
+        scroller.startMousePosition = adv->mousePosition;
+        scroller.startMousePoint.x = msg->GetX();
+        scroller.startMousePoint.y = msg->GetY();
 
         // Init Click Status
-        mapScroller.rmcAtMapScreen = true;
+        scroller.rmcAtMapScreen = true;
+        // lastWindowAnswer = P_WindowManager->resultItemID;
         if (msg->command == eMsgCommand::WHEEL_BUTTON)
         {
-            mapScroller.wheelButtonAtMapScreen = true;
-            mapScroller.scrollingDone = false;
-            mapScroller.SetMapEdgeScrollStatus(false);
+            scroller.wheelButtonAtMapScreen = true;
+            scroller.scrollingDone = false;
+            scroller.SetMapEdgeScrollStatus(false);
         }
     }
 
@@ -100,59 +116,30 @@ int __stdcall MapScroller::AdvMgr_MapScreenProcedure(HiHook *h, H3AdventureManag
     if (msg->command == eMsgCommand::RBUTTON_UP || msg->command == eMsgCommand::LCLICK_OUTSIDE ||
         msg->command == eMsgCommand::LBUTTON_UP)
     {
-        mapScroller.rmcAtMapScreen = false;
-        mapScroller.SetMapEdgeScrollStatus(true);
+        scroller.Stop();
     }
 
     if (msg->command == eMsgCommand::MOUSE_OVER || msg->command == eMsgCommand::MOUSE_BUTTON)
     {
 
         // if mapView Zone then send wrong coordinates for map items under mouse
-        if (mapScroller.isMapView)
+        if (scroller.isMapView)
         {
             msg->position.x -= adv->screenDrawOffset.x;
             msg->position.y -= adv->screenDrawOffset.y;
         }
     }
-    if (mapScroller.scrollingDone && msg->command == eMsgCommand::WHEEL_BUTTON &&
+    if (scroller.scrollingDone && msg->command == eMsgCommand::WHEEL_BUTTON &&
         msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP)
     {
-        mapScroller.scrollingDone = false;
+        scroller.scrollingDone = false;
         msg->command = eMsgCommand(0);
-        // return 1;
     }
 
     return THISCALL_2(int, h->GetDefaultFunc(), adv, msg);
 }
 
-void MapScroller::CreatePatches() noexcept
-{
-
-    if (!m_isInited)
-    {
-
-        // Init Map Draw Limit Borders;
-
-        scrollLimits.left = IntAt(0x4195F2 + 1); //
-        scrollLimits.top = IntAt(0x41960A + 1);
-
-        scrollLimits.right = CharAt(0x4195FC + 2);
-        scrollLimits.bottom = CharAt(0x419615 + 2);
-
-        _pi->WriteHiHook(0x40E2C0, THISCALL_, AdvMgr_MouseMove);
-        _pi->WriteHiHook(0x408710, THISCALL_, AdvMgr_MapScreenProcedure);
-        _pi->WriteHiHook(0x417A80, THISCALL_, AdvMgr_SetActiveHero);
-
-        _pi->WriteLoHook(0x60309A, BaseDlg_OnRightClickHold);
-        _pi->WriteLoHook(0x417548, AdvMgr_MobilizeCurrentHero);
-
-        edgeScrollHook = _pi->CreateCodePatch(0x40883A, (char *)"9090909090"); // nop for the edge scroll
-
-        m_isInited = true;
-    }
-}
-
-int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, int x, int y) noexcept
+int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, const int x, const int y) noexcept
 {
 
     auto &mapScroller = Get();
@@ -161,13 +148,12 @@ int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, 
     {
         if (!adv->centeredHero)
         {
-
-            if (CDECL_0(DWORD, 0x4F8970) - mapScroller.sinceLastDrawTime >= 8) // thanks to baratorch for idea
+            if (h3::GetTime() - mapScroller.sinceLastDrawTime >= 8) // thanks to baratorch for idea
             {
                 int mapX = adv->screenPosition.GetX();
                 int mapY = adv->screenPosition.GetY();
-                int mapZ = adv->screenPosition.GetZ();
-                int mapSize = *P_MapSize;
+                const int mapZ = adv->screenPosition.GetZ();
+                const size_t mapSize = *P_MapSize;
 
                 if (mapX >= mapSize)
                     mapX -= 1024; // draw outside map tiles
@@ -176,35 +162,33 @@ int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, 
 
                 H3POINT totalOffset(x - mapScroller.startMousePoint.x, y - mapScroller.startMousePoint.y);
 
-                mapScroller.calculator = {
-                    mapScroller.startScreenOffset,
-                    H3Position(mapScroller.startScreenPosition.x, mapScroller.startScreenPosition.y, mapZ)};
+                static Calculator calculator;
+                calculator = {mapScroller.startScreenOffset,
+                              H3Position(mapScroller.startScreenPosition.x, mapScroller.startScreenPosition.y, mapZ)};
 
-                mapScroller.calculator += totalOffset;
+                calculator += totalOffset;
                 if (mapScroller.isMapView) // if Map View Zone hten return draw offset to properly calc
-                    mapScroller.calculator += adv->screenDrawOffset;
+                    calculator += adv->screenDrawOffset;
 
-                P_AdventureManager->screenDrawOffset.x = mapScroller.calculator.point.x;
-                P_AdventureManager->screenDrawOffset.y = mapScroller.calculator.point.y;
+                P_AdventureManager->screenDrawOffset.x = calculator.point.x;
+                P_AdventureManager->screenDrawOffset.y = calculator.point.y;
 
                 //	showCurrent(x, y);
-                mapX = mapScroller.calculator.pos.x;
-                mapY = mapScroller.calculator.pos.y;
+                mapX = calculator.pos.x;
+                mapY = calculator.pos.y;
 
-                mapX = Clamp(mapScroller.scrollLimits.left, mapX, mapScroller.scrollLimits.right + *P_MapSize);
-                mapY = Clamp(mapScroller.scrollLimits.top, mapY, mapScroller.scrollLimits.bottom + *P_MapSize);
+                mapX = Clamp(mapScroller.scrollLimits.left, mapX, mapScroller.scrollLimits.right + mapSize);
+                mapY = Clamp(mapScroller.scrollLimits.top, mapY, mapScroller.scrollLimits.bottom + mapSize);
                 //	toEcho = H3String::Format(toEcho.String(), totalOffset.x, totalOffset.y, calc.pos.x, calc.pos.y,
-                // startScreenPosition.x, startScreenPosition.y,mapX,mapY);
 
                 // limit out of bounds for pixels
-                if (mapX == mapScroller.scrollLimits.left || mapX == mapScroller.scrollLimits.right + *P_MapSize)
+                if (mapX == mapScroller.scrollLimits.left || mapX == mapScroller.scrollLimits.right + mapSize)
                     P_AdventureManager->screenDrawOffset.x = 0;
 
-                if (mapY == mapScroller.scrollLimits.top || mapY == mapScroller.scrollLimits.bottom + *P_MapSize)
+                if (mapY == mapScroller.scrollLimits.top || mapY == mapScroller.scrollLimits.bottom + mapSize)
                     P_AdventureManager->screenDrawOffset.y = 0;
 
-                adv->screenPosition.SetX(mapX);
-                adv->screenPosition.SetY(mapY);
+                adv->screenPosition.SetXYZ(mapX, mapY, mapZ);
 
                 // call "AdvMgr_Draw_MiniMap"
                 THISCALL_7(void, 0x412BA0, adv, adv->screenPosition, 1, 1, 0, 0, 0);
@@ -212,27 +196,32 @@ int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, 
                 THISCALL_6(char, 0x40F350, adv, mapX, mapY, mapZ, 0, 0);
 
                 // redraw the whole map for the players
-                P_WindowManager->H3Redraw(0, 8, IntAt(0x4196EA + 1), IntAt(0x4196E5 + 1));
+                P_WindowManager->H3Redraw(MAP_MARGIN, MAP_MARGIN, IntAt(0x4196EA + 1), IntAt(0x4196E5 + 1));
 
                 // update draw sinceLastDrawTime timer
-                mapScroller.sinceLastDrawTime = CDECL_0(DWORD, 0x4F8970);
+                mapScroller.sinceLastDrawTime = h3::GetTime();
                 mapScroller.scrollingDone = true;
             }
         }
     }
     else // if not holding then reset variable
     {
-        mapScroller.rmcAtMapScreen = false;
-        mapScroller.SetMapEdgeScrollStatus(true);
+        mapScroller.Stop();
     }
 
     return THISCALL_3(int, h->GetDefaultFunc(), adv, x, y);
 }
 
-MapScroller::Calculator::Calculator(const H3POINT &p, const H3Position &pos) : point(p), pos(pos.GetX(), pos.GetY())
+void MapScroller::Stop() noexcept
 {
-    int mapX = pos.GetX();
-    int mapY = pos.GetY();
+    rmcAtMapScreen = false;
+    SetMapEdgeScrollStatus(true);
+    lastAdddedDlg = nullptr;
+}
+Calculator::Calculator(const H3POINT &p, const H3Position &pos) noexcept : point(p), pos(pos.GetX(), pos.GetY())
+{
+    UINT mapX = pos.GetX();
+    UINT mapY = pos.GetY();
     int mapSize = *P_MapSize;
 
     if (mapX >= mapSize)
@@ -246,14 +235,14 @@ MapScroller::Calculator::Calculator(const H3POINT &p, const H3Position &pos) : p
     align();
 }
 
-void MapScroller::Calculator::operator+=(const H3POINT &other)
+void Calculator::operator+=(const H3POINT &other) noexcept
 {
     point.x += other.x;
     point.y += other.y;
     align();
 }
 
-void MapScroller::Calculator::align() noexcept
+void Calculator::align() noexcept
 {
     if (point.x > 31 || point.x < -31)
     {
@@ -267,7 +256,7 @@ void MapScroller::Calculator::align() noexcept
         point.y %= 31;
     }
 }
-void MapScroller::SetMapEdgeScrollStatus(const bool state)
+void MapScroller::SetMapEdgeScrollStatus(const BOOL state) noexcept
 {
     if (edgeScrollHook)
     {
@@ -275,12 +264,48 @@ void MapScroller::SetMapEdgeScrollStatus(const bool state)
     }
 }
 
-_LHF_(MapScroller::AdvMgr_MobilizeCurrentHero)
+_LHF_(MapScroller::AdvMgr_MobilizeCurrentHero) noexcept
 {
     // restore map draw offset when selet hero
     P_AdventureManager->screenDrawOffset.x = 0;
     P_AdventureManager->screenDrawOffset.y = 0;
     return EXEC_DEFAULT;
+}
+void __stdcall MapScroller::AdvMgr_SetActiveHero(HiHook *h, H3AdventureManager *adv, const int heroIdx, const int a3,
+                                                 const char a4, const char a5) noexcept
+{
+    P_AdventureManager->screenDrawOffset.x = 0;
+    P_AdventureManager->screenDrawOffset.y = 0;
+    THISCALL_5(void, h->GetDefaultFunc(), adv, heroIdx, a3, a4, a5);
+}
+
+void MapScroller::CreatePatches() noexcept
+{
+
+    if (!m_isInited)
+    {
+
+        // Init Map Draw Limit Borders;
+
+        // handle scrolling process
+        _pi->WriteHiHook(0x40E2C0, THISCALL_, AdvMgr_MouseMove);
+        // handle scrolling data initialization
+        _pi->WriteHiHook(0x408710, THISCALL_, AdvMgr_MapScreenProcedure);
+
+        // handle proper hero drawing when scrolling
+        _pi->WriteHiHook(0x417A80, THISCALL_, AdvMgr_SetActiveHero);
+        _pi->WriteLoHook(0x417548, AdvMgr_MobilizeCurrentHero);
+
+        // handle extra dlg creation before popup dlg
+        _pi->WriteHiHook(0x0602970, THISCALL_, WndMgr_AddNewDlg);
+        // handle popup dlg closing
+        _pi->WriteLoHook(0x60309A, BaseDlg_OnRightClickHold);
+
+        // init patch to disable map edge scroll
+        edgeScrollHook = _pi->CreateCodePatch(0x40883A, const_cast<LPSTR>("9090909090")); // nop for the edge scroll
+
+        m_isInited = true;
+    }
 }
 
 } // namespace scroll
