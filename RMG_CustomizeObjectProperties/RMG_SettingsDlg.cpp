@@ -1760,7 +1760,7 @@ int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
                 }
             }
 
-            Era::WriteStrToIni("alwaysRandom", Era::IntToStr(enabelFullRandom).c_str(),
+            Era::WriteStrToIni(RMG_SettingsDlg::INI_ALWAYS_RANDOM, Era::IntToStr(enabelFullRandom).c_str(),
                                RMG_SettingsDlg::SETTINGS_INI_SECTION, RMG_SettingsDlg::INI_FILE_PATH);
             Era::SaveIni(RMG_SettingsDlg::INI_FILE_PATH);
         }
@@ -1806,7 +1806,7 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
         {
             randomGameButton->SetHint(EraJS::read("RMG.text.buttons.random.rmc"));
 
-            BOOL result = Era::ReadStrFromIni("alwaysRandom", SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
+            BOOL result = Era::ReadStrFromIni(INI_ALWAYS_RANDOM, SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
             if (result && atoi(h3_TextBuffer))
             {
                 randomGameButton->SetFrame(2);

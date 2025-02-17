@@ -70,6 +70,10 @@ BOOL WarehousesExtender::InitNewGameMapItemSetup(H3MapItem *mapItem) const noexc
         *warehouse = {};
         const UINT resType = mapItem->objectSubtype;
         warehouse->resourceType = resType;
+        if (resType == h3::limits::RESOURCES && !DwordAt(0x27F99AC))
+        {
+            warehouse->resourceType = eResource::GOLD;
+        }
         // reset objSetup of the item
         warehouse->Reset();
         return true;
@@ -80,7 +84,6 @@ BOOL WarehousesExtender::InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexc
 {
     if (const auto warehouse = H3MapItemWarehouse::GetWarehouse(mapItem))
     {
-        
         warehouse->Reset();
         return true;
     }

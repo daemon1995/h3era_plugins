@@ -46,6 +46,7 @@ class RMG_SettingsDlg : public H3Dlg
 
   public:
     static constexpr LPCSTR SETTINGS_INI_SECTION = "DlgSettings";
+    static constexpr LPCSTR INI_ALWAYS_RANDOM_ = "alwaysRandom";
     static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
     // std::vector<H3CreatureBankSetup> &creatureBanks;
 

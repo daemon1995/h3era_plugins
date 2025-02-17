@@ -145,7 +145,8 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             editor.editedRMGObjectGenerators.RemoveAll();
 
             // check if we have full random
-            const BOOL result = Era::ReadStrFromIni("alwaysRandom", rmgdlg::RMG_SettingsDlg::SETTINGS_INI_SECTION,
+            const BOOL result = Era::ReadStrFromIni(rmgdlg::RMG_SettingsDlg::INI_ALWAYS_RANDOM,
+                                                    rmgdlg::RMG_SettingsDlg::SETTINGS_INI_SECTION,
                                                     rmgdlg::RMG_SettingsDlg::INI_FILE_PATH, h3_TextBuffer);
             const BOOL randomizeProperties = result && atoi(h3_TextBuffer);
 
@@ -175,11 +176,15 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 case eObject::KEYMASTER:
                 case eObject::PRISON:
                 case eObject::SEER_HUT:
-                case eObject::SPELL_SCROLL:
 
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
-                    continue;
 
+                    continue;
+                case eObject::SPELL_SCROLL:
+                    if (rmgObjGen->subtype == 0)
+                    {
+                        editor.editedRMGObjectGenerators.Add(rmgObjGen);
+                    }
                 default:
                     break;
                 }
@@ -876,12 +881,12 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     return result;
 }
 
-int *create3DArray(int X, int Y, int Z)
+inline int *create3DArray(int X, int Y, int Z)
 {
     return new int[X * Y * Z];
 }
 
-int *create2DArray(int X, int Y)
+inline int *create2DArray(int X, int Y)
 {
     return new int[X * Y];
 }
