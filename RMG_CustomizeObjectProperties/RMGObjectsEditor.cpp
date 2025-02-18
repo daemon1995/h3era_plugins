@@ -124,17 +124,28 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
         extender::ObjectsExtender::AddObjectsToObjectGenList(rmgObjectsList);
 
-        //	return;
-        // edit current objects by type/subtype
-        auto &editor = RMGObjectsEditor::Get();
-        const BOOL isPseudoGeneration = Get().isPseudoGeneration;
+        // add scrolls level 6
+        if (H3RmgObjectGenerator *objScrollGen = H3ObjectAllocator<_RMGObjGenScroll_>().allocate(1))
+        {
+            THISCALL_3(H3RmgObjectGenerator *, 0x0535390, objScrollGen, _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL,
+                       _RMGObjGenScroll_::MAP_CONTROL_SPELL_VALUE);
+            rmgObjectsList->Push(objScrollGen);
+        }
 
-        if (isPseudoGeneration)
+        auto &editor = RMGObjectsEditor::Get();
+        editor.SetMapControlSpellLevels(true);
+
+        // edit current objects by type/subtype
+        if (editor.isPseudoGeneration)
         {
 
-            for (auto &rmgObj : *rmgObjectsList)
+            for (auto &rmgObjGen : *rmgObjectsList)
             {
-                RMGObjectInfo::InitFromRmgObjectGenerator(*rmgObj);
+                if (rmgObjGen->type == eObject::SPELL_SCROLL)
+                {
+                    rmgObjGen->subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
+                }
+                RMGObjectInfo::InitFromRmgObjectGenerator(*rmgObjGen);
             }
         }
         else
@@ -166,30 +177,33 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 }
             }
 
+            // init variables;
             for (auto &rmgObjGen : *rmgObjectsList)
             {
                 // skip changes for some objects to not break native map generation
                 switch (rmgObjGen->type)
                 {
-
+                    // add these objects w/o any restrictions
                 case eObject::PANDORAS_BOX:
                 case eObject::KEYMASTER:
                 case eObject::PRISON:
                 case eObject::SEER_HUT:
 
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
-
                     continue;
+
                 case eObject::SPELL_SCROLL:
-                    if (rmgObjGen->subtype == 0)
-                    {
-                        editor.editedRMGObjectGenerators.Add(rmgObjGen);
-                    }
+
+                    rmgObjGen->subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
+                    break;
+
                 default:
                     break;
                 }
 
-                const auto &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
+                const RMGObjectInfo &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
+
+                // const auto &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
                 // if this is first fucntion call with pseudo generator
                 // we collect data
 
@@ -212,6 +226,41 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             // swap vectors between each other to use edited values
             std::swap(rmgStruct->objectGenerators, editor.editedRMGObjectGenerators);
         }
+        editor.SetMapControlSpellLevels(false);
+    }
+}
+void RMGObjectsEditor::SetMapControlSpellLevels(const BOOL state, const BOOL blockWaterSpells) noexcept
+{
+    if (state)
+    {
+        spellLvls[eSpell::SUMMON_BOAT] = P_Spell[eSpell::SUMMON_BOAT].level;
+        spellLvls[eSpell::SCUTTLE_BOAT] = P_Spell[eSpell::SCUTTLE_BOAT].level;
+
+        spellLvls[eSpell::FLY] = P_Spell[eSpell::FLY].level;
+        spellLvls[eSpell::WATER_WALK] = P_Spell[eSpell::WATER_WALK].level;
+        spellLvls[eSpell::DIMENSION_DOOR] = P_Spell[eSpell::DIMENSION_DOOR].level;
+        spellLvls[eSpell::TOWN_PORTAL] = P_Spell[eSpell::TOWN_PORTAL].level;
+
+        P_Spell[eSpell::FLY].level = _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL;
+        P_Spell[eSpell::WATER_WALK].level = _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL;
+        P_Spell[eSpell::DIMENSION_DOOR].level = _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL;
+        P_Spell[eSpell::TOWN_PORTAL].level = _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL;
+        if (blockWaterSpells)
+        {
+            P_Spell[eSpell::SUMMON_BOAT].level = _RMGObjGenScroll_::BANNED_SPELL_LEVEL;
+            P_Spell[eSpell::SCUTTLE_BOAT].level = _RMGObjGenScroll_::BANNED_SPELL_LEVEL;
+            P_Spell[eSpell::WATER_WALK].level = _RMGObjGenScroll_::BANNED_SPELL_LEVEL;
+        }
+    }
+    else
+    {
+        P_Spell[eSpell::SUMMON_BOAT].level = spellLvls[eSpell::SUMMON_BOAT];
+        P_Spell[eSpell::SCUTTLE_BOAT].level = spellLvls[eSpell::SCUTTLE_BOAT];
+
+        P_Spell[eSpell::FLY].level = spellLvls[eSpell::FLY];
+        P_Spell[eSpell::WATER_WALK].level = spellLvls[eSpell::WATER_WALK];
+        P_Spell[eSpell::DIMENSION_DOOR].level = spellLvls[eSpell::DIMENSION_DOOR];
+        P_Spell[eSpell::TOWN_PORTAL].level = spellLvls[eSpell::TOWN_PORTAL];
     }
 }
 
@@ -228,10 +277,20 @@ _LHF_(RMGObjectsEditor::RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck)
             const int zoneId = IntAt(c->ebp - 0x34);
 
             // check if numer of placed this object'type/subtypes on the whole map is more than allowed
+            if (objGen->type == eObject::SPELL_SCROLL)
+            {
+                objGen->subtype = reinterpret_cast<_RMGObjGenScroll_ *>(objGen)->spellLevel;
+            }
             if (generatedInfo.ObjectCantBeGenerated(objGen, zoneId))
             {
+
                 // set flag that limit is exceeded
                 c->flags.SF = c->flags.OF;
+            }
+            if (objGen->type == eObject::SPELL_SCROLL)
+            {
+                // reinterpret_cast<_RMGObjGenScroll_ *>(objGen)->spellLevel = objGen->subtype;
+                objGen->subtype = 0;
             }
         }
     }
@@ -245,9 +304,30 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
     if (generatedInfo.Inited())
     {
         // Get generated and placed RMG object from stack
-        const H3RmgObject *obj = *reinterpret_cast<H3RmgObject **>(c->ebp + 0x8);
+        const H3RmgObject *rmgObject = *reinterpret_cast<H3RmgObject **>(c->ebp + 0x8);
         // increase counter
-        generatedInfo.IncreaseObjectsCounters(obj->properties->prototype, c->ecx);
+        auto &prototype = rmgObject->properties->prototype;
+        switch (prototype->type)
+        {
+        case eObject::SPELL_SCROLL:
+
+            if (generatedInfo.lastGeneratedSpellScroll)
+            {
+                const int storedObjectSubtype = prototype->subtype;
+                prototype->subtype = generatedInfo.lastGeneratedSpellScroll->spellLevel;
+                generatedInfo.IncreaseObjectsCounters(prototype, c->ecx);
+                prototype->subtype = storedObjectSubtype;
+
+                generatedInfo.lastGeneratedSpellScroll = nullptr;
+            }
+
+            break;
+
+        default:
+            generatedInfo.IncreaseObjectsCounters(prototype, c->ecx);
+
+            break;
+        }
     }
 
     return EXEC_DEFAULT;
@@ -334,7 +414,7 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
     Get().BeforeMapGeneration(rmg);
 }
 
-void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) const noexcept
+void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) noexcept
 {
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfo());
@@ -350,7 +430,9 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
 
     //    firstRun = false;
     //}
+    SetMapControlSpellLevels(true, !(rmgStruct->waterAmount));
 
+    // store spell levels
     // change guard ai values
     auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
     for (auto &info : monstersInfo)
@@ -381,6 +463,9 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
     std::swap(rmgStruct->objectGenerators, editedRMGObjectGenerators);
     editedRMGObjectGenerators.RemoveAll();
 
+    // restore changed spell levels
+    SetMapControlSpellLevels(false);
+
     auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
     for (auto &info : monstersInfo)
     {
@@ -391,6 +476,27 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
     }
 }
 
+// set virtual object subtype to spell level to increase counters
+H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHook *h, _RMGObjGenScroll_ *scrollGen,
+                                                                            H3RmgObjectPropsRef *ref,
+                                                                            H3RmgRandomMapGenerator *rmg,
+                                                                            H3RmgZoneGenerator *zoneGen) noexcept
+
+{
+
+    H3RmgObject *rmgObject = THISCALL_4(H3RmgObject *, h->GetDefaultFunc(), scrollGen, ref, rmg, zoneGen);
+    if (rmgObject)
+    {
+        generatedInfo.lastGeneratedSpellScroll = scrollGen;
+
+        // auto &prototype = rmgObject->properties->prototype;
+        // const int storedObjectSubtype = prototype->subtype;
+        // prototype->subtype = scrollGen->spellLevel;
+        //// generatedInfo.IncreaseObjectsCounters(rmgObject->properties->prototype, zoneGen->zoneInfo->id);
+        // prototype->subtype = storedObjectSubtype;
+    }
+    return rmgObject;
+}
 // fixes for different RMG bugs/stuff
 namespace fixes
 {
@@ -400,8 +506,8 @@ _LHF_(RMG__AtSubterranianGatesPrototypeGet)
 
     if (const auto genZone = *reinterpret_cast<H3RmgZoneGenerator **>(c->ebp + 0x8))
     {
-        // _RMGObjectPrototypeRef_ *__thiscall RMG_FindObjectPrototype(_RMGStruct_ *this, int ground, eObject type, int
-        // subtype)
+        // _RMGObjectPrototypeRef_ *__thiscall RMG_FindObjectPrototype(_RMGStruct_ *this, int ground, eObject type,
+        // int subtype)
         const DWORD correctObjectPrototypeRef =
             THISCALL_4(DWORD, 0x546530, c->edi, genZone->ground, eObject::SUBTERRANEAN_GATE, 0);
         if (correctObjectPrototypeRef)
@@ -423,8 +529,8 @@ _LHF_(RMG__AtSecondSubterranianGatesPositioning)
     correctObjectPrototypeRef = 0;
     if (const auto genZone = *reinterpret_cast<H3RmgZoneGenerator **>(c->ebp - 0x10))
     {
-        // _RMGObjectPrototypeRef_ *__thiscall RMG_FindObjectPrototype(_RMGStruct_ *this, int ground, eObject type, int
-        // subtype)
+        // _RMGObjectPrototypeRef_ *__thiscall RMG_FindObjectPrototype(_RMGStruct_ *this, int ground, eObject type,
+        // int subtype)
         correctObjectPrototypeRef =
             THISCALL_4(DWORD, 0x546530, IntAt(c->ebp - 0x14), genZone->ground, eObject::SUBTERRANEAN_GATE, 0);
 
@@ -466,6 +572,7 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteLoHook(0x54676B, RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck);
         _pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
 
+        _pi->WriteHiHook(0x05353C0, THISCALL_, RMG__RMGObjGenScroll__CreateObject);
         _pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
 
         _pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);
@@ -499,6 +606,7 @@ inline int index2D(const int objType, const int objSubtype, const int lineSize)
 void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId)
 {
     // increment number of zone generated subtypes of that obj type
+
     const int index3 = index3D(zoneId, prop->type, prop->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
     eachZoneGeneratedBySubtype[index3]++;
 
@@ -775,6 +883,11 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         }
     }
 
+    // custom data for scrolls
+    auto &ref = defaultRMGObjectsInfoByType[eObject::SPELL_SCROLL];
+
+    const int isize = ref.size();
+    isize;
     // dwellings value calculation
     const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
     for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR1])
@@ -899,8 +1012,8 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
     if (templateBaseZoneAmount)
     {
         UINT totalZoneConnectionsAmount = 0;
-
-        if (rmg->waterAmount)
+        const BOOL hasWater = rmg->waterAmount;
+        if (hasWater)
         {
             // adding zone + totalZoneConnectionsAmount cause of water connections for the land zones creation
             std::unordered_set<UINT> connectionZonesIdPairs;
@@ -939,6 +1052,8 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
                 maxObjectSubtype = p_ObjGen->subtype + 1;
             }
         }
+        // sprintf(h3_TextBuffer, "maxObjectSubtype: %d", maxSubtypes[eObject::SPELL_SCROLL]);
+        // H3Mes sagebox(h3_TextBuffer);
 
         // create counters and limits
         eachZoneGeneratedBySubtype = create3DArray(zonesAmount, H3_MAX_OBJECTS, maxObjectSubtype);

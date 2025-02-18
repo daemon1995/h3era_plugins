@@ -151,11 +151,14 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     auto *objList = setup->objectLists;
 
     std::vector<sound::SoundManager::ObjectSound> addedWavNames;
+    maxSubtypes[eObject::SPELL_SCROLL] = 7;
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     { // iterate all the objects types entries
 
+
         for (const auto &obj : objList[objType])
         {
+
             // each object gen of that type has hihgher subptype
             if (obj.subtype >= maxSubtypes[obj.type])
             {
@@ -266,14 +269,14 @@ size_t RMGObjectSetable::HashFunction::operator()(const RMGObjectSetable &obj) c
     size_t subtypeHash = std::hash<int>()(obj.subtype) << 1;
     return typeHash ^ subtypeHash;
 }
-void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList)
+void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjectsList)
 {
     // check if there are any object properties extenders
     if (extenders.size())
     {
         std::unordered_set<RMGObjectSetable, RMGObjectSetable::HashFunction> objectsSet;
         // create set of the objects to add only unique objects
-        for (auto rmgObj : *rmgObjecsList)
+        for (auto rmgObj : *rmgObjectsList)
         {
             objectsSet.insert({rmgObj->type, rmgObj->subtype});
         }
@@ -295,7 +298,7 @@ void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
                     // and return to add into the list
                     if (objGen)
                     {
-                        rmgObjecsList->Push(objGen);
+                        rmgObjectsList->Push(objGen);
                     }
                 }
 
@@ -305,7 +308,7 @@ void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
                     THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, info.type, info.subtype, info.value,
                                info.density);
                     objGen->vTable = (H3RmgObjectGenerator::VTable *)0x0640BC8;
-                    rmgObjecsList->Push(objGen);
+                    rmgObjectsList->Push(objGen);
                 }
             }
         }

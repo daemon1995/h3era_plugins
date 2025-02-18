@@ -1,6 +1,38 @@
 #pragma once
 struct ObjectLimitsInfo;
+#include <array>
 
+struct _RMGObjGenScroll_ : public H3RmgObjectGenerator
+{
+    static constexpr UINT MAP_CONTROL_SPELL_LEVEL = 6;
+    static constexpr UINT BANNED_SPELL_LEVEL = 7;
+    static constexpr UINT MAP_CONTROL_SPELL_VALUE = 20000;
+    int spellLevel;
+};
+struct _RMGObjGenPrison_ : public H3RmgObjectGenerator
+{
+    int Exp;
+};
+struct _RMGObjGenPandoraMon_ : public H3RmgObjectGenerator
+{
+    int montype;
+    int objectValue;
+};
+
+struct _RMGObjGenPandoraMagic_ : public H3RmgObjectGenerator
+{
+    int minLevel;
+    int maxLevel;
+    int schoolBit;
+};
+struct _RMGObjGenPandoraGold_ : public H3RmgObjectGenerator
+{
+    int gold;
+};
+struct _RMGObjGenPandoraExp_ : public H3RmgObjectGenerator
+{
+    int exp;
+};
 struct RMGObjectInfo
 {
 
@@ -80,6 +112,9 @@ struct GeneratedInfo
         };
         int *arrays[4];
     };
+
+  public:
+    const _RMGObjGenScroll_ *lastGeneratedSpellScroll = nullptr;
 
   public:
     void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId);
@@ -166,7 +201,7 @@ class RMGObjectsEditor : public IGamePatch
     BOOL isPseudoGeneration = false;
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
-
+    std::array<INT, limits::SPELLS> spellLvls = {};
     // std::vector<RMGObjectInfo> currentRMGObjectsInfoByType[h3::limits::OBJECTS];
     //  std::vector<RMGObjectInfo> defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
     //  std::array<std::vector<RMGObjectInfo>, h3::limits::OBJECTS> defaultRMGObjectsInfoByType;
@@ -185,14 +220,19 @@ class RMGObjectsEditor : public IGamePatch
   private:
     void InitDefaultProperties(const INT16 *maxSubtypes);
 
-    void BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) const noexcept;
+    void BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) noexcept;
     void AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept;
     //		void CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg);
+    void SetMapControlSpellLevels(const BOOL state, const BOOL blockWaterSpells = true) noexcept;
 
   private:
     static _LHF_(RMG_OnBeforeMapGeneration);
     static _LHF_(RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck);
     static _LHF_(RMG__RMGObject_AtPlacement);
+    static H3RmgObject *__stdcall RMG__RMGObjGenScroll__CreateObject(HiHook *h, _RMGObjGenScroll_ *scrollGen,
+                                                                     H3RmgObjectPropsRef *ref,
+                                                                     H3RmgRandomMapGenerator *rmg,
+                                                                     H3RmgZoneGenerator *zoneGen) noexcept;
 
     static void __stdcall RMG__InitGenZones(HiHook *h, const H3RmgRandomMapGenerator *rmg,
                                             const H3RmgTemplate *RmgTemplate);
