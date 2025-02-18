@@ -8,23 +8,64 @@ namespace cbanks
 class CreatureBanksExtender : public extender::ObjectsExtender
 {
 
+    static constexpr LPCSTR creatureBankStateFormat = "RMG_CreatureBankStateById_%d";
+    static constexpr UINT STATES_AMOUNT = 4;
+    static constexpr UINT GUARDES_AMOUNT = 5;
+    static constexpr UINT MITHRIL_ID = 7;
+
     static INT currentCreatureBankId;
     static H3MapItem *currentMapItem;
     static H3CreatureBank *currentCreatureBank;
-    static constexpr LPCSTR creatureBankStateFormat = "RMG_CreatureBankStateById_%d";
+
+    static INT creatureBankStateId;
+    static UINT mithrilToAdd;
+
   private:
     UINT16 defaultBanksNumber = 0;
     UINT16 addedBanksNumber = 0;
+
+    struct CustomReward
+    {
+        static constexpr UINT SPELLS_AMOUNT = 4;
+        static constexpr LPCSTR creatureBankSpellsFormat = "RMG_CreatureBankId_%d_SpellId_%d";
+        static constexpr LPCSTR hasCustomSetupFormat = "RMG_CreatureBankId_%d_hasCustomSetup";
+        
+        BOOL enabled = false;
+
+        UINT experience;
+        UINT8 primarySkills[SPELLS_AMOUNT];
+
+        UINT spellPoints;
+
+        INT luck;
+        INT morale;
+        // resources
+        // artifacts
+        struct SpellsReward
+        {
+            eSpell spellId = eSpell::NONE;
+            eSpellchool spellSchool;
+            DWORD spellLevels = 0;
+            DWORD spellFlags = 0;
+            BOOL generate = false;
+
+        } spellsRewards[SPELLS_AMOUNT];
+
+      public:
+        void ReadStateFromJson(const INT16 creatureBankId, const UINT stateId) noexcept;
+    };
 
     struct CreatureBank
     {
         UINT m_size;
 
         std::vector<int> monsterAwards;
-        std::vector<std::array<int, 5>> monsterGuards;
+        std::vector<std::array<int, GUARDES_AMOUNT>> monsterGuards;
         std::vector<H3CreatureBankSetup> setups;
+        std::vector<std::array<UINT, STATES_AMOUNT>> mithrilAmount;
         std::vector<int> isNotBank;
         std::vector<std::array<int, 14>> customPositions;
+        std::vector<std::array<CustomReward, STATES_AMOUNT>> customRewards;
 
       public:
         void CopyDefaultData(const size_t defaultSize);
@@ -59,7 +100,6 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     static _LHF_(CrBank_BeforeAddingToGameList);
     static _LHF_(CrBank_BeforeSetupFromState);
 
-
     static _LHF_(CrBank_DisplayPreCombatMessage);
     static _LHF_(CrBank_BeforeCombatStart);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
@@ -72,7 +112,10 @@ class CreatureBanksExtender : public extender::ObjectsExtender
                                                     const int picType2, const int picSubtype2, const int par,
                                                     const int time, const int picType3, const int picSubtype3);
 
+    static _LHF_(CrBank_AfterCombatWon);
+
     static _LHF_(CrBank_AfterDrawingResources);
+    static _LHF_(CrBank_BeforeShowingRewardMessage);
     static _LHF_(CrBank_BeforeGivingResources);
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *event);
     //	static int __stdcall CretureBankSetups__Ctor(HiHook*h);

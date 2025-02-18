@@ -4,7 +4,8 @@ namespace cbanks
 INT CreatureBanksExtender::currentCreatureBankId = -1;
 H3MapItem *CreatureBanksExtender::currentMapItem = nullptr;
 H3CreatureBank *CreatureBanksExtender::currentCreatureBank = nullptr;
-
+UINT CreatureBanksExtender::mithrilToAdd = 0;
+INT CreatureBanksExtender::creatureBankStateId = -1;
 BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
                     const bool withoutBrackets = true) noexcept
 {
@@ -139,62 +140,177 @@ void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *eve
         }
     }
 }
-
-_LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
+_LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 {
-    if (c->esi == 7) // add one more iteration of next resource is mitrhil
+    // if mitrhil option is enabled
+    if (DwordAt(0x27F99AC))
     {
+
         if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
         {
-            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
+            const int creatureBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
+            if (creatureBankId != eObject::NO_OBJ)
+            {
+                libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
+                const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
+                mithrilToAdd = Get().creatureBanks.mithrilAmount[creatureBankId][stateId];
+            }
+        }
+    }
+    return EXEC_DEFAULT;
+}
+
+// works for Human Only
+_LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
+{
+    if (c->esi == MITHRIL_ID && mithrilToAdd) // add one more iteration of next resource is mitrhil
+    {
+        c->eax = mithrilToAdd;
+        // return to one more iteration
+        c->return_address = 0x04ABDA6;
+        return NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
+
+_LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
+{
+    if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+    {
+        const int creatureBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
+        if (creatureBankId != eObject::NO_OBJ)
+        {
+            const int cbUniqueId = mapItem->creatureBank.id;
+            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, cbUniqueId);
 
             const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
-            // if (stateId)
+
+            libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, cbUniqueId);
+
+            // if taht state has custom setup
+            if (Era::GetAssocVarIntValue(h3_TextBuffer))
             {
-                c->eax = stateId;
-                // return to one more iteration
-                c->return_address = 0x04ABDA6;
-                return NO_EXEC_DEFAULT;
+                H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
+
+                const auto &setup = Get().creatureBanks.customRewards[creatureBankId][stateId];
+
+                for (size_t i = 0; i < CustomReward::SPELLS_AMOUNT; i++)
+                {
+
+                    libc::sprintf(h3_TextBuffer, CustomReward::creatureBankSpellsFormat, cbUniqueId, i);
+                    const eSpell spellId = eSpell(Era::GetAssocVarIntValue(h3_TextBuffer));
+                    if (spellId != eSpell::NONE)
+                    {
+                        H3PictureCategories pair = H3PictureCategories::Spell(spellId);
+
+                        pictureCategories->Add(pair);
+                        break;
+                    }
+                    // const int spellId = setup.spellsRewards[i].;
+                }
+                pictureCategories->Add(H3PictureCategories::PrimarySkill(ePrimary::ATTACK, 2));
+                pictureCategories->Add(H3PictureCategories::Experience(3500));
+                pictureCategories->Add(H3PictureCategories::Luck(-3));
+                pictureCategories->Add(H3PictureCategories::Morale(2));
+                //  pictureCategories->Add(H3PictureCategories::SpellPoints(12));
+                pictureCategories->Add(H3PictureCategories(ePictureCategories(0), 1));
             }
         }
     }
 
     return EXEC_DEFAULT;
 }
+
+// works for Human and AI
 _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
 {
-
-    if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+    if (mithrilToAdd)
     {
-        if (const auto hero = reinterpret_cast<H3Hero *>(c->edi))
+        if (const auto hero = reinterpret_cast<H3Hero *>(c->ecx))
         {
-            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
-
-            const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
-            IntAt(0x27F9A00 + hero->owner * 4) += stateId;
+            THISCALL_3(void, 0x04E3870, hero, MITHRIL_ID, mithrilToAdd);
         }
+        mithrilToAdd = 0;
     }
 
     return EXEC_DEFAULT;
 }
-int lastSetupFromState = -1;
 _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
 {
-    lastSetupFromState = c->edx;
+    creatureBankStateId = c->edx;
 
     return EXEC_DEFAULT;
 }
 _LHF_(CreatureBanksExtender::CrBank_BeforeAddingToGameList)
 {
-    if (lastSetupFromState != -1)
+    if (creatureBankStateId != -1)
     {
         if (const auto mapItem = reinterpret_cast<H3MapItem *>(c->esi))
         {
-            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
-            Era::SetAssocVarIntValue(h3_TextBuffer, lastSetupFromState);
+            const UINT creatureBankId = mapItem->creatureBank.id;
+            libc::sprintf(h3_TextBuffer, creatureBankStateFormat, creatureBankId);
+            Era::SetAssocVarIntValue(h3_TextBuffer, creatureBankStateId);
+
+            // add custom spells
+            const auto &bannedInfo = P_Game->Get()->disabledSpells;
+            const auto &customReward = Get().creatureBanks.customRewards[mapItem->objectSubtype][creatureBankStateId];
+            if (customReward.enabled)
+            {
+                // init custom setup
+                libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, creatureBankId);
+                Era::SetAssocVarIntValue(h3_TextBuffer, true);
+
+                // init spells generation
+                static std::unordered_set<int> spellsSet;
+                for (size_t i = 0; i < CustomReward::SPELLS_AMOUNT; i++)
+                {
+                    const auto &data = customReward.spellsRewards[i];
+
+                    // init no spells for that creature bank
+                    libc::sprintf(h3_TextBuffer, CustomReward::creatureBankSpellsFormat, creatureBankId, i);
+                    Era::SetAssocVarIntValue(h3_TextBuffer, eSpell::NONE);
+                    const eSpell spell = data.spellId;
+                    if (spell != eSpell::NONE)
+                    {
+                        spellsSet.insert(spell);
+                    }
+                    else if (data.generate)
+                    {
+                        static std::vector<UINT> spellsToSelect;
+                        spellsToSelect.reserve(h3::limits::SPELLS);
+                        INT spellId = 0;
+                        do
+                        {
+                            const auto &spell = P_Spell[spellId];
+
+                            if (!bannedInfo[spellId] && spell.flags & data.spellFlags &&
+                                data.spellLevels & (1 << spell.level) && data.spellSchool & spell.school)
+                            {
+                                spellsToSelect.emplace_back(spellId);
+                            }
+                        } while (spellId++ < h3::limits::SPELLS);
+
+                        // add spell to set if exist
+                        if (const size_t goodSpells = spellsToSelect.size())
+                        {
+                            spellsSet.insert(spellsToSelect[H3Random::RandBetween(0, goodSpells - 1)]);
+                            spellsToSelect.clear();
+                        }
+                    }
+                }
+
+                volatile int i = 0;
+                for (const auto spell : spellsSet)
+                {
+                    libc::sprintf(h3_TextBuffer, CustomReward::creatureBankSpellsFormat, creatureBankId, i++);
+                    Era::SetAssocVarIntValue(h3_TextBuffer, spell);
+                }
+                spellsSet.clear();
+            }
         }
 
-        lastSetupFromState = -1;
+        creatureBankStateId = -1;
     }
 
     return EXEC_DEFAULT;
@@ -223,7 +339,12 @@ void CreatureBanksExtender::CreatePatches()
     _pi->WriteLoHook(0x4ABAD3, CrBank_BeforeCombatStart);
 
     _pi->WriteHiHook(0x4ABBCB, THISCALL_, CrBank_CombatStart);
+
+    // Adding mithril to player
+    _pi->WriteLoHook(0x04ABBFF, CrBank_AfterCombatWon);
     _pi->WriteLoHook(0x04ABE3C, CrBank_AfterDrawingResources);
+    // _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
+
     _pi->WriteLoHook(0x04AC13B, CrBank_BeforeGivingResources);
 
     _pi->WriteHexPatch(0x040ABDE, "EB0C90909090"); // remove extra space in the guard description start
@@ -399,7 +520,6 @@ int CreatureBanksExtender::GetCreatureBankId(const int objType, const int objSub
 
 eObject CreatureBanksExtender::GetCreatureBankObjectType(const int creatureBankId) noexcept
 {
-
     // get CB object type for some edits later
     eObject objectType = eObject::NO_OBJ;
     if (creatureBankId >= 0)
@@ -430,7 +550,6 @@ eObject CreatureBanksExtender::GetCreatureBankObjectType(const int creatureBankI
 
 void CreatureBanksExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
 {
-
     // Get Default Banks Number from H3Vector<H3CreatureBankSetup::Ctor>::Size()
     defaultBanksNumber = ByteAt(0x47A3BA + 0x1);
 
@@ -468,7 +587,6 @@ H3RmgObjectGenerator *CreatureBanksExtender::CreateRMGObjectGen(const RMGObjectI
 }
 inline int ReadJsonInt(LPCSTR format, const int arg)
 {
-
     return EraJS::readInt(H3String::Format(format, arg).String());
 }
 inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2)
@@ -477,8 +595,64 @@ inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2)
 }
 inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2, const int arg3)
 {
-
     return EraJS::readInt(H3String::Format(format, arg, arg2, arg3).String());
+}
+void CreatureBanksExtender::CustomReward::ReadStateFromJson(const INT16 creatureBankId, const UINT stateId) noexcept
+{
+
+    experience = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.experience", creatureBankId, stateId);
+    spellPoints = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankId, stateId);
+
+    if (int _luck = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.luck", creatureBankId, stateId))
+    {
+        luck = Clamp(-3, _luck, 3);
+    }
+    if (int _morale = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.morale", creatureBankId, stateId))
+    {
+        morale = Clamp(-3, _morale, 3);
+    }
+
+    bool readSuccess = false;
+    for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+    {
+        primarySkills[i] =
+            ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankId, stateId, i);
+
+        int spellId = EraJS::readInt(
+            H3String::Format("RMG.objectGeneration.16.%d.states.%d.spells.%d.id", creatureBankId, stateId, i).String(),
+            readSuccess);
+        if (readSuccess)
+        {
+            spellsRewards[i].spellId = eSpell(Clamp(0, spellId, h3::limits::SPELLS));
+        }
+        else
+        {
+            UINT spellSchool =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.schools", creatureBankId, stateId, i);
+
+            UINT spellLevels =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.levels", creatureBankId, stateId, i);
+
+            UINT spellFlags =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.flags", creatureBankId, stateId, i);
+            // if any of data is set then spell may be generated
+
+            if (spellSchool || spellLevels || spellFlags)
+            {
+                spellsRewards[i].generate = true;
+                spellsRewards[i].spellSchool =
+                    spellSchool ? eSpellchool(Clamp(0, spellSchool, h3::eSpellchool::ALL)) : eSpellchool::ALL;
+
+                spellsRewards[i].spellLevels = spellLevels ? Clamp(0, spellLevels, 31) : 31;
+
+                spellsRewards[i].spellFlags = spellFlags ? spellFlags : -1;
+            }
+        }
+
+        static CustomReward defaultStateReward;
+        // set "enabled" if object is not default
+        enabled = memcmp(this, &defaultStateReward, sizeof(defaultStateReward));
+    }
 }
 
 int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
@@ -492,7 +666,7 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
     Reserve(30);
 
     bool trSuccess = false;
-    std::array<int, 14> defaultPositions;
+    static std::array<int, 14> defaultPositions;
 
     constexpr int postionsAddress = 0x063D0E0;
 
@@ -508,7 +682,7 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
     {
 
         // states
-        H3CreatureBankSetup setup;
+        static H3CreatureBankSetup setup;
 
         // assign new CB name from json/default
         H3String name =
@@ -540,7 +714,13 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
                 positions[i + 7] = jsonDefenderPosition;
         }
 
-        for (size_t i = 0; i < 4; i++)
+        static std::array<UINT, STATES_AMOUNT> mithrilRewards{};
+        mithrilRewards.fill(0);
+
+        static std::array<CustomReward, STATES_AMOUNT> customReward{};
+        customReward.fill(CustomReward{});
+
+        for (size_t i = 0; i < STATES_AMOUNT; i++)
         {
             auto &state = setup.states[i];
 
@@ -566,6 +746,12 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
                 state.resources.asArray[j] =
                     ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankId, i, j);
             }
+            mithrilRewards[i] =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankId, i, MITHRIL_ID);
+            if (ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.customReward", creatureBankId, i))
+            {
+                customReward[i].ReadStateFromJson(creatureBankId, i);
+            }
         }
 
         const int isNotBank = ReadJsonInt("RMG.objectGeneration.16.%d.isNotBank", creatureBankId);
@@ -574,12 +760,13 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
         creatureBanks.isNotBank.emplace_back(isNotBank);
         creatureBanks.setups.emplace_back(setup);
         creatureBanks.monsterAwards.emplace_back(setup.states[0].creatureRewardType);
-
-        std::array<int, 5> tempArr = {-1, -1, -1, -1, -1};
+        creatureBanks.customRewards.emplace_back(customReward);
+        static std::array<int, GUARDES_AMOUNT> tempArr;
+        tempArr.fill(-1);
         memcpy(&tempArr[0], &setup.states[0].guardians.type[0], sizeof(tempArr));
 
         creatureBanks.monsterGuards.emplace_back(tempArr);
-
+        creatureBanks.mithrilAmount.emplace_back(mithrilRewards);
         addedBanksNumber++;
     }
 
@@ -627,7 +814,8 @@ void CreatureBanksExtender::Resize(UINT16 m_size) noexcept
     creatureBanks.setups.resize(m_size);
     creatureBanks.isNotBank.resize(m_size);
     creatureBanks.customPositions.resize(m_size);
-
+    creatureBanks.mithrilAmount.resize(m_size);
+    creatureBanks.customRewards.resize(m_size);
     creatureBanks.m_size = m_size;
 }
 
@@ -638,6 +826,8 @@ void CreatureBanksExtender::Reserve(UINT16 m_size) noexcept
     creatureBanks.setups.reserve(m_size);
     creatureBanks.isNotBank.reserve(m_size);
     creatureBanks.customPositions.reserve(m_size);
+    creatureBanks.mithrilAmount.reserve(m_size);
+    creatureBanks.customRewards.reserve(m_size);
 }
 
 void CreatureBanksExtender::ShrinkToFit() noexcept
@@ -647,6 +837,8 @@ void CreatureBanksExtender::ShrinkToFit() noexcept
     creatureBanks.setups.shrink_to_fit();
     creatureBanks.isNotBank.shrink_to_fit();
     creatureBanks.customPositions.shrink_to_fit();
+    creatureBanks.mithrilAmount.shrink_to_fit();
+    creatureBanks.customRewards.shrink_to_fit();
 
     creatureBanks.m_size = creatureBanks.monsterAwards.size();
 }

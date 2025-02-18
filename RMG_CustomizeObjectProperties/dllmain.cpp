@@ -47,9 +47,14 @@ PatcherInstance *_PI;
     c. call events for all extenders from this plugin
 
 13. Create complex objects extender support:
-    a. spell scrolls
-    b. hero prisons;
-    c. pandora's box;
+    !!
+        create switch for each type of complex object that converts to:
+        switch (objectType)
+
+        case
+        a. spell scrolls
+        b. hero prisons;
+        c. pandora's box;
 14. Add object ONLY type settings:
     a. create groups of subtypes general settings;
     b. user can create custom groups of subtypes;
