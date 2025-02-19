@@ -6,6 +6,7 @@ H3MapItem *CreatureBanksExtender::currentMapItem = nullptr;
 H3CreatureBank *CreatureBanksExtender::currentCreatureBank = nullptr;
 UINT CreatureBanksExtender::mithrilToAdd = 0;
 INT CreatureBanksExtender::creatureBankStateId = -1;
+std::array<eSpell, CreatureBanksExtender::STATES_AMOUNT> CreatureBanksExtender::spellsToLearn;
 BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
                     const bool withoutBrackets = true) noexcept
 {
@@ -143,13 +144,49 @@ void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *eve
 _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 {
     // if mitrhil option is enabled
-    if (DwordAt(0x27F99AC))
-    {
 
-        if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+    if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+
+    {
+        const int creatureBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
+
+        if (creatureBankId != eObject::NO_OBJ)
         {
-            const int creatureBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
-            if (creatureBankId != eObject::NO_OBJ)
+
+            spellsToLearn.fill(eSpell::NONE);
+
+            libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, mapItem->creatureBank.id);
+            const int hasSetup = Era::GetAssocVarIntValue(h3_TextBuffer);
+
+            //  const auto &reward = Get().creatureBanks.customRewards[creatureBankId][stateId];
+            if (hasSetup)
+            {
+                // reset state about reward
+                Era::SetAssocVarIntValue(h3_TextBuffer, 0);
+
+                if (auto hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8))
+                {
+                    if (hero->WearsArtifact(eArtifact::SPELLBOOK))
+                    {
+                        const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
+                        for (size_t i = 0; i < STATES_AMOUNT; i++)
+                        {
+                            libc::sprintf(h3_TextBuffer, CustomReward::creatureBankSpellsFormat,
+                                          mapItem->creatureBank.id, i);
+
+                            const eSpell spellId = eSpell(Era::GetAssocVarIntValue(h3_TextBuffer));
+                            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
+                                P_Spell[spellId].level > maxSpellLevel)
+                            {
+                                continue;
+                            }
+                            spellsToLearn[i] = spellId;
+                        }
+                    }
+                }
+            }
+            // if mithril is enabled
+            if (DwordAt(0x27F99AC))
             {
                 libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
                 const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
@@ -192,34 +229,36 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
             if (Era::GetAssocVarIntValue(h3_TextBuffer))
             {
                 H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
-
-                const auto &setup = Get().creatureBanks.customRewards[creatureBankId][stateId];
+                // const auto &setup = Get().creatureBanks.customRewards[creatureBankId][stateId];
 
                 for (size_t i = 0; i < CustomReward::SPELLS_AMOUNT; i++)
                 {
-
-                    libc::sprintf(h3_TextBuffer, CustomReward::creatureBankSpellsFormat, cbUniqueId, i);
-                    const eSpell spellId = eSpell(Era::GetAssocVarIntValue(h3_TextBuffer));
+                    const eSpell spellId = spellsToLearn[i];
                     if (spellId != eSpell::NONE)
                     {
                         H3PictureCategories pair = H3PictureCategories::Spell(spellId);
 
                         pictureCategories->Add(pair);
-                        break;
                     }
-                    // const int spellId = setup.spellsRewards[i].;
                 }
-                pictureCategories->Add(H3PictureCategories::PrimarySkill(ePrimary::ATTACK, 2));
-                pictureCategories->Add(H3PictureCategories::Experience(3500));
-                pictureCategories->Add(H3PictureCategories::Luck(-3));
-                pictureCategories->Add(H3PictureCategories::Morale(2));
-                //  pictureCategories->Add(H3PictureCategories::SpellPoints(12));
-                pictureCategories->Add(H3PictureCategories(ePictureCategories(0), 1));
             }
         }
     }
 
     return EXEC_DEFAULT;
+}
+int __stdcall CreatureBanksExtender::CrBank_BeforeEndingText(HiHook *h, H3String *mes, const size_t len, const DWORD a3,
+                                                             const DWORD a4) noexcept
+{
+
+    int result = THISCALL_4(int, h->GetDefaultFunc(), mes, len, a3, a4);
+    //
+    if (mes->Empty())
+    {
+    }
+    mes->Append("\n\ntetetet");
+
+    return result;
 }
 
 // works for Human and AI
@@ -229,6 +268,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
     {
         if (const auto hero = reinterpret_cast<H3Hero *>(c->ecx))
         {
+            // add resource to hero
             THISCALL_3(void, 0x04E3870, hero, MITHRIL_ID, mithrilToAdd);
         }
         mithrilToAdd = 0;
@@ -258,8 +298,8 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeAddingToGameList)
             if (customReward.enabled)
             {
                 // init custom setup
-                libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, creatureBankId);
-                Era::SetAssocVarIntValue(h3_TextBuffer, true);
+              //  libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, creatureBankId);
+               // Era::SetAssocVarIntValue(h3_TextBuffer, true);
 
                 // init spells generation
                 static std::unordered_set<int> spellsSet;
@@ -343,7 +383,8 @@ void CreatureBanksExtender::CreatePatches()
     // Adding mithril to player
     _pi->WriteLoHook(0x04ABBFF, CrBank_AfterCombatWon);
     _pi->WriteLoHook(0x04ABE3C, CrBank_AfterDrawingResources);
-    // _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
+    _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
+    _pi->WriteHiHook(0x04ABFD2, THISCALL_, CrBank_BeforeEndingText);
 
     _pi->WriteLoHook(0x04AC13B, CrBank_BeforeGivingResources);
 

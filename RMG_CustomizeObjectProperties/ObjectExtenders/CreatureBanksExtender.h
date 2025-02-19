@@ -16,7 +16,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     static INT currentCreatureBankId;
     static H3MapItem *currentMapItem;
     static H3CreatureBank *currentCreatureBank;
-
+    static std::array<eSpell, STATES_AMOUNT> spellsToLearn;
     static INT creatureBankStateId;
     static UINT mithrilToAdd;
 
@@ -29,7 +29,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         static constexpr UINT SPELLS_AMOUNT = 4;
         static constexpr LPCSTR creatureBankSpellsFormat = "RMG_CreatureBankId_%d_SpellId_%d";
         static constexpr LPCSTR hasCustomSetupFormat = "RMG_CreatureBankId_%d_hasCustomSetup";
-        
+
         BOOL enabled = false;
 
         UINT experience;
@@ -116,6 +116,9 @@ class CreatureBanksExtender : public extender::ObjectsExtender
 
     static _LHF_(CrBank_AfterDrawingResources);
     static _LHF_(CrBank_BeforeShowingRewardMessage);
+    static int __stdcall CrBank_BeforeEndingText(HiHook *h, H3String *mes, const size_t len, const DWORD a3,
+                                                 const DWORD a4) noexcept;
+
     static _LHF_(CrBank_BeforeGivingResources);
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *event);
     //	static int __stdcall CretureBankSetups__Ctor(HiHook*h);
