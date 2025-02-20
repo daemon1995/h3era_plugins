@@ -220,7 +220,7 @@ class RMGObjectsEditor : public IGamePatch
   private:
     void InitDefaultProperties(const INT16 *maxSubtypes);
 
-    void BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) noexcept;
+    void BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) ;
     void AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept;
     //		void CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg);
     void SetMapControlSpellLevels(const BOOL state, const BOOL blockWaterSpells = true) noexcept;

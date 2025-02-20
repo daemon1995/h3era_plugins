@@ -153,6 +153,14 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
         if (creatureBankId != eObject::NO_OBJ)
         {
 
+            // if mithril is enabled
+            if (DwordAt(0x27F99AC))
+            {
+                libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
+                const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
+                mithrilToAdd = Get().creatureBanks.mithrilAmount[creatureBankId][stateId];
+            }
+            return EXEC_DEFAULT;
             spellsToLearn.fill(eSpell::NONE);
 
             libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, mapItem->creatureBank.id);
@@ -185,13 +193,6 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
                     }
                 }
             }
-            // if mithril is enabled
-            if (DwordAt(0x27F99AC))
-            {
-                libc::sprintf(h3_TextBuffer, creatureBankStateFormat, mapItem->creatureBank.id);
-                const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
-                mithrilToAdd = Get().creatureBanks.mithrilAmount[creatureBankId][stateId];
-            }
         }
     }
     return EXEC_DEFAULT;
@@ -213,6 +214,8 @@ _LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
 
 _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
 {
+    return EXEC_DEFAULT;
+
     if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
     {
         const int creatureBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
@@ -284,8 +287,11 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
 }
 _LHF_(CreatureBanksExtender::CrBank_BeforeAddingToGameList)
 {
+    return EXEC_DEFAULT;
+
     if (creatureBankStateId != -1)
     {
+
         if (const auto mapItem = reinterpret_cast<H3MapItem *>(c->esi))
         {
             const UINT creatureBankId = mapItem->creatureBank.id;
@@ -298,8 +304,8 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeAddingToGameList)
             if (customReward.enabled)
             {
                 // init custom setup
-              //  libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, creatureBankId);
-               // Era::SetAssocVarIntValue(h3_TextBuffer, true);
+                //  libc::sprintf(h3_TextBuffer, CustomReward::hasCustomSetupFormat, creatureBankId);
+                // Era::SetAssocVarIntValue(h3_TextBuffer, true);
 
                 // init spells generation
                 static std::unordered_set<int> spellsSet;
@@ -448,10 +454,10 @@ _LHF_(CreatureBanksExtender::SpecialCrBank_DisplayPreCombatMessage)
     return EXEC_DEFAULT;
 }
 
-signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PosMixed, UINT attHero,
-                                                               UINT attArmy, int PlayerIndex, UINT defTown,
-                                                               UINT defHero, UINT defArmy, int seed, signed int a10,
-                                                               int isBank)
+signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PosMixed,
+                                                               const H3Hero *attHero, UINT attArmy, int PlayerIndex,
+                                                               UINT defTown, UINT defHero, UINT defArmy, int seed,
+                                                               signed int a10, int isBank)
 {
 
     static Patch *positionsPatch = nullptr;
@@ -460,7 +466,10 @@ signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT A
         auto &banks = Get().creatureBanks;
         isBank = ~(banks.isNotBank[currentCreatureBankId]);
 
-        positionsPatch = _PI->WriteDword(0x04632A9 + 3, (int)banks.customPositions[currentCreatureBankId].data());
+        if (isBank)
+        {
+            positionsPatch = _PI->WriteDword(0x04632A9 + 3, (int)banks.customPositions[currentCreatureBankId].data());
+        }
 
         currentCreatureBankId = -1;
     }
@@ -470,7 +479,7 @@ signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT A
 
     if (positionsPatch)
     {
-        positionsPatch->Undo();
+        positionsPatch->Destroy();
         positionsPatch = nullptr;
     }
 
@@ -707,7 +716,7 @@ int CreatureBanksExtender::GetBankSetupsNumberFromJson(const INT16 maxSubtype)
     Reserve(30);
 
     bool trSuccess = false;
-    static std::array<int, 14> defaultPositions;
+    std::array<int, 14> defaultPositions;
 
     constexpr int postionsAddress = 0x063D0E0;
 

@@ -76,7 +76,7 @@ void LegendHeroes::CreatePatches() noexcept
 
     _pi->WriteDword(0x560A39 + 1, wgt.arrows[1].y); // replace right_arrow arrow original y pos
     _pi->WriteDword(0x560A3E + 1, wgt.arrows[1].x); // replace right_arrow arrow original x pos
-    _pi->WriteDword(0x5641A2 + 2, 0x6A673C);        // replace right_arrow arrow original x pos
+    _pi->WriteDword(0x5641A2 + 2, 0x6A673C);        // wog fix weird hint address for right button
 
     _pi->WriteDword(0x5608FB + 1, wgt.backpack.pos.y);   // replace bacpack artifacts.def original y pos
     _pi->WriteDword(0x5608B6 + 3, wgt.backpack.pos.x);   // replace bacpack artifacts.def original start x pos

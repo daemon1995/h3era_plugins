@@ -349,16 +349,24 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
         const int totalTownsCount = rmg->townsCount;
         for (size_t i = 0; i < 4; i++)
         {
-            const int creatureType = DwordAt(dwellings4Ptr + (i << 2));
+            const int creatureType = DwordAt(dwellings4Ptr + (i << 2) + 16 * objGen->subtype);
 
             if (creatureType != eCreature::UNDEFINED)
             {
                 auto &info = P_CreatureInformation[creatureType];
                 const int creatureTown = info.town;
-                if (creatureTown != zoneGen->townType2)
+                if (creatureTown != zoneGen->townType2 && i == 0)
                 {
-                    continue;
+                    if (i == 0)
+                    {
+                        return resultValue;
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
+
                 if (const int aiValue = info.aiValue)
                 {
                     int dwellingSlotValue = aiValue * info.grow;
@@ -371,12 +379,17 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
                             dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
                         }
                     }
-                    resultValue += dwellingSlotValue + (totalTownsCount * aiValue >> 1);
+                    resultValue += dwellingSlotValue;
+
+                    if (creatureTown != eTown::NEUTRAL)
+                    {
+                        resultValue += totalTownsCount * aiValue >> 1;
+                    }
                 }
             }
         }
 
-        return resultValue >> 2; // resultValue / 2;
+        return resultValue;
     }
 
     const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
@@ -414,10 +427,11 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
     Get().BeforeMapGeneration(rmg);
 }
 
-void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) noexcept
+void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct)
 {
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfo());
+
     // _PI->WriteDword(0x0541013,)
     // static BOOL firstRun = true;
     // if (firstRun)
@@ -1052,6 +1066,7 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
                 maxObjectSubtype = p_ObjGen->subtype + 1;
             }
         }
+
         // sprintf(h3_TextBuffer, "maxObjectSubtype: %d", maxSubtypes[eObject::SPELL_SCROLL]);
         // H3Mes sagebox(h3_TextBuffer);
 
@@ -1068,14 +1083,55 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         memset(zoneLimitsBySubtype, 0, arraylength);
         memset(mapLimitsBySubtype, 0, arraylength);
 
-        // assign info from userData
+        const int maxSubtype = maxObjectSubtype;
+        LPCSTR iniFile = "Runtime/Rmg/Debug.ini";
+        LPCSTR section = "MAIN";
+
+        if (1)
+        {
+
+            Era::ClearIniCache(iniFile);
+
+            Era::WriteStrToIni("seed", std::to_string(rmg->randomSeed).c_str(), section, iniFile);
+            Era::WriteStrToIni("kek?", rand() & 1 ? "kek" : "no kek", section, iniFile);
+
+            section = "Assign";
+            // assign info from userData
+            Era::WriteStrToIni("initLimits", std::to_string(false).c_str(), section, iniFile);
+            Era::WriteStrToIni("maxObjectSubtype", std::to_string(maxSubtype).c_str(), section, iniFile);
+            Era::WriteStrToIni("arraylength", std::to_string(arraylength).c_str(), section, iniFile);
+            Era::WriteStrToIni("objectGenerators::Size", std::to_string(rmg->objectGenerators.Size()).c_str(), section,
+                               iniFile);
+            Era::SaveIni(iniFile);
+        }
+
         for (const auto &vec : userRmgInfoSet)
         {
             for (const auto &info : vec)
             {
-                const int index2 = index2D(info.type, info.subtype, maxObjectSubtype);
-                zoneLimitsBySubtype[index2] = info.zoneLimit;
-                mapLimitsBySubtype[index2] = info.mapLimit;
+
+                try
+                {
+                    const int index2 = index2D(info.type, info.subtype, maxSubtype);
+                    zoneLimitsBySubtype[index2] = info.zoneLimit;
+                    mapLimitsBySubtype[index2] = info.mapLimit;
+                }
+                catch (const std::exception &)
+                {
+                    Era::WriteStrToIni("lastItemTypeToInit", std::to_string(info.type).c_str(), section, iniFile);
+                    Era::WriteStrToIni("lastItemTypeToInit", std::to_string(info.type).c_str(), section, iniFile);
+
+                    section = "GENERATORS";
+                    int counter = 0;
+                    for (auto *p_ObjGen : rmg->objectGenerators)
+                    {
+                        // each object gen of that type has hihgher subptype
+                        Era::WriteStrToIni("type", std::to_string(p_ObjGen->type).c_str(), section, iniFile);
+                        Era::WriteStrToIni("subtype", std::to_string(p_ObjGen->subtype).c_str(), section, iniFile);
+                    }
+
+                    Era::SaveIni(iniFile);
+                }
             }
         }
 

@@ -104,7 +104,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     static _LHF_(CrBank_BeforeCombatStart);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
 
-    static signed int __stdcall CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PisMixed, UINT attHero, UINT attArmy,
+    static signed int __stdcall CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PisMixed, const H3Hero* attHero, UINT attArmy,
                                                    int PlayerIndex, UINT defTown, UINT defHero, UINT defArmy, int seed,
                                                    signed int a10, int isBank);
     static void __stdcall CrBank_AskForVisitMessage(HiHook *h, char *mes, const int messageType, const int x,
