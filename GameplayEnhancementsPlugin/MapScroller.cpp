@@ -196,7 +196,7 @@ int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, 
                 THISCALL_6(char, 0x40F350, adv, mapX, mapY, mapZ, 0, 0);
 
                 // redraw the whole map for the players
-                P_WindowManager->H3Redraw(MAP_MARGIN, MAP_MARGIN, IntAt(0x4196EA + 1), IntAt(0x4196E5 + 1));
+                P_WindowManager->H3Redraw(MAP_MARGIN, MAP_MARGIN, mapScroller.mapViewW, mapScroller.mapViewH);
 
                 // update draw sinceLastDrawTime timer
                 mapScroller.sinceLastDrawTime = h3::GetTime();
