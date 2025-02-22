@@ -13,7 +13,7 @@ Locale::~Locale()
 const bool Locale::operator==(const Locale& other) const
 {
 
-	return !(*this == other);
+	return !(*this != other);
 }
 
 const bool Locale::operator!=(const Locale& other) const
