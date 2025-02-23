@@ -5,7 +5,7 @@ using namespace h3;
 namespace dllText
 {
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
-constexpr const char *PLUGIN_VERSION = "1.02";
+constexpr const char *PLUGIN_VERSION = "1.03";
 constexpr const char *PLUGIN_DATA = __DATE__;
 constexpr const char *INSTANCE_NAME = "EraPlugin.LanguageSelectionDlg.daemon_n";
 } // namespace dllText
@@ -16,7 +16,6 @@ PatcherInstance *_PI;
 _LHF_(HooksInit)
 {
 
-    ArtifactHandler::Init();
     MapObjectHandler::Init();
     // ArtifactHandler::Init();
     LanguageSelectionDlg::Init();
@@ -41,7 +40,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             {
                 globalPatcher = GetPatcher();
                 _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
+                // must have hooks before other
                 MonsterHandler::Init();
+                ArtifactHandler::Init();
+
                 _PI->WriteLoHook(0x4EEAF2, HooksInit);
             }
         }
