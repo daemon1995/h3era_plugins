@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "LanguageSelectionDlg.h"
 
-
 // constexpr UINT32 WIDGET_WIDTH = 213;
 // constexpr UINT32 WIDGET_HEIGHT = 23;
 constexpr UINT16 FRAME_WIDGET_ID = 2;

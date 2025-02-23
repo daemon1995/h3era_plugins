@@ -6,6 +6,7 @@
 
 #ifndef PCH_H
 #define PCH_H
+#define ERA4
 #include "..\headers\header.h"
 // add headers that you want to pre-compile here
 #include "Locale.h"
@@ -16,4 +17,7 @@
 
 #include "LanguageSelectionDlg.h"
 #include "MonsterHandler.h"
+#include "ArtifactHandler.h"
+#include "HeroHandler.h"
+#include "MapObjectHandler.h"
 #endif // PCH_H
