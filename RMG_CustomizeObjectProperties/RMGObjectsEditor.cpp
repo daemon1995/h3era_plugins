@@ -904,11 +904,17 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     isize;
     // dwellings value calculation
     const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
+    const int MAX_MON_ID = IntAt(0x4A1657);
+
     for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR1])
     {
         const int dwellingCreatureType = DwordAt(dwellings1Ptr + (dwellingObjInfo.subtype << 2));
-        const int creatureAIValue = P_CreatureInformation[dwellingCreatureType].aiValue;
-        dwellingObjInfo.value = creatureAIValue;
+        if (dwellingCreatureType< MAX_MON_ID)
+        {
+            const int creatureAIValue = P_CreatureInformation[dwellingCreatureType].aiValue;
+            dwellingObjInfo.value = creatureAIValue;
+        }
+
     }
 
     const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
