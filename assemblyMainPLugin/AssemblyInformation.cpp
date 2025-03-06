@@ -160,15 +160,16 @@ void AssemblyInformation::RemoteVersion::GetVersion() noexcept
     sprintf(h3_TextBuffer, "%s", "");
 
     // create WideStringsPtr
-    Era::ReadStrFromIni("API", "GitHub", ASSEMBLY_INI_FILE, h3_TextBuffer);
+    constexpr LPCSTR sectionName = "GitHub";
+    Era::ReadStrFromIni("API", sectionName, ASSEMBLY_INI_FILE, h3_TextBuffer);
     std::string narrowString = h3_TextBuffer;
     std::wstring api(narrowString.begin(), narrowString.end());
 
-    Era::ReadStrFromIni("Host", "GitHub", ASSEMBLY_INI_FILE, h3_TextBuffer);
+    Era::ReadStrFromIni("Host", sectionName, ASSEMBLY_INI_FILE, h3_TextBuffer);
     narrowString = h3_TextBuffer;
     std::wstring host(narrowString.begin(), narrowString.end());
 
-    Era::ReadStrFromIni("Path", "GitHub", ASSEMBLY_INI_FILE, h3_TextBuffer);
+    Era::ReadStrFromIni("Path", sectionName, ASSEMBLY_INI_FILE, h3_TextBuffer);
     narrowString = h3_TextBuffer;
     std::wstring path(narrowString.begin(), narrowString.end());
 
