@@ -301,9 +301,14 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
         const int _y = bttns[2]->GetY() - 1;
         const int _w = bttns[1]->GetX() - _x - 8;
         const int _h = bttns[2]->GetHeight() + 2;
-        hintBar = reinterpret_cast<H3DlgHintBar *>(H3DlgTextPcx::Create(
-            _x, _y, _w, _h, h3_NullString, NH3Dlg::Text::SMALL, "rmghntbr.pcx", eTextColor::REGULAR));
-        AddItem(hintBar);
+
+        hintBar = H3ObjectAllocator<H3DlgHintBar>().allocate(1);
+        if (hintBar)
+        {
+            THISCALL_12(H3DlgHintBar *, 0x5BCB70, hintBar, _x, _y, _w, _h, h3_NullString, NH3Dlg::Text::SMALL,
+                        "rmghntbr.pcx", eTextColor::REGULAR, 0, eTextAlignment::MIDDLE_CENTER, 8);
+            AddItem(hintBar);
+        }
     }
 
     m_pages.emplace_back(new BanksPage{captionButtons[0], m_banks});
