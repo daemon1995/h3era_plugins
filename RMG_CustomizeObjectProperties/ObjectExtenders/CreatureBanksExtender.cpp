@@ -134,10 +134,9 @@ void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *eve
         H3String name = EraJS::read(
             H3String::Format("RMG.objectGeneration.%d.%d.name", objectType, objectSubtype).String(), trSuccess);
 
-        auto &bankSetup = Get().creatureBanks.setups[i];
         if (trSuccess)
         {
-            bankSetup.name = name;
+            creatureBanks.setups[i].name = name;
         }
     }
 }
@@ -145,9 +144,10 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 {
     // if mitrhil option is enabled
 
-    if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+    if (const auto mapItem = ValueAt<H3MapItem *>(c->ebp + 0xC))
 
     {
+
         const int creatureBankId = GetCreatureBankId(mapItem->objectType, mapItem->objectSubtype);
 
         if (creatureBankId != eObject::NO_OBJ)
@@ -160,6 +160,7 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
                 const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
                 mithrilToAdd = Get().creatureBanks.mithrilAmount[creatureBankId][stateId];
             }
+
             return EXEC_DEFAULT;
             spellsToLearn.fill(eSpell::NONE);
 
@@ -259,7 +260,7 @@ int __stdcall CreatureBanksExtender::CrBank_BeforeEndingText(HiHook *h, H3String
     if (mes->Empty())
     {
     }
-    mes->Append("\n\ntetetet");
+    //  mes->Append("\n\ntetetet");
 
     return result;
 }
@@ -430,8 +431,7 @@ void CustomAskForCombatStartDlg(char *originalText, H3MapItem *mapItem, const in
 {
 
     auto creatureBank = &P_Game->creatureBanks[mapItem->creatureBank.id];
-    //  Era::y[1] = creatureBank->c
-    //  Era::ExecErmCmd("IF:L^%y1^");
+
     ShowMultiplePicsArmyMessage(originalText, 2, -1, -1, &creatureBank->guardians);
 }
 _LHF_(CreatureBanksExtender::SpecialCrBank_DisplayPreCombatMessage)
