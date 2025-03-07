@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.13";
+const char *PLUGIN_VERSION = "1.14";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -23,7 +23,6 @@ Patcher *globalPatcher;
 PatcherInstance *_PI;
 
 /*
-
 1. Assign settings from settings dlg with lmitizer - Done
 2. Make Dlg Scroll and Input text workin - Done
 3. Add Default settings reset - Done
@@ -62,6 +61,7 @@ PatcherInstance *_PI;
 15. Add properties replacer for existing objects by defName/type/subptype triple: Done
     a. load original list into set;
     b. load new
+16. fix Dlg Memory leaks with new ERA memory check tools
 */
 
 _LHF_(CrBanksTxt_AfterLoad)
@@ -82,7 +82,15 @@ _LHF_(CrBanksTxt_AfterLoad)
 
     return EXEC_DEFAULT;
 }
-
+namespace EraMemory
+{
+extern volatile size_t *allocatedMemorySize;
+}
+void __stdcall OnAdventureMapRightMouseClick(Era::TEvent *e)
+{
+  //  Era::ShowMessage(Era::IntToStr(*EraMemory::allocatedMemorySize).c_str());
+  //  new int[25];
+}
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     static BOOL plugin_On = 0; //!< Flag to indicate if the plugin is on
@@ -105,7 +113,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
             //! Get the global patcher
             globalPatcher = GetPatcher();
-
+            // Era::RegisterHandler(OnAdventureMapRightMouseClick, "OnAdventureMapRightMouseClick");
             //! Create an instance of the plugin
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
             _PI->WriteLoHook(0x4EDE42, CrBanksTxt_AfterLoad);

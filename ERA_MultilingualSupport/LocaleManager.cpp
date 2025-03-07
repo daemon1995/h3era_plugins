@@ -141,7 +141,7 @@ LocaleManager::~LocaleManager()
     {
         if (locale)
         {
-            locale->~Locale();
+            delete locale;
             locale = nullptr;
         }
     }

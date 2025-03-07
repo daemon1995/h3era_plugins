@@ -812,9 +812,9 @@ RMG_SettingsDlg::ObjectsPage::~ObjectsPage()
     // call all the items dtors and clear vectors
     for (auto &panel : dlgPanels)
     {
-        panel->~ObjectsPanel();
 
-        // delete panel;
+        delete panel;
+        panel = nullptr;
     }
 
     delete pageHeader;
@@ -867,7 +867,8 @@ RMG_SettingsDlg::~RMG_SettingsDlg()
 
     for (auto &p : m_pages)
     {
-        p->~Page();
+        delete p;
+        p = nullptr;
     }
     m_pages.clear();
 
