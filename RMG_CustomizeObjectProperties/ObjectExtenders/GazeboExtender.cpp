@@ -107,6 +107,13 @@ BOOL GazeboExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Posi
                 BOOL agreed = !isHuman;
                 if (isHuman)
                 {
+                    const auto advMgr = P_AdventureManager->Get();
+                    // void __thiscall AdvMgr_SetTimer(_AdvMgr_ *this, int timerType, signed int addedTime)
+                    THISCALL_3(void, 0x415CC0, advMgr, 0, -1);
+
+                    //void __thiscall AdvMgr_UpdateInfoPanel(_AdvMgr_ *this, int a2, char needRedraw, char a4)
+                    THISCALL_4(void, 0x0415D40, advMgr, 0, 0, 1);
+
                     H3String objName = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
                     objName.Append(EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.visit",
                                                                 mapItem->objectType, mapItem->objectSubtype)
