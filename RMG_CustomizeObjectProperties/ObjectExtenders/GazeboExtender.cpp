@@ -112,7 +112,7 @@ BOOL GazeboExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Posi
                     THISCALL_3(void, 0x415CC0, advMgr, 0, -1);
 
                     //void __thiscall AdvMgr_UpdateInfoPanel(_AdvMgr_ *this, int a2, char needRedraw, char a4)
-                    THISCALL_4(void, 0x0415D40, advMgr, 0, 0, 1);
+                    THISCALL_4(void, 0x0415D40, advMgr, 0, 1, 1);
 
                     H3String objName = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
                     objName.Append(EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.visit",
