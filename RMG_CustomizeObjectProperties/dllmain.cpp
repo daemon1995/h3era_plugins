@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.14";
+const char *PLUGIN_VERSION = "1.15";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -61,7 +61,7 @@ PatcherInstance *_PI;
 15. Add properties replacer for existing objects by defName/type/subptype triple: Done
     a. load original list into set;
     b. load new
-16. fix Dlg Memory leaks with new ERA memory check tools
+16. fix Dlg Memory leaks with new ERA memory check tools - Done
 */
 
 _LHF_(CrBanksTxt_AfterLoad)
