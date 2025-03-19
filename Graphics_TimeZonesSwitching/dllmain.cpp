@@ -17,10 +17,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             pluginIsOn = true;
 
             globalPatcher = GetPatcher();
-            _PI = globalPatcher->CreateInstance("EraPlugin.Graphics.TimeZoneSwitching.daemon_n");
+            constexpr char pluginName[] = "Graphics.TimeZoneSwitching.daemon_n";
+            _PI = globalPatcher->CreateInstance(pluginName);
 
             timezone::TownManager::Get();
-            Era::ConnectEra();
+            Era::ConnectEra(hModule, pluginName);
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
