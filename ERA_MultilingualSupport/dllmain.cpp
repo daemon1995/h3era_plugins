@@ -1,11 +1,13 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
+
+
 #include "pch.h"
 
 using namespace h3;
 namespace dllText
 {
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
-constexpr const char *PLUGIN_VERSION = "1.04";
+constexpr const char *PLUGIN_VERSION = "1.05";
 constexpr const char *PLUGIN_DATA = __DATE__;
 constexpr const char *INSTANCE_NAME = "EraPlugin.LanguageSelectionDlg.daemon_n";
 } // namespace dllText

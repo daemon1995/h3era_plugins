@@ -1,5 +1,49 @@
 #include "MonsterHandler.h"
 #include "pch.h"
+#ifdef CREATE_JSON
+
+#include <fstream>
+#include <thread>
+
+// Структура для хранения данных о монстре
+struct MonsterInfo
+{
+    std::string singularName;
+    std::string pluralName;
+    std::string description;
+};
+
+// Функция для создания JSON-документа
+void CreateMonstersJson(const std::vector<MonsterInfo> &monsters, const std::string &filePath)
+{
+    nlohmann::json j;
+
+    // Создаем структуру JSON
+    for (size_t i = 0; i < monsters.size(); ++i)
+    {
+        if (!monsters[i].singularName.empty())
+            j["era"]["monsters"][std::to_string(i)]["name"]["singular"] = monsters[i].singularName;
+
+        if (!monsters[i].pluralName.empty())
+            j["era"]["monsters"][std::to_string(i)]["name"]["pluralName"] = monsters[i].pluralName;
+
+        if (!monsters[i].description.empty())
+            j["era"]["monsters"][std::to_string(i)]["name"]["description"] = monsters[i].description;
+    }
+
+    // Сохраняем JSON в файл
+    std::ofstream outFile(filePath);
+    if (outFile.is_open())
+    {
+        outFile << j.dump(4); // 4 — это отступ для красивого форматирования
+        outFile.close();
+    }
+    else
+    {
+        throw std::runtime_error("Failed to open file for writing: " + filePath);
+    }
+}
+#endif // CREATE_JSON
 
 bool __stdcall LoadCranimTxt(HiHook *h)
 {
@@ -17,7 +61,7 @@ bool __stdcall LoadCranimTxt(HiHook *h)
 
     return result;
 }
-bool __stdcall LoadCrtraitsTxt(HiHook *h, int a1)
+bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
 {
     bool result = CDECL_1(bool, h->GetDefaultFunc(), a1);
 
@@ -38,8 +82,17 @@ bool __stdcall LoadCrtraitsTxt(HiHook *h, int a1)
         const auto pluralNames = *reinterpret_cast<LPCSTR **>(0x047B10C + 1);
         const auto descriptions = *reinterpret_cast<LPCSTR **>(0x047B0EC + 1);
 
+#ifdef CREATE_JSON
+        std::vector<MonsterInfo> monsters;
+        monsters.resize(MAX_MON_ID);
+#endif // CREATE_JSON
+
         for (size_t i = 0; i < MAX_MON_ID; i++)
         {
+#ifdef CREATE_JSON
+            monsters[i] = {singleNames[i], pluralNames[i], descriptions[i]};
+            ;
+#endif // CREATE_JSON
             sprintf(h3_TextBuffer, "era.monsters.%d.name.singular", i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
@@ -55,6 +108,11 @@ bool __stdcall LoadCrtraitsTxt(HiHook *h, int a1)
             if (readSuccess)
                 descriptions[i] = readResult;
         }
+#ifdef CREATE_JSON
+        std::thread th(CreateMonstersJson, monsters, "mosterNames.json");
+        //        CreateMonstersJson(monsters, "mosterNames.json");
+        th.detach();
+#endif // CREATE_JSON
     }
 
     return result;
@@ -62,6 +120,6 @@ bool __stdcall LoadCrtraitsTxt(HiHook *h, int a1)
 
 void MonsterHandler::Init()
 {
-    _PI->WriteHiHook(0x07117CA, CDECL_, LoadCrtraitsTxt); //
-                                                          //  _PI->WriteHiHook(0x04EDF4B, CDECL_, LoadCranimTxt);   //
+    _PI->WriteHiHook(0x07117CA, CDECL_, WoG_OnMapReset); //
+                                                         //  _PI->WriteHiHook(0x04EDF4B, CDECL_, LoadCranimTxt);   //
 }

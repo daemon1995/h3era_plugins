@@ -4,7 +4,7 @@ class LocaleManager
 {
   private:
     static constexpr LPCSTR m_localeFormat = "era.locale.name.%s";
-    static constexpr LPCSTR defaultLocaleNames = ",en,ru,cn,ua,pl,kr";
+    static constexpr LPCSTR defaultLocaleNames = ",en,ru,cn,ua,pl,ko";
     static constexpr LPCSTR INI_FILE_NAME = "heroes3.ini";
     static constexpr LPCSTR INI_KEY_NAME = "Language";
     static constexpr LPCSTR INI_SECTION_NAME = "Era";
