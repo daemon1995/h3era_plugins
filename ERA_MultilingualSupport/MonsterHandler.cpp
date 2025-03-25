@@ -67,11 +67,7 @@ bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
 
     if (result)
     {
-        static BOOL firstCall = true;
-
-        if (!firstCall)
-            return result;
-        firstCall = false;
+        h->Undo();
 
         const int MAX_MON_ID = IntAt(0x4A1657);
 

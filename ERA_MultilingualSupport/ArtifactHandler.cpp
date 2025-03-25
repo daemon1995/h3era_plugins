@@ -49,48 +49,43 @@ bool __stdcall LoadArtTraitsTxt(HiHook *h)
 
     if (result)
     {
-        static BOOL firstCall = true;
+        h->Undo();
 
-        if (firstCall)
+        const int artsNum = IntAt(0x49DD8E + 2) / 4;
+        bool readSuccess = false;
+        LPCSTR readResult = nullptr;
+        LPCSTR *eventTable = *reinterpret_cast<LPCSTR **>(0x49F51B + 3);
+#ifdef CREATE_JSON
+        std::vector<ArtifactInfo> artifacts;
+        artifacts.resize(artsNum);
+#endif // CREATE_JSON
+        for (size_t i = 0; i < artsNum; i++)
         {
-            firstCall = false;
-
-            const int artsNum = IntAt(0x49DD8E + 2) / 4;
-            bool readSuccess = false;
-            LPCSTR readResult = nullptr;
-            LPCSTR *eventTable = *reinterpret_cast<LPCSTR **>(0x49F51B + 3);
+            auto &artInfo = P_ArtifactSetup[i];
 #ifdef CREATE_JSON
-            std::vector<ArtifactInfo> artifacts;
-            artifacts.resize(artsNum);
+            artifacts[i] = {artInfo.name, artInfo.description, eventTable[i]};
+            ;
 #endif // CREATE_JSON
-            for (size_t i = 0; i < artsNum; i++)
-            {
-                auto &artInfo = P_ArtifactSetup[i];
-#ifdef CREATE_JSON
-                artifacts[i] = {artInfo.name, artInfo.description, eventTable[i]};
-                ;
-#endif // CREATE_JSON
-                sprintf(h3_TextBuffer, "era.artifacts.%d.name", i);
-                readResult = EraJS::read(h3_TextBuffer, readSuccess);
-                if (readSuccess)
-                    artInfo.name = readResult;
+            sprintf(h3_TextBuffer, "era.artifacts.%d.name", i);
+            readResult = EraJS::read(h3_TextBuffer, readSuccess);
+            if (readSuccess)
+                artInfo.name = readResult;
 
-                sprintf(h3_TextBuffer, "era.artifacts.%d.description", i);
-                readResult = EraJS::read(h3_TextBuffer, readSuccess);
-                if (readSuccess)
-                    artInfo.description = readResult;
+            sprintf(h3_TextBuffer, "era.artifacts.%d.description", i);
+            readResult = EraJS::read(h3_TextBuffer, readSuccess);
+            if (readSuccess)
+                artInfo.description = readResult;
 
-                sprintf(h3_TextBuffer, "era.artifacts.%d.event", i);
-                readResult = EraJS::read(h3_TextBuffer, readSuccess);
-                if (readSuccess)
-                    eventTable[i] = readResult;
-            }
-#ifdef CREATE_JSON
-            std::thread th(CreateArtifactsJson, artifacts, "artifactNames.json");
-            //  CreateArtifactsJson(artifacts, "artifactNames.json");
-            th.detach();
-#endif // CREATE_JSON
+            sprintf(h3_TextBuffer, "era.artifacts.%d.event", i);
+            readResult = EraJS::read(h3_TextBuffer, readSuccess);
+            if (readSuccess)
+                eventTable[i] = readResult;
         }
+#ifdef CREATE_JSON
+        std::thread th(CreateArtifactsJson, artifacts, "artifactNames.json");
+        //  CreateArtifactsJson(artifacts, "artifactNames.json");
+        th.detach();
+#endif // CREATE_JSON
     }
 
     return result;

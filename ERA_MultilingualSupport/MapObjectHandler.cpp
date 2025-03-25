@@ -38,11 +38,6 @@ void CreateObjectsJson(const std::vector<std::string> &objectNames, const std::v
 #endif // CREATE_JSON
 void MapObjectHandler::Init()
 {
-    static BOOL firstCall = true;
-
-    if (!firstCall)
-        return;
-    firstCall = false;
 
     bool readSuccess = false;
     LPCSTR readResult = nullptr;

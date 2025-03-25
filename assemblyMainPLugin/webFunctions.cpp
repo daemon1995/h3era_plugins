@@ -1,13 +1,12 @@
-// #pragma once
+ #pragma once
 #include <Windows.h>
-#include <sstream>
+#include <string>
 #include <winhttp.h>
 #pragma comment(lib, "winhttp.lib")
 
 std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const wchar_t *path)
 {
 
-    std::string result{};
 
     HINTERNET hSession =
         WinHttpOpen(api, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
@@ -49,7 +48,9 @@ std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const
     DWORD dwSize = 0;
     DWORD dwDownloaded = 0;
     LPSTR pszOutBuffer;
-    std::stringstream responseStream;
+
+    std::string responseStream;
+    std::string result{};
 
     do
     {
@@ -76,7 +77,7 @@ std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const
             break;
         }
 
-        responseStream << pszOutBuffer;
+        responseStream += pszOutBuffer;
         delete[] pszOutBuffer;
 
     } while (dwSize > 0);
@@ -85,7 +86,7 @@ std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
 
-    result = responseStream.str();
+    result = responseStream;
 
     return result;
 }

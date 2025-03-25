@@ -34,24 +34,14 @@ BOOL __stdcall _IsIconic(HWND hwnd)
 
 
 }
-void SetNewArtsText()
-{
-	const int artsNum = IntAt(0x49DD8E + 2) / 4;
-	for (size_t i = 0; i < artsNum; i++)
-	{
-		P_ArtifactSetup[i].name = EraJS::read(H3String::Format("era.artifacts.%d.name", i).String());
-		P_ArtifactSetup[i].description = EraJS::read(H3String::Format("era.artifacts.%d.description", i).String());
 
-	}
-}
 int __stdcall GameStart(LoHook* h, HookContext* c)
 {
 	AssemblyInformation::Get();
 	//info->LoadDataFromJson();
-	UserNotification::Get();
+	//UserNotification::Get();
 	h->Undo();
 	return EXEC_DEFAULT;
-	SetNewArtsText();
 
 
 	DWORD_PTR* pIsIconic = reinterpret_cast<DWORD_PTR*>(0x0063A2A8); // Адрес указателя на IsIconic
@@ -72,13 +62,6 @@ int __stdcall GameStart(LoHook* h, HookContext* c)
 	return EXEC_DEFAULT;
 }
 
-
-
-void __stdcall OnAfterReloadLanguageData(Era::TEvent* e)
-{
-	SetNewArtsText();
-}
-
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved
@@ -94,12 +77,10 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		{
 
 			plugin_On = 1;
-			Era::ConnectEra();
+			Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
 			globalPatcher = GetPatcher();
 			Era::RegisterHandler(OnReportVersion, "OnReportVersion");
 			_PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
-
-			//Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 			_PI->WriteLoHook(0x4EDFFD, GameStart);
 
 
