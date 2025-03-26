@@ -2,39 +2,7 @@
 #include "pch.h"
 
 #ifdef CREATE_JSON
-
-#include <fstream>
-#include <thread>
-
-// Функция для создания JSON-документа
-void CreateObjectsJson(const std::vector<std::string> &objectNames, const std::vector<std::string> &dwellingNames,
-                       const std::string &filePath)
-{
-    nlohmann::json j;
-    // Создаем структуру JSON
-    for (size_t i = 0; i < objectNames.size(); ++i)
-    {
-        if (!objectNames[i].empty())
-            j["era"]["objects"][std::to_string(i)] = objectNames[i];
-    }
-    for (size_t i = 0; i < dwellingNames.size(); ++i)
-    {
-        if (!dwellingNames[i].empty())
-            j["era"]["dwellings1"][std::to_string(i)] = dwellingNames[i];
-    }
-
-    // Сохраняем JSON в файл
-    std::ofstream outFile(filePath);
-    if (outFile.is_open())
-    {
-        outFile << j.dump(4); // 4 — это отступ для красивого форматирования
-        outFile.close();
-    }
-    else
-    {
-        throw std::runtime_error("Failed to open file for writing: " + filePath);
-    }
-}
+#include "ExportManager.h"
 #endif // CREATE_JSON
 void MapObjectHandler::Init()
 {
@@ -42,18 +10,18 @@ void MapObjectHandler::Init()
     bool readSuccess = false;
     LPCSTR readResult = nullptr;
     LPCSTR *table = H3DwellingNames1::Get();
-    const int dwellingsNum = IntAt(0x49DD8E + 2) / 4;
+    const int dwellings1Num = IntAt(0x0405CCE + 2) / 4;
 
 #ifdef CREATE_JSON
-    std::vector<std::string> objects, dwellings;
+    std::vector<std::string> objects, dwellings1; // , dwellings4;
     objects.resize(limits::OBJECTS);
-    dwellings.resize(dwellingsNum);
+    dwellings1.resize(dwellings1Num);
 #endif // CREATE_JSON
     // load dwelling names
-    for (size_t i = 0; i < dwellingsNum; i++)
+    for (size_t i = 0; i < dwellings1Num; i++)
     {
 #ifdef CREATE_JSON
-        dwellings[i] = table[i];
+        dwellings1[i] = ExportManager::LPCSTR_to_wstring(table[i]);
 #endif // CREATE_JSON
         sprintf(h3_TextBuffer, "era.dwellings1.%d", i);
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
@@ -78,7 +46,7 @@ void MapObjectHandler::Init()
     for (size_t i = 0; i < limits::OBJECTS; i++)
     {
 #ifdef CREATE_JSON
-        objects[i] = table[i];
+        objects[i] = ExportManager::LPCSTR_to_wstring(table[i]);
 #endif // CREATE_JSON
         sprintf(h3_TextBuffer, "era.objects.%d", i);
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
@@ -86,9 +54,6 @@ void MapObjectHandler::Init()
             table[i] = readResult;
     }
 #ifdef CREATE_JSON
-    std::thread th(CreateObjectsJson, objects, dwellings, "objectNames.json");
-    //    CreateObjectsJson(objects,dwellings,"objectNames.json");
-
-    th.detach();
+    ExportManager::CreateObjectsJson(objects, dwellings1);
 #endif // CREATE_JSON
 }

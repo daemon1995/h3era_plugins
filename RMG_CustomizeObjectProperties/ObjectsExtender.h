@@ -24,7 +24,7 @@ struct ObjectProperty
     static std::unordered_map<std::string, std::string> additionalPropertiesMap;
 
   public:
-    static std::string *FindPropertyReplace(LPCSTR other) noexcept;
+    static const std::string *FindPropertyReplace(LPCSTR other) noexcept;
     static std::string GetMapKey(LPCSTR other) noexcept;
     static BOOL AddProperty(std::string &other) noexcept;
 };

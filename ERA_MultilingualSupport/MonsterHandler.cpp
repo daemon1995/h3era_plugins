@@ -1,48 +1,9 @@
 #include "MonsterHandler.h"
+
 #include "pch.h"
 #ifdef CREATE_JSON
 
-#include <fstream>
-#include <thread>
-
-// Структура для хранения данных о монстре
-struct MonsterInfo
-{
-    std::string singularName;
-    std::string pluralName;
-    std::string description;
-};
-
-// Функция для создания JSON-документа
-void CreateMonstersJson(const std::vector<MonsterInfo> &monsters, const std::string &filePath)
-{
-    nlohmann::json j;
-
-    // Создаем структуру JSON
-    for (size_t i = 0; i < monsters.size(); ++i)
-    {
-        if (!monsters[i].singularName.empty())
-            j["era"]["monsters"][std::to_string(i)]["name"]["singular"] = monsters[i].singularName;
-
-        if (!monsters[i].pluralName.empty())
-            j["era"]["monsters"][std::to_string(i)]["name"]["pluralName"] = monsters[i].pluralName;
-
-        if (!monsters[i].description.empty())
-            j["era"]["monsters"][std::to_string(i)]["name"]["description"] = monsters[i].description;
-    }
-
-    // Сохраняем JSON в файл
-    std::ofstream outFile(filePath);
-    if (outFile.is_open())
-    {
-        outFile << j.dump(4); // 4 — это отступ для красивого форматирования
-        outFile.close();
-    }
-    else
-    {
-        throw std::runtime_error("Failed to open file for writing: " + filePath);
-    }
-}
+#include "ExportManager.h"
 #endif // CREATE_JSON
 
 bool __stdcall LoadCranimTxt(HiHook *h)
@@ -79,15 +40,17 @@ bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
         const auto descriptions = *reinterpret_cast<LPCSTR **>(0x047B0EC + 1);
 
 #ifdef CREATE_JSON
-        std::vector<MonsterInfo> monsters;
+        std::vector<ExportManager::MonsterInfo> monsters;
         monsters.resize(MAX_MON_ID);
 #endif // CREATE_JSON
 
         for (size_t i = 0; i < MAX_MON_ID; i++)
         {
 #ifdef CREATE_JSON
-            monsters[i] = {singleNames[i], pluralNames[i], descriptions[i]};
-            ;
+            monsters[i] = {ExportManager::LPCSTR_to_wstring(singleNames[i]),
+                           ExportManager::LPCSTR_to_wstring(pluralNames[i]),
+                           ExportManager::LPCSTR_to_wstring(descriptions[i])};
+
 #endif // CREATE_JSON
             sprintf(h3_TextBuffer, "era.monsters.%d.name.singular", i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
@@ -105,9 +68,9 @@ bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
                 descriptions[i] = readResult;
         }
 #ifdef CREATE_JSON
-        std::thread th(CreateMonstersJson, monsters, "mosterNames.json");
-        //        CreateMonstersJson(monsters, "mosterNames.json");
-        th.detach();
+        // std::thread th(CreateMonstersJson, monsters, "mosterNames.json");
+        ExportManager::CreateMonstersJson(monsters);
+        // th.detach();
 #endif // CREATE_JSON
     }
 

@@ -41,8 +41,10 @@ _LHF_(ObjectsExtender::LoadObjectsTxt)
 
             // std::transform(txtPropertyString.begin(), txtPropertyString.end(), txtPropertyString.begin(), ::tolower);
 
-            if (std::string *propertyReplace = ObjectProperty::FindPropertyReplace(txtPropertyString.c_str()))
+            if (const std::string *propertyReplace = ObjectProperty::FindPropertyReplace(txtPropertyString.c_str()))
             {
+                // Era::WriteStrToIni((*objectTxt)[i], propertyReplace->data(), "tryingToReplace",
+                //                    "runtime/tum/properties.ini");
                 (*objectTxt)[i] = propertyReplace->data();
             }
         }
@@ -54,6 +56,9 @@ _LHF_(ObjectsExtender::LoadObjectsTxt)
         // iterate each added property
         for (auto &prop : ObjectProperty::additionalPropertiesMap)
         {
+            // Era::WriteStrToIni(prop.first.c_str(), prop.second.c_str(), "objectsExtender",
+            //                    "runtime/tum/properties.ini");
+
             // if possible to insert
             if (objectsSet.insert(prop.second.c_str()).second)
             {
@@ -64,6 +69,7 @@ _LHF_(ObjectsExtender::LoadObjectsTxt)
                 newProperties++;
             }
         }
+        // Era::SaveIni("runtime/tum/properties.ini");
 
         c->eax += newProperties;
     }
@@ -114,11 +120,12 @@ void ObjectsExtender::LoadMapObjectPropertiesFromLoadedMods() noexcept
 
     for (auto &modName : modList)
     {
-
+        //    std::string modName = "wog";
         bool readSuccess = false;
 
         int propertyIdCounter = 0;
 
+        // first read raw propertiese array
         do
         {
             std::string str = EraJS::read(
@@ -128,6 +135,38 @@ void ObjectsExtender::LoadMapObjectPropertiesFromLoadedMods() noexcept
                 ObjectProperty::AddProperty(str);
             }
         } while (readSuccess);
+
+        // later read array of arrays
+        int arrayCounter = 0;
+        bool breakFlag = false;
+        do
+        {
+            do
+            {
+                std::string str = EraJS::read(
+                    H3String::Format("RMG.%s.properties.%d.%d", modName.c_str(), arrayCounter, propertyIdCounter)
+                        .String(),
+                    readSuccess);
+                if (readSuccess)
+                {
+                    ObjectProperty::AddProperty(str);
+                    propertyIdCounter++;
+                }
+                else if (propertyIdCounter)
+                {
+                    propertyIdCounter = 0;
+                    arrayCounter++;
+                    break;
+                }
+                else
+                {
+                    breakFlag = true;
+                    break;
+                }
+
+            } while (true);
+
+        } while (!breakFlag);
     }
 }
 
@@ -154,7 +193,6 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     maxSubtypes[eObject::SPELL_SCROLL] = 7;
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     { // iterate all the objects types entries
-
 
         for (const auto &obj : objList[objType])
         {
@@ -564,7 +602,7 @@ std::string ObjectProperty::GetMapKey(LPCSTR propertyString) noexcept
     return h3_TextBuffer;
 }
 // check if we have replaced property for that object
-std::string *ObjectProperty::FindPropertyReplace(LPCSTR other) noexcept
+const std::string *ObjectProperty::FindPropertyReplace(LPCSTR other) noexcept
 {
 
     auto it = additionalPropertiesMap.find(GetMapKey(other));

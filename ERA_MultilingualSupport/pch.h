@@ -7,13 +7,11 @@
 #ifndef PCH_H
 #define PCH_H
 #define ERA4
-//#define CREATE_JSON
+// #define CREATE_JSON
 
 #ifdef CREATE_JSON
 #define NLOHMAN_JSON
 #endif // CREATE_JSON
-
-
 
 #include "..\headers\header.h"
 // add headers that you want to pre-compile here
@@ -23,9 +21,9 @@
 #include "H3DlgTextPcxLocale.h"
 #include "LocaleManager.h"
 
-#include "LanguageSelectionDlg.h"
-#include "MonsterHandler.h"
 #include "ArtifactHandler.h"
 #include "HeroHandler.h"
+#include "LanguageSelectionDlg.h"
 #include "MapObjectHandler.h"
+#include "MonsterHandler.h"
 #endif // PCH_H

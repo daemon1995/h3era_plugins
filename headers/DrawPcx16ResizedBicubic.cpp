@@ -70,14 +70,14 @@ void H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(H3LoadedPcx16 *_this, H3Loade
     double ox, oy, dx, dy, k1, k2;
     int ox1, oy1, ox2, oy2;
 
-    int ymax = s_h - 1;
-    int xmax = s_w - 1;
+    const int ymax = s_h - 1;
+    const int xmax = s_w - 1;
 
     if (bitMod == 32)
     {
 
         // destination pixel values
-        double *p_g = new double[3];
+        double p_g[3];// = new double[3];
 
         for (int y = 0; y < d_h; y++)
         {
@@ -96,7 +96,7 @@ void H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(H3LoadedPcx16 *_this, H3Loade
                 dx = ox - static_cast<double>(ox1);
 
                 // initial pixel value
-                memset(p_g, 0, sizeof(double) * 3);
+                memset(p_g, 0, sizeof(p_g));
 
                 for (int n = -1; n < 3; n++)
                 {
@@ -133,7 +133,7 @@ void H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(H3LoadedPcx16 *_this, H3Loade
             }
         }
 
-        delete[] p_g;
+       // delete[] p_g;
     }
     else
     {
