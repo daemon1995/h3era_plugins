@@ -13,14 +13,19 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     static constexpr UINT MITHRIL_ID = 7;
     static constexpr UINT SPELLS_AMOUNT = 4;
     static constexpr UINT SKILLS_AMOUNT = 4;
+
     struct Current
     {
         INT type = -1;
         INT stateId = -1;
         H3CreatureBank *bank = nullptr;
         H3MapItem *mapItem = nullptr;
+        H3Hero *hero = nullptr;
+        Patch *positionsPatch = nullptr;
+
         std::array<eSpell, STATES_AMOUNT> spellsToLearn = {eSpell::NONE, eSpell::NONE, eSpell::NONE, eSpell::NONE};
         UINT mithrilToAdd = 0;
+        H3String message = "";
         UINT spellPointsToAdd = 0;
         UINT experiencePointsToAdd = 0;
     };

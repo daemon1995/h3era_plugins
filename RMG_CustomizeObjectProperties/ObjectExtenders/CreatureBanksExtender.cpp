@@ -103,8 +103,6 @@ BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, con
 CreatureBanksExtender::CreatureBanksExtender()
     : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.CreatureBanksExtender.daemon_n"))
 {
-    // bankCombatCheck = false;
-
     CreatePatches();
 }
 
@@ -218,7 +216,6 @@ __int64 __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3He
 }
 _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 {
-    // if mitrhil option is enabled
 
     if (const auto mapItem = ValueAt<H3MapItem *>(c->ebp + 0xC))
     {
@@ -234,6 +231,7 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
             currentCreatureBank.spellPointsToAdd = 0;
             currentCreatureBank.mithrilToAdd = 0;
             currentCreatureBank.experiencePointsToAdd = 0;
+            currentCreatureBank.hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
 
             if (customBank)
             {
@@ -243,7 +241,7 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
                     currentCreatureBank.mithrilToAdd = customBank->mithrilAmount;
                 }
 
-                if (auto hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8))
+                if (auto &hero = currentCreatureBank.hero)
                 {
 
                     currentCreatureBank.experiencePointsToAdd += static_cast<int>(
@@ -294,6 +292,14 @@ _LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
 {
     if (c->esi == MITHRIL_ID && currentCreatureBank.mithrilToAdd) // add one more iteration of next resource is mitrhil
     {
+        // change  gold picture from money to gold if we have mithril
+        H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
+        H3PictureCategories *lastCategory = pictureCategories->Last();
+        if (lastCategory->type == ePictureCategories::MONEY)
+        {
+            lastCategory->type = ePictureCategories::GOLD;
+        }
+
         c->eax = currentCreatureBank.mithrilToAdd;
         // return to one more iteration
         c->return_address = 0x04ABDA6;
@@ -316,6 +322,17 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
             if (customCreatureBank)
             {
                 H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
+                auto &message = currentCreatureBank.message;
+                auto &hero = currentCreatureBank.hero;
+                bool experienceAdded = false;
+                bool primarySkillAdded = false;
+                if (const UINT experience = currentCreatureBank.experiencePointsToAdd)
+                {
+
+                    H3PictureCategories pair = H3PictureCategories::Experience(experience);
+                    pictureCategories->Add(pair);
+                    experienceAdded = true;
+                }
 
                 for (size_t i = 0; i < SKILLS_AMOUNT; i++)
                 {
@@ -324,38 +341,70 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
                     {
                         H3PictureCategories pair = H3PictureCategories::PrimarySkill(ePrimary(i), skillNum);
                         pictureCategories->Add(pair);
+                        primarySkillAdded = true;
                     }
                 }
+                if (experienceAdded || primarySkillAdded)
+                {
+                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(176), hero->name);
+                    message.Append(' ').Append(h3_TextBuffer);
+                }
+
+                if (const UINT spellPoints = currentCreatureBank.spellPointsToAdd)
+                {
+
+                    H3PictureCategories pair = H3PictureCategories::SpellPoints(spellPoints);
+                    pictureCategories->Add(pair);
+
+                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(178), hero->name);
+                    message.Append(' ').Append(h3_TextBuffer);
+                }
+
                 if (const INT luck = customCreatureBank->luck)
                 {
                     H3PictureCategories pair = H3PictureCategories::Luck(luck);
                     pictureCategories->Add(pair);
-                }
-                if (const INT morale = customCreatureBank->morale)
-                {
-                    H3PictureCategories pair = H3PictureCategories::Morale(morale);
-                    pictureCategories->Add(pair);
-                }
-                if (const UINT experience = currentCreatureBank.experiencePointsToAdd)
-                {
-                    H3PictureCategories pair = H3PictureCategories::Experience(experience);
-                    pictureCategories->Add(pair);
-                }
-                if (const UINT spellPoints = customCreatureBank->spellPoints)
-                {
-                    H3PictureCategories pair = H3PictureCategories::SpellPoints(spellPoints);
-                    pictureCategories->Add(pair);
+
+                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(luck > 0 ? 182 : 181), hero->name);
+                    message.Append(' ').Append(h3_TextBuffer);
                 }
 
+                if (const INT morale = customCreatureBank->morale)
+                {
+
+                    H3PictureCategories pair = H3PictureCategories::Morale(morale);
+                    pictureCategories->Add(pair);
+
+                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(morale > 0 ? 180 : 179), hero->name);
+                    message.Append(' ').Append(h3_TextBuffer);
+                }
+
+                bool addSpells = false;
+                int strIdx = 0;
                 for (size_t i = 0; i < SPELLS_AMOUNT; i++)
                 {
                     eSpell &spellId = currentCreatureBank.spellsToLearn[i];
                     if (spellId != eSpell::NONE)
                     {
+
                         H3PictureCategories pair = H3PictureCategories::Spell(spellId);
                         pictureCategories->Add(pair);
                         spellId = eSpell::NONE;
+                        if (addSpells)
+                        {
+                            strIdx = 189;
+                        }
+                        else
+                        {
+                            addSpells = true;
+                            strIdx = 185;
+                        }
                     }
+                }
+                if (addSpells)
+                {
+                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(strIdx), hero->name);
+                    message.Append(' ').Append(h3_TextBuffer);
                 }
             }
         }
@@ -363,24 +412,17 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
 
     return EXEC_DEFAULT;
 }
-DllExport int *CreatureBankGetSpells(int creatureBankType, int stateId, int spellIndex)
-{
-    return nullptr;
-}
-DllExport int *CreatureBankSetSpells(int creatureBankType, int stateId, int spellIndex)
-{
-    return nullptr;
-}
+
 int __stdcall CreatureBanksExtender::CrBank_BeforeEndingText(HiHook *h, H3String *mes, const size_t len, const DWORD a3,
                                                              const DWORD a4) noexcept
 {
 
     int result = THISCALL_4(int, h->GetDefaultFunc(), mes, len, a3, a4);
     //
-    if (mes->Empty())
+    if (!mes->Empty() && !currentCreatureBank.message.Empty())
     {
+        mes->Append('\n').Append(currentCreatureBank.message);
     }
-    //  mes->Append("\n\ntetetet");
 
     return result;
 }
@@ -397,6 +439,18 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
         }
         mithrilToAdd = 0;
     }
+    currentCreatureBank.type = -1;
+    currentCreatureBank.stateId = -1;
+
+    currentCreatureBank.bank = nullptr;
+    currentCreatureBank.mapItem = nullptr;
+    currentCreatureBank.hero = nullptr;
+
+    currentCreatureBank.spellsToLearn.fill(eSpell::NONE);
+    currentCreatureBank.mithrilToAdd = 0;
+    currentCreatureBank.experiencePointsToAdd = 0;
+    currentCreatureBank.spellPointsToAdd = 0;
+    currentCreatureBank.message = "";
 
     return EXEC_DEFAULT;
 }
@@ -471,16 +525,17 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
             bank = &creatureBanks[mapItem->creatureBank.id];
         }
         else
+        {
             bank = nullptr;
+        }
     }
-
     return EXEC_DEFAULT;
 }
 _LHF_(CreatureBanksExtender::CrBank_BeforeCombatStart)
 {
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ecx))
     {
-        currentCreatureBank.type = GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype);
+        currentCreatureBank.type = GetCreatureBankType(mapItem);
     }
 
     return EXEC_DEFAULT;
@@ -519,7 +574,7 @@ signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT A
                                                                signed int a10, int isBank)
 {
 
-    static Patch *positionsPatch = nullptr;
+    auto &positionsPatch = currentCreatureBank.positionsPatch;
     if (positionsPatch)
     {
         positionsPatch->Destroy();
@@ -794,7 +849,7 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
     Reserve(30);
 
     bool trSuccess = false;
-    std::array<int, 14> defaultPositions;
+    std::array<int, 14> defaultPositions{};
 
     constexpr int postionsAddress = 0x063D0E0;
 
@@ -988,12 +1043,8 @@ void CreatureBanksExtender::CustomCreatureBank::GenerateSpells(const CustomRewar
 {
     const auto &bannedInfo = P_Game->Get()->disabledSpells;
 
-    // init custom setup
-    //  libc::sprintf(h3_TextBuffer, CustomReward::enabledFormat, creatureBankType);
-    // Era::SetAssocVarIntValue(h3_TextBuffer, true);
-
     // init spells generation
-    static std::unordered_set<int> spellsSet;
+    std::unordered_set<int> spellsSet;
     for (size_t i = 0; i < SPELLS_AMOUNT; i++)
     {
         const auto &data = setup.spellsRewards[i];
@@ -1005,7 +1056,7 @@ void CreatureBanksExtender::CustomCreatureBank::GenerateSpells(const CustomRewar
         }
         else if (data.generate)
         {
-            static std::vector<UINT> spellsToSelect;
+            std::vector<UINT> spellsToSelect;
             spellsToSelect.reserve(h3::limits::SPELLS);
             INT spellId = 0;
             do
@@ -1021,10 +1072,9 @@ void CreatureBanksExtender::CustomCreatureBank::GenerateSpells(const CustomRewar
             } while (spellId++ < h3::limits::SPELLS);
 
             // add spell to set if exist
-            if (const size_t goodSpells = spellsToSelect.size())
+            if (const size_t goodSpellsAmount = spellsToSelect.size())
             {
-                spellsSet.insert(spellsToSelect[H3Random::RandBetween(0, goodSpells - 1)]);
-                spellsToSelect.clear();
+                spellsSet.insert(spellsToSelect[H3Random::RandBetween(0, goodSpellsAmount - 1)]);
             }
         }
     }
@@ -1141,6 +1191,12 @@ void __stdcall CreatureBanksExtender::OnAfterSaveOrLoadGame(Era::TEvent *Event)
 void __stdcall CreatureBanksExtender::OnGameLeave(Era::TEvent *Event)
 {
     Get().manager.customCreatureBanksVector.clear();
+
+    if (currentCreatureBank.positionsPatch)
+    {
+        currentCreatureBank.positionsPatch->Destroy();
+        currentCreatureBank.positionsPatch = nullptr;
+    }
 }
 
 void CreatureBanksExtender::CreatePatches()
