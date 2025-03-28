@@ -46,9 +46,9 @@ void SortRmgObjects(std::vector<RMGObject> &objVector, const eSorting sortingTyp
 
     std::sort(objVector.begin(), objVector.end(), [&](const RMGObject &first, const RMGObject &second) -> bool {
         const int cbIdFirst =
-            cbanks::CreatureBanksExtender::GetCreatureBankId(first.objectInfo.type, first.objectInfo.subtype);
+            cbanks::CreatureBanksExtender::GetCreatureBankType(first.objectInfo.type, first.objectInfo.subtype);
         const int cbIdSecond =
-            cbanks::CreatureBanksExtender::GetCreatureBankId(second.objectInfo.type, second.objectInfo.subtype);
+            cbanks::CreatureBanksExtender::GetCreatureBankType(second.objectInfo.type, second.objectInfo.subtype);
 
         H3String str, str2;
         switch (sortingType)
@@ -172,6 +172,7 @@ EXTERN_C __declspec(dllexport) const BOOL RMGObjectSupportsGeneration(const int 
 
 RMG_SettingsDlg *RMG_SettingsDlg::Page::dlg = nullptr;
 RMG_SettingsDlg *RMG_SettingsDlg::instance = nullptr;
+BOOL RMG_SettingsDlg::isDlgTextEditInput = false;
 
 const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> &RMG_SettingsDlg::
     GetObjectAttributes() noexcept
@@ -848,6 +849,7 @@ H3Msg *__stdcall RMG_SettingsDlg::H3DlgEdit__TranslateInputKey(HiHook *h, H3Inpu
 
     if (instance && instance->blockLettersInput)
     {
+        isDlgTextEditInput = false;
         // block inputing any text except numbers and backspaces
         if (msg->subtype != 127 && (msg->subtype < 48 || msg->subtype > 57)
             //	|| msg->subtype > 60 && msg->subtype < 122
@@ -1065,7 +1067,7 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
 
     const auto rmgObject = panel->rmgObject;
     const int cbID =
-        cbanks::CreatureBanksExtender::GetCreatureBankId(rmgObject->objectInfo.type, rmgObject->objectInfo.subtype);
+        cbanks::CreatureBanksExtender::GetCreatureBankType(rmgObject->objectInfo.type, rmgObject->objectInfo.subtype);
 
     if (cbID != eObject::NO_OBJ)
     {
@@ -1206,7 +1208,11 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
 
                         //	if (dlgPanel->mapLimitEdit == clickedItem)
                         constexpr int SIZE = 4;
-
+                        if (isDlgTextEditInput)
+                        {
+                            isDlgTextEditInput = false;
+                            //  dlgPanel->PanelInfoToObjectInfo();
+                        }
                         for (size_t i = 0; i < SIZE; ++i)
                         {
                             //	dlgPanel->rmgObject->objectInfo.data[i + 1] =
@@ -1397,8 +1403,8 @@ RMGObject::RMGObject(const H3ObjectAttributes &attributes, H3LoadedPcx16 *object
         // place picture into "Squere" thanks to @Berserker ...
         const int maxDim = std::max(srcWidth, srcHeight);
 
-        const int dstWidth = int(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
-        const int dstHeight = int(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
+        const int dstWidth = static_cast<int>(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
+        const int dstHeight = static_cast<int>(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
 
         const int dstX = (PCX_WIDTH - dstWidth) >> 1;
         const int dstY = (PCX_HEIGHT - dstHeight) >> 1;
@@ -1866,8 +1872,8 @@ void CreateResizedObjectPcx()
                     // place picture into "Square" thanks to @Berserker ...
                     const int maxDim = std::max(srcWidth, srcHeight);
 
-                    const int dstWidth = int(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
-                    const int dstHeight = int(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
+                    const int dstWidth = static_cast<int>(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
+                    const int dstHeight = static_cast<int>(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
 
                     const int dstX = (PCX_WIDTH - dstWidth) >> 1;
                     const int dstY = (PCX_HEIGHT - dstHeight) >> 1;

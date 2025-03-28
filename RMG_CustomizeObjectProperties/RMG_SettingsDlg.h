@@ -230,6 +230,8 @@ class RMG_SettingsDlg : public H3Dlg
 
   private:
     static RMG_SettingsDlg *instance;
+    static BOOL isDlgTextEditInput;
+
     static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_banks;
     static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_commonObjects;
     static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_dwellings;
