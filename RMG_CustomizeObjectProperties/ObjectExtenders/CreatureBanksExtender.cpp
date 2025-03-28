@@ -177,17 +177,17 @@ __int64 __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3He
                                 static_cast<int>(skill * needExpoToNextLvl * hero->AI_experienceEffectiveness);
                         }
                     }
-                    //if (const int luck = customReward->luck)
+                    // if (const int luck = customReward->luck)
                     //{
-                    //    double tempdouble = FASTCALL_2(double, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //    float tempfloat = FASTCALL_2(float, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //    __int64 temp__int64 = FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //    int tempint = FASTCALL_2(int, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //    bonusValue += FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //}
-                    //if (const int morale = customReward->morale)
+                    //     double tempdouble = FASTCALL_2(double, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+                    //     float tempfloat = FASTCALL_2(float, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+                    //     __int64 temp__int64 = FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1),
+                    //     luck); int tempint = FASTCALL_2(int, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+                    //     bonusValue += FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+                    // }
+                    // if (const int morale = customReward->morale)
                     //{
-                    //    float temp = FASTCALL_2(float, 0x0435480, hero->GetMoraleBonus(nullptr, 0, 1), morale);
+                    //     float temp = FASTCALL_2(float, 0x0435480, hero->GetMoraleBonus(nullptr, 0, 1), morale);
 
                     //    bonusValue += FASTCALL_2(__int64, 0x0435480, hero->GetMoraleBonus(nullptr, 0, 1), morale);
                     //}
@@ -312,62 +312,49 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
         const int creatureBankType = GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype);
         if (creatureBankType != eObject::NO_OBJ)
         {
-            // const int cbUniqueId = mapItem->creatureBank.id;
-            //  libc::sprintf(h3_TextBuffer, stateFormat, cbUniqueId);
-
-            // const int stateId = Era::GetAssocVarIntValue(h3_TextBuffer);
-
-            // libc::sprintf(h3_TextBuffer, enabledFormat, cbUniqueId);
-
-            // if taht state has custom setup
-            // if (Era::GetAssocVarIntValue(h3_TextBuffer))
+            const auto &customCreatureBank = Get().GetCustomCreatureBank(mapItem);
+            if (customCreatureBank)
             {
-                // const auto &setup = Get().creatureBanks.customRewards[creatureBankType][stateId];
+                H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
 
-                const auto &customCreatureBank = Get().GetCustomCreatureBank(mapItem);
-                if (customCreatureBank)
+                for (size_t i = 0; i < SKILLS_AMOUNT; i++)
                 {
-                    H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
 
-                    for (size_t i = 0; i < SKILLS_AMOUNT; i++)
+                    if (const UINT skillNum = customCreatureBank->primarySkills[i])
                     {
+                        H3PictureCategories pair = H3PictureCategories::PrimarySkill(ePrimary(i), skillNum);
+                        pictureCategories->Add(pair);
+                    }
+                }
+                if (const INT luck = customCreatureBank->luck)
+                {
+                    H3PictureCategories pair = H3PictureCategories::Luck(luck);
+                    pictureCategories->Add(pair);
+                }
+                if (const INT morale = customCreatureBank->morale)
+                {
+                    H3PictureCategories pair = H3PictureCategories::Morale(morale);
+                    pictureCategories->Add(pair);
+                }
+                if (const UINT experience = currentCreatureBank.experiencePointsToAdd)
+                {
+                    H3PictureCategories pair = H3PictureCategories::Experience(experience);
+                    pictureCategories->Add(pair);
+                }
+                if (const UINT spellPoints = customCreatureBank->spellPoints)
+                {
+                    H3PictureCategories pair = H3PictureCategories::SpellPoints(spellPoints);
+                    pictureCategories->Add(pair);
+                }
 
-                        if (const UINT skillNum = customCreatureBank->primarySkills[i])
-                        {
-                            H3PictureCategories pair = H3PictureCategories::PrimarySkill(ePrimary(i), skillNum);
-                            pictureCategories->Add(pair);
-                        }
-                    }
-                    if (const INT luck = customCreatureBank->luck)
+                for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+                {
+                    eSpell &spellId = currentCreatureBank.spellsToLearn[i];
+                    if (spellId != eSpell::NONE)
                     {
-                        H3PictureCategories pair = H3PictureCategories::Luck(luck);
+                        H3PictureCategories pair = H3PictureCategories::Spell(spellId);
                         pictureCategories->Add(pair);
-                    }
-                    if (const INT morale = customCreatureBank->morale)
-                    {
-                        H3PictureCategories pair = H3PictureCategories::Morale(morale);
-                        pictureCategories->Add(pair);
-                    }
-                    if (const UINT experience = customCreatureBank->experience)
-                    {
-                        H3PictureCategories pair = H3PictureCategories::Experience(experience);
-                        pictureCategories->Add(pair);
-                    }
-                    if (const UINT spellPoints = customCreatureBank->spellPoints)
-                    {
-                        H3PictureCategories pair = H3PictureCategories::SpellPoints(spellPoints);
-                        pictureCategories->Add(pair);
-                    }
-
-                    for (size_t i = 0; i < SPELLS_AMOUNT; i++)
-                    {
-                        eSpell &spellId = currentCreatureBank.spellsToLearn[i];
-                        if (spellId != eSpell::NONE)
-                        {
-                            H3PictureCategories pair = H3PictureCategories::Spell(spellId);
-                            pictureCategories->Add(pair);
-                            spellId = eSpell::NONE;
-                        }
+                        spellId = eSpell::NONE;
                     }
                 }
             }
