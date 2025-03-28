@@ -65,6 +65,20 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
         limitsInfo.zoneTypeLimits[limit[i].type] = limit[i].value;
     }
 
+    // init global defaults for all objects
+    bool readSucces = false;
+    const UINT mapGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.map", readSucces);
+    if (readSucces)
+    {
+        std::fill(std::begin(limitsInfo.mapTypesLimit), std::end(limitsInfo.mapTypesLimit), mapGlobalLimitDefault);
+    }
+
+    const UINT zoneGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.zone", readSucces);
+    if (readSucces)
+    {
+        std::fill(std::begin(limitsInfo.zoneTypeLimits), std::end(limitsInfo.zoneTypeLimits), zoneGlobalLimitDefault);
+    }
+
     RMGObjectInfo::InitDefaultProperties(limitsInfo, maxSubtypes);
 
     // init pseudoGanerator
@@ -143,8 +157,11 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             {
                 if (rmgObjGen->type == eObject::SPELL_SCROLL)
                 {
-                    rmgObjGen->subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
+                    const int spellLevel = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
+                    if (spellLevel < 7)
+                        rmgObjGen->subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
                 }
+
                 RMGObjectInfo::InitFromRmgObjectGenerator(*rmgObjGen);
             }
         }
@@ -280,6 +297,10 @@ _LHF_(RMGObjectsEditor::RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck)
             if (objGen->type == eObject::SPELL_SCROLL)
             {
                 objGen->subtype = reinterpret_cast<_RMGObjGenScroll_ *>(objGen)->spellLevel;
+                if (objGen->subtype > 6)
+                {
+                    return EXEC_DEFAULT;
+                }
             }
             if (generatedInfo.ObjectCantBeGenerated(objGen, zoneId))
             {
@@ -314,9 +335,12 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
             if (generatedInfo.lastGeneratedSpellScroll)
             {
                 const int storedObjectSubtype = prototype->subtype;
-                prototype->subtype = generatedInfo.lastGeneratedSpellScroll->spellLevel;
-                generatedInfo.IncreaseObjectsCounters(prototype, c->ecx);
-                prototype->subtype = storedObjectSubtype;
+                if (storedObjectSubtype < 7)
+                {
+                    prototype->subtype = generatedInfo.lastGeneratedSpellScroll->spellLevel;
+                    generatedInfo.IncreaseObjectsCounters(prototype, c->ecx);
+                    prototype->subtype = storedObjectSubtype;
+                }
 
                 generatedInfo.lastGeneratedSpellScroll = nullptr;
             }
@@ -620,7 +644,6 @@ inline int index2D(const int objType, const int objSubtype, const int lineSize)
 void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId)
 {
     // increment number of zone generated subtypes of that obj type
-
     const int index3 = index3D(zoneId, prop->type, prop->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
     eachZoneGeneratedBySubtype[index3]++;
 
@@ -909,12 +932,11 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR1])
     {
         const int dwellingCreatureType = DwordAt(dwellings1Ptr + (dwellingObjInfo.subtype << 2));
-        if (dwellingCreatureType< MAX_MON_ID)
+        if (dwellingCreatureType < MAX_MON_ID)
         {
             const int creatureAIValue = P_CreatureInformation[dwellingCreatureType].aiValue;
             dwellingObjInfo.value = creatureAIValue;
         }
-
     }
 
     const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
@@ -957,7 +979,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 {
     LPCSTR result = h3_NullString;
 
-    const int creatureBankId = cbanks::CreatureBanksExtender::GetCreatureBankId(type, subtype);
+    const int creatureBankId = cbanks::CreatureBanksExtender::GetCreatureBankType(type, subtype);
     if (creatureBankId >= 0)
     {
         return H3CreatureBankSetup::Get()[creatureBankId].name.String();
