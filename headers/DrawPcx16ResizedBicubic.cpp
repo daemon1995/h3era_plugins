@@ -17,14 +17,12 @@ void H3LoadedPcx16Resized::DrawResizedBicubic(H3LoadedPcx16 *src_pcx, int s_w, i
 
 H3LoadedPcx16Resized *H3LoadedPcx16Resized::Create(INT width, INT height)
 {
-    auto pcx = H3LoadedPcx16::Create(width, height);
-    return reinterpret_cast<H3LoadedPcx16Resized *>(pcx);
+    return Create(h3_NullString, width, height);
 }
 
 H3LoadedPcx16Resized *H3LoadedPcx16Resized::Create(LPCSTR name, INT width, INT height)
 {
-
-    return Create(h3_NullString, width, height);
+    return reinterpret_cast<H3LoadedPcx16Resized *>(H3LoadedPcx16::Create(name, width, height));
 }
 
 double BiCubicKernel(double x)
@@ -77,7 +75,7 @@ void H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(H3LoadedPcx16 *_this, H3Loade
     {
 
         // destination pixel values
-        double p_g[3];// = new double[3];
+        double p_g[3]; // = new double[3];
 
         for (int y = 0; y < d_h; y++)
         {
@@ -133,7 +131,7 @@ void H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(H3LoadedPcx16 *_this, H3Loade
             }
         }
 
-       // delete[] p_g;
+        // delete[] p_g;
     }
     else
     {

@@ -101,7 +101,7 @@ BOOL GazeboExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Posi
             if (playerGoldBeforeVisit >= GOLD_REQUIRED)
             {
                 // Calculate exp given considering the learning power
-                float heroLearningPower = GetHeroLearningPower(hero);
+                float heroLearningPower = h3functions::GetHeroLearningPower(hero);
                 const int expGiven = static_cast<int>(EXP_GIVEN * heroLearningPower);
 
                 BOOL agreed = !isHuman;
@@ -136,11 +136,6 @@ BOOL GazeboExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Posi
     }
 
     return false;
-}
-
-float GetHeroLearningPower(const H3Hero *hero)
-{
-    return THISCALL_1(float, 0x04E4AB0, hero);
 }
 
 BOOL GazeboExtender::InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept

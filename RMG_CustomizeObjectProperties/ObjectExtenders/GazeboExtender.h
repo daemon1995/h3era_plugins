@@ -6,7 +6,6 @@ constexpr int GAZEBO_OBJECT_SUBTYPE = 6;
 constexpr float EXP_GIVEN = 2000;
 constexpr int GOLD_REQUIRED = 1000;
 
-float GetHeroLearningPower(const H3Hero *hero); // это прототип функции
 
 struct H3MapItemGazebo
 {

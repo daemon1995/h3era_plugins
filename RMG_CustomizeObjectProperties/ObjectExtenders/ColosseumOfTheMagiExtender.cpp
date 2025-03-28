@@ -94,7 +94,7 @@ BOOL ColosseumOfTheMagiExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, 
                 // void __thiscall AdvMgr_SetTimer(_AdvMgr_ *this, int timerType, signed int addedTime)
                 THISCALL_3(void, 0x415CC0, advMgr, 0, -1);
 
-                //void __thiscall AdvMgr_UpdateInfoPanel(_AdvMgr_ *this, int a2, char needRedraw, char a4)
+                // void __thiscall AdvMgr_UpdateInfoPanel(_AdvMgr_ *this, int a2, char needRedraw, char a4)
                 THISCALL_4(void, 0x0415D40, advMgr, 0, 1, 1);
 
                 H3Messagebox::ePick choice = AskQuestionWithTwoOptions(mapItem);
