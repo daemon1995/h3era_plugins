@@ -6,7 +6,6 @@ constexpr int GAZEBO_OBJECT_SUBTYPE = 6;
 constexpr float EXP_GIVEN = 2000;
 constexpr int GOLD_REQUIRED = 1000;
 
-
 struct H3MapItemGazebo
 {
     static int gazeboCounter;
@@ -41,7 +40,7 @@ class GazeboExtender : public extender::ObjectsExtender
                               const BOOL isHuman) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiMapItemWeight) const noexcept override final;
-    virtual H3RmgObjectGenerator* CreateRMGObjectGen(const RMGObjectInfo& objectInfo) const noexcept override final;
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
 
   private:
     //	static _LHF_(Game__AtShrineOfMagicIncantationSettingSpell);

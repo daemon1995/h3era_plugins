@@ -20,9 +20,9 @@ BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, 
 
     if (auto gazebo = H3MapItemGazebo::GetFromMapItem(mapItem))
     {
-        const bool isVistedByHero = H3MapItemGazebo::IsVisitedByHero(*gazebo, hero);
+        const bool isVisitedByHero = H3MapItemGazebo::IsVisitedByHero(*gazebo, hero);
 
-        if (!isVistedByHero)
+        if (!isVisitedByHero)
         {
             if (P_ActivePlayer->playerResources.gold >= GOLD_REQUIRED)
             {
