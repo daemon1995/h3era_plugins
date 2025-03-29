@@ -458,12 +458,8 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
 {
 
     // init creature banks base data to assign to custom banks when they will be added into main array
-
-    int &type = currentCreatureBank.type;
-    int &stateId = currentCreatureBank.stateId;
-    stateId = c->edx;
-
-    type = c->ecx / 400;
+    int &type = currentCreatureBank.type = c->ecx / 400;
+    int &stateId = currentCreatureBank.stateId = c->edx;
 
     // check if we already in the game creature banks
     const auto &creatureBank = reinterpret_cast<H3CreatureBank *>(c->ebx);
@@ -498,11 +494,10 @@ void __stdcall CreatureBanksExtender::CrBank_AddToGameList(HiHook *h, H3Vector<H
     // if we inited data in the CrBank_BeforeSetupFromState
     if (sizeBeforeAdding < creatureBanks->Size() && stateId != -1 && type != -1)
     {
-        auto &customBanks = Get().manager.customCreatureBanksVector;
+        auto &manager = Get().manager;
 
-        const auto &customRewardSetupState = Get().manager.customRewardSetups[type][stateId];
-
-        customBanks.emplace_back(CustomCreatureBank(customRewardSetupState, sizeBeforeAdding));
+        const auto &customRewardSetupState = manager.customRewardSetups[type][stateId];
+        manager.customCreatureBanksVector.emplace_back(CustomCreatureBank(customRewardSetupState, sizeBeforeAdding));
 
         type = -1;
         stateId = -1;
@@ -513,9 +508,7 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 {
 
     auto &mapItem = currentCreatureBank.mapItem;
-    auto &bank = currentCreatureBank.bank;
-
-    bank = nullptr;
+    auto &bank = currentCreatureBank.bank = nullptr;
 
     if (mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
     {
@@ -1209,8 +1202,6 @@ void CreatureBanksExtender::CreatePatches()
         _pi->WriteLoHook(0x047A70D, CrBank_BeforeSetupFromState);
 
         _pi->WriteHiHook(0x04D22B0, THISCALL_, CrBank_AddToGameList);
-        // ObjectPlacement by WoG
-        //_pi->WriteHiHook(0x07133E2, CDECL_, WoG_PlaceObject); // 16 object type
         _pi->WriteHiHook(0x0528520, FASTCALL_, AIHero_GetMapItemWeight); // 25 object type
 
         _pi->WriteHiHook(0x04A13E6, FASTCALL_, CrBank_AskForVisitMessage); // 16 object type
@@ -1222,10 +1213,9 @@ void CreatureBanksExtender::CreatePatches()
         //  _pi->WriteLoHook(0x041391C, AdvMgr_GetObjectRightClickDescr);
 
         _pi->WriteLoHook(0x4ABAD3, CrBank_BeforeCombatStart);
-
         _pi->WriteHiHook(0x4ABBCB, THISCALL_, CrBank_CombatStart);
 
-        // Adding mithril to player
+        // Adding custom rewards to player
         _pi->WriteLoHook(0x04ABBFF, CrBank_AfterCombatWon);
         _pi->WriteLoHook(0x04ABE3C, CrBank_AfterDrawingResources);
         _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
