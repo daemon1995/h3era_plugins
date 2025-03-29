@@ -150,7 +150,7 @@ class RMG_SettingsDlg : public H3Dlg
         // std::vector<H3ObjectAttributes> displayedAttributes;
         BOOL ignoreSubtypes;
 
-        std::vector<ObjectsPanel *> dlgPanels;
+        std::vector<ObjectsPanel *> objectsPanels;
         std::vector<RMGObject> RMGObjects;
 
         ObjectsPage(H3DlgCaptionButton *captionbttn,

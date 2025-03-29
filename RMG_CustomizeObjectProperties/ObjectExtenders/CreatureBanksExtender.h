@@ -119,7 +119,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         void Resize(const size_t size) noexcept;
         void Reserve(const size_t size) noexcept;
         void ShrinkToFit() noexcept;
-        void CopyDefaultData(const size_t defaultSize);
+        void CopyDefaultData(const size_t defaultSize, const std::array<int, 14> &defaultPositions);
 
       public:
         int LoadCreatureBanksFromJson(const INT16 defaultBanksNumber, const INT16 maxSubtype);

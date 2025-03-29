@@ -766,14 +766,14 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
                                                                       const UINT stateId) noexcept
     : stateId(stateId)
 {
-
-    if (ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.customReward", creatureBankType, stateId))
+    mithrilAmount =
+        ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankType, stateId, MITHRIL_ID);
+    // if (ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.customReward", creatureBankType, stateId))
     {
         enabled = true;
         experience = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.experience", creatureBankType, stateId);
         spellPoints = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankType, stateId);
-        mithrilAmount =
-            ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankType, stateId, MITHRIL_ID);
+
         if (int _luck = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.luck", creatureBankType, stateId))
         {
             luck = Clamp(-3, _luck, 3);
@@ -833,120 +833,211 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
 int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumber,
                                                                           const INT16 maxSubtype)
 {
-    Resize(defaultBanksNumber);
 
     int addedBanksNumber = 0;
 
-    // const int MAX_MON_ID = IntAt(0x4A1657);
+    const int MAX_MON_ID = IntAt(0x4A1657);
 
-    Reserve(30);
-
-    bool trSuccess = false;
+    // init  default positions
     std::array<int, 14> defaultPositions{};
-
     constexpr int postionsAddress = 0x063D0E0;
-
     libc::memcpy(defaultPositions.data(), reinterpret_cast<int *>(postionsAddress), sizeof(defaultPositions));
 
-    // @todo add default creature banks editor
-    for (INT16 i = 0; i < defaultBanksNumber; i++)
+    Resize(defaultBanksNumber);
+
+    CopyDefaultData(defaultBanksNumber, defaultPositions);
+
+    bool trSuccess = false;
+    std::array<int, GUARDES_AMOUNT> tempArr = {};
+    tempArr.fill(-1);
+
+    //  allocate space for new creature banks
+    Reserve(maxSubtype + 1 - defaultBanksNumber);
+    for (INT16 creatureBankType = 0; creatureBankType < maxSubtype; creatureBankType++)
     {
-        customPositions[i] = defaultPositions;
-    }
-
-    for (INT16 creatureBankType = defaultBanksNumber; creatureBankType < maxSubtype; creatureBankType++)
-    {
-
-        // states
-        H3CreatureBankSetup setup;
-
-        // assign new CB name from json/default
-        H3String name =
-            EraJS::read(H3String::Format("RMG.objectGeneration.16.%d.name", creatureBankType).String(), trSuccess);
-        if (!trSuccess && setup.name.Empty())
-            name = H3ObjectName::Get()[eObject::CREATURE_BANK];
-        setup.name = name;
-
-        // read custom postions
-        std::array<int, 14> positions = defaultPositions;
-
-        for (size_t i = 0; i < 7; i++)
+        const int objectType = CreatureBanksExtender::GetCreatureBankObjectType(creatureBankType);
+        const int objectSubtype = objectType == eObject::CREATURE_BANK ? creatureBankType : 0;
+        if (objectType != eObject::NO_OBJ)
         {
-            const int jsonAttackerPosition =
-                ReadJsonInt("RMG.objectGeneration.16.%d.attackerPositions.%d", creatureBankType, i);
 
-            const BOOL atackerPositionIsValid = !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 ||
-                                                  jsonAttackerPosition % 17 == 0 || jsonAttackerPosition % 17 == 16);
+            // states
+            H3CreatureBankSetup setup;
 
-            if (atackerPositionIsValid)
-                positions[i] = jsonAttackerPosition;
+            // copy original creature bank data
+            if (creatureBankType < defaultBanksNumber)
+            {
+                setup = setups[creatureBankType];
+            }
 
-            const int jsonDefenderPosition =
-                ReadJsonInt("RMG.objectGeneration.16.%d.defenderPositions.%d", creatureBankType, i);
+            // assign new CB name from json/default
+            H3String name = EraJS::read(
+                H3String::Format("RMG.objectGeneration.%d.%d.name", objectType, objectSubtype).String(), trSuccess);
+            if (trSuccess)
+            {
+                setup.name = name;
+            }
+            else if (setup.name.Empty())
+            {
+                setup.name = H3ObjectName::Get()[eObject::CREATURE_BANK];
+            }
 
-            const BOOL defenderPositionIsValid = !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 ||
-                                                   jsonDefenderPosition % 17 == 0 || jsonDefenderPosition % 17 == 16);
-            if (defenderPositionIsValid)
-                positions[i + 7] = jsonDefenderPosition;
+            for (size_t i = 0; i < STATES_AMOUNT; i++)
+            {
+                auto &state = setup.states[i];
+
+                const int creatureRewardType =
+                    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.creatureRewardType",
+                                                    objectType, objectSubtype, i)
+                                       .String(),
+                                   trSuccess);
+
+                if (trSuccess)
+                {
+                    state.creatureRewardType =
+                        Clamp(eCreature::UNDEFINED, creatureRewardType, MAX_MON_ID); // creatureRewardType;
+                }
+                const int creatureRewardCount =
+                    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.creatureRewardCount",
+                                                    objectType, objectSubtype, i)
+                                       .String(),
+                                   trSuccess);
+                if (trSuccess)
+                {
+                    state.creatureRewardCount = Clamp(0, creatureRewardCount, 127);
+                }
+
+                const int chance = EraJS::readInt(
+                    H3String::Format("RMG.objectGeneration.%d.%d.states.%d.chance", objectType, objectSubtype, i)
+                        .String(),
+                    trSuccess);
+                if (trSuccess)
+                {
+                    state.chance = Clamp(0, chance, 100);
+                }
+
+                const int upgrade = EraJS::readInt(
+                    H3String::Format("RMG.objectGeneration.%d.%d.states.%d.upgrade", objectType, objectSubtype, i)
+                        .String(),
+                    trSuccess);
+                if (trSuccess)
+                {
+                    state.upgrade = Clamp(0, chance, 100);
+                }
+
+                for (size_t artLvl = 0; artLvl < 4; artLvl++)
+                {
+                    const int artsNum =
+                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.artifactTypeCounts.%d",
+                                                        objectType, objectSubtype, i, artLvl)
+                                           .String(),
+                                       trSuccess);
+                    if (trSuccess)
+                    {
+                        state.artifactTypeCounts[artLvl] = Clamp(0, artsNum, 127);
+                    }
+                }
+
+                for (size_t j = 0; j < 7; j++)
+                {
+
+                    const int guardType =
+                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.guardians.type.%d",
+                                                        objectType, objectSubtype, i, j)
+                                           .String(),
+                                       trSuccess);
+                    if (trSuccess)
+                    {
+                        state.guardians.type[j] =
+                            Clamp(eCreature::UNDEFINED, guardType, MAX_MON_ID); // creatureRewardType;
+                    }
+
+                    const int guardCount =
+                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.guardians.count.%d",
+                                                        objectType, objectSubtype, i, j)
+                                           .String(),
+                                       trSuccess);
+                    if (trSuccess)
+                    {
+                        state.guardians.count[j] = Clamp(0, guardCount, INT32_MAX); // creatureRewardType;
+                    }
+
+                    const int resources = EraJS::readInt(
+                        H3String::Format("RMG.objectGeneration.%d.%d.states.%d.resources.%d", creatureBankType, i, j)
+                            .String(),
+                        trSuccess);
+                    if (trSuccess)
+                    {
+                        state.resources.asArray[j] = Clamp(0, resources, INT32_MAX); // creatureRewardType;
+                    }
+                }
+            }
+
+            // init custom rewards
+            std::array<CustomRewardSetupState, STATES_AMOUNT> customReward{[creatureBankType]() {
+                std::array<CustomRewardSetupState, STATES_AMOUNT> arr;
+                for (size_t i = 0; i < STATES_AMOUNT; ++i)
+                {
+                    arr[i] = CustomRewardSetupState(creatureBankType, i);
+                }
+                return arr;
+            }()};
+
+            const bool isNotBank = ReadJsonInt("RMG.objectGeneration.%d.%d.isNotBank", objectType, objectSubtype);
+
+            // read custom postions
+            std::array<int, 14> positions = defaultPositions;
+
+            for (size_t i = 0; i < 7; i++)
+            {
+                const int jsonAttackerPosition =
+                    ReadJsonInt("RMG.objectGeneration.%d.%d.attackerPositions.%d", objectType, objectSubtype, i);
+
+                const BOOL atackerPositionIsValid =
+                    !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 || jsonAttackerPosition % 17 == 0 ||
+                      jsonAttackerPosition % 17 == 16);
+
+                if (atackerPositionIsValid)
+                    positions[i] = jsonAttackerPosition;
+
+                const int jsonDefenderPosition =
+                    ReadJsonInt("RMG.objectGeneration.%d.%d.defenderPositions.%d", objectType, objectSubtype, i);
+
+                const BOOL defenderPositionIsValid =
+                    !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 || jsonDefenderPosition % 17 == 0 ||
+                      jsonDefenderPosition % 17 == 16);
+                if (defenderPositionIsValid)
+                    positions[i + 7] = jsonDefenderPosition;
+            }
+
+            if (creatureBankType < defaultBanksNumber)
+            {
+                setups[creatureBankType] = setup;
+                customRewardSetups[creatureBankType] = customReward;
+                isNotBankSettings[creatureBankType] = isNotBank;
+                customPositions[creatureBankType] = positions;
+
+                monsterAwards[creatureBankType] = setup.states[0].creatureRewardType;
+            }
+            else
+            {
+                setups.emplace_back(setup);
+                customRewardSetups.emplace_back(customReward);
+                isNotBankSettings.emplace_back(isNotBank);
+                customPositions.emplace_back(positions);
+
+                monsterAwards.emplace_back(setup.states[0].creatureRewardType);
+                memcpy(&tempArr[0], &setup.states[0].guardians.type[0], sizeof(tempArr));
+                monsterGuards.emplace_back(tempArr);
+
+                // increase number of added banks
+                addedBanksNumber++;
+            }
         }
-
-        //        CustomRewardSetupState customReward(creatureBankType, 0);//[STATES_AMOUNT];
-        std::array<CustomRewardSetupState, STATES_AMOUNT> customReward{[creatureBankType]() {
-            std::array<CustomRewardSetupState, STATES_AMOUNT> arr;
-            for (size_t i = 0; i < STATES_AMOUNT; ++i)
-            {
-                arr[i] = CustomRewardSetupState(creatureBankType, i);
-            }
-            return arr;
-        }()};
-        //         customReward.fill(CustomRewardSetupState{creatureBankType, 0});
-
-        for (size_t i = 0; i < STATES_AMOUNT; i++)
-        {
-            auto &state = setup.states[i];
-
-            state.creatureRewardType =
-                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.creatureRewardType", creatureBankType, i);
-            state.creatureRewardCount =
-                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.creatureRewardCount", creatureBankType, i);
-            state.chance = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.chance", creatureBankType, i);
-            state.upgrade = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.upgrade", creatureBankType, i);
-
-            for (size_t artLvl = 0; artLvl < 4; artLvl++)
-            {
-                state.artifactTypeCounts[artLvl] = ReadJsonInt(
-                    "RMG.objectGeneration.16.%d.states.%d.artifactTypeCounts.%d", creatureBankType, i, artLvl);
-            }
-
-            for (size_t j = 0; j < 7; j++)
-            {
-                state.guardians.type[j] =
-                    ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.guardians.type.%d", creatureBankType, i, j);
-                state.guardians.count[j] =
-                    ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.guardians.count.%d", creatureBankType, i, j);
-                state.resources.asArray[j] =
-                    ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankType, i, j);
-            }
-        }
-
-        const int isNotBank = (ReadJsonInt("RMG.objectGeneration.16.%d.isNotBank", creatureBankType));
-
-        customPositions.emplace_back(positions);
-        isNotBankSettings.emplace_back(isNotBank);
-        setups.emplace_back(setup);
-        monsterAwards.emplace_back(setup.states[0].creatureRewardType);
-        customRewardSetups.emplace_back(customReward);
-
-        static std::array<int, GUARDES_AMOUNT> tempArr;
-        tempArr.fill(-1);
-        memcpy(&tempArr[0], &setup.states[0].guardians.type[0], sizeof(tempArr));
-
-        monsterGuards.emplace_back(tempArr);
-        addedBanksNumber++;
     }
     if (addedBanksNumber > 0)
     {
-        CopyDefaultData(defaultBanksNumber);
+        ValueAt<int *>(0x47A4A8 + 3) = monsterAwards.data();
+        ValueAt<int *>(0x47A4AF + 3) = monsterGuards[0].data();
     }
 
     ShrinkToFit();
@@ -959,24 +1050,24 @@ UINT CreatureBanksExtender::Size() const noexcept
     return manager.m_size;
 }
 
-void CreatureBanksExtender::CreatureBankManager::CopyDefaultData(const size_t defaultSize)
+void CreatureBanksExtender::CreatureBankManager::CopyDefaultData(const size_t defaultBanksNumber,
+                                                                 const std::array<int, 14> &defaultPositions)
 {
-
-    const int *currentCreatureRewardsArray = ValueAt<int *>(0x47A4A8 + 3);
-    memcpy(monsterAwards.data(), currentCreatureRewardsArray, sizeof(int) * defaultSize);
-    ValueAt<int *>(0x47A4A8 + 3) = monsterAwards.data();
-
-    const int *currentGuardiansArray = ValueAt<int *>(0x47A4AF + 3);
-    memcpy(monsterGuards[0].data(), currentGuardiansArray, sizeof(int) * defaultSize * 5);
-    ValueAt<int *>(0x47A4AF + 3) = monsterGuards[0].data();
-
+    // copy original creature banks
     H3CreatureBankSetup *originalBanks = *reinterpret_cast<H3CreatureBankSetup **>(0x67029C);
     if (originalBanks)
     {
+        const int *currentCreatureRewardsArray = ValueAt<int *>(0x47A4A8 + 3);
+        memcpy(monsterAwards.data(), currentCreatureRewardsArray, sizeof(int) * defaultBanksNumber);
+        const int *currentGuardiansArray = ValueAt<int *>(0x47A4AF + 3);
+        memcpy(monsterGuards[0].data(), currentGuardiansArray, sizeof(int) * defaultBanksNumber * 5);
         // iterate default data and copy into current array
-        for (size_t i = 0; i < defaultSize; i++)
+        for (size_t i = 0; i < defaultBanksNumber; i++)
         {
+
+            customPositions[i] = defaultPositions;
             setups[i] = originalBanks[i];
+            isNotBankSettings[i] = false;
         }
     }
 }

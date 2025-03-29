@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.17";
+const char *PLUGIN_VERSION = "1.18";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -39,7 +39,7 @@ PatcherInstance *_PI;
     a. horizontal scroll bar
     b. ...
 10. Add saving/loading settings for users;
-11. Add default Creature banks support;
+11. Add default Creature banks support; Done
 12. Remove all extenders code from the plugin:
     a. create API for ObjectExtender class
     b. create unordered map<std::pair<int objectType, int objectSubtype>, std::shared_ptr<ObjectExtender>> of extenders

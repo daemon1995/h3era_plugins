@@ -449,7 +449,7 @@ BOOL RMG_SettingsDlg::RemoveEditsFocus(const BOOL save) const noexcept
     if (auto objPage = dynamic_cast<ObjectsPage *>(m_currentPage))
     {
         // loop all the panels
-        for (auto panel : objPage->dlgPanels)
+        for (auto panel : objPage->objectsPanels)
         {
             // if any of them was foucused
             if (panel->UnfocusEdits(save))
@@ -465,32 +465,20 @@ BOOL RMG_SettingsDlg::RemoveEditsFocus(const BOOL save) const noexcept
 VOID RMG_SettingsDlg::OnOK()
 {
 
-    if (!RemoveEditsFocus(true))
-    {
-        // H3Messagebox();
-        if (!SaveRMGObjectsInfo(true))
-            H3Messagebox(EraJS::read("RMG.text.dlg.iniError"));
-        WriteIniDlgSettings();
+    RemoveEditsFocus(true);
 
-        this->Stop();
-    }
-    else
-    {
-        Redraw();
-    }
+    if (!SaveRMGObjectsInfo(true))
+        H3Messagebox(EraJS::read("RMG.text.dlg.iniError"));
+    WriteIniDlgSettings();
+
+    this->Stop();
 }
 
 VOID RMG_SettingsDlg::OnCancel()
 {
-    if (!RemoveEditsFocus(false))
-    {
-        WriteIniDlgSettings();
-        this->Stop();
-    }
-    else
-    {
-        Redraw();
-    }
+    RemoveEditsFocus(false);
+    WriteIniDlgSettings();
+    this->Stop();
 }
 BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
 {
@@ -573,13 +561,13 @@ void RMG_SettingsDlg::ObjectsPage::CreateVerticalScrollBar()
     const int layoutHeight = RMG_SettingsDlg::instance->heightDlg - 40;
     constexpr int itemId = 100;
 
-    const int PANELS_NUM = dlgPanels.size();
+    const int PANELS_NUM = objectsPanels.size();
     const int DATA_NUM = RMGObjects.size();
     // if needed m_size > space -> create custom scroll bar
     if (PANELS_NUM < DATA_NUM)
     {
-        auto lastPanel = dlgPanels.back();
-        const int scrollBarY = dlgPanels.front()->backgroundPcx->GetY();
+        auto lastPanel = objectsPanels.back();
+        const int scrollBarY = objectsPanels.front()->backgroundPcx->GetY();
         verticalScrollBar = H3DlgScrollbar::Create(
             dlg->widthDlg - 24, scrollBarY, 16,
             lastPanel->backgroundPcx->GetY() + lastPanel->backgroundPcx->GetHeight() - scrollBarY, itemId,
@@ -594,10 +582,10 @@ void RMG_SettingsDlg::ObjectsPage::CreateVerticalScrollBar()
 void RMG_SettingsDlg::ObjectsPage::CreateHorizontalScrollBar()
 {
     // if we have some panels
-    if (dlgPanels.size())
+    if (objectsPanels.size())
     {
         // if panels have > 4 input edits
-        auto &firstPanel = dlgPanels.front();
+        auto &firstPanel = objectsPanels.front();
         int editsNum = 0;
         for (const auto edit : firstPanel->edits)
         {
@@ -607,7 +595,7 @@ void RMG_SettingsDlg::ObjectsPage::CreateHorizontalScrollBar()
         {
             constexpr int padding = 22;
             const int x = firstPanel->objectNameItem->GetX() + firstPanel->objectNameItem->GetWidth() + padding;
-            auto &lastPanel = dlgPanels.back();
+            auto &lastPanel = objectsPanels.back();
 
             const int y = lastPanel->objectNameItem->GetY() + lastPanel->objectNameItem->GetHeight() + 5;
 
@@ -776,9 +764,6 @@ void RMG_SettingsDlg::ObjectsPanel::ObjectInfoToPanelInfo() noexcept
             if (edits[i])
             {
                 edits[i]->SetText(std::to_string(rmgObject->objectInfo.data[i + 1]).c_str());
-                //	edits[i]->Draw();
-                //	edits[i]->Refresh();
-                //	edits[i]->ParentRedraw();
             }
         }
     }
@@ -811,7 +796,7 @@ RMG_SettingsDlg::Page::~Page()
 RMG_SettingsDlg::ObjectsPage::~ObjectsPage()
 {
     // call all the items dtors and clear vectors
-    for (auto &panel : dlgPanels)
+    for (auto &panel : objectsPanels)
     {
 
         delete panel;
@@ -819,7 +804,7 @@ RMG_SettingsDlg::ObjectsPage::~ObjectsPage()
     }
 
     delete pageHeader;
-    dlgPanels.clear();
+    objectsPanels.clear();
 
     // clear RMGObjects pcx
     for (auto &object : RMGObjects)
@@ -849,7 +834,7 @@ H3Msg *__stdcall RMG_SettingsDlg::H3DlgEdit__TranslateInputKey(HiHook *h, H3Inpu
 
     if (instance && instance->blockLettersInput)
     {
-        isDlgTextEditInput = false;
+        isDlgTextEditInput = true;
         // block inputing any text except numbers and backspaces
         if (msg->subtype != 127 && (msg->subtype < 48 || msg->subtype > 57)
             //	|| msg->subtype > 60 && msg->subtype < 122
@@ -892,7 +877,7 @@ void RMG_SettingsDlg::ObjectsPage::SetVisible(bool state)
         state ? horizontalScrollBar->ShowActivate() : horizontalScrollBar->HideDeactivate();
     }
 
-    for (auto &p : dlgPanels)
+    for (auto &p : objectsPanels)
     {
         p->SetVisible(state);
     }
@@ -902,7 +887,7 @@ void RMG_SettingsDlg::ObjectsPage::SetVisible(bool state)
 
 void RMG_SettingsDlg::ObjectsPage::SaveData()
 {
-    for (auto &panel : dlgPanels)
+    for (auto &panel : objectsPanels)
     {
         panel->rmgObject->objectInfo.Clamp();
 
@@ -1008,7 +993,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
     const size_t panelsNum = Clamp(0, objectsNum, 8);
     for (size_t i = 0; i < panelsNum; i++)
     {
-        dlgPanels.emplace_back(new ObjectsPanel(x, i * 55 + 100, this));
+        objectsPanels.emplace_back(new ObjectsPanel(x, i * 55 + 100, this));
     }
 
     CreateVerticalScrollBar();
@@ -1017,7 +1002,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
 
 void RMG_SettingsDlg::ObjectsPage::FillObjects(int firstItem)
 {
-    const size_t PANELS_NUM = dlgPanels.size();
+    const size_t PANELS_NUM = objectsPanels.size();
     const size_t DATA_NUM = RMGObjects.size();
 
     for (size_t i = 0; i < PANELS_NUM; i++)
@@ -1028,8 +1013,8 @@ void RMG_SettingsDlg::ObjectsPage::FillObjects(int firstItem)
         // set new data if object is in range
         if (inRange)
         {
-            dlgPanels[i]->UnfocusEdits(false);
-            dlgPanels[i]->SetObject(&RMGObjects[dataIndex]);
+            objectsPanels[i]->UnfocusEdits(false);
+            objectsPanels[i]->SetObject(&RMGObjects[dataIndex]);
         }
     }
 }
@@ -1064,7 +1049,7 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
 {
     BOOL result = ObjectsPage::ShowObjectExtendedInfo(panel, msg);
     return result;
-
+    BOOL resultA = true;
     const auto rmgObject = panel->rmgObject;
     const int cbID =
         cbanks::CreatureBanksExtender::GetCreatureBankType(rmgObject->objectInfo.type, rmgObject->objectInfo.subtype);
@@ -1098,6 +1083,8 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
 
         ddl.RMB_Show();
     }
+    return resultA;
+
 }
 
 RMG_SettingsDlg::BanksPage::~BanksPage()
@@ -1115,7 +1102,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
     if (msg.IsKeyDown())
     {
     }
-
+    msg.GetKey();
     if (itemId && msg.command == eMsgCommand::ITEM_COMMAND)
     {
 
@@ -1163,25 +1150,29 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
             const int doMassReverse = msg.AltPressed();
             int needMassRedraw = false;
             // iterate all "Page" dlgPanels
-            for (const auto &dlgPanel : dlgPanels)
+            for (const auto &objectsPanel : objectsPanels)
             {
                 // check if item is in dlg panel
 
                 // if that panel is visible
-                if (dlgPanel->visible)
+                if (objectsPanel->visible)
                 {
+
                     // check if panel has data
                     // check if clicked item is from that panel
-                    if (dlgPanel->rmgObject &&
-                        dlgPanel->items.end() != std::find(dlgPanel->items.begin(), dlgPanel->items.end(), clickedItem))
+
+                    if (objectsPanel->rmgObject &&
+                        objectsPanel->items.end() !=
+                            std::find(objectsPanel->items.begin(), objectsPanel->items.end(), clickedItem))
                     {
+
                         if (msg.subtype == eMsgSubtype::LBUTTON_DOWN &&
-                            (dlgPanel->enabledCheckBox == clickedItem || dlgPanel->pictureItem == clickedItem ||
-                             dlgPanel->objectNameItem == clickedItem))
+                            (objectsPanel->enabledCheckBox == clickedItem || objectsPanel->pictureItem == clickedItem ||
+                             objectsPanel->objectNameItem == clickedItem))
                         {
                             P_SoundManager->ClickSound();
 
-                            const int newSetup = dlgPanel->rmgObject->objectInfo.enabled ^= true;
+                            const int newSetup = objectsPanel->rmgObject->objectInfo.enabled ^= true;
                             if (doMassEnable || doMassReverse)
                             {
                                 for (auto &obj : this->RMGObjects)
@@ -1191,54 +1182,77 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                                 needMassRedraw = true;
                                 if (doMassReverse)
                                 {
-                                    dlgPanel->rmgObject->objectInfo.enabled ^= true;
+                                    objectsPanel->rmgObject->objectInfo.enabled ^= true;
                                 }
                             }
                             else
                             {
 
-                                dlgPanel->UnfocusEdits(true);
-                                dlgPanel->ObjectInfoToPanelInfo();
-                                //	dlgPanel->PanelInfoToObjectInfo();
+                                objectsPanel->UnfocusEdits(true);
+                                objectsPanel->ObjectInfoToPanelInfo();
+                                //	objectsPanel->PanelInfoToObjectInfo();
                             }
                             needMassRedraw = true;
 
                             needDlgRedraw = true;
                         }
 
-                        //	if (dlgPanel->mapLimitEdit == clickedItem)
+                        //	if (objectsPanel->mapLimitEdit == clickedItem)
                         constexpr int SIZE = 4;
-                        if (isDlgTextEditInput)
-                        {
-                            isDlgTextEditInput = false;
-                            //  dlgPanel->PanelInfoToObjectInfo();
-                        }
+
                         for (size_t i = 0; i < SIZE; ++i)
                         {
-                            //	dlgPanel->rmgObject->objectInfo.data[i + 1] =
-                            // dlgPanel->edits[i]->GetH3String().ToSigned();
+                            //	objectsPanel->rmgObject->objectInfo.data[i + 1] =
+                            // objectsPanel->edits[i]->GetH3String().ToSigned();
                         }
-                        if (msg.subtype == eMsgSubtype::LBUTTON_CLICK && clickedItem == dlgPanel->defaultButton)
+                        if (msg.subtype == eMsgSubtype::LBUTTON_CLICK && clickedItem == objectsPanel->defaultButton)
                         {
 
-                            dlgPanel->UnfocusEdits(true);
-                            dlgPanel->rmgObject->objectInfo.RestoreDefault();
-                            dlgPanel->ObjectInfoToPanelInfo();
+                            objectsPanel->UnfocusEdits(true);
+                            objectsPanel->rmgObject->objectInfo.RestoreDefault();
+                            objectsPanel->ObjectInfoToPanelInfo();
                             needDlgRedraw = true;
                         }
                         if (msg.IsRightClick())
-                            result = this->ShowObjectExtendedInfo(dlgPanel, msg);
+                            result = this->ShowObjectExtendedInfo(objectsPanel, msg);
+                    }
+                    else if (isDlgTextEditInput)
+                    {
+                        // objectsPanel->UnfocusEdits(1);
+
+                        constexpr int SIZE = 4;
+                        for (auto &i : objectsPanel->edits)
+                        {
+                            if (*reinterpret_cast<char *>(reinterpret_cast<char *>(i) + 0x6D))
+                            {
+                                //   needDlgRedraw = true;
+                                objectsPanel->PanelInfoToObjectInfo();
+                                objectsPanel->ObjectInfoToPanelInfo();
+
+                                //  Era::ExecErmCmd("IF:L^^");
+                                isDlgTextEditInput = false;
+                                needDlgRedraw = true;
+                                break;
+                            }
+                        }
+                        //  Era::NotifyError(Era::IntToStr(int(clickedItem)).c_str());
+                    }
+                    if (needDlgRedraw)
+                    {
+                        break;
                     }
                 }
-                if (needMassRedraw)
-                {
-                    for (const auto &dlgPanel : dlgPanels)
-                    {
-                        dlgPanel->UnfocusEdits(true);
 
-                        dlgPanel->ObjectInfoToPanelInfo();
-                        //	break;
-                    }
+                // break;
+            }
+            if (needMassRedraw)
+            {
+                for (const auto &dlgPanel : objectsPanels)
+                {
+                    dlgPanel->UnfocusEdits(true);
+
+                    dlgPanel->ObjectInfoToPanelInfo();
+                    //	break;
                 }
             }
         }
