@@ -1,6 +1,5 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 
-
 #include "pch.h"
 
 using namespace h3;
@@ -46,7 +45,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
                 // must have hooks before other
                 MonsterHandler::Init();
                 ArtifactHandler::Init();
-              //   _PI->WriteLoHook(0x04EE053, gem_TestHook);
+                //   _PI->WriteLoHook(0x04EE053, gem_TestHook);
 
                 _PI->WriteLoHook(0x4EEAF2, HooksInit);
             }
