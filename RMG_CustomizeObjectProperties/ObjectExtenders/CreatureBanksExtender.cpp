@@ -154,7 +154,7 @@ __int64 __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3He
                     int bonusValue = 0;
                     if (const UINT mithrilAmount = customReward->mithrilAmount)
                     {
-                        const H3Player *player = THISCALL_1(H3Player *, 0x04E5920, hero->owner);
+                        const H3Player *player = THISCALL_1(H3Player *, 0x04E5920, hero);
 
                         bonusValue +=
                             static_cast<int>(player->resourceImportance[eResource::GOLD] * mithrilAmount * 1000);
@@ -194,7 +194,7 @@ __int64 __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3He
                         const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
                         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
                         {
-                            const eSpell& spellId = customReward->spells[i];
+                            const eSpell &spellId = customReward->spells[i];
 
                             if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
                                 P_Spell[spellId].level > maxSpellLevel)
