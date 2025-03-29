@@ -28,7 +28,7 @@ bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
 
     if (result)
     {
-        h->Undo();
+        // h->Undo();
 
         const int MAX_MON_ID = IntAt(0x4A1657);
 
@@ -66,6 +66,11 @@ bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
                 descriptions[i] = readResult;
+
+            // temp ? fix for missing broken name pointers
+            P_CreatureInformation[i].namePlural = pluralNames[i];
+            P_CreatureInformation[i].nameSingular = singleNames[i];
+            P_CreatureInformation[i].description = descriptions[i];
         }
 #ifdef CREATE_JSON
         // std::thread th(CreateMonstersJson, monsters, "mosterNames.json");
@@ -80,5 +85,5 @@ bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
 void MonsterHandler::Init()
 {
     _PI->WriteHiHook(0x07117CA, CDECL_, WoG_OnMapReset); //
-                                                         //  _PI->WriteHiHook(0x04EDF4B, CDECL_, LoadCranimTxt);   //
+    // _PI->WriteHiHook(0x04EDF4B, CDECL_, LoadCranimTxt);  //
 }

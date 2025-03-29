@@ -39,7 +39,7 @@ void ExportManager::CreateMonstersJson(const std::vector<MonsterInfo> &monsters)
             j["era"]["monsters"][std::to_string(i)]["name"]["singular"] = monsters[i].singularName;
 
         if (!monsters[i].pluralName.empty())
-            j["era"]["monsters"][std::to_string(i)]["name"]["pluralName"] = monsters[i].pluralName;
+            j["era"]["monsters"][std::to_string(i)]["name"]["plural"] = monsters[i].pluralName;
 
         if (!monsters[i].description.empty())
             j["era"]["monsters"][std::to_string(i)]["name"]["description"] = monsters[i].description;

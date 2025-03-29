@@ -36,7 +36,9 @@ LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
 
                 sprintf(h3_TextBuffer, m_localeFormat, localeName);
                 readSuccess = false;
-                Locale *locale = new Locale(localeName, EraJS::read(h3_TextBuffer, readSuccess));
+                std::string localeNameStr = EraJS::read(h3_TextBuffer, readSuccess);
+                localeNameStr.append(" - ").append(localeName);
+                Locale *locale = new Locale(localeName, localeNameStr.c_str());
                 locale->hasDescription = readSuccess && !locale->displayedName.empty();
                 m_locales.emplace_back(locale);
             }
