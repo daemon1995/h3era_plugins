@@ -172,17 +172,21 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
 {
 
     instance->needDrawHints = false;
-    const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() &&
-                           STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings.vKey) & 0x800 &&
-                           instance->settings.isHeld;
-
-    if (keyIsHeld)
+    // if map isn't forcelly hidden
+    if (IntAt(0x699588) == 0)
     {
-        instance->playerID = P_Game->Get()->GetPlayerID();
-        static char ermVariableNameBuffer[64];
+        const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() &&
+                               STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings.vKey) & 0x800 &&
+                               instance->settings.isHeld;
 
-        sprintf(ermVariableNameBuffer, "gem_adventure_map_object_hints_option_%d", instance->playerID); // ;
-        instance->needDrawHints = Era::GetAssocVarIntValue(ermVariableNameBuffer);
+        if (keyIsHeld)
+        {
+            instance->playerID = P_Game->Get()->GetPlayerID();
+            static char ermVariableNameBuffer[64];
+
+            sprintf(ermVariableNameBuffer, "gem_adventure_map_object_hints_option_%d", instance->playerID); // ;
+            instance->needDrawHints = Era::GetAssocVarIntValue(ermVariableNameBuffer);
+        }
     }
 
     instance->drawnOjectIndexes.clear();
