@@ -23,7 +23,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         H3Hero *hero = nullptr;
         Patch *positionsPatch = nullptr;
 
-        std::array<eSpell, STATES_AMOUNT> spellsToLearn = {eSpell::NONE, eSpell::NONE, eSpell::NONE, eSpell::NONE};
+        std::array<eSpell, SPELLS_AMOUNT> spellsToLearn = {eSpell::NONE, eSpell::NONE, eSpell::NONE, eSpell::NONE};
         UINT mithrilToAdd = 0;
         H3String message = "";
         UINT spellPointsToAdd = 0;

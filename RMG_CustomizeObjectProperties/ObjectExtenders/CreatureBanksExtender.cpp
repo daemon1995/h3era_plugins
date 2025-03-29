@@ -194,7 +194,7 @@ __int64 __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3He
                         const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
                         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
                         {
-                            const eSpell spellId = customReward->spells[i];
+                            const eSpell& spellId = customReward->spells[i];
 
                             if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
                                 P_Spell[spellId].level > maxSpellLevel)
@@ -265,7 +265,7 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
                         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
                         {
 
-                            const eSpell spellId = customBank->spells[i];
+                            const eSpell &spellId = customBank->spells[i];
                             if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
                                 P_Spell[spellId].level > maxSpellLevel)
                             {
