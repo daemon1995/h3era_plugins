@@ -79,7 +79,7 @@ _LHF_(CrBanksTxt_AfterLoad)
     wog::WoGObjectsExtender::Get();
     //! Set patches for the RMG_SettingsDlg
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
-
+    university::UniversityExtender::Get();
     return EXEC_DEFAULT;
 }
 namespace EraMemory
