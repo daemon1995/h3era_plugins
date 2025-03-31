@@ -13,6 +13,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     static constexpr UINT MITHRIL_ID = 7;
     static constexpr UINT SPELLS_AMOUNT = 4;
     static constexpr UINT SKILLS_AMOUNT = 4;
+    static constexpr UINT ARTIFACTS_AMOUNT = 4;
 
     struct Current
     {
@@ -28,6 +29,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         H3String message = "";
         UINT spellPointsToAdd = 0;
         UINT experiencePointsToAdd = 0;
+        INT MAX_ART_ID = limits::ARTIFACTS;
     };
     static Current currentCreatureBank;
 
@@ -45,6 +47,8 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         UINT spellPoints = 0;
         INT luck = 0;
         INT morale = 0;
+        eArtifact exactArtifacts[ARTIFACTS_AMOUNT] = {eArtifact::NONE, eArtifact::NONE, eArtifact::NONE,
+                                                      eArtifact::NONE};
 
         UINT8 primarySkills[SKILLS_AMOUNT] = {0, 0, 0, 0};
         struct SpellsReward

@@ -479,18 +479,37 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
     int &stateId = currentCreatureBank.stateId = c->edx;
 
     // check if we already in the game creature banks
-    const auto &creatureBank = reinterpret_cast<H3CreatureBank *>(c->ebx);
 
-    const auto &creatureBanks = P_Game->creatureBanks;
-    for (size_t i = 0; i < creatureBanks.Size(); i++)
+    if (auto creatureBank = reinterpret_cast<H3CreatureBank *>(c->ebx))
     {
-        if (creatureBank == &creatureBanks[i])
+        // creatureBank->artifacts.Resize(0);
+
+        auto &manager = Get().manager;
+        const auto &customRewardSetups = manager.customRewardSetups;
+        if (type < manager.customRewardSetups.size() && stateId < manager.customRewardSetups[type].size())
         {
-            auto &manager = Get().manager;
-            manager.customCreatureBanksVector[i] = CustomCreatureBank(manager.customRewardSetups[type][stateId], i);
-            stateId = -1;
-            type = -1;
-            break;
+            const auto &customRewardSetupState = customRewardSetups[type][stateId];
+
+            for (size_t i = 0; i < ARTIFACTS_AMOUNT; i++)
+            {
+                const eArtifact artifact = customRewardSetupState.exactArtifacts[i];
+                if (artifact != eArtifact::NONE)
+                {
+                    creatureBank->artifacts.AddOne(artifact);
+                }
+            }
+
+            const auto &creatureBanks = P_Game->creatureBanks;
+            for (size_t i = 0; i < creatureBanks.Size(); i++)
+            {
+                if (creatureBank == &creatureBanks[i])
+                {
+                    manager.customCreatureBanksVector[i] = CustomCreatureBank(customRewardSetupState, i);
+                    stateId = -1;
+                    type = -1;
+                    break;
+                }
+            }
         }
     }
 
@@ -804,6 +823,14 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
         bool readSuccess = false;
         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
         {
+            const int artId = EraJS::readInt(
+                H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifacts.%d", creatureBankType, stateId, i)
+                    .String(),
+                readSuccess);
+            if (readSuccess)
+            {
+                exactArtifacts[i] = eArtifact(Clamp(eArtifact::NONE, artId, currentCreatureBank.MAX_ART_ID));
+            }
             primarySkills[i] = Clamp(
                 0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i),
                 INT8_MAX);
@@ -814,7 +841,7 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
                 readSuccess);
             if (readSuccess)
             {
-                spellsRewards[i].spellId = eSpell(Clamp(0, spellId, h3::limits::SPELLS));
+                spellsRewards[i].spellId = eSpell(Clamp(eSpell::NONE, spellId, h3::limits::SPELLS));
             }
             else
             {
@@ -855,11 +882,12 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
     int addedBanksNumber = 0;
 
     const int MAX_MON_ID = IntAt(0x4A1657);
+    currentCreatureBank.MAX_ART_ID = IntAt(0x49DD8E + 2) / 4;
 
     // init  default positions
     std::array<int, 14> defaultPositions{};
-    constexpr int postionsAddress = 0x063D0E0;
-    libc::memcpy(defaultPositions.data(), reinterpret_cast<int *>(postionsAddress), sizeof(defaultPositions));
+    constexpr int positionsAddress = 0x063D0E0;
+    libc::memcpy(defaultPositions.data(), reinterpret_cast<int *>(positionsAddress), sizeof(defaultPositions));
 
     Resize(defaultBanksNumber);
 
@@ -885,6 +913,17 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
             if (creatureBankType < defaultBanksNumber)
             {
                 setup = setups[creatureBankType];
+            }
+            else
+            {
+                setup.states[0].chance = 100; // default.chance
+                for (size_t i = 0; i < STATES_AMOUNT; i++)
+                {
+                    for (size_t j = 0; j < ARTIFACTS_AMOUNT; j++)
+                    {
+                        setup.states[i].artifactTypeCounts[j] = 0;
+                    }
+                }
             }
 
             // assign new CB name from json/default
@@ -939,7 +978,7 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
                     trSuccess);
                 if (trSuccess)
                 {
-                    state.upgrade = Clamp(0, chance, 100);
+                    state.upgrade = Clamp(0, upgrade, 100);
                 }
 
                 for (size_t artLvl = 0; artLvl < 4; artLvl++)
