@@ -2,7 +2,7 @@
 namespace spellmarket
 {
 
-constexpr int SPELL_MARKET_OBJECT_SUBTYPE = 25;
+constexpr int SPELL_MARKET_OBJECT_SUBTYPE = 12;
 constexpr int GOLD_REQUIRED = 2000;
 enum eVisitError : char
 {
