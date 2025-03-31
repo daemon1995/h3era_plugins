@@ -84,10 +84,9 @@ _LHF_(ShrinesExternder::Game__AtShrineOfMagicGestureSettingSpell)
     // object subtype is spell id
     if (H3MapItem *shrines = reinterpret_cast<H3MapItem *>(c->esi))
     {
-        //   shrines->objectSubtype = eSpell::TOWN_PORTAL + 1;
         if (const int objectSubtype = shrines->objectSubtype)
         {
-            shrines->magicShrine.spell = objectSubtype - 1;
+            shrines->magicShrine.spell = Clamp(0, objectSubtype - 1, limits::SPELLS - 1);
         }
     }
     return EXEC_DEFAULT;

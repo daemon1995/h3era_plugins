@@ -15,10 +15,9 @@ RMGObjectsEditor::RMGObjectsEditor() : IGamePatch(globalPatcher->CreateInstance(
 
 void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
 {
-    auto &editor = RMGObjectsEditor::Get();
 
     // init data in the main
-    editor.InitDefaultProperties(maxSubtypes);
+    Get().InitDefaultProperties(maxSubtypes);
 
     // load ini data in the separate thread
     std::thread th(&RMGObjectInfo::LoadUserProperties, maxSubtypes);
@@ -99,9 +98,9 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     patch->Destroy();
 }
 
-const H3Vector<H3RmgObjectGenerator *> &RMGObjectsEditor::GetObjectGeneratorsList() const noexcept
+const H3Vector<H3RmgObjectGenerator *> *RMGObjectsEditor::GetObjectGeneratorsList() const noexcept
 {
-    return *originalRMGObjectGenerators; // .objectGenerators;
+    return originalRMGObjectGenerators; // .objectGenerators;
 }
 
 RMGObjectsEditor &RMGObjectsEditor::Get() noexcept

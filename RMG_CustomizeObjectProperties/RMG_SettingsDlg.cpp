@@ -1615,29 +1615,33 @@ void FindDataInObjectGeneratorsList(std::vector<std::pair<H3ObjectAttributes, H3
     {
         std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> temp;
         temp.reserve(attributesList.size());
-        auto &objList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList();
 
-        for (const auto *rmgGenObj : objList)
+        if (const auto objList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList())
         {
-            auto result = std::find_if(
-                attributesList.begin(), attributesList.end(),
-                [&](const std::pair<H3ObjectAttributes, H3LoadedPcx16 *> &atr) -> bool {
-                    return atr.first.type == rmgGenObj->type &&
-                           atr.first.subtype ==
-                               rmgGenObj->subtype; // (ignoreSubtypes ? obj.subtype != 0 : atr.subtype == obj.subtype);
-                });
 
-            if (result != attributesList.end())
+            for (const auto *rmgGenObj : *objList)
             {
-                // H3ObjectAttributes attr = *result;
-                temp.emplace_back(*result); //);std::make_pair(attr,nullptr));
+                auto result = std::find_if(
+                    attributesList.begin(), attributesList.end(),
+                    [&](const std::pair<H3ObjectAttributes, H3LoadedPcx16 *> &atr) -> bool {
+                        return atr.first.type == rmgGenObj->type &&
+                               atr.first.subtype ==
+                                   rmgGenObj
+                                       ->subtype; // (ignoreSubtypes ? obj.subtype != 0 : atr.subtype == obj.subtype);
+                    });
+
+                if (result != attributesList.end())
+                {
+                    // H3ObjectAttributes attr = *result;
+                    temp.emplace_back(*result); //);std::make_pair(attr,nullptr));
+                }
             }
+
+            temp.shrink_to_fit();
+
+            // reassign array data
+            attributesList = temp;
         }
-
-        temp.shrink_to_fit();
-
-        // reassign array data
-        attributesList = temp;
     }
 }
 
@@ -1840,20 +1844,16 @@ int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
         {
             const int currentFrame = randomGameButton->GetFrame();
             randomGameButton->SetFrame(currentFrame ^ 2);
-            const bool enabelFullRandom = randomGameButton->GetFrame() == 2;
+            const bool enableFullRandom = randomGameButton->GetFrame() == 2;
             randomGameButton->Draw();
             randomGameButton->ParentRedraw();
-            static bool firstLaunch = true;
-            if (firstLaunch)
+
+            if (currentFrame == 0)
             {
-                firstLaunch = false;
-                if (!currentFrame)
-                {
-                    H3Messagebox::Show(EraJS::read("RMG.text.buttons.random.help"));
-                }
+                H3Messagebox::Show(EraJS::read("RMG.text.buttons.random.help"));
             }
 
-            Era::WriteStrToIni(RMG_SettingsDlg::INI_ALWAYS_RANDOM, Era::IntToStr(enabelFullRandom).c_str(),
+            Era::WriteStrToIni(RMG_SettingsDlg::INI_ALWAYS_RANDOM, Era::IntToStr(enableFullRandom).c_str(),
                                RMG_SettingsDlg::SETTINGS_INI_SECTION, RMG_SettingsDlg::INI_FILE_PATH);
             Era::SaveIni(RMG_SettingsDlg::INI_FILE_PATH);
         }
@@ -2002,16 +2002,16 @@ void CreateGraphics(const H3Vector<H3RmgObjectGenerator *> &rmgObjList)
 void __stdcall GameStart(HiHook *hook, const DWORD a1)
 {
     THISCALL_1(int, hook->GetDefaultFunc(), a1);
-    static bool assetsCreated = false;
-    if (!assetsCreated)
+
+    hook->Undo();
+
+    GetObjectPrototypesLists();
+    if (const auto genList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList())
     {
-        GetObjectPrototypesLists();
-        CreateGraphics(editor::RMGObjectsEditor::Get().GetObjectGeneratorsList());
+        CreateGraphics(*genList);
         // CreateResizedObjectPcx();
         std::thread th(CreateResizedObjectPcx);
         th.detach();
-
-        assetsCreated = true;
     }
 }
 

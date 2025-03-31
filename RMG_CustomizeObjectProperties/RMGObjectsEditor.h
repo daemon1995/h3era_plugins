@@ -247,7 +247,7 @@ class RMGObjectsEditor : public IGamePatch
     static void __stdcall RMG__CreateObjectGenerators(HiHook *h, H3RmgRandomMapGenerator *rmgStruct);
 
   public:
-    const H3Vector<H3RmgObjectGenerator *> &GetObjectGeneratorsList() const noexcept;
+    const H3Vector<H3RmgObjectGenerator *> *GetObjectGeneratorsList() const noexcept;
 
     // Get vector of the information for all subtypes of that type
 
