@@ -9,13 +9,10 @@
 *.user
 *.userosscache
 *.sln.docstates
-*.vcxproj
 *.filters
 *.json
-*.vcxproj
 *.zip
 *.7z
-*/*.vcxproj
 */*.sln
 */*.map
 
