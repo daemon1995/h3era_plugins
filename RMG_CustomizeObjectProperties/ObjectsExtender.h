@@ -47,6 +47,8 @@ class ObjectsExtender : public IGamePatch
 
   protected:
     static std::vector<RMGObjectInfo> additionalRmgObjects;
+    static BOOL skipMapMessageByHdMod;
+    static BOOL patchesCreated;
 
   protected:
     ObjectsExtender(PatcherInstance *pi);
@@ -66,7 +68,8 @@ class ObjectsExtender : public IGamePatch
                                        const BOOL isRightClick) const noexcept;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiResWeight) const noexcept;
-
+    virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                             const H3String &defaltText) noexcept;
     //	virtual int AiMapItemWeightFunction(HookContext* c, const H3MapItem* mapItem, H3Player* player);
     // returns if object was visited by some of derived classes
     // virtual BOOL HeroMapItemVisitFunction(HookContext* c, const H3Hero* hero, const H3MapItem* mapItem, const BOOL
@@ -90,9 +93,13 @@ class ObjectsExtender : public IGamePatch
     static INT ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRightClick);
     static void LoadMapObjectPropertiesByTypeSubtypes() noexcept;
     static void LoadMapObjectPropertiesFromLoadedMods() noexcept;
-
+    //static int __stdcall WoG_PlaceObject(HiHook *h, const int x, const int y, const int z, const int objType,
+//                                     const int objSubtype, const int objType2, const int objSubtype2,
+//                                     const DWORD a8);
   public:
     static void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList);
+    static BOOL ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                       H3String &resultString) noexcept;
     // static void HandleRmgOjectGeneratorBeforeAdding(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
 
     // static void __stdcall H3AdventureManager__ObjectVisit_SoundPlay(HiHook* h, const int objType, const int

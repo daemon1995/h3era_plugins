@@ -51,7 +51,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         {
             eSpell spellId = eSpell::NONE;
             eSpellchool spellSchool = eSpellchool::ALL;
-            DWORD spellLevels = 0x1F;
+            DWORD spellLevels = 0x3E;
             DWORD spellFlags = -1;
             BOOL generate = false;
 
@@ -168,9 +168,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
                                                     const int y, const int picType1, const int picSubtype1,
                                                     const int picType2, const int picSubtype2, const int par,
                                                     const int time, const int picType3, const int picSubtype3);
-    static int __stdcall WoG_PlaceObject(HiHook *h, const int x, const int y, const int z, const int objType,
-                                         const int objSubtype, const int objType2, const int objSubtype2,
-                                         const DWORD a8);
+
     static _LHF_(CrBank_AfterCombatWon);
 
     static _LHF_(CrBank_AfterDrawingResources);

@@ -64,6 +64,7 @@ struct RMGObjectInfo
     static constexpr LPCSTR OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%s";
     static constexpr LPCSTR OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%d.%s";
     static constexpr LPCSTR OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%d.name";
+    static constexpr LPCSTR OBJECT_SUBTYPE_DESC_JSON_KEY_FORMAT = "RMG.objectGeneration.%d.%d.description";
 
   public:
     static std::vector<RMGObjectInfo> currentRMGObjectsInfoByType[h3::limits::OBJECTS];
@@ -79,7 +80,10 @@ struct RMGObjectInfo
     void RestoreDefault() noexcept;
     void SetRandom() noexcept;
     void MakeReal() const noexcept;
+    inline LPCSTR GetRmgTypeDescription() const noexcept;
+    inline LPCSTR GetRmgSubtypeDescription() const noexcept;
     LPCSTR GetName() const noexcept;
+    LPCSTR GetDescription() const noexcept;
 
     BOOL WriteToINI() const noexcept;
     inline void ReadFromINI() noexcept;
@@ -94,6 +98,8 @@ struct RMGObjectInfo
     static void LoadUserProperties(const INT16 *maxSubtypes);
     static LPCSTR GetObjectName(const INT32 type, const INT32 subtype);
     static LPCSTR GetObjectName(const H3MapItem *mapItem);
+    static LPCSTR GetObjectDescription(const INT32 type, const INT32 subtype);
+    static LPCSTR GetObjectDescription(const H3MapItem *mapItem);
 };
 
 struct GeneratedInfo
@@ -220,7 +226,7 @@ class RMGObjectsEditor : public IGamePatch
   private:
     void InitDefaultProperties(const INT16 *maxSubtypes);
 
-    void BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct) ;
+    void BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct);
     void AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept;
     //		void CreateGeneratedInfo(const H3RmgRandomMapGenerator* rmg);
     void SetMapControlSpellLevels(const BOOL state, const BOOL blockWaterSpells = true) noexcept;

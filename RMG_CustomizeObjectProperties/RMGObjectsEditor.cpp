@@ -766,6 +766,14 @@ void RMGObjectInfo::MakeReal() const noexcept
     }
 }
 
+LPCSTR RMGObjectInfo::GetRmgTypeDescription() const noexcept
+{
+    return EraJS::read(H3String::Format("RMG.objectGeneration.%d.text.rmg", type).String());
+}
+LPCSTR RMGObjectInfo::GetRmgSubtypeDescription() const noexcept
+{
+    return EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.rmg", type, subtype).String());
+}
 RMGObjectInfo::RMGObjectInfo(const INT32 type, const INT32 subtype) : type(type), subtype(subtype)
 {
     enabled = true;
@@ -857,14 +865,6 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator &gener
     }
 
     rmgObjInfo.Clamp();
-}
-LPCSTR RMGObjectInfo::GetObjectName(const H3MapItem *mapItem)
-{
-    if (mapItem)
-    {
-        return GetObjectName(mapItem->objectType, mapItem->objectSubtype);
-    }
-    return h3_NullString;
 }
 
 void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, const INT16 *maxSubtypes)
@@ -974,7 +974,14 @@ void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
         }
     }
 }
-
+LPCSTR RMGObjectInfo::GetObjectName(const H3MapItem *mapItem)
+{
+    if (mapItem)
+    {
+        return GetObjectName(mapItem->objectType, mapItem->objectSubtype);
+    }
+    return h3_NullString;
+}
 LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 {
     LPCSTR result = h3_NullString;
@@ -984,58 +991,91 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     {
         return H3CreatureBankSetup::Get()[creatureBankId].name.String();
     }
+    bool readSucces = false;
 
-    switch (type)
+    libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
+    LPCSTR jsonString = EraJS::read(h3_TextBuffer, readSucces);
+
+    if (readSucces)
     {
-    case eObject::ARTIFACT:
-        result = P_Artifacts[subtype].name;
-        break;
-    case eObject::CREATURE_GENERATOR1:
-        result = P_DwellingNames1[subtype];
-        break;
-    case eObject::CREATURE_GENERATOR4:
-        result = P_DwellingNames4[subtype];
-        break;
-    case eObject::MINE:
-        result = P_MineNames[subtype];
-        break;
-    case eObject::MONSTER:
-    case eObject::RANDOM_MONSTER:
-        result = P_Creatures[subtype].namePlural;
-    case eObject::PYRAMID:
-    case warehouses::WAREHOUSE_OBJECT_TYPE:
-    case extender::HOTA_OBJECT_TYPE:
-    case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
-    case 146:
-        libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
-        result = EraJS::read(h3_TextBuffer);
-        break;
-    case eObject::RESOURCE:
-        result = P_ResourceName[subtype];
-        break;
-    case eObject::SHRINE_OF_MAGIC_INCANTATION:
-        if (subtype)
-        {
-            libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
-            result = EraJS::read(h3_TextBuffer);
-        }
-        else
-        {
-            result = P_ObjectName[type];
-        }
-        break;
 
-    case eObject::TOWN:
-        result = P_TownNames[subtype];
-        break;
-    default:
-        result = P_ObjectName[type];
-        break;
+        result = jsonString;
+    }
+    else
+    {
+        switch (type)
+        {
+        case eObject::ARTIFACT:
+            result = P_Artifacts[subtype].name;
+            break;
+        case eObject::CREATURE_GENERATOR1:
+            result = P_DwellingNames1[subtype];
+            break;
+        case eObject::CREATURE_GENERATOR4:
+            result = P_DwellingNames4[subtype];
+            break;
+        case eObject::MINE:
+            result = P_MineNames[subtype];
+            break;
+        case eObject::MONSTER:
+        case eObject::RANDOM_MONSTER:
+            result = P_Creatures[subtype].namePlural;
+        case eObject::PYRAMID:
+        case warehouses::WAREHOUSE_OBJECT_TYPE:
+        case extender::HOTA_OBJECT_TYPE:
+        case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
+        case 146:
+            result = jsonString;
+            break;
+        case eObject::RESOURCE:
+            result = P_ResourceName[subtype];
+            break;
+        case eObject::SHRINE_OF_MAGIC_INCANTATION:
+            if (subtype)
+            {
+                libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
+                result = EraJS::read(h3_TextBuffer);
+            }
+            else
+            {
+                result = P_ObjectName[type];
+            }
+            break;
+
+        case eObject::TOWN:
+            result = P_TownNames[subtype];
+            break;
+        default:
+            result = P_ObjectName[type];
+            break;
+        }
     }
 
     return result;
 }
 
+LPCSTR RMGObjectInfo::GetObjectDescription(const H3MapItem *mapItem)
+{
+    if (mapItem)
+    {
+        return GetObjectDescription(mapItem->objectType, mapItem->objectSubtype);
+    }
+    return h3_NullString;
+}
+LPCSTR RMGObjectInfo::GetObjectDescription(const INT32 type, const INT32 subtype)
+{
+    LPCSTR result = h3_NullString;
+    bool readSucces = false;
+
+    libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_DESC_JSON_KEY_FORMAT, type, subtype);
+    LPCSTR jsonString = EraJS::read(h3_TextBuffer, readSucces);
+
+    if (readSucces)
+    {
+        result = jsonString;
+    }
+    return h3_NullString;
+}
 inline int *create3DArray(int X, int Y, int Z)
 {
     return new int[X * Y * Z];

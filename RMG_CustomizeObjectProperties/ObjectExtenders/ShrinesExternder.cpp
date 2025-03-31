@@ -14,6 +14,31 @@ ShrinesExternder::ShrinesExternder()
 ShrinesExternder::~ShrinesExternder()
 {
 }
+
+BOOL ShrinesExternder::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                                   const H3String &defaultHint) noexcept
+{
+    if (info.type >= eObject::SHRINE_OF_MAGIC_INCANTATION && info.type <= eObject::SHRINE_OF_MAGIC_THOUGHT)
+    {
+
+        if (info.type == eObject::SHRINE_OF_MAGIC_GESTURE && info.subtype > 0)
+        {
+            H3String additionalHint = defaultHint + "\n";
+            // additionalHint += info.GetRmgTypeDescription();
+            // additionalHint.Append("\n\n");
+
+            libc::sprintf(h3_TextBuffer, "{~>SpellScr.def:0:%d block}", info.subtype - 1);
+            additionalHint.Append(h3_TextBuffer);
+            H3Messagebox::RMB(additionalHint.String());
+        }
+        else
+        {
+            H3Messagebox::RMB(defaultHint.String());
+        }
+        return true;
+    }
+    return 0;
+}
 H3RmgObjectGenerator *ShrinesExternder::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
 {
 
@@ -31,20 +56,12 @@ H3RmgObjectGenerator *ShrinesExternder::CreateRMGObjectGen(const RMGObjectInfo &
 BOOL ShrinesExternder::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                           int &aiResWeight) const noexcept
 {
-    if (mapItem->objectSubtype > 0)
-    {
-        if (mapItem->objectType == eObject::SHRINE_OF_MAGIC_GESTURE && currentHero->level < LEVEL_REQUIRED)
-        {
-            aiResWeight = 0;
-            return true;
-        }
-        else if (mapItem->objectType == eObject::SHRINE_OF_MAGIC_THOUGHT)
-        {
-            // aiResWeight = 0;
 
-            //  activePlayer->resourceImportance[eResource::GOLD] * SPELL_COST;
-            // return true;
-        }
+    if (mapItem->objectType == eObject::SHRINE_OF_MAGIC_GESTURE && mapItem->objectSubtype > 0 &&
+        currentHero->level < LEVEL_REQUIRED)
+    {
+        aiResWeight = 0;
+        return true;
     }
 
     return false;

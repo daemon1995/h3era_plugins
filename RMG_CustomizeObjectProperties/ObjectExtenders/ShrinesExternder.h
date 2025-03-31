@@ -25,6 +25,8 @@ class ShrinesExternder : public extender::ObjectsExtender
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiResWeight) const noexcept;
+    virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                             const H3String &defaltText) noexcept override final;
 
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;

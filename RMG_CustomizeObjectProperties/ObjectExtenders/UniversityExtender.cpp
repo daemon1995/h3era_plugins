@@ -14,10 +14,8 @@ UniversityExtender::~UniversityExtender()
 }
 H3RmgObjectGenerator *UniversityExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
 {
-
-    if (objectInfo.type == eObject::UNIVERSITY && objectInfo.subtype)
+    if (objectInfo.type == eObject::UNIVERSITY && objectInfo.subtype) // ignore existing university with subtype 0
     {
-
         return extender::ObjectsExtender::CreateRMGObjectGen(objectInfo);
     }
     return nullptr;
@@ -55,10 +53,12 @@ void UniversityExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
             else if (skillSet.size())
             {
                 int k = 0;
-                do
+
+                while (skillSet.size() < 4)
                 {
                     skillSet.insert(k++);
-                } while (skillSet.size() < 4);
+                }
+
                 DWORD skillBits = 0;
                 for (auto s : skillSet)
                 {
@@ -80,6 +80,7 @@ void UniversityExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
         //     patchIsRequired = true;
         // }
     }
+
     if (patchIsRequired)
     {
         CreatePatches();
@@ -111,14 +112,61 @@ BOOL UniversityExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero 
     return 0;
 }
 
+BOOL UniversityExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                                     const H3String &defaultHint) noexcept
+{
+    if (info.type == eObject::UNIVERSITY)
+    {
+
+        H3String additionalHint = defaultHint + "\n";
+        additionalHint += EraJS::read(H3String::Format("RMG.objectGeneration.%d.text.rmg", info.type).String());
+
+        volatile int drawnSkills = 0;
+        if (info.subtype < universitiesData.size())
+        {
+            for (size_t i = 0; i < limits::SECONDARY_SKILLS; i++)
+            {
+                if (universitiesData[info.subtype].allowedSkills & (1 << i))
+                {
+                    if (drawnSkills++ % 7 == 0)
+                    {
+                        additionalHint.Append("\n\n");
+                    }
+                    libc::sprintf(h3_TextBuffer, "{~>SECSK32.def:0:%d}", i * 3 + 3);
+                    additionalHint.Append(h3_TextBuffer);
+                }
+            }
+        }
+
+        // increase message box size
+        if (drawnSkills > 7)
+        {
+            IntAt(0x4F662f + 1) += 100;
+            IntAt(0x04F65D4 + 2) += 100;
+            IntAt(0x04F662F + 1) += 100;
+        }
+        H3Messagebox::RMB(additionalHint.String());
+        if (drawnSkills > 7)
+        {
+            IntAt(0x4F662f + 1) -= 100;
+            IntAt(0x04F65D4 + 2) -= 100;
+            IntAt(0x04F662F + 1) -= 100;
+        }
+
+        return true;
+    }
+    return 0;
+}
+
 void __stdcall UniversityExtender::Game_SetupUniversity(HiHook *h, H3Main *game, const H3MapItem *university)
 {
-    bool dataChanged = false;
 
     const auto &universityData = Get().universitiesData[university->objectSubtype];
 
-    if (university->objectSubtype <= UNI_OBJECT_SUBTYPE)
+    bool dataChanged = universityData.allowedSkills != -1;
+    if (dataChanged)
     {
+
         memcpy(bannedSkillsCopy, game->bannedSkills, sizeof(bannedSkillsCopy));
         for (size_t i = 0; i < limits::SECONDARY_SKILLS; i++)
         {
@@ -132,7 +180,6 @@ void __stdcall UniversityExtender::Game_SetupUniversity(HiHook *h, H3Main *game,
                 game->bannedSkills[i] = true;
             }
         }
-        dataChanged = true;
     }
 
     THISCALL_2(void, h->GetDefaultFunc(), game, university);
@@ -162,15 +209,8 @@ _LHF_(UniversityDlg_SetWidgetText)
     auto &objectSubtype = UniversityExtender::objectSubtype;
     if (objectSubtype != -1)
     {
-        bool readSuccess = false;
-        LPCSTR name = EraJS::read(
-            H3String::Format("RMG.objectGeneration.%d.%d.name", eObject::UNIVERSITY, objectSubtype).String(),
-            readSuccess);
 
-        if (readSuccess)
-        {
-            c->edx = int(name);
-        }
+        c->edx = int(RMGObjectInfo::GetObjectName(eObject::UNIVERSITY, objectSubtype));
         objectSubtype = -1;
     }
 
@@ -183,15 +223,8 @@ _LHF_(University_AtGetName)
     {
         if (mapItem->objectType == eObject::UNIVERSITY)
         {
-
-            bool readSuccess = false;
-            LPCSTR name = EraJS::read(
-                H3String::Format("RMG.objectGeneration.%d.%d.name", eObject::UNIVERSITY, mapItem->objectSubtype)
-                    .String(),
-                readSuccess);
-
-            if (readSuccess)
-                libc::sprintf(h3_TextBuffer, name);
+            LPCSTR name = RMGObjectInfo::GetObjectName(mapItem);
+            libc::sprintf(h3_TextBuffer, name);
         }
     }
 
@@ -205,15 +238,8 @@ void UniversityExtender::CreatePatches()
         _pi->WriteLoHook(0x04AA196, UniversityDlg_BeforeCreate);
         _pi->WriteLoHook(0x05EFA36, UniversityDlg_SetWidgetText);
 
-        //_pi->WriteLoHook(0x4C1974, Game__AtShrineOfMagicIncantationSettingSpell);
-        //_pi->WriteLoHook(0x4C1A0E, Game__AtShrineOfMagicGestureSettingSpell);
-        //_pi->WriteLoHook(0x04A5291, Shrine__AtVisit);
-        //_pi->WriteLoHook(0x04A5459, Shrine__AtWisdomCheck);
-
         _pi->WriteLoHook(0x0415439, University_AtGetName);
         _pi->WriteLoHook(0x040CAE5, University_AtGetName);
-
-        //_pi->WriteLoHook(0x40DA24, Shrine__AtGetHint);
 
         m_isInited = true;
     }
@@ -221,8 +247,6 @@ void UniversityExtender::CreatePatches()
 
 UniversityExtender &UniversityExtender::Get()
 {
-    // TODO: insert return statement here
-
     static UniversityExtender _instance;
     return _instance;
 }

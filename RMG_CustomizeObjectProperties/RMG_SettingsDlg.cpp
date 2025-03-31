@@ -321,6 +321,41 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     ReadIniDlgSettings();
 }
 
+int __fastcall HelpButtonProc(H3Msg *msg)
+{
+    if (msg->IsLeftClick())
+    {
+        H3String shellExecutePath = EraJS::read("RMG.text.dlg.buttons.help.url");
+
+        BOOL isOk = H3Messagebox::Choice(EraJS::read("RMG.text.dlg.buttons.help.question"));
+        if (isOk)
+        {
+            // call ShellExecuteA from exe to open github download page
+            INT_PTR intRes =
+                STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", shellExecutePath.String(), NULL, NULL, SW_SHOWNORMAL);
+            if (intRes <= 32)
+            {
+
+                LPSTR messageBuffer = nullptr;
+
+                // Форматирование сообщения об ошибке
+                size_t size = FormatMessageA(
+                    FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                    nullptr, intRes, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
+
+                std::string message(messageBuffer, size);
+                H3Messagebox(message.c_str());
+
+                // Освобождение буфера
+                LocalFree(messageBuffer);
+            }
+        }
+
+        return 1;
+    }
+
+    return false;
+}
 VOID RMG_SettingsDlg::OnHelp() const noexcept
 {
     H3String mes = EraJS::read("RMG.text.dlg.buttons.help.help");
@@ -336,8 +371,41 @@ VOID RMG_SettingsDlg::OnHelp() const noexcept
         mes = EraJS::read("RMG.text.dlg.notImplemented");
     }
 
-    H3Messagebox::Show(mes);
-    return VOID();
+    const int helpWidth = this->widthDlg * 0.95;
+    const int helpHeight = this->heightDlg * 0.95;
+    H3Dlg dlg(helpWidth, helpHeight, -1, -1, 0, 1);
+
+    H3DefLoader okBttnDef(NH3Dlg::Assets::OKAY32_DEF);
+    H3DefLoader siteBttn("wogcurse.def");
+
+    const int offset = 20;
+    const int textWidth = helpWidth - 2 * offset;
+
+    const int okBttnY = helpHeight - okBttnDef->heightDEF - offset;
+    const int okBttnX = (helpWidth - okBttnDef->widthDEF) / 2;
+    auto okBttn = dlg.CreateOK32Button(helpWidth - offset - okBttnDef->widthDEF - 1, okBttnY);
+    okBttn->AddHotkey(eVKey::H3VK_ESCAPE);
+    // okBttn->SetX(helpWidth - offset - okBttnDef->widthDEF - 1);
+    auto customBttn = dlg.CreateCustomButton(offset, okBttnY, 1, siteBttn->GetName(), HelpButtonProc, 0, 0);
+
+    auto text = dlg.CreateText(offset, okBttnY, helpWidth - offset - okBttnX, okBttnDef->heightDEF,
+                               EraJS::read("RMG.text.dlg.buttons.help.name"), NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
+                               0, eTextAlignment::MIDDLE_CENTER, -1);
+
+    customBttn->SetWidth(text->GetWidth());
+    customBttn->SetHeight(text->GetHeight());
+    H3RGB565 color(H3RGB888::Highlight());
+
+    auto frame = dlg.CreateFrame(text, color, 0, 1);
+    frame->DeActivate();
+    text->DeActivate();
+
+    const int textHeight = helpHeight - 2 * (offset + 1) - okBttnDef->heightDEF;
+
+    dlg.CreateScrollableText(mes.String(), offset, offset, textWidth, textHeight, NH3Dlg::Text::MEDIUM,
+                             eTextColor::SILVER);
+
+    return dlg.Start();
 }
 
 BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
@@ -1025,19 +1093,17 @@ BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *pa
 
     if (clickedItem == panel->pictureItem || clickedItem == panel->objectNameItem)
     {
+        const auto &rmgObject = panel->rmgObject;
 
         H3String str;
 
-        const auto &rmgObject = panel->rmgObject;
-        const int defHeight = rmgObject->attributes->height;
-        LPCSTR defName = rmgObject->attributes->defName.String();
-        H3DefLoader def(defName);
+        const bool result =
+            extender::ObjectsExtender::ShowObjectExtendedInfo(rmgObject->objectInfo, rmgObject->attributes, str);
 
-        str += H3String::Format("{~>%s:0:%d block}", defName, rand() % def->groups[0]->count); // .Append(defPic);
-        str += rmgObject->objectInfo.GetName();
-        str.Append(H3String::Format(" (%d/%d)", rmgObject->attributes->type, rmgObject->attributes->subtype));
-
-        H3Messagebox::RMB(str.String());
+        if (!result)
+        {
+            H3Messagebox::RMB(str.String());
+        }
 
         return true;
     }
@@ -1084,7 +1150,6 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
         ddl.RMB_Show();
     }
     return resultA;
-
 }
 
 RMG_SettingsDlg::BanksPage::~BanksPage()
@@ -1165,7 +1230,11 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                         objectsPanel->items.end() !=
                             std::find(objectsPanel->items.begin(), objectsPanel->items.end(), clickedItem))
                     {
-
+                        if (msg.IsRightClick())
+                        {
+                            result = this->ShowObjectExtendedInfo(objectsPanel, msg);
+                            break;
+                        }
                         if (msg.subtype == eMsgSubtype::LBUTTON_DOWN &&
                             (objectsPanel->enabledCheckBox == clickedItem || objectsPanel->pictureItem == clickedItem ||
                              objectsPanel->objectNameItem == clickedItem))
@@ -1213,8 +1282,6 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                             objectsPanel->ObjectInfoToPanelInfo();
                             needDlgRedraw = true;
                         }
-                        if (msg.IsRightClick())
-                            result = this->ShowObjectExtendedInfo(objectsPanel, msg);
                     }
                     else if (isDlgTextEditInput)
                     {

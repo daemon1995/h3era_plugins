@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.18";
+const char *PLUGIN_VERSION = "1.20";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -77,9 +77,13 @@ _LHF_(CrBanksTxt_AfterLoad)
     colosseumOfTheMagi::ColosseumOfTheMagiExtender::Get();
     // wateringPlace::WateringPlaceExtender::Get();
     wog::WoGObjectsExtender::Get();
-    //! Set patches for the RMG_SettingsDlg
-    rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
+    spellmarket::SpellMarketExtender::Get();
     university::UniversityExtender::Get();
+
+    //! Set patches for the RMG_SettingsDlg
+
+    rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
+
     return EXEC_DEFAULT;
 }
 namespace EraMemory
@@ -88,8 +92,8 @@ extern volatile size_t *allocatedMemorySize;
 }
 void __stdcall OnAdventureMapRightMouseClick(Era::TEvent *e)
 {
-  //  Era::ShowMessage(Era::IntToStr(*EraMemory::allocatedMemorySize).c_str());
-  //  new int[25];
+    //  Era::ShowMessage(Era::IntToStr(*EraMemory::allocatedMemorySize).c_str());
+    //  new int[25];
 }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {

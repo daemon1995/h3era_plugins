@@ -202,7 +202,7 @@ __int64 __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3He
                                 continue;
                             }
 
-                            bonusValue += FASTCALL_2(int, 0x0527B20, hero, spellId);
+                            bonusValue += h3functions::GetAIHeroSpellValue(hero, spellId);
                         }
                     }
 
@@ -246,8 +246,8 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 
                     currentCreatureBank.experiencePointsToAdd += static_cast<int>(
                         static_cast<float>(customBank->experience) * h3functions::GetHeroLearningPower(hero));
-                    hero->experience += currentCreatureBank.experiencePointsToAdd;
 
+                    THISCALL_4(void, 0x4E3620, hero, currentCreatureBank.experiencePointsToAdd, false, true);
                     const UINT heroSpellPoints = hero->spellPoints;
                     const UINT maxSpellPoints = IntAt(0x049F99F + 2);
                     if (hero->spellPoints < maxSpellPoints)
@@ -273,7 +273,7 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
                             }
                             currentCreatureBank.spellsToLearn[i] = spellId;
                             // learn spell
-                            THISCALL_2(void, 0x4D95A0, hero, spellId);
+                            h3functions::HeroLearnSpell(hero, spellId);
                         }
                     }
                     for (size_t i = 0; i < SKILLS_AMOUNT; i++)
@@ -290,14 +290,22 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 // works for Human Only
 _LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
 {
+
     if (c->esi == MITHRIL_ID && currentCreatureBank.mithrilToAdd) // add one more iteration of next resource is mitrhil
     {
         // change  gold picture from money to gold if we have mithril
-        H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
-        H3PictureCategories *lastCategory = pictureCategories->Last();
-        if (lastCategory->type == ePictureCategories::MONEY)
+        ;
+        if (H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54))
         {
-            lastCategory->type = ePictureCategories::GOLD;
+            if (!pictureCategories->IsEmpty())
+            {
+
+                H3PictureCategories *lastCategory = pictureCategories->Last();
+                if (lastCategory && lastCategory->type == ePictureCategories::MONEY)
+                {
+                    lastCategory->type = ePictureCategories::GOLD;
+                }
+            }
         }
 
         c->eax = currentCreatureBank.mithrilToAdd;
@@ -311,7 +319,6 @@ _LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
 
 _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
 {
-    //  return EXEC_DEFAULT;
 
     if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
     {
@@ -322,6 +329,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
             if (customCreatureBank)
             {
                 H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
+
                 auto &message = currentCreatureBank.message;
                 auto &hero = currentCreatureBank.hero;
                 bool experienceAdded = false;
@@ -409,7 +417,16 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
             }
         }
     }
-
+    // skip strings vector parsing if it is empty to avoid crash
+    if (H3Vector<H3String> *strings = reinterpret_cast<H3Vector<H3String> *>(c->ebp - 0x44))
+    {
+        if (strings->IsEmpty())
+        {
+            c->esp -= 12;
+            c->return_address = 0x04ABE51;
+            return NO_EXEC_DEFAULT;
+        }
+    }
     return EXEC_DEFAULT;
 }
 
@@ -772,7 +789,8 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
     {
         enabled = true;
         experience = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.experience", creatureBankType, stateId);
-        spellPoints = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankType, stateId);
+        spellPoints =
+            Clamp(0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankType, stateId), 999);
 
         if (int _luck = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.luck", creatureBankType, stateId))
         {
@@ -786,8 +804,9 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
         bool readSuccess = false;
         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
         {
-            primarySkills[i] =
-                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i);
+            primarySkills[i] = Clamp(
+                0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i),
+                INT8_MAX);
 
             const int spellId = EraJS::readInt(
                 H3String::Format("RMG.objectGeneration.16.%d.states.%d.spells.%d.id", creatureBankType, stateId, i)
@@ -808,7 +827,6 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
                 UINT spellFlags = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.flags",
                                               creatureBankType, stateId, i);
                 // if any of data is set then spell may be generated
-
                 if (spellSchool || spellLevels || spellFlags)
                 {
                     spellsRewards[i].generate = true;
@@ -818,7 +836,7 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
                     }
                     if (spellLevels)
                     {
-                        spellsRewards[i].spellLevels = Clamp(1, spellLevels, spellsRewards[i].spellLevels);
+                        spellsRewards[i].spellLevels = Clamp(2, spellLevels, spellsRewards[i].spellLevels);
                     }
                     if (spellFlags)
                     {
@@ -961,10 +979,11 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
                         state.guardians.count[j] = Clamp(0, guardCount, INT32_MAX); // creatureRewardType;
                     }
 
-                    const int resources = EraJS::readInt(
-                        H3String::Format("RMG.objectGeneration.%d.%d.states.%d.resources.%d", creatureBankType, i, j)
-                            .String(),
-                        trSuccess);
+                    const int resources =
+                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.resources.%d", objectType,
+                                                        objectSubtype, i, j)
+                                           .String(),
+                                       trSuccess);
                     if (trSuccess)
                     {
                         state.resources.asArray[j] = Clamp(0, resources, INT32_MAX); // creatureRewardType;
@@ -1153,7 +1172,7 @@ void CreatureBanksExtender::CustomCreatureBank::GenerateSpells(const CustomRewar
                 {
                     spellsToSelect.emplace_back(spellId);
                 }
-            } while (spellId++ < h3::limits::SPELLS);
+            } while (++spellId < h3::limits::SPELLS);
 
             // add spell to set if exist
             if (const size_t goodSpellsAmount = spellsToSelect.size())

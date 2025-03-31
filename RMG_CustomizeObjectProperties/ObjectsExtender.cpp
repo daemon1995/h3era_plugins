@@ -6,6 +6,8 @@ namespace extender
 std::vector<ObjectsExtender *> ObjectsExtender::extenders;
 std::vector<RMGObjectInfo> ObjectsExtender::additionalRmgObjects;
 std::unordered_map<std::string, std::string> ObjectProperty::additionalPropertiesMap;
+BOOL ObjectsExtender::skipMapMessageByHdMod = false;
+BOOL ObjectsExtender::patchesCreated = false;
 
 void EditableH3TextFile::AddLine(LPCSTR txt)
 {
@@ -18,7 +20,12 @@ size_t EditableH3TextFile::GetLineCount() const noexcept
 ObjectsExtender::ObjectsExtender(PatcherInstance *pi) : IGamePatch(pi)
 {
 
-    CreatePatches();
+    if (!patchesCreated)
+    {
+        CreatePatches();
+        patchesCreated = true;
+        skipMapMessageByHdMod = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
+    }
     extenders.emplace_back(this);
 }
 
@@ -353,6 +360,27 @@ void ObjectsExtender::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
     }
 }
 
+BOOL ObjectsExtender::ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                             H3String &stringResult) noexcept
+{
+    stringResult = "";
+    LPCSTR defName = attributes->defName.String();
+    H3DefLoader def(defName);
+
+    stringResult += H3String::Format("{~>%s:0:%d block}", defName, rand() % def->groups[0]->count); // .Append(defPic);
+    stringResult += info.GetName();
+    stringResult.Append(H3String::Format(" (%d/%d)", info.type, info.subtype));
+
+    for (auto &i : extenders)
+    {
+        if (i->RMGDlg_ShowCustomObjectHint(info, attributes, stringResult))
+        {
+            return true;
+        }
+    }
+    return 0;
+}
+
 _LHF_(ObjectsExtender::H3AdventureManager__ObjectVisit)
 {
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->edi))
@@ -537,6 +565,7 @@ void ObjectsExtender::CreatePatches()
     // before any of extenders is inited
     if (extenders.empty())
     {
+
         // Era::RegisterHandler(OnWogObjectHint);
         _PI->WriteLoHook(0x515038, LoadObjectsTxt);
 
@@ -567,6 +596,11 @@ BOOL ObjectsExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *cu
 }
 BOOL ObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                          int &aiResWeight) const noexcept
+{
+    return false;
+}
+BOOL ObjectsExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                                  const H3String &defaltText) noexcept
 {
     return false;
 }
