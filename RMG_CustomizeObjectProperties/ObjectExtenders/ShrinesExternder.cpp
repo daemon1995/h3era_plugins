@@ -104,7 +104,7 @@ _LHF_(ShrinesExternder::Shrine__AtVisit)
         if (shrine->objectSubtype != 0)
         {
             *reinterpret_cast<LPCSTR *>(c->ebp + 0x10) = EraJS::read(
-                H3String::Format("RMG.objectGeneration.%d.%d.visit", shrine->objectType, shrine->objectSubtype)
+                H3String::Format("RMG.objectGeneration.%d.%d.text.visit", shrine->objectType, shrine->objectSubtype)
                     .String());
         }
     }
@@ -124,7 +124,7 @@ _LHF_(ShrinesExternder::Shrine__AtWisdomCheck)
         {
             c->ecx |= 0xFFFFFFFF;
             c->esi = int(EraJS::read(
-                H3String::Format("RMG.objectGeneration.%d.%d.level", shrine->objectType, shrine->objectSubtype)
+                H3String::Format("RMG.objectGeneration.%d.%d.text.level", shrine->objectType, shrine->objectSubtype)
                     .String()));
             c->return_address = 0x04A549A;
         }
@@ -143,15 +143,7 @@ LPCSTR ShrinesExternder::GetCustomName(const H3MapItem *shrine)
     if (shrine->objectSubtype != 0)
     {
         currentShrineHint = shrine;
-        bool readSucces = false;
-        const auto strPtr = EraJS::read(
-            H3String::Format("RMG.objectGeneration.%d.%d.name", shrine->objectType, shrine->objectSubtype).String(),
-            readSucces);
-
-        // if (readSucces)
-        {
-            result = strPtr;
-        }
+        result = RMGObjectInfo::GetObjectName(shrine);
     }
     return result;
 }
@@ -184,8 +176,8 @@ LPCSTR ShrinesExternder::GetCustomHint(const H3MapItem *shrine)
         if (shrine->objectType == eObject::SHRINE_OF_MAGIC_INCANTATION ||
             shrine->objectType == eObject::SHRINE_OF_MAGIC_GESTURE)
         {
-            auto strPtr = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.hint", currentShrineHint->objectType,
-                                                       currentShrineHint->objectSubtype)
+            auto strPtr = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.hint",
+                                                       currentShrineHint->objectType, currentShrineHint->objectSubtype)
                                           .String(),
                                       readSucces);
             // if (readSucces)

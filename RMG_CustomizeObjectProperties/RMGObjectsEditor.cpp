@@ -1030,6 +1030,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
             result = P_ResourceName[subtype];
             break;
         case eObject::SHRINE_OF_MAGIC_INCANTATION:
+        case eObject::SHRINE_OF_MAGIC_GESTURE:
             if (subtype)
             {
                 libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
