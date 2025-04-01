@@ -109,7 +109,7 @@ BOOL SpellMarketExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero
             objHint.Append(isRightClick ? "\n" : " ");
             libc::sprintf(h3_TextBuffer, "RMG.objectGeneration.%d.%d.text.hint", mapItem->objectType,
                           mapItem->objectSubtype);
-            objHint.Append(h3_TextBuffer);
+            objHint.Append(EraJS::read(h3_TextBuffer));
         }
 
         if (const H3Hero *hero = P_ActivePlayer->GetActiveHero())
