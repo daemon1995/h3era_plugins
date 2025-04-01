@@ -103,9 +103,15 @@ _LHF_(ShrinesExternder::Shrine__AtVisit)
         currentShrineHint = shrine;
         if (shrine->objectSubtype != 0)
         {
-            *reinterpret_cast<LPCSTR *>(c->ebp + 0x10) = EraJS::read(
+            bool readSucces = false;
+            LPCSTR visitText = EraJS::read(
                 H3String::Format("RMG.objectGeneration.%d.%d.text.visit", shrine->objectType, shrine->objectSubtype)
-                    .String());
+                    .String(),
+                readSucces);
+            if (readSucces)
+            {
+                *reinterpret_cast<LPCSTR *>(c->ebp + 0x10) = visitText;
+            }
         }
     }
     return EXEC_DEFAULT;
