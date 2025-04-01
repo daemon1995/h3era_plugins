@@ -86,16 +86,19 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         DECLARE_INDEXED_FIELD(UINT8, primarySkills, SKILLS_AMOUNT, 0)
         DECLARE_INDEXED_FIELD(eSpell, spells, SPELLS_AMOUNT, eSpell::NONE)
 
+      public:
+        // used at initialization of the creature bank
+        CustomCreatureBank(const CustomRewardSetupState &setupState, const UINT index);
+        // used at loading of the creature bank from save
+        CustomCreatureBank(const int craetureBankId);
+
       private:
         void GenerateSpells(const CustomRewardSetupState &setup);
 
       public:
-        // used at initialization of the creature bank
-        CustomCreatureBank(const CustomRewardSetupState &setupState, const UINT index);
-        //   CustomCreatureBank(const H3CreatureBank &bank);
         void WriteSaveData() const noexcept;
-        // used at loading of the creature bank from save
-        CustomCreatureBank(const int craetureBankId);
+        void ClearAssocVariables() const noexcept;
+
         //  static BOOL Create(const H3CreatureBank &bank);
     };
 
@@ -161,7 +164,8 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     static _LHF_(CrBank_BeforeCombatStart);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
     static void __stdcall OnBeforeSaveGame(Era::TEvent *Event);
-    static void __stdcall OnAfterSaveOrLoadGame(Era::TEvent *Event);
+    static void __stdcall OnAfterSaveGame(Era::TEvent *Event);
+    static void __stdcall OnAfterLoadGame(Era::TEvent *Event);
     static void __stdcall OnGameLeave(Era::TEvent *Event);
     static __int64 __stdcall AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos);
     static signed int __stdcall CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PisMixed, const H3Hero *attHero,

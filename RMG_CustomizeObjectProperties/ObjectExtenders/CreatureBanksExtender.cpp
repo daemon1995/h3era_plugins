@@ -1278,6 +1278,18 @@ CreatureBanksExtender::CustomCreatureBank::CustomCreatureBank(const CustomReward
         field[i] = eSpell(Era::GetAssocVarIntValue(h3_TextBuffer));                                                    \
         Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                                                    \
     }
+// this function loads single items of the stuct from savegame and clears variable
+#define CLEAR_SIMPLE_FIELD(field)                                                                                      \
+    libc::sprintf(h3_TextBuffer, field##Format, id);                                                                   \
+    Era::SetAssocVarIntValue(h3_TextBuffer, 0);
+
+// this function only clears variables
+#define CLEAR_INDEXED_FIELD(field, size)                                                                               \
+    for (size_t i = 0; i < size; ++i)                                                                                  \
+    {                                                                                                                  \
+        libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
+        Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                                                    \
+    }
 
 void CreatureBanksExtender::CustomCreatureBank::WriteSaveData() const noexcept
 {
@@ -1292,7 +1304,19 @@ void CreatureBanksExtender::CustomCreatureBank::WriteSaveData() const noexcept
     SAVE_INDEXED_FIELD(primarySkills, SKILLS_AMOUNT);
     SAVE_INDEXED_FIELD(spells, SPELLS_AMOUNT);
 }
+void CreatureBanksExtender::CustomCreatureBank::ClearAssocVariables() const noexcept
+{
+    // CLEAR_SIMPLE_FIELD(id)
+    CLEAR_SIMPLE_FIELD(stateIndex);
+    CLEAR_SIMPLE_FIELD(mithrilAmount)
+    CLEAR_SIMPLE_FIELD(experience);
+    CLEAR_SIMPLE_FIELD(spellPoints)
+    CLEAR_SIMPLE_FIELD(luck);
+    CLEAR_SIMPLE_FIELD(morale);
 
+    CLEAR_INDEXED_FIELD(primarySkills, SKILLS_AMOUNT);
+    CLEAR_INDEXED_FIELD(spells, SPELLS_AMOUNT);
+}
 // load creature bank from savegame by id and global assoc variables
 CreatureBanksExtender::CustomCreatureBank::CustomCreatureBank(const int creatureBankId)
 {
@@ -1318,7 +1342,17 @@ void __stdcall CreatureBanksExtender::OnBeforeSaveGame(Era::TEvent *Event)
         i.WriteSaveData();
     }
 }
-void __stdcall CreatureBanksExtender::OnAfterSaveOrLoadGame(Era::TEvent *Event)
+void __stdcall CreatureBanksExtender::OnAfterSaveGame(Era::TEvent *Event)
+{
+    auto &manager = Get().manager;
+
+    for (auto &i : manager.customCreatureBanksVector)
+    {
+        i.ClearAssocVariables();
+    }
+}
+
+void __stdcall CreatureBanksExtender::OnAfterLoadGame(Era::TEvent *Event)
 {
     auto &manager = Get().manager;
     manager.customCreatureBanksVector.clear();
@@ -1378,8 +1412,9 @@ void CreatureBanksExtender::CreatePatches()
 
         Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
         Era::RegisterHandler(OnBeforeSaveGame, "OnBeforeSaveGame");
-        Era::RegisterHandler(OnAfterSaveOrLoadGame, "OnAfterLoadGame");
-        Era::RegisterHandler(OnAfterSaveOrLoadGame, "OnAfterSaveGame");
+        Era::RegisterHandler(OnAfterSaveGame, "OnAfterSaveGame");
+        Era::RegisterHandler(OnAfterLoadGame, "OnAfterLoadGame");
+
         Era::RegisterHandler(OnGameLeave, "OnGameLeave");
 
         m_isInited = true;
