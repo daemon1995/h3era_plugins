@@ -671,7 +671,7 @@ BOOL RMGObjectInfo::Clamp() noexcept
     }
     if (!zoneLimit || !mapLimit)
     {
-        zoneLimit = mapLimit = 0;
+        // zoneLimit = mapLimit = 0;
         enabled = false;
         dataChanged = true;
     }
