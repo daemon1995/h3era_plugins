@@ -482,8 +482,6 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
 
     if (auto creatureBank = reinterpret_cast<H3CreatureBank *>(c->ebx))
     {
-        // creatureBank->artifacts.Resize(0);
-
         auto &manager = Get().manager;
         const auto &customRewardSetups = manager.customRewardSetups;
         if (type < manager.customRewardSetups.size() && stateId < manager.customRewardSetups[type].size())
@@ -492,7 +490,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
 
             for (size_t i = 0; i < ARTIFACTS_AMOUNT; i++)
             {
-                const eArtifact artifact = customRewardSetupState.exactArtifacts[i];
+                const eArtifact artifact = customRewardSetupState.artifactIds[i];
                 if (artifact != eArtifact::NONE)
                 {
                     creatureBank->artifacts.AddOne(artifact);
@@ -824,12 +822,12 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
         {
             const int artId = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifacts.%d", creatureBankType, stateId, i)
+                H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifactIds.%d", creatureBankType, stateId, i)
                     .String(),
                 readSuccess);
             if (readSuccess)
             {
-                exactArtifacts[i] = eArtifact(Clamp(eArtifact::NONE, artId, currentCreatureBank.MAX_ART_ID));
+                artifactIds[i] = eArtifact(Clamp(eArtifact::NONE, artId, currentCreatureBank.MAX_ART_ID));
             }
             primarySkills[i] = Clamp(
                 0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i),

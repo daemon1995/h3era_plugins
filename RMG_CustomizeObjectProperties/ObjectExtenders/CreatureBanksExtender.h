@@ -47,8 +47,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         UINT spellPoints = 0;
         INT luck = 0;
         INT morale = 0;
-        eArtifact exactArtifacts[ARTIFACTS_AMOUNT] = {eArtifact::NONE, eArtifact::NONE, eArtifact::NONE,
-                                                      eArtifact::NONE};
+        eArtifact artifactIds[ARTIFACTS_AMOUNT] = {eArtifact::NONE, eArtifact::NONE, eArtifact::NONE, eArtifact::NONE};
 
         UINT8 primarySkills[SKILLS_AMOUNT] = {0, 0, 0, 0};
         struct SpellsReward
