@@ -23,6 +23,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         H3MapItem *mapItem = nullptr;
         H3Hero *hero = nullptr;
         Patch *positionsPatch = nullptr;
+        LPCSTR customDefName = nullptr;
 
         std::array<eSpell, SPELLS_AMOUNT> spellsToLearn = {eSpell::NONE, eSpell::NONE, eSpell::NONE, eSpell::NONE};
         UINT mithrilToAdd = 0;
@@ -40,7 +41,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     struct CustomRewardSetupState
     {
 
-        BOOL enabled = false;
+        BOOL enabled = true;
         UINT stateId = 0;
         UINT mithrilAmount = 0;
         UINT experience = 0;
@@ -59,6 +60,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
             BOOL generate = false;
 
         } spellsRewards[SPELLS_AMOUNT];
+        LPCSTR customDefName = nullptr;
 
       public:
         CustomRewardSetupState(const INT creatureBankType = 0, const UINT stateId = 0) noexcept;
@@ -113,7 +115,7 @@ class CreatureBanksExtender : public extender::ObjectsExtender
         std::vector<H3CreatureBankSetup> setups;
 
         // custom data
-        std::vector<int> isNotBankSettings;
+        std::vector<int> isBankSettings;
         std::vector<std::array<int, 14>> customPositions;
         std::vector<std::array<CustomRewardSetupState, STATES_AMOUNT>> customRewardSetups;
 
@@ -141,11 +143,9 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     CreatureBanksExtender();
     virtual ~CreatureBanksExtender();
 
-  private:
+  protected:
     virtual void CreatePatches() override;
     virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes) override final;
-
-  protected:
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept;
 
     // virtual void GetObjectPreperties() noexcept override  final;
@@ -153,29 +153,30 @@ class CreatureBanksExtender : public extender::ObjectsExtender
     const CustomCreatureBank *GetCustomCreatureBank(const H3MapItem *mapItem) noexcept;
 
   private:
+    static _LHF_(CrBank_BeforeSetupFromState);
+
+    static int __stdcall WoG_PlaceObject(HiHook *h, const int x, const int y, const int z, const int objType,
+                                         const int objSubtype, const int objType2, const int objSubtype2,
+                                         const DWORD a8);
     static void __stdcall CrBank_AddToGameList(HiHook *h, H3Vector<H3CreatureBank> *creatureBanks,
                                                const H3CreatureBank *end, const UINT number,
                                                const H3CreatureBank *creatureBank);
+    static _LHF_(Game_AfterInitMapItem);
+    static _LHF_(Game_SetMapItemDef);
 
-    static _LHF_(CrBank_BeforeAddingToGameList);
-    static _LHF_(CrBank_BeforeSetupFromState);
+    static __int64 __stdcall AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos);
 
     static _LHF_(CrBank_DisplayPreCombatMessage);
-    static _LHF_(CrBank_BeforeCombatStart);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
-    static void __stdcall OnBeforeSaveGame(Era::TEvent *Event);
-    static void __stdcall OnAfterSaveGame(Era::TEvent *Event);
-    static void __stdcall OnAfterLoadGame(Era::TEvent *Event);
-    static void __stdcall OnGameLeave(Era::TEvent *Event);
-    static __int64 __stdcall AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos);
-    static signed int __stdcall CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PisMixed, const H3Hero *attHero,
-                                                   UINT attArmy, int PlayerIndex, UINT defTown, UINT defHero,
-                                                   UINT defArmy, int seed, signed int a10, int isBank);
     static void __stdcall CrBank_AskForVisitMessage(HiHook *h, char *mes, const int messageType, const int x,
                                                     const int y, const int picType1, const int picSubtype1,
                                                     const int picType2, const int picSubtype2, const int par,
                                                     const int time, const int picType3, const int picSubtype3);
 
+    static _LHF_(CrBank_BeforeCombatStart);
+    static signed int __stdcall CrBank_CombatStart(HiHook *h, H3AdventureManager *advMan, UINT PisMixed,
+                                                   const H3Hero *attHero, UINT attArmy, int PlayerIndex, UINT defTown,
+                                                   UINT defHero, UINT defArmy, int seed, signed int a10, int isBank);
     static _LHF_(CrBank_AfterCombatWon);
 
     static _LHF_(CrBank_AfterDrawingResources);
@@ -184,6 +185,12 @@ class CreatureBanksExtender : public extender::ObjectsExtender
                                                  const DWORD a4) noexcept;
 
     static _LHF_(CrBank_BeforeGivingResources);
+
+    static void __stdcall OnBeforeSaveGame(Era::TEvent *Event);
+    static void __stdcall OnAfterSaveGame(Era::TEvent *Event);
+    static void __stdcall OnAfterLoadGame(Era::TEvent *Event);
+    static void __stdcall OnGameLeave(Era::TEvent *Event);
+
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *event);
     //	static int __stdcall CretureBankSetups__Ctor(HiHook*h);
   public:

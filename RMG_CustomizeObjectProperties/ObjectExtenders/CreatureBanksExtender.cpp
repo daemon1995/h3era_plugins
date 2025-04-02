@@ -1,6 +1,48 @@
 #include "..\pch.h"
 namespace cbanks
 {
+namespace defines
+{
+// this function saves single items of the stuct to savegame
+#define SAVE_SIMPLE_FIELD(field)                                                                                       \
+    libc::sprintf(h3_TextBuffer, field##Format, id);                                                                   \
+    Era::SetAssocVarIntValue(h3_TextBuffer, field);
+
+// this function saves array items of the stuct to savegame
+#define SAVE_INDEXED_FIELD(field, size)                                                                                \
+    for (size_t i = 0; i < size; ++i)                                                                                  \
+    {                                                                                                                  \
+        libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
+        Era::SetAssocVarIntValue(h3_TextBuffer, field[i]);                                                             \
+    }
+
+// this function loads single items of the stuct from savegame and clears variable
+#define LOAD_SIMPLE_FIELD(field)                                                                                       \
+    libc::sprintf(h3_TextBuffer, field##Format, id);                                                                   \
+    field = Era::GetAssocVarIntValue(h3_TextBuffer);                                                                   \
+    Era::SetAssocVarIntValue(h3_TextBuffer, 0);
+
+// this function loads array items of the stuct from savegame and clears variables
+#define LOAD_INDEXED_FIELD(field, size)                                                                                \
+    for (size_t i = 0; i < size; ++i)                                                                                  \
+    {                                                                                                                  \
+        libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
+        field[i] = eSpell(Era::GetAssocVarIntValue(h3_TextBuffer));                                                    \
+        Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                                                    \
+    }
+// this function loads single items of the stuct from savegame and clears variable
+#define CLEAR_SIMPLE_FIELD(field)                                                                                      \
+    libc::sprintf(h3_TextBuffer, field##Format, id);                                                                   \
+    Era::SetAssocVarIntValue(h3_TextBuffer, 0);
+
+// this function only clears variables
+#define CLEAR_INDEXED_FIELD(field, size)                                                                               \
+    for (size_t i = 0; i < size; ++i)                                                                                  \
+    {                                                                                                                  \
+        libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
+        Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                                                    \
+    }
+} // namespace defines
 
 CreatureBanksExtender::Current CreatureBanksExtender::currentCreatureBank;
 
@@ -114,7 +156,6 @@ CreatureBanksExtender &CreatureBanksExtender::Get()
 
 void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *event)
 {
-
     auto &creatureBanks = Get().manager;
     const size_t SIZE = creatureBanks.m_size;
     const size_t defaultBanksNumber = Get().defaultBanksNumber;
@@ -222,7 +263,8 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 
         const int creatureBankType = GetCreatureBankType(mapItem);
 
-        if (creatureBankType != eObject::NO_OBJ && !mapItem->creatureBank.taken)
+        if (creatureBankType != eObject::NO_OBJ && !mapItem->creatureBank.taken &&
+            mapItem->creatureBank.id < Get().manager.customCreatureBanksVector.size())
         {
 
             auto customBank = Get().GetCustomCreatureBank(mapItem);
@@ -325,8 +367,8 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
         const int creatureBankType = GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype);
         if (creatureBankType != eObject::NO_OBJ)
         {
-            const auto &customCreatureBank = Get().GetCustomCreatureBank(mapItem);
-            if (customCreatureBank)
+
+            if (const auto customCreatureBank = Get().GetCustomCreatureBank(mapItem))
             {
                 H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
 
@@ -456,21 +498,13 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
         }
         mithrilToAdd = 0;
     }
-    currentCreatureBank.type = -1;
-    currentCreatureBank.stateId = -1;
-
-    currentCreatureBank.bank = nullptr;
-    currentCreatureBank.mapItem = nullptr;
-    currentCreatureBank.hero = nullptr;
-
-    currentCreatureBank.spellsToLearn.fill(eSpell::NONE);
-    currentCreatureBank.mithrilToAdd = 0;
-    currentCreatureBank.experiencePointsToAdd = 0;
-    currentCreatureBank.spellPointsToAdd = 0;
-    currentCreatureBank.message = "";
+    currentCreatureBank = CreatureBanksExtender::Current();
 
     return EXEC_DEFAULT;
 }
+
+bool stateChagesDef = false;
+
 _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
 {
 
@@ -488,6 +522,8 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
         {
             const auto &customRewardSetupState = customRewardSetups[type][stateId];
 
+            currentCreatureBank.customDefName = customRewardSetupState.customDefName;
+
             for (size_t i = 0; i < ARTIFACTS_AMOUNT; i++)
             {
                 const eArtifact artifact = customRewardSetupState.artifactIds[i];
@@ -497,12 +533,56 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
                 }
             }
 
-            const auto &creatureBanks = P_Game->creatureBanks;
+            // find bank in creatureBanks array
+            const auto &game = H3Game::Get();
+            const auto &creatureBanks = game->creatureBanks;
             for (size_t i = 0; i < creatureBanks.Size(); i++)
             {
+                // if this creature bank already exist
                 if (creatureBank == &creatureBanks[i])
                 {
+                    const auto &adventure = P_AdventureManager->Get();
+
+                    // get current creature bank presetup
+                    const auto &currentCustomBank = manager.customCreatureBanksVector[i];
+                    const auto &currentStateSetup = manager.customRewardSetups[type][currentCustomBank.stateIndex];
+
+                    // init creature bank graphics
+                    if (currentCreatureBank.customDefName != currentStateSetup.customDefName &&
+                        currentCreatureBank.customDefName)
+                    {
+                        const int mapSize = H3MapSize::Get();
+                        bool breakLoop[2] = {false, false};
+                        for (size_t z = 0; z < game->mainSetup.hasUnderground; z++)
+                        {
+                            for (size_t y = 0; y < mapSize; y++)
+                            {
+                                for (size_t x = 0; x < mapSize; x++)
+                                {
+                                    if (const auto mapItem = adventure->GetMapItem(x, y, z))
+                                    {
+                                        if (CreatureBanksExtender::GetCreatureBankType(mapItem) == type &&
+                                            mapItem->creatureBank.id == i)
+                                        {
+                                            h3functions::SetMapItemDef(mapItem);
+                                            breakLoop[0] = true;
+                                            breakLoop[1] = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (breakLoop[1])
+                                    break;
+                            }
+                            if (breakLoop[0])
+                                break;
+                        }
+                    }
+
+                    // init custom reward
+                    // set new creature bank setup - required cause data may be changed and spells too
                     manager.customCreatureBanksVector[i] = CustomCreatureBank(customRewardSetupState, i);
+
                     stateId = -1;
                     type = -1;
                     break;
@@ -512,6 +592,30 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
     }
 
     return EXEC_DEFAULT;
+}
+
+// place creature bank with script/ plugin /else
+int __stdcall CreatureBanksExtender::WoG_PlaceObject(HiHook *h, const int x, const int y, const int z,
+                                                     const int objType, const int objSubtype, const int objType2,
+                                                     const int objSubtype2, const DWORD a8)
+{
+
+    const int sizeBeforeAdding = P_Game->creatureBanks.Size();
+
+    const int result = CDECL_8(int, h->GetDefaultFunc(), x, y, z, objType, objSubtype, objType2, objSubtype2, a8);
+    if (sizeBeforeAdding < P_Game->creatureBanks.Size())
+    {
+        if (currentCreatureBank.customDefName)
+        {
+            if (const auto mapItem = P_AdventureManager->GetMapItem(x, y, z))
+            {
+                h3functions::SetMapItemDef(mapItem);
+            }
+            currentCreatureBank.customDefName = nullptr;
+        }
+    }
+
+    return result;
 }
 
 void __stdcall CreatureBanksExtender::CrBank_AddToGameList(HiHook *h, H3Vector<H3CreatureBank> *creatureBanks,
@@ -537,7 +641,25 @@ void __stdcall CreatureBanksExtender::CrBank_AddToGameList(HiHook *h, H3Vector<H
         stateId = -1;
     }
 }
+_LHF_(CreatureBanksExtender::Game_AfterInitMapItem)
+{
+    if (currentCreatureBank.customDefName && c->esi)
+    {
+        h3functions::SetMapItemDef(reinterpret_cast<H3MapItem *>(c->esi));
+    }
 
+    return EXEC_DEFAULT;
+}
+_LHF_(CreatureBanksExtender::Game_SetMapItemDef)
+{
+    if (auto &customDefName = currentCreatureBank.customDefName)
+    {
+        libc::sprintf(reinterpret_cast<char *>(c->ebp - 0x84), "%s", customDefName);
+        customDefName = nullptr;
+    }
+
+    return EXEC_DEFAULT;
+}
 _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 {
 
@@ -595,7 +717,7 @@ _LHF_(CreatureBanksExtender::SpecialCrBank_DisplayPreCombatMessage)
     return EXEC_DEFAULT;
 }
 
-signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT AdvMan, UINT PosMixed,
+signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, H3AdventureManager *advMan, UINT PosMixed,
                                                                const H3Hero *attHero, UINT attArmy, int PlayerIndex,
                                                                UINT defTown, UINT defHero, UINT defArmy, int seed,
                                                                signed int a10, int isBank)
@@ -607,20 +729,20 @@ signed int __stdcall CreatureBanksExtender::CrBank_CombatStart(HiHook *h, UINT A
         positionsPatch->Destroy();
         positionsPatch = nullptr;
     }
+
     int &type = currentCreatureBank.type;
     if (type != -1)
     {
-        auto &banks = Get().manager;
-        isBank = banks.isNotBankSettings[type] ? false : true;
+        const auto &banks = Get().manager;
 
-        if (isBank)
+        if (isBank = banks.isBankSettings[type])
         {
             positionsPatch = _PI->WriteDword(0x04632A9 + 3, (int)banks.customPositions[type].data());
         }
         type = -1;
     }
 
-    const int result = THISCALL_11(signed int, h->GetDefaultFunc(), AdvMan, PosMixed, attHero, attArmy, PlayerIndex,
+    const int result = THISCALL_11(signed int, h->GetDefaultFunc(), advMan, PosMixed, attHero, attArmy, PlayerIndex,
                                    defTown, defHero, defArmy, seed, a10, isBank);
 
     if (positionsPatch)
@@ -688,7 +810,7 @@ void __stdcall CreatureBanksExtender::CrBank_AskForVisitMessage(HiHook *h, char 
 
 int CreatureBanksExtender::GetCreatureBankType(const H3MapItem *mapItem) noexcept
 {
-    return GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype);
+    return mapItem ? GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype) : eObject::NO_OBJ;
 }
 int CreatureBanksExtender::GetCreatureBankType(const int objType, const int objSubtype) noexcept
 {
@@ -784,10 +906,7 @@ H3RmgObjectGenerator *CreatureBanksExtender::CreateRMGObjectGen(const RMGObjectI
     }
     return nullptr;
 }
-inline int ReadJsonInt(LPCSTR format, const int arg)
-{
-    return EraJS::readInt(H3String::Format(format, arg).String());
-}
+
 inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2)
 {
     return EraJS::readInt(H3String::Format(format, arg, arg2).String());
@@ -796,77 +915,85 @@ inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2, const int a
 {
     return EraJS::readInt(H3String::Format(format, arg, arg2, arg3).String());
 }
+
 CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT creatureBankType,
                                                                       const UINT stateId) noexcept
     : stateId(stateId)
 {
+
+    bool readSuccess = false;
+    LPCSTR customDefName = EraJS::read(
+        H3String::Format("RMG.objectGeneration.16.%d.states.%d.customDef", creatureBankType, stateId).String(),
+        readSuccess);
+
+    if (readSuccess && libc::strcmpi(customDefName, h3_NullString))
+    {
+        this->customDefName = customDefName;
+    }
+
     mithrilAmount =
         ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankType, stateId, MITHRIL_ID);
-    // if (ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.customReward", creatureBankType, stateId))
+
+    experience = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.experience", creatureBankType, stateId);
+    spellPoints =
+        Clamp(0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankType, stateId), 999);
+
+    if (int _luck = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.luck", creatureBankType, stateId))
     {
-        enabled = true;
-        experience = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.experience", creatureBankType, stateId);
-        spellPoints =
-            Clamp(0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankType, stateId), 999);
+        luck = Clamp(-3, _luck, 3);
+    }
+    if (int _morale = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.morale", creatureBankType, stateId))
+    {
+        morale = Clamp(-3, _morale, 3);
+    }
 
-        if (int _luck = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.luck", creatureBankType, stateId))
+    for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+    {
+        const int artId = EraJS::readInt(
+            H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifactIds.%d", creatureBankType, stateId, i)
+                .String(),
+            readSuccess);
+        if (readSuccess)
         {
-            luck = Clamp(-3, _luck, 3);
+            artifactIds[i] = eArtifact(Clamp(eArtifact::NONE, artId, currentCreatureBank.MAX_ART_ID));
         }
-        if (int _morale = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.morale", creatureBankType, stateId))
+        primarySkills[i] = Clamp(
+            0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i),
+            INT8_MAX);
+
+        const int spellId = EraJS::readInt(
+            H3String::Format("RMG.objectGeneration.16.%d.states.%d.spells.%d.id", creatureBankType, stateId, i)
+                .String(),
+            readSuccess);
+        if (readSuccess)
         {
-            morale = Clamp(-3, _morale, 3);
+            spellsRewards[i].spellId = eSpell(Clamp(eSpell::NONE, spellId, h3::limits::SPELLS));
         }
-
-        bool readSuccess = false;
-        for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+        else
         {
-            const int artId = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifactIds.%d", creatureBankType, stateId, i)
-                    .String(),
-                readSuccess);
-            if (readSuccess)
-            {
-                artifactIds[i] = eArtifact(Clamp(eArtifact::NONE, artId, currentCreatureBank.MAX_ART_ID));
-            }
-            primarySkills[i] = Clamp(
-                0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i),
-                INT8_MAX);
+            UINT spellSchool = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.schools",
+                                           creatureBankType, stateId, i);
 
-            const int spellId = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.16.%d.states.%d.spells.%d.id", creatureBankType, stateId, i)
-                    .String(),
-                readSuccess);
-            if (readSuccess)
-            {
-                spellsRewards[i].spellId = eSpell(Clamp(eSpell::NONE, spellId, h3::limits::SPELLS));
-            }
-            else
-            {
-                UINT spellSchool = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.schools",
-                                               creatureBankType, stateId, i);
+            UINT spellLevels =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.levels", creatureBankType, stateId, i);
 
-                UINT spellLevels = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.levels",
-                                               creatureBankType, stateId, i);
-
-                UINT spellFlags = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.flags",
-                                              creatureBankType, stateId, i);
-                // if any of data is set then spell may be generated
-                if (spellSchool || spellLevels || spellFlags)
+            UINT spellFlags =
+                ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spells.%d.bits.flags", creatureBankType, stateId, i);
+            // if any of data is set then spell may be generated
+            if (spellSchool || spellLevels || spellFlags)
+            {
+                spellsRewards[i].generate = true;
+                if (spellSchool)
                 {
-                    spellsRewards[i].generate = true;
-                    if (spellSchool)
-                    {
-                        spellsRewards[i].spellSchool = eSpellchool(Clamp(1, spellSchool, h3::eSpellchool::ALL));
-                    }
-                    if (spellLevels)
-                    {
-                        spellsRewards[i].spellLevels = Clamp(2, spellLevels, spellsRewards[i].spellLevels);
-                    }
-                    if (spellFlags)
-                    {
-                        spellsRewards[i].spellFlags = spellFlags;
-                    }
+                    spellsRewards[i].spellSchool = eSpellchool(Clamp(1, spellSchool, h3::eSpellchool::ALL));
+                }
+                if (spellLevels)
+                {
+                    spellsRewards[i].spellLevels = Clamp(2, spellLevels, spellsRewards[i].spellLevels);
+                }
+                if (spellFlags)
+                {
+                    spellsRewards[i].spellFlags = spellFlags;
                 }
             }
         }
@@ -1038,38 +1165,47 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
                 return arr;
             }()};
 
-            const bool isNotBank = ReadJsonInt("RMG.objectGeneration.%d.%d.isNotBank", objectType, objectSubtype);
+            // placement troops in combat
 
-            // read custom postions
+            bool isBank = EraJS::readInt(
+                H3String::Format("RMG.objectGeneration.%d.%d.troopPlacement.isBank", objectType, objectSubtype)
+                    .String(),
+                trSuccess);
+
+            const bool isBankSetting = trSuccess ? isBank : true;
+
             std::array<int, 14> positions = defaultPositions;
 
             for (size_t i = 0; i < 7; i++)
             {
-                const int jsonAttackerPosition =
-                    ReadJsonInt("RMG.objectGeneration.%d.%d.attackerPositions.%d", objectType, objectSubtype, i);
+                if (const int jsonAttackerPosition = ReadJsonInt(
+                        "RMG.objectGeneration.%d.%d.troopPlacement.attackers.%d", objectType, objectSubtype, i))
+                {
 
-                const BOOL atackerPositionIsValid =
-                    !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 || jsonAttackerPosition % 17 == 0 ||
-                      jsonAttackerPosition % 17 == 16);
+                    const BOOL atackerPositionIsValid =
+                        !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 || jsonAttackerPosition % 17 == 0 ||
+                          jsonAttackerPosition % 17 == 16);
 
-                if (atackerPositionIsValid)
-                    positions[i] = jsonAttackerPosition;
+                    if (atackerPositionIsValid)
+                        positions[i] = jsonAttackerPosition;
+                }
 
-                const int jsonDefenderPosition =
-                    ReadJsonInt("RMG.objectGeneration.%d.%d.defenderPositions.%d", objectType, objectSubtype, i);
-
-                const BOOL defenderPositionIsValid =
-                    !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 || jsonDefenderPosition % 17 == 0 ||
-                      jsonDefenderPosition % 17 == 16);
-                if (defenderPositionIsValid)
-                    positions[i + 7] = jsonDefenderPosition;
+                if (const int jsonDefenderPosition = ReadJsonInt(
+                        "RMG.objectGeneration.%d.%d.troopPlacement.defenders.%d", objectType, objectSubtype, i))
+                {
+                    const BOOL defenderPositionIsValid =
+                        !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 || jsonDefenderPosition % 17 == 0 ||
+                          jsonDefenderPosition % 17 == 16);
+                    if (defenderPositionIsValid)
+                        positions[i + 7] = jsonDefenderPosition;
+                }
             }
 
             if (creatureBankType < defaultBanksNumber)
             {
                 setups[creatureBankType] = setup;
                 customRewardSetups[creatureBankType] = customReward;
-                isNotBankSettings[creatureBankType] = isNotBank;
+                isBankSettings[creatureBankType] = isBankSetting;
                 customPositions[creatureBankType] = positions;
 
                 monsterAwards[creatureBankType] = setup.states[0].creatureRewardType;
@@ -1078,7 +1214,7 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
             {
                 setups.emplace_back(setup);
                 customRewardSetups.emplace_back(customReward);
-                isNotBankSettings.emplace_back(isNotBank);
+                isBankSettings.emplace_back(isBankSetting);
                 customPositions.emplace_back(positions);
 
                 monsterAwards.emplace_back(setup.states[0].creatureRewardType);
@@ -1120,10 +1256,9 @@ void CreatureBanksExtender::CreatureBankManager::CopyDefaultData(const size_t de
         // iterate default data and copy into current array
         for (size_t i = 0; i < defaultBanksNumber; i++)
         {
-
             customPositions[i] = defaultPositions;
             setups[i] = originalBanks[i];
-            isNotBankSettings[i] = false;
+            isBankSettings[i] = true;
         }
     }
 }
@@ -1137,12 +1272,12 @@ void CreatureBanksExtender::CreatureBankManager::Resize(const size_t size) noexc
     monsterAwards.resize(size);
     monsterGuards.resize(size);
     setups.resize(size);
-    isNotBankSettings.resize(size);
+    isBankSettings.resize(size);
     customPositions.resize(size);
     customRewardSetups.resize(size);
 
     // init customRewardSetups for default banks properly
-    for (size_t creatureBankType = 0; creatureBankType < size; ++creatureBankType)
+    for (size_t creatureBankType = m_size; creatureBankType < size; ++creatureBankType)
     {
         for (size_t i = 0; i < STATES_AMOUNT; ++i)
         {
@@ -1157,7 +1292,7 @@ void CreatureBanksExtender::CreatureBankManager::Reserve(const size_t size) noex
     monsterAwards.reserve(size);
     monsterGuards.reserve(size);
     setups.reserve(size);
-    isNotBankSettings.reserve(size);
+    isBankSettings.reserve(size);
     customPositions.reserve(size);
     customRewardSetups.reserve(size);
 }
@@ -1167,7 +1302,7 @@ void CreatureBanksExtender::CreatureBankManager::ShrinkToFit() noexcept
     monsterAwards.shrink_to_fit();
     monsterGuards.shrink_to_fit();
     setups.shrink_to_fit();
-    isNotBankSettings.shrink_to_fit();
+    isBankSettings.shrink_to_fit();
     customPositions.shrink_to_fit();
     customRewardSetups.shrink_to_fit();
     m_size = monsterAwards.size();
@@ -1176,7 +1311,7 @@ void CreatureBanksExtender::CreatureBankManager::ShrinkToFit() noexcept
 const CreatureBanksExtender::CustomCreatureBank *CreatureBanksExtender::GetCustomCreatureBank(
     const H3MapItem *mapItem) noexcept
 {
-    return &manager.customCreatureBanksVector[mapItem->creatureBank.id];
+    return mapItem->creatureBank.id >= Size() ? nullptr : &manager.customCreatureBanksVector[mapItem->creatureBank.id];
 }
 
 void CreatureBanksExtender::CustomCreatureBank::GenerateSpells(const CustomRewardSetupState &setup)
@@ -1250,46 +1385,6 @@ CreatureBanksExtender::CustomCreatureBank::CustomCreatureBank(const CustomReward
         morale = setupState.morale;
     }
 }
-
-// this function saves single items of the stuct to savegame
-#define SAVE_SIMPLE_FIELD(field)                                                                                       \
-    libc::sprintf(h3_TextBuffer, field##Format, id);                                                                   \
-    Era::SetAssocVarIntValue(h3_TextBuffer, field);
-
-// this function saves array items of the stuct to savegame
-#define SAVE_INDEXED_FIELD(field, size)                                                                                \
-    for (size_t i = 0; i < size; ++i)                                                                                  \
-    {                                                                                                                  \
-        libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
-        Era::SetAssocVarIntValue(h3_TextBuffer, field[i]);                                                             \
-    }
-
-// this function loads single items of the stuct from savegame and clears variable
-#define LOAD_SIMPLE_FIELD(field)                                                                                       \
-    libc::sprintf(h3_TextBuffer, field##Format, id);                                                                   \
-    field = Era::GetAssocVarIntValue(h3_TextBuffer);                                                                   \
-    Era::SetAssocVarIntValue(h3_TextBuffer, 0);
-
-// this function loads array items of the stuct from savegame and clears variables
-#define LOAD_INDEXED_FIELD(field, size)                                                                                \
-    for (size_t i = 0; i < size; ++i)                                                                                  \
-    {                                                                                                                  \
-        libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
-        field[i] = eSpell(Era::GetAssocVarIntValue(h3_TextBuffer));                                                    \
-        Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                                                    \
-    }
-// this function loads single items of the stuct from savegame and clears variable
-#define CLEAR_SIMPLE_FIELD(field)                                                                                      \
-    libc::sprintf(h3_TextBuffer, field##Format, id);                                                                   \
-    Era::SetAssocVarIntValue(h3_TextBuffer, 0);
-
-// this function only clears variables
-#define CLEAR_INDEXED_FIELD(field, size)                                                                               \
-    for (size_t i = 0; i < size; ++i)                                                                                  \
-    {                                                                                                                  \
-        libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
-        Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                                                    \
-    }
 
 void CreatureBanksExtender::CustomCreatureBank::WriteSaveData() const noexcept
 {
@@ -1369,8 +1464,8 @@ void __stdcall CreatureBanksExtender::OnGameLeave(Era::TEvent *Event)
     if (currentCreatureBank.positionsPatch)
     {
         currentCreatureBank.positionsPatch->Destroy();
-        currentCreatureBank.positionsPatch = nullptr;
     }
+    currentCreatureBank = {};
 }
 
 void CreatureBanksExtender::CreatePatches()
@@ -1379,43 +1474,75 @@ void CreatureBanksExtender::CreatePatches()
 
     if (!m_isInited)
     {
-        // Custom creature banks initialization
+        // creature bank initialization
         _pi->WriteLoHook(0x047A70D, CrBank_BeforeSetupFromState);
+        // ObjectPlacement by WoG
+        _pi->WriteHiHook(0x07133E2, CDECL_, WoG_PlaceObject);
 
+        // adding creature bank into array
         _pi->WriteHiHook(0x04D22B0, THISCALL_, CrBank_AddToGameList);
-        _pi->WriteHiHook(0x0528520, FASTCALL_, AIHero_GetMapItemWeight); // 25 object type
+        _pi->WriteLoHook(0x04C1E32, Game_AfterInitMapItem);
+        _pi->WriteLoHook(0x04C96D1, Game_SetMapItemDef);
 
-        _pi->WriteHiHook(0x04A13E6, FASTCALL_, CrBank_AskForVisitMessage); // 16 object type
-        _pi->WriteHiHook(0x04A1E56, FASTCALL_, CrBank_AskForVisitMessage); // 25 object type
+        _pi->WriteHiHook(0x0528520, FASTCALL_, AIHero_GetMapItemWeight); // creature bank new Rewards AI weight
 
-        _pi->WriteLoHook(0x04A1394, CrBank_DisplayPreCombatMessage);        // 16 object type
-        _pi->WriteLoHook(0x04A1E29, CrBank_DisplayPreCombatMessage);        // 25 object type
-        _pi->WriteLoHook(0x04AC19D, SpecialCrBank_DisplayPreCombatMessage); // crypt/ships object type
+        // chaging creature bank text patches
+        {
+            // Pre-combat message
+            {
+                _pi->WriteLoHook(0x04A1394, CrBank_DisplayPreCombatMessage);        // 16 object type
+                _pi->WriteLoHook(0x04A1E29, CrBank_DisplayPreCombatMessage);        // 25 object type
+                _pi->WriteLoHook(0x04AC19D, SpecialCrBank_DisplayPreCombatMessage); // crypt/ships object type
+
+                _pi->WriteHiHook(0x04A13E6, FASTCALL_, CrBank_AskForVisitMessage); // 16 object type
+                _pi->WriteHiHook(0x04A1E56, FASTCALL_, CrBank_AskForVisitMessage); // 25 object type
+            }
+            // Creature bank description for getting text
+            {
+                _pi->WriteDword(0x0413E23 + 1, 0x6603B0);      // ["\n\0" -> "\n\n\0" for getCrBank text]
+                _pi->WriteHexPatch(0x040ABDE, "EB0C90909090"); // remove extra space in the guard description start
+            }
+        }
+
         //  _pi->WriteLoHook(0x041391C, AdvMgr_GetObjectRightClickDescr);
 
         _pi->WriteLoHook(0x4ABAD3, CrBank_BeforeCombatStart);
         _pi->WriteHiHook(0x4ABBCB, THISCALL_, CrBank_CombatStart);
 
-        // Adding custom rewards to player
-        _pi->WriteLoHook(0x04ABBFF, CrBank_AfterCombatWon);
-        _pi->WriteLoHook(0x04ABE3C, CrBank_AfterDrawingResources);
-        _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
-        _pi->WriteHiHook(0x04ABFD2, THISCALL_, CrBank_BeforeEndingText);
+        // giving custom rewards after combat won
+        // if (0)
+        {
+            // Adding custom rewards to winner (except mithril)
+            _pi->WriteLoHook(0x04ABBFF, CrBank_AfterCombatWon);
 
-        _pi->WriteLoHook(0x04AC13B, CrBank_BeforeGivingResources);
+            // only for Human Player
+            {
+                // adding mitrhil picture with text by game's function
+                _pi->WriteLoHook(0x04ABE3C, CrBank_AfterDrawingResources);
+                // adding custom rewards pictures into main H3PictureVector
+                // creating custom rewards text taken from Pandora's Box award
+                _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
+                // adding custom text to original reward message (appending it to the end)
+                _pi->WriteHiHook(0x04ABFD2, THISCALL_, CrBank_BeforeEndingText);
+            }
 
-        _pi->WriteHexPatch(0x040ABDE, "EB0C90909090"); // remove extra space in the guard description start
+            // giving mithril
+            _pi->WriteLoHook(0x04AC13B, CrBank_BeforeGivingResources);
+        }
+
         //  _pi->WriteHexPatch(0x040AC7D, "EB0C90909090"); // remove extra space in the guard description between
         //  creatures
 
-        _pi->WriteDword(0x0413E23 + 1, 0x6603B0); // ["\n\0" -> "\n\n\0" for getCrBank text]
+        // saving data in the save game at ERA' events with assocs int variables
+        {
+            Era::RegisterHandler(OnBeforeSaveGame, "OnBeforeSaveGame");
+            Era::RegisterHandler(OnAfterSaveGame, "OnAfterSaveGame");
+            Era::RegisterHandler(OnAfterLoadGame, "OnAfterLoadGame");
+            Era::RegisterHandler(OnGameLeave, "OnGameLeave");
+        }
 
+        // renaming creature banks
         Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
-        Era::RegisterHandler(OnBeforeSaveGame, "OnBeforeSaveGame");
-        Era::RegisterHandler(OnAfterSaveGame, "OnAfterSaveGame");
-        Era::RegisterHandler(OnAfterLoadGame, "OnAfterLoadGame");
-
-        Era::RegisterHandler(OnGameLeave, "OnGameLeave");
 
         m_isInited = true;
     }

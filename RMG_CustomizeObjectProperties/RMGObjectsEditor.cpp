@@ -592,6 +592,32 @@ _LHF_(RMG__AtSecondSubterranianGatesPlacement)
     return EXEC_DEFAULT;
 }
 
+_LHF_(RMG__AtQuestArtifactListCounter)
+{
+    const int artId = c->eax;
+    if (artId >= 0 && P_ArtifactSetup[artId].IsPartOfCombo())
+    {
+        // jump to next art in the loop
+        c->return_address = 0x54B9D1;
+        return  NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
+_LHF_(RMG__AtQuestArtifactListSelectRandom)
+{
+    const int artId = c->eax;
+    if (artId >= 0 && P_ArtifactSetup[artId].IsPartOfCombo())
+    {
+        // jump to next art in the loop
+        c->return_address = 0x54BA32;
+        return NO_EXEC_DEFAULT;
+
+    }
+
+    return EXEC_DEFAULT;
+}
+
 } // namespace fixes
 
 void RMGObjectsEditor::CreatePatches()
