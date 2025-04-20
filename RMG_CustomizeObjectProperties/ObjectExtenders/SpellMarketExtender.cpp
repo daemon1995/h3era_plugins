@@ -33,7 +33,7 @@ BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *h
     if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))
     {
         aiMapItemWeight = 0;
-        if (spellMarket->TryToVisit(const_cast<H3Hero *>(hero)))
+        if (spellMarket->TryToVisit(const_cast<H3Hero *>(hero)) == eVisitError::NONE)
         {
             for (size_t i = 0; i < 2; i++)
             {
