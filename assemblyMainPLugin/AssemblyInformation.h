@@ -44,6 +44,7 @@ class AssemblyInformation : public IGamePatch
         H3DlgText *AddToDlg(H3BaseDlg *dlg) noexcept;
 
     } m_eraVersion;
+    BOOL alwaysDraw = false;
 
     struct LocalVersion : public Version
     {
@@ -74,14 +75,16 @@ class AssemblyInformation : public IGamePatch
 
     Version *versions[3];
 
+  private:
     AssemblyInformation(PatcherInstance *_pi);
 
   public:
     virtual void CreatePatches() noexcept final override;
 
   public:
-    static int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg);
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
+
+    static int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg);
     static int __stdcall DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg *dlg);
     static int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val);
     static int __stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg);

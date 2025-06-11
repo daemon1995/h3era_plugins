@@ -6,8 +6,10 @@
 
 #pragma comment(lib, "Shlwapi.lib")
 
+namespace web
+{
 std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const wchar_t *path);
-
+}
 // constexpr const char* BASE_JSON_KEY = "gem_plugin.main_menu";
 
 const char *AssemblyInformation::BASE_JSON_KEY = "gem_plugin.main_menu";
@@ -74,9 +76,6 @@ H3DlgText *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
     auto it =
         dlg->CreateText(x, y, itemWidth, fnt->height, text.String(), fnt->GetName(), 7, -1, eTextAlignment::HLEFT);
 
-    // fnt->Dereference();
-    // if (versions)
-    //	*reinterpret_cast<int*>(*reinterpret_cast<int*>(versions) +0x44) = eTextColor::RED;
     return it;
 }
 
@@ -88,28 +87,31 @@ void AssemblyInformation::Version::AdjustItemText() noexcept
         text = h3_TextBuffer;
     }
 }
-void AssemblyInformation::Version::ClickProcedure() const noexcept
+
+void OpenExternalFile(const char *path, const char *msg = nullptr)
 {
-
-    if (shellExecutePath.Empty())
+    if (path)
     {
-    }
-    else
-    {
-        P_SoundManager->ClickSound();
+        const bool isUrl = PathIsURLA(path);
 
-        // check if we open file or the link
-        bool isUrl = PathIsURL(shellExecutePath.String());
+        // BOOL isOk = true;
+        if (msg)
+        {
+            std::string _msg = msg;
+            libc::sprintf(h3_TextBuffer, _msg.c_str(), path);
+        }
+        else
+        {
+            LPCSTR jsonKey = isUrl ? panelText::OPEN_URL : panelText::OPEN_FILE;
+            libc::sprintf(h3_TextBuffer, EraJS::read(jsonKey), path);
+        }
 
-        LPCSTR jsonKey =
-            isUrl ? "gem_plugin.user_notification.open_web_page" : "gem_plugin.user_notification.open_external_file";
-        libc::sprintf(h3_TextBuffer, EraJS::read(jsonKey), shellExecutePath.String());
         BOOL isOk = H3Messagebox::Choice(h3_TextBuffer);
+
         if (isOk)
         {
             // call ShellExecuteA from exe to open github download page
-            INT_PTR intRes =
-                STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", shellExecutePath.String(), NULL, NULL, SW_SHOWNORMAL);
+            INT_PTR intRes = STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", path, NULL, NULL, SW_SHOWNORMAL);
 
             /** https://learn.microsoft.com/ru-ru/windows/win32/api/shellapi/nf-shellapi-shellexecutea */
             if (intRes <= 32)
@@ -129,6 +131,15 @@ void AssemblyInformation::Version::ClickProcedure() const noexcept
                 LocalFree(messageBuffer);
             }
         }
+    }
+}
+void AssemblyInformation::Version::ClickProcedure() const noexcept
+{
+
+    if (!shellExecutePath.Empty())
+    {
+        P_SoundManager->ClickSound();
+        OpenExternalFile(shellExecutePath.String());
     }
 }
 
@@ -177,7 +188,7 @@ void AssemblyInformation::RemoteVersion::GetVersion() noexcept
     if (!api.empty() && !host.empty() && !path.empty())
     {
         // make an HTTP request (thanks to Chat GPT)
-        std::string requestResponce = PerformWinHTTPRequest(api.c_str(), host.c_str(), path.c_str());
+        std::string requestResponce = web::PerformWinHTTPRequest(api.c_str(), host.c_str(), path.c_str());
         if (!requestResponce.empty())
         {
             // parse json (thanks to nlohmann)
@@ -287,6 +298,15 @@ int __stdcall AssemblyInformation::DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
     Get().CreateDlgItems(dlg);
     return result;
 }
+int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
+
+{
+    if (auto notificationPanel = NotificationPanel::instance)
+    {
+        delete notificationPanel;
+    }
+    return THISCALL_1(int, h->GetDefaultFunc(), dlg);
+}
 int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
 {
     int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
@@ -303,6 +323,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg
 }
 void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 {
+
     // hide wnd version hint
     if (auto *it = dlg->GetH3DlgItem(545))
         it->Hide();
@@ -315,6 +336,8 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
             version->dlgItem = version->AddToDlg(dlg);
         }
     }
+
+    NotificationPanel::Init(dlg, 20, 180, 500, 390);
 }
 
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
@@ -340,18 +363,15 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
         }
     }
 
+    BOOL setCustomCursor = false;
     if (activeVersion)
     {
-        P_MouseManager->SetCursor(3, 0);
+        setCustomCursor = true;
 
         if (msg->IsLeftDown())
         {
             activeVersion->ClickProcedure();
         }
-    }
-    else if (msg->GetX()) // check if mouse isn't reset
-    {
-        P_MouseManager->DefaultCursor();
     }
 
     AssemblyInformation::RemoteVersion &remoteVersion = Get().m_remoteVersion;
@@ -371,6 +391,23 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
         remoteVersion.workDone.store(false);
     }
 
+    if (auto panel = NotificationPanel::instance)
+    {
+        if (panel->ProcessPanel(msg, Get().alwaysDraw))
+        {
+            setCustomCursor = true;
+            //  return 0;
+        }
+    }
+
+    if (setCustomCursor)
+    {
+        P_MouseManager->SetCursor(3, 0);
+    }
+    else if (msg->GetX()) // check if mouse isn't reset
+    {
+        P_MouseManager->DefaultCursor();
+    }
     return FASTCALL_1(int, h->GetDefaultFunc(), msg);
 }
 
@@ -391,15 +428,14 @@ void AssemblyInformation::CreatePatches() noexcept
     if (!m_isEnabled)
     {
         _PI->WriteHiHook(0x4FB930, THISCALL_, DlgMainMenu_Create);
-        _PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
-        _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes from new game
-        // move and resize iam00.def (next hero buttn)
-        constexpr BYTE defWidth = 32;
-        _PI->WriteByte(0x401A85 + 1, defWidth);        // set width
-        _PI->WriteDword(0x401A8C + 1, 679 + defWidth); // set y
-
+        //  _PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
+        // _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes from new game
         _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
-        _PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+
+        _PI->WriteHiHook(0x04FBCF0, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
+        // _PI->WriteHiHook(0x04D5AA0, THISCALL_, DlgMainMenu_Dtor); // New/Load Game
+
+        // _PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
 
         //	Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 
@@ -422,6 +458,7 @@ void AssemblyInformation::LoadDataFromJson()
         m_eraVersion.GetJsonData("era_version");
         m_localVersion.GetJsonData("current_version");
         m_remoteVersion.GetJsonData("online_version");
+        alwaysDraw = EraJS::readInt("nmmi.menu_info.main.always_draw");
 
         m_eraVersion.version = Era::GetEraVersion();
         if (m_eraVersion.show || m_localVersion.show || m_remoteVersion.show)

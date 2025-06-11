@@ -1,12 +1,8 @@
 ﻿#include "framework.h"
-// #ifndef PROJECT_NAME
-// #define PROJECT_NAME ""
-
-// #endif // !PROJECT_NAME
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.72";
+const char *PLUGIN_VERSION = "1.73";
 const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";

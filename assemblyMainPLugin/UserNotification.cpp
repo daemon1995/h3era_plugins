@@ -112,7 +112,7 @@ char __stdcall UserNotification::AdvMgr_DrawMap(HiHook *h, H3AdventureManager *a
 
 void UserNotification::PluginText::Load() noexcept
 {
-    startGameWithoutOptionsFile = EraJS::read("gem_plugin.user_notification.no_dat_settings");
+    startGameWithoutOptionsFile = EraJS::read("era.notifications.user.no_dat_settings");
 }
 
 void __stdcall OnDrawActionPlayCastSpell(HiHook *h, H3CombatManager *mgr, eSpell spellId, int pos, int casterKind,

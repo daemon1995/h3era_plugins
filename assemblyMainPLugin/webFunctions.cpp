@@ -1,12 +1,14 @@
- #pragma once
+#pragma once
+
 #include <Windows.h>
 #include <string>
 #include <winhttp.h>
 #pragma comment(lib, "winhttp.lib")
+namespace web
+{
 
 std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const wchar_t *path)
 {
-
 
     HINTERNET hSession =
         WinHttpOpen(api, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
@@ -90,3 +92,4 @@ std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const
 
     return result;
 }
+} // namespace web
