@@ -107,9 +107,9 @@ void __stdcall LegendHeroes::OnAfterErmInstructions(Era::TEvent *event)
     {
         if (!heroLook->forceOverride && !heroLook[i].original)
         {
-            sprintf(const_cast<char *>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
+            libc::sprintf(const_cast<char *>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
                     heroLook[i].portraitIndex);
-            sprintf(const_cast<char *>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
+            libc::sprintf(const_cast<char *>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
                     heroLook[i].portraitIndex);
         }
     }
@@ -146,7 +146,7 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
                 WordAt(reinterpret_cast<int>(originalArtBgWgt) + 0x10) += 20000; // set newID
                 originalArtBgWgt->HideDeactivate();
             }
-            dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotBgId, "artifact.def", 0, 0, FALSE,
+            dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotBgId, "artifact.def", 0, 0, false,
                                           0x10)); // add new items to dlg
 
             if (H3DlgItem *originalArtWdgt = dlg->GetH3DlgItem(artSlotId))
@@ -154,7 +154,7 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
                 WordAt(reinterpret_cast<int>(originalArtWdgt) + 0x10) += 20000; // set newID
                 originalArtWdgt->HideDeactivate();
             }
-            dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotId, "artifact.def", 0, 0, FALSE,
+            dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotId, "artifact.def", 0, 0, false,
                                           0x10)); // add new items to dlg
         }
 
@@ -173,7 +173,7 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
                 originalArtBgWgt->HideDeactivate();
             }
 
-            dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotId, "artifact.def", 0, 0, FALSE,
+            dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotId, "artifact.def", 0, 0, false,
                                           0x10)); // add new items to dlg
         }
 

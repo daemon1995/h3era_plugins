@@ -115,8 +115,9 @@
 #else
 	#define _H3API_ inline // force function to be inline
 #endif /* _H3API_LIBRARY_ */
-
-#define _CRT_SECURE_NO_WARNINGS // Prevents some warnings
+#ifndef _CRT_SECURE_NO_WARNINGS
+	#define _CRT_SECURE_NO_WARNINGS // Prevents some warnings
+#endif
 
 #ifndef _WINDOWS_
 	#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
@@ -18055,9 +18056,9 @@ namespace h3
 		/** @brief [04]*/
 		CHAR    name[24];
 		/** @brief [1C]*/
-		INT32*  gameVersionPtr;
+		INT32  gameVersion;
 		/** @brief [20]*/
-		INT32   gameVersion;
+		INT32   selectedHeroIndex;
 		/** @brief [24]*/
 		INT32   town;
 		/** @brief [28]*/
@@ -20840,6 +20841,10 @@ namespace h3
 	public:
 		_H3API_ static H3DlgScrollableText* Create(LPCSTR text, INT32 x, INT32 y,
 			INT32 width, INT32 height, LPCSTR font, INT32 color, INT32 isBlue);
+		
+		_H3API_ H3DlgTextScrollbar* GetTextScrollBar();
+		_H3API_ H3LoadedPcx16* GetPcx();
+		_H3API_ H3Vector<H3DlgText*>* GetItems();
 	};
 	_H3API_ASSERT_SIZE_(H3DlgScrollableText);
 
@@ -20895,6 +20900,7 @@ namespace h3
 		INT32               btnSize2;
 		/** @brief [58]*/
 		h3unk32             _f_58;
+	public:
 		/** @brief [5C]*/
 		BOOL8               catchKeys;
 		/** @brief [5D]*/
@@ -31564,8 +31570,9 @@ namespace h3
         };
 
         H3DefLoader box(is_blue ? NH3Dlg::HDassets::DLGBLUEBOX : NH3Dlg::Assets::DLGBOX);
-
-        if (box.Get() == nullptr)
+		const int defWidth = box->widthDEF;
+		const int defHeight = box->heightDEF;
+		if (box.Get() == nullptr)
             return FALSE;
 
         H3BasePalette565 pal565;
@@ -31593,30 +31600,30 @@ namespace h3
             f_bm = BoxFrames::BF_bm;
         }
 
-        int _w = w - 64 - 64;
+        int _w = w - defWidth - defHeight;
         H3DefFrame* tm = box->GetGroupFrame(0, BoxFrames::BF_tm);
         H3DefFrame* bm = box->GetGroupFrame(0, f_bm);
         while (_w > 0)
         {
-            tm->DrawToPcx16(0, 0, 64, 64, this, x + _w, y, pal);
-            bm->DrawToPcx16(0, 0, 64, 64, this, x + _w, y + h - 64, pal);
-            _w -= 64;
+            tm->DrawToPcx16(0, 0, defWidth, defWidth, this, x + _w, y, pal);
+            bm->DrawToPcx16(0, 0, defWidth, defHeight, this, x + _w, y + h - defHeight, pal);
+            _w -= defWidth;
         }
 
-        int _h = h - 64 - 64;
+        int _h = h - defWidth - defHeight;
         H3DefFrame* ml = box->GetGroupFrame(0, BoxFrames::BF_ml);
         H3DefFrame* mr = box->GetGroupFrame(0, BoxFrames::BF_mr);
         while (_h > 0)
         {
-            ml->DrawToPcx16(0, 0, 64, 64, this, x, y + _h, pal);
-            mr->DrawToPcx16(0, 0, 64, 64, this, x + w - 64, y + _h, pal);
-            _h -= 64;
+            ml->DrawToPcx16(0, 0, defWidth, defHeight, this, x, y + _h, pal);
+            mr->DrawToPcx16(0, 0, defWidth, defHeight, this, x + w - defWidth, y + _h, pal);
+            _h -= defHeight;
         }
 
-        box->GetGroupFrame(0, BoxFrames::BF_tl)->DrawToPcx16(0, 0, 64, 64, this, x, y, pal);
-        box->GetGroupFrame(0, BoxFrames::BF_tr)->DrawToPcx16(0, 0, 64, 64, this, x + w - 64, y, pal);
-        box->GetGroupFrame(0, f_bl)->DrawToPcx16(0, 0, 64, 64, this, x, y + h - 64, pal);
-        box->GetGroupFrame(0, f_br)->DrawToPcx16(0, 0, 64, 64, this, x + w - 64, y + h - 64, pal);
+        box->GetGroupFrame(0, BoxFrames::BF_tl)->DrawToPcx16(0, 0, defWidth, defHeight, this, x, y, pal);
+        box->GetGroupFrame(0, BoxFrames::BF_tr)->DrawToPcx16(0, 0, defWidth, defHeight, this, x + w - defWidth, y, pal);
+        box->GetGroupFrame(0, f_bl)->DrawToPcx16(0, 0, defWidth, defHeight, this, x, y + h - defHeight, pal);
+        box->GetGroupFrame(0, f_br)->DrawToPcx16(0, 0, defWidth, defHeight, this, x + w - defWidth, y + h - defHeight, pal);
 
         return TRUE;
     }
@@ -35834,6 +35841,20 @@ namespace h3
             THISCALL_9(H3DlgScrollableText*, 0x5BA360, s, text, x, y, width, height, font, color, isBlue);
         return s;
     }
+	 _H3API_ H3DlgTextScrollbar* H3DlgScrollableText::GetTextScrollBar()
+	 {
+		 return scrollBar;
+	 }
+
+	 _H3API_ H3LoadedPcx16* H3DlgScrollableText::GetPcx()
+	 {
+		 return canvas;
+	 }
+
+	 _H3API_ H3Vector<H3DlgText*>* H3DlgScrollableText::GetItems()
+	 {
+		 return &textItems;
+	 }
 } /* namespace h3 */
 
 namespace h3
