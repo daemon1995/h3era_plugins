@@ -1,15 +1,12 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
-Patcher* globalPatcher;
-PatcherInstance* _PI;
+Patcher *globalPatcher;
+PatcherInstance *_PI;
 
 #define COUNT_TYPES 10
 
-
-
-char* ButtonName;
-
+char *ButtonName;
 
 #define NONE 0
 #define MELEE 1
@@ -27,14 +24,44 @@ BYTE typesIterator;
 _byte_ saveNpcTypesAction[156];
 
 #define BTTN_ID 2020
+_LHF_(LoHook_InitTxtFiles)
+{
+
+    switcher::ActionSwitcher::Get();
+    return EXEC_DEFAULT;
+}
+_LHF_(Ancient_Calc)
+{
+    // get defender stack
+
+    IntAt(0x2832700) = c->eax;
+    return EXEC_DEFAULT;
 
 
+}
 
+int __stdcall WoG_GetStackDefence(HiHook *h, H3CombatCreature *_this, H3CombatCreature *attacker,
+                                  const BOOL includeFrenzy)
+{
+    int finalDefence = 0;
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+    finalDefence = THISCALL_3(int, h->GetDefaultFunc(), _this, attacker, includeFrenzy);
+    if (attacker && !P_CombatManager->IsHiddenBattle())
+    {
+        const int attackerType = attacker->type;
+        if (attackerType == eCreature::BEHEMOTH || attackerType == eCreature::ANCIENT_BEHEMOTH || attackerType == 156)
+        {
+            int expectedDefence = THISCALL_3(int, 0x04422B0, _this, attacker, includeFrenzy);
+
+            libc::sprintf(h3_TextBuffer, "attacker type: %d,  defense Expected/Final: %d / %d", attackerType,
+                          expectedDefence, finalDefence);
+            P_CombatManager->dlg->ShowHint(h3_TextBuffer, 1);
+        }
+    }
+    return finalDefence;
+}
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 
     static bool pluginIsOn = false;
@@ -45,13 +72,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
         {
             pluginIsOn = true;
             globalPatcher = GetPatcher();
-            _PI = globalPatcher->CreateInstance("EraPlugin.Combat.SwitchCreatureAction.daemon_n");
-            Era::ConnectEra();
-            switcher::ActionSwitcher::Get();
+            static LPCSTR moduleName = "EraPlugin.Combat.SwitchCreatureAction.daemon_n";
+            _PI = globalPatcher->CreateInstance(moduleName);
+            Era::ConnectEra(hModule, moduleName);
 
             //// инициализация параметров (при старте карты)
-            //_PI->WriteLoHook(0x4EEAC0, LoHook_InitTxtFiles);
-
+            //     _PI->WriteLoHook(0x4EEAC0, LoHook_InitTxtFiles);
+           // _PI->WriteHiHook(0x075D3EC, THISCALL_, WoG_GetStackDefence);
             //// добавление кнопки на экран битвы
             //_PI->WriteLoHook(0x46B664, Y_AddChooseAttackButton);
 
@@ -86,8 +113,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             //// get 0x473D27
             //_PI->WriteHiHook(0x473D27, CALL_, EXTENDED_, FASTCALL_, Y_HiHook_BM_GetNetData);
 
-            //LPCSTR temp = "$(H3GameDir)";
-
+            // LPCSTR temp = "$(H3GameDir)";
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -96,4 +122,3 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
-
