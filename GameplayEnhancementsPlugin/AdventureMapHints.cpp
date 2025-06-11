@@ -240,16 +240,53 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                 {
 
                     H3DefLoader flagDef(NH3Dlg::Assets::CREST58);
+                    currentItem->hero.index;
+                   // return;
 
-                    const H3Hero &hero = P_Game->heroes[currentItem->hero.index];
-                    const int owner = hero.owner;
-                    const int frameId = owner >= 0 && owner < 8 ? owner : 8;
-                    H3PcxLoader portrait(P_HeroInfo[hero.id].smallPortrait);
+                    //   Era::y[1] = currentItem->hero.index;
+                    // Era::ExecErmCmd("HEy1:Z?y1^");
+                    //   if (Era::y[1] <= 0)
+
+                    // Era::ExecErmCmd("IF:L^%y1^");
+                    //  return;
+
+                    const H3Hero *hero = &P_Game->heroes[currentItem->hero.index];
+                    // Era::y[1];//P_Game->heroes[currentItem->hero.index];
+
+                    const int owner = hero->owner;
+
+                    const auto heroInfos = P_HeroInfo->Get();
+
+                    if (hero->id<0 || hero->id> 154)
+                    {
+                        return;
+                    }
+                    H3PcxLoader portrait(heroInfos[hero->id].smallPortrait);
+
+                    if (true)
+                    {
+
+                    }
+
+
+                    // libc::sprintf(Era::z[1], "%d", currentItem->hero.index);
+                    // Era::ExecErmCmd("IF:L^%z1^");
+                    //                    H3Messagebox(heroInfos[hero.id].smallPortrait);
+                    //  return;
+
+                    //  if (!heroInfos[hero->id].smallPortrait)
+                    {
+                        //       return;
+                    }
+                    // return;
 
                     const int TEMP_PCX_WIDTH = portrait->width + TEXT_MARGIN;
                     const int TEMP_PCX_HEIGHT = portrait->height + (flagDef->heightDEF >> 1) + TEXT_MARGIN;
+                    //   return;
 
                     tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
+                    //  return;
+                    const int frameId = owner >= 0 && owner < 8 ? owner : 8;
 
                     memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
                     portrait->DrawToPcx16(tempBuffer, 1, 1, 1);
@@ -257,6 +294,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     flagDef->DrawToPcx16(0, frameId, ((flagDef->widthDEF - portrait->width) >> 1) - 1, 4,
                                          portrait->width, (flagDef->heightDEF >> 1) - 1, tempBuffer, 1,
                                          portrait->height + 1);
+                    //    return;
                 }
                 else
                 {

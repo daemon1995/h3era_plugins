@@ -58,6 +58,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             _PI->WriteLoHook(0x070AD9A, WoG_BeforeTownbuildingDemolishQuestion);
             _PI->WriteLoHook(0x070C1A1, WoG_AfterTownbuildingDemolishQuestion);
             demolishButtonPatch = _PI->CreateDwordPatch(0x04F738A + 1, (int)demoBttn);
+            // move and resize iam00.def (next hero buttn)
+            constexpr BYTE defWidth = 32;
+            _PI->WriteByte(0x401A85 + 1, defWidth);        // set width
+            _PI->WriteDword(0x401A8C + 1, 679 + defWidth); // set y
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
