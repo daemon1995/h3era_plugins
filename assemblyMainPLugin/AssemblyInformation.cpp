@@ -298,29 +298,31 @@ int __stdcall AssemblyInformation::DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
     Get().CreateDlgItems(dlg);
     return result;
 }
-int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
+int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 
 {
+
     if (auto notificationPanel = NotificationPanel::instance)
     {
         delete notificationPanel;
     }
+    Get().isVisible = false;
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
-int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
-{
-    int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
-    Get().CreateDlgItems(dlg);
-    return result;
-}
-int __stdcall AssemblyInformation::DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg *dlg)
-{
-    Get().CreateDlgItems(dlg);
-    auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
-    int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
-    _h->Destroy();
-    return result;
-}
+// int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
+//{
+//     int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
+//     Get().CreateDlgItems(dlg);
+//     return result;
+// }
+// int __stdcall AssemblyInformation::DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg *dlg)
+//{
+//     Get().CreateDlgItems(dlg);
+//     auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+//     int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
+//     _h->Destroy();
+//     return result;
+// }
 void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 {
 
@@ -334,6 +336,7 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
         {
             version->AdjustItemText();
             version->dlgItem = version->AddToDlg(dlg);
+            isVisible = true;
         }
     }
 
@@ -342,58 +345,61 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 {
-
-    H3DlgText *visibleItem = nullptr;
-    const AssemblyInformation::Version *activeVersion = nullptr;
-    for (auto *ver : Get().versions)
-    {
-        H3DlgText *it = ver->dlgItem;
-        if (it && it->IsVisible())
-        {
-
-            if (it == msg->ItemAtPosition(msg->GetDlg()))
-            {
-                activeVersion = ver;
-            }
-
-            if (ver->alwaysDraw)
-            {
-                it->Draw();
-            }
-        }
-    }
-
+    auto &instance = Get();
     BOOL setCustomCursor = false;
-    if (activeVersion)
-    {
-        setCustomCursor = true;
 
-        if (msg->IsLeftDown())
+    if (instance.isVisible)
+    {
+        const AssemblyInformation::Version *activeVersion = nullptr;
+        for (auto *ver : instance.versions)
         {
-            activeVersion->ClickProcedure();
+            H3DlgText *it = ver->dlgItem;
+            if (it && it->IsVisible())
+            {
+
+                if (it == msg->ItemAtPosition(msg->GetDlg()))
+                {
+                    activeVersion = ver;
+                }
+
+                if (ver->alwaysDraw)
+                {
+                    it->Draw();
+                }
+            }
         }
-    }
 
-    AssemblyInformation::RemoteVersion &remoteVersion = Get().m_remoteVersion;
+        if (activeVersion)
+        {
+            setCustomCursor = true;
 
-    H3DlgText *it = remoteVersion.dlgItem;
+            if (msg->IsLeftDown())
+            {
+                activeVersion->ClickProcedure();
+            }
+        }
 
-    if (remoteVersion.workDone.load() && it && it->IsVisible())
-    {
+        AssemblyInformation::RemoteVersion &remoteVersion = instance.m_remoteVersion;
 
-        remoteVersion.AdjustItemText();
-        it->SetText(remoteVersion.text);
-        H3FontLoader fn(remoteVersion.fontName);
-        it->SetWidth(fn->GetMaxLineWidth(
-            remoteVersion.text.String())); // (remoteVersion.text.Length() + 1)* remoteVersion.characterLength);
-        it->Draw();
-        it->Refresh();
-        remoteVersion.workDone.store(false);
+        H3DlgText *it = remoteVersion.dlgItem;
+
+        if (remoteVersion.workDone.load() && it && it->IsVisible())
+        {
+
+            remoteVersion.AdjustItemText();
+            it->SetText(remoteVersion.text);
+            H3FontLoader fn(remoteVersion.fontName);
+            it->SetWidth(fn->GetMaxLineWidth(
+                remoteVersion.text.String())); // (remoteVersion.text.Length() + 1)* remoteVersion.characterLength);
+            it->Draw();
+            it->Refresh();
+            remoteVersion.workDone.store(false);
+        }
     }
 
     if (auto panel = NotificationPanel::instance)
     {
-        if (panel->ProcessPanel(msg, Get().alwaysDraw))
+        if (panel->ProcessPanel(msg, instance.alwaysDraw))
         {
             setCustomCursor = true;
             //  return 0;
@@ -408,6 +414,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
     {
         P_MouseManager->DefaultCursor();
     }
+
     return FASTCALL_1(int, h->GetDefaultFunc(), msg);
 }
 
@@ -427,12 +434,16 @@ void AssemblyInformation::CreatePatches() noexcept
 {
     if (!m_isEnabled)
     {
-        _PI->WriteHiHook(0x4FB930, THISCALL_, DlgMainMenu_Create);
-        //  _PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
-        // _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes from new game
+        _PI->WriteHiHook(0x04EF00C, THISCALL_, DlgMainMenu_Create);
+        _PI->WriteHiHook(0x04EF247, THISCALL_, DlgMainMenu_Create);
+
         _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
 
-        _PI->WriteHiHook(0x04FBCF0, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
+        _PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor);  // MAIN menu
+        _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
+        //  _PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
+        // _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes from new game
+
         // _PI->WriteHiHook(0x04D5AA0, THISCALL_, DlgMainMenu_Dtor); // New/Load Game
 
         // _PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc

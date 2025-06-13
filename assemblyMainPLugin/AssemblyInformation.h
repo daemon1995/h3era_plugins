@@ -44,7 +44,6 @@ class AssemblyInformation : public IGamePatch
         H3DlgText *AddToDlg(H3BaseDlg *dlg) noexcept;
 
     } m_eraVersion;
-    BOOL alwaysDraw = false;
 
     struct LocalVersion : public Version
     {
@@ -74,6 +73,8 @@ class AssemblyInformation : public IGamePatch
     } m_remoteVersion;
 
     Version *versions[3];
+    BOOL alwaysDraw = false;
+    BOOL isVisible = false;
 
   private:
     AssemblyInformation(PatcherInstance *_pi);
@@ -84,10 +85,12 @@ class AssemblyInformation : public IGamePatch
   public:
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
 
-    static int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg);
-    static int __stdcall DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg *dlg);
-    static int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val);
     static int __stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg);
+    static int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg);
+    static int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg);
+
+    // static int __stdcall DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg *dlg);
+    //  static int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val);
 
   private:
     void LoadDataFromJson();
