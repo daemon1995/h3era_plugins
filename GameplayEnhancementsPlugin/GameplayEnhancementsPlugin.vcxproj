@@ -163,6 +163,7 @@
     <ClInclude Include="GraphicsEnhancements.h" />
     <ClInclude Include="ISettings.h" />
     <ClInclude Include="MapScroller.h" />
+    <ClInclude Include="MithrilDisplay.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -174,6 +175,7 @@
     <ClCompile Include="GraphicsEnhancements.cpp" />
     <ClCompile Include="ISettings.cpp" />
     <ClCompile Include="MapScroller.cpp" />
+    <ClCompile Include="MithrilDisplay.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

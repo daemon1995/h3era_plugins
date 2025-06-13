@@ -17,4 +17,5 @@
 #include "GameplayFeature.h"
 #include "GraphicsEnhancements.h"
 #include "MapScroller.h"
+#include "MithrilDisplay.h"
 #endif // PCH_H

@@ -13,7 +13,7 @@ _LHF_(HooksInit)
     cmbhints::CombatHints::Get();
 
     features::GameplayFeature::Get();
-
+    ERI::ExtendedResourcesInfo::Get();
     static constexpr LPCSTR vipPluginInstanceName = "EraPlugin.AdventureMapHints.daemon_n";
     if (globalPatcher->GetInstance(vipPluginInstanceName) == nullptr)
     {
