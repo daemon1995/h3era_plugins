@@ -139,6 +139,9 @@
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>D:\SW\ExeMapCompiler\$(ProjectName).map</MapFileName>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(TargetPath)" "D:\games\HoMM 3 ERA test\Mods\wog\eraplugins\" /Y /I</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

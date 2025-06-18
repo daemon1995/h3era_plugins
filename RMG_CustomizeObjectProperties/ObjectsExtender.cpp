@@ -146,6 +146,8 @@ void ObjectsExtender::LoadMapObjectPropertiesFromLoadedMods() noexcept
         // later read array of arrays
         int arrayCounter = 0;
         bool breakFlag = false;
+        // reset objects counter
+        propertyIdCounter = 0;
         do
         {
             do
