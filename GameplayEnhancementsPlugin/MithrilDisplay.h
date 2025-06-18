@@ -25,7 +25,7 @@ class ExtendedResourcesInfo : public IGamePatch
     virtual void CreatePatches() override;
 
   private:
-    const BOOL ShowMithrilRMCHint(H3Msg *msg, H3DlgItem *hintZone) noexcept;
+    BOOL ShowMithrilRMCHint(const H3Msg *msg, H3DlgItem *hintZone) const noexcept;
 
   private:
     static BOOL8 BuildMithril(H3ResourceBarPanel *resourceBarPanel, int textItemWidth, bool buildFrame = true);

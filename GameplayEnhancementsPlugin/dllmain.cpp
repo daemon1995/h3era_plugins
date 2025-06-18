@@ -1,7 +1,22 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
-Patcher *globalPatcher;
-PatcherInstance *_PI;
+Patcher *globalPatcher = nullptr;
+PatcherInstance *_PI = nullptr;
+
+namespace dllText
+{
+const char *PLUGIN_VERSION = "1.5.0";
+const char *INSTANCE_NAME = "EraPlugin.GameplayFeatures.daemon_n";
+const char *PLUGIN_AUTHOR = "daemon_n";
+const char *PLUGIN_DATA = __DATE__;
+} // namespace dllText
+
+void __stdcall OnReportVersion(Era::TEvent *e)
+{
+    sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
+    std::string temp(h3_TextBuffer);
+    Era::ReportPluginVersion(temp.c_str());
+}
 
 _LHF_(HooksInit)
 {
@@ -48,11 +63,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         {
             pluginIsOn = true;
 
-            static LPCSTR pluginInstanceName = "EraPlugin.GameplayFeatures.daemon_n";
-            Era::ConnectEra(hModule, pluginInstanceName);
+            Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
+            Era::RegisterHandler(OnReportVersion, "OnReportVersion");
 
             globalPatcher = GetPatcher();
-            _PI = globalPatcher->CreateInstance(pluginInstanceName);
+            _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 
             _PI->WriteLoHook(0x4EEAF2, HooksInit);
             _PI->WriteLoHook(0x070AD9A, WoG_BeforeTownbuildingDemolishQuestion);

@@ -83,49 +83,53 @@ char __stdcall H3AdventureMgrDlg_Interface_MoveHint(HiHook *h, H3AdventureMgrDlg
 int __stdcall ExtendedResourcesInfo::KingdomOverviewDlgProc(HiHook *h, H3BaseDlg *dlg, H3Msg *msg)
 {
 
-    auto *mithrilBar = &Get();
-    if (msg->subtype == eMsgSubtype::RBUTTON_DOWN)
+    if (auto *mithrilBar = instance)
     {
-        mithrilBar->ShowMithrilRMCHint(msg, mithrilBar->kingdomHintcontrol);
-    }
-    else if (msg->command == eMsgCommand::MOUSE_OVER)
-    {
-        H3DlgItem *hintZone = mithrilBar->kingdomHintcontrol;
-        int x = msg->GetX();
-        int y = msg->GetY();
-        bool result = x >= hintZone->GetAbsoluteX() && x <= hintZone->GetAbsoluteX() + hintZone->GetWidth() &&
-                      y >= hintZone->GetAbsoluteY() && y <= hintZone->GetAbsoluteY() + hintZone->GetHeight();
-        if (result)
+        if (auto mithrilText = mithrilBar->kingdomHintcontrol)
         {
-            //	mithril->lastHintIsMitril = true;
-
-            auto it = dlg->GetText(37);
-            if (it)
+            constexpr int HINT_BAR_ID = 37;
+            if (msg->subtype == eMsgSubtype::RBUTTON_DOWN)
             {
+                mithrilBar->ShowMithrilRMCHint(msg, mithrilText);
+            }
+            else if (msg->command == eMsgCommand::MOUSE_OVER)
+            {
+                const H3DlgItem *hintZone = mithrilText;
+                int x = msg->GetX();
+                int y = msg->GetY();
+                const bool result =
+                    x >= hintZone->GetAbsoluteX() && x <= hintZone->GetAbsoluteX() + hintZone->GetWidth() &&
+                    y >= hintZone->GetAbsoluteY() && y <= hintZone->GetAbsoluteY() + hintZone->GetHeight();
+                if (result)
+                {
+                    //	mithril->lastHintIsMitril = true;
 
-                H3TextFile **resNames = reinterpret_cast<H3TextFile **>(0x6A5390); // get resourec name
-                it->SetText((*resNames)->GetText(8));
-                it->Draw();
-                it->Refresh();
+                    if (auto it = dlg->GetText(HINT_BAR_ID))
+                    {
+                        it->SetText(P_ResourceName[eResource::MITHRIL]);
+                        it->Draw();
+                        it->Refresh();
+                    }
+                }
+                else if (x >= hintZone->GetAbsoluteX() + hintZone->GetWidth())
+                {
+
+                    if (auto it = dlg->GetText(HINT_BAR_ID))
+                    {
+                        it->SetText("");
+                        it->Draw();
+                        it->Refresh();
+                    }
+                }
             }
         }
-        else if (x >= hintZone->GetAbsoluteX() + hintZone->GetWidth())
-        {
-            auto it = dlg->GetText(37);
-            if (it)
-            {
-                it->SetText("");
-                it->Draw();
-                it->Refresh();
-            }
-        }
     }
 
-    THISCALL_2(int, h->GetDefaultFunc(), dlg, msg);
-    return 0;
+    // THISCALL_2(int, h->GetDefaultFunc(), dlg, msg);
+    return THISCALL_2(int, h->GetDefaultFunc(), dlg, msg);
 }
 
-const BOOL ExtendedResourcesInfo::ShowMithrilRMCHint(H3Msg *msg, H3DlgItem *hintZone) noexcept
+BOOL ExtendedResourcesInfo::ShowMithrilRMCHint(const H3Msg *msg, H3DlgItem *hintZone) const noexcept
 {
     int x = msg->GetX();
     int y = msg->GetY();
@@ -151,10 +155,8 @@ _LHF_(ExtendedResourcesInfo::OnAdvMgrDlgRightClick)
 {
 
     bool ret = EXEC_DEFAULT;
-    H3Msg *msg = reinterpret_cast<H3Msg *>(c->edi);
-    auto *mithrilBar = &Get();
-
-    if (mithrilBar->ShowMithrilRMCHint(msg, mithrilBar->advMapHintControl))
+    const H3Msg *msg = reinterpret_cast<H3Msg *>(c->edi);
+    if (instance->ShowMithrilRMCHint(msg, instance->advMapHintControl))
     {
         c->ebx = true;
         c->return_address = 0x408974;
