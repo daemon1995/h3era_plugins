@@ -4,6 +4,22 @@
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
 
+namespace exports
+{
+//DllExport LPCSTR GetObjectName(const H3MapItem *mapItem)
+//{
+//    if (mapItem)
+//    {
+//        return RMGObjectInfo::GetObjectName(mapItem->objectType, mapItem->objectSubtype);
+//    }
+//    return h3_NullString;
+//}
+DllExport LPCSTR GetObjectName(const INT32 type, const INT32 subtype)
+{
+    return RMGObjectInfo::GetObjectName(type, subtype);
+}
+} // namespace exports
+
 namespace editor
 {
 GeneratedInfo RMGObjectsEditor::generatedInfo;
@@ -1008,6 +1024,7 @@ void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
         }
     }
 }
+
 LPCSTR RMGObjectInfo::GetObjectName(const H3MapItem *mapItem)
 {
     if (mapItem)

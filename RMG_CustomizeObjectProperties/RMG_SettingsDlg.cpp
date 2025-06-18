@@ -144,7 +144,7 @@ std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> RMG_SettingsDlg::m_w
 const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> RMG_SettingsDlg::m_objectAttributes = {
     &m_banks, &m_commonObjects, &m_dwellings, &m_wogObjects};
 
-EXTERN_C __declspec(dllexport) const BOOL RMGObjectSupportsGeneration(const int objType, const int objSubtype = -1)
+DllExport BOOL RMGObjectSupportsGeneration(const int objType, const int objSubtype = -1)
 {
     BOOL result = false;
     if (objType > eObject::NO_OBJ && objType < H3_MAX_OBJECTS)
