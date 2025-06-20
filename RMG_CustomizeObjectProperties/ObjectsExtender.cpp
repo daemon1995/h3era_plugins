@@ -517,14 +517,16 @@ _LHF_(ObjectsExtender::AIHero_GetObjectPosWeight)
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
     {
 
-        const H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
+        H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
+        int *moveDistance = reinterpret_cast<int *>(c->edi);
         const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
+        const H3Position pos = *reinterpret_cast<H3Position *>(c->ebp + 0x8);
 
         INT aiResWeight = 0;
 
         for (const auto &extender : extenders)
         {
-            if (extender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight))
+            if (extender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight, moveDistance, pos))
             {
 
                 c->eax = aiResWeight;
@@ -596,8 +598,8 @@ BOOL ObjectsExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *cu
 {
     return false;
 }
-BOOL ObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
-                                         int &aiResWeight) const noexcept
+BOOL ObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
+                                         int &aiMapItemWeight, int *moveDistance, const H3Position pos) const noexcept
 {
     return false;
 }

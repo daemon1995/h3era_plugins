@@ -26,8 +26,9 @@ void SpellMarketExtender::CreatePatches()
         m_isInited = true;
     }
 }
-BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
-                                             int &aiMapItemWeight) const noexcept
+BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
+                                             int &aiMapItemWeight, int *moveDistance,
+                                             const H3Position pos) const noexcept
 {
 
     if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))
@@ -44,7 +45,7 @@ BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *h
             }
             if (aiMapItemWeight > 0)
             {
-                aiMapItemWeight -= player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED;
+                aiMapItemWeight -= activePlayer->resourceImportance[eResource::GOLD] * GOLD_REQUIRED;
             }
         }
         return true;

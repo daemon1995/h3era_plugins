@@ -14,8 +14,9 @@ GazeboExtender::~GazeboExtender()
 }
 
 // Устанавливает ценность объекта для ИИ
-BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
-                                        int &aiMapItemWeight) const noexcept
+BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem* mapItem, H3Hero* hero, const H3Player* activePlayer,
+    int& aiMapItemWeight, int* moveDistance,
+    const H3Position pos) const noexcept
 {
 
     if (auto gazebo = H3MapItemGazebo::GetFromMapItem(mapItem))
@@ -29,7 +30,7 @@ BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, 
                 // адрес похожего псевдокода 0052BB89
                 const float aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
                 aiMapItemWeight =
-                    static_cast<int>(aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
+                    static_cast<int>(aiExperience - activePlayer->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
             }
         }
         return true;

@@ -127,8 +127,9 @@ BOOL WarehousesExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3
     return false;
 }
 
-BOOL WarehousesExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *player,
-                                            int &aiMapItemWeight) const noexcept
+BOOL WarehousesExtender::SetAiMapItemWeight(H3MapItem* mapItem, H3Hero* hero, const H3Player* activePlayer,
+    int& aiMapItemWeight, int* moveDistance,
+    const H3Position pos) const noexcept
 {
 
     // for hota warehouse
@@ -147,7 +148,7 @@ BOOL WarehousesExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *cu
             }
             const INT16 resNum = resType == eResource::GOLD ? objSetup->resourceAmount * 500 : objSetup->resourceAmount;
 
-            aiMapItemWeight = static_cast<int>(player->resourceImportance[resType] * resNum); // static_cast<double*>()
+            aiMapItemWeight = static_cast<int>(activePlayer->resourceImportance[resType] * resNum); // static_cast<double*>()
         }
         return true;
     }

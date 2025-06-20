@@ -12,8 +12,9 @@ WateringPlaceExtender::~WateringPlaceExtender()
 {
 }
 
-BOOL WateringPlaceExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
-                                               int &aiMapItemWeight) const noexcept
+BOOL WateringPlaceExtender::SetAiMapItemWeight(H3MapItem* mapItem, H3Hero* hero, const H3Player* activePlayer,
+    int& aiMapItemWeight, int* moveDistance,
+    const H3Position pos) const noexcept
 {
     // TODO: use SWAN POND???? 00528567
 

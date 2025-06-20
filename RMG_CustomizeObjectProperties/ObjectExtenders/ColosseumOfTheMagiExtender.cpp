@@ -14,8 +14,9 @@ ColosseumOfTheMagiExtender::~ColosseumOfTheMagiExtender()
 {
 }
 
-BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *hero, const H3Player *player,
-                                                    int &aiMapItemWeight) const noexcept
+BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
+                                                    int & aiMapItemWeight, int *moveDistance,
+                                                    const H3Position pos) const noexcept
 {
 
     if (auto colosseumOfTheMagi = H3MapItemColosseumOfTheMagi::GetFromMapItem(mapItem))

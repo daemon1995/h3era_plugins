@@ -69,8 +69,9 @@ class SpellMarketExtender : public extender::ObjectsExtender
                               const BOOL isHuman) const noexcept override final;
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
     //   static BOOL IsWoGObject(const H3MapItem *mapItem) noexcept;
-    virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
-                                    int &aiMapItemWeight) const noexcept override final;
+    virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
+                                    int &aiMapItemWeight, int *moveDistance,
+                                    const H3Position pos) const noexcept override final;
 
   public:
     //   static BOOL IsWoGObject(const H3RmgObjectGenerator *p_ObjGen) noexcept;
