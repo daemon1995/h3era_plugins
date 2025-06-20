@@ -272,18 +272,18 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     struct MapItemSettings
     {
         char yellowTileNonPassability;
-        char unkknownTileNonPassability[2];
+        char unknownTileNonPassability[2];
         char data[9];
         eObject type;
     };
 
     MapItemSettings *settingsTable = *reinterpret_cast<MapItemSettings **>(0x0660428);
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].yellowTileNonPaasability = true;
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPaasability[0] = true;
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPaasability[1] = true;
-    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].yellowTileNonPaasability = true;
-    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unkknownTileNonPaasability[0] = true;
-    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unkknownTileNonPaasability[1] = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].yellowTileNonPassability = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unknownTileNonPassability[0] = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unknownTileNonPassability[1] = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].yellowTileNonPassability = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unknownTileNonPassability[0] = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unknownTileNonPassability[1] = true;
 
     // Get All The Extenders we have
     for (auto &extender : extenders)
