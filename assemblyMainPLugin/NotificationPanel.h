@@ -34,8 +34,8 @@ struct NotificationPanel
         UINT hiddenByUserDescriptionHash = 0;
         UINT currentDescriptionHash = 0;
 
-        H3DlgText *modNameItem = nullptr;
-        // H3DlgText *version = nullptr;
+        H3DlgText* modNameDlgText = nullptr;
+        H3DlgFrame* nameUnderline = nullptr;
 
         LPCSTR displayedText = nullptr;
         LPCSTR displayedName = nullptr;
@@ -53,6 +53,7 @@ struct NotificationPanel
 
       public:
         BOOL MarkAsHiddenByUser() noexcept;
+        BOOL ReloadDescription() noexcept;
     };
     INT x = 0;
     INT y = 0;
@@ -116,10 +117,12 @@ struct NotificationPanel
     ModInfo *GetModInfoFromVisible(const UINT index) noexcept;
     void SwitchModInfo(const int step) noexcept;
     void SetModVisible(ModInfo &modInfo, const BOOL isVisible) noexcept;
+    void Retranslate(const BOOL redraw = false) noexcept;
 
   public:
     void SetVisible(const BOOL isVisible, const BOOL activateAllNotifications = false) noexcept;
     BOOL ProcessPanel(H3Msg *msg, const BOOL forceRedraw = false) noexcept;
+    void ReloadLanguageData() noexcept;
     static NotificationPanel *Init(H3BaseDlg *parrent, const int x = 1, const int y = 1, const int width = 400,
                                    const int height = 600) noexcept;
 };

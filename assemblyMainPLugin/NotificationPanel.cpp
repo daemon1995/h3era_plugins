@@ -12,7 +12,7 @@ NotificationPanel::ModInfo::ModInfo(LPCSTR folderName)
 {
 
     bool readSuccess = false;
-    // return;
+
     libc::sprintf(h3_TextBuffer, jsonFormat::MOD_TEXT, folderName);
     LPSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
     const UINT len = libc::strlen(notificationText);
@@ -51,6 +51,43 @@ BOOL NotificationPanel::ModInfo::MarkAsHiddenByUser() noexcept
         libc::sprintf(h3_TextBuffer, "%d", currentDescriptionHash);
         Era::WriteStrToIni(modFolderName.c_str(), h3_TextBuffer, INI_SECTION_NAME, INI_FILE_NAME);
 
+        return true;
+    }
+    return false;
+}
+
+BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
+{
+    bool readSuccess = false;
+    libc::sprintf(h3_TextBuffer, jsonFormat::MOD_TEXT, modFolderName.c_str());
+    LPCSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
+    const UINT len = libc::strlen(notificationText);
+
+    if (readSuccess && len > 0)
+    {
+        displayedText = notificationText;
+
+        libc::sprintf(h3_TextBuffer, jsonFormat::MOD_NAME, modFolderName.c_str());
+
+        H3FontLoader fn(NH3Dlg::Text::MEDIUM);
+
+        const int oldModNameWidth = fn->GetMaxLineWidth(displayedName) + 2;
+        displayedName = EraJS::read(h3_TextBuffer);
+
+        const int modNameWidth = fn->GetMaxLineWidth(displayedName) + 2;
+        const int xOffset = (oldModNameWidth - modNameWidth) / 2;
+
+        nameUnderline->SetWidth(modNameWidth);
+        nameUnderline->SetX(nameUnderline->GetX() + xOffset);
+
+        libc::sprintf(h3_TextBuffer, jsonFormat::MOD_URL, modFolderName.c_str());
+        LPCSTR link = EraJS::read(h3_TextBuffer, readSuccess);
+        if (readSuccess && libc::strlen(link) > 0)
+        {
+            externalLink = link;
+        }
+
+        currentDescriptionHash = Era::Hash32(displayedText, len);
         return true;
     }
     return false;
@@ -437,12 +474,13 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
         auto urlUnderline = H3DlgFrame::Create(underX, y + 24, modNameWidth, 1, linkColor);
         modInfo.items.emplace_back(urlUnderline);
         AddItem(urlUnderline);
+        modInfo.nameUnderline = urlUnderline;
         textColor = eTextColor::BLUE2;
     }
 
-    modInfo.modNameItem =
+    modInfo.modNameDlgText =
         H3DlgText::Create(x, y + 6, width, 20, modInfo.displayedName, NH3Dlg::Text::MEDIUM, textColor);
-    modInfo.items.emplace_back(modInfo.modNameItem);
+    modInfo.items.emplace_back(modInfo.modNameDlgText);
 
     H3RGB565 highLightColor(H3RGB888::Highlight());
     auto delimiterFrame = H3DlgFrame::Create(x + 10, y + 30, width - 16, 1, highLightColor);
@@ -451,6 +489,8 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
     modInfo.descriptionTextScrollBar =
         H3DlgScrollableText::Create(modInfo.displayedText, x + 10, y + 40, width - 16, height - 53,
                                     NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, true);
+
+    // modInfo.descriptionTextScrollBar->SetText(modInfo.displayedText);
     modInfo.items.emplace_back(modInfo.descriptionTextScrollBar);
 
     if (auto scroll = modInfo.descriptionTextScrollBar)
@@ -472,7 +512,7 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
     // add items into dlg as hidden items
     AddItem(delimiterFrame);
 
-    AddItem(modInfo.modNameItem);
+    AddItem(modInfo.modNameDlgText);
     AddItem(modInfo.descriptionTextScrollBar);
 }
 
@@ -604,6 +644,46 @@ void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL isVisible) no
         }
     }
 }
+
+void NotificationPanel::Retranslate(const BOOL redraw) noexcept
+{
+    bool readSuccess = false;
+    LPCSTR str = EraJS::read(panelText::HIDE_ALL, readSuccess);
+    if (readSuccess)
+    {
+        hideAllButton->SetText(str);
+        if (redraw)
+        {
+            hideAllButton->Draw();
+            hideAllButton->Refresh();
+        }
+    }
+    str = EraJS::read(panelText::HIDE_ONE, readSuccess);
+    if (readSuccess)
+    {
+        hideOneButton->SetText(str);
+        if (redraw)
+        {
+            hideOneButton->Draw();
+            hideOneButton->Refresh();
+        }
+    }
+    str = EraJS::read(panelText::TITLE, readSuccess);
+    if (readSuccess)
+    {
+        panelTitle->SetText(str);
+        if (redraw)
+        {
+            panelTitle->Draw();
+            panelTitle->Refresh();
+        }
+    }
+    // str = EraJS::read(panelText::HIDE_ALL, readSuccess);
+    // if (readSuccess)
+    //{
+    //     hideAllButton->SetText(str);
+    // }
+}
 void NotificationPanel::SwitchModInfo(const int step) noexcept
 {
     const int infosToShow = notificationsVisible;
@@ -647,7 +727,7 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
 
         const auto processItem = msg->ItemAtPosition(msg->GetDlg());
 
-        result = currentModInfo && currentModInfo->modNameItem == processItem && currentModInfo->externalLink;
+        result = currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink;
 
         if (msg->IsLeftDown())
         {
@@ -659,6 +739,8 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
             }
             else if (result)
             {
+                P_SoundManager->ClickSound();
+
                 OpenExternalFile(currentModInfo->externalLink);
             }
         }
@@ -775,6 +857,32 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
     }
 
     return result;
+}
+
+void NotificationPanel::ReloadLanguageData() noexcept
+{
+
+    const bool isVisibleBefore = isVisible;
+
+    Retranslate(isVisibleBefore);
+
+    if (isVisibleBefore)
+    {
+        SetVisible(false);
+    }
+
+    for (auto &i : this->modInfos)
+    {
+        if (i.displayedText && i.ReloadDescription())
+        {
+            i.descriptionTextScrollBar->SetText(i.displayedText);
+            i.modNameDlgText->SetText(i.displayedName);
+        }
+    }
+    if (isVisibleBefore)
+    {
+        SetVisible(true);
+    }
 }
 
 NotificationPanel *NotificationPanel::Init(H3BaseDlg *parrent, const int x, const int y, const int width,

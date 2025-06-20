@@ -420,16 +420,91 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
 void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent *e)
 {
-    Get().LoadDataFromJson();
-    for (const auto it : Get().versions)
+    if (auto panel = NotificationPanel::instance)
     {
-        if (it && it->show)
-        {
-            it->AdjustItemText();
-        }
+        panel->ReloadLanguageData();
     }
+    //Get().LoadDataFromJson();
+    //for (const auto it : Get().versions)
+    //{
+    //    if (it && it->show)
+    //    {
+    //        it->AdjustItemText();
+    //    }
+    //}
+}
+H3DlgText *__stdcall H3DlgText__Ctor(HiHook *h, H3DlgText *_this, int xpos, int ypos, int xsize, int ysize,
+                                     const char *text, const char *font, int color, int itemId, int align, int bkcolor,
+                                     int unused)
+{
+
+    // bkcolor = 1; // rand() % 255;
+    // text =
+    // libc::sprintf(h3_TextBuffer, "%d", bkcolor);
+    // text = h3_TextBuffer;
+    return THISCALL_12(H3DlgText *, h->GetDefaultFunc(), _this, xpos, ypos, xsize, ysize, text, font, color, itemId,
+                       align, bkcolor, unused);
 }
 
+_LHF_(gem_Text)
+{
+
+    if (auto dlgText = reinterpret_cast<H3DlgText *>(c->edi))
+    {
+
+        if (!libc::strcmpi(reinterpret_cast<LPCSTR>(c->eax), h3_NullString))
+        {
+            dlgText->bkColor = 1;
+        }
+        // const int lineId = c->ebx >> 2;
+        // if (c->ebx ==128)
+        //{
+        //     dlgText->bkColor = 1;
+
+        //}
+        else
+        {
+            dlgText->bkColor = 0;
+        }
+    }
+    // c->eax = 123;
+    return EXEC_DEFAULT;
+}
+
+BOOL flagISFirstError = false;
+_LHF_(WoG_BeforeErmError)
+{
+    flagISFirstError = true;
+
+
+
+    return EXEC_DEFAULT;
+
+}
+_LHF_(SoD_MsgBoxDlgBeforeRun)
+{
+  //  if (flagISFirstError)
+    {
+            reinterpret_cast<char*>(c->ebp);
+        //if (vec.Size())
+        {
+            H3Vector<H3DlgItem*> vec;
+           // libc::sprintf(h3_TextBuffer, "%d", vec->Size());
+            MessageBoxA(0, h3_TextBuffer, h3_TextBuffer, MB_OK);
+            //auto pcx = H3DlgPcx::Create(12, 12,122,12,-1, NH3Dlg::HDassets::HD_STATUSBAR_PCX);
+
+           //vec->AddOne(pcx);
+            //dlg->CreateBlackBox(1,1,22,22);
+        }
+
+        flagISFirstError = false;
+
+    }
+
+
+    return EXEC_DEFAULT;
+
+}
 void AssemblyInformation::CreatePatches() noexcept
 {
     if (!m_isEnabled)
@@ -441,6 +516,18 @@ void AssemblyInformation::CreatePatches() noexcept
 
         _PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor);  // MAIN menu
         _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
+
+        Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
+        if (0)
+        {
+            _PI->WriteLoHook(0x071234D, WoG_BeforeErmError);
+            _PI->WriteLoHook(0x04F71FE, SoD_MsgBoxDlgBeforeRun);
+
+            
+        }
+        // _PI->WriteHiHook(0x05BA547, THISCALL_, H3DlgText__Ctor);
+        // _PI->WriteHiHook(0x044E190, THISCALL_, H3DlgText__Draw);
+        // _PI->WriteLoHook(0x05BAA35, gem_Text);
         //  _PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
         // _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes from new game
 

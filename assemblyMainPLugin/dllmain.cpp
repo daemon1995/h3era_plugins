@@ -2,15 +2,15 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.73";
+const char *PLUGIN_VERSION = "1.74";
 const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";
 const char *PLUGIN_DATA = __DATE__;
 } // namespace dllText
 
-Patcher *globalPatcher;
-PatcherInstance *_PI;
+Patcher *globalPatcher = nullptr;
+PatcherInstance *_PI = nullptr;
 
 void __stdcall OnReportVersion(Era::TEvent *e)
 {
