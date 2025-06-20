@@ -6,14 +6,14 @@ std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits
 
 namespace exports
 {
-//DllExport LPCSTR GetObjectName(const H3MapItem *mapItem)
+// DllExport LPCSTR GetObjectName(const H3MapItem *mapItem)
 //{
-//    if (mapItem)
-//    {
-//        return RMGObjectInfo::GetObjectName(mapItem->objectType, mapItem->objectSubtype);
-//    }
-//    return h3_NullString;
-//}
+//     if (mapItem)
+//     {
+//         return RMGObjectInfo::GetObjectName(mapItem->objectType, mapItem->objectSubtype);
+//     }
+//     return h3_NullString;
+// }
 DllExport LPCSTR GetObjectName(const INT32 type, const INT32 subtype)
 {
     return RMGObjectInfo::GetObjectName(type, subtype);

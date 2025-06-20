@@ -12,39 +12,56 @@ WateringPlaceExtender::~WateringPlaceExtender()
 {
 }
 
-BOOL WateringPlaceExtender::SetAiMapItemWeight(H3MapItem* mapItem, H3Hero* hero, const H3Player* activePlayer,
-    int& aiMapItemWeight, int* moveDistance,
-    const H3Position pos) const noexcept
+BOOL WateringPlaceExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *player,
+                                               int &aiMapItemWeight, int *moveDistance,
+                                               const H3Position pos) const noexcept
 {
-    // TODO: use SWAN POND???? 00528567
+    if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
+    {
+        const bool isVisitedByHero = H3MapItemWateringPlace::IsVisitedByHero(hero);
 
-    // if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
-    //{
-    //     if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
-    //     {
-    //         const H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
-    //         const bool isVisitedByHero = H3MapItemWateringPlace::IsVisitedByHero(*wateringPlace, hero);
+        if (!isVisitedByHero)
+        {
+            // Pattern used: visit SWAN POND 00528A4C
+            // v36 = *moveDistance;
+            int v36 = *moveDistance;
+            // currMovePts = hero->Movement;
+            int currMovePts = hero->movement;
+            // if ( *moveDistance > currMovePts || v36 + 200 < currMovePts )
+            //     return 0;
+            if (*moveDistance > currMovePts || v36 + 200 < currMovePts)
+            {
+                aiMapItemWeight = 0;
+                return true;
+            }
+            // v100 = *(float*)moveDistance;
+            float v100 = static_cast<float>(*moveDistance);
+            // v23 = v36 < currMovePts;
+            int v23 = v36 < currMovePts;
+            // pos = (type_point)currMovePts;
+            int v30 = currMovePts;
+            // p_pos = (int*)&pos;
+            int *p_v30 = (int *)&v30;
+            // if (!v23)
+            //     p_pos = (int*)&v100;
+            if (!v23)
+            {
+                p_v30 = (int *)&v100;
+            }
+            //*moveDistance = *p_pos;
+            *moveDistance = *p_v30;
+            // AI_Value = Army_Get_AI_Value(&hero->army);
+            const int Army_Get_AI_Value = THISCALL_1(int, 0x044A950, &hero->army);
+            // pos = (type_point)(((__int16)Hero_GetSumOfPrimarySkills(hero) + 40) * AI_Value / 40);
+            const int SumOfPrimarySkills = THISCALL_1(int, 0x04E5BD0, hero);
+            v30 = (SumOfPrimarySkills + 40) * Army_Get_AI_Value / 40;
+            //*(_QWORD*)&v8 = (__int64)((double)*(int*)&pos * (double)v3); // what is v3?
+            // return v8;
+            aiMapItemWeight = v30;
+        }
 
-    //        if (!isVisitedByHero)
-    //        {
-    //            if (P_ActivePlayer->playerResources.gold >= GOLD_REQUIRED)
-    //            {
-    //                // адрес похожего псевдокода 0052BB89
-    //                const __int64 aiExperience = EXP_GIVEN * hero->AI_experienceEffectiveness;
-    //                const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
-    //                const int aiResWeight =
-    //                    (__int64)((double)aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
-
-    //                if (aiResWeight)
-    //                {
-    //                    c->eax = aiResWeight;
-    //                    c->return_address = 0x05285A1;
-    //                    return NO_EXEC_DEFAULT;
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+        return true;
+    }
 
     return false;
 }
@@ -90,7 +107,7 @@ BOOL AskQuestion(const H3MapItem *mapItem)
 BOOL WateringPlaceExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Position pos,
                                          const BOOL isHuman) const noexcept
 {
-    if (auto wateringPlace = H3MapItemWateringPlace::GetFromMapItem(mapItem))
+    if (H3MapItemWateringPlace::GetFromMapItem(mapItem))
     {
         const bool isVisitedByHero = H3MapItemWateringPlace::IsVisitedByHero(hero);
 
@@ -156,11 +173,18 @@ void __stdcall OnEveryDay(Era::TEvent *event)
 
         if (H3MapItemWateringPlace::IsVisitedByHero(hero))
         {
-            hero->movement += MOVE_POINTS_GIVEN;
+
             // hero->RecalculateMovement();
-            THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
+            // THISCALL_4(void, 0x0415D40, P_AdventureManager->Get(), 1, 0, 0); // AdvMgr_UpdateInfoPanel
+            // THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
             sprintf(h3_TextBuffer, H3MapItemWateringPlace::ErmVariableFormat, hero->id); // получение имени переменной
             Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                  // обнулить переменную
+            hero->movement += MOVE_POINTS_GIVEN;
+            // THISCALL_4(void, 0x04032E0, P_AdventureManager->dlg, -1, 1, 1); // H3AdventureMgrDlg::RedrawHeroesSlots
+            P_AdventureManager->FullUpdate();
+            // DlgHeroInfo_Update 004E247A
+            // DlgHeroInfo_ProcessAction 004DD5CE
+            // Dlg_HeroInfo_Main 004E1CBC
         }
     }
     // Для вообще всех героев (в тюрьмах, таверне и т.д.)

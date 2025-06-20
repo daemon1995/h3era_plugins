@@ -15,7 +15,7 @@ ColosseumOfTheMagiExtender::~ColosseumOfTheMagiExtender()
 }
 
 BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
-                                                    int & aiMapItemWeight, int *moveDistance,
+                                                    int &aiMapItemWeight, int *moveDistance,
                                                     const H3Position pos) const noexcept
 {
 

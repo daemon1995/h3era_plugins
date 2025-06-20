@@ -14,9 +14,8 @@ GazeboExtender::~GazeboExtender()
 }
 
 // Устанавливает ценность объекта для ИИ
-BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem* mapItem, H3Hero* hero, const H3Player* activePlayer,
-    int& aiMapItemWeight, int* moveDistance,
-    const H3Position pos) const noexcept
+BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
+                                        int &aiMapItemWeight, int *moveDistance, const H3Position pos) const noexcept
 {
 
     if (auto gazebo = H3MapItemGazebo::GetFromMapItem(mapItem))
