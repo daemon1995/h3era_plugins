@@ -278,9 +278,12 @@ void __stdcall ObjectsExtender::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     };
 
     MapItemSettings *settingsTable = *reinterpret_cast<MapItemSettings **>(0x0660428);
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].yellowTileNonPassability = true;
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPassability[0] = true;
-    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPassability[1] = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].yellowTileNonPaasability = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPaasability[0] = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].unkknownTileNonPaasability[1] = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].yellowTileNonPaasability = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unkknownTileNonPaasability[0] = true;
+    settingsTable[HOTA_UNREACHABLE_YT_OBJECT_TYPE].unkknownTileNonPaasability[1] = true;
 
     // Get All The Extenders we have
     for (auto &extender : extenders)
@@ -628,7 +631,7 @@ std::string ObjectProperty::GetMapKey(LPCSTR propertyString) noexcept
     static std::vector<std::string> words;
     std::string word;
     words.reserve(9);
-    // Разбиваем строку на слова и добавляем их в вектор
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     while (stream >> word)
     {
         words.emplace_back(word);

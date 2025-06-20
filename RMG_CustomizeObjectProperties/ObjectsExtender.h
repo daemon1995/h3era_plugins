@@ -3,8 +3,11 @@
 #include <unordered_set>
 namespace extender
 {
+constexpr int ERA_OBJECT_TYPE = 141;
 constexpr int HOTA_OBJECT_TYPE = 144;
 constexpr int HOTA_PICKUPABLE_OBJECT_TYPE = 145;
+constexpr int HOTA_UNREACHABLE_YT_OBJECT_TYPE = 146;
+
 namespace limits
 {
 constexpr int EXTENDED = 1024;
