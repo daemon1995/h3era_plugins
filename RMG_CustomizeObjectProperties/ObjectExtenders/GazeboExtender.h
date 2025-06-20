@@ -16,8 +16,7 @@ struct H3MapItemGazebo
     INT32 id;
 
   public:
-    void Reset();
-    static inline BOOL IsVisitedByHero(const H3MapItemGazebo gazebo, const H3Hero *hero) noexcept;
+    static inline BOOL IsVisitedByHero(const H3MapItemGazebo *gazebo, const H3Hero *hero) noexcept;
     static inline H3MapItemGazebo *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
