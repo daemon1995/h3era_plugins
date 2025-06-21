@@ -3,9 +3,13 @@
 
 namespace jsonFormat
 {
-constexpr LPCSTR MOD_TEXT = "era.%s.notification.text";
-constexpr LPCSTR MOD_NAME = "era.%s.notification.name";
-constexpr LPCSTR MOD_URL = "era.%s.notification.url";
+constexpr LPCSTR UNIQUE_MOD_NAME = "era.%s.notification.name";
+constexpr LPCSTR UNIQIUE_MOD_TEXT = "era.%s.notification.text";
+constexpr LPCSTR UNIQUE_MOD_URL = "era.%s.notification.url";
+
+constexpr LPCSTR ORDERED_MOD_NAME = "era.%s.notification.%d.name";
+constexpr LPCSTR ORDERED_MOD_TEXT = "era.%s.notification.%d.text";
+constexpr LPCSTR ORDERED_MOD_URL = "era.%s.notification.%d.url";
 } // namespace jsonFormat
 struct NotificationPanel
 {
@@ -26,16 +30,20 @@ struct NotificationPanel
 
     struct ModInfo
     {
+        static constexpr int NOTIFICATIONS_PER_MOD = 5;
+        static constexpr int NONE_INDEX = -1;
+
         BOOL isVisible = false;
         BOOL isHiddenByUser = false;
         BOOL savedAsHiddenByUser = false;
-        UINT index = 0;
+        UINT displayedIndex = 0;
+        const INT modIndex = NONE_INDEX;
 
         UINT hiddenByUserDescriptionHash = 0;
         UINT currentDescriptionHash = 0;
 
-        H3DlgText* modNameDlgText = nullptr;
-        H3DlgFrame* nameUnderline = nullptr;
+        H3DlgText *modNameDlgText = nullptr;
+        H3DlgFrame *nameUnderline = nullptr;
 
         LPCSTR displayedText = nullptr;
         LPCSTR displayedName = nullptr;
@@ -49,7 +57,7 @@ struct NotificationPanel
         std::vector<H3DlgItem *> items;
 
       public:
-        ModInfo(LPCSTR folderName);
+        ModInfo(LPCSTR description, LPCSTR folderName, const int index = NONE_INDEX);
 
       public:
         BOOL MarkAsHiddenByUser() noexcept;

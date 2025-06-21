@@ -8,35 +8,39 @@ H3DlgPcx16 *CreateOpenPanelTextPcxButton(H3BaseDlg *dlg, const size_t notificati
 bool FolderExists(const std::wstring &path);
 std::wstring GetAppDataPath();
 
-NotificationPanel::ModInfo::ModInfo(LPCSTR folderName)
+NotificationPanel::ModInfo::ModInfo(LPCSTR description, LPCSTR folderName, const int index)
+    : modIndex(index), displayedText(description), modFolderName(folderName)
 {
 
     bool readSuccess = false;
 
-    libc::sprintf(h3_TextBuffer, jsonFormat::MOD_TEXT, folderName);
-    LPSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
-    const UINT len = libc::strlen(notificationText);
-    if (readSuccess && len > 0)
+    libc::sprintf(h3_TextBuffer, modIndex == NONE_INDEX ? jsonFormat::UNIQIUE_MOD_TEXT : jsonFormat::ORDERED_MOD_TEXT,
+                  folderName, modIndex);
+
+    // LPCSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
+    //  if (readSuccess && len > 0)
+
+    libc::sprintf(h3_TextBuffer, modIndex == NONE_INDEX ? jsonFormat::UNIQUE_MOD_NAME : jsonFormat::ORDERED_MOD_NAME,
+                  folderName, modIndex);
+    displayedName = EraJS::read(h3_TextBuffer);
+
+    libc::sprintf(h3_TextBuffer, modIndex == NONE_INDEX ? jsonFormat::UNIQUE_MOD_URL : jsonFormat::ORDERED_MOD_URL,
+                  folderName, modIndex);
+    LPCSTR link = EraJS::read(h3_TextBuffer, readSuccess);
+    if (readSuccess && libc::strlen(link) > 0)
     {
-        modFolderName = folderName;
-        displayedText = notificationText;
+        externalLink = link;
+    }
 
-        libc::sprintf(h3_TextBuffer, jsonFormat::MOD_NAME, folderName);
-        displayedName = EraJS::read(h3_TextBuffer);
+    const UINT len = libc::strlen(displayedText);
+    currentDescriptionHash = Era::Hash32(displayedText, len);
 
-        libc::sprintf(h3_TextBuffer, jsonFormat::MOD_URL, folderName);
-        LPSTR link = EraJS::read(h3_TextBuffer, readSuccess);
-        if (readSuccess && libc::strlen(link) > 0)
-        {
-            externalLink = link;
-        }
+    libc::sprintf(h3_TextBuffer, "%s %d", modFolderName.c_str(), modIndex);
 
-        currentDescriptionHash = Era::Hash32(displayedText, len);
-
-        if (Era::ReadStrFromIni(folderName, INI_SECTION_NAME, INI_FILE_NAME, h3_TextBuffer))
-        {
-            isHiddenByUser = atoi(h3_TextBuffer) == currentDescriptionHash;
-        }
+    char buf[16];
+    if (Era::ReadStrFromIni(h3_TextBuffer, INI_SECTION_NAME, INI_FILE_NAME, buf))
+    {
+        isHiddenByUser = atoi(buf) == currentDescriptionHash;
     }
 
     isVisible = !isHiddenByUser;
@@ -48,8 +52,9 @@ BOOL NotificationPanel::ModInfo::MarkAsHiddenByUser() noexcept
     if (!savedAsHiddenByUser)
     {
         savedAsHiddenByUser = true;
-        libc::sprintf(h3_TextBuffer, "%d", currentDescriptionHash);
-        Era::WriteStrToIni(modFolderName.c_str(), h3_TextBuffer, INI_SECTION_NAME, INI_FILE_NAME);
+        libc::sprintf(h3_TextBuffer, "%s %d", modFolderName.c_str(), modIndex);
+        Era::WriteStrToIni(h3_TextBuffer, Era::IntToStr(currentDescriptionHash).c_str(), INI_SECTION_NAME,
+                           INI_FILE_NAME);
 
         return true;
     }
@@ -59,7 +64,9 @@ BOOL NotificationPanel::ModInfo::MarkAsHiddenByUser() noexcept
 BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
 {
     bool readSuccess = false;
-    libc::sprintf(h3_TextBuffer, jsonFormat::MOD_TEXT, modFolderName.c_str());
+    libc::sprintf(h3_TextBuffer, modIndex == NONE_INDEX ? jsonFormat::UNIQIUE_MOD_TEXT : jsonFormat::ORDERED_MOD_TEXT,
+                  modFolderName.c_str(), modIndex);
+
     LPCSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
     const UINT len = libc::strlen(notificationText);
 
@@ -67,7 +74,9 @@ BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
     {
         displayedText = notificationText;
 
-        libc::sprintf(h3_TextBuffer, jsonFormat::MOD_NAME, modFolderName.c_str());
+        libc::sprintf(h3_TextBuffer,
+                      modIndex == NONE_INDEX ? jsonFormat::UNIQUE_MOD_NAME : jsonFormat::ORDERED_MOD_NAME,
+                      modFolderName.c_str(), modIndex);
 
         H3FontLoader fn(NH3Dlg::Text::MEDIUM);
 
@@ -77,10 +86,15 @@ BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
         const int modNameWidth = fn->GetMaxLineWidth(displayedName) + 2;
         const int xOffset = (oldModNameWidth - modNameWidth) / 2;
 
-        nameUnderline->SetWidth(modNameWidth);
-        nameUnderline->SetX(nameUnderline->GetX() + xOffset);
+        if (nameUnderline)
+        {
+            nameUnderline->SetWidth(modNameWidth);
+            nameUnderline->SetX(nameUnderline->GetX() + xOffset);
+        }
 
-        libc::sprintf(h3_TextBuffer, jsonFormat::MOD_URL, modFolderName.c_str());
+        libc::sprintf(h3_TextBuffer, modIndex == NONE_INDEX ? jsonFormat::UNIQUE_MOD_URL : jsonFormat::ORDERED_MOD_URL,
+                      modFolderName.c_str(), modIndex);
+
         LPCSTR link = EraJS::read(h3_TextBuffer, readSuccess);
         if (readSuccess && libc::strlen(link) > 0)
         {
@@ -286,19 +300,42 @@ void NotificationPanel::CreateModInfoList(std::vector<std::string> &modList) noe
     notificationsTotal = 0;
     if (const size_t length = modList.size())
     {
-        volatile int index = 0;
+        volatile int infoIndex = 0;
         modInfos.reserve(length);
-
         for (size_t i = 0; i < length; i++)
         {
-            ModInfo modInfo{modList[i].c_str()};
 
-            if (modInfo.displayedText)
+            LPCSTR modFolderNamePtr = modList[i].c_str();
+
+            bool readSuccess = false;
+
+            libc::sprintf(h3_TextBuffer, jsonFormat::UNIQIUE_MOD_TEXT, modFolderNamePtr);
+
+            LPCSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
+            if (readSuccess && strlen(notificationText))
             {
-                modInfo.index = ++index;
-                modInfos.emplace_back(modInfo);
+                modInfos.emplace_back(ModInfo(notificationText, modFolderNamePtr, ModInfo::NONE_INDEX));
+                modInfos.at(infoIndex).displayedIndex = infoIndex++;
+            }
+            else
+            {
+                int modIndex = 0;
+
+                do
+                {
+                    libc::sprintf(h3_TextBuffer, jsonFormat::ORDERED_MOD_TEXT, modFolderNamePtr, modIndex);
+
+                    LPCSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
+                    if (readSuccess && strlen(notificationText))
+                    {
+                        modInfos.emplace_back(ModInfo(notificationText, modFolderNamePtr, modIndex));
+                        modInfos.at(infoIndex).displayedIndex = infoIndex++;
+                    }
+
+                } while (readSuccess && ++modIndex < ModInfo::NOTIFICATIONS_PER_MOD);
             }
         }
+        modInfos.shrink_to_fit();
     }
     notificationsTotal = modInfos.size();
 }
@@ -403,7 +440,7 @@ NotificationPanel::ModInfo *NotificationPanel::GetModInfoFromVisible(const UINT 
     volatile int i = 0;
     for (auto &it : modInfos)
     {
-        if (it.isVisible && it.index == index)
+        if (it.isVisible && it.displayedIndex == index)
         {
             result = &it;
             break;
@@ -531,7 +568,7 @@ void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNot
         {
             for (auto &i : modInfos)
             {
-                i.index = ++index;
+                i.displayedIndex = ++index;
                 i.isHiddenByUser = false;
                 i.isVisible = visible; // (visible && !i.isHiddenByUser) || activateAllNotifications;
             }
@@ -543,7 +580,7 @@ void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNot
                 if (visible)
                 {
                     if (!i.isHiddenByUser)
-                        i.index = ++index;
+                        i.displayedIndex = ++index;
                 }
                 else
                 {
@@ -565,7 +602,7 @@ void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNot
                     {
                         currentModInfo = &modInfos[0];
                     }
-                    currentModInfoIndex = currentModInfo->index;
+                    currentModInfoIndex = currentModInfo->displayedIndex;
                 }
                 this->UpdateVisibleNotificationsList();
             }
@@ -703,7 +740,7 @@ void NotificationPanel::SwitchModInfo(const int step) noexcept
                 }
 
                 currentModInfo = assumedModInfo;
-                currentModInfoIndex = currentModInfo->index;
+                currentModInfoIndex = currentModInfo->displayedIndex;
                 SetModVisible(*currentModInfo, true);
 
                 if (notificationsCounter)
@@ -781,7 +818,7 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
                     volatile int i = 0;
                     for (auto &it : modInfos)
                     {
-                        it.index = it.isVisible && !it.isHiddenByUser ? ++i : 0;
+                        it.displayedIndex = it.isVisible && !it.isHiddenByUser ? ++i : 0;
                     }
 
                     if (currentModInfoIndex > notificationsVisible)
