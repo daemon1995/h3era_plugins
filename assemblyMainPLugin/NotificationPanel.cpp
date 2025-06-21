@@ -774,7 +774,7 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
 
         const auto processItem = msg->ItemAtPosition(msg->GetDlg());
 
-        result = currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink;
+        result = processItem == this->parrentCaller || currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink;
 
         if (msg->IsLeftDown())
         {
