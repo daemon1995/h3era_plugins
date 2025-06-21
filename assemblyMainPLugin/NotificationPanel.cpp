@@ -35,12 +35,12 @@ NotificationPanel::ModInfo::ModInfo(LPCSTR description, LPCSTR folderName, const
     const UINT len = libc::strlen(displayedText);
     currentDescriptionHash = Era::Hash32(displayedText, len);
 
-    libc::sprintf(h3_TextBuffer, "%s %d", modFolderName.c_str(), modIndex);
+    libc::sprintf(h3_TextBuffer, "%d", currentDescriptionHash, modFolderName.c_str(), modIndex);
 
     char buf[16];
     if (Era::ReadStrFromIni(h3_TextBuffer, INI_SECTION_NAME, INI_FILE_NAME, buf))
     {
-        isHiddenByUser = atoi(buf) == currentDescriptionHash;
+        isHiddenByUser = atoi(buf); // == currentDescriptionHash;
     }
 
     isVisible = !isHiddenByUser;
@@ -52,9 +52,8 @@ BOOL NotificationPanel::ModInfo::MarkAsHiddenByUser() noexcept
     if (!savedAsHiddenByUser)
     {
         savedAsHiddenByUser = true;
-        libc::sprintf(h3_TextBuffer, "%s %d", modFolderName.c_str(), modIndex);
-        Era::WriteStrToIni(h3_TextBuffer, Era::IntToStr(currentDescriptionHash).c_str(), INI_SECTION_NAME,
-                           INI_FILE_NAME);
+        libc::sprintf(h3_TextBuffer, "%d", currentDescriptionHash, modFolderName.c_str(), modIndex);
+        Era::WriteStrToIni(h3_TextBuffer, Era::IntToStr(true).c_str(), INI_SECTION_NAME, INI_FILE_NAME);
 
         return true;
     }
@@ -96,10 +95,8 @@ BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
                       modFolderName.c_str(), modIndex);
 
         LPCSTR link = EraJS::read(h3_TextBuffer, readSuccess);
-        if (readSuccess && libc::strlen(link) > 0)
-        {
-            externalLink = link;
-        }
+
+        externalLink = readSuccess && libc::strlen(link) > 0 ? link : nullptr;
 
         currentDescriptionHash = Era::Hash32(displayedText, len);
         return true;
@@ -368,6 +365,21 @@ NotificationPanel::~NotificationPanel() noexcept
     instance = nullptr;
 }
 
+void RedrawPcxText(H3LoadedPcx16 *pcx, const int notificationAmount)
+{
+    if (pcx)
+    {
+        const UINT width = pcx->width;
+        const UINT height = pcx->height;
+
+        pcx->BackgroundRegion(0, 0, width, height, true);
+        pcx->DarkenArea(0, 0, width, height, 50);
+        pcx->BevelArea(1, 1, width - 2, height - 2);
+        H3FontLoader fnt(NH3Dlg::Text::MEDIUM);
+        libc::sprintf(h3_TextBuffer, EraJS::read(panelText::BUTTON_FORMAT), notificationAmount);
+        fnt->TextDraw(pcx, h3_TextBuffer, 0, 0, width, height);
+    }
+}
 H3DlgPcx16 *CreateOpenPanelTextPcxButton(H3BaseDlg *dlg, const size_t notificationAmount)
 {
 
@@ -388,12 +400,8 @@ H3DlgPcx16 *CreateOpenPanelTextPcxButton(H3BaseDlg *dlg, const size_t notificati
     // H3RGB565 darkBorderColor(H3RGB888(165, 140, 66));
 
     auto pcx = H3LoadedPcx16::Create(width, height);
-    pcx->BackgroundRegion(0, 0, width, height, true);
-    pcx->DarkenArea(0, 0, width, height, 50);
-    pcx->BevelArea(1, 1, width - 2, height - 2);
-    H3FontLoader fnt(NH3Dlg::Text::MEDIUM);
-    libc::sprintf(h3_TextBuffer, EraJS::read(panelText::BUTTON_FORMAT), notificationAmount);
-    fnt->TextDraw(pcx, h3_TextBuffer, 0, 0, width, height);
+
+    RedrawPcxText(pcx, notificationAmount);
 
     captionPcx->SetPcx(pcx);
 
@@ -499,8 +507,7 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
     const int width = modBackground->GetWidth() - offset * 2;
     const int height = modBackground->GetHeight() - offset + 2;
 
-    eTextColor textColor = eTextColor::REGULAR;
-    if (modInfo.externalLink)
+    //  if (modInfo.externalLink)
     {
         H3RGB565 linkColor(H3RGB888(0, 0xAA, 0xFF));
         H3FontLoader fn(NH3Dlg::Text::MEDIUM);
@@ -511,8 +518,9 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
         modInfo.items.emplace_back(urlUnderline);
         AddItem(urlUnderline);
         modInfo.nameUnderline = urlUnderline;
-        textColor = eTextColor::BLUE2;
     }
+
+    const eTextColor textColor = modInfo.externalLink ? eTextColor::REGULAR : eTextColor::BLUE2;
 
     modInfo.modNameDlgText =
         H3DlgText::Create(x, y + 6, width, 20, modInfo.displayedName, NH3Dlg::Text::MEDIUM, textColor);
@@ -651,6 +659,9 @@ void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL isVisible) no
     for (auto &i : modInfo.items)
     {
         isVisible ? i->ShowActivate(), i->Draw(), i->Refresh() : i->HideDeactivate();
+    }
+    if (modInfo.externalLink)
+    {
     }
 
     if (auto scroll = modInfo.descriptionTextScrollBar)
@@ -897,6 +908,16 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
 
 void NotificationPanel::ReloadLanguageData() noexcept
 {
+
+    if (parrentCaller)
+    {
+        RedrawPcxText(parrentCaller->GetPcx(), notificationsTotal);
+        if (parrentCaller->IsVisible())
+        {
+            parrentCaller->Draw();
+            parrentCaller->Refresh();
+        }
+    }
 
     const bool isVisibleBefore = isVisible;
 
