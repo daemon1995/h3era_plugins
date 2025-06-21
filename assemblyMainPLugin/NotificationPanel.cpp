@@ -150,12 +150,11 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
             // Проверяем существование папки
             if (!FolderExists(targetFolder))
             {
-                modList.emplace_back(std::string{"heroes launcher"});
+                modList.insert(modList.begin(), "heroes launcher");
             }
         }
     }
 
-    std::reverse(modList.begin(), modList.end()); // reverse modList
     CreateModInfoList(modList);
 
     if (notificationsTotal)
