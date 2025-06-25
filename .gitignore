@@ -16,6 +16,12 @@
 */*.sln
 */*.map
 
+# Пользовательские настройки проектов
+Directory.Build.props.user
+Directory.Build.targets.user
+**/Directory.Build.props.user
+**/Directory.Build.targets.user
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
