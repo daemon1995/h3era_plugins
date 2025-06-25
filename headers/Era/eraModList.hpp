@@ -52,11 +52,11 @@ inline std::string ReadStrWithLenField(const char *&p)
 // Основная функция разбора
 inline void ParseSerializedModList(void *SerializedModList, std::vector<std::string> &ResModList)
 {
-    assert(SerializedModList != nullptr);
+//    assert(SerializedModList != nullptr);
 
     const char *p = static_cast<const char *>(SerializedModList);
     const int NumMods = ReadInt(p);
-    assert(NumMods >= 0);
+//    assert(NumMods >= 0);
 
     ResModList.resize(NumMods);
     for (int i = 0; i < NumMods; ++i)

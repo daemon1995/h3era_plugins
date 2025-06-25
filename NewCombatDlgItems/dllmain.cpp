@@ -50,7 +50,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 			globalPatcher = GetPatcher();
 			_PI = globalPatcher->CreateInstance("EraPlugins.CreatureInformation.daemon_n");
-			Era::ConnectEra();
+			Era::ConnectEra(hModule,"EraPlugins.CreatureInformation.daemon_n" );
 			_PI->WriteLoHook(0x4EEAF2, HooksInit);
 
 		}

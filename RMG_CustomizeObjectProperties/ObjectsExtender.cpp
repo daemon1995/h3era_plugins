@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <thread>
+#include <sstream>
 namespace extender
 {
 
@@ -628,7 +629,7 @@ BOOL ObjectsExtender::VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, cons
 std::string ObjectProperty::GetMapKey(LPCSTR propertyString) noexcept
 {
     std::istringstream stream(propertyString);
-    static std::vector<std::string> words;
+    std::vector<std::string> words;
     std::string word;
     words.reserve(9);
     // ��������� ������ �� ����� � ��������� �� � ������
