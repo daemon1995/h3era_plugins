@@ -5089,6 +5089,7 @@ namespace h3
             CRYSTAL = 4,
             GEMS    = 5,
             GOLD    = 6,
+            MITHRIL = 7,
         };
     } /* namespace NH3Resources */
     typedef NH3Resources::eResource eResource;
@@ -20377,6 +20378,10 @@ namespace h3
 		_H3API_ INT32        GetClickFrame() const;
 		_H3API_ VOID         ColorDefToPlayer(INT32 id);
 		_H3API_ VOID         SetClickFrame(INT32 clickFrame);
+		_H3API_ VOID         SetText(H3String text);
+		_H3API_ VOID         SetText(LPCSTR text);
+		_H3API_ LPCSTR       GetText() const;
+
 		_H3API_ H3LoadedDef* GetDef();
 	};
 	_H3API_ASSERT_SIZE_(H3DlgDefButton);
@@ -20517,6 +20522,8 @@ namespace h3
 		H3Font*  font;
 		/** @brief [44]*/
 		INT32    color;
+	public:
+
 		/** @brief [48]*/
 		INT32    bkColor;
 		/** @brief [4C]*/
@@ -20842,6 +20849,7 @@ namespace h3
 		_H3API_ static H3DlgScrollableText* Create(LPCSTR text, INT32 x, INT32 y,
 			INT32 width, INT32 height, LPCSTR font, INT32 color, INT32 isBlue);
 		
+		_H3API_ void SetText(LPCSTR text);
 		_H3API_ H3DlgTextScrollbar* GetTextScrollBar();
 		_H3API_ H3LoadedPcx16* GetPcx();
 		_H3API_ H3Vector<H3DlgText*>* GetItems();
@@ -35341,6 +35349,18 @@ namespace h3
     {
         hotkeys.Add(key);
     }
+	_H3API_ VOID H3DlgDefButton::SetText(H3String text)
+	{
+		return SetText(text.String());
+	}
+	_H3API_ VOID H3DlgDefButton::SetText(LPCSTR text)
+	{
+		caption.Assign(text);
+	}
+	_H3API_ LPCSTR H3DlgDefButton::GetText() const
+	{
+		return caption.String();
+	}
     _H3API_ H3DlgDefButton* H3DlgDefButton::Create(INT32 x, INT32 y, INT32 width, INT32 height, INT32 id, LPCSTR defName, INT32 frame, INT32 clickFrame, BOOL closeDialog, INT32 hotkey)
     {
         H3DlgDefButton* b = H3ObjectAllocator<H3DlgDefButton>().allocate(1);
@@ -35841,20 +35861,22 @@ namespace h3
             THISCALL_9(H3DlgScrollableText*, 0x5BA360, s, text, x, y, width, height, font, color, isBlue);
         return s;
     }
-	 _H3API_ H3DlgTextScrollbar* H3DlgScrollableText::GetTextScrollBar()
-	 {
-		 return scrollBar;
-	 }
-
-	 _H3API_ H3LoadedPcx16* H3DlgScrollableText::GetPcx()
-	 {
-		 return canvas;
-	 }
-
-	 _H3API_ H3Vector<H3DlgText*>* H3DlgScrollableText::GetItems()
-	 {
-		 return &textItems;
-	 }
+	_H3API_ void H3DlgScrollableText::SetText(LPCSTR text)
+	{
+		THISCALL_2(void, 0x05BAA90, this, text);
+	}
+	_H3API_ H3DlgTextScrollbar* H3DlgScrollableText::GetTextScrollBar()
+	{
+		return scrollBar;
+	}
+	_H3API_ H3LoadedPcx16* H3DlgScrollableText::GetPcx()
+	{
+		return canvas;
+	}
+	_H3API_ H3Vector<H3DlgText*>* H3DlgScrollableText::GetItems()
+	{
+		return &textItems;
+	}
 } /* namespace h3 */
 
 namespace h3
