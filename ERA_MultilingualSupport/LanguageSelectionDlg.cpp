@@ -6,7 +6,7 @@ constexpr UINT16 FRAME_WIDGET_ID = 2;
 constexpr UINT16 FIRST_SELECTION_WIDGET_ID = 3;
 constexpr UINT16 LOCALEDLG_BUTTON_ID = 4445;
 
-LanguageSelectionDlg::LanguageSelectionDlg(const int width, const int height, const int x, const int y,
+LanguageSelectionDlg::LanguageSelectionDlg(const int x, const int y, const int width, const int height,
                                            const DlgStyle *style, LocaleManager *handler)
     : H3Dlg(width, height, x, y, false, false), m_style(style), m_localeManager(handler)
 {
@@ -47,12 +47,14 @@ void CurrentDlg_HandleLocaleDlgStart(const H3Msg *msg, const DlgStyle *style, co
 
                         const UINT16 DLG_HEIGHT = style->WIDGET_HEIGHT * ITEMS_NUM;
 
-                        const INT16 DLG_X = dlgPcx->GetAbsoluteX();
-                        const INT16 DLG_Y = dlgPcx->GetY() < 0 ? dlgPcx->GetAbsoluteY() - dlgPcx->GetY()
+                        INT16 DLG_X = dlgPcx->GetAbsoluteX();
+                        INT16 DLG_Y = dlgPcx->GetY() < 0 ? dlgPcx->GetAbsoluteY() - dlgPcx->GetY()
                                                                : dlgPcx->GetAbsoluteY() + dlgPcx->GetHeight();
                         // const INT16 DLG_Y = bttn->GetAbsoluteY();// +yOffset;
+                        DLG_X = dlgPcx->GetAbsoluteX() -style->WIDGET_WIDTH  ;
+                        DLG_Y = dlgPcx->GetAbsoluteY();
 
-                        LanguageSelectionDlg langDlg(DLG_WIDTH, DLG_HEIGHT, DLG_X, DLG_Y, style,
+                        LanguageSelectionDlg langDlg(DLG_X, DLG_Y, DLG_WIDTH, DLG_HEIGHT,  style,
                                                      localeHandler); // = direction ? {500, 500} : {0};
 
                         std::string currentLocale = LocaleManager::ReadLocaleFromIni();
@@ -227,7 +229,7 @@ void AddButtonToMainMenuDlg(H3BaseDlg *dlg)
         const auto pcx = style->localeBackgroundLoadedPcx;
         if (pcx)
         {
-            const int x = dlg->GetWidth() - pcx->width;
+            const int x = dlg->GetWidth();// -pcx->width;
             const int borderHeight = H3GameHeight::Get() - 600;
 
             const int offset = pcx->height + 4;

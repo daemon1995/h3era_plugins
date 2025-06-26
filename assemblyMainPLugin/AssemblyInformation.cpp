@@ -424,14 +424,14 @@ void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent *e)
     {
         panel->ReloadLanguageData();
     }
-    //Get().LoadDataFromJson();
-    //for (const auto it : Get().versions)
+    // Get().LoadDataFromJson();
+    // for (const auto it : Get().versions)
     //{
-    //    if (it && it->show)
-    //    {
-    //        it->AdjustItemText();
-    //    }
-    //}
+    //     if (it && it->show)
+    //     {
+    //         it->AdjustItemText();
+    //     }
+    // }
 }
 H3DlgText *__stdcall H3DlgText__Ctor(HiHook *h, H3DlgText *_this, int xpos, int ypos, int xsize, int ysize,
                                      const char *text, const char *font, int color, int itemId, int align, int bkcolor,
@@ -476,34 +476,28 @@ _LHF_(WoG_BeforeErmError)
 {
     flagISFirstError = true;
 
-
-
     return EXEC_DEFAULT;
-
 }
 _LHF_(SoD_MsgBoxDlgBeforeRun)
 {
-  //  if (flagISFirstError)
+    //  if (flagISFirstError)
     {
-            reinterpret_cast<char*>(c->ebp);
-        //if (vec.Size())
+        reinterpret_cast<char *>(c->ebp);
+        // if (vec.Size())
         {
-            H3Vector<H3DlgItem*> vec;
-           // libc::sprintf(h3_TextBuffer, "%d", vec->Size());
+            H3Vector<H3DlgItem *> vec;
+            // libc::sprintf(h3_TextBuffer, "%d", vec->Size());
             MessageBoxA(0, h3_TextBuffer, h3_TextBuffer, MB_OK);
-            //auto pcx = H3DlgPcx::Create(12, 12,122,12,-1, NH3Dlg::HDassets::HD_STATUSBAR_PCX);
+            // auto pcx = H3DlgPcx::Create(12, 12,122,12,-1, NH3Dlg::HDassets::HD_STATUSBAR_PCX);
 
-           //vec->AddOne(pcx);
-            //dlg->CreateBlackBox(1,1,22,22);
+            // vec->AddOne(pcx);
+            // dlg->CreateBlackBox(1,1,22,22);
         }
 
         flagISFirstError = false;
-
     }
 
-
     return EXEC_DEFAULT;
-
 }
 void AssemblyInformation::CreatePatches() noexcept
 {
@@ -522,8 +516,6 @@ void AssemblyInformation::CreatePatches() noexcept
         {
             _PI->WriteLoHook(0x071234D, WoG_BeforeErmError);
             _PI->WriteLoHook(0x04F71FE, SoD_MsgBoxDlgBeforeRun);
-
-            
         }
         // _PI->WriteHiHook(0x05BA547, THISCALL_, H3DlgText__Ctor);
         // _PI->WriteHiHook(0x044E190, THISCALL_, H3DlgText__Draw);

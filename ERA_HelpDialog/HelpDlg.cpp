@@ -1,8 +1,7 @@
-#include "framework.h"
 #include "SystemFunctions.h"
+#include "framework.h"
 #include <regex>
 #include <sstream> // for std::istringstream
-
 
 namespace main
 {
@@ -10,25 +9,21 @@ namespace main
 HelpDlg *HelpDlg::instance = nullptr;
 LastActiveDlgModInfo Mod::lastActiveModInfo;
 
-
-
 HelpDlg::HelpDlg(const int width, const int height, const int x, const int y) : H3Dlg(width, height, x, y, 1, 0)
 {
     // disable dlg shadow
     flags ^= 16;
 
     HelpDlg::instance = this;
-    
-    needResize = false;
 
     // set black background
     background = H3LoadedPcx16::Create(h3_NullString, width, height);
     memset(background->buffer, 0, background->buffSize);
 
-    H3DlgPcx16 *bg = H3DlgPcx16::Create(0, 0, background->width, background->height, 0, nullptr);
-    bg->SetPcx(background);
+    H3DlgPcx16 *backDlgPcx = H3DlgPcx16::Create(0, 0, background->width, background->height, 0, nullptr);
+    backDlgPcx->SetPcx(background);
 
-    AddItem(bg);
+    AddItem(backDlgPcx);
 
     // create "ok"
 
@@ -54,12 +49,11 @@ HelpDlg::HelpDlg(const int width, const int height, const int x, const int y) : 
     AddItem(bttn);
 
     // create hint
-    hintBar = H3DlgHintBar::Create(this,borderMargin + 1, okY + 1, width - (panelsMargin + okWidth + 2 + borderMargin * 2), okHeight);
+    hintBar = H3DlgHintBar::Create(this, borderMargin + 1, okY + 1,
+                                   width - (panelsMargin + okWidth + 2 + borderMargin * 2), okHeight);
     // golden frame around
     CreateFrame(hintBar, color, -1, 1);
     AddItem(hintBar);
-
-
 
     /// create 3 GENERAL panels
     /**
@@ -72,7 +66,7 @@ HelpDlg::HelpDlg(const int width, const int height, const int x, const int y) : 
     |          |                            |
     | PANEL    |          PANEL             |
     |          |                            |
-	|__________|____________________________|
+    |__________|____________________________|
     */
     constexpr int headerX = borderMargin;
 
@@ -90,18 +84,18 @@ HelpDlg::HelpDlg(const int width, const int height, const int x, const int y) : 
     const int contentWidth = width - categoriesWidth - headerX * 2 - panelsMargin;
     panels.contentPanel = new ContentPanel(contentX, categoriesY, contentWidth, categoriesHeight, this);
 
-
     /** create 3 Predefined CONTENT panels:
-    * Creatures, Artifacts, Towns
+     * Creatures, Artifacts, Towns
      */
 
     creaturesContentPanel = new CreaturesContentPanel(contentX, categoriesY, contentWidth, categoriesHeight, this);
     artifactsContentPanel = new ArtifactsContentPanel(contentX, categoriesY, contentWidth, categoriesHeight, this);
 
-    std::string nonParsedModNamesString = external::GetLoadedGameMods();
+    std::vector<std::string> modsVector;
 
+    modList::GetEraModList(modsVector);
 
-    if (GetLoadedModsJsonInformation(nonParsedModNamesString))
+    if (GetLoadedModsJsonInformation(modsVector))
     {
         m_activeMod = *(mods.begin());
 
@@ -142,7 +136,7 @@ const Content *HelpDlg::ActiveContent() const noexcept
 void HelpDlg::CallHelpInHelpDlg() const noexcept
 {
     help::HelpInHelpDlg dlg(500, 500);
-    
+
     dlg.Start();
 }
 
@@ -150,14 +144,10 @@ void HelpDlg::DisplayAllHotkeys() /*const*/ noexcept
 {
     if (this->hotkeys.size())
     {
-        
+
         for (auto &hotkey : this->hotkeys)
-		{
-		
-
-
-
-		}
+        {
+        }
     }
 }
 
@@ -198,48 +188,33 @@ std::string ExtractModNameFromPath(const std::string &input)
     return path.substr(first, last - first + 1);
 }
 
-
-
 // this function creates mod list and returns "true"
 // if there is at least one mode that may be displayed
-BOOL HelpDlg::GetLoadedModsJsonInformation(const std::string& nonParsedModNamesString)
+BOOL HelpDlg::GetLoadedModsJsonInformation(const std::vector<std::string> &modNames)
 {
     BOOL result = false;
-    std::vector<std::string> modNames;
 
     // parse string
-    if (!nonParsedModNamesString.empty())
+    if (!modNames.empty())
     {
 
-
-
-        std::istringstream stream(nonParsedModNamesString);
-        std::string line;
-        // Читаем строку по строке, разделяя по символу '\n'
         UINT modId = 0;
-        while (std::getline(stream, line))
+        for (auto &modName : modNames)
         {
-            std::string parsedLine = ExtractModNameFromPath(line);
-            // H3Messagebox(parsedLine.c_str());
-            if (!parsedLine.empty())
-            {
-                modNames.emplace_back(parsedLine);
 
-                // create mod
-                Mod* mod = new Mod(parsedLine.c_str(), modId++);
-                if (mod->hasSomeInfo)
-                {
-                    result = true;
-                }
-                // if it has some info
-                if (mod->hasSomeInfo)
-                {
-                    mods.emplace_back(mod);
-                }
-                else
-                {
-                    mod->~Mod();
-                }
+            Mod *mod = new Mod(modName.c_str(), modId++);
+            if (mod->hasSomeInfo)
+            {
+                result = true;
+            }
+            // if it has some info
+            if (mod->hasSomeInfo)
+            {
+                mods.emplace_back(mod);
+            }
+            else
+            {
+                mod->~Mod();
             }
         }
     }
@@ -279,16 +254,19 @@ BOOL HelpDlg::DialogProc(H3Msg &msg)
             SetActiveMod(0);
             break;
         case buttons::CREATURES:
+
             break;
         case buttons::ARTIFACTS:
+
             break;
         case buttons::TOWNS:
+
             break;
             // maximize button
-        case buttons::MAXIMIZE:
-            needResize = true;
-            // restartDlg
-            this->Stop();
+        case buttons::RESIZE_DLG:
+            // P_WindowManager->SetClickedItemId(2020);
+            //   restartDlg
+            //  this->Stop();
             break;
         case buttons::HELP:
             CallHelpInHelpDlg();
@@ -300,8 +278,6 @@ BOOL HelpDlg::DialogProc(H3Msg &msg)
         }
         if (!headerClick)
         {
-            
-
         }
     }
     else if (msg.IsRightClick())
@@ -318,38 +294,26 @@ BOOL HelpDlg::DialogProc(H3Msg &msg)
 
     if (hintBar && hintBar->IsVisible())
     {
-       // Era::ExecErmCmd("IF:L^^");
+        // Era::ExecErmCmd("IF:L^^");
         hintBar->ShowHint(&msg);
-
     }
     return 0;
 }
 
-
-void HelpDlg::AssignWithCalledDlg(const H3Town* town, const eCreature creature) noexcept
+void HelpDlg::AssignWithCalledDlg(const H3Town *town, const eCreature creature) noexcept
 {
-    
 
     if (town)
     {
-
-
     }
     else if (creature != eCreature::UNDEFINED)
     {
-
     }
-
-
 }
 
 BOOL HelpDlg::DlgExists()
 {
     return instance != nullptr;
-}
-BOOL HelpDlg::NeedResizeScreen() const noexcept
-{
-    return needResize;
 }
 
 void H3DlgFramedPanel::CreateBorderFrame()
@@ -357,9 +321,9 @@ void H3DlgFramedPanel::CreateBorderFrame()
     H3RGB565 frameColor = H3RGB888::Highlight();
     panelFrame = H3DlgFrame::Create(0, 0, width, height, -1, frameColor);
 
-    //panelFrame->HideDeactivate();
-    //items += panelFrame;
-    //THISCALL_3(H3DlgItem *, 0x5AA7B0, this, panelFrame, -1);
+    // panelFrame->HideDeactivate();
+    // items += panelFrame;
+    // THISCALL_3(H3DlgItem *, 0x5AA7B0, this, panelFrame, -1);
     this->AddItem(panelFrame);
     panelFrame->Show();
 }
@@ -375,7 +339,7 @@ const H3BaseDlg *H3DlgFramedPanel::Parent() const noexcept
     return parent;
 }
 
-void H3DlgFramedPanel::AddScrtollBar(H3DlgScrollbar *scrollBar) noexcept
+void H3DlgFramedPanel::AddScrollBar(H3DlgScrollbar *scrollBar) noexcept
 {
     this->scrollBar = scrollBar;
     if (scrollBar)
@@ -390,7 +354,7 @@ H3LoadedPcx16 *H3DlgFramedPanel::GetBackgroundPcx() const noexcept
 }
 
 HeaderMenuPanel::HeaderMenuPanel(const int x, const int y, const int width, const int height, H3BaseDlg *parent)
-    : IPanel(x, y, width, height, parent)
+    : DlgPanel(x, y, width, height, parent)
 {
     if (dlgPanel)
     {
@@ -400,43 +364,36 @@ HeaderMenuPanel::HeaderMenuPanel(const int x, const int y, const int width, cons
 
 HeaderMenuPanel::~HeaderMenuPanel()
 {
-
 }
 
 void HeaderMenuPanel::InitPanelItems()
 {
 
-    LPCSTR defName = "RMGmenbt.def";
+    LPCSTR captionButtonDefNam = "RMGmenbt.def";
 
-    H3DefLoader def(defName);
+    H3DefLoader def(captionButtonDefNam);
     // return;
     volatile int counter = 0;
+    constexpr eVKey keys[7] = {eVKey::H3VK_M, eVKey::H3VK_K, eVKey::H3VK_C, eVKey::H3VK_A,
+                               eVKey::H3VK_T, eVKey::H3VK_R, eVKey::H3VK_H};
     for (auto &bttn : buttons.asArray)
     {
-        bttn =
-            H3DlgCaptionButton::Create(counter * def->widthDEF * 2 / 3 + 1, 3, buttons::FIRST + counter, defName,
-                                       EraJS::read(H3String::Format("help.text.main.header.%d.name", counter).String()),
-                                       NH3Dlg::Text::MEDIUM, 0, 0, false, 0, 0);
+        bttn = H3DlgCaptionButton::Create(
+            counter * def->widthDEF * 2 / 3 + 1, 3, buttons::FIRST + counter, captionButtonDefNam,
+            EraJS::read(H3String::Format("help.dlg.main.header.%d.name", counter).String()), NH3Dlg::Text::MEDIUM, 0, 0,
+            false, keys[counter], 0);
 
         bttn->SetClickFrame(1);
         this->dlgPanel->AddItem(bttn);
 
-        bttn->SetHints(EraJS::read(H3String::Format("help.text.main.header.%d.hint", counter).String()),
-                       EraJS::read(H3String::Format("help.text.main.header.%d.rmc", counter).String()), false);
+        bttn->SetHints(EraJS::read(H3String::Format("help.dlg.main.header.%d.hint", counter).String()),
+                       EraJS::read(H3String::Format("help.dlg.main.header.%d.rmc", counter).String()), false);
         bttn->ShowActivate();
         counter++;
-
-        //	const int bX = counter++ * 56 + 256;
-        //	bttn->SetX(bX);
     }
+    // set "close dlg" for resize bbtn: nended to use P_
+    ByteAt(reinterpret_cast<ADDRESS>(buttons.resize) + 0x44) = true;
 
-
-
-    buttons.artifacts->AddHotkey(eVKey::H3VK_A);
-    buttons.towns->AddHotkey(eVKey::H3VK_T);
-    buttons.creatures->AddHotkey(eVKey::H3VK_C);
-    buttons.resize->AddHotkey(eVKey::H3VK_M);
-    buttons.help->AddHotkey(eVKey::H3VK_H);
     //	return;
 
     for (size_t i = 1; i < 5; i++)
@@ -521,8 +478,7 @@ HotKeysCategory *Mod::CreateHotkeysCategory() const noexcept
             H3String description = EraJS::read(
                 H3String::Format("%s.categories.hotkeys.content.%d.description", json.String(), hotkeyId).String());
 
-
-            hotkeys.emplace_back(HotKey{ hkcategories::eType(type), key, description});
+            hotkeys.emplace_back(HotKey{hkcategories::eType(type), key, description});
             hotkeyId++;
         }
     }
@@ -579,9 +535,8 @@ void Mod::SetVisible(const BOOL state)
 
 void Mod::StoreModInfoAsActive() const noexcept
 {
-    //lastActiveModInfo.scrollBarPos  = this->activeCategory
+    // lastActiveModInfo.scrollBarPos  = this->activeCategory
     lastActiveModInfo.categoryId = m_lastActiveCategoryId;
-    
 }
 
 void ContentPanel::InitPanelItems()
@@ -607,7 +562,7 @@ void ContentPanel::InitPanelItems()
 
 //}
 
-void IPanel::CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScrollbar_proc scrollBarProc)
+void DlgPanel::CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScrollbar_proc scrollBarProc)
 {
     constexpr int X_INTERVAL = 7;
     constexpr int Y_INTERVAL = 6;
@@ -618,7 +573,6 @@ void IPanel::CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScro
     constexpr int maxPaddingY = 6;
     const int width = dlgPanel->GetWidth() - xScrollBarPadding;
     const int height = dlgPanel->GetHeight();
-    
 
     H3DefLoader def(defName);
     const int defWidth = def->widthDEF;
@@ -630,8 +584,10 @@ void IPanel::CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScro
     const int columns = (availableWidth + defWidth - 1) / (defWidth + minPaddingX);
     const int rows = (availableHeight + defHeight - 1) / (defHeight + minPaddingY);
 
-    const int paddingX = std::max(minPaddingX, std::min(maxPaddingX, (availableWidth - (columns - 1) * defWidth) / columns));
-    const int paddingY = std::max(minPaddingY, std::min(maxPaddingY, (availableHeight - (rows - 1) * defHeight) / rows));
+    const int paddingX =
+        std::max(minPaddingX, std::min(maxPaddingX, (availableWidth - (columns - 1) * defWidth) / columns));
+    const int paddingY =
+        std::max(minPaddingY, std::min(maxPaddingY, (availableHeight - (rows - 1) * defHeight) / rows));
 
     int x = paddingX;
     int y = paddingY;
@@ -641,15 +597,13 @@ void IPanel::CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScro
     {
         for (int j = 0; j < columns && counter < maxItems; ++j)
         {
-            H3DlgDef* monDef = H3DlgDef::Create(x, y, defName, 0);
+            H3DlgDef *monDef = H3DlgDef::Create(x, y, defName, 0);
             this->dlgPanel->AddItem(monDef);
             x += defWidth + paddingX;
             ++counter;
         }
         x = paddingX;
         y += defHeight + paddingY;
-
-        
     }
 
     if (scrollBarProc && counter >= maxItems && columns)
@@ -657,33 +611,27 @@ void IPanel::CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScro
         const int extraItems = maxItems + 1 - counter;
         const int scrollBarTicksCount = extraItems / columns + 1;
 
-        scrollBar = H3DlgScrollbar::Create(width - xScrollBarPadding, 2, 16, availableHeight, 123, scrollBarTicksCount, scrollBarProc, false, 1, true);
+        auto scrollBar = H3DlgScrollbar::Create(width - xScrollBarPadding, 2, 16, availableHeight, 123,
+                                                scrollBarTicksCount, scrollBarProc, false, 1, true);
         this->dlgPanel->AddItem(scrollBar);
-
     }
 }
 
-
 void CreaturesContentPanel::InitPanelItems()
 {
-
     const int maxMonId = IntAt(0x4A1657) - 1;
 
     CreateItemsGrid(NH3Dlg::Assets::CREATURE_SMALL, maxMonId, ScrollProc);
 }
 
-void __fastcall CreaturesContentPanel::ScrollProc(INT32 tick, H3BaseDlg* dlg)
+void __fastcall CreaturesContentPanel::ScrollProc(INT32 tick, H3BaseDlg *dlg)
 {
-
-
 }
-void __fastcall ArtifactsContentPanel::ScrollProc(INT32 tick, H3BaseDlg* dlg)
+void __fastcall ArtifactsContentPanel::ScrollProc(INT32 tick, H3BaseDlg *dlg)
 {
-
-
 }
 ContentPanel::ContentPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent)
-    : IPanel(x, y, width, height, parent)
+    : DlgPanel(x, y, width, height, parent)
 {
     if (dlgPanel)
     {
@@ -693,13 +641,13 @@ ContentPanel::ContentPanel(const int x, const int y, const int width, const int 
 
 CreaturesContentPanel::CreaturesContentPanel(const int x, const int y, const int width, const int height,
                                              const H3BaseDlg *parent)
-    : IPanel(x, y, width, height, parent)
+    : DlgPanel(x, y, width, height, parent)
 {
     InitPanelItems();
 }
 ArtifactsContentPanel::ArtifactsContentPanel(const int x, const int y, const int width, const int height,
                                              const H3BaseDlg *parent)
-    : IPanel(x, y, width, height, parent)
+    : DlgPanel(x, y, width, height, parent)
 {
     InitPanelItems();
 }
@@ -718,7 +666,7 @@ ContentPanel::~ContentPanel()
     }
 }
 CategoriesPanel::CategoriesPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent)
-    : IPanel(x, y, width, height, parent), activeMod(nullptr)
+    : DlgPanel(x, y, width, height, parent), activeMod(nullptr)
 {
     if (dlgPanel)
     {
@@ -732,12 +680,13 @@ CategoriesPanel::~CategoriesPanel()
 void CategoriesPanel::InitPanelItems()
 {
 
-    const int CATEGORY_WIDTH = dlgPanel->GetWidth();
+    const int panelWidth = dlgPanel->GetWidth();
+    const int panelHeight = dlgPanel->GetHeight();
+
     constexpr int CATEGORY_HEIGHT = 48;
     constexpr int CATEGORY_INTERVAL = 6;
-    const int height = dlgPanel->GetHeight();
     constexpr int padding = 1;
-    const int catsNum = (height - CATEGORY_INTERVAL) / (CATEGORY_HEIGHT + CATEGORY_INTERVAL);
+    const size_t catsNum = (panelHeight - CATEGORY_INTERVAL) / (CATEGORY_HEIGHT + CATEGORY_INTERVAL);
     // return;
 
     H3DefLoader townDef(NH3Dlg::Assets::TOWN_SMALL);
@@ -762,9 +711,9 @@ void CategoriesPanel::InitPanelItems()
             //	iconItem->Show();
 
             H3DlgTextPcx *textPcx = H3DlgTextPcx::Create(
-                x + icoWidth + textXOffset, icoY,
-                CATEGORY_WIDTH - icoWidth - textXOffset - scrollPadding - padding * 2 - 2, CATEGORY_HEIGHT,
-                h3_NullString, NH3Dlg::Text::MEDIUM, "gem_res.pcx", eTextColor::WHITE, eTextAlignment::MIDDLE_CENTER);
+                x + icoWidth + textXOffset, icoY, panelWidth - icoWidth - textXOffset - scrollPadding - padding * 2 - 2,
+                CATEGORY_HEIGHT, h3_NullString, NH3Dlg::Text::MEDIUM, "gem_res.pcx", eTextColor::WHITE,
+                eTextAlignment::MIDDLE_CENTER);
 
             this->dlgPanel->AddItem(iconItem);
             this->dlgPanel->AddItem(textPcx);
@@ -774,11 +723,10 @@ void CategoriesPanel::InitPanelItems()
             panelCat.icon = iconItem;
             panelCategories.emplace_back(panelCat);
         }
-        H3DlgScrollbar *scrollBar =
-            H3DlgScrollbar::Create(this->dlgPanel->GetWidth() - scrollPadding, padding, 16,
-                                   this->dlgPanel->GetHeight() - padding * 2, 123, 123, nullptr, false, 1, true);
+        H3DlgScrollbar *scrollBar = H3DlgScrollbar::Create(
+            panelWidth - scrollPadding, padding, 16, panelHeight - padding * 2, 123, 123, nullptr, false, 1, true);
 
-        this->dlgPanel->AddScrtollBar(scrollBar);
+        this->dlgPanel->AddScrollBar(scrollBar);
         scrollBar->ShowActivate();
     }
 
@@ -843,14 +791,14 @@ Category::~Category()
 void Category::ShowContent() const noexcept
 {
 }
-//IPanel::IPanel(const IPanel &other)
-//    : IPanel(other.dlgPanel->GetX(), other.dlgPanel->GetY(), other.dlgPanel->GetWidth(), other.dlgPanel->GetY(),
-//             other.dlgPanel->Parent())
+// DlgPanel::DlgPanel(const DlgPanel &other)
+//     : DlgPanel(other.dlgPanel->GetX(), other.dlgPanel->GetY(), other.dlgPanel->GetWidth(), other.dlgPanel->GetY(),
+//              other.dlgPanel->Parent())
 //{
 //
-//}
-// create base class with h3 extended panel
-IPanel::IPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent)
+// }
+//  create base class with h3 extended panel
+DlgPanel::DlgPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent)
 {
 
     // if item is allocated
@@ -860,17 +808,17 @@ IPanel::IPanel(const int x, const int y, const int width, const int height, cons
     }
 }
 
-IPanel::~IPanel()
+DlgPanel::~DlgPanel()
 {
-    delete dlgPanel;
+    H3ObjectAllocator<H3DlgFramedPanel>().deallocate(dlgPanel);
 }
 
-int IPanel::GetX() const noexcept
+int DlgPanel::GetX() const noexcept
 {
     return dlgPanel->GetX();
 }
 
-int IPanel::GetY() const noexcept
+int DlgPanel::GetY() const noexcept
 {
     return dlgPanel->GetY();
 }
@@ -894,7 +842,7 @@ void CategoriesPanel::PanelCategory::SetCategory(const Category *category)
         // show icon
         icon->ShowActivate();
     }
-    // else if current has and sorc doesn't
+    // else if current has and source doesn't
     else if (!category->iconPcx && icon->GetPcx())
     {
         // resize and move text item

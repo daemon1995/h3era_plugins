@@ -122,15 +122,35 @@ const char* n_DlgExpMon = "DlgCrExp.def";
 const char* n_SkillSlotPcx = "skillslt.pcx";
 
 #define WOG_STACK_EXPERIENCE_ON *reinterpret_cast<bool*>(0x02772730)
-
+#include <string>
 using namespace h3;
 BOOL ShowStackAvtiveSpells(H3CombatCreature* stack, bool isRMC, H3DlgItem* clickedItem);
 void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi);
 
 BOOL main_isRMC = false;
 BOOL DrawCreatureSkillsList(int firstSkillIndex = 0);
+//std::map<std::string, std::string> names;
+BOOL ParseText(LPCSTR text)
+{
 
 
+	std::string str(text);
+	auto result = std::find_if(str.begin(), str.end(), [](char ch) { return ch != ' '; });
+
+	
+
+
+	if (result != str.end())
+	{
+
+	}
+
+
+
+	return false;
+
+
+}
 CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg* dlg, H3CombatCreature* stack, H3Army* army, int armySlotIndex) :
 	dlg(dlg), stack(stack), army(army), armySlotIndex(armySlotIndex), wogStackExperience(WOG_STACK_EXPERIENCE_ON)
 {
@@ -239,6 +259,18 @@ BOOL CreatureDlgHandler::AlignItems()
 	if (!description)
 		description = dlg->GetText(1);
 
+	if (description)
+	{
+		LPCSTR text = description->GetH3String().String();
+		if (text && libc::strcmpi(text, h3_NullString))
+		{
+			ParseText(text);
+
+
+		}
+	}
+
+
 
 	int x = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.x"));
 	int y = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.y"));
@@ -345,6 +377,37 @@ BOOL CreatureDlgHandler::AlignItems()
 
 BOOL CreatureDlgHandler::AddExperienceButton()
 {
+
+	if (dlg)
+	{
+
+		if (auto backPcx8 = dlg->GetH3DlgItem(200))
+		{
+			const int boxW = 200;
+
+			const int boxX = backPcx8->GetX() - boxW;
+			const int boxH = 100;
+			H3DlgPcx16* boxFrame = H3DlgPcx16::Create(boxX, backPcx8->GetY(),nullptr);
+			boxFrame->SetWidth(boxW);
+			boxFrame->SetHeight(boxH);
+			H3LoadedPcx16* boxPcx = H3LoadedPcx16::Create(boxW, boxH);
+			boxPcx->BackgroundRegion(0, 0, boxW, boxH, false);
+			boxPcx->FrameRegion(0, 0, boxW, boxH, false,0,false);
+			//boxPcx->BevelArea(1, 1, boxW - 2, boxH - 2);
+			boxPcx->DarkenArea(1, 1, boxW - 2, boxH - 2, 50);
+			boxFrame->SetPcx(boxPcx);
+			dlg->AddItem(boxFrame);
+
+
+			//if (auto pcx = boxFrame->GetPcx())
+			//{
+			//	pcx->Destroy();
+			//	boxFrame->SetPcx(nullptr);
+			//}
+
+		}
+	}
+
 	bool isNPC = !(dlg->creatureId < 174 || dlg->creatureId > 191);
 	if (!isNPC || stack != nullptr)
 	{
@@ -535,9 +598,9 @@ H3CreatureInfoDlg* __stdcall H3CreatureInfoDlg_NotBattleCtor(HiHook* h,
 
 	auto result = THISCALL_11(H3CreatureInfoDlg*, h->GetDefaultFunc(), dlg, army, slotId, hero, town, x, y, monGrade, a9, a10, a11);
 
-	if (dlg->GetY() + DLG_HEIGHT > P_AdventureMgr->dlg->GetHeight())
+	if (dlg->GetY() + DLG_HEIGHT + 145 > P_AdventureMgr->dlg->GetHeight())
 	{
-		IntAt((int)dlg + 0x1C) = P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT;
+		IntAt((int)dlg + 0x1C) = P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT - 145;
 	}
 
 	CreatureDlgHandler handler(result, nullptr, army, slotId);
@@ -822,7 +885,7 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance* pi)
 
 	//non combat dlg
 	pi->WriteDword(0x5F3F1B + 1, DLG_HEIGHT); // set non battle dlg height
-	pi->WriteDword(0x5F3F20 + 1, DLG_WIDTH); // set non battle dlg width
+	pi->WriteDword(0x5F3F20 + 1, DLG_WIDTH + 145); // set non battle dlg width
 	pi->WriteDword(0x5F406B + 1, DLG_HEIGHT); // set non battle bg_pcx height
 	pi->WriteDword(0x5F4070 + 1, DLG_WIDTH); // set non battle bg_pcx width
 	pi->WriteDword(0x5F44CE + 1, 336); // set hint pcx width

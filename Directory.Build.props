@@ -25,7 +25,7 @@
   <!-- Настройки для Debug конфигураций -->
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <RuntimeLibrary Condition="'$(Platform)' == 'Win32'">MultiThreadedDebug</RuntimeLibrary>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     <GenerateDebugInformation>true</GenerateDebugInformation>
     <EnableUAC>false</EnableUAC>
     <GenerateMapFile>true</GenerateMapFile>
@@ -34,6 +34,7 @@
   <!-- Настройки для Release конфигураций -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <UseDebugLibraries>false</UseDebugLibraries>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <FunctionLevelLinking>true</FunctionLevelLinking>
     <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -56,6 +57,8 @@
     <OutDir>$(LocalGamePath)\Mods\WoG\eraplugins\</OutDir>
     <MapFileName Condition="'$(Configuration)' == 'Debug'">$(LocalGamePath)\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
     <MapFileName Condition="'$(Configuration)' == 'Release'">$(LocalToolsPath)\ExeMapCompiler\$(ProjectName).map</MapFileName>
+	<TargetName>$(ProjectName)</TargetName>
+    <TargetExt>.era</TargetExt>
   </PropertyGroup>
 
   <!-- Настройки для x64 платформы -->
@@ -93,7 +96,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(LocalHeadersPath)\;$(IncludePath)</IncludePath>
-    <PreprocessorDefinitions>_DEBUG;$(ProjectName.ToUpper().Replace('.','_'))_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <PreprocessorDefinitions>_DEBUG;$(ProjectName.ToUpper().Replace('.','_'))_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
     <SDLCheck>true</SDLCheck>
     <ConformanceMode>true</ConformanceMode>
     <PrecompiledHeader>Use</PrecompiledHeader>
@@ -104,7 +107,7 @@
   <!-- Настройки для Release x64 -->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <PreprocessorDefinitions>NDEBUG;$(ProjectName.ToUpper().Replace('.','_'))_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <PreprocessorDefinitions>NDEBUG;$(ProjectName.ToUpper().Replace('.','_'))_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
     <SDLCheck>true</SDLCheck>
     <ConformanceMode>true</ConformanceMode>
     <PrecompiledHeader>Use</PrecompiledHeader>

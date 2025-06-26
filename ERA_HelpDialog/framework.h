@@ -1,8 +1,12 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 // Windows Header Files
+#define ERA_MODLIST
+#define ERA4
+
 #include "..\headers\header.h"
+#include "DlgPanels.h"
 #include "HelpDlg.h"
-#include "ModListDlg.h"
 #include "HelpInHelpDlg.h"
+#include "ModListDlg.h"

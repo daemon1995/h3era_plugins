@@ -11,12 +11,12 @@
 #define PCH_H
 #define RESIZED_PCX
 // Добавьте сюда заголовочные файлы для предварительной компиляции
-
+#define _WOG_
 #include "../headers/header.h"
 
-#include "ISettings.h"
-#include "AdventureMapHints.h"
-#include "MithrilDisplay.h"
+//#include "ISettings.h"
+//#include "AdventureMapHints.h"
+//#include "MithrilDisplay.h"
 
 
 #endif //PCH_H

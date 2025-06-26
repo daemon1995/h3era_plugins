@@ -221,6 +221,7 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
             AddItem(panelTitle, true);
         }
 
+
         const int switchX = width - FRAME_OFFSET * 2 - 120;
         const int switchY = y + FRAME_OFFSET + 4;
         if (previousModButton = H3DlgDefButton::Create(switchX, switchY, "ntf_left.def", 0, 1))
@@ -767,6 +768,7 @@ void NotificationPanel::SwitchModInfo(const int step) noexcept
 void OpenExternalFile(const char *path, const char *msg = nullptr);
 BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept
 {
+
 
     BOOL result = false;
     if (msg)

@@ -18,9 +18,9 @@ bool DlgStyle::CreateAssets(bool forceRecreate)
 
     if (styles.empty())
     {
-        styles.emplace_back(DlgStyle("comopbck.pcx", {245, 253, 460, 276}, 7, h3::NH3Dlg::Text::MEDIUM));
+        styles.emplace_back(DlgStyle("comopbck.pcx", {245, 253, 445, 276}, 7, h3::NH3Dlg::Text::MEDIUM));
         styles.emplace_back(DlgStyle("ADOPYPNL.PCX", {4, 1, 102, 19}, 25, h3::NH3Dlg::Text::MEDIUM));
-        styles.emplace_back(DlgStyle("ADVOPTBK.PCX", {251, 549, 390, 569}, 25, h3::NH3Dlg::Text::SMALL));
+        styles.emplace_back(DlgStyle("ADVOPTBK.PCX", {251, 549, 390 -16, 569}, 25, h3::NH3Dlg::Text::SMALL));
         text.Load();
     }
     return !styles.empty();

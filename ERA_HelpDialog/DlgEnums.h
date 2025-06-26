@@ -12,7 +12,7 @@ namespace main
             CREATURES,
             ARTIFACTS,
             TOWNS,
-            MAXIMIZE,
+            RESIZE_DLG,
             HELP,
             LAST = HELP
         };

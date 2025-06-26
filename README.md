@@ -8,6 +8,8 @@
 
 Монорепозиторий плагинов для Heroes of Might and Magic 3 ERA.
 
+> **ℹ️ Для автоформатирования кода рекомендуется использовать расширение [clang-tools](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd) для VS Code или аналог для вашей IDE. Форматирование кода производится автоматически по .clang-format.**
+
 ## Архитектура репозитория
 
 Этот репозиторий использует **монорепо** структуру по следующим причинам:
@@ -120,6 +122,7 @@
    copy Directory.Build.props.template Directory.Build.props.user
    # Отредактируйте Directory.Build.props.user под ваши пути
    ```
+   📖 **Подробнее**: [VS_USER_SETTINGS.md](VS_USER_SETTINGS.md)
 
 3. **Откройте в Visual Studio 2022**:
    ```bash
@@ -132,11 +135,36 @@
 ### 🔧 **Разработка нового плагина**
 
 1. Создайте новую папку для плагина
-2. Добавьте проект в `H3EraPlugins.sln`
+2. Добавьте проект в `H3EraPlugins.sln` (📖 [подробнее](SOLUTION_BEST_PRACTICES.md))
 3. Настройки сборки подхватятся автоматически из `Directory.Build.props`
 4. Используйте общие заголовки из папки `headers/`
 
 Все плагины будут автоматически скопированы в соответствующие папки игры согласно настройкам в `Directory.Build.props.user`.
+
+### 🚀 **Работа с Visual Studio Code**
+
+1. **Настройте окружение**:
+   - Убедитесь, что установлен Visual Studio Code.
+   - Установите расширение [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools).
+
+2. **Откройте репозиторий в VS Code**:
+   ```bash
+   code .
+   ```
+
+3. **Сборка проекта**:
+   - Откройте меню "Terminal -> Run Task".
+   - Выберите задачу "Build Solution" для сборки всех плагинов.
+
+4. **Отладка**:
+   - Откройте меню "Run -> Start Debugging" (F5).
+   - Убедитесь, что выбрана конфигурация "Launch Plugin".
+
+5. **Редактирование кода**:
+   - Используйте общие заголовочные файлы из папки `headers/`.
+   - Форматируйте код с помощью `.clang-format`.
+
+📖 **Подробнее**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 📚 **Дополнительная информация**
 
@@ -151,6 +179,8 @@
 ## <a id="english"></a>🇺🇸 English Version
 
 Monorepo of plugins for Heroes of Might and Magic 3 ERA.
+
+> **ℹ️ For automatic code formatting, it is recommended to use the [clang-tools](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd) extension for VS Code or a similar tool for your IDE. Code is formatted automatically according to .clang-format.**
 
 ## Repository Architecture
 
@@ -264,6 +294,7 @@ If compatibility with older Windows versions is needed, you can use:
    copy Directory.Build.props.template Directory.Build.props.user
    # Edit Directory.Build.props.user for your paths
    ```
+   📖 **Details**: [VS_USER_SETTINGS.md](VS_USER_SETTINGS.md)
 
 3. **Open in Visual Studio 2022**:
    ```bash
@@ -276,11 +307,36 @@ If compatibility with older Windows versions is needed, you can use:
 ### 🔧 **Developing New Plugin**
 
 1. Create new folder for plugin
-2. Add project to `H3EraPlugins.sln`
+2. Add project to `H3EraPlugins.sln` (📖 [details](SOLUTION_BEST_PRACTICES.md))
 3. Build settings will be automatically inherited from `Directory.Build.props`
 4. Use common headers from `headers/` folder
 
 All plugins will be automatically copied to corresponding game folders according to settings in `Directory.Build.props.user`.
+
+### 🚀 **Работа с Visual Studio Code**
+
+1. **Настройте окружение**:
+   - Убедитесь, что установлен Visual Studio Code.
+   - Установите расширение [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools).
+
+2. **Откройте репозиторий в VS Code**:
+   ```bash
+   code .
+   ```
+
+3. **Сборка проекта**:
+   - Откройте меню "Terminal -> Run Task".
+   - Выберите задачу "Build Solution" для сборки всех плагинов.
+
+4. **Отладка**:
+   - Откройте меню "Run -> Start Debugging" (F5).
+   - Убедитесь, что выбрана конфигурация "Launch Plugin".
+
+5. **Редактирование кода**:
+   - Используйте общие заголовочные файлы из папки `headers/`.
+   - Форматируйте код с помощью `.clang-format`.
+
+📖 **Подробнее**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 📚 **Additional Information**
 

@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectsExtender.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
+    <ClCompile Include="RMGObjectsEditor.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
+    <ClCompile Include="RMG_SettingsDlg.cpp">
+      <Filter>SettingsDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\WarehousesExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\CreatureBanksExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\ShrinesExternder.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\headers\Era\era.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\GazeboExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\WateringPlaceExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\WoGObjectsExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\ColosseumOfTheMagiExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundManager.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\UniversityExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ObjectsExtender.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="RMGObjectsEditor.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="RMG_SettingsDlg.h">
+      <Filter>SettingsDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\CreatureBanksExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\WarehousesExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\ShrinesExternder.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\GazeboExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\WateringPlaceExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\WoGObjectsExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\ColosseumOfTheMagiExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundManager.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\UniversityExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\SpellMarketExtender.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="source files">
+      <UniqueIdentifier>{e9b4f00f-697c-49d7-8a0d-5d21b9998c72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="headers">
+      <UniqueIdentifier>{0017b8c2-4edb-4895-b9e0-3f7b6b0280fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SettingsDlg">
+      <UniqueIdentifier>{c667124d-4d02-4df5-8fc7-04aaaf4c7305}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extenders">
+      <UniqueIdentifier>{572dc5ac-3f4d-41de-b560-1a6862f4dfd0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

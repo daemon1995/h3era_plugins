@@ -61,14 +61,24 @@ _LHF_(MainWindow_F1)
             //            libc::sprintf(Era::z[0], "%s", town->name);
             //          Era::ExecErmCmd("IF:L^%z1^;");
         }
+        else
+        {
+            ::townFromClick = nullptr;
+        }
         if (creature != eCreature::UNDEFINED)
         {
             //    H3Messagebox(P_CreatureInformation[creature].namePlural);
         }
+        else
+        {
+
+            ::creatureFromClick = eCreature::UNDEFINED;
+        }
         //   Era::y[55] = **reinterpret_cast<DWORD**>(P_WindowManager->lastDlg);
         //  Era::ExecErmCmd("IF:L^%y55^;");
-
+        const int storeResult = P_WindowManager->resultItemID;
         bool isFullScreen = atoi(h3_TextBuffer);
+
         do
         {
             const int dialogWidth = isFullScreen ? H3GameWidth::Get() - 6 : 800;
@@ -83,6 +93,8 @@ _LHF_(MainWindow_F1)
             // start help dialog
 
             dialog.Start();
+            const int storeResultA = P_WindowManager->ClickedItemID();
+            storeResultA;
             //            town ? dialog.RMB_Show(): dialog.Start();
             if (town == nullptr && 0)
             {
@@ -90,7 +102,8 @@ _LHF_(MainWindow_F1)
                 return NO_EXEC_DEFAULT;
             }
             // reverse isFullScreen after dialog closed
-            if (dialog.NeedResizeScreen())
+
+            if (P_WindowManager->resultItemID == main::buttons::RESIZE_DLG)
             {
                 Era::WriteStrToIni("FullScreen", (isFullScreen ^= 1) ? "1" : "0", "Help", main::HelpDlg::iniPath);
                 Era::SaveIni(main::HelpDlg::iniPath);
@@ -101,6 +114,7 @@ _LHF_(MainWindow_F1)
             }
 
         } while (TRUE);
+        P_WindowManager->resultItemID = storeResult;
     }
 
     // skip original code
@@ -110,30 +124,46 @@ _LHF_(MainWindow_F1)
 
 void __stdcall H3TownSmallDlg__Constructor(HiHook *hook, const H3Dlg *dlg, const H3Town *town, const int info)
 {
-    ::townFromClick = town;
     THISCALL_3(void, hook->GetDefaultFunc(), dlg, town, info);
+    ::townFromClick = town;
 }
-
-void __stdcall H3CreatureSmallDlg__Constructor(HiHook *hook, const H3Dlg *dlg, const int vision,
-                                               const eCreature creature, const int count, const int diploType,
-                                               const int cost)
+//_LHF_(H3CreatureSmallDlg__BeforeRun)
+//{
+//    if (auto mapItem = *reinterpret_cast<H3MapItem**> (c->ebp + 0x8))
+//    {
+//        ::creatureFromClick = eCreature(mapItem->wanderingCreature.CreatureType());
+//    }
+//   //  = creature;
+//
+//	return EXEC_DEFAULT;
+//}
+H3Dlg *__stdcall H3CreatureSmallDlg__Constructor(HiHook *hook, const H3Dlg *dlg, const H3MapItem *mapItem, const int a4,
+                                                 const int a5)
 {
-    ::creatureFromClick = creature;
-    THISCALL_6(void, hook->GetDefaultFunc(), dlg, vision, creature, count, diploType, cost);
+    auto result = THISCALL_4(H3Dlg *, hook->GetDefaultFunc(), dlg, mapItem, a4, a5);
+    if (mapItem)
+    {
+        ::creatureFromClick = eCreature(mapItem->wanderingCreature.CreatureType());
+    }
+    //  ::creatureFromClick = creature;
+
+    return result;
 }
 _LHF_(HooksInit)
 {
 
     // intercept F1 already pressed
     _PI->WriteLoHook(0x4F8751, MainWindow_F1);
-    
+
     /** Intercept other dlgs to marke needed dlgs are openeed (F1 may be pressed) to show help from there.
-    * By default supported only creatures and towns because only those are in the help dlg rn
-    */
+     * By default supported only creatures and towns because only those are in the help dlg rn
+     */
+    // return EXEC_DEFAULT;
+
     _PI->WriteHiHook(0x530600, THISCALL_, H3TownSmallDlg__Constructor);
-    _PI->WriteHiHook(0x52FDA0, THISCALL_, H3CreatureSmallDlg__Constructor);
-
-
+    // ATTENTION ! In WOG address and type are changed
+    // _PI->WriteHiHook(0x52FDA0, FASTCALL_, H3CreatureSmallDlg__Constructor);
+    //  _PI->WriteLoHook(0x0417355, H3CreatureSmallDlg__BeforeRun);
     return EXEC_DEFAULT;
 }
 
@@ -148,7 +178,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         {
             pluginIsOn = true;
 
-            Era::ConnectEra();
+            // Era::ConnectEra();
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
             _PI->WriteLoHook(0x4EEAF2, HooksInit);

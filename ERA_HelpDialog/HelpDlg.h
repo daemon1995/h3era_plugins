@@ -9,14 +9,12 @@ struct BaseMod;
 struct Mod;
 struct HotKeysCategory;
 
-
 struct LastActiveDlgModInfo
 {
     int modId = -1;
     int categoryId = -1;
     int scrollBarPos = 0;
-    const Mod* mod = nullptr;
-
+    const Mod *mod = nullptr;
 };
 
 class H3DlgFramedPanel : public H3DlgBasePanel
@@ -26,27 +24,28 @@ class H3DlgFramedPanel : public H3DlgBasePanel
     H3DlgScrollbar *scrollBar = nullptr;
 
   public:
-    void CreateBorderFrame();
-    ~H3DlgFramedPanel();
+    virtual ~H3DlgFramedPanel();
 
   public:
+    void CreateBorderFrame();
     const H3BaseDlg *Parent() const noexcept;
-    void AddScrtollBar(H3DlgScrollbar *scrollBar) noexcept;
+    void AddScrollBar(H3DlgScrollbar *scrollBar) noexcept;
     H3LoadedPcx16 *GetBackgroundPcx() const noexcept;
 };
 
-
-class IPanel
+// Abstract class to create main dlg panels
+class DlgPanel
 {
   protected:
     H3DlgFramedPanel *dlgPanel = nullptr;
-    H3DlgScrollbar * scrollBar = nullptr;
+    // H3DlgScrollbar *scrollBar = nullptr;
+
   protected:
-    IPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent);
-  //  IPanel(const IPanel &other);
+    DlgPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent);
+    //  DlgPanel(const DlgPanel &other);
 
   public:
-    virtual ~IPanel();
+    virtual ~DlgPanel();
 
   protected:
     void CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScrollbar_proc scrollBarProc = nullptr);
@@ -55,11 +54,10 @@ class IPanel
     inline int GetX() const noexcept;
     inline int GetY() const noexcept;
     virtual void InitPanelItems() = 0;
-   // virtual void UpdateContent(const Content& content) =0;
-
+    // virtual void UpdateContent(const Content& content) =0;
 };
 
-class HeaderMenuPanel : public IPanel
+class HeaderMenuPanel : public DlgPanel
 {
 
     union {
@@ -73,11 +71,11 @@ class HeaderMenuPanel : public IPanel
             H3DlgCaptionButton *resize;
             H3DlgCaptionButton *help;
         };
-        H3DlgCaptionButton *asArray[7];
+        H3DlgCaptionButton *asArray[7] = {};
 
     } buttons;
 
-    H3DlgCaptionButton*activeButton = nullptr;
+    H3DlgCaptionButton *activeButton = nullptr;
 
   public:
     HeaderMenuPanel(const int x, const int y, const int width, const int height, H3BaseDlg *parent);
@@ -85,16 +83,14 @@ class HeaderMenuPanel : public IPanel
 
   private:
     virtual void InitPanelItems() override;
-    
-public:
-   
 
+  public:
     // virtual void InitPanelItems() override;
 };
 
 class IGridPanel
 {
-    IGridPanel() = delete;
+    IGridPanel() = default;
 
   protected:
     virtual void Sort() = 0;
@@ -106,19 +102,18 @@ class ContentPanelSwitch
   public:
     H3DlgEdit *search = nullptr;
     H3String searchStr;
-    
+
     int state = -1;
     /*OVBUTN3.def*/
     std::vector<H3DlgCaptionButton *> menuButtons;
-    H3DlgCaptionButton* activeButton = nullptr;
+    H3DlgCaptionButton *activeButton = nullptr;
 };
-class GameInfoContentPanel : public IPanel
+class GameInfoContentPanel : public DlgPanel
 {
     ContentPanelSwitch menu;
 };
 
-
-class CategoriesPanel : public IPanel
+class CategoriesPanel : public DlgPanel
 {
     Mod *activeMod = nullptr;
     struct PanelCategory
@@ -149,24 +144,23 @@ class CategoriesPanel : public IPanel
     void RedrawCategoryItems(const int firstItemId = 0);
 };
 
-class ContentPanel : public IPanel
+class ContentPanel : public DlgPanel
 {
     H3DlgPcx16 *backPcx = nullptr;
 
   public:
     ContentPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent);
-    //	ContentPanel(const IPanel& other);
+    //	ContentPanel(const DlgPanel& other);
     virtual ~ContentPanel();
 
   private:
     virtual void InitPanelItems() override;
 
-
-public:
- //   virtual void UpdateContent(const Content& content) noexcept override;
+  public:
+    //   virtual void UpdateContent(const Content& content) noexcept override;
     // void H3d
 };
-class CreaturesContentPanel : public IPanel
+class CreaturesContentPanel : public DlgPanel
 {
 
   private:
@@ -175,19 +169,19 @@ class CreaturesContentPanel : public IPanel
   public:
     CreaturesContentPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent);
     //		CreaturesContentPanel(const ContentPanel& other);
- //   virtual ~CreaturesContentPanel();
+    //   virtual ~CreaturesContentPanel();
 
+  private:
+    virtual void InitPanelItems() override;
 
-private:
-	virtual void InitPanelItems() override;
-private:
-    static void __fastcall ScrollProc(INT32 tick, H3BaseDlg* dlg);
+  private:
+    static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 
-public:
-  //  virtual void UpdateContent(const Content& content) noexcept override;
+  public:
+    //  virtual void UpdateContent(const Content& content) noexcept override;
 };
 
-class ArtifactsContentPanel : public IPanel
+class ArtifactsContentPanel : public DlgPanel
 {
 
   private:
@@ -198,27 +192,27 @@ class ArtifactsContentPanel : public IPanel
     //		CreaturesContentPanel(const ContentPanel& other);
   private:
     virtual void InitPanelItems() override;
+
   private:
-    static void __fastcall ScrollProc(INT32 tick, H3BaseDlg* dlg);
-public:
- //   virtual void UpdateContent(const Content& content)  noexcept override;
+    static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
+
+  public:
+    //   virtual void UpdateContent(const Content& content)  noexcept override;
 };
 
 struct BaseMod
 {
 
-protected:
+  protected:
     static constexpr LPCSTR jsonBase = "help.mods.";
-
 };
 
 struct Mod : public BaseMod
 {
-private:
+  private:
     static LastActiveDlgModInfo lastActiveModInfo;
 
-public:
-
+  public:
     // to check if some data is stored in the json
     BOOL hasSomeInfo;
     const UINT id;
@@ -245,7 +239,7 @@ public:
     void GetInfo();
     void SetVisible(const BOOL state);
     void StoreModInfoAsActive() const noexcept;
-    static const LastActiveDlgModInfo& GetLastActiveModInfo() noexcept;
+    static const LastActiveDlgModInfo &GetLastActiveModInfo() noexcept;
 
     //		void DrawCategory(const int id) const noexcept;
 };
@@ -255,12 +249,17 @@ class CreaturesMod : public Mod
 
     CreaturesContentPanel *panel;
 };
+class ArtifactsMod : public Mod
+{
+    ArtifactsContentPanel *panel;
+};
+
 struct Category
 {
     H3LoadedPcx16 *iconPcx = nullptr;
     H3String name;
 
-    Content *content;
+    Content *content = nullptr;
     //	const UINT id;
   public:
     //	Category(LPCSTR jsonKeyName/*, const UINT id*/);
@@ -307,7 +306,7 @@ class HelpDlg : public H3Dlg
             ContentPanel *contentPanel;
         };
 
-        IPanel *asArray[3];
+        DlgPanel *asArray[3];
 
     } panels;
     CreaturesContentPanel *creaturesContentPanel;
@@ -334,16 +333,16 @@ class HelpDlg : public H3Dlg
 
     Mod *CallModListDlg(const Mod *activeMod) const noexcept;
 
-    BOOL GetLoadedModsJsonInformation(const std::string & nonParsedModNamesString);
+    BOOL GetLoadedModsJsonInformation(const std::vector<std::string> &modNames);
 
     void SetActiveMod(/*const */ Mod *mod);
 
-    BOOL DialogProc(H3Msg &msg) override;
+    virtual BOOL DialogProc(H3Msg &msg) override;
 
   public:
     // void AssignWithCalledDlg(const buttons::eButton sourceButton = buttons::eButton::NONE,
     //     const int categoryId = 0) noexcept;
-    void AssignWithCalledDlg(const H3Town *town =nullptr, const eCreature creature = eCreature::UNDEFINED) noexcept;
+    void AssignWithCalledDlg(const H3Town *town = nullptr, const eCreature creature = eCreature::UNDEFINED) noexcept;
     // check if dlg exists
     static BOOL DlgExists();
     BOOL NeedResizeScreen() const noexcept;

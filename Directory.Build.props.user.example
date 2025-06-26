@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- 
+    ПРИМЕР пользовательских настроек для разработчика RMG_CustomizeObjectProperties
+    
+    ИНСТРУКЦИЯ:
+    1. Скопируйте Directory.Build.props.template как Directory.Build.props.user
+    2. Раскомментируйте и настройте пути под ваше окружение
+    3. Этот файл НЕ попадает в Git
+  -->
+  <PropertyGroup>
+    <!-- 🎮 ПУТИ К ИГРЕ - настройте под ваше окружение -->
+    <LocalGamePath>D:\games\HoMM 3 ERA</LocalGamePath>
+    <LocalGameTestPath>D:\games\HoMM 3 ERA test</LocalGameTestPath>
+    <LocalToolsPath>D:\SW</LocalToolsPath>
+    
+    <!-- 📁 ПУТЬ К ЗАГОЛОВОЧНЫМ ФАЙЛАМ (автоматически из папки headers/) -->
+    <!-- <LocalHeadersPath>C:\CustomPath\HeroesHeaders</LocalHeadersPath> -->
+    
+    <!-- 🔧 НАСТРОЙКИ КОМПИЛЯТОРА -->
+    <PlatformToolset>v143</PlatformToolset>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    
+    <!-- ⚡ ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ ДЛЯ РАЗРАБОТКИ -->
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    
+    <!-- 🐛 НАСТРОЙКИ ОТЛАДКИ -->
+    <GenerateDebugInformation>true</GenerateDebugInformation>
+    <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+  </PropertyGroup>
+</Project>
