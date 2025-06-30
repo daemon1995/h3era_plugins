@@ -5,7 +5,11 @@
 // Однако изменение любого из приведенных здесь файлов между операциями сборки приведет к повторной компиляции всех(!)
 // этих файлов. Не добавляйте сюда файлы, которые планируете часто изменять, так как в этом случае выигрыша в
 // производительности не будет.
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+
+#endif // !_CRT_SECURE_NO_WARNINGS
+
 #define RESIZED_PCX
 #define ERA4
 #define ERA_MODLIST
