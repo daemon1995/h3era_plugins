@@ -16,7 +16,7 @@ void __stdcall OnReportVersion(Era::TEvent *e)
 {
 
     // show plugin name, version and compilation time
-    sprintf(h3_TextBuffer, "{%s} v%s (%s)", "PROJECT_NAME", dllText::PLUGIN_VERSION, __DATE__);
+    sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
 }

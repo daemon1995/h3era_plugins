@@ -14,7 +14,7 @@ inline std::string GetExecutableDirectory()
     // Получаем полный путь к исполняемому файлу
     if (GetModuleFileNameA(NULL, path, MAX_PATH) == 0)
     {
-        return h3_NullString; // В случае ошибки возвращаем пустую строку
+        return ""; // В случае ошибки возвращаем пустую строку
     }
 
     // Преобразуем путь в строку C++
@@ -24,7 +24,7 @@ inline std::string GetExecutableDirectory()
     size_t lastSlashPos = fullPath.find_last_of("\\/");
     if (lastSlashPos == std::string::npos)
     {
-        return h3_NullString; // Если разделитель не найден, возвращаем пустую строку
+        return ""; // Если разделитель не найден, возвращаем пустую строку
     }
 
     // Возвращаем подстроку до последней обратной косой черты
@@ -94,26 +94,6 @@ inline BOOL GetEraMappedModList(std::vector<std::string> &modLsit)
     return false;
 }
 
-inline std::string ExtractModNameFromPath(const std::string &input)
-{
-    // Ищем начало пути
-    size_t startPos = input.find("$ <= $");
-    if (startPos == std::string::npos)
-        return h3_NullString;
-    startPos += 12; // Пропускаем "$ <= $"
-
-    // Ищем конец пути до квадратной скобки
-    size_t endPos = input.find("[", startPos);
-    if (endPos == std::string::npos)
-        return h3_NullString;
-
-    // Извлекаем путь и убираем пробелы по краям
-    std::string path = input.substr(startPos, endPos - startPos);
-    size_t first = path.find_first_not_of(' ');
-    size_t last = path.find_last_not_of(' ');
-
-    return path.substr(first, last - first + 1);
-}
 inline int GetEraModList(std::vector<std::string> &modList, const BOOL toLower = false)
 {
     modList.clear();

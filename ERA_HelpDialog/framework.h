@@ -4,7 +4,7 @@
 // Windows Header Files
 //#define ERA_MODLIST
 #define ERA4
-
+#define ERA_MODLIST
 #include "..\headers\header.h"
 #include "DlgPanels.h"
 #include "HelpDlg.h"

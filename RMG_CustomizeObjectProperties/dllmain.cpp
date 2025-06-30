@@ -5,8 +5,6 @@ using namespace h3;
 
 namespace dllText
 {
-#define STRINGIZE2(s) #s
-#define STRINGIZE(s) STRINGIZE2(s)
 const char *PLUGIN_VERSION = "1.24";
 const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
@@ -17,7 +15,7 @@ void __stdcall OnReportVersion(Era::TEvent *e)
 {
 
     // show plugin name, version and compilation time
-    sprintf(h3_TextBuffer, "{%s} v%s (%s)", STRINGIZE(PROJECT_NAME), dllText::PLUGIN_VERSION, __DATE__);
+    sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
 }
