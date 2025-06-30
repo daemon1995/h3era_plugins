@@ -15,11 +15,6 @@
     <LocalGameTestPath Condition="'$(LocalGameTestPath)' == ''">D:\games\HoMM 3 ERA test</LocalGameTestPath>
     <LocalToolsPath Condition="'$(LocalToolsPath)' == ''">D:\SW</LocalToolsPath>
     <LocalHeadersPath Condition="'$(LocalHeadersPath)' == ''">$(MSBuildThisFileDirectory)headers\</LocalHeadersPath>
-    
-    <!-- Настройки для совместимости с VS 2022 -->
-    <VCProjectVersion>17.0</VCProjectVersion>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <PlatformToolset Condition="'$(PlatformToolset)' == ''">v143</PlatformToolset>
   </PropertyGroup>
 
   <!-- Настройки для Debug конфигураций -->
@@ -61,17 +56,12 @@
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
 
-  <!-- Настройки для x64 платформы -->
-  <PropertyGroup Condition="'$(Platform)' == 'x64'">
-    <OutDir>$(LocalGamePath)\Mods\Game Enhancement Mod\eraplugins\</OutDir>
-  </PropertyGroup>
-
   <!-- Настройки для Debug Win32 -->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <PreprocessorDefinitions>WIN32;_DEBUG;$(ProjectName.ToUpper().Replace('.','_'))_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
     <SDLCheck>false</SDLCheck>
-    <ConformanceMode>true</ConformanceMode>
+    <ConformanceMode>false</ConformanceMode>
     <PrecompiledHeader>NotUsing</PrecompiledHeader>
     <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     <LanguageStandard>Default</LanguageStandard>
@@ -90,30 +80,5 @@
     <BufferSecurityCheck>true</BufferSecurityCheck>
     <StructMemberAlignment>Default</StructMemberAlignment>
     <PostBuildEventCommand>xcopy "$(TargetPath)" "$(LocalGameTestPath)\Mods\wog\eraplugins\" /Y /I</PostBuildEventCommand>
-  </PropertyGroup>
-
-  <!-- Настройки для Debug x64 -->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(LocalHeadersPath)\;$(IncludePath)</IncludePath>
-    <PreprocessorDefinitions>_DEBUG;$(ProjectName.ToUpper().Replace('.','_'))_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    <SDLCheck>true</SDLCheck>
-    <ConformanceMode>true</ConformanceMode>
-    <PrecompiledHeader>Use</PrecompiledHeader>
-    <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    <LanguageStandard>Default</LanguageStandard>
-  </PropertyGroup>
-
-  <!-- Настройки для Release x64 -->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <PreprocessorDefinitions>NDEBUG;$(ProjectName.ToUpper().Replace('.','_'))_EXPORTS;_WINDOWS;_USRDLL;PROJECT_NAME="$(ProjectName)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    <SDLCheck>true</SDLCheck>
-    <ConformanceMode>true</ConformanceMode>
-    <PrecompiledHeader>Use</PrecompiledHeader>
-    <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    <LanguageStandard>Default</LanguageStandard>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
 </Project>

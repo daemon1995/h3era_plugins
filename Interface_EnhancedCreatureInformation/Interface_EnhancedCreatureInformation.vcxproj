@@ -12,9 +12,10 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{BD8EB49A-36B9-458C-906A-B8C950EFE4C0}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{9cf6680a-4176-463d-86eb-1fb9f6955224}</ProjectGuid>
-    <RootNamespace>ERAMultilingualSupport</RootNamespace>
+    <RootNamespace>EditsforHelgtla</RootNamespace>
+    <ProjectName>NewCombatDlgItems</ProjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -23,13 +24,15 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -43,44 +46,27 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\WoG\EraPlugins</OutDir>
-    <TargetExt>.era</TargetExt>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\WoG\EraPlugins</OutDir>
-    <TargetExt>.era</TargetExt>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
+    <TargetName>new_battle_interface_dlg</TargetName>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;ERAMULTILINGUALSUPPORT_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableUAC>false</EnableUAC>
-      <GenerateMapFile>true</GenerateMapFile>
-      <MapFileName>D:\games\HoMM 3 ERA\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
-    </Link>
-  </ItemDefinitionGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
+    <TargetName>new_battle_interface_dlg</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;ERAMULTILINGUALSUPPORT_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;EDITSFORHELGTLA_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -89,36 +75,39 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <GenerateMapFile>true</GenerateMapFile>
-      <MapFileName>D:\games\HoMM 3 ERA\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
+      <Version>
+      </Version>
+      <ShowProgress>LinkVerboseCLR</ShowProgress>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;EDITSFORHELGTLA_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ArtifactHandler.h" />
-    <ClInclude Include="DlgStyle.h" />
-    <ClInclude Include="ExportManager.h" />
-    <ClInclude Include="H3DlgTextPcxLocale.h" />
-    <ClInclude Include="HeroHandler.h" />
-    <ClInclude Include="LanguageSelectionDlg.h" />
-    <ClInclude Include="Locale.h" />
-    <ClInclude Include="LocaleManager.h" />
-    <ClInclude Include="MapObjectHandler.h" />
-    <ClInclude Include="MonsterHandler.h" />
-    <ClInclude Include="pch.h" />
+    <ClInclude Include="battle_CreatureDlg_SpellsPreview.h" />
+    <ClInclude Include="MonPreview.h" />
+    <ClInclude Include="CreatureDlgHandler.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp" />
-    <ClCompile Include="ArtifactHandler.cpp" />
-    <ClCompile Include="DlgStyle.cpp" />
+    <ClCompile Include="MonPreview.cpp" />
+    <ClCompile Include="CreatureDlgHandler.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="ExportManager.cpp" />
-    <ClCompile Include="H3DlgTextPcxLocale.cpp" />
-    <ClCompile Include="HeroHandler.cpp" />
-    <ClCompile Include="LanguageSelectionDlg.cpp" />
-    <ClCompile Include="Locale.cpp" />
-    <ClCompile Include="LocaleManager.cpp" />
-    <ClCompile Include="MapObjectHandler.cpp" />
-    <ClCompile Include="MonsterHandler.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
