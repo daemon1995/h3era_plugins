@@ -22,6 +22,7 @@ struct Calculator
 class MapScroller : public IGamePatch
 {
 
+	static MapScroller* instance;
   private:
     const RECT scrollLimits;
     const UINT mapViewW;

@@ -4,8 +4,12 @@
 
 namespace cmbhints
 {
-
-
+	constexpr float HP_LABEL_HEIGHT = 4.0f;
+	constexpr float HP_LABEL_FILL = 0.4f;
+	constexpr float HP_LABEL_LOSS = 0.975f;
+	constexpr float HP_LABEL_SATURATION = 0.8f; // idk.mb set 1
+	constexpr int HP_LABEL_MAX_OFFSET = 18;
+	CombatHints* CombatHints::instance = nullptr;
 	CombatHints::CombatHints() :IGamePatch(globalPatcher->CreateInstance("EraPlugin.CombatHints.daemon_n"))
 	{
 		CreatePatches();
@@ -14,19 +18,40 @@ namespace cmbhints
 		settings.load();
 	}
 
+	DllExport BOOL SetState(int isEnabled, int isHeld) noexcept
+	{
+		auto& settings = CombatHints::Get().settings;
+		bool settingsChanged = false;
 
-	constexpr float HP_LABEL_HEIGHT = 4.0f;
-	constexpr float HP_LABEL_FILL = 0.4f;
-	constexpr float HP_LABEL_LOSS = 0.975f;
-	constexpr float HP_LABEL_SATURATION = 0.8f; // idk.mb set 1
+		if (settings.isEnabled != isEnabled)
+		{
+			settings.isEnabled = isEnabled;
+			settingsChanged = true;
 
-	constexpr int HP_LABEL_MAX_OFFSET = 18;
+		}
+		if (settings.isHeld != isHeld)
+		{
+			settings.isHeld = isHeld;
+			settingsChanged = true;
+		}
+		return settingsChanged;
+	}
 
+	DllExport void GetState(int * isEnabled, int * isHeld) noexcept
+	{
+		Era::RESIZE_ALG_DOWNSCALE;
+		auto& settings = CombatHints::Get().settings;
+		if (isEnabled)
+			*isEnabled = settings.isEnabled;
+		if (isHeld)
+			*isHeld = settings.isHeld;
+	}
 
 	CombatHints& CombatHints::Get()
 	{
-		static CombatHints instance;
-		return instance;
+		if (instance == nullptr)
+			instance = new CombatHints();
+		return *instance;
 
 	}
 

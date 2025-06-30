@@ -6,6 +6,7 @@ GameplayFeature::GameplayFeature() : IGamePatch(_PI)
 {
     CreatePatches();
 }
+GameplayFeature * GameplayFeature::instance = nullptr;
 H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, int PosX, int PosY, int SizeX,
                                                int SizeY, int ItemInd, char *DefName, int cadre, int pressCadre,
                                                int CloseDialog, int HotKey, int Flags) noexcept
@@ -199,8 +200,9 @@ void GameplayFeature::CreatePatches() noexcept
 }
 GameplayFeature &GameplayFeature::Get()
 {
-    static GameplayFeature instance;
-    return instance;
+	if (!instance)
+		instance = new GameplayFeature();
+	return *instance;
 }
 
 } // namespace features

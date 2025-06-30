@@ -182,10 +182,8 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
         if (keyIsHeld)
         {
             instance->playerID = P_Game->Get()->GetPlayerID();
-            static char ermVariableNameBuffer[64];
-
-            sprintf(ermVariableNameBuffer, "gem_adventure_map_object_hints_option_%d", instance->playerID); // ;
-            instance->needDrawHints = Era::GetAssocVarIntValue(ermVariableNameBuffer);
+            sprintf(Era::z[0], "gem_adventure_map_object_hints_option_%d", instance->playerID); // ;
+            instance->needDrawHints = Era::GetAssocVarIntValue(Era::z[0]);
         }
     }
 

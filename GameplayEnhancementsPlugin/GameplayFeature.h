@@ -5,6 +5,7 @@ namespace features
 {
 class GameplayFeature : public IGamePatch
 {
+	static GameplayFeature* instance;
 
     GameplayFeature();
     virtual void CreatePatches() noexcept override;

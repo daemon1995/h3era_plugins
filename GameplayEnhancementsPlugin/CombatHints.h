@@ -108,9 +108,11 @@ namespace cmbhints
 	class CombatHints : public IGamePatch
 	{
 
+		static CombatHints* instance;
 
 		BOOL needRedraw = false;
 		BOOL isEnabled = false;
+	public:
 		Settings settings;
 
 

@@ -2,6 +2,7 @@
 
 namespace scroll
 {
+MapScroller * MapScroller::instance = nullptr;
 
 MapScroller::MapScroller() noexcept
     : IGamePatch(globalPatcher->CreateInstance("EraPlugin.MapScrolling.daemon_n")),
@@ -15,8 +16,9 @@ MapScroller::MapScroller() noexcept
 MapScroller &MapScroller::Get() noexcept
 {
 
-    static MapScroller instacne; // = MapScroller();
-    return instacne;
+	if(instance == nullptr)
+		instance = new MapScroller();
+    return *instance;
 }
 
 void __stdcall MapScroller::WndMgr_AddNewDlg(HiHook *h, const H3WindowManager *wm, const H3BaseDlg *dlg,
