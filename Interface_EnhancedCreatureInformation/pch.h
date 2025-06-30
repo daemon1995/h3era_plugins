@@ -6,8 +6,12 @@
 
 #ifndef PCH_H
 #define PCH_H
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif // _CRT_SECURE_NO_WARNINGS
+#ifndef RESIZED_PCX
 #define RESIZED_PCX
+#endif // RESIZED_PCX
 // Добавьте сюда заголовочные файлы для предварительной компиляции
 #include "..\headers\header.h"
 #include "MonPreview.h"
