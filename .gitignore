@@ -110,6 +110,7 @@ Generated\ Files/
 *.zip
 *.7z
 *.map
+Artifacts_AddingNewFeatures/
 
 # Лишние solution файлы в подпапках (используем только главный H3EraPlugins.sln)
 */*.sln
