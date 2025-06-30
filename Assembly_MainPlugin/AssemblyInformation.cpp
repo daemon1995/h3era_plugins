@@ -527,10 +527,11 @@ void AssemblyInformation::CreatePatches() noexcept
         _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
 
         Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
-        _PI->WriteHiHook(0x04F6C00, FASTCALL_, HeroDlg_ArtifactDescription);
 
         if (0)
         {
+            _PI->WriteHiHook(0x04F6C00, FASTCALL_, HeroDlg_ArtifactDescription);
+
             
             _PI->WriteLoHook(0x071234D, WoG_BeforeErmError);
             _PI->WriteLoHook(0x04F71FE, SoD_MsgBoxDlgBeforeRun);
