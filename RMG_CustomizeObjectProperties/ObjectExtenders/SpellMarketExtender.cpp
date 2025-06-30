@@ -262,12 +262,13 @@ H3RmgObjectGenerator *SpellMarketExtender::CreateRMGObjectGen(const RMGObjectInf
     return nullptr;
 }
 
+SpellMarketExtender *SpellMarketExtender::instance = nullptr;
+
 SpellMarketExtender &SpellMarketExtender::Get()
 {
-    // TODO: insert return statement here
-
-    static SpellMarketExtender _instance;
-    return _instance;
+    if (!instance)
+        instance = new SpellMarketExtender();
+    return *instance;
 }
 
 void H3MapItemSpellMarket::Reset()

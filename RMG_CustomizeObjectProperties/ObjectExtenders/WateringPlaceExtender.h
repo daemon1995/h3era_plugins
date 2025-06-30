@@ -19,6 +19,7 @@ struct H3MapItemWateringPlace
 
 class WateringPlaceExtender : public extender::ObjectsExtender
 {
+    static WateringPlaceExtender* instance;
 
     WateringPlaceExtender();
 

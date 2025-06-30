@@ -21,9 +21,8 @@ struct H3MapItemColosseumOfTheMagi
 
 class ColosseumOfTheMagiExtender : public extender::ObjectsExtender
 {
-
+    static ColosseumOfTheMagiExtender* instance;
     ColosseumOfTheMagiExtender();
-
     virtual ~ColosseumOfTheMagiExtender();
 
   private:

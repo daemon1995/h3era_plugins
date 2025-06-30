@@ -62,12 +62,13 @@ BOOL WoGObjectsExtender::WoGObjectHasOptionEnabled(const H3RmgObjectGenerator *p
     return DwordAt(WOG_OPTIONS_ARRAY + WoGObjectOptionsIds[p_ObjGen->subtype] * 4);
 }
 
-WoGObjectsExtender &WoGObjectsExtender::Get()
-{
-    // TODO: insert return statement here
+WoGObjectsExtender* WoGObjectsExtender::instance = nullptr;
 
-    static WoGObjectsExtender _instance;
-    return _instance;
+WoGObjectsExtender& WoGObjectsExtender::Get()
+{
+    if (!instance)
+        instance = new WoGObjectsExtender();
+    return *instance;
 }
 
 } // namespace wog

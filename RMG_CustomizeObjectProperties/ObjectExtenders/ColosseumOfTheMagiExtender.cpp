@@ -1,6 +1,15 @@
 #include "../pch.h"
 namespace colosseumOfTheMagi
 {
+ColosseumOfTheMagiExtender* ColosseumOfTheMagiExtender::instance = nullptr;
+
+ColosseumOfTheMagiExtender& ColosseumOfTheMagiExtender::Get()
+{
+    if (!instance)
+        instance = new ColosseumOfTheMagiExtender();
+    return *instance;
+}
+
 int H3MapItemColosseumOfTheMagi::colosseumOfTheMagiCounter = 0;
 
 ColosseumOfTheMagiExtender::ColosseumOfTheMagiExtender()
@@ -25,7 +34,7 @@ BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *
 
         if (!isVisitedByHero)
         {
-            // Код из арены для ИИ
+            // пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ
             int needExpoToNextLvl = h3functions::NeedExpoToNextLevel(hero->level);
             float moveDist = (float)(2 * needExpoToNextLvl);
             aiMapItemWeight = static_cast<int>(moveDist * hero->AI_experienceEffectiveness);
@@ -110,8 +119,8 @@ BOOL ColosseumOfTheMagiExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, 
                         hero->primarySkill[2] += 2;
                     }
                     sprintf(h3_TextBuffer, H3MapItemColosseumOfTheMagi::ErmVariableFormat, colosseumOfTheMagi->id,
-                            hero->id);                          // получение имени переменной
-                    Era::SetAssocVarIntValue(h3_TextBuffer, 1); // отметить переменную, что объект посещен
+                            hero->id);                          // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                    Era::SetAssocVarIntValue(h3_TextBuffer, 1); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 }
             }
             // for AI
@@ -126,8 +135,8 @@ BOOL ColosseumOfTheMagiExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, 
                     hero->primarySkill[3] += 2;
                 }
                 sprintf(h3_TextBuffer, H3MapItemColosseumOfTheMagi::ErmVariableFormat, colosseumOfTheMagi->id,
-                        hero->id);                          // получение имени переменной
-                Era::SetAssocVarIntValue(h3_TextBuffer, 1); // отметить переменную, что объект посещен
+                        hero->id);                          // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                Era::SetAssocVarIntValue(h3_TextBuffer, 1); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             }
             return true;
         }
@@ -218,11 +227,5 @@ H3RmgObjectGenerator *ColosseumOfTheMagiExtender::CreateRMGObjectGen(const RMGOb
         return CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
-}
-
-ColosseumOfTheMagiExtender &ColosseumOfTheMagiExtender::Get()
-{
-    static ColosseumOfTheMagiExtender _instance;
-    return _instance;
 }
 } // namespace colosseumOfTheMagi

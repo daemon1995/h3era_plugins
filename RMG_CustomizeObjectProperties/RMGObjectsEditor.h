@@ -199,6 +199,7 @@ struct RMGFixes
 } // namespace fixes
 class RMGObjectsEditor : public IGamePatch
 {
+	static RMGObjectsEditor* instance;
     static GeneratedInfo generatedInfo;
 
   private:

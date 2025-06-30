@@ -245,10 +245,13 @@ void UniversityExtender::CreatePatches()
     }
 }
 
-UniversityExtender &UniversityExtender::Get()
+UniversityExtender* UniversityExtender::instance = nullptr;
+
+UniversityExtender& UniversityExtender::Get()
 {
-    static UniversityExtender _instance;
-    return _instance;
+    if (!instance)
+        instance = new UniversityExtender();
+    return *instance;
 }
 
 } // namespace university

@@ -22,6 +22,7 @@ struct H3MapItemGazebo
 
 class GazeboExtender : public extender::ObjectsExtender
 {
+    static GazeboExtender* instance;
 
     GazeboExtender();
 

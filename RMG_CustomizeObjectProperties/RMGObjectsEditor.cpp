@@ -22,6 +22,7 @@ DllExport LPCSTR GetObjectName(const INT32 type, const INT32 subtype)
 
 namespace editor
 {
+RMGObjectsEditor *RMGObjectsEditor::instance = nullptr;
 GeneratedInfo RMGObjectsEditor::generatedInfo;
 
 RMGObjectsEditor::RMGObjectsEditor() : IGamePatch(globalPatcher->CreateInstance("EraPlugin.RMG.ObjectEditor.daemon_n"))
@@ -121,9 +122,10 @@ const H3Vector<H3RmgObjectGenerator *> *RMGObjectsEditor::GetObjectGeneratorsLis
 
 RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
 {
-    static RMGObjectsEditor instance;
+	if (instance == nullptr)
+		instance = new RMGObjectsEditor();
 
-    return instance;
+    return *instance;
     // new RMGObjectsEditor();
 }
 

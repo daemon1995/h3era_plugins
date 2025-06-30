@@ -4,6 +4,8 @@ namespace university
 {
 class UniversityExtender : public extender::ObjectsExtender
 {
+    static UniversityExtender* instance;
+
   public:
     static INT8 bannedSkillsCopy[limits::SECONDARY_SKILLS];
     static INT objectSubtype;

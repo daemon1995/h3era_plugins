@@ -213,10 +213,13 @@ void H3MapItemWarehouse::Reset()
     }
 }
 
+WarehousesExtender *WarehousesExtender::instance = nullptr;
+
 WarehousesExtender &WarehousesExtender::Get()
 {
-    static WarehousesExtender _instance;
-    return _instance;
+    if (!instance)
+        instance = new WarehousesExtender();
+    return *instance;
 }
 
 } // namespace warehouses

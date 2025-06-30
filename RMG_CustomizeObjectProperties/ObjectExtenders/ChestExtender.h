@@ -1,4 +1,6 @@
 #pragma once
+#include "../pch.h"
+#include "../ObjectsExtender.h"
 
 namespace chests
 {
@@ -8,6 +10,7 @@ namespace chests
 
 class ChestsExtender : public extender::ObjectsExtender
 {
+    static ChestsExtender* instance;
     static constexpr DWORD WOG_OPTIONS_ARRAY = 0x02771920;
     static DWORD WoGObjectHasOptionEnabled(int option) noexcept;
     ChestsExtender();
@@ -36,4 +39,4 @@ class ChestsExtender : public extender::ObjectsExtender
     static ChestsExtender &Get();
 };
 
-} // namespace MISC
+} // namespace chests

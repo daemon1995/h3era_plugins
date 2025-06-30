@@ -1,6 +1,15 @@
 #include "../pch.h"
 namespace chests
 {
+ChestsExtender* ChestsExtender::instance = nullptr;
+
+ChestsExtender& ChestsExtender::Get()
+{
+    if (!instance)
+        instance = new ChestsExtender();
+    return *instance;
+}
+
 // int H3MapItemGazebo::gazeboCounter = 0;
 
 ChestsExtender::ChestsExtender() : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.ChestExtender.daemon_n"))
@@ -109,9 +118,4 @@ H3RmgObjectGenerator *ChestsExtender::CreateRMGObjectGen(const RMGObjectInfo &ob
     return nullptr;
 }
 
-ChestsExtender &ChestsExtender::Get()
-{
-    static ChestsExtender _instance;
-    return _instance;
-}
 } // namespace chests

@@ -235,12 +235,13 @@ void ShrinesExternder::CreatePatches()
     }
 }
 
+ShrinesExternder *ShrinesExternder::instance = nullptr;
+
 ShrinesExternder &ShrinesExternder::Get()
 {
-    // TODO: insert return statement here
-
-    static ShrinesExternder _instance;
-    return _instance;
+    if (!instance)
+        instance = new ShrinesExternder();
+    return *instance;
 }
 
 } // namespace shrines

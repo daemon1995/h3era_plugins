@@ -7,6 +7,7 @@ namespace cbanks
 
 class CreatureBanksExtender : public extender::ObjectsExtender
 {
+    static CreatureBanksExtender* instance;
 
     static constexpr UINT STATES_AMOUNT = 4;
     static constexpr UINT GUARDES_AMOUNT = 5;

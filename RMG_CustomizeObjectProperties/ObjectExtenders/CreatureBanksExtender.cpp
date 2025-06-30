@@ -148,10 +148,13 @@ CreatureBanksExtender::CreatureBanksExtender()
     CreatePatches();
 }
 
+CreatureBanksExtender *CreatureBanksExtender::instance = nullptr;
+
 CreatureBanksExtender &CreatureBanksExtender::Get()
 {
-    static CreatureBanksExtender _instance;
-    return _instance;
+    if (!instance)
+        instance = new CreatureBanksExtender();
+    return *instance;
 }
 
 void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *event)

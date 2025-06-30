@@ -21,6 +21,7 @@ struct H3MapItemWarehouse
 
 class WarehousesExtender : public extender::ObjectsExtender
 {
+    static WarehousesExtender* instance;
 
     WarehousesExtender();
 
