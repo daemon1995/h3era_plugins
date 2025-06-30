@@ -39,7 +39,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 		{
 			plugin_On = 1;
-			Era::ConnectEra();
+			Era::ConnectEra(hModule,dllText::INSTANCE_NAME);
 			globalPatcher = GetPatcher();
 			_PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 			_PI->WriteLoHook(0x4EEAF2, HooksInit);

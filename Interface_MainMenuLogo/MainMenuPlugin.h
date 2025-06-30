@@ -3,7 +3,7 @@ class MainMenuPlugin :
     public IGamePatch
 {
 
-
+	static MainMenuPlugin* instance;
 
 
 private:

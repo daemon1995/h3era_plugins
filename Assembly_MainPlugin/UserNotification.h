@@ -2,6 +2,7 @@
 #include "framework.h"
 class UserNotification : public IGamePatch
 {
+	static UserNotification* instance;
 
     UserNotification(PatcherInstance *_pi);
     void CreatePatches() noexcept override;

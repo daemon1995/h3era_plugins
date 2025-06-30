@@ -6,7 +6,7 @@ class AssemblyInformation : public IGamePatch
 
     static const char *ASSEMBLY_INI_FILE;
     static const char *BASE_JSON_KEY;
-
+	static AssemblyInformation* instance;
     struct PluginText : public IPluginText
     {
 

@@ -6,6 +6,7 @@ namespace preview
     class MonPreview :public IGamePatch
     {
 
+        static MonPreview* instance;
 
     private:
         H3LoadedPcx* creaturePanelBackgrounds[2];

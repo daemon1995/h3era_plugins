@@ -15,6 +15,7 @@ std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const
 const char *AssemblyInformation::BASE_JSON_KEY = "gem_plugin.main_menu";
 const char *AssemblyInformation::ASSEMBLY_INI_FILE = "ERA_Project.ini";
 
+AssemblyInformation* AssemblyInformation::instance = nullptr;
 // @todo // add red color for different versions
 AssemblyInformation::AssemblyInformation(PatcherInstance *_pi)
     : IGamePatch(_pi), versions{&m_eraVersion, &m_localVersion, &m_remoteVersion}
@@ -552,8 +553,11 @@ void AssemblyInformation::CreatePatches() noexcept
 
 AssemblyInformation &AssemblyInformation::Get()
 {
-    static AssemblyInformation instance(_PI);
-    return instance;
+    if (!instance)
+    {
+        instance = new AssemblyInformation(_PI);
+    }
+    return *instance;
 
     // TODO: insert return statement here
 }

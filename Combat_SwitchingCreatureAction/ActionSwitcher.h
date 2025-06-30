@@ -109,6 +109,8 @@ class SwitcherDlgPanel
 
 class ActionSwitcher : public IGamePatch
 {
+    static ActionSwitcher* instance;
+
 
   private:
     BOOL state = true;

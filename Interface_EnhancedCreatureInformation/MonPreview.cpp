@@ -456,11 +456,14 @@ namespace preview
 	}
 
 
-
+	MonPreview* MonPreview::instance = nullptr;
 	MonPreview& MonPreview::Get()//(PatcherInstance* _PI)
 	{
-		static MonPreview instance;
-		return instance;
+		if (!instance)
+		{
+			instance = new MonPreview();
+		}
+		return *instance;
 
 	}
 

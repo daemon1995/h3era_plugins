@@ -5,6 +5,7 @@
 
 #include "framework.h"
 
+UserNotification* UserNotification::instance = nullptr;
 UserNotification::UserNotification(PatcherInstance *_pi) : IGamePatch(_pi)
 {
 
@@ -124,8 +125,11 @@ void __stdcall OnDrawActionPlayCastSpell(HiHook *h, H3CombatManager *mgr, eSpell
 
 UserNotification &UserNotification::Get()
 {
-    static UserNotification instance(_PI);
-    return instance;
+    if (instance == nullptr)
+    {
+        instance = new UserNotification(_PI);
+    }
+    return *instance;
 }
 void UserNotification::CreatePatches() noexcept
 {

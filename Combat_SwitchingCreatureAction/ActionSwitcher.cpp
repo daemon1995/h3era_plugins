@@ -10,6 +10,8 @@ DllExport bool SetState(const bool state)
 
     return ActionSwitcher::Get().SetPluginState(state);
 }
+ActionSwitcher* ActionSwitcher::instance = nullptr;
+
 SwitcherDlgPanel *SwitcherDlgPanel::instance = nullptr;
 _LHF_(CombatStackAccpetsTurn)
 {
@@ -88,6 +90,7 @@ void SendNetData_AttackType(int type)
         }
     }
 }
+
 
 ActionSwitcher::ActionSwitcher() : IGamePatch(_PI)
 {
@@ -705,8 +708,11 @@ BOOL ActionSwitcher::SetPluginState(const bool state) noexcept
 
 ActionSwitcher &ActionSwitcher::Get()
 {
-    static ActionSwitcher instance;
-    return instance; // TODO: insert return statement here
+    if (instance == nullptr)
+    {
+        instance = new ActionSwitcher();
+	}
+    return *instance; // TODO: insert return statement here
 }
 
 #define NONE 0
