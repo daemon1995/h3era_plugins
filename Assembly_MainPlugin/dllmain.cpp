@@ -2,7 +2,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.75";
+const char *PLUGIN_VERSION = "1.76";
 const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";
@@ -23,7 +23,6 @@ void __stdcall OnReportVersion(Era::TEvent *e)
 
 BOOL __stdcall _IsIconic(HWND hwnd)
 {
-
 
     return false;
 }

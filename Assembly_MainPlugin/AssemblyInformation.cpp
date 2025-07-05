@@ -1,5 +1,6 @@
-#include "framework.h"
 #include <thread>
+
+#include "framework.h"
 // #include "webFunctions.cpp"
 
 #include "Shlwapi.h"
@@ -12,10 +13,7 @@ std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const
 }
 // constexpr const char* BASE_JSON_KEY = "gem_plugin.main_menu";
 
-const char *AssemblyInformation::BASE_JSON_KEY = "gem_plugin.main_menu";
-const char *AssemblyInformation::ASSEMBLY_INI_FILE = "ERA_Project.ini";
-
-AssemblyInformation* AssemblyInformation::instance = nullptr;
+AssemblyInformation *AssemblyInformation::instance = nullptr;
 // @todo // add red color for different versions
 AssemblyInformation::AssemblyInformation(PatcherInstance *_pi)
     : IGamePatch(_pi), versions{&m_eraVersion, &m_localVersion, &m_remoteVersion}
@@ -67,7 +65,6 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
 
 H3DlgText *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
 {
-
     H3FontLoader fnt(this->fontName);                          // = H3Font::Load(h3::NH3Dlg::Text::MEDIUM);
     const int itemWidth = fnt->GetMaxLineWidth(text.String()); // text.Length()* characterLength;
     if (800 - x < itemWidth)
@@ -117,7 +114,6 @@ void OpenExternalFile(const char *path, const char *msg = nullptr)
             /** https://learn.microsoft.com/ru-ru/windows/win32/api/shellapi/nf-shellapi-shellexecutea */
             if (intRes <= 32)
             {
-
                 LPSTR messageBuffer = nullptr;
 
                 // Форматирование сообщения об ошибке
@@ -136,7 +132,6 @@ void OpenExternalFile(const char *path, const char *msg = nullptr)
 }
 void AssemblyInformation::Version::ClickProcedure() const noexcept
 {
-
     if (!shellExecutePath.Empty())
     {
         P_SoundManager->ClickSound();
@@ -154,13 +149,36 @@ void AssemblyInformation::LocalVersion::AdjustItemText() noexcept
 
 void AssemblyInformation::RemoteVersion::GetJsonData(const char *jsonSubKey)
 {
+    workDone = false;
+
     Version::GetJsonData(jsonSubKey);
     Era::ReadStrFromIni("Remote", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
     shellExecutePath = h3_TextBuffer;
 
     if (show && !customText && !workDone.load())
     {
-        workDone = false;
+        constexpr DWORD FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+
+        // При первом запуске читаем время из INI
+
+        if (Era::ReadStrFromIni(LAST_TIME_CHECKED_INI_KEY, ASSEMBLY_SETTINGS_SECTION, ASSEMBLY_SETTINGS_INI,
+                                h3_TextBuffer))
+        {
+            DWORD lastCheckTime = strtoul(h3_TextBuffer, nullptr, 10);
+            if (Era::ReadStrFromIni(LAST_VERSION_INI_KEY, ASSEMBLY_SETTINGS_SECTION, ASSEMBLY_SETTINGS_INI,
+                                    h3_TextBuffer))
+            {
+                H3String cachedVersion = h3_TextBuffer;
+                if (lastCheckTime != 0 && (h3::GetTime() - lastCheckTime) < FIFTEEN_MINUTES_MS &&
+                    !cachedVersion.Empty())
+                {
+                    version = cachedVersion;
+                    workDone.store(true);
+                    return;
+                }
+            }
+        }
+
         std::thread th(&AssemblyInformation::RemoteVersion::GetVersion, this);
         th.detach();
     }
@@ -200,13 +218,21 @@ void AssemblyInformation::RemoteVersion::GetVersion() noexcept
                 version = obj.get<std::string>().c_str();
         }
     }
+
     workDone.store(true);
+
+    sprintf(h3_TextBuffer, "%lu", h3::GetTime());
+    Era::WriteStrToIni(RemoteVersion::LAST_TIME_CHECKED_INI_KEY, h3_TextBuffer, ASSEMBLY_SETTINGS_SECTION,
+                       ASSEMBLY_SETTINGS_INI);
+
+    // save last version
+    Era::WriteStrToIni(RemoteVersion::LAST_VERSION_INI_KEY, version.String(), ASSEMBLY_SETTINGS_SECTION,
+                       ASSEMBLY_SETTINGS_INI);
+    // check if remote version is higher
+    Era::SaveIni(ASSEMBLY_SETTINGS_INI);
+    // save last check time
 }
-// void AssemblyInformation::RemoteVersion::ClickProcedure() noexcept
-//{
-//
-//
-// }
+
 void AssemblyInformation::LocalVersion::GetJsonData(const char *jsonSubKey)
 {
     Version::GetJsonData(jsonSubKey);
@@ -246,7 +272,6 @@ const BOOL AssemblyInformation::CompareVersions()
     // if there is process run then start to compare locale and remote
     if (m_remoteVersion.workDone.load())
     {
-
         m_remoteVersion.version.ToDouble();
         m_remoteVersion.workDone = false;
 
@@ -258,7 +283,6 @@ const BOOL AssemblyInformation::CompareVersions()
 
 void AssemblyInformation::LocalVersion::GetVersion() noexcept
 {
-
     if (!customVersion)
     {
         Era::ReadStrFromIni("key", "Registry", ASSEMBLY_INI_FILE, h3_TextBuffer);
@@ -302,7 +326,6 @@ int __stdcall AssemblyInformation::DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 
 {
-
     if (auto notificationPanel = NotificationPanel::instance)
     {
         delete notificationPanel;
@@ -310,23 +333,23 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
     Get().isVisible = false;
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
-// int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
+// int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h,
+// H3BaseDlg *dlg, const int val)
 //{
 //     int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
 //     Get().CreateDlgItems(dlg);
 //     return result;
 // }
-// int __stdcall AssemblyInformation::DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg *dlg)
+// int __stdcall AssemblyInformation::DlgMainMenu_Campaign_Run(HiHook *h,
+// H3BaseDlg *dlg)
 //{
 //     Get().CreateDlgItems(dlg);
-//     auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
-//     int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
-//     _h->Destroy();
-//     return result;
+//     auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); //
+//     Main Main Menu Dlg Proc int result = THISCALL_1(int, h->GetDefaultFunc(),
+//     dlg); _h->Destroy(); return result;
 // }
 void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 {
-
     // hide wnd version hint
     if (auto *it = dlg->GetH3DlgItem(545))
         it->Hide();
@@ -357,7 +380,6 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
             H3DlgText *it = ver->dlgItem;
             if (it && it->IsVisible())
             {
-
                 if (it == msg->ItemAtPosition(msg->GetDlg()))
                 {
                     activeVersion = ver;
@@ -386,14 +408,14 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
         if (remoteVersion.workDone.load() && it && it->IsVisible())
         {
-
             remoteVersion.AdjustItemText();
             it->SetText(remoteVersion.text);
             H3FontLoader fn(remoteVersion.fontName);
-            it->SetWidth(fn->GetMaxLineWidth(
-                remoteVersion.text.String())); // (remoteVersion.text.Length() + 1)* remoteVersion.characterLength);
+            it->SetWidth(fn->GetMaxLineWidth(remoteVersion.text.String())); // (remoteVersion.text.Length() + 1)*
+            // remoteVersion.characterLength);
             it->Draw();
             it->Refresh();
+
             remoteVersion.workDone.store(false);
         }
     }
@@ -438,7 +460,6 @@ H3DlgText *__stdcall H3DlgText__Ctor(HiHook *h, H3DlgText *_this, int xpos, int 
                                      const char *text, const char *font, int color, int itemId, int align, int bkcolor,
                                      int unused)
 {
-
     // bkcolor = 1; // rand() % 255;
     // text =
     // libc::sprintf(h3_TextBuffer, "%d", bkcolor);
@@ -449,10 +470,8 @@ H3DlgText *__stdcall H3DlgText__Ctor(HiHook *h, H3DlgText *_this, int xpos, int 
 
 _LHF_(gem_Text)
 {
-
     if (auto dlgText = reinterpret_cast<H3DlgText *>(c->edi))
     {
-
         if (!libc::strcmpi(reinterpret_cast<LPCSTR>(c->eax), h3_NullString))
         {
             dlgText->bkColor = 1;
@@ -489,7 +508,8 @@ _LHF_(SoD_MsgBoxDlgBeforeRun)
             H3Vector<H3DlgItem *> vec;
             // libc::sprintf(h3_TextBuffer, "%d", vec->Size());
             MessageBoxA(0, h3_TextBuffer, h3_TextBuffer, MB_OK);
-            // auto pcx = H3DlgPcx::Create(12, 12,122,12,-1, NH3Dlg::HDassets::HD_STATUSBAR_PCX);
+            // auto pcx = H3DlgPcx::Create(12, 12,122,12,-1,
+            // NH3Dlg::HDassets::HD_STATUSBAR_PCX);
 
             // vec->AddOne(pcx);
             // dlg->CreateBlackBox(1,1,22,22);
@@ -500,19 +520,23 @@ _LHF_(SoD_MsgBoxDlgBeforeRun)
 
     return EXEC_DEFAULT;
 }
-// void *__fastcall b_MsgBox(const char *Mes, int MType, int PosX, int PosY, int Type1, int SType1, int Type2, int SType2, int Par, int Time2Show, int Type3, int SType3)
-void __stdcall HeroDlg_ArtifactDescription(HiHook* h, const char* Mes, int MType, int PosX, int PosY, int Type1, int SType1, int Type2, int SType2, int Par, int Time2Show, int Type3, int SType3)
+// void *__fastcall b_MsgBox(const char *Mes, int MType, int PosX, int PosY, int
+// Type1, int SType1, int Type2, int SType2, int Par, int Time2Show, int Type3,
+// int SType3)
+void __stdcall HeroDlg_ArtifactDescription(HiHook *h, const char *Mes, int MType, int PosX, int PosY, int Type1,
+                                           int SType1, int Type2, int SType2, int Par, int Time2Show, int Type3,
+                                           int SType3)
 {
     const DWORD stored = DwordAt(0x04F5A74 + 1);
 
     DwordAt(0x04F5A74 + 1) = 0x0681800;
     DwordAt(0x04F5AA1 + 1) = 0x0681800;
 
-    FASTCALL_12(void , h->GetDefaultFunc(), Mes, MType, PosX, PosY, ePictureCategories::ATTACK, 12, ePictureCategories::DEFENSE, 6, Par, Time2Show, ePictureCategories::KNOWLEDGE, 2);
+    FASTCALL_12(void, h->GetDefaultFunc(), Mes, MType, PosX, PosY, ePictureCategories::ATTACK, 12,
+                ePictureCategories::DEFENSE, 6, Par, Time2Show, ePictureCategories::KNOWLEDGE, 2);
 
     DwordAt(0x04F5A74 + 1) = stored;
     DwordAt(0x04F5AA1 + 1) = stored;
-    
 }
 void AssemblyInformation::CreatePatches() noexcept
 {
@@ -521,7 +545,8 @@ void AssemblyInformation::CreatePatches() noexcept
         _PI->WriteHiHook(0x04EF00C, THISCALL_, DlgMainMenu_Create);
         _PI->WriteHiHook(0x04EF247, THISCALL_, DlgMainMenu_Create);
 
-        _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+        _PI->WriteHiHook(0x4FBDA0, THISCALL_,
+                         DlgMainMenu_Proc); // Main Main Menu Dlg Proc
 
         _PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor);  // MAIN menu
         _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
@@ -532,7 +557,6 @@ void AssemblyInformation::CreatePatches() noexcept
         {
             _PI->WriteHiHook(0x04F6C00, FASTCALL_, HeroDlg_ArtifactDescription);
 
-            
             _PI->WriteLoHook(0x071234D, WoG_BeforeErmError);
             _PI->WriteLoHook(0x04F71FE, SoD_MsgBoxDlgBeforeRun);
         }
@@ -540,13 +564,17 @@ void AssemblyInformation::CreatePatches() noexcept
         // _PI->WriteHiHook(0x044E190, THISCALL_, H3DlgText__Draw);
         // _PI->WriteLoHook(0x05BAA35, gem_Text);
         //  _PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
-        // _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes from new game
+        // _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes
+        // from new game
 
-        // _PI->WriteHiHook(0x04D5AA0, THISCALL_, DlgMainMenu_Dtor); // New/Load Game
+        // _PI->WriteHiHook(0x04D5AA0, THISCALL_, DlgMainMenu_Dtor); // New/Load
+        // Game
 
-        // _PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+        // _PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main
+        // Menu Dlg Proc
 
-        //	Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
+        //	Era::RegisterHandler(OnAfterReloadLanguageData,
+        //"OnAfterReloadLanguageData");
 
         m_isEnabled = true;
     }

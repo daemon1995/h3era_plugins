@@ -4,9 +4,12 @@
 class AssemblyInformation : public IGamePatch
 {
 
-    static const char *ASSEMBLY_INI_FILE;
-    static const char *BASE_JSON_KEY;
-	static AssemblyInformation* instance;
+    static constexpr LPCSTR ASSEMBLY_INI_FILE = "ERA_Project.ini";
+    static constexpr LPCSTR BASE_JSON_KEY = "gem_plugin.main_menu";
+    static constexpr LPCSTR ASSEMBLY_SETTINGS_INI = "Runtime/Era/assembly_settings.ini";
+    static constexpr LPCSTR ASSEMBLY_SETTINGS_SECTION = "Assembly";
+
+    static AssemblyInformation *instance;
     struct PluginText : public IPluginText
     {
 
@@ -63,6 +66,8 @@ class AssemblyInformation : public IGamePatch
 
     struct RemoteVersion : public Version
     {
+        static constexpr LPCSTR LAST_VERSION_INI_KEY = "LastVersionReceived";
+        static constexpr LPCSTR LAST_TIME_CHECKED_INI_KEY = "LastRemoteCheckTime";
         std::atomic<bool> workDone;
 
       public:

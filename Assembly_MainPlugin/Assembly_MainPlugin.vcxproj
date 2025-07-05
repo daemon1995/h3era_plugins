@@ -14,8 +14,6 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{FF90A4AC-6B9F-4E22-AE7D-03B35FD0043E}</ProjectGuid>
-    <RootNamespace>assemblyMainPLugin</RootNamespace>
-    <ProjectName>AssemblyMainPLugin</ProjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
