@@ -37,7 +37,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RMG_CustomizeObjectProperti
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_DifferentStuff", "Test_DifferentStuff\Test_DifferentStuff.vcxproj", "{C11651EC-412B-43A8-8F51-C4607A7689A3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_ExperienceLimit", "Heroes_ExperienceLimit\Heroes_ExperienceLimit.vcxproj", "{7374708D-BD32-4484-8661-3276656318DD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_ExperienceSplit", "Heroes_ExperienceSplit\Heroes_ExperienceSplit.vcxproj", "{7374708D-BD32-4484-8661-3276656318DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

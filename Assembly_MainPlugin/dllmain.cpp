@@ -7,7 +7,8 @@ const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";
 const char *PLUGIN_DATA = __DATE__;
-} // namespace dllText
+} // namespace dllText56
+
 
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;

@@ -66,43 +66,7 @@ static int __stdcall Hero_GiveExperience(HiHook* h, H3Hero* hero, const int expe
 	return result;
 }
 
-_LHF_(BattleMgr_SetWinner)
-{
 
-
-	if (const auto& hero = ValueAt<H3Hero*>(c->esi + c->edi * 0x4 + 0x53CC))
-	{
-
-		const auto& player = P_Game->players[hero->owner];
-		if (player.is_human)
-		{
-			const int side = IntAt(c->ebp - 0x20);
-			int totalKilled = 0;
-			for (size_t i = 0; i < 20; i++)
-			{
-				if (const auto stack = &P_CombatManager->stacks[side][i])
-				{
-					if (stack->type != eCreature::UNDEFINED)
-					{
-
-						const int killed = stack->numberAtStart - stack->numberAlive;
-						if (killed > 1)
-						{
-							IntAt(c->ebp - 0xD) = 1;
-							totalKilled += killed;
-						}
-					}
-				}
-			}
-			P_CombatManager->necromancyRaisedAmount = static_cast<int>(static_cast<float>(totalKilled) * hero->GetNecromancyPower(true));
-
-			c->return_address = 0x0476FB3;
-			return NO_EXEC_DEFAULT; // Do not execute original code, we will handle necromancy ourselves
-		}
-	}
-
-	return EXEC_DEFAULT; // Do execute original code
-}
 
 void __stdcall OnAfterWog(Era::TEvent* e)
 {
@@ -115,12 +79,7 @@ void __stdcall OnAfterWog(Era::TEvent* e)
 		_PI->WriteHiHook(0x057408D, THISCALL_, Hero_GiveExperience); // CALL_ quest experience
 
 	}
-	if (atoi(Era::tr("tlrq.combat.alwaysFullHpNecromancy")))
-	{
-		//_PI->WriteHexPatch(0x0476F63 + 1, "45 E4 90"); // now necromacy ignores creature HP
 
-		_PI->WriteLoHook(0x0476F33, BattleMgr_SetWinner);
-	}
 	//_PI->WriteHiHook(0x04E3620, THISCALL_, Hero_GiveExperienceAll); // SPLICE_
 }
 
