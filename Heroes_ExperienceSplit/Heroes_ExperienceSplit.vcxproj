@@ -14,7 +14,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{7374708d-bd32-4484-8661-3276656318dd}</ProjectGuid>
-    <RootNamespace>HeroExperienceLimit</RootNamespace>
+    <RootNamespace>Hero_ExperienceSplit</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

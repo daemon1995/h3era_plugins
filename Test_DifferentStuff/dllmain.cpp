@@ -10,7 +10,10 @@ using namespace h3;
 
 Patcher *globalPatcher;
 PatcherInstance *_PI;
-
+namespace dllText
+{
+LPCSTR instanceName = "EraPlugin.test.daemon_n";
+}
 namespace db
 {
 // void echo(int a)
@@ -165,12 +168,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     case DLL_PROCESS_ATTACH:
 
         globalPatcher = GetPatcher();
-        _PI = globalPatcher->CreateInstance("ERA.daemon_n.testDlg");
+        _PI = globalPatcher->CreateInstance(dllText::instanceName);
         _PI->WriteLoHook(0x4EEAF2, HooksInit);
 
         // if (ver.era()      )
         {
-            Era::ConnectEra();
+            Era::ConnectEra(hModule, dllText::instanceName);
         }
 
     case DLL_THREAD_ATTACH:
