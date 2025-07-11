@@ -91,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssemblyInformation.h" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="NotificationPanel.h" />
     <ClInclude Include="UserNotification.h" />
   </ItemGroup>
