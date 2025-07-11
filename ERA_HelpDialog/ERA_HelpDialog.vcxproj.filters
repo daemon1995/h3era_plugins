@@ -9,11 +9,11 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="MainDlg">
+      <UniqueIdentifier>{ce8d4a84-5bc8-41f9-b902-abaaf4fbc6df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HelpDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ModListDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -29,12 +29,12 @@
     <ClInclude Include="DlgPanels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HelpDlg.h">
+      <Filter>MainDlg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HelpDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModListDlg.cpp">
@@ -51,6 +51,9 @@
     </ClCompile>
     <ClCompile Include="DlgPanels.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpDlg.cpp">
+      <Filter>MainDlg</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
