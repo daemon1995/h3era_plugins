@@ -21404,7 +21404,7 @@ namespace h3
 	{
 		_H3API_SIZE_(4);
 		unsigned  cost : 16;
-		unsigned _b17  : 16;
+		unsigned fromSpecZoneCost : 16;
 	};
 	_H3API_ASSERT_SIZE_(H3RmgMovementCost);
 
