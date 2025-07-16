@@ -70,7 +70,7 @@ struct NotificationPanel
     BOOL isVisible = false;
     H3BaseDlg *parentDlg = nullptr;
 
-    H3DlgPcx16 *parrentCaller = nullptr;
+    H3DlgCaptionButton *parentCaller = nullptr;
     H3LoadedPcx16 *backupScreen = nullptr;
 
     // personal dlg items

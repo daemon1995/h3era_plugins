@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <shlobj.h>
+#include <windows.h>
 
 NotificationPanel *NotificationPanel::instance = nullptr;
 H3DlgPcx16 *CreateOpenPanelTextPcxButton(H3BaseDlg *dlg, const size_t notificationAmount);
@@ -122,7 +123,29 @@ std::wstring GetAppDataPath()
     CoTaskMemFree(appDataPath);
     return result;
 }
+typedef H3DlgCaptionButton *(__stdcall *GetMainMenuWidgetById_t)(const char *);
 
+static H3DlgCaptionButton *GetNotificationPanelCallerWidget()
+{
+    HMODULE hApi = GetModuleHandleA("Interface_MainMenuAPI.era");
+    if (hApi)
+    {
+        auto getWidget = (GetMainMenuWidgetById_t)GetProcAddress(hApi, "GetMainMenuWidgetById");
+        if (!getWidget)
+        {
+            // РџРѕРїСЂРѕР±СѓРµРј РґСЂСѓРіРёРµ РІР°СЂРёР°РЅС‚С‹ РёРјРµРЅРё С„СѓРЅРєС†РёРё
+            getWidget = (GetMainMenuWidgetById_t)GetProcAddress(hApi, "_GetMainMenuWidgetById");
+        }
+        if (!getWidget)
+        {
+            getWidget = (GetMainMenuWidgetById_t)GetProcAddress(hApi, "_GetMainMenuWidgetById@4");
+        }
+
+        if (getWidget)
+            return getWidget("notification_panel_caller");
+    }
+    return nullptr;
+}
 NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y, const int width,
                                      const int height) noexcept
     : x(x), y(y), width(width), height(height), isVisible(false), parentDlg(parent)
@@ -131,20 +154,20 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
     std::vector<std::string> modList;
     modList::GetEraModList(modList, true);
 
-    // проверка на сущестовавание лаунчера у пользователя
-    // Получаем путь к AppData
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ AppData
     bool readSucces = false;
     std::string launcherFolder = EraJS::read(panelText::LAUNCHER_PATH, readSucces);
     if (readSucces && !launcherFolder.empty())
     {
-        // Формируем полный путь к папке
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
         std::wstring appDataPath = GetAppDataPath();
         if (!appDataPath.empty())
         {
 
             std::wstring targetFolder =
                 appDataPath + L"\\" + std::wstring(launcherFolder.begin(), launcherFolder.end());
-            // Проверяем существование папки
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             if (!FolderExists(targetFolder))
             {
                 modList.insert(modList.begin(), "heroes launcher");
@@ -156,9 +179,12 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
 
     if (notificationsTotal)
     {
-        parrentCaller = CreateOpenPanelTextPcxButton(parent, notificationsTotal);
+        if (parentCaller = GetNotificationPanelCallerWidget())
+        {
+            libc::sprintf(h3_TextBuffer, EraJS::read(panelText::BUTTON_FORMAT), notificationsTotal);
+            parentCaller->SetText(h3_TextBuffer);
+        }
 
-        // must have a backup of the original screen to restore on close
         backupScreen = H3LoadedPcx16::Create(width, height);
 
         // making hd mod wrong main menu drawing offset fix
@@ -221,8 +247,7 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
             AddItem(panelTitle, true);
         }
 
-
-        const int switchX = width - FRAME_OFFSET * 2 - 120;
+        const int switchX = width - FRAME_OFFSET * 2 - 140 + x;
         const int switchY = y + FRAME_OFFSET + 4;
         if (previousModButton = H3DlgDefButton::Create(switchX, switchY, "ntf_left.def", 0, 1))
         {
@@ -355,14 +380,14 @@ NotificationPanel::~NotificationPanel() noexcept
         backupScreen->Destroy();
         backupScreen = nullptr;
     }
-    if (parrentCaller)
-    {
-        if (auto pcx = parrentCaller->GetPcx())
-        {
-            pcx->Destroy();
-            parrentCaller->SetPcx(nullptr);
-        }
-    }
+    // if (parentCaller)
+    //{
+    //     if (auto pcx = parentCaller->GetPcx())
+    //     {
+    //         pcx->Destroy();
+    //         parentCaller->SetPcx(nullptr);
+    //     }
+    // }
     instance = nullptr;
 }
 
@@ -769,135 +794,132 @@ void OpenExternalFile(const char *path, const char *msg = nullptr);
 BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept
 {
 
-
     BOOL result = false;
     if (msg)
     {
-
-        const auto processItem = msg->ItemAtPosition(msg->GetDlg());
-
-        result = processItem == this->parrentCaller || currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink;
-
-        if (msg->IsLeftDown())
+        if (const auto processItem = msg->ItemAtPosition(msg->GetDlg()))
         {
+            result = processItem == parentCaller ||
+                     (currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink);
 
-            if (processItem == this->parrentCaller)
+            if (msg->IsLeftDown())
             {
-                P_SoundManager->ClickSound();
-                this->SetVisible(!this->isVisible, true);
-            }
-            else if (result)
-            {
-                P_SoundManager->ClickSound();
 
-                OpenExternalFile(currentModInfo->externalLink);
-            }
-        }
-        else if (msg->IsLeftClick())
-        {
-
-            if (processItem == hideAllButton)
-            {
-                this->SetVisible(false);
-                int modsWrittenToIni = 0;
-                // if mod has text, mark it as hidden
-                for (auto &i : modInfos)
+                if (result)
                 {
-                    modsWrittenToIni += i.MarkAsHiddenByUser();
-                }
-                if (modsWrittenToIni)
-                {
-                    Era::SaveIni(INI_FILE_NAME);
+                    P_SoundManager->ClickSound();
+
+                    OpenExternalFile(currentModInfo->externalLink);
                 }
             }
-            else if (processItem == hideOneButton)
+            else if (msg->IsLeftClick())
             {
 
-                // first, mark current mod as hidden
-                if (currentModInfo->MarkAsHiddenByUser())
+                if (processItem == parentCaller)
                 {
-                    Era::SaveIni(INI_FILE_NAME);
+                    // P_SoundManager->ClickSound();
+                    SetVisible(!isVisible, true);
                 }
-
-                // if there are more than one visible notification
-                if (notificationsVisible > 1)
+                else if (processItem == hideAllButton)
                 {
-                    // hide current mod to make space for the next one
-
-                    SetModVisible(*currentModInfo, false);
-                    UpdateVisibleNotificationsList();
-
-                    volatile int i = 0;
-                    for (auto &it : modInfos)
+                    SetVisible(false);
+                    int modsWrittenToIni = 0;
+                    // if mod has text, mark it as hidden
+                    for (auto &i : modInfos)
                     {
-                        it.displayedIndex = it.isVisible && !it.isHiddenByUser ? ++i : 0;
+                        modsWrittenToIni += i.MarkAsHiddenByUser();
+                    }
+                    if (modsWrittenToIni)
+                    {
+                        Era::SaveIni(INI_FILE_NAME);
+                    }
+                }
+                else if (processItem == hideOneButton)
+                {
+
+                    // first, mark current mod as hidden
+                    if (currentModInfo->MarkAsHiddenByUser())
+                    {
+                        Era::SaveIni(INI_FILE_NAME);
                     }
 
-                    if (currentModInfoIndex > notificationsVisible)
+                    // if there are more than one visible notification
+                    if (notificationsVisible > 1)
                     {
-                        currentModInfoIndex = currentModInfoIndex - 1;
-                    }
+                        // hide current mod to make space for the next one
 
-                    if (currentModInfo = GetModInfoFromVisible(currentModInfoIndex))
-                    {
-                        SetModVisible(*currentModInfo, true);
+                        SetModVisible(*currentModInfo, false);
                         UpdateVisibleNotificationsList();
+
+                        volatile int i = 0;
+                        for (auto &it : modInfos)
+                        {
+                            it.displayedIndex = it.isVisible && !it.isHiddenByUser ? ++i : 0;
+                        }
+
+                        if (currentModInfoIndex > notificationsVisible)
+                        {
+                            currentModInfoIndex = currentModInfoIndex - 1;
+                        }
+
+                        if (currentModInfo = GetModInfoFromVisible(currentModInfoIndex))
+                        {
+                            SetModVisible(*currentModInfo, true);
+                            UpdateVisibleNotificationsList();
+                        }
+                        if (notificationsCounter)
+                        {
+                            notificationsCounter->Draw();
+                            notificationsCounter->Refresh();
+                        }
                     }
-                    if (notificationsCounter)
+                    else
                     {
-                        notificationsCounter->Draw();
-                        notificationsCounter->Refresh();
+                        SetVisible(false);
                     }
                 }
-                else
+                else if (processItem == nextModButton)
                 {
-                    this->SetVisible(false);
+                    SwitchModInfo(1);
                 }
-            }
-            else if (processItem == nextModButton)
-            {
-                SwitchModInfo(1);
-            }
-            else if (processItem == previousModButton)
-            {
-                SwitchModInfo(-1);
+                else if (processItem == previousModButton)
+                {
+                    SwitchModInfo(-1);
+                }
             }
         }
 
-        if (isVisible)
+        if (isVisible && forceRedraw)
         {
-            if (forceRedraw)
+
+            for (auto &i : items)
             {
-                for (auto &i : items)
+                i->Draw();
+            }
+
+            if (currentModInfo && currentModInfo->isVisible)
+            {
+                for (auto &i : currentModInfo->items)
                 {
                     i->Draw();
                 }
 
-                if (currentModInfo && currentModInfo->isVisible)
+                if (auto scroll = currentModInfo->descriptionTextScrollBar)
                 {
-
-                    for (auto &i : currentModInfo->items)
+                    if (auto _items = scroll->GetItems())
                     {
-                        i->Draw();
+                        for (auto &i : *_items)
+                        {
+                            i->Draw();
+                        }
                     }
 
-                    if (auto scroll = currentModInfo->descriptionTextScrollBar)
+                    // manage scrollbar if it has more than one tick (visible)
+                    if (auto _i = scroll->GetTextScrollBar())
                     {
-                        if (auto items = scroll->GetItems())
+                        if (_i->GetTicksCount() > 1)
                         {
-                            for (auto &i : *items)
-                            {
-                                i->Draw();
-                            }
-                        }
-
-                        // manage scrollbar if it has more than one tick (visible)
-                        if (auto i = scroll->GetTextScrollBar())
-                        {
-                            if (i->GetTicksCount() > 1)
-                            {
-                                i->Draw();
-                            }
+                            _i->Draw();
                         }
                     }
                 }
@@ -911,13 +933,14 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
 void NotificationPanel::ReloadLanguageData() noexcept
 {
 
-    if (parrentCaller)
+    if (parentCaller)
     {
-        RedrawPcxText(parrentCaller->GetPcx(), notificationsTotal);
-        if (parrentCaller->IsVisible())
+        libc::sprintf(h3_TextBuffer, EraJS::read(panelText::BUTTON_FORMAT), notificationsTotal);
+        parentCaller->SetText(h3_TextBuffer);
+        if (parentCaller->IsVisible())
         {
-            parrentCaller->Draw();
-            parrentCaller->Refresh();
+            parentCaller->Draw();
+            parentCaller->Refresh();
         }
     }
 
@@ -955,3 +978,5 @@ NotificationPanel *NotificationPanel::Init(H3BaseDlg *parrent, const int x, cons
     instance = new NotificationPanel(parrent, x, y, width, height);
     return instance;
 }
+
+// РџРѕР»СѓС‡РµРЅРёРµ РІРёРґР¶РµС‚Р° notification_panel_caller С‡РµСЂРµР· API Interface_MainMenuAPI

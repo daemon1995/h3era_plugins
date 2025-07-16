@@ -116,7 +116,7 @@ void OpenExternalFile(const char *path, const char *msg = nullptr)
             {
                 LPSTR messageBuffer = nullptr;
 
-                // Форматирование сообщения об ошибке
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                 size_t size = FormatMessageA(
                     FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                     nullptr, intRes, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
@@ -124,7 +124,7 @@ void OpenExternalFile(const char *path, const char *msg = nullptr)
                 std::string message(messageBuffer, size);
                 H3Messagebox(message.c_str());
 
-                // Освобождение буфера
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
                 LocalFree(messageBuffer);
             }
         }
@@ -159,7 +159,7 @@ void AssemblyInformation::RemoteVersion::GetJsonData(const char *jsonSubKey)
     {
         constexpr DWORD FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 
-        // При первом запуске читаем время из INI
+        // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ INI
 
         if (Era::ReadStrFromIni(LAST_TIME_CHECKED_INI_KEY, ASSEMBLY_SETTINGS_SECTION, ASSEMBLY_SETTINGS_INI,
                                 h3_TextBuffer))
@@ -491,74 +491,22 @@ _LHF_(gem_Text)
     return EXEC_DEFAULT;
 }
 
-BOOL flagISFirstError = false;
-_LHF_(WoG_BeforeErmError)
-{
-    flagISFirstError = true;
-
-    return EXEC_DEFAULT;
-}
-_LHF_(SoD_MsgBoxDlgBeforeRun)
-{
-    //  if (flagISFirstError)
-    {
-        reinterpret_cast<char *>(c->ebp);
-        // if (vec.Size())
-        {
-            H3Vector<H3DlgItem *> vec;
-            // libc::sprintf(h3_TextBuffer, "%d", vec->Size());
-            MessageBoxA(0, h3_TextBuffer, h3_TextBuffer, MB_OK);
-            // auto pcx = H3DlgPcx::Create(12, 12,122,12,-1,
-            // NH3Dlg::HDassets::HD_STATUSBAR_PCX);
-
-            // vec->AddOne(pcx);
-            // dlg->CreateBlackBox(1,1,22,22);
-        }
-
-        flagISFirstError = false;
-    }
-
-    return EXEC_DEFAULT;
-}
-// void *__fastcall b_MsgBox(const char *Mes, int MType, int PosX, int PosY, int
-// Type1, int SType1, int Type2, int SType2, int Par, int Time2Show, int Type3,
-// int SType3)
-void __stdcall HeroDlg_ArtifactDescription(HiHook *h, const char *Mes, int MType, int PosX, int PosY, int Type1,
-                                           int SType1, int Type2, int SType2, int Par, int Time2Show, int Type3,
-                                           int SType3)
-{
-    const DWORD stored = DwordAt(0x04F5A74 + 1);
-
-    DwordAt(0x04F5A74 + 1) = 0x0681800;
-    DwordAt(0x04F5AA1 + 1) = 0x0681800;
-
-    FASTCALL_12(void, h->GetDefaultFunc(), Mes, MType, PosX, PosY, ePictureCategories::ATTACK, 12,
-                ePictureCategories::DEFENSE, 6, Par, Time2Show, ePictureCategories::KNOWLEDGE, 2);
-
-    DwordAt(0x04F5A74 + 1) = stored;
-    DwordAt(0x04F5AA1 + 1) = stored;
-}
 void AssemblyInformation::CreatePatches() noexcept
 {
     if (!m_isEnabled)
     {
-        _PI->WriteHiHook(0x04EF00C, THISCALL_, DlgMainMenu_Create);
+        //_PI->WriteHiHook(0x04EF00C, THISCALL_, DlgMainMenu_Create);
         _PI->WriteHiHook(0x04EF247, THISCALL_, DlgMainMenu_Create);
 
-        _PI->WriteHiHook(0x4FBDA0, THISCALL_,
-                         DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+        _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc);
 
-        _PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor);  // MAIN menu
+        //_PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor);  // MAIN menu
         _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
 
         Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 
         if (0)
         {
-            _PI->WriteHiHook(0x04F6C00, FASTCALL_, HeroDlg_ArtifactDescription);
-
-            _PI->WriteLoHook(0x071234D, WoG_BeforeErmError);
-            _PI->WriteLoHook(0x04F71FE, SoD_MsgBoxDlgBeforeRun);
         }
         // _PI->WriteHiHook(0x05BA547, THISCALL_, H3DlgText__Ctor);
         // _PI->WriteHiHook(0x044E190, THISCALL_, H3DlgText__Draw);
