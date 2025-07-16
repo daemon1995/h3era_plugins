@@ -122,8 +122,8 @@ const H3Vector<H3RmgObjectGenerator *> *RMGObjectsEditor::GetObjectGeneratorsLis
 
 RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
 {
-	if (instance == nullptr)
-		instance = new RMGObjectsEditor();
+    if (instance == nullptr)
+        instance = new RMGObjectsEditor();
 
     return *instance;
     // new RMGObjectsEditor();
@@ -1077,7 +1077,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
         case warehouses::WAREHOUSE_OBJECT_TYPE:
         case extender::HOTA_OBJECT_TYPE:
         case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
-        case 146:
+        case extender::HOTA_UNREACHABLE_YT_OBJECT_TYPE:
             result = jsonString;
             break;
         case eObject::RESOURCE:
