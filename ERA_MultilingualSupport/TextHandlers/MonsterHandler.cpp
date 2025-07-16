@@ -1,10 +1,5 @@
-#include "MonsterHandler.h"
+#include "HandlersList.h"
 
-#include "pch.h"
-#ifdef CREATE_JSON
-
-#include "ExportManager.h"
-#endif // CREATE_JSON
 
 bool __stdcall LoadCranimTxt(HiHook *h)
 {

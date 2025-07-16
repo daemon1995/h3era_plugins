@@ -1,13 +1,8 @@
-﻿#include "ArtifactHandler.h"
-#include "pch.h"
+﻿#include "HandlersList.h"
 
-#ifdef CREATE_JSON
-#include "ExportManager.h"
-#endif // CREATE_JSON
 bool __stdcall LoadArtTraitsTxt(HiHook *h)
 {
     bool result = CDECL_0(bool, h->GetDefaultFunc());
-
     if (result)
     {
         h->Undo();
@@ -22,26 +17,42 @@ bool __stdcall LoadArtTraitsTxt(HiHook *h)
 #endif // CREATE_JSON
         for (size_t i = 0; i < artsNum; i++)
         {
-            auto &artInfo = P_ArtifactSetup[i];
-#ifdef CREATE_JSON
-            artifacts[i] = {ExportManager::LPCSTR_to_wstring(artInfo.name),
-                            ExportManager::LPCSTR_to_wstring(artInfo.description),
-                            ExportManager::LPCSTR_to_wstring(eventTable[i])};
-#endif // CREATE_JSON
+            auto &artInfo = P_ArtifactSetup->Get()[i];
+            //   artInfo.name;
+
             sprintf(h3_TextBuffer, "era.artifacts.%d.name", i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
+            {
                 artInfo.name = readResult;
+            }
 
             sprintf(h3_TextBuffer, "era.artifacts.%d.description", i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
+            {
                 artInfo.description = readResult;
+            }
 
             sprintf(h3_TextBuffer, "era.artifacts.%d.event", i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
+            {
                 eventTable[i] = readResult;
+            }
+
+#ifdef CREATE_JSON
+            if (eventTable[i])
+            {
+                std::string name = ExportManager::LPCSTR_to_wstring(artInfo.name);
+                if (name.at(0) != '#')
+                {
+                    artifacts[i] = {name, ExportManager::LPCSTR_to_wstring(artInfo.description),
+                                    libc::strlen(eventTable[i]) > 10 ? ExportManager::LPCSTR_to_wstring(eventTable[i])
+                                                                     : h3_NullString};
+                }
+            }
+#endif // CREATE_JSON
         }
 #ifdef CREATE_JSON
         ExportManager::CreateArtifactsJson(artifacts);

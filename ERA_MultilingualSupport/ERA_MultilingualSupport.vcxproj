@@ -74,31 +74,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ArtifactHandler.h" />
     <ClInclude Include="DlgStyle.h" />
     <ClInclude Include="ExportManager.h" />
     <ClInclude Include="H3DlgTextPcxLocale.h" />
-    <ClInclude Include="HeroHandler.h" />
     <ClInclude Include="LanguageSelectionDlg.h" />
     <ClInclude Include="Locale.h" />
     <ClInclude Include="LocaleManager.h" />
-    <ClInclude Include="MapObjectHandler.h" />
-    <ClInclude Include="MonsterHandler.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="TextHandlers\ArtifactHandler.h" />
+    <ClInclude Include="TextHandlers\HeroHandler.h" />
+    <ClInclude Include="TextHandlers\MapObjectHandler.h" />
+    <ClInclude Include="TextHandlers\MonsterHandler.h" />
+    <ClInclude Include="TextHandlers\TownHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
-    <ClCompile Include="ArtifactHandler.cpp" />
     <ClCompile Include="DlgStyle.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ExportManager.cpp" />
     <ClCompile Include="H3DlgTextPcxLocale.cpp" />
-    <ClCompile Include="HeroHandler.cpp" />
     <ClCompile Include="LanguageSelectionDlg.cpp" />
     <ClCompile Include="Locale.cpp" />
     <ClCompile Include="LocaleManager.cpp" />
-    <ClCompile Include="MapObjectHandler.cpp" />
-    <ClCompile Include="MonsterHandler.cpp" />
+    <ClCompile Include="TextHandlers\ArtifactHandler.cpp" />
+    <ClCompile Include="TextHandlers\HeroHandler.cpp" />
+    <ClCompile Include="TextHandlers\MapObjectHandler.cpp" />
+    <ClCompile Include="TextHandlers\MonsterHandler.cpp" />
+    <ClCompile Include="TextHandlers\TownHandler.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

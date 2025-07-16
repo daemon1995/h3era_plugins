@@ -6,8 +6,10 @@
 
 #ifndef PCH_H
 #define PCH_H
+#ifndef ERA4
 #define ERA4
-// #define CREATE_JSON
+#endif // ERA4
+#define CREATE_JSON
 
 #ifdef CREATE_JSON
 #define NLOHMAN_JSON
@@ -21,9 +23,6 @@
 #include "H3DlgTextPcxLocale.h"
 #include "LocaleManager.h"
 
-#include "ArtifactHandler.h"
-#include "HeroHandler.h"
 #include "LanguageSelectionDlg.h"
-#include "MapObjectHandler.h"
-#include "MonsterHandler.h"
+#include "TextHandlers/HandlersList.h"
 #endif // PCH_H
