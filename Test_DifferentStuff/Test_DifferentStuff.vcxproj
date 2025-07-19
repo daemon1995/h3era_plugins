@@ -15,7 +15,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{c11651ec-412b-43a8-8f51-c4607a7689a3}</ProjectGuid>
     <RootNamespace>DlgTests</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -49,7 +49,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Pol Revisitable Creature Bank\EraPlugins\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Link>
@@ -66,6 +66,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CombatHooks.h" />
@@ -73,8 +76,7 @@
     <ClInclude Include="TestDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\headers\Era\era.cpp" />
-    <ClCompile Include="CombatHooks.cpp" />
+    <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="TestDlg.cpp" />
   </ItemGroup>

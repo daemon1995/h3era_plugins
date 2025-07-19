@@ -32,10 +32,7 @@
     <ClCompile Include="TestDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\headers\Era\era.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CombatHooks.cpp">
+    <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
