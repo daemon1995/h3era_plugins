@@ -23,13 +23,13 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{C974D039-D3A0-4E86-A083-4EC87685E904}</ProjectGuid>
     <RootNamespace>NewHeroDlgItems</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
@@ -38,7 +38,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -77,7 +77,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>D:\games\HoMM 3 ERA\Mods\Legend Heroes\eraplugins\</OutDir>
     <TargetName>Legend_Heroes</TargetName>
-    <IncludePath>C:\Users\dimon\source\repos\heroes\oldHeroesHeaders;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -85,7 +85,7 @@
     <OutDir>D:\games\HoMM 3 ERA\Mods\Legend Heroes\eraplugins\</OutDir>
     <TargetName>Legend_Heroes</TargetName>
     <TargetExt>.era</TargetExt>
-    <IncludePath>C:\Users\dimon\source\repos\heroes\oldHeroesHeaders;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
