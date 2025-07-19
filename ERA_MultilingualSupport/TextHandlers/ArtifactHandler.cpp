@@ -10,60 +10,49 @@ bool __stdcall LoadArtTraitsTxt(HiHook *h)
         const int artsNum = IntAt(0x49DD8E + 2) / 4;
         bool readSuccess = false;
         LPCSTR readResult = nullptr;
-        LPCSTR *eventTable = *reinterpret_cast<LPCSTR **>(0x49F51B + 3);
-#ifdef CREATE_JSON
-        std::vector<ExportManager::ArtifactInfo> artifacts;
-        artifacts.resize(artsNum);
-#endif // CREATE_JSON
+        LPCSTR *eventTable = ArtifactHandler::GetEventTable();
+        const int lastEventIndex = H3AdveventText::Get()->end() - H3AdveventText::Get()->begin() >> 2;
         for (size_t i = 0; i < artsNum; i++)
         {
             auto &artInfo = P_ArtifactSetup->Get()[i];
-            //   artInfo.name;
 
-            sprintf(h3_TextBuffer, "era.artifacts.%d.name", i);
+            sprintf(h3_TextBuffer, ArtifactHandler::formats::NAME, i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
             {
                 artInfo.name = readResult;
             }
 
-            sprintf(h3_TextBuffer, "era.artifacts.%d.description", i);
+            sprintf(h3_TextBuffer, ArtifactHandler::formats::DESCRIPTION, i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
             {
                 artInfo.description = readResult;
             }
 
-            sprintf(h3_TextBuffer, "era.artifacts.%d.event", i);
+            sprintf(h3_TextBuffer, ArtifactHandler::formats::EVENT, i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
             {
                 eventTable[i] = readResult;
             }
-
-#ifdef CREATE_JSON
-            if (eventTable[i])
+            else if (i > lastEventIndex)
             {
-                std::string name = ExportManager::LPCSTR_to_wstring(artInfo.name);
-                if (name.at(0) != '#')
-                {
-                    artifacts[i] = {name, ExportManager::LPCSTR_to_wstring(artInfo.description),
-                                    libc::strlen(eventTable[i]) > 10 ? ExportManager::LPCSTR_to_wstring(eventTable[i])
-                                                                     : h3_NullString};
-                }
+                eventTable[i] = h3_NullString; // if not read, set to nullptr
             }
-#endif // CREATE_JSON
         }
-#ifdef CREATE_JSON
-        ExportManager::CreateArtifactsJson(artifacts);
-#endif // CREATE_JSON
     }
 
     return result;
 }
+
+inline LPCSTR *ArtifactHandler::GetEventTable() noexcept
+{
+    return *reinterpret_cast<LPCSTR **>(0x49F51B + 3);
+}
+
 void ArtifactHandler::Init()
 {
-
     // Warning: this hook is after all txt read
     _PI->WriteHiHook(0x04EDEA2, CDECL_, LoadArtTraitsTxt);
 }
