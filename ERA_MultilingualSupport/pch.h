@@ -14,6 +14,9 @@
 #ifdef CREATE_JSON
 #define NLOHMAN_JSON
 #endif // CREATE_JSON
+#ifndef RESIZED_PCX
+#define RESIZED_PCX
+#endif // !RESIZED_PCX
 
 #include "..\headers\header.h"
 // add headers that you want to pre-compile here

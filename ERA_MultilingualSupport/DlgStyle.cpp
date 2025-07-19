@@ -2,13 +2,10 @@
 
 std::vector<DlgStyle> DlgStyle::styles;
 
-DlgStyle::DlgStyle(const char *pcxName, const RECT rect, const UINT16 maxRows, const LPCSTR f)
-    : WIDGET_WIDTH(rect.right - rect.left), WIDGET_HEIGHT(rect.bottom - rect.top), MAXIMUM_ROWS(maxRows), fontName(f)
+DlgStyle::DlgStyle(const UINT width, const UINT height, const UINT16 maxRows, LPCSTR pcxName, const LPCSTR f,
+                   const BOOL createExport)
+    : width(width), height(height), maxRows(maxRows), fontName(f), pcxName(pcxName), createExportButton(createExport)
 {
-    H3PcxLoader pcx(pcxName);
-
-    localeBackgroundLoadedPcx = H3LoadedPcx::Create(h3_NullString, WIDGET_WIDTH, WIDGET_HEIGHT);
-    pcx->DrawToPcx(rect.left, rect.top, rect.left + WIDGET_WIDTH, rect.top + WIDGET_HEIGHT, localeBackgroundLoadedPcx);
 }
 
 bool DlgStyle::CreateAssets(bool forceRecreate)
@@ -18,9 +15,9 @@ bool DlgStyle::CreateAssets(bool forceRecreate)
 
     if (styles.empty())
     {
-        styles.emplace_back(DlgStyle("comopbck.pcx", {245, 253, 445, 276}, 7, h3::NH3Dlg::Text::MEDIUM));
-        styles.emplace_back(DlgStyle("ADOPYPNL.PCX", {4, 1, 102, 19}, 25, h3::NH3Dlg::Text::MEDIUM));
-        styles.emplace_back(DlgStyle("ADVOPTBK.PCX", {251, 549, 390 -16, 569}, 25, h3::NH3Dlg::Text::SMALL));
+
+        styles.emplace_back(DlgStyle(200, 23, 7, NH3Dlg::Assets::DIBOXBACK, h3::NH3Dlg::Text::MEDIUM, false ));
+        styles.emplace_back(DlgStyle(123, 40, 25, NH3Dlg::HDassets::DLGBLUEBACK, h3::NH3Dlg::Text::BIG, true));
         text.Load();
     }
     return !styles.empty();

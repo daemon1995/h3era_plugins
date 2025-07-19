@@ -1,42 +1,33 @@
 #include "pch.h"
-#include "H3DlgTextPcxLocale.h"
 
-
-void H3DlgTextPcxLocale::SetPcx(H3LoadedPcx* pcx)
+void H3DlgTextPcxLocale::SetPcx(H3LoadedPcx *pcx)
 {
-	loadedPcx = pcx;
+    if (loadedPcx && loadedPcx != pcx)
+    {
+        loadedPcx->Dereference();
+    }
+    loadedPcx = pcx;
 }
-void H3DlgTextPcxLocale::SetLocale(const Locale* locale)
+void H3DlgTextPcxLocale::SetLocale(const Locale *locale)
 {
-	m_locale = locale;
-	SetText(m_locale->displayedName.c_str());
-}
-
-const Locale* H3DlgTextPcxLocale::GetLocale() const noexcept
-{
-	return m_locale;
+    m_locale = locale;
+    SetText(m_locale->displayedName.c_str());
 }
 
-H3DlgTextPcxLocale* H3DlgTextPcxLocale::Create(INT32 x, INT32 y, INT32 width, INT32 height,
-	const Locale* locale, LPCSTR fontName, H3LoadedPcx* pcx, INT32 color, INT32 id, INT32 align)
+const Locale *H3DlgTextPcxLocale::GetLocale() const noexcept
 {
-	H3DlgTextPcxLocale* t = H3ObjectAllocator<H3DlgTextPcxLocale>().allocate(1);
-	if (t)
-	{
-		// set nop for loading pcx to skip default proc
+    return m_locale;
+}
 
-		auto* blockLoadingPcx = _PI->WriteHexPatch(0x5BCBD0, "90 90 90 90 90");
-
-		THISCALL_12(H3DlgTextPcxLocale*, 0x5BCB70, t, x, y, width, height, 0, fontName,
-			nullptr, color, id, align, 8);
-		//restore orginal code;
-		blockLoadingPcx->Undo();
-		blockLoadingPcx->Destroy();
-		if (locale)
-			t->SetLocale(locale);
-
-
-		t->loadedPcx = pcx;
-	}
-	return t;
+H3DlgTextPcxLocale *H3DlgTextPcxLocale::Create(INT32 x, INT32 y, INT32 width, INT32 height, const Locale *locale,
+                                               LPCSTR fontName, LPCSTR pcxName, INT32 color, INT32 id, INT32 align)
+{
+    H3DlgTextPcxLocale *t = H3ObjectAllocator<H3DlgTextPcxLocale>().allocate(1);
+    if (t)
+    {
+        THISCALL_12(H3DlgTextPcxLocale *, 0x5BCB70, t, x, y, width, height, 0, fontName, pcxName, color, id, align, 8);
+        if (locale)
+            t->SetLocale(locale);
+    }
+    return t;
 }
