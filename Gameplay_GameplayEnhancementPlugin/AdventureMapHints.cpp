@@ -46,8 +46,6 @@ void AdventureMapHints::CreatePatches() noexcept
     }
 }
 
-char changedData[32] = {};
-
 void GameManager_HidePlayersVisitedInfo(H3Main *game, const int playerID, H3PlayersBitfield (&changedData)[32]) noexcept
 {
 
@@ -239,7 +237,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
 
                     H3DefLoader flagDef(NH3Dlg::Assets::CREST58);
                     currentItem->hero.index;
-                   // return;
+                    // return;
 
                     //   Era::y[1] = currentItem->hero.index;
                     // Era::ExecErmCmd("HEy1:Z?y1^");
@@ -255,7 +253,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
 
                     const auto heroInfos = P_HeroInfo->Get();
 
-                    if (hero->id<0 || hero->id> 154)
+                    if (hero->id < 0 || hero->id > 154)
                     {
                         return;
                     }
@@ -263,9 +261,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
 
                     if (true)
                     {
-
                     }
-
 
                     // libc::sprintf(Era::z[1], "%d", currentItem->hero.index);
                     // Era::ExecErmCmd("IF:L^%z1^");
@@ -333,7 +329,6 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     const int TEMP_PCX_HEIGHT = tempBuffer->height;
 
                     tempBuffer->DrawFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 189, 149, 57);
-
                     // resize tempBuffer to align text for screen borders
 
                     int objectWidth = 1 * TILE_WIDTH;
