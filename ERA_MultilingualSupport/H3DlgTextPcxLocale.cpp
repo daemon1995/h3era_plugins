@@ -12,6 +12,7 @@ void H3DlgTextPcxLocale::SetLocale(const Locale *locale)
 {
     m_locale = locale;
     SetText(m_locale->displayedName.c_str());
+
 }
 
 const Locale *H3DlgTextPcxLocale::GetLocale() const noexcept

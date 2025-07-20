@@ -62,11 +62,11 @@ BOOL ExportManager::WriteJsonFile(const std::string &filePath, nlohmann::ordered
     return false; // Возвращаем false, если JSON пустой
 }
 
-static int GetMaxOriginalId(LPCSTR keySubstring, const int defaultValue)
+INT ExportManager::GetMaxOriginalId(LPCSTR keySubstring, const int defaultValue)
 {
     // Получаем максимальный ID оригинальных данных из конфигурации
     bool readSuccess = false;
-    const int maxId = EraJS::readInt("era.dlg.maximumIds." + std::string(keySubstring), readSuccess);
+    const int maxId = EraJS::readInt(MAX_ID_JSON + std::string(keySubstring), readSuccess);
     if (!readSuccess || maxId < 0)
     {
         return defaultValue;
@@ -80,11 +80,12 @@ BOOL ExportManager::CreateMonstersJson(LPCSTR filePath, const BOOL originalData,
     constexpr int maxOriginalId = 196;
     const int outOfBound = GetMaxOriginalId("creatures", maxOriginalId) + 1;
 
-    const int minMonId = originalData ? 0 : outOfBound; // Если оригинальные данные, начинаем с 196, иначе с 197
-    const int maxMonId = additionalData ? IntAt(0x4A1657) : outOfBound;
+    const int minId = originalData ? 0 : outOfBound;
+    const int maxMonId = IntAt(0x4A1657);
+    const int maxId = Clamp(0, additionalData ? maxMonId : outOfBound, maxMonId);
 
     // Создаем структуру JSON
-    for (size_t i = minMonId; i < maxMonId; ++i)
+    for (size_t i = minId; i < maxId; ++i)
     {
         auto &creatureInfo = P_CreatureInformation[i];
         auto &ptr = creatureInfo.nameSingular;
@@ -103,14 +104,20 @@ BOOL ExportManager::CreateMonstersJson(LPCSTR filePath, const BOOL originalData,
 
     return WriteJsonFile(filePath, j);
 }
+
 BOOL ExportManager::CreateArtifactsJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData)
 
 {
     nlohmann::ordered_json j;
-    const int artsNum = IntAt(0x49DD8E + 2) / 4;
+    constexpr int maxOriginalId = 170;
+    const int outOfBound = GetMaxOriginalId("artifacts", maxOriginalId) + 1;
+    const int minId = originalData ? 0 : outOfBound;
+    const int maxArtId = IntAt(0x49DD8E + 2) >> 2;
+    const int maxId = Clamp(0, additionalData ? maxArtId : outOfBound, maxArtId);
+
     const auto &event = ArtifactHandler::GetEventTable();
     // Создаем структуру JSON
-    for (size_t i = 0; i < artsNum; ++i)
+    for (size_t i = minId; i < maxId; ++i)
     {
         auto &artInfo = P_ArtifactSetup->Get()[i];
         if (artInfo.name)
@@ -146,22 +153,34 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
     }
     table = H3DwellingNames1::Get();
 
-    const int dwellings1Num = MapObjectHandler::GetSubtypesAmount(eObject::CREATURE_GENERATOR1);
+    constexpr int maxOriginalId1 = 100;
+    const int outOfBound1 = GetMaxOriginalId("dwellings1", maxOriginalId1) + 1;
+    const int minId1 = originalData ? 0 : outOfBound1;
+    const int maxAmount1 = MapObjectHandler::GetSubtypesAmount(eObject::CREATURE_GENERATOR1);
+    const int maxId1 = Clamp(0, additionalData ? maxAmount1 : outOfBound1, maxAmount1);
 
-    for (size_t i = 0; i < dwellings1Num; ++i)
+    for (size_t i = minId1; i < maxId1; ++i)
     {
         if (stricmp(table[i], h3_NullString))
             j["era"]["dwellings1"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
 
     const int dwellings4Num = MapObjectHandler::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
+
+    constexpr int maxOriginalId4 = 1;
+    const int outOfBound4 = GetMaxOriginalId("dwellings4", maxOriginalId4) + 1;
+    const int minId4 = originalData ? 0 : outOfBound4;
+    const int maxAmount4 = MapObjectHandler::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
+    const int maxId4 = Clamp(0, additionalData ? maxAmount4 : outOfBound4, maxAmount4);
+
     table = H3DwellingNames4::Get();
 
-    for (size_t i = 0; i < dwellings4Num; ++i)
+    for (size_t i = minId4; i < maxId4; ++i)
     {
         if (stricmp(table[i], h3_NullString))
             j["era"]["dwellings4"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
+
     // Сохраняем JSON в файл
     return WriteJsonFile(filePath, j);
 }
@@ -202,6 +221,20 @@ BOOL ExportManager::CreateCreatureBanksJson(LPCSTR filePath, const BOOL original
 
     const auto bankObjectTypes = {eObject::CREATURE_BANK, eObject::DERELICT_SHIP, eObject::DRAGON_UTOPIA,
                                   eObject::CRYPT, eObject::SHIPWRECK};
+
+    int creatureBanksNumber = 0;
+    for (auto &i : P_Game->mainSetup.objectLists[eObject::CREATURE_BANK])
+    {
+        if (i.subtype >= creatureBanksNumber)
+        {
+            creatureBanksNumber = i.subtype + 1;
+        }
+    }
+
+    constexpr int maxOriginalId = 20;
+    const int outOfBound = GetMaxOriginalId("creatureBanks", maxOriginalId) + 1;
+    const int minId = originalData ? 0 : outOfBound;
+    const int maxId = Clamp(0, additionalData ? creatureBanksNumber : outOfBound, creatureBanksNumber);
 
     for (const int objectType : bankObjectTypes)
     {
@@ -255,10 +288,21 @@ BOOL ExportManager::CreateTownBuildingsJson(LPCSTR filePath, const BOOL original
     const auto townDwellingDescriptions = TownHandler::GetTownDwellingDescriptions();
     nlohmann::ordered_json j;
 
-    for (size_t townType = 0; townType < townsNum; townType++)
+    constexpr int maxOriginalId = 10;
+    const int outOfBound = GetMaxOriginalId("towns", maxOriginalId) + 1;
+    const int minId = originalData ? 0 : outOfBound;
+    const int maxId = Clamp(0, additionalData ? townsNum : outOfBound, townsNum);
+
+    for (size_t townType = minId; townType < maxId; townType++)
     {
-        const int jsonTownType =
-            townType == neutralTownId ? -1 : townType; // Neutral town is 0 in JSON, others are 1-indexed
+
+        const bool isNeutralTown = townType == neutralTownId;
+        if (isNeutralTown && originalData == false)
+        {
+            break; // Neutral town is not exported w/o original data
+        }
+        const int jsonTownType = isNeutralTown ? -1 : townType; // Neutral town is 0 in JSON, others are 1-indexed
+
         for (size_t dwellingId = 0; dwellingId < dwellinsPerTown; dwellingId++)
         {
             const UINT stringId = townType * dwellinsPerTown + dwellingId;
@@ -320,7 +364,8 @@ void ExportDlg::CreateDlgItems()
     if (selectionPanels.size())
     {
         LPCSTR text = EraJS::read("era.locale.dlg.export.item");
-        CreateText(borderPadding, borderPadding, PANEL_TEXT_WIDTH, 20, text, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, -1);
+        CreateText(borderPadding, borderPadding, PANEL_TEXT_WIDTH, 20, text, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
+                   -1);
         text = EraJS::read("era.locale.dlg.export.original");
         CreateText(borderPadding + PANEL_TEXT_WIDTH, borderPadding, PANEL_TEXT_WIDTH, 20, text, NH3Dlg::Text::MEDIUM,
                    eTextColor::REGULAR, -1);
@@ -343,7 +388,7 @@ ExportDlg::SelectionPanel *ExportDlg::CreateSelectionPanel(const int x, const in
                                       startId, eTextAlignment::MIDDLE_LEFT);
         const int panelTextX = panel->panelText->GetX();
 
-        const int originalCheckBoxX = panelTextW + CHECKBOX_PADDING/2;
+        const int originalCheckBoxX = panelTextW + CHECKBOX_PADDING / 2;
         panel->originalDataCheckBox = CreateDef(originalCheckBoxX, y, startId + 1, NH3Dlg::Assets::ON_OFF_CHECKBOX, 1);
         panel->additionalDataCheckBox =
             CreateDef(originalCheckBoxX + CHECKBOX_PADDING, y, startId + 2, NH3Dlg::Assets::ON_OFF_CHECKBOX, 1);

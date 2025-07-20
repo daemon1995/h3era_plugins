@@ -1,8 +1,6 @@
 #pragma once
 class HeroHandler
 {
-public:
-
-	static void Init();
+  public:
+    static void Init();
 };
-

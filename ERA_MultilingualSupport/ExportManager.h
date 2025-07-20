@@ -36,41 +36,32 @@ class ExportDlg : public H3Dlg
 };
 class ExportManager
 {
-  public:
-    struct ObjectInfo
-    {
-        std::string name;
-        static constexpr LPCSTR DEFAULT_PATH = "ObjectText.json";
-    };
+    static constexpr LPCSTR MAX_ID_JSON = "era.dlg.maximumId.";
 
+  public:
     struct MonsterInfo
     {
-        std::string singularName;
-        std::string pluralName;
-        std::string description;
         static constexpr LPCSTR DEFAULT_PATH = "CreaturesText.json";
+    };
+    struct ArtifactInfo
+    {
+        static constexpr LPCSTR DEFAULT_PATH = "ArtifactText.json";
+    };
+    struct ObjectInfo
+    {
+        static constexpr LPCSTR DEFAULT_PATH = "ObjectText.json";
     };
     struct CreatureBankInfo
     {
-        std::string name;
-        std::string visitText;
         static constexpr LPCSTR DEFAULT_PATH = "CreatureBankText.json";
     };
     struct TownBuildingInfo
     {
-        std::string name;
-        std::string description;
         static constexpr LPCSTR DEFAULT_PATH = "TownText.json";
     };
-    struct ArtifactInfo
-    {
-        std::string name;
-        std::string description;
-        std::string event;
-        static constexpr LPCSTR DEFAULT_PATH = "ArtifactText.json";
-    };
-    static std::string LPCSTR_to_wstring(LPCSTR ansi_str);
 
+    static std::string LPCSTR_to_wstring(LPCSTR ansi_str);
+    static INT GetMaxOriginalId(LPCSTR keySubstring, const int defaultValue);
     static BOOL WriteJsonFile(const std::string &filePath, nlohmann::json &j);
     static BOOL WriteJsonFile(const std::string &filePath, nlohmann::ordered_json &j);
     static BOOL CreateMonstersJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);

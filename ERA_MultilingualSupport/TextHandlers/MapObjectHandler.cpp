@@ -45,7 +45,7 @@ void MapObjectHandler::Init()
 int MapObjectHandler::GetSubtypesAmount(const eObject type) noexcept
 {
     std::unordered_set<int> objectSubtypes;
-    for (auto &i : P_Game->mainSetup.objectLists[eObject::CREATURE_GENERATOR4])
+    for (auto &i : P_Game->mainSetup.objectLists[type])
     {
         objectSubtypes.insert(i.subtype);
     }

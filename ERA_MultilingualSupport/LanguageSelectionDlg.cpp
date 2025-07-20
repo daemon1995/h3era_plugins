@@ -116,7 +116,7 @@ void LanguageSelectionDlg::RedrawLocales(UINT16 firstItemId) noexcept
         // assure those support locale edits
         if (auto selectionWidget = Get<H3DlgTextPcxLocale>(i + firstLocaleItemId))
         { // set new locale according on the scroll offset
-            auto locale = Handler()->LocaleAt(i + firstItemId);
+            auto locale = localeManager->LocaleAt(i + firstItemId);
             selectionWidget->SetLocale(locale);
             if (selectionWidget->GetX() == selectionFrame->GetX() && selectionWidget->GetY() == selectionFrame->GetY())
             {
