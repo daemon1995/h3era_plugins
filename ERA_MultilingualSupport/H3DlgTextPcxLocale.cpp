@@ -1,34 +1,44 @@
 #include "pch.h"
 
-void H3DlgTextPcxLocale::SetPcx(H3LoadedPcx *pcx)
-{
-    if (loadedPcx && loadedPcx != pcx)
-    {
-        loadedPcx->Dereference();
-    }
-    loadedPcx = pcx;
-}
-void H3DlgTextPcxLocale::SetLocale(const Locale *locale)
+void H3DlgPcx16Locale::SetLocale(const Locale *locale)
 {
     m_locale = locale;
-    SetText(m_locale->displayedName.c_str());
+    LPCSTR localName = m_locale ? m_locale->displayedName.c_str() : h3_NullString;
+    //    SetText(localName);
 
+    if (auto pcx = loadedPcx16)
+    {
+        const UINT width = pcx->width;
+        const UINT height = pcx->height;
+
+        pcx->BackgroundRegion(0, 0, width, height, isBlueBack);
+        pcx->DarkenArea(0, 0, width, height, 50);
+        pcx->BevelArea(1, 1, width - 2, height - 2);
+        if (font)
+        {
+            font->TextDraw(pcx, localName, 0, 0, width, height);
+        }
+    }
 }
 
-const Locale *H3DlgTextPcxLocale::GetLocale() const noexcept
+const Locale *H3DlgPcx16Locale::GetLocale() const noexcept
 {
     return m_locale;
 }
 
-H3DlgTextPcxLocale *H3DlgTextPcxLocale::Create(INT32 x, INT32 y, INT32 width, INT32 height, const Locale *locale,
-                                               LPCSTR fontName, LPCSTR pcxName, INT32 color, INT32 id, INT32 align)
+H3DlgPcx16Locale *H3DlgPcx16Locale::Create(const INT32 x, const INT32 y, const DlgStyle &style, const Locale *locale,
+                                           H3Font *font,  INT32 id, eTextAlignment align)
 {
-    H3DlgTextPcxLocale *t = H3ObjectAllocator<H3DlgTextPcxLocale>().allocate(1);
+    H3DlgPcx16Locale *t = H3ObjectAllocator<H3DlgPcx16Locale>().allocate(1);
     if (t)
     {
-        THISCALL_12(H3DlgTextPcxLocale *, 0x5BCB70, t, x, y, width, height, 0, fontName, pcxName, color, id, align, 8);
-        if (locale)
-            t->SetLocale(locale);
+        THISCALL_8(H3DlgPcx16Locale *, 0x450340, t, x, y, style.width, style.height, id, nullptr, 0x800);
+        H3LoadedPcx16 *pcx = H3LoadedPcx16::Create(style.width, style.height);
+        t->isBlueBack = style.isBlueBack;
+        t->SetPcx(pcx);
+        t->font = font;
+        t->align = align;
+        t->SetLocale(locale);
     }
     return t;
 }

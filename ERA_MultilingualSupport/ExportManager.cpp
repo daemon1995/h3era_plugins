@@ -398,7 +398,7 @@ ExportDlg::SelectionPanel *ExportDlg::CreateSelectionPanel(const int x, const in
     return panel;
 }
 
-ExportDlg::ExportDlg(const int width, const int height, const int x, const int y, const DlgStyle *style)
+ExportDlg::ExportDlg(const int width, const int height, const int x, const int y, const DlgStyle &style)
     : H3Dlg(width, height, x, y, false, false)
 {
     this->AddBackground(true, false, true);

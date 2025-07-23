@@ -1,92 +1,110 @@
 #include "pch.h"
 #include <sstream>
+#include <unordered_set>
 
 H3String LocaleManager::m_displayedName{};
+static BOOL PathIsValid(const std::string &path)
+{
+    // Check if the path is not empty and does not contain invalid characters
+    if (path.empty() || path.find_first_of("<>:\"/\\|?*") != std::string::npos)
+        return false;
+    // Check if the path exists
+    return true; // GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+}
 
 LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
 {
 
-    m_locales.clear();
+    locales.clear();
 
-    m_locales.reserve(25);
+    locales.reserve(25);
 
     //  Read list of available locales
     bool readSuccess = false;
 
-    std::string localeList = EraJS::read(JSON_KEY, readSuccess);
-    if (readSuccess)
-        localeList.append(defaultLocaleNames);
-    else
-        localeList = defaultLocaleNames;
-
-    std::stringstream ss(localeList);
-
-    int counter = 0; // {};
-
-    while (ss.good() && counter++ < 512)
+    std::unordered_set<std::string> iso_639_1_languagesSet;
+    // create set of default locales
+    for (const auto &defaultLocaleName : iso_639_1_languages)
     {
-        std::string substr;
-        getline(ss, substr, ',');
-        if (!substr.empty())
+        iso_639_1_languagesSet.insert(defaultLocaleName);
+    }
+
+    // check if that locale has alternative name and replace it in set
+    for (const auto &defaultLocaleName : iso_639_1_languages)
+    {
+        LPCSTR alternativeName =
+            EraJS::read(H3String::Format(format::alternative, defaultLocaleName).String(), readSuccess);
+
+        if (readSuccess)
         {
-            const char *const localeName = substr.c_str();
-
-            if (FindLocale(localeName) == m_locales.cend())
+            std::string alternativeNameStr(alternativeName);
+            if (PathIsValid(alternativeNameStr))
             {
-
-                sprintf(h3_TextBuffer, m_localeFormat, localeName);
-                readSuccess = false;
-                std::string localeNameStr = EraJS::read(h3_TextBuffer, readSuccess);
-                localeNameStr.append(" - ").append(localeName);
-                Locale *locale = new Locale(localeName, localeNameStr.c_str());
-                locale->hasDescription = readSuccess && !locale->displayedName.empty();
-                m_locales.emplace_back(locale);
+                iso_639_1_languagesSet.erase(defaultLocaleName);
+                iso_639_1_languagesSet.insert(alternativeName);
+            }
+            else
+            {
+                libc::sprintf(h3_TextBuffer, EraJS::read(error::alternative), defaultLocaleName, alternativeName);
+                Era::ShowMessage(h3_TextBuffer);
             }
         }
     }
-    // find current locale
 
-    std::string str = ReadLocaleFromIni();
+    // add default locales if they have defined names from json
+    for (auto &i : iso_639_1_languagesSet)
+    {
+        LPCSTR langName = EraJS::read(H3String::Format(format::name, i.c_str()).String(), readSuccess);
+
+        if (readSuccess && libc::strcmp(langName, h3_NullString))
+        {
+            locales.emplace_back(Locale(i.c_str(), langName));
+        }
+    }
+
+    const std::string str = ReadLocaleFromIni();
     if (!str.empty()) // if ther is ini entry
     {
         const char *localeName = str.c_str();
         auto currentLocalePtr = FindLocale(localeName);
         // check if added in vector
-        if (currentLocalePtr != m_locales.end())
+        if (currentLocalePtr != locales.end())
         {
-            m_current = *currentLocalePtr;
+            m_current = &*currentLocalePtr;
         }
         else
         {
             // otherwise create new locale
-            // sprintf(h3_TextBuffer, m_localeFormat, localeName);
-            readSuccess = false;
-            m_current =
-                new Locale(localeName, EraJS::read(H3String::Format(m_localeFormat, localeName).String(), readSuccess));
-            m_current->hasDescription = readSuccess && !m_current->displayedName.empty();
+            Locale current(localeName, EraJS::read(H3String::Format(format::name, localeName).String(), readSuccess));
+            current.hasDescription = readSuccess && !current.displayedName.empty();
             // and add into vector
-            m_locales.emplace_back(m_current);
+            locales.emplace_back(current);
+            m_current = &locales.back();
         }
     }
 
-    m_locales.shrink_to_fit();
+    locales.shrink_to_fit();
 }
 
 LPCSTR LocaleManager::LocaleFormat() const noexcept
 {
-    return m_localeFormat;
+    return format::name;
 }
 
-const Locale *LocaleManager::LocaleAt(int id) const noexcept
+const Locale &LocaleManager::LocaleAt(const int id) const noexcept
 {
-    return m_locales.at(id);
+    return locales.at(id);
+}
+const Locale &LocaleManager::operator[](const int id) const noexcept
+{
+    return locales.at(id);
 }
 
-const std::vector<Locale *>::const_iterator LocaleManager::FindLocale(const char *other) const noexcept
+const std::vector<Locale>::const_iterator LocaleManager::FindLocale(const char *other) const noexcept
 {
 
-    auto compareResult = std::find_if(m_locales.begin(), m_locales.end(), [&](const Locale *locale) -> bool {
-        return !_strcmpi(locale->name.c_str(), other);
+    auto compareResult = std::find_if(locales.begin(), locales.end(), [&](const Locale &locale) -> bool {
+        return !libc::strcmpi(locale.name.c_str(), other);
     });
 
     return compareResult;
@@ -104,7 +122,7 @@ BOOL LocaleManager::SetForUser(const Locale *locale) const
 
 std::string LocaleManager::ReadLocaleFromIni()
 {
-    sprintf(h3_TextBuffer, "%d", 0); // set default buffer
+    libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
     Era::ReadStrFromIni(INI_KEY_NAME, INI_SECTION_NAME, INI_FILE_NAME, h3_TextBuffer);
     return std::string(h3_TextBuffer);
 }
@@ -126,26 +144,18 @@ void LocaleManager::SetSelected(const Locale *locale) noexcept
 
 LPCSTR LocaleManager::GetDisplayedName()
 {
-    DlgStyle::text.Load();
-    sprintf(h3_TextBuffer, DlgStyle::text.displayNameFormat, ReadLocaleFromIni().c_str());
+    sprintf(h3_TextBuffer, EraJS::read("era.locale.dlg.buttonName"), ReadLocaleFromIni().c_str());
     m_displayedName = h3_TextBuffer;
     return m_displayedName.String();
 }
 
 UINT32 LocaleManager::GetCount() const noexcept
 {
-    return m_locales.size();
+    return locales.size();
 }
 
 LocaleManager::~LocaleManager()
 {
-    for (auto &locale : m_locales)
-    {
-        if (locale)
-        {
-            delete locale;
-            locale = nullptr;
-        }
-    }
-    m_locales.clear();
+
+    locales.clear();
 }

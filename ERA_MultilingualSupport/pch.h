@@ -15,14 +15,15 @@
 #define NLOHMAN_JSON
 #endif // CREATE_JSON
 #ifndef RESIZED_PCX
-#define RESIZED_PCX
+// #define RESIZED_PCX
 #endif // !RESIZED_PCX
-
+#ifndef MAIN_MENU_API
+#define MAIN_MENU_API
+#endif // MAIN_MENU_API
 #include "..\headers\header.h"
 // add headers that you want to pre-compile here
 #include "Locale.h"
 
-#include "DlgStyle.h"
 #include "H3DlgTextPcxLocale.h"
 #include "LocaleManager.h"
 

@@ -4,91 +4,183 @@ constexpr UINT16 FRAME_WIDGET_ID = 2;
 constexpr UINT16 FIRST_SELECTION_WIDGET_ID = 3;
 constexpr UINT16 LOCALEDLG_BUTTON_ID = 4445;
 
-LanguageSelectionDlg::LanguageSelectionDlg(const int x, const int y, const int width, const int height,
-                                           const DlgStyle *style, LocaleManager *handler)
-    : H3Dlg(width, height, x, y, false, false), m_style(style), localeManager(handler)
-{
+std::vector<DlgStyle> LanguageSelectionDlg::styles;
 
-    flags ^= 0x10; // disable dlg shadow
-    CreateDlgItems();
-    dlgText.Load();
+bool LanguageSelectionDlg::CreateAssets(const BOOL forceRecreate)
+{
+    if (forceRecreate)
+        styles.clear();
+
+    if (styles.empty())
+    {
+        styles.emplace_back(DlgStyle(200, 23, 7, false, DlgStyle::BROWN_BACK, h3::NH3Dlg::Text::MEDIUM));
+        styles.emplace_back(DlgStyle(150, 20, 25, true, DlgStyle::BLUE_BACK, h3::NH3Dlg::Text::MEDIUM));
+    }
+    return !styles.empty();
 }
 
 /// function to get last locale from vector
-// write commentaries
-
-void CurrentDlg_HandleLocaleDlgStart(const H3Msg *msg, const DlgStyle *style, const int yOffset = 0)
+// This function retrieves the last locale from the available locales
+// and returns it for further processing or display.
+void CurrentDlg_HandleLocaleDlgStart(void *_msg)
 {
-    if (msg->itemId == LOCALEDLG_BUTTON_ID)
+    if (const auto msg = static_cast<H3Msg *>(_msg))
     {
-        auto dlgPcx = msg->GetDlg()->GetTextPcx(msg->itemId);
-        if (dlgPcx)
+        const auto callerItem = msg->GetDlg()->GetCaptionButton(msg->itemId);
+        if (callerItem && msg->IsLeftClick())
         {
-            if (msg->IsLeftDown())
+            auto &style = LanguageSelectionDlg::styles[DlgStyle::BLUE_BACK]; // use first style by default
+
+            LocaleManager localeManager;
+
+            const UINT localesCount = localeManager.GetCount() + (style.createExportButton);
+
+            const UINT16 maxLocalesToDisplay = style.maxRows;
+            const bool createSlider = localesCount > maxLocalesToDisplay;
+
+            // if there are locales
+            if (const INT32 itemsToDisplay = createSlider ? maxLocalesToDisplay : localesCount)
             {
-                // create locale handler
-                if (LocaleManager *localeHandler = new LocaleManager())
+                // calc width based on the dlg asset width + assumed scroll width
+                const UINT16 dlgWidth = style.width + 16 * createSlider;
+
+                const UINT16 dlgHeight = style.height * itemsToDisplay;
+
+                const int callerX = callerItem->GetAbsoluteX();
+                const int callerY = callerItem->GetAbsoluteY();
+                const int callerWidth = callerItem->GetWidth();
+                const int callerHeight = callerItem->GetHeight();
+                const int gameWidth = H3GameWidth::Get();
+                const int gameHeight = H3GameHeight::Get();
+                constexpr int backgroundWidth = 800;
+                constexpr int backgroundHeight = 600;
+                const int backgroundX = gameWidth - backgroundWidth >> 1;
+                const int backgroundY = gameHeight - backgroundHeight >> 1;
+
+                INT16 dlgX = callerX + callerWidth;
+
+                // calculate dialog position
+                if (dlgX + dlgWidth > backgroundX + backgroundWidth)
                 {
+                    dlgX = backgroundX + backgroundWidth - dlgWidth;
+                }
 
-                    const UINT LOCALES_NUM = localeHandler->GetCount();
+                // dlgX = callerItem->GetAbsoluteX();
 
-                    const UINT16 MAX_ITEMS_PER_HEIGHT = style->maxRows;
-                    const bool ITEMS_OVERFLOW = LOCALES_NUM > MAX_ITEMS_PER_HEIGHT;
-                    const int ITEMS_NUM = ITEMS_OVERFLOW ? MAX_ITEMS_PER_HEIGHT : LOCALES_NUM;
-                    P_SoundMgr->ClickSound();
+                // const INT16 dlgY = bttn->GetAbsoluteY();// +yOffset;
+                //   dlgX = callerItem->GetAbsoluteX() - style.width;
+                INT16 dlgY = backgroundY;
 
-                    // if there are locales
-                    if (ITEMS_NUM)
-                    {
-                        // calc width based on the dlg asset width + assumed scroll width
-                        const UINT16 DLG_WIDTH = style->width + 16 * ITEMS_OVERFLOW;
+                LanguageSelectionDlg langDlg(dlgX, dlgY, dlgWidth, dlgHeight, style, &localeManager);
 
-                        const UINT16 DLG_HEIGHT = style->height * ITEMS_NUM;
+                const std::string currentLocale = LocaleManager::ReadLocaleFromIni();
+                langDlg.Start();
 
-                        INT16 DLG_X = dlgPcx->GetAbsoluteX();
-                        INT16 DLG_Y = dlgPcx->GetY() < 0 ? dlgPcx->GetAbsoluteY() - dlgPcx->GetY()
-                                                         : dlgPcx->GetAbsoluteY() + dlgPcx->GetHeight();
-                        // const INT16 DLG_Y = bttn->GetAbsoluteY();// +yOffset;
-                        DLG_X = dlgPcx->GetAbsoluteX() - style->width;
-                        DLG_Y = dlgPcx->GetAbsoluteY();
-
-                        LanguageSelectionDlg langDlg(DLG_X, DLG_Y, DLG_WIDTH, DLG_HEIGHT, style, localeHandler);
-
-                        std::string currentLocale = LocaleManager::ReadLocaleFromIni();
-                        langDlg.Start();
-
-                        std::string selectedLocale = LocaleManager::ReadLocaleFromIni();
-                        if (currentLocale != selectedLocale)
-                        {
-                            dlgPcx->SetText(LocaleManager::GetDisplayedName());
-                            dlgPcx->Draw();
-                            dlgPcx->ParentRedraw();
-                        }
-                    }
-                    else
-                    {
-                        H3Messagebox("ERROR:\nNo locales");
-                    }
-                    delete localeHandler;
+                const std::string selectedLocale = LocaleManager::ReadLocaleFromIni();
+                if (currentLocale != selectedLocale)
+                {
+                    callerItem->SetText(LocaleManager::GetDisplayedName());
+                    callerItem->Draw();
+                    callerItem->ParentRedraw();
                 }
             }
-            else if (msg->IsRightClick())
+            else
             {
-                // H3Messagebox::RMB("");
+                H3Messagebox("ERROR:\nNo locales");
             }
         }
     }
 }
 
-void __fastcall DlgSroll_Proc(INT32 tickId, H3BaseDlg *dlg)
+LanguageSelectionDlg::LanguageSelectionDlg(const int x, const int y, const int width, const int height,
+                                           const DlgStyle &style, LocaleManager *handler)
+    : H3Dlg(width, height, x, y, false, false), style(style), localeManager(handler)
+{
+
+    flags ^= 0x10; // disable dlg shadow
+    fontLoader = style.fontName.String();
+
+    CreateDlgItems();
+    dlgText.Load();
+}
+
+void LanguageSelectionDlg::CreateDlgItems()
+{
+    const UINT widgetWidth = style.width;
+    const UINT widgetHeight = style.height;
+
+    const UINT SIZE = localeManager->GetCount();
+    const BOOL createExportButton = style.createExportButton;
+
+    const UINT16 MAX_ITEMS_PER_HEIGHT =
+        Clamp(createExportButton, style.maxRows, heightDlg / widgetHeight) - createExportButton;
+
+    const int exportButtonHeight = createExportButton ? widgetHeight : 0; // +2 for export button and frame
+    const int exportButtonWidth = createExportButton ? widgetWidth : 0;   // +2 for export button and frame
+    // if items more than need
+    const int overload = SIZE - MAX_ITEMS_PER_HEIGHT;
+    if (overload > 0)
+    {
+        // create Scroll Bar
+        constexpr int SCROLLBAR_WIDTH = 16;
+        CreateScrollbar(widgetWidth, 0, SCROLLBAR_WIDTH, heightDlg - exportButtonHeight, 1, overload + 1, DlgSroll_Proc,
+                        style.isBlueBack);
+    }
+
+    if (localesToDraw = SIZE < MAX_ITEMS_PER_HEIGHT ? SIZE : MAX_ITEMS_PER_HEIGHT)
+    {
+        static_assert(FIRST_SELECTION_WIDGET_ID > 2, "First selection widget ID must be > 2");
+        firstLocaleItemId = FIRST_SELECTION_WIDGET_ID;
+        lastLocaleItemId = firstLocaleItemId - 1;
+
+        for (size_t i = 0; i < localesToDraw; i++)
+        {
+            const int y = i * widgetHeight;
+            const int itemId = firstLocaleItemId + i;
+
+            auto textPcx = H3DlgPcx16Locale::Create(0, y, style, &localeManager->LocaleAt(i), fontLoader.Get(),
+                                                    ++lastLocaleItemId);
+            displayedLocales.push_back(textPcx);
+            AddItem(textPcx);
+        }
+    }
+    if (createExportButton)
+    {
+        const UINT16 exportButtonItemId =
+            ((firstLocaleItemId != -1) ? lastLocaleItemId : FIRST_SELECTION_WIDGET_ID) + 1;
+        // create special button to export available text
+        exportDlgPcx = H3DlgPcx16::Create(0, localesToDraw * widgetHeight, exportButtonWidth, exportButtonHeight,
+                                          exportButtonItemId, nullptr);
+
+        auto pcx = H3LoadedPcx16::Create(exportButtonWidth, exportButtonHeight);
+
+        libc::memset(pcx->buffer, 0, pcx->buffSize);
+        pcx->SimpleFrameRegion(0, 0, exportButtonWidth, exportButtonHeight);
+
+        pcx->BackgroundRegion(4, 4, exportButtonWidth - 8, exportButtonHeight - 8, 0); // H3RGB888(0xFF, 0xFF, 0xFF));
+
+        fontLoader->TextDraw(pcx, EraJS::read(ExportDlg::BUTTON_NAME), 2, 2, exportButtonWidth - 4,
+                             exportButtonHeight - 4);
+        exportDlgPcx->SetPcx(pcx);
+
+        AddItem(exportDlgPcx);
+    }
+
+    H3RGB565 color(H3RGB888::Highlight());
+    selectionFrame = this->CreateFrame(0, 0, widgetWidth, widgetHeight, FRAME_WIDGET_ID, color);
+    selectionFrame->HideDeactivate();
+
+    // auto frame = CreateFrame(0, 0, widthDlg, heightDlg, -1, color);
+    // frame->DeActivate();
+}
+
+void __fastcall LanguageSelectionDlg::DlgSroll_Proc(INT32 tickId, H3BaseDlg *dlg)
 {
     // try to cast dlg to our dlg
     if (auto localeDlg = dynamic_cast<LanguageSelectionDlg *>(dlg))
     {
-
         localeDlg->RedrawLocales(tickId);
         localeDlg->Redraw();
-        return;
     }
 }
 
@@ -96,7 +188,7 @@ BOOL LanguageSelectionDlg::OnMouseHover(H3DlgItem *it)
 {
     if (it->GetID() >= firstLocaleItemId && it->GetID() <= lastLocaleItemId)
     {
-        if (auto pcxLocale = it->Cast<H3DlgTextPcxLocale>())
+        if (auto pcxLocale = it->Cast<H3DlgPcx16Locale>())
         {
             localeManager->SetSelected(pcxLocale->GetLocale());
 
@@ -114,10 +206,10 @@ void LanguageSelectionDlg::RedrawLocales(UINT16 firstItemId) noexcept
     for (uint16_t i = 0; i < localesToDraw; i++)
     {
         // assure those support locale edits
-        if (auto selectionWidget = Get<H3DlgTextPcxLocale>(i + firstLocaleItemId))
+        if (auto selectionWidget = Get<H3DlgPcx16Locale>(i + firstLocaleItemId))
         { // set new locale according on the scroll offset
-            auto locale = localeManager->LocaleAt(i + firstItemId);
-            selectionWidget->SetLocale(locale);
+            auto &locale = localeManager->LocaleAt(i + firstItemId);
+            selectionWidget->SetLocale(&locale);
             if (selectionWidget->GetX() == selectionFrame->GetX() && selectionWidget->GetY() == selectionFrame->GetY())
             {
                 PlaceFrameAtWidget(selectionWidget);
@@ -130,7 +222,7 @@ void LanguageSelectionDlg::HideFrame() const noexcept
     selectionFrame->HideDeactivate();
     localeManager->SetSelected(nullptr);
 }
-void LanguageSelectionDlg::PlaceFrameAtWidget(const H3DlgTextPcxLocale *it) const noexcept
+void LanguageSelectionDlg::PlaceFrameAtWidget(const H3DlgPcx16Locale *it) const noexcept
 {
     selectionFrame->SetX(it->GetX());
     selectionFrame->SetY(it->GetY());
@@ -149,20 +241,18 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
 
             const Locale *locale = localeManager->GetSelected();
 
-            bool samelocale = locale == localeManager->GetCurrent();
+            const BOOL samelocale = locale == localeManager->GetCurrent();
 
             LPCSTR formatPtr = samelocale ? dlgText.sameLocaleFormat : dlgText.questionformat;
 
             LPCSTR comment = h3_NullString;
-            // check if locale description is missed
-            if (!locale->hasDescription)
+            // check if locale description is broken
+            if (locale->broken)
             {
-                LPCSTR keyName = H3String::Format(localeManager->LocaleFormat(), locale->name.c_str()).String();
-                comment = H3String::Format(dlgText.localeHasNoDescriptionFormat.String(), locale->name.c_str(), keyName)
-                              .String();
+                comment = H3String::Format(EraJS::read(LocaleManager::error::name), locale->name.c_str()).String();
             }
 
-            sprintf(h3_TextBuffer, formatPtr, locale->name.c_str(), locale->displayedName.c_str(), comment);
+            libc::sprintf(h3_TextBuffer, formatPtr, locale->name.c_str(), locale->displayedName.c_str(), comment);
 
             if (samelocale)
             {
@@ -180,26 +270,29 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
         }
         else if (exportDlgPcx && msg.itemId == exportDlgPcx->GetID())
         {
-            ExportDlg exportDlg(630, 300, -1, -1, m_style);
+            P_SoundManager->ClickSound();
+            // create export dialog
+            ExportDlg exportDlg(630, 300, -1, -1, style);
             exportDlg.Start();
         }
     }
-
+    if (msg.IsKeyDown())
+    {
+        const eVKey keyCode = msg.GetKey();
+        if (keyCode == eVKey::H3VK_ESCAPE || keyCode == eVKey::H3VK_SPACEBAR || keyCode == eVKey::H3VK_ENTER)
+        {
+            Stop();
+        }
+    }
     if (msg.ClickOutside())
         Stop();
 
     return 0;
 }
-const LocaleManager *LanguageSelectionDlg::Handler() const noexcept
-{
-    return localeManager;
-}
-const DlgStyle *LanguageSelectionDlg::Style() const noexcept
-{
-    return m_style;
-}
+
 LanguageSelectionDlg::~LanguageSelectionDlg()
 {
+    fontLoader.Release();
     if (exportDlgPcx)
     {
         if (auto pcx = exportDlgPcx->GetPcx())
@@ -208,178 +301,50 @@ LanguageSelectionDlg::~LanguageSelectionDlg()
             exportDlgPcx->SetPcx(nullptr);
         }
     }
-}
-
-void CurrentDlg_CreateDlgCallPcx(H3BaseDlg *dlg, int x, int y, const DlgStyle *style)
-{
-
-    auto *captionPcx = H3DlgTextPcx::Create(x, y, style->width, style->height, LocaleManager::GetDisplayedName(),
-                                            style->fontName.String(), style->pcxName, 7, LOCALEDLG_BUTTON_ID);
-
-    dlg->AddItem(captionPcx);
-}
-
-H3BaseDlg *DlgSystemOptions_Create(HiHook *h, H3BaseDlg *dlg)
-{
-    dlg = THISCALL_1(H3BaseDlg *, h->GetDefaultFunc(), dlg);
-    CurrentDlg_CreateDlgCallPcx(dlg, 235, 269, &DlgStyle::styles[DlgStyle::BROWN_BACK]);
-    return dlg;
-}
-
-void AddButtonToMainMenuDlg(H3BaseDlg *dlg)
-{
-    if (dlg) // before any dlg run get dlg) // if exists
+    // destroy created pictures
+    for (auto &i : displayedLocales)
     {
-
-        const DlgStyle *style = &DlgStyle::styles[DlgStyle::BLUE_BACK];
-        const auto pcx = style->pcxName;
-        if (pcx)
+        if (auto pcx = i->GetPcx())
         {
-            const int x = dlg->GetWidth(); // -pcx->width;
-            const int borderHeight = H3GameHeight::Get() - 600;
-
-            // const int offset = pcx->height + 4;
-            const int y = 0; // borderHeight > offset << 1 ? -offset : 0;
-            CurrentDlg_CreateDlgCallPcx(dlg, x, y, style);
+            pcx->Destroy();
+            i->SetPcx(nullptr);
         }
     }
 }
 
-_LHF_(DlgSystemOptions_AtCreate)
-{
-    if (H3Dlg *dlg = *reinterpret_cast<H3Dlg **>(c->ebp - 0x20)) // before any dlg run get dlg
-        CurrentDlg_CreateDlgCallPcx(dlg, 235, 269, &DlgStyle::styles[DlgStyle::BROWN_BACK]);
-
-    return EXEC_DEFAULT;
-}
-
-int __stdcall DlgSystemOption_Proc(HiHook *h, H3BaseDlg *dlg, H3Msg *msg)
-{
-    int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, msg);
-    CurrentDlg_HandleLocaleDlgStart(msg, &DlgStyle::styles[DlgStyle::BROWN_BACK]);
-    return result;
-}
-
-int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
-{
-    CurrentDlg_HandleLocaleDlgStart(msg, &DlgStyle::styles[DlgStyle::BLUE_BACK], 20);
-    return FASTCALL_1(int, h->GetDefaultFunc(), msg);
-}
-int __stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
-{
-    int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
-    AddButtonToMainMenuDlg(dlg);
-    return result;
-}
-int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
-{
-    int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
-    AddButtonToMainMenuDlg(dlg);
-    return result;
-}
-int __stdcall DlgMainMenu_Campaign_Run(HiHook *h, H3BaseDlg *dlg)
-{
-    AddButtonToMainMenuDlg(dlg);
-    auto _h = _PI->WriteHiHook(0x5FFAC0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
-    int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
-    _h->Destroy();
-    return result;
-}
-
-void LanguageSelectionDlg::Init()
-{
-    if (DlgStyle::CreateAssets())
-    {
-
-        // Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
-        //_PI->WriteLoHook(0x5B2F9B, DlgSystemOptions_AtCreate); //System options dlg from Adventure Mgr and Main Menu
-        //(by HD mod only - RMB or MRM) _PI->WriteLoHook(0x4EF259, DlgMainMenu_BeforeRun); //MAIN Main Menu Dlg Run
-
-        _PI->WriteHiHook(0x4FB930, THISCALL_, DlgMainMenu_Create);
-        _PI->WriteHiHook(0x4D56D0, THISCALL_, DlgMainMenu_NewLoad_Create);
-        //	_PI->WriteHiHook(0x456BA0, THISCALL_, DlgMainMenu_Campaign_Create); //goes from new game
-        _PI->WriteHiHook(0x4F0799, THISCALL_, DlgMainMenu_Campaign_Run); // goes from new game
-
-        _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
-        _PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // New/ Load Game Menu Dlg Proc
-        _PI->WriteHiHook(0x5B1AA0, THISCALL_,
-                         DlgSystemOptions_Create); // Campaign (and some several) Game Menu Dlg Proc
-
-        _PI->WriteHiHook(0x5B3450, THISCALL_, DlgSystemOption_Proc);
-    }
-}
-
-void LanguageSelectionDlg::CreateDlgItems()
-{
-    const UINT widgetWidth = m_style->width;
-    const UINT widgetHeight = m_style->height;
-
-    const UINT SIZE = localeManager->GetCount();
-
-    const UINT16 MAX_ITEMS_PER_HEIGHT = m_style->maxRows;
-    const BOOL createExportButton = m_style->createExportButton;
-
-    const int exportButtonHeight = createExportButton ? widgetHeight : 0; // +2 for export button and frame
-    const int exportButtonWidth = createExportButton ? widgetWidth : 0;   // +2 for export button and frame
-    // if items more than need
-    const int overload = SIZE - MAX_ITEMS_PER_HEIGHT;
-    if (overload > 0)
-    {
-        // create Scroll Bar
-        constexpr int SCROLLBAR_WIDTH = 16;
-        CreateScrollbar(widgetWidth, 0, SCROLLBAR_WIDTH, heightDlg - exportButtonHeight, 1, overload + 1,
-                        DlgSroll_Proc);
-    }
-
-    if (localesToDraw = (SIZE < MAX_ITEMS_PER_HEIGHT ? SIZE : MAX_ITEMS_PER_HEIGHT) - createExportButton)
-    {
-        static_assert(FIRST_SELECTION_WIDGET_ID > 2, "First selection widget ID must be > 2");
-        firstLocaleItemId = FIRST_SELECTION_WIDGET_ID;
-        lastLocaleItemId = firstLocaleItemId - 1;
-
-        for (size_t i = 0; i < localesToDraw; i++)
-        {
-            const int y = i * widgetHeight;
-            const int itemId = firstLocaleItemId + i;
-            auto textPcx =
-                H3DlgTextPcxLocale::Create(0, y, widgetWidth, widgetHeight, localeManager->LocaleAt(i),
-                                           m_style->fontName.String(), m_style->pcxName, 1, ++lastLocaleItemId);
-
-            AddItem(textPcx);
-        }
-    }
-    if (createExportButton)
-    {
-        const UINT16 exportButtonItemId =
-            ((firstLocaleItemId != -1) ? lastLocaleItemId : FIRST_SELECTION_WIDGET_ID) + 1;
-        // create special button to export available text
-        exportDlgPcx = H3DlgPcx16::Create(0, localesToDraw * widgetHeight, exportButtonWidth, exportButtonHeight,
-                                          exportButtonItemId, nullptr);
-
-        auto pcx = H3LoadedPcx16::Create(exportButtonWidth, exportButtonHeight);
-
-        libc::memset(pcx->buffer, 0, pcx->buffSize);
-        pcx->SimpleFrameRegion(0, 0, exportButtonWidth, exportButtonHeight);
-
-        pcx->BackgroundRegion(4, 4, exportButtonWidth - 8, exportButtonHeight - 8, 0); // H3RGB888(0xFF, 0xFF, 0xFF));
-        H3FontLoader fnt(m_style->fontName.String());
-        fnt->TextDraw(pcx, EraJS::read("era.locale.dlg.export.name"), 2, 2, exportButtonWidth - 4,
-                      exportButtonHeight - 4);
-        exportDlgPcx->SetPcx(pcx);
-
-        AddItem(exportDlgPcx);
-    }
-
-    H3RGB565 color(H3RGB888::Highlight());
-    selectionFrame = this->CreateFrame(0, 0, widgetWidth, widgetHeight, FRAME_WIDGET_ID, color);
-    selectionFrame->HideDeactivate();
-
-    // auto frame = CreateFrame(0, 0, widthDlg, heightDlg, -1, color);
-    // frame->DeActivate();
-}
 void LanguageSelectionDlg::DlgText::Load() noexcept
 {
     questionformat = EraJS::read("era.locale.dlg.question");
     localeHasNoDescriptionFormat = EraJS::read("era.locale.dlg.noDescription");
     sameLocaleFormat = EraJS::read("era.locale.dlg.sameLocale");
+}
+void LanguageSelectionDlg::Init()
+{
+    if (CreateAssets())
+    {
+        using namespace mainmenu;
+
+        eMenuList menuList = eMenuList(eMenuList::Main | eMenuList::NewGame | eMenuList::LoadGame);
+        MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, LocaleManager::GetDisplayedName(), menuList,
+                            &CurrentDlg_HandleLocaleDlgStart};
+
+        RegisterMainMenuWidget(langInfo);
+        for (size_t i = 0; i < 6; i++)
+        {
+            libc::sprintf(h3_TextBuffer, "era.locale.dlg.style.%d", i);
+            mainmenu::MenuWidgetInfo info{h3_TextBuffer, LocaleManager::GetDisplayedName(), mainmenu::eMenuList::Main,
+                                          &CurrentDlg_HandleLocaleDlgStart};
+
+            mainmenu::RegisterMainMenuWidget(info);
+        }
+    }
+}
+
+DlgStyle::DlgStyle(const UINT width, const UINT height, const UINT maxRows, const BOOL createExportButton,
+                   const BOOL isBlueBack, LPCSTR fontName)
+    : width(width), height(height), maxRows(maxRows), createExportButton(createExportButton), isBlueBack(isBlueBack),
+      fontName(fontName)
+{
+    this->maxRows = Clamp(0, maxRows + createExportButton, (600 / height));
+    pcxName = isBlueBack ? NH3Dlg::HDassets::DLGBLUEBACK : NH3Dlg::Assets::DIBOXBACK;
 }

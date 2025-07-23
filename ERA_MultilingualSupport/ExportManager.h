@@ -5,7 +5,12 @@
 
 class ExportDlg : public H3Dlg
 {
+  public:
+    static constexpr LPCSTR BUTTON_NAME = "era.locale.dlg.export.name";
+
+  private:
     static constexpr LPCSTR PANEL_NAME_FORMAT = "era.locale.dlg.export.items.%d";
+
     static constexpr int PANEL_TEXT_WIDTH = 200;
     static constexpr int CHECKBOX_PADDING = 200;
     static constexpr int PANELS_PADDING = 30;
@@ -25,7 +30,7 @@ class ExportDlg : public H3Dlg
                                          BOOL (*exportFunc)(LPCSTR, const BOOL, const BOOL));
 
   public:
-    ExportDlg(const int width, const int height, const int x, const int y, const DlgStyle *style);
+    ExportDlg(const int width, const int height, const int x, const int y, const DlgStyle &style);
     virtual ~ExportDlg();
 
     virtual BOOL DialogProc(H3Msg &msg) override;

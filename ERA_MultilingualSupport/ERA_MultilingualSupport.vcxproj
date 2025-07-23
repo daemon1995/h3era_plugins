@@ -74,7 +74,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="DlgStyle.h" />
     <ClInclude Include="ExportManager.h" />
     <ClInclude Include="H3DlgTextPcxLocale.h" />
     <ClInclude Include="LanguageSelectionDlg.h" />
@@ -89,7 +88,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
-    <ClCompile Include="DlgStyle.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ExportManager.cpp" />
     <ClCompile Include="H3DlgTextPcxLocale.cpp" />
