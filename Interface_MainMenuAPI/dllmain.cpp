@@ -17,6 +17,32 @@ PatcherInstance *_PI = nullptr;
 int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg);
 int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg);
 
+int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
+{
+    const int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
+    MenuWidgetManager::Get().CreateWidgets(dlg, val ? eMenuList::LoadGame : eMenuList::NewGame);
+    return result;
+}
+
+int __stdcall DlgMainMenu_NewLoad_Dtor(HiHook *h, H3BaseDlg *dlg)
+{
+    MenuWidgetManager::Get().DestroyWidgets(dlg);
+    return THISCALL_1(int, h->GetDefaultFunc(), dlg);
+}
+int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
+{
+    // Custom processing for the main menu dialog
+    MenuWidgetManager::Get().HandleEvent(msg);
+
+    return FASTCALL_1(int, h->GetDefaultFunc(), msg);
+}
+
+int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
+{
+    MenuWidgetManager::Get().DestroyWidgets(dlg);
+
+    return THISCALL_1(int, h->GetDefaultFunc(), dlg);
+}
 H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 {
 
@@ -24,16 +50,21 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 
     if (const UINT size = MenuWidgetManager::Get().GetWidgets().size())
     {
-
-        static bool initialized = false;
-
-        if (!initialized)
+        if (!MenuWidgetManager::initialized)
         {
-            _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc);
-
+            MenuWidgetManager::initialized = true;
+            _PI->WriteHiHook(0x04FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
+            _PI->WriteHiHook(0x04EF02B, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
             _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
+
+            _PI->WriteHiHook(0x04EF31F, THISCALL_, DlgMainMenu_NewLoad_Create);
+            _PI->WriteHiHook(0x04EF65A, THISCALL_, DlgMainMenu_NewLoad_Create);
+            _PI->WriteHiHook(0x04D5B50, THISCALL_, DlgMainMenu_Proc); // New/ Load Game Menu Dlg Proc
+
+            _PI->WriteHiHook(0x04EF343, THISCALL_, DlgMainMenu_NewLoad_Dtor);
+            _PI->WriteHiHook(0x04EF67A, THISCALL_, DlgMainMenu_NewLoad_Dtor);
         }
-        MenuWidgetManager::Get().CreateWidgets(dlg, 804, 100, 120, 24, 4);
+        MenuWidgetManager::Get().CreateWidgets(dlg, eMenuList::Main);
     }
     else
     {
@@ -46,21 +77,17 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
     return result;
 }
 
-int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
-{
-    // Custom processing for the main menu dialog
-    MenuWidgetManager::Get().HandleEvent(msg);
-
-    return FASTCALL_1(int, h->GetDefaultFunc(), msg);
-}
-
-int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
-{
-
-    return THISCALL_1(int, h->GetDefaultFunc(), dlg);
-}
 void __stdcall OnAfterWog(Era::TEvent *e)
 {
+
+    MenuWidgetInfo hideWidgets{MenuWidgetManager::WIDGET_NAME_HIDE, EraJS::read(MenuWidgetManager::WIDGET_TEXT_HIDE),
+                               eMenuList::All, &MenuWidgetManager::OnHideButtonProc};
+    MenuWidgetManager::Get().RegisterWidget(hideWidgets);
+
+    MenuWidgetInfo optionWidgets{MenuWidgetManager::WIDGET_NAME_OPTIONS,
+                               EraJS::read(MenuWidgetManager::WIDGET_TEXT_OPTIONS), eMenuList::All,
+                               &MenuWidgetManager::OnOptionsButtonProc};
+    MenuWidgetManager::Get().RegisterWidget(optionWidgets);
 
     // This function is called after the Wog event
 }
@@ -80,6 +107,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             Era::RegisterHandler(OnAfterWog, "OnAfterWog");
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
             _PI->WriteHiHook(0x04EF247, THISCALL_, DlgMainMenu_Create);
+
             // _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc);
             // _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor);
         }

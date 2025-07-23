@@ -1,0 +1,5 @@
+LIBRARY Interface_MainMenuAPI
+EXPORTS
+    RegisterMainMenuWidget
+	GetMainMenuWidgetByName
+	GetMainMenuWidgetId
