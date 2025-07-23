@@ -3,6 +3,7 @@
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 // Windows Header Files
 #define NLOHMAN_JSON
+#define MAIN_MENU_API
 // add headers that you want to pre-compile here
 #include "..\headers\header.h"
 #include "..\headers\era\eraModList.hpp"

@@ -123,28 +123,11 @@ std::wstring GetAppDataPath()
     CoTaskMemFree(appDataPath);
     return result;
 }
-typedef H3DlgCaptionButton *(__stdcall *GetMainMenuWidgetById_t)(const char *);
 
 static H3DlgCaptionButton *GetNotificationPanelCallerWidget()
 {
-    HMODULE hApi = GetModuleHandleA("Interface_MainMenuAPI.era");
-    if (hApi)
-    {
-        auto getWidget = (GetMainMenuWidgetById_t)GetProcAddress(hApi, "GetMainMenuWidgetById");
-        if (!getWidget)
-        {
-            // Попробуем другие варианты имени функции
-            getWidget = (GetMainMenuWidgetById_t)GetProcAddress(hApi, "_GetMainMenuWidgetById");
-        }
-        if (!getWidget)
-        {
-            getWidget = (GetMainMenuWidgetById_t)GetProcAddress(hApi, "_GetMainMenuWidgetById@4");
-        }
-
-        if (getWidget)
-            return getWidget("notification_panel_caller");
-    }
-    return nullptr;
+    return reinterpret_cast<H3DlgCaptionButton *>(
+        mainmenu::GetMainMenuWidgetByName(NotificationPanel::PARENT_BUTTON_CALLER_NAME));
 }
 NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y, const int width,
                                      const int height) noexcept
@@ -186,11 +169,6 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
         }
 
         backupScreen = H3LoadedPcx16::Create(width, height);
-
-        // making hd mod wrong main menu drawing offset fix
-        const int _x = x + (H3GameWidth::Get() - 800) / 2;
-        const int _y = y + (H3GameHeight::Get() - 600) / 2;
-        backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
 
         H3RGB565 highLightColor(H3RGB888::Highlight());
         H3RGB565 lightBorderColor(H3RGB888(247, 222, 123));
@@ -593,6 +571,14 @@ void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNot
         this->isVisible = visible;
         auto &background = runtimes.panelBackground.item;
 
+        if (visible)
+        {
+            // making hd mod wrong main menu drawing offset fix
+            const int _x = x + (H3GameWidth::Get() - 800) / 2;
+            const int _y = y + (H3GameHeight::Get() - 600) / 2;
+            backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
+        }
+
         background->SetPcx(visible ? runtimes.panelBackground.pcx : backupScreen);
 
         volatile int index = 0;
@@ -791,6 +777,18 @@ void NotificationPanel::SwitchModInfo(const int step) noexcept
     }
 }
 void OpenExternalFile(const char *path, const char *msg = nullptr);
+
+void NotificationPanel::OnPanelCallerClick(void *msg) noexcept
+{
+    if (auto *h3msg = reinterpret_cast<H3Msg *>(msg))
+    {
+        if (h3msg->IsLeftClick())
+        {
+            instance->SetVisible(!instance->isVisible, true);
+        }
+    }
+}
+
 BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept
 {
 
@@ -818,7 +816,6 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
                 if (processItem == parentCaller)
                 {
                     // P_SoundManager->ClickSound();
-                    SetVisible(!isVisible, true);
                 }
                 else if (processItem == hideAllButton)
                 {

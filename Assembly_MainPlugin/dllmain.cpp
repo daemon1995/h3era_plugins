@@ -7,8 +7,7 @@ const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";
 const char *PLUGIN_DATA = __DATE__;
-} // namespace dllText56
-
+} // namespace dllText
 
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
@@ -30,24 +29,6 @@ BOOL __stdcall _IsIconic(HWND hwnd)
 
 #include <windows.h>
 // Объявление структуры и типа функции для регистрации виджета
-typedef struct MenuWidgetInfo
-{
-    std::string name;
-    std::string text;
-    std::function<void(H3Msg&)> onClick;
-	H3DlgCaptionButton* uiElement = nullptr; // Указатель на элемент интерфейса
-	int id = 0; // Идентификатор виджета
-} MenuWidgetInfo;
-
-typedef void(__stdcall* RegisterMainMenuWidget_t)(const MenuWidgetInfo& info);
-
-void TestWidgetClick(H3Msg& msg) {
-    if (msg.itemId == 400)
-    {
-        MessageBoxA(NULL, "Test widget clicked!", "Widget", MB_OK);
-
-    }
-}
 
 int __stdcall GameStart(LoHook *h, HookContext *c)
 {
@@ -55,27 +36,10 @@ int __stdcall GameStart(LoHook *h, HookContext *c)
     // info->LoadDataFromJson();
     // UserNotification::Get();
 
-
-                // Динамически ищем функцию экспорта из Interface_MainMenuAPI
-    HMODULE hApi = GetModuleHandleA("Interface_MainMenuAPI.era");
-    if (hApi) {
-        auto reg = (RegisterMainMenuWidget_t)GetProcAddress(hApi, "RegisterMainMenuWidget");
-        if (!reg) {
-            // Попробуем другие варианты имени функции
-            reg = (RegisterMainMenuWidget_t)GetProcAddress(hApi, "_RegisterMainMenuWidget");
-        }
-        if (!reg) {
-            reg = (RegisterMainMenuWidget_t)GetProcAddress(hApi, "_RegisterMainMenuWidget@4");
-        }
-        if (reg) {
-            MenuWidgetInfo infso{ "notification_panel_caller", "notification_panel_caller Widget", &TestWidgetClick };
-            reg(infso);
-        } else {
-            MessageBoxA(NULL, "Function RegisterMainMenuWidget not found!", "Debug", MB_OK);
-        }
-    } else {
-        MessageBoxA(NULL, "Module Interface_MainMenuAPI.era not found!", "Debug", MB_OK);
-    }
+    // Динамически ищем функцию экспорта из Interface_MainMenuAPI
+    mainmenu::MenuWidgetInfo info{NotificationPanel::PARENT_BUTTON_CALLER_NAME, h3_NullString,
+                                  mainmenu::eMenuList::Main, NotificationPanel ::OnPanelCallerClick};
+    mainmenu::RegisterMainMenuWidget(info);
     h->Undo();
     return EXEC_DEFAULT;
 
@@ -116,8 +80,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             Era::RegisterHandler(OnReportVersion, "OnReportVersion");
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
             _PI->WriteLoHook(0x4EDFFD, GameStart);
-
-
         }
         break;
 

@@ -13,6 +13,7 @@ constexpr LPCSTR ORDERED_MOD_URL = "era.%s.notification.%d.url";
 } // namespace jsonFormat
 struct NotificationPanel
 {
+	static constexpr LPCSTR PARENT_BUTTON_CALLER_NAME = "notification_panel_caller";
     static NotificationPanel *instance;
     static constexpr int FRAME_OFFSET = 2;
     // namespace assetss
@@ -131,6 +132,7 @@ struct NotificationPanel
     void SetVisible(const BOOL isVisible, const BOOL activateAllNotifications = false) noexcept;
     BOOL ProcessPanel(H3Msg *msg, const BOOL forceRedraw = false) noexcept;
     void ReloadLanguageData() noexcept;
+	static void OnPanelCallerClick(void* msg) noexcept;
     static NotificationPanel *Init(H3BaseDlg *parrent, const int x = 1, const int y = 1, const int width = 400,
                                    const int height = 600) noexcept;
 };
