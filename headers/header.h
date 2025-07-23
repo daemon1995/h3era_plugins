@@ -27,7 +27,9 @@
 #ifdef ERA_MODLIST
 #include "Era/eraModList.hpp"
 #endif // ERA_MOD_LIST
-
+#ifdef MAIN_MENU_API
+#include "EraPluginsAPI/MainMenuAPI.hpp"
+#endif // MAIN_MENU_API
 #ifdef _WOG_
 #include "WoG/NPC.h"
 #include "WoG/WogClasses.h"
