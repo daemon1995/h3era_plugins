@@ -132,7 +132,7 @@ void LanguageSelectionDlg::CreateDlgItems()
         static_assert(FIRST_SELECTION_WIDGET_ID > 2, "First selection widget ID must be > 2");
         firstLocaleItemId = FIRST_SELECTION_WIDGET_ID;
         lastLocaleItemId = firstLocaleItemId - 1;
-
+        H3DlgPcx16Locale::CreateBackgroundPcx(style);
         for (size_t i = 0; i < localesToDraw; i++)
         {
             const int y = i * widgetHeight;
@@ -310,6 +310,7 @@ LanguageSelectionDlg::~LanguageSelectionDlg()
             i->SetPcx(nullptr);
         }
     }
+    H3DlgPcx16Locale::DeleteBackgroundPcx();
 }
 
 void LanguageSelectionDlg::DlgText::Load() noexcept
@@ -326,7 +327,7 @@ void LanguageSelectionDlg::Init()
 
         eMenuList menuList = eMenuList(eMenuList::Main | eMenuList::NewGame | eMenuList::LoadGame);
         MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, LocaleManager::GetDisplayedName(), menuList,
-                            &CurrentDlg_HandleLocaleDlgStart};
+                                &CurrentDlg_HandleLocaleDlgStart};
 
         RegisterMainMenuWidget(langInfo);
         for (size_t i = 0; i < 6; i++)
