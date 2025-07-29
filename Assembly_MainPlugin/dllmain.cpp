@@ -38,8 +38,8 @@ int __stdcall GameStart(LoHook *h, HookContext *c)
 
     // Динамически ищем функцию экспорта из Interface_MainMenuAPI
     mainmenu::MenuWidgetInfo info{NotificationPanel::PARENT_BUTTON_CALLER_NAME, h3_NullString,
-                                  mainmenu::eMenuList::Main, NotificationPanel ::OnPanelCallerClick};
-    mainmenu::RegisterMainMenuWidget(info);
+                                  mainmenu::eMenuList::MAIN, NotificationPanel::OnPanelCallerClick};
+    mainmenu::MainMenu_RegisterWidget(info);
     h->Undo();
     return EXEC_DEFAULT;
 

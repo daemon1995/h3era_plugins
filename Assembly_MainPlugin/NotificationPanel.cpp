@@ -127,7 +127,7 @@ std::wstring GetAppDataPath()
 static H3DlgCaptionButton *GetNotificationPanelCallerWidget()
 {
     return reinterpret_cast<H3DlgCaptionButton *>(
-        mainmenu::GetMainMenuWidgetByName(NotificationPanel::PARENT_BUTTON_CALLER_NAME));
+        mainmenu::MainMenu_GetDialogButton(NotificationPanel::PARENT_BUTTON_CALLER_NAME));
 }
 NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y, const int width,
                                      const int height) noexcept
