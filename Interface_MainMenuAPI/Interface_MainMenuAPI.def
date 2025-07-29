@@ -1,5 +1,6 @@
 LIBRARY Interface_MainMenuAPI
 EXPORTS
-    RegisterMainMenuWidget
-	GetMainMenuWidgetByName
-	GetMainMenuWidgetId
+    MainMenu_RegisterWidget
+	MainMenu_GetDialogButton
+	MainMenu_GetDialogButtonId
+	MainMenu_SetDialogButtonText

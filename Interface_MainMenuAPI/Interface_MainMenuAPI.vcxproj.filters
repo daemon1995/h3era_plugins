@@ -23,9 +23,15 @@
     <ClCompile Include="MenuWidgetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BaseGameWidgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MenuWidgetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseGameWidgets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

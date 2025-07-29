@@ -5,29 +5,49 @@ MenuWidgetManager &MenuWidgetManager::Get()
     static MenuWidgetManager instance;
     return instance;
 }
+BOOL MenuWidgetManager::IsVisible() const noexcept
+{
+    return isVisible;
+}
 
 void MenuWidgetManager::SetVisible(const bool visible)
 {
-    if (visible != this->visible)
+    if (visible != this->isVisible)
     {
-
-        this->visible = visible;
-        if (visible)
+        this->isVisible = visible;
+        if (visible && placedOutside)
         {
             // making hd mod wrong main menu drawing offset fix
             const int _x = background->GetX() + (H3GameWidth::Get() - 800) / 2;
             const int _y = background->GetY() + (H3GameHeight::Get() - 600) / 2;
             backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
         }
-        background->SetPcx(visible ? backgroundPcx : backupScreen);
-
-        for (auto &wg : createdWidgets)
+        // if (menuType != mainmenu::MAIN)
         {
-            if (auto *it = wg->uiElement)
+            background->SetPcx(visible ? backgroundPcx : backupScreen);
+        }
+
+        for (size_t i = 0; i < createdWidgets.size(); i++)
+        {
+            auto *widget = createdWidgets[i];
+            if (auto it = widget->uiElement)
             {
-                visible ? it->ShowActivate(), it->Draw(), it->Refresh() : it->HideDeactivate();
+                const int itemId = it->GetID();
+                if (itemId >= topWidgetId && itemId <= bottomWidgetId)
+                {
+                    visible ? it->ShowActivate(), it->Draw(), it->Refresh() : it->HideDeactivate();
+                }
             }
         }
+
+        if (auto *it = scrollbar)
+        {
+            visible ? it->ShowActivate(), it->Draw(), it->Refresh() : it->HideDeactivate();
+        }
+
+        for (auto &it : arrows)
+            if (it)
+                visible ? it->ShowActivate(), it->Draw(), it->Refresh() : it->HideDeactivate();
 
         if (!visible)
         {
@@ -36,217 +56,429 @@ void MenuWidgetManager::SetVisible(const bool visible)
         }
     }
 }
-void MenuWidgetManager::OnHideButtonProc(void *_msg)
-{
-    if (auto msg = static_cast<H3Msg *>(_msg))
-    {
-        if (msg->IsLeftClick())
-        {
 
-            auto &instance = Get();
-            instance.SetVisible(instance.visible ^ true);
-            msg->GetDlg()->Redraw();
+void MenuWidgetManager::RedrawWidgets(const INT32 firstWidgetIndex, H3BaseDlg *dlg) noexcept
+{
+    if (firstWidgetIndex >= 0 && firstWidgetIndex != topWidgetId - START_WIDGET_ID &&
+        firstWidgetIndex + displayedWidgetsCount <= createdWidgets.size())
+    {
+        topWidgetId = firstWidgetIndex + START_WIDGET_ID;
+        bottomWidgetId = topWidgetId + displayedWidgetsCount - 1;
+        if (scrollbar)
+        {
+            scrollbar->Draw();
+            scrollbar->Refresh();
+        }
+
+        // int drawnWidgetsCount = 0;
+        for (size_t i = 0; i < createdWidgets.size(); i++)
+        {
+            auto *widget = createdWidgets[i];
+            if (auto it = widget->uiElement)
+            {
+                const int itemId = it->GetID();
+                if (itemId >= topWidgetId && itemId <= bottomWidgetId)
+                {
+
+                    it->SetX(widgetStartX);
+                    it->SetY(widgetStartY + (i - firstWidgetIndex) * (widgetHeight + widgetSpacing));
+
+                    it->ShowActivate();
+                    it->Draw();
+                    it->Refresh();
+                }
+                else
+                {
+                    it->HideDeactivate();
+                }
+            }
         }
     }
 }
-void MenuWidgetManager::OnOptionsButtonProc(void *_msg)
+
+VOID __fastcall MenuWidgetManager::DlgScroll_Proc(INT32 tickId, H3BaseDlg *dlg)
 {
-    if (auto msg = static_cast<H3Msg *>(_msg))
-    {
-        if (msg->IsLeftClick())
-        {
-
-            auto skipButtonsCreation = _PI->WriteJmp(0x05B1BED, 0x05B1DA0);
-            char dlgMemory[104];
-            THISCALL_1(int, 0x05B1AA0, dlgMemory); // ctor
-            THISCALL_1(int, 0x05B33C0, dlgMemory); // run
-            THISCALL_1(int, 0x05B3350, dlgMemory); // dtor
-
-            skipButtonsCreation->Destroy();
-        }
-    }
-}
-BOOL MenuWidgetManager::RegisterWidget(const MenuWidgetInfo &info)
-{
-    if (widgets.find(info.name) != widgets.end())
-    {
-        std::string errorMsg = "Widget with name '" + info.name + "' is already registered!";
-        MessageBoxA(NULL, errorMsg.c_str(), "Widget Registration Error", MB_OK | MB_ICONERROR);
-        return FALSE;
-    }
-
-    widgets[info.name] = info;
-    return TRUE;
+    Get().RedrawWidgets(tickId, dlg);
 }
 
-void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const eMenuList menuList, const int widgetStartX,
-                                      const int widgetStartY, const int widgetWidthA, const int widgetHeightA,
-                                      const int widgetSpacing)
+void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList menuList)
 {
-    // Устанавливаем параметры размещения виджетов
-    SetLayoutParams(widgetWidthA, widgetHeightA, widgetStartX, widgetStartY, widgetSpacing);
+
+    const size_t registeredWidgetsCount = registeredWidgets.size();
+    if (registeredWidgetsCount == 0)
+    {
+        // no widgets registered for this menu type
+        return;
+    }
 
     createdWidgets.clear();
-    createdWidgets.reserve(widgets.size());
-    for (auto &pair : widgets)
+    createdWidgets.reserve(registeredWidgetsCount);
+    menuType = menuList;
+
+    for (auto &widget : registeredWidgets)
     {
-        MenuWidgetInfo &widget = pair.second;
         if (widget.menuList & menuList)
         {
             createdWidgets.push_back(&widget);
         }
     }
-    const int widgetCount = createdWidgets.size();
-    if (widgetCount < 2)
-    {
-        return;
-    }
+    createdWidgets.shrink_to_fit();
+    const size_t currentMenuTypeWidgets = createdWidgets.size();
 
+    LPCSTR fontName = h3::NH3Dlg::Text::MEDIUM;
+    H3FontLoader fnt(fontName);
     // put the "main_menu_api_widget" at the top of the list
-    for (size_t i = 1; i < widgetCount; i++)
+    constexpr int assetWidth = 174;
+    BOOL isBigAsset = false;
+    int hideWgtInd = -1;
+    for (size_t i = 0; i < currentMenuTypeWidgets; i++)
     {
-        if (createdWidgets[i]->name == WIDGET_NAME_HIDE)
+        const auto &displayedName = createdWidgets[i]->name;
+        if (displayedName == BaseGameWidgets::WIDGET_NAME_HIDE)
         {
-            std::swap(createdWidgets[i], createdWidgets[0]);
-            break;
+            hideWgtInd = i;
+        }
+        if (!isBigAsset && fnt->GetLinesCountInText(createdWidgets[i]->text.c_str(), assetWidth) > 1)
+        {
+            isBigAsset = true;
         }
     }
+    // if we have a hide widget, put it at the top of the list
+    if (hideWgtInd >= 0)
+    {
+        // if there is only one widget, we return
+        if (currentMenuTypeWidgets < 2)
+        {
+            createdWidgets.clear();
+            return;
+        }
+
+        std::swap(createdWidgets[hideWgtInd], createdWidgets[0]);
+    }
+
+    LPCSTR assetName = isBigAsset ? assets::BIG_BUTTON : assets::SMALL_BUTTON;
 
     const int gameWidth = H3GameWidth::Get();
     const int gameHeight = H3GameHeight::Get();
+
     constexpr int backgroundWidth = 800;
     constexpr int backgroundHeight = 600;
+    constexpr int minimalOutsideWidth = 1180;
+    constexpr int frameWidth = 4;
+    constexpr int scrollbarOffset = 0;
+
+    constexpr int frameGameWidth = backgroundWidth + frameWidth * 2;
+    constexpr int frameGameHeight = backgroundHeight + frameWidth * 2;
+
+    constexpr int scrollbarWidth = 16;
+    constexpr int arrowHeight = 16;
+
     const int backgroundX = gameWidth - backgroundWidth >> 1;
     const int backgroundY = gameHeight - backgroundHeight >> 1;
 
-    constexpr int frameWidth = 4;
+    const int frameOffset = (gameWidth < frameGameWidth) || (gameHeight < frameGameHeight) ? 0 : frameWidth;
 
-    const int xFrameOffset = (gameWidth > backgroundWidth + 8) ? frameWidth : 0;
-    const int yFrameOffset = (gameHeight > backgroundHeight + 8) ? frameWidth : 0;
-
-    H3DefLoader def(DEF_NAME);
-    widgetWidth = def->widthDEF;
+    H3DefLoader def(assetName);
+    // widgetWidth = def->widthDEF;
     widgetHeight = def->heightDEF;
+    //    widgetStartX = backgroundWidth + xFrameOffset;
 
-    const int backgroundAreaHeight = widgetHeight * widgetCount + widgetSpacing * (widgetCount - 1) + (frameWidth << 1);
-    const int backgroundAreaWidth = Clamp(100, widgetWidth, 200) + (frameWidth << 1);
+    placedOutside = gameWidth >= minimalOutsideWidth;
+    const BOOL framesInternal =
+        (gameWidth < backgroundWidth + frameWidth * 2) || (gameHeight < backgroundHeight + frameWidth * 2);
+
+    frameStartX = placedOutside ? backgroundWidth + frameOffset : 0;
+    frameStartY = placedOutside ? -frameOffset : 0; // backgroundY;
+
+    const int availableHeight = backgroundHeight - framesInternal * (frameOffset << 1);
+
+    enum ScrollType
+    {
+        SLIDER,
+        ARROWS
+    };
+    const ScrollType scrollType = placedOutside && gameWidth <= minimalOutsideWidth + scrollbarWidth ? ARROWS : SLIDER;
+
+    BOOL createScrollbar = false;
+    INT widgetsToDraw = currentMenuTypeWidgets;
+    INT additionalHeight = 0;
+    INT additionalWidth = 0;
+
+    const BOOL widgetsFit =
+        availableHeight >= widgetHeight * currentMenuTypeWidgets + widgetSpacing * (currentMenuTypeWidgets - 1);
+
+    if (!widgetsFit)
+    {
+        createScrollbar = true;
+        const int heightPerWidget = widgetHeight + widgetSpacing;
+
+        widgetsToDraw = (availableHeight + widgetSpacing) / heightPerWidget;
+        if (scrollType == ScrollType::ARROWS)
+        {
+            const int arrowsHeight = arrowHeight << 1;
+
+            widgetsToDraw = (availableHeight + widgetSpacing - arrowsHeight) / heightPerWidget;
+            additionalHeight += arrowsHeight; // Add height for arrows
+        }
+        else
+        {
+            additionalWidth = scrollbarWidth + scrollbarOffset; // Add width for scrollbar
+        }
+    }
+
+    const int backgroundAreaHeight =
+        widgetHeight * widgetsToDraw + widgetSpacing * (widgetsToDraw - 1) + (frameWidth << 1) + additionalHeight;
+    const int backgroundAreaWidth = widgetWidth + additionalWidth + (frameWidth << 1);
 
     backgroundPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
     backupScreen = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
 
     backgroundPcx->BackgroundRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight, true);
     backgroundPcx->SimpleFrameRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight);
-    background = H3DlgPcx16::Create(widgetStartX - xFrameOffset, widgetStartY - yFrameOffset, backgroundAreaWidth,
-                                    backgroundAreaHeight, 0, nullptr);
 
+    background = H3DlgPcx16::Create(frameStartX, frameStartY, backgroundAreaWidth, backgroundAreaHeight, 0, nullptr);
     background->SetPcx(backgroundPcx);
-    background->Hide();
-    dlg->AddItem(background);
-    backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), widgetStartX - xFrameOffset + backgroundX,
-                             widgetStartY - yFrameOffset + backgroundY);
-    background->Show();
-    visible = true;
-    const int x = widgetStartX; // +xFrameOffset;
-    const int y = widgetStartY; // +yFrameOffset;
+    background->HideDeactivate();
 
+    dlg->AddItem(background);
+
+    backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), background->GetAbsoluteX(), background->GetAbsoluteY());
+    background->Show();
+    isVisible = true;
+
+    int yArrowOffset = 0;
+    widgetStartX = frameStartX + frameWidth;
+
+    if (createScrollbar)
+    {
+        const int arrowStartY = frameStartY + frameWidth;
+
+        if (scrollType == ARROWS)
+        {
+            yArrowOffset = arrowHeight; // Offset for arrows
+            arrows[0] = dlg->CreateButton(widgetStartX, arrowStartY, widgetWidth, arrowHeight, ARROWS_ITEM_IDS[0],
+                                          assets::ARROW_UP, 0, 1);
+            arrows[1] = dlg->CreateButton(widgetStartX, frameStartY + backgroundAreaHeight - arrowHeight - frameWidth,
+                                          widgetWidth, arrowHeight, ARROWS_ITEM_IDS[1], assets::ARROW_DOWN, 0, 1);
+        }
+        else
+        {
+            const int ticksCount = createdWidgets.size() - widgetsToDraw + 1;
+            scrollbar = dlg->CreateScrollbar(widgetStartX + widgetWidth + scrollbarOffset, arrowStartY, scrollbarWidth,
+                                             backgroundAreaHeight - (frameWidth << 1), SCROLLBAR_ITEM_ID, ticksCount,
+                                             DlgScroll_Proc, true);
+        }
+    }
+
+    widgetStartY = yArrowOffset + frameStartY + frameWidth; // Adjust widget start Y position
     // Создаем кнопки для каждого виджета
     int currentId = START_WIDGET_ID;
-    int i = 0;
-    for (auto *widget : createdWidgets)
+    topWidgetId = currentId;
+
+    // create displayed widgets
+    for (size_t i = 0; i < widgetsToDraw; i++)
     {
+        auto *widget = createdWidgets[i];
         widget->id = currentId++; // Assign and increment ID
 
-        widget->uiElement =
-            dlg->CreateCaptionButton(x, y + i * (widgetHeight + widgetSpacing), widgetWidth, widgetHeight, widget->id,
-                                     DEF_NAME, widget->text.c_str(), h3::NH3Dlg::Text::MEDIUM, 0);
+        widget->uiElement = dlg->CreateCaptionButton(widgetStartX, widgetStartY + i * (widgetHeight + widgetSpacing),
+                                                     widgetWidth, widgetHeight, widget->id, assetName,
+                                                     widget->text.c_str(), fontName, 0, 0, 0, 0, eTextColor::REGULAR);
         widget->uiElement->SetClickFrame(1);
-        widget->uiElement->SetFrame(3);
-        i++;
     }
+    bottomWidgetId = currentId - 1; // Last widget ID
+    // create hidden widgets
+    for (size_t i = widgetsToDraw; i < currentMenuTypeWidgets; i++)
+    {
+        auto *widget = createdWidgets[i];
+        widget->id = currentId++; // Assign and increment ID
+
+        widget->uiElement = dlg->CreateCaptionButton(0, 0, widgetWidth, widgetHeight, widget->id, assetName,
+                                                     widget->text.c_str(), fontName, 0, 0, 0, 0, eTextColor::REGULAR);
+        widget->uiElement->SetClickFrame(1);
+        widget->uiElement->HideDeactivate();
+    }
+    displayedWidgetsCount = widgetsToDraw;
 }
 void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
 {
 
-    background->SetPcx(nullptr);
-
-    if (backgroundPcx)
+    if (background)
     {
-        backgroundPcx->Destroy();
-        backgroundPcx = nullptr;
+
+        if (isVisible && backupScreen && placedOutside)
+        {
+            background->SetPcx(backupScreen);
+            background->Draw();
+            background->Refresh();
+        }
+
+        background->SetPcx(nullptr);
+        background = nullptr;
     }
     if (backupScreen)
     {
         backupScreen->Destroy();
         backupScreen = nullptr;
     }
-
-    for (auto &wg : widgets)
+    if (backgroundPcx)
     {
-        wg.second.uiElement = nullptr; // Clear UI elements
-        wg.second.id = 0;              // Clear onClick handlers
+        backgroundPcx->Destroy();
+        backgroundPcx = nullptr;
     }
 
+    for (auto &wg : registeredWidgets)
+    {
+        wg.uiElement = nullptr; // Clear UI elements
+        wg.id = 0;
+    }
+
+    topWidgetId = 0;
+    bottomWidgetId = 0;
+    displayedWidgetsCount = 0;
+    widgetStartX = 0;
+    widgetStartY = 0;
+    frameStartX = 0;
+    frameStartY = 0;
+    isVisible = false;
+    placedOutside = false;
+    scrollbar = nullptr;
+    memset(arrows, 0, sizeof(arrows));
+    menuType = mainmenu::eMenuList::MAIN;
     createdWidgets.clear();
 }
-H3DlgCaptionButton *MenuWidgetManager::GetWidgetByName(const std::string &name) const
+
+void MenuWidgetManager::HandleEvent(H3Msg *msg)
 {
-    auto it = widgets.find(name);
-    if (it != widgets.end())
-        return it->second.uiElement;
+    if (isVisible)
+    {
+        if (msg->itemId >= topWidgetId && msg->itemId <= bottomWidgetId)
+        {
+            const int widgetInd = msg->itemId - START_WIDGET_ID;
+            const LocalMenuWidgetInfo *widget = createdWidgets[widgetInd];
+
+            if (widget->uiElement && widget->id == msg->itemId && widget->onClick)
+            {
+                widget->onClick(msg);
+            }
+        }
+
+        if (msg->IsLeftClick())
+        {
+
+            if (arrows[0] && msg->itemId == arrows[0]->GetID())
+
+            {
+                const int previousId = topWidgetId - START_WIDGET_ID - 1;
+                RedrawWidgets(previousId, msg->GetDlg());
+            }
+            else if (arrows[1] && msg->itemId == arrows[1]->GetID())
+            {
+                const int nextId = topWidgetId - START_WIDGET_ID + 1;
+                RedrawWidgets(nextId, msg->GetDlg());
+            }
+        }
+    }
+}
+
+INT MenuWidgetManager::RegisteredNumber() const noexcept
+{
+    return registeredWidgets.size();
+}
+
+BOOL MenuWidgetManager::RegisterWidget(const mainmenu::MenuWidgetInfo &info)
+{
+    std::string name = info.name;
+
+    if (widgetIndexes.find(name) != widgetIndexes.end())
+    {
+        std::string errorMsg = "Widget with name '" + name + "' is already registered!";
+        MessageBoxA(NULL, errorMsg.c_str(), "Widget Registration Error", MB_OK | MB_ICONERROR);
+        return FALSE;
+    }
+
+    const int lastId = registeredWidgets.size();
+
+    widgetIndexes[name] = lastId;
+    registeredWidgets.emplace_back(LocalMenuWidgetInfo{info});
+    return TRUE;
+}
+
+H3DlgCaptionButton *MenuWidgetManager::GetWidgetByName(LPCSTR name) const
+{
+    const auto it = widgetIndexes.find(name);
+    if (it != widgetIndexes.end())
+        return registeredWidgets[it->second].uiElement;
     return nullptr;
 }
 
 bool MenuWidgetManager::HasWidget(const std::string &name) const
 {
-    return widgets.find(name) != widgets.end();
+    return widgetIndexes.find(name) != widgetIndexes.end();
+}
+int MenuWidgetManager::GetWidgetId(const std::string &name) const
+{
+    const auto it = widgetIndexes.find(name);
+    if (it != widgetIndexes.end())
+        return registeredWidgets[it->second].id;
+    return 0;
 }
 
-void MenuWidgetManager::SetLayoutParams(int width, int height, int startX, int startY, int spacing)
+BOOL MenuWidgetManager::SetWidgetText(const std::string &name, LPCSTR text)
 {
-    widgetWidth = width;
-    widgetHeight = height;
-    widgetStartX = startX;
-    widgetStartY = startY;
-    widgetSpacing = spacing;
-}
-
-void MenuWidgetManager::HandleEvent(H3Msg *msg)
-{
-    for (const MenuWidgetInfo *widget : createdWidgets)
+    const auto it = widgetIndexes.find(name);
+    if (it != widgetIndexes.end())
     {
-        if (widget->uiElement && widget->id == msg->itemId && widget->onClick)
+        auto &wgt = registeredWidgets[it->second];
+        if (wgt.text != text)
         {
-            widget->onClick(msg);
+            wgt.text = text;
+            if (auto it = wgt.uiElement)
+            {
+                it->SetText(text);
+                if (isVisible)
+                {
+                    it->Draw();
+                    it->Refresh();
+                }
+            }
+
+            return true;
         }
     }
+
+    return false;
 }
 
-const std::unordered_map<std::string, MenuWidgetInfo> &MenuWidgetManager::GetWidgets() const
+extern "C" __declspec(dllexport) BOOL __stdcall MainMenu_RegisterWidget(const mainmenu::MenuWidgetInfo &info)
 {
-    return widgets;
-}
-
-extern "C" __declspec(dllexport) BOOL __stdcall RegisterMainMenuWidget(const MenuWidgetInfo &info)
-{
+    if (!info.name)
+        return false;
     return MenuWidgetManager::Get().RegisterWidget(info);
 }
 
-extern "C" __declspec(dllexport) H3DlgCaptionButton *__stdcall GetMainMenuWidgetByName(const char *name)
+extern "C" __declspec(dllexport) H3DlgCaptionButton *__stdcall MainMenu_GetDialogButton(const char *name)
 {
     if (!name)
         return nullptr;
     return MenuWidgetManager::Get().GetWidgetByName(name);
 }
 
-extern "C" __declspec(dllexport) int __stdcall GetMainMenuWidgetId(const char *name)
+extern "C" __declspec(dllexport) int __stdcall MainMenu_GetDialogButtonId(const char *name)
 {
-    if (name)
-    {
-        auto it = MenuWidgetManager::Get().GetWidgets().find(name);
-        if (it != MenuWidgetManager::Get().GetWidgets().end())
-        {
-            return it->second.uiElement->GetID();
-        }
-    }
-    return 0;
+    if (!name)
+        return 0;
+    return MenuWidgetManager::Get().GetWidgetId(name);
+}
+
+extern "C" __declspec(dllexport) BOOL __stdcall MainMenu_SetDialogButtonText(const char *name, const char *text)
+{
+    if (!name || !text)
+        return 0;
+    return MenuWidgetManager::Get().SetWidgetText(name, text);
+}
+
+LocalMenuWidgetInfo::LocalMenuWidgetInfo(const mainmenu::MenuWidgetInfo &ext)
+    : name(ext.name), text(ext.text), menuList(ext.menuList), onClick(ext.onClick), uiElement(nullptr), id(0)
+{
 }

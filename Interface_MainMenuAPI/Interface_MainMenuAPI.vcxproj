@@ -76,6 +76,7 @@
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <FunctionLevelLinking>
       </FunctionLevelLinking>
+      <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
@@ -86,14 +87,18 @@
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ModuleDefinitionFile>Interface_MainMenuAPI.def</ModuleDefinitionFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>D:\SW\ExeMapCompiler\$(TargetName).map</MapFileName>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="BaseGameWidgets.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MenuWidgetManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseGameWidgets.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MenuWidgetManager.h" />
   </ItemGroup>

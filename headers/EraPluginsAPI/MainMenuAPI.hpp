@@ -1,31 +1,29 @@
 #pragma once
-#include <functional>
-#include <string>
 #include <windows.h>
 namespace mainmenu
 {
 class H3DlgCaptionButton;
 
-enum eMenuList :INT
+enum eMenuList : INT
 {
-    Main = 0x1,
-    NewGame = 0x2,
-    LoadGame = 0x4,
-    Campaign = 0x8,
-    All = 0xF
+    MAIN = 0x1,
+    NEW_GAME = 0x2,
+    LOAD_GAME = 0x4,
+    CAMPAIGN = 0x8,
+    ALL = 0xF
 };
 struct MenuWidgetInfo
 {
-    std::string name; // Renamed from id
-    std::string text;
-    eMenuList menuList = eMenuList::Main;
-    std::function<void(void *)> onClick;
-    H3DlgCaptionButton *uiElement = nullptr;
-    int id = 0; // Integer ID for the dialog item
+    const char *name = nullptr; // Renamed from id
+    const char *text = nullptr;
+    eMenuList menuList = eMenuList::MAIN;
+    void (*onClick)(void *msg);
 };
-typedef BOOL(__stdcall *TRegisterMainMenuWidget)(const MenuWidgetInfo &info);
-typedef H3DlgCaptionButton *(__stdcall *TGetMainMenuWidgetByName)(const char *name);
-typedef int(__stdcall *TGetMainMenuWidgetId)(const char *name);
+
+typedef BOOL(__stdcall *TMainMenu_RegisterWidget)(const MenuWidgetInfo &info);
+typedef H3DlgCaptionButton *(__stdcall *TMainMenu_GetDialogButton)(const char *name);
+typedef int(__stdcall *TMainMenu_GetDialogButtonId)(const char *name);
+typedef BOOL(__stdcall *TMainMenu_SetDialogButtonText)(const char *name, const char *text);
 
 static constexpr LPCSTR _PLUGIN_NAME = "Interface_MainMenuAPI.era";
 #define DECLARE_PLUGIN_FUNC(name, returnType, argTypes, argNames)                                                      \
@@ -40,8 +38,18 @@ static constexpr LPCSTR _PLUGIN_NAME = "Interface_MainMenuAPI.era";
     }
 
 // »спользование макроса дл€ объ€влени€ функций:
-DECLARE_PLUGIN_FUNC(RegisterMainMenuWidget, BOOL, const MenuWidgetInfo &info, info)
-DECLARE_PLUGIN_FUNC(GetMainMenuWidgetByName, H3DlgCaptionButton *, const char *name, name)
-DECLARE_PLUGIN_FUNC(GetMainMenuWidgetId, int, const char *name, name)
+DECLARE_PLUGIN_FUNC(MainMenu_RegisterWidget, BOOL, const MenuWidgetInfo &info, info)
+DECLARE_PLUGIN_FUNC(MainMenu_GetDialogButton, H3DlgCaptionButton *, const char *name, name)
+DECLARE_PLUGIN_FUNC(MainMenu_GetDialogButtonId, int, const char *name, name)
+
+inline BOOL MainMenu_SetDialogButtonText(const char *name, const char *text)
+{
+    HINSTANCE hApi = LoadLibraryA(_PLUGIN_NAME);
+    if (auto func = reinterpret_cast<TMainMenu_SetDialogButtonText>(GetProcAddress(hApi, "MainMenu_SetDialogButtonText")))
+    {
+        return func(name, text);
+    }
+    return 0;
+}
 
 } // namespace mainmenu
