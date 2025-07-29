@@ -20,9 +20,10 @@ struct DlgStyle
 
 class LanguageSelectionDlg : public H3Dlg
 {
-    static constexpr LPCSTR UNIQUE_BUTTON_NAME = "locale_selection_button";
 
   public:
+    static constexpr LPCSTR UNIQUE_BUTTON_NAME = "locale_selection_button";
+
     static std::vector<DlgStyle> styles;
 
   private:

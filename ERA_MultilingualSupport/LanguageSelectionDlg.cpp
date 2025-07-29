@@ -79,9 +79,9 @@ void CurrentDlg_HandleLocaleDlgStart(void *_msg)
                 const std::string selectedLocale = LocaleManager::ReadLocaleFromIni();
                 if (currentLocale != selectedLocale)
                 {
-                    callerItem->SetText(LocaleManager::GetDisplayedName());
-                    callerItem->Draw();
-                    callerItem->ParentRedraw();
+                    mainmenu::MainMenu_SetDialogButtonText(
+                        LanguageSelectionDlg::UNIQUE_BUTTON_NAME,
+                        LocaleManager::GetDisplayedName()); // update button text with new locale name
                 }
             }
             else
