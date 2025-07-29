@@ -10,7 +10,7 @@ class ExportDlg : public H3Dlg
 
   private:
     static constexpr LPCSTR PANEL_NAME_FORMAT = "era.locale.dlg.export.items.%d";
-
+    static constexpr LPCSTR SUBFOLDER_NAME = "Runtime\\Exports\\";
     static constexpr int PANEL_TEXT_WIDTH = 200;
     static constexpr int CHECKBOX_PADDING = 200;
     static constexpr int PANELS_PADDING = 30;

@@ -41,12 +41,27 @@ BOOL ExportManager::WriteJsonFile(const std::string &filePath, nlohmann::json &j
     }
     return false; // Возвращаем false, если JSON пустой
 }
+
+void EnsureDirectoryExists(const std::string &filePath)
+{
+    size_t pos = 0;
+    while ((pos = filePath.find_first_of("/\\", pos + 1)) != std::string::npos)
+    {
+        std::string dir = filePath.substr(0, pos);
+        if (!dir.empty())
+        {
+            CreateDirectoryA(dir.c_str(), NULL);
+        }
+    }
+}
+
 BOOL ExportManager::WriteJsonFile(const std::string &filePath, nlohmann::ordered_json &j)
 {
 
     // Сохраняем JSON в файл
     if (!j.empty())
     {
+        EnsureDirectoryExists(filePath);
         std::ofstream outFile(filePath);
         if (outFile.is_open())
         {
@@ -477,6 +492,9 @@ VOID ExportDlg::OnOK()
 {
     bool exportSuccess = false;
     std::string message, list;
+
+    Era::ExecErmCmd("UN:J9/0/1");
+    std::string exportPath = Era::z[1] + std::string(SUBFOLDER_NAME);
     for (auto &i : selectionPanels)
     {
         if (i->exportFunction)
@@ -485,10 +503,12 @@ VOID ExportDlg::OnOK()
             const BOOL additionalData = i->additionalDataCheckBox->GetFrame() == 1;
             if (originalData || additionalData)
             {
-                LPCSTR key = i->exportFunction(i->exportPath, originalData, additionalData)
+
+                std::string filePath = exportPath + i->exportPath;
+                LPCSTR key = i->exportFunction(filePath.c_str(), originalData, additionalData)
                                  ? EraJS::read("era.locale.dlg.export.success")
                                  : EraJS::read("era.locale.dlg.export.error");
-                libc::sprintf(h3_TextBuffer, key, i->exportPath);
+                libc::sprintf(h3_TextBuffer, key, filePath.c_str());
                 list += "\n" + std::string(h3_TextBuffer);
             }
         }
@@ -499,6 +519,8 @@ VOID ExportDlg::OnOK()
         libc::sprintf(h3_TextBuffer, message.c_str(), list.c_str());
         if (H3Messagebox::Choice(h3_TextBuffer))
         {
+            INT_PTR intRes =
+                STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", exportPath.c_str(), NULL, NULL, SW_SHOWNORMAL);
         }
     }
     else

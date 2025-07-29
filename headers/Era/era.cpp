@@ -212,7 +212,7 @@ void SetPcharValue(char *Buf, const char *NewValue, int BufSize)
 } // namespace Era
 
 // Replace basic C++ memory manager, but only for Visual Studio in multithreaded (/MT) mode.
-#ifdef _MSC_VER 
+#ifdef _MSC_VER
 #ifdef _MT
 namespace EraMemory
 {
