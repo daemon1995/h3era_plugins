@@ -321,6 +321,48 @@ BOOL ExportManager::CreateTownBuildingsJson(LPCSTR filePath, const BOOL original
 
     return WriteJsonFile(filePath, j);
 }
+BOOL ExportManager::CreateHeroesJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData)
+
+{
+    nlohmann::ordered_json j;
+
+    constexpr int maxOriginalId = 155;
+    const int outOfBound = GetMaxOriginalId("heroes", maxOriginalId) + 1;
+
+    const int heroCount = H3HeroCount::Get();
+    const int minId = originalData ? 0 : outOfBound;
+    const int maxId = Clamp(0, additionalData ? heroCount : outOfBound, heroCount);
+
+    LPCSTR str = nullptr;
+    for (size_t heroType = minId; heroType < maxId; heroType++)
+    {
+
+        str = P_HeroInfo[heroType].name;
+        if (str && (stricmp(str, h3_NullString)))
+            j["era"]["heroes"][std::to_string(heroType)]["name"] = LPCSTR_to_wstring(str);
+
+        // Export hero data
+        str = P_HeroSpecialty[heroType].spShort;
+        if (str && (stricmp(str, h3_NullString)))
+            j["era"]["heroes"][std::to_string(heroType)]["specialty"]["short"] = LPCSTR_to_wstring(str);
+
+        str = P_HeroSpecialty[heroType].spFull;
+        if (str && (stricmp(str, h3_NullString)))
+            j["era"]["heroes"][std::to_string(heroType)]["specialty"]["full"] = LPCSTR_to_wstring(str);
+
+        str = P_HeroSpecialty[heroType].spDescr;
+        if (str && (stricmp(str, h3_NullString)))
+            j["era"]["heroes"][std::to_string(heroType)]["specialty"]["description"] = LPCSTR_to_wstring(str);
+
+        str = (*reinterpret_cast<LPCSTR **>(0x005B9A18 + 2))[heroType + 1];
+        if (str && (stricmp(str, h3_NullString)))
+        {
+            j["era"]["heroes"][std::to_string(heroType)]["biography"] = LPCSTR_to_wstring(str);
+        }
+    }
+
+    return WriteJsonFile(filePath, j);
+}
 
 // void ExportManager::ExportAllToJson(const BOOL originalDatas, const BOOL additionalData)
 //{
@@ -338,11 +380,12 @@ void ExportDlg::CreateDlgItems()
     CreateCancelButton();
 
     BOOL (*selectionPanelExportFunctions[])(LPCSTR, const BOOL, const BOOL) = {
-        ExportManager::CreateMonstersJson, ExportManager::CreateArtifactsJson, ExportManager::CreateObjectsJson,
-        ExportManager::CreateCreatureBanksJson, ExportManager::CreateTownBuildingsJson};
-    LPCSTR panelPaths[] = {ExportManager::MonsterInfo::DEFAULT_PATH, ExportManager::ArtifactInfo::DEFAULT_PATH,
-                           ExportManager::ObjectInfo::DEFAULT_PATH, ExportManager::CreatureBankInfo::DEFAULT_PATH,
-                           ExportManager::TownBuildingInfo::DEFAULT_PATH};
+        ExportManager::CreateMonstersJson,      ExportManager::CreateArtifactsJson,
+        ExportManager::CreateObjectsJson,       ExportManager::CreateCreatureBanksJson,
+        ExportManager::CreateTownBuildingsJson, ExportManager::CreateHeroesJson};
+    LPCSTR panelPaths[] = {ExportManager::MonsterInfo::DEFAULT_PATH,      ExportManager::ArtifactInfo::DEFAULT_PATH,
+                           ExportManager::ObjectInfo::DEFAULT_PATH,       ExportManager::CreatureBankInfo::DEFAULT_PATH,
+                           ExportManager::TownBuildingInfo::DEFAULT_PATH, ExportManager::HeroInfo::DEFAULT_PATH};
     constexpr size_t panelsNum = std::size(selectionPanelExportFunctions);
     constexpr int startId = 1;
     selectionPanels.reserve(panelsNum);

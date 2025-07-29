@@ -14,7 +14,7 @@ constexpr const char *INSTANCE_NAME = "EraPlugin.LanguageSelectionDlg.daemon_n";
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 
-void __stdcall OnReportVersion(Era::TEvent* e)
+void __stdcall OnReportVersion(Era::TEvent *e)
 {
 
     // show plugin name, version and compilation time
@@ -28,7 +28,7 @@ _LHF_(HooksInit)
 
     MapObjectHandler::Init();
     TownHandler::Init();
-
+    HeroHandler::Init();
     // ArtifactHandler::Init();
     LanguageSelectionDlg::Init();
 

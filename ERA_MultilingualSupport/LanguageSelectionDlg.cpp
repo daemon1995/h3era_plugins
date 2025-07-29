@@ -157,7 +157,8 @@ void LanguageSelectionDlg::CreateDlgItems()
         libc::memset(pcx->buffer, 0, pcx->buffSize);
         pcx->SimpleFrameRegion(0, 0, exportButtonWidth, exportButtonHeight);
 
-        pcx->BackgroundRegion(4, 4, exportButtonWidth - 8, exportButtonHeight - 8, 0); // H3RGB888(0xFF, 0xFF, 0xFF));
+        pcx->BackgroundRegion(4, 4, exportButtonWidth - 8, exportButtonHeight - 8,
+                              true); // H3RGB888(0xFF, 0xFF, 0xFF));
 
         fontLoader->TextDraw(pcx, EraJS::read(ExportDlg::BUTTON_NAME), 2, 2, exportButtonWidth - 4,
                              exportButtonHeight - 4);
@@ -241,9 +242,9 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
 
             const Locale *locale = localeManager->GetSelected();
 
-            const BOOL samelocale = locale == localeManager->GetCurrent();
+            const BOOL sameLocale = locale == localeManager->GetCurrent();
 
-            LPCSTR formatPtr = samelocale ? dlgText.sameLocaleFormat : dlgText.questionformat;
+            LPCSTR formatPtr = sameLocale ? dlgText.sameLocaleFormat : dlgText.questionformat;
 
             LPCSTR comment = h3_NullString;
             // check if locale description is broken
@@ -254,7 +255,7 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
 
             libc::sprintf(h3_TextBuffer, formatPtr, locale->name.c_str(), locale->displayedName.c_str(), comment);
 
-            if (samelocale)
+            if (sameLocale)
             {
                 H3Messagebox::Show(h3_TextBuffer);
             }
@@ -276,7 +277,7 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
             exportDlg.Start();
         }
     }
-    if (msg.IsKeyDown())
+    else if (msg.IsKeyDown())
     {
         const eVKey keyCode = msg.GetKey();
         if (keyCode == eVKey::H3VK_ESCAPE || keyCode == eVKey::H3VK_SPACEBAR || keyCode == eVKey::H3VK_ENTER)
@@ -284,7 +285,7 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
             Stop();
         }
     }
-    if (msg.ClickOutside())
+    else if (msg.ClickOutside())
         Stop();
 
     return 0;
@@ -325,19 +326,10 @@ void LanguageSelectionDlg::Init()
     {
         using namespace mainmenu;
 
-        eMenuList menuList = eMenuList(eMenuList::Main | eMenuList::NewGame | eMenuList::LoadGame);
+        eMenuList menuList = eMenuList::ALL;
         MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, LocaleManager::GetDisplayedName(), menuList,
                                 &CurrentDlg_HandleLocaleDlgStart};
-
-        RegisterMainMenuWidget(langInfo);
-        for (size_t i = 0; i < 6; i++)
-        {
-            libc::sprintf(h3_TextBuffer, "era.locale.dlg.style.%d", i);
-            mainmenu::MenuWidgetInfo info{h3_TextBuffer, LocaleManager::GetDisplayedName(), mainmenu::eMenuList::Main,
-                                          &CurrentDlg_HandleLocaleDlgStart};
-
-            mainmenu::RegisterMainMenuWidget(info);
-        }
+        MainMenu_RegisterWidget(langInfo);
     }
 }
 

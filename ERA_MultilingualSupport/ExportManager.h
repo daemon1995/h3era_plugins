@@ -64,6 +64,10 @@ class ExportManager
     {
         static constexpr LPCSTR DEFAULT_PATH = "TownText.json";
     };
+    struct HeroInfo
+    {
+        static constexpr LPCSTR DEFAULT_PATH = "HeroText.json";
+    };
 
     static std::string LPCSTR_to_wstring(LPCSTR ansi_str);
     static INT GetMaxOriginalId(LPCSTR keySubstring, const int defaultValue);
@@ -74,6 +78,7 @@ class ExportManager
     static BOOL CreateObjectsJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
     static BOOL CreateCreatureBanksJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
     static BOOL CreateTownBuildingsJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
+    static BOOL CreateHeroesJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
 
     //  static BOOL ExportAllToJson(const BOOL originalData, const BOOL additionalData);
 };

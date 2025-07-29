@@ -1,6 +1,8 @@
 #pragma once
-class MonsterHandler
+struct MonsterHandler
 {
+
+    static std::vector<LPCSTR> originalSingleNames, originalPluralNames, originalDescriptions;
 
   public:
     struct formats

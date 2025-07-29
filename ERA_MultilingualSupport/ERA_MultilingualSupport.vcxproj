@@ -72,6 +72,9 @@
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>D:\games\HoMM 3 ERA\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
     </Link>
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ExportManager.h" />

@@ -1,5 +1,4 @@
 #include "pch.h"
-#include <sstream>
 #include <unordered_set>
 
 H3String LocaleManager::m_displayedName{};
@@ -16,8 +15,6 @@ LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
 {
 
     locales.clear();
-
-    locales.reserve(25);
 
     //  Read list of available locales
     bool readSuccess = false;
@@ -82,8 +79,6 @@ LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
             m_current = &locales.back();
         }
     }
-
-    locales.shrink_to_fit();
 }
 
 LPCSTR LocaleManager::LocaleFormat() const noexcept
@@ -122,9 +117,10 @@ BOOL LocaleManager::SetForUser(const Locale *locale) const
 
 std::string LocaleManager::ReadLocaleFromIni()
 {
-    libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
-    Era::ReadStrFromIni(INI_KEY_NAME, INI_SECTION_NAME, INI_FILE_NAME, h3_TextBuffer);
-    return std::string(h3_TextBuffer);
+    char buff[16];
+    libc::sprintf(buff, "%d", 0); // set default buffer
+    Era::ReadStrFromIni(INI_KEY_NAME, INI_SECTION_NAME, INI_FILE_NAME, buff);
+    return std::string(buff);
 }
 
 const Locale *LocaleManager::GetCurrent() const noexcept
@@ -144,8 +140,9 @@ void LocaleManager::SetSelected(const Locale *locale) noexcept
 
 LPCSTR LocaleManager::GetDisplayedName()
 {
-    sprintf(h3_TextBuffer, EraJS::read("era.locale.dlg.buttonName"), ReadLocaleFromIni().c_str());
-    m_displayedName = h3_TextBuffer;
+    char buff[256];
+    libc::sprintf(buff, EraJS::read("era.locale.dlg.buttonName"), ReadLocaleFromIni().c_str());
+    m_displayedName = buff;
     return m_displayedName.String();
 }
 
