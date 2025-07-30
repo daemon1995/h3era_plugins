@@ -15,17 +15,17 @@ void MenuWidgetManager::SetVisible(const bool visible)
     if (visible != this->isVisible)
     {
         this->isVisible = visible;
-        if (visible && placedOutside)
+        if (visible && !placedOutside && insideBackupScreenPcx)
         {
             // making hd mod wrong main menu drawing offset fix
-            const int _x = background->GetX() + (H3GameWidth::Get() - 800) / 2;
-            const int _y = background->GetY() + (H3GameHeight::Get() - 600) / 2;
-            backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
+            const int _x = framedBackground->GetX() + (H3GameWidth::Get() - 800) / 2;
+            const int _y = framedBackground->GetY() + (H3GameHeight::Get() - 600) / 2;
+            insideBackupScreenPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
         }
-        // if (menuType != mainmenu::MAIN)
-        {
-            background->SetPcx(visible ? backgroundPcx : backupScreen);
-        }
+
+        framedBackground->SetPcx(visible         ? framedBackgroundPcx
+                                 : placedOutside ? outsideBackupScreenPcx
+                                                 : insideBackupScreenPcx);
 
         for (size_t i = 0; i < createdWidgets.size(); i++)
         {
@@ -51,8 +51,9 @@ void MenuWidgetManager::SetVisible(const bool visible)
 
         if (!visible)
         {
-            background->Draw();
-            background->Refresh();
+            framedBackground->Draw();
+            framedBackground->Refresh();
+            framedBackground->HideDeactivate();
         }
     }
 }
@@ -230,20 +231,35 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
         widgetHeight * widgetsToDraw + widgetSpacing * (widgetsToDraw - 1) + (frameWidth << 1) + additionalHeight;
     const int backgroundAreaWidth = widgetWidth + additionalWidth + (frameWidth << 1);
 
-    backgroundPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
-    backupScreen = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
+    framedBackgroundPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
 
-    backgroundPcx->BackgroundRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight, true);
-    backgroundPcx->SimpleFrameRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight);
+    framedBackgroundPcx->BackgroundRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight, true);
+    framedBackgroundPcx->SimpleFrameRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight);
 
-    background = H3DlgPcx16::Create(frameStartX, frameStartY, backgroundAreaWidth, backgroundAreaHeight, 0, nullptr);
-    background->SetPcx(backgroundPcx);
-    background->HideDeactivate();
+    framedBackground =
+        H3DlgPcx16::Create(frameStartX, frameStartY, backgroundAreaWidth, backgroundAreaHeight, 0, nullptr);
+    framedBackground->SetPcx(framedBackgroundPcx);
+    framedBackground->HideDeactivate();
 
-    dlg->AddItem(background);
+    dlg->AddItem(framedBackground);
 
-    backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), background->GetAbsoluteX(), background->GetAbsoluteY());
-    background->Show();
+    if (placedOutside)
+    {
+        if (outsideBackupScreenPcx == nullptr)
+        {
+            outsideBackupScreenPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundHeight + frameOffset * 2);
+            outsideBackupScreenPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), framedBackground->GetAbsoluteX(),
+                                               framedBackground->GetAbsoluteY());
+        }
+    }
+    else
+    {
+        insideBackupScreenPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
+        insideBackupScreenPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), framedBackground->GetAbsoluteX(),
+                                          framedBackground->GetAbsoluteY());
+    }
+
+    framedBackground->Show();
     isVisible = true;
 
     int yArrowOffset = 0;
@@ -303,28 +319,42 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
 void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
 {
 
-    if (background)
+    if (framedBackground)
     {
 
-        if (isVisible && backupScreen && placedOutside)
+        if (isVisible)
         {
-            background->SetPcx(backupScreen);
-            background->Draw();
-            background->Refresh();
+            if (!placedOutside && insideBackupScreenPcx)
+            {
+                framedBackground->SetPcx(insideBackupScreenPcx);
+                framedBackground->Draw();
+                framedBackground->Refresh();
+            }
+            else if (outsideBackupScreenPcx)
+            {
+                framedBackground->SetWidth(outsideBackupScreenPcx->width);
+                framedBackground->SetHeight(outsideBackupScreenPcx->height);
+                framedBackground->SetPcx(outsideBackupScreenPcx);
+
+                framedBackground->Draw();
+                framedBackground->Refresh();
+            }
         }
 
-        background->SetPcx(nullptr);
-        background = nullptr;
+        framedBackground->SetPcx(nullptr);
+        framedBackground = nullptr;
     }
-    if (backupScreen)
+
+    if (insideBackupScreenPcx)
     {
-        backupScreen->Destroy();
-        backupScreen = nullptr;
+        insideBackupScreenPcx->Destroy();
+        insideBackupScreenPcx = nullptr;
     }
-    if (backgroundPcx)
+
+    if (framedBackgroundPcx)
     {
-        backgroundPcx->Destroy();
-        backgroundPcx = nullptr;
+        framedBackgroundPcx->Destroy();
+        framedBackgroundPcx = nullptr;
     }
 
     for (auto &wg : registeredWidgets)
@@ -350,6 +380,7 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
 
 void MenuWidgetManager::HandleEvent(H3Msg *msg)
 {
+
     if (isVisible)
     {
         if (msg->itemId >= topWidgetId && msg->itemId <= bottomWidgetId)
@@ -362,8 +393,7 @@ void MenuWidgetManager::HandleEvent(H3Msg *msg)
                 widget->onClick(msg);
             }
         }
-
-        if (msg->IsLeftClick())
+        else if (msg->IsLeftClick())
         {
 
             if (arrows[0] && msg->itemId == arrows[0]->GetID())

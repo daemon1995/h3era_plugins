@@ -47,11 +47,13 @@ class MenuWidgetManager
     int bottomWidgetId = 0;
     int displayedWidgetsCount = 0;
     mainmenu::eMenuList menuType = mainmenu::eMenuList::MAIN;
-    H3LoadedPcx16 *backgroundPcx = nullptr;
-    H3LoadedPcx16 *backupScreen = nullptr;
+    H3LoadedPcx16 *framedBackgroundPcx = nullptr;
+    H3LoadedPcx16 *insideBackupScreenPcx = nullptr;
+    H3LoadedPcx16 *outsideBackupScreenPcx = nullptr;
+    // H3LoadedPcx16 *backupScreens[4] = {nullptr, nullptr, nullptr, nullptr};
     H3DlgScrollbar *scrollbar = nullptr;
     H3DlgDefButton *arrows[2] = {nullptr, nullptr};
-    H3DlgPcx16 *background = nullptr;
+    H3DlgPcx16 *framedBackground = nullptr;
     std::unordered_map<std::string, int> widgetIndexes;
     std::vector<LocalMenuWidgetInfo> registeredWidgets;
     std::vector<LocalMenuWidgetInfo *> createdWidgets;

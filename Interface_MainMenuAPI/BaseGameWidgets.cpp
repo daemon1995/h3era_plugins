@@ -22,9 +22,11 @@ void BaseGameWidgets::SystemOptionsButtonProc(void *_msg)
 
             auto skipButtonsCreation = _PI->WriteJmp(0x05B1BED, 0x05B1DA0);
             char dlgMemory[104];
+            STDCALL_0(VOID, 0x597AA0);             // stop video animation
             THISCALL_1(int, 0x05B1AA0, dlgMemory); // ctor
             THISCALL_1(int, 0x05B33C0, dlgMemory); // run
             THISCALL_1(int, 0x05B3350, dlgMemory); // dtor
+            STDCALL_0(VOID, 0x597B50);             // resume video animation
 
             skipButtonsCreation->Destroy();
         }
@@ -40,7 +42,10 @@ void BaseGameWidgets::WoGOptionsButtonProc(void *_msg)
             const int storeValue = IntAt(0x291A430);
             IntAt(0x291A430) = 1;
             auto jumpOverMouseCheck = _PI->WriteJmp(0x07790FB, 0x0779157);
+            STDCALL_0(VOID, 0x597AA0); // stop video animation
             THISCALL_0(int, 0x07790E1);
+            STDCALL_0(VOID, 0x597B50); // resume video animation
+
             jumpOverMouseCheck->Destroy();
             IntAt(0x291A430) = storeValue;
         }
