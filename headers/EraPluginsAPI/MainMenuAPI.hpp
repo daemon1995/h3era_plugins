@@ -28,10 +28,10 @@ enum eMenuList : INT
  */
 struct MenuWidgetInfo
 {
-    const char *name = nullptr;  ///< Unique identifier for the widget
-    const char *text = nullptr;  ///< Display text of the widget
-    eMenuList menuList = eMenuList::MAIN;  ///< Menu context(s) where the widget should appear
-    void (*onClick)(void *msg);  ///< Callback function triggered when widget is clicked
+    const char *name = nullptr;           ///< Unique identifier for the widget
+    const char *text = nullptr;           ///< Display text of the widget
+    eMenuList menuList = eMenuList::MAIN; ///< Menu context(s) where the widget should appear
+    void (*onClick)(void *msg);           ///< Callback function triggered when widget is clicked
 };
 
 /**
@@ -99,7 +99,8 @@ DECLARE_PLUGIN_FUNC(MainMenu_GetDialogButtonId, int, const char *name, name)
 inline BOOL MainMenu_SetDialogButtonText(const char *name, const char *text)
 {
     HINSTANCE hApi = LoadLibraryA(_PLUGIN_NAME);
-    if (auto func = reinterpret_cast<TMainMenu_SetDialogButtonText>(GetProcAddress(hApi, "MainMenu_SetDialogButtonText")))
+    if (auto func =
+            reinterpret_cast<TMainMenu_SetDialogButtonText>(GetProcAddress(hApi, "MainMenu_SetDialogButtonText")))
     {
         return func(name, text);
     }
