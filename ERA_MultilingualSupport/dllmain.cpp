@@ -6,7 +6,7 @@ using namespace h3;
 namespace dllText
 {
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
-constexpr const char *PLUGIN_VERSION = "2.0";
+constexpr const char *PLUGIN_VERSION = "2.1";
 constexpr const char *PLUGIN_DATA = __DATE__;
 constexpr const char *INSTANCE_NAME = "EraPlugin.LanguageSelectionDlg.daemon_n";
 } // namespace dllText
