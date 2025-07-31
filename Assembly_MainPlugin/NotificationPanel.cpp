@@ -797,8 +797,7 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
     {
         if (const auto processItem = msg->ItemAtPosition(msg->GetDlg()))
         {
-            result = processItem == parentCaller ||
-                     (currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink);
+            result = (currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink);
 
             if (msg->IsLeftDown())
             {
@@ -806,7 +805,6 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
                 if (result)
                 {
                     P_SoundManager->ClickSound();
-
                     OpenExternalFile(currentModInfo->externalLink);
                 }
             }
