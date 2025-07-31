@@ -160,8 +160,7 @@ void LanguageSelectionDlg::CreateDlgItems()
         pcx->BackgroundRegion(4, 4, exportButtonWidth - 8, exportButtonHeight - 8,
                               true); // H3RGB888(0xFF, 0xFF, 0xFF));
 
-        fontLoader->TextDraw(pcx, EraJS::read(ExportDlg::BUTTON_NAME), 2, 2, exportButtonWidth - 4,
-                             exportButtonHeight - 4);
+        fontLoader->TextDraw(pcx, EraJS::read(ExportDlg::BUTTON_NAME), 0, 0, exportButtonWidth, exportButtonHeight);
         exportDlgPcx->SetPcx(pcx);
 
         AddItem(exportDlgPcx);

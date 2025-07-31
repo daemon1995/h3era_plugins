@@ -45,7 +45,7 @@ void LoadJsonData(const BOOL refreshText)
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
         if (readSuccess)
         {
-            // pluralNames[i] = readResult;
+            pluralNames[i] = readResult;
         }
 
         libc::sprintf(h3_TextBuffer, "era.monsters.%d.name.description", i);
