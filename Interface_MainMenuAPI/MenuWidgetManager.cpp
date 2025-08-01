@@ -124,20 +124,20 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
         }
     }
     createdWidgets.shrink_to_fit();
-    const size_t currentMenuTypeWidgets = createdWidgets.size();
+    size_t currentMenuTypeWidgets = createdWidgets.size();
 
     LPCSTR fontName = h3::NH3Dlg::Text::MEDIUM;
     H3FontLoader fnt(fontName);
     // put the "main_menu_api_widget" at the top of the list
     constexpr int assetWidth = 174;
     BOOL isBigAsset = false;
-    int hideWgtInd = -1;
+    int hideWidgetInd = -1;
     for (size_t i = 0; i < currentMenuTypeWidgets; i++)
     {
         const auto &displayedName = createdWidgets[i]->name;
         if (displayedName == BaseGameWidgets::WIDGET_NAME_HIDE)
         {
-            hideWgtInd = i;
+            hideWidgetInd = i;
         }
         if (!isBigAsset && fnt->GetLinesCountInText(createdWidgets[i]->text.c_str(), assetWidth) > 1)
         {
@@ -145,7 +145,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
         }
     }
     // if we have a hide widget, put it at the top of the list
-    if (hideWgtInd >= 0)
+    if (hideWidgetInd >= 0)
     {
         // if there is only one widget, we return
         if (currentMenuTypeWidgets < 2)
@@ -154,7 +154,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
             return;
         }
 
-        std::swap(createdWidgets[hideWgtInd], createdWidgets[0]);
+        std::swap(createdWidgets[hideWidgetInd], createdWidgets[0]);
     }
 
     LPCSTR assetName = isBigAsset ? assets::BIG_BUTTON : assets::SMALL_BUTTON;
@@ -185,6 +185,14 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
     //    widgetStartX = backgroundWidth + xFrameOffset;
 
     placedOutside = gameWidth >= minimalOutsideWidth;
+
+    if (placedOutside && hideWidgetInd >= 0)
+    {
+        std::swap(createdWidgets[0], createdWidgets.back());
+        currentMenuTypeWidgets -= 1; // Remove the hide widget from the list
+        createdWidgets.pop_back();
+    }
+
     const BOOL framesInternal =
         (gameWidth < backgroundWidth + frameWidth * 2) || (gameHeight < backgroundHeight + frameWidth * 2);
 

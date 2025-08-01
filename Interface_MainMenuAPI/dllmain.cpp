@@ -5,7 +5,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.2";
+const char *PLUGIN_VERSION = "1.3";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -111,6 +111,8 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 
             _PI->WriteHiHook(0x04EF343, THISCALL_, DlgMainMenu_NewLoad_Dtor);
             _PI->WriteHiHook(0x04EF67A, THISCALL_, DlgMainMenu_NewLoad_Dtor);
+            BaseGameWidgets::RegisterWidgets();
+
         }
         MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuList::MAIN);
     }
@@ -127,7 +129,6 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 
 void __stdcall OnAfterWog(Era::TEvent *e)
 {
-    BaseGameWidgets::RegisterWidgets();
 
     // This function is called after the Wog event
 }

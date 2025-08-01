@@ -77,6 +77,7 @@
       <FunctionLevelLinking>
       </FunctionLevelLinking>
       <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <ConformanceMode>false</ConformanceMode>
     </ClCompile>
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
