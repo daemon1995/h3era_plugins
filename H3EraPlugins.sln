@@ -1,6 +1,7 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36221.1 d17.14
+VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Artifacts_AddingNewFeatures", "Artifacts_AddingNewFeatures\Artifacts_AddingNewFeatures.vcxproj", "{D8E5282D-5A18-4757-8342-7E9759F5A3F3}"
 EndProject
@@ -39,6 +40,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_ExperienceSplit", "Heroes_ExperienceSplit\Heroes_ExperienceSplit.vcxproj", "{7374708D-BD32-4484-8661-3276656318DD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_MainMenuAPI", "Interface_MainMenuAPI\Interface_MainMenuAPI.vcxproj", "{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_SlayerSpellRework", "Gameplay_SlayerSpellRework\Gameplay_SlayerSpellRework.vcxproj", "{78CD603D-B134-46FC-A397-A658F94AAC26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -122,6 +125,10 @@ Global
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}.Debug|x86.Build.0 = Debug|Win32
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}.Release|x86.ActiveCfg = Release|Win32
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}.Release|x86.Build.0 = Release|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Debug|x86.ActiveCfg = Debug|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Debug|x86.Build.0 = Debug|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Release|x86.ActiveCfg = Release|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
