@@ -32948,7 +32948,7 @@ namespace h3
 {
 	_H3API_ BOOL H3HeroSpecialty::HasSpellSpec() const
 	{
-		return type == eHeroSpecialty::SPEED;
+		return type == eHeroSpecialty::SPELL;
 	}
 	_H3API_ eSpell H3HeroSpecialty::GetSpell() const
 	{
