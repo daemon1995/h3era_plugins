@@ -1,7 +1,5 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
-#include "MenuWidgetManager.h"
 #include "framework.h"
-#include <minwindef.h>
 
 namespace dllText
 {
@@ -112,7 +110,6 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
             _PI->WriteHiHook(0x04EF343, THISCALL_, DlgMainMenu_NewLoad_Dtor);
             _PI->WriteHiHook(0x04EF67A, THISCALL_, DlgMainMenu_NewLoad_Dtor);
             BaseGameWidgets::RegisterWidgets();
-
         }
         MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuList::MAIN);
     }

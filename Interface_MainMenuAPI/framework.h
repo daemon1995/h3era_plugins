@@ -6,3 +6,4 @@
 // add headers that you want to pre-compile here
 #include "../headers/header.h"
 #include "BaseGameWidgets.h"
+#include "MenuWidgetManager.h"
