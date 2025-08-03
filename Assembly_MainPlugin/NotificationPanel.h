@@ -13,7 +13,7 @@ constexpr LPCSTR ORDERED_MOD_URL = "era.%s.notification.%d.url";
 } // namespace jsonFormat
 struct NotificationPanel
 {
-	static constexpr LPCSTR PARENT_BUTTON_CALLER_NAME = "notification_panel_caller";
+    static constexpr LPCSTR PARENT_BUTTON_CALLER_NAME = "notification_panel_caller";
     static NotificationPanel *instance;
     static constexpr int FRAME_OFFSET = 2;
     // namespace assetss
@@ -28,6 +28,11 @@ struct NotificationPanel
     static constexpr int SCROLL_BAR_HEIGHT = 10;
     static constexpr int SCROLL_BAR_X = 5;
     static constexpr int SCROLL_BAR_Y = 5;
+
+    static constexpr int PREVIOUS_BUTTON_ID = 200;
+    static constexpr int NEXT_BUTTON_ID = 201;
+    static constexpr int HIDE_ONE_BUTTON_ID = 202;
+    static constexpr int HIDE_ALL_BUTTON_ID = 203;
 
     struct ModInfo
     {
@@ -51,8 +56,8 @@ struct NotificationPanel
         LPCSTR externalLink = nullptr;
 
         std::string modFolderName;
-        H3DlgScrollableText* descriptionTextScrollBar = nullptr;
-        H3DlgText* descriptionText = nullptr;
+        H3DlgScrollableText *descriptionTextScrollBar = nullptr;
+        H3DlgText *descriptionText = nullptr;
 
         // H3DlgText *author = nullptr;
         //   H3DlgText *description = nullptr;
@@ -133,7 +138,7 @@ struct NotificationPanel
     void SetVisible(const BOOL isVisible, const BOOL activateAllNotifications = false) noexcept;
     BOOL ProcessPanel(H3Msg *msg, const BOOL forceRedraw = false) noexcept;
     void ReloadLanguageData() noexcept;
-	static void OnPanelCallerClick(void* msg) noexcept;
+    static void OnPanelCallerClick(void *msg) noexcept;
     static NotificationPanel *Init(H3BaseDlg *parrent, const int x = 1, const int y = 1, const int width = 400,
                                    const int height = 600) noexcept;
 };

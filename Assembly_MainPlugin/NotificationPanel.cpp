@@ -227,14 +227,16 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
 
         const int switchX = width - FRAME_OFFSET * 2 - 140 + x;
         const int switchY = y + FRAME_OFFSET + 4;
-        if (previousModButton = H3DlgDefButton::Create(switchX, switchY, "ntf_left.def", 0, 1))
+        if (previousModButton =
+                H3DlgDefButton::Create(switchX, switchY, PREVIOUS_BUTTON_ID, "ntf_left.def", 0, 1, false, 0))
         {
             auto frame = H3DlgFrame::Create(previousModButton, highLightColor, 0, 1);
 
             AddItem(frame, true);
             AddItem(previousModButton, true);
         }
-        if (nextModButton = H3DlgDefButton::Create(switchX + 100, switchY, "ntf_rght.def", 0, 1))
+        if (nextModButton =
+                H3DlgDefButton::Create(switchX + 100, switchY, NEXT_BUTTON_ID, "ntf_rght.def", 0, 1, false, 0))
         {
             auto frame = H3DlgFrame::Create(nextModButton, highLightColor, 0, 1);
             AddItem(frame, true);
@@ -257,9 +259,9 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
 
         const int BTTN_X = x + MOD_AREA_OFFSET;
         const int BTTN_Y = y + height - BTTN_HEIGHT - FRAME_OFFSET * 6;
-        if (hideAllButton = H3DlgCaptionButton::Create(BTTN_X + FRAME_OFFSET, BTTN_Y, 0, "ntf_hdal.def",
-                                                       EraJS::read(panelText::HIDE_ALL), NH3Dlg::Text::MEDIUM, 0, 0,
-                                                       false, 0, eTextColor::REGULAR))
+        if (hideAllButton = H3DlgCaptionButton::Create(BTTN_X + FRAME_OFFSET, BTTN_Y, HIDE_ONE_BUTTON_ID,
+                                                       "ntf_hdal.def", EraJS::read(panelText::HIDE_ALL),
+                                                       NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR))
         {
             hideAllButton->SetClickFrame(1);
             auto frame = H3DlgFrame::Create(hideAllButton, highLightColor, 0, 1);
@@ -267,9 +269,9 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
             AddItem(hideAllButton, true);
         }
 
-        if (hideOneButton = H3DlgCaptionButton::Create(x + width - MOD_AREA_OFFSET - bttnWidth - FRAME_OFFSET, BTTN_Y,
-                                                       0, "ntf_hide.def", EraJS::read(panelText::HIDE_ONE),
-                                                       NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR))
+        if (hideOneButton = H3DlgCaptionButton::Create(
+                x + width - MOD_AREA_OFFSET - bttnWidth - FRAME_OFFSET, BTTN_Y, HIDE_ALL_BUTTON_ID, "ntf_hide.def",
+                EraJS::read(panelText::HIDE_ONE), NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR))
         {
 
             hideOneButton->SetClickFrame(1);
@@ -358,14 +360,7 @@ NotificationPanel::~NotificationPanel() noexcept
         backupScreen->Destroy();
         backupScreen = nullptr;
     }
-    // if (parentCaller)
-    //{
-    //     if (auto pcx = parentCaller->GetPcx())
-    //     {
-    //         pcx->Destroy();
-    //         parentCaller->SetPcx(nullptr);
-    //     }
-    // }
+
     instance = nullptr;
 }
 
@@ -845,7 +840,7 @@ void NotificationPanel::OnPanelCallerClick(void *msg) noexcept
 {
     if (auto *h3msg = reinterpret_cast<H3Msg *>(msg))
     {
-        if (h3msg->IsLeftClick())
+        if (h3msg->IsLeftClick() && instance)
         {
             instance->SetVisible(!instance->isVisible, true);
         }
@@ -858,92 +853,90 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
     BOOL result = false;
     if (msg)
     {
-        if (const auto processItem = msg->ItemAtPosition(msg->GetDlg()))
+
+        if (msg->IsLeftClick())
         {
-            result = (currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink);
+            const int itemId = msg->itemId;
+            int modsWrittenToIni = 0;
 
-            if (msg->IsLeftDown())
+            switch (msg->itemId)
             {
-
-                if (result)
+            case PREVIOUS_BUTTON_ID:
+                SwitchModInfo(-1);
+                break;
+            case NEXT_BUTTON_ID:
+                SwitchModInfo(1);
+                break;
+            case HIDE_ONE_BUTTON_ID:
+                // first, mark current mod as hidden
+                if (currentModInfo->MarkAsHiddenByUser())
                 {
-                    P_SoundManager->ClickSound();
-                    OpenExternalFile(currentModInfo->externalLink);
+                    Era::SaveIni(INI_FILE_NAME);
                 }
-            }
-            else if (msg->IsLeftClick())
-            {
 
-                if (processItem == parentCaller)
+                // if there are more than one visible notification
+                if (notificationsVisible > 1)
                 {
-                    // P_SoundManager->ClickSound();
+                    // hide current mod to make space for the next one
+
+                    SetModVisible(*currentModInfo, false);
+                    UpdateVisibleNotificationsList();
+
+                    volatile int i = 0;
+                    for (auto &it : modInfos)
+                    {
+                        it.displayedIndex = it.isVisible && !it.isHiddenByUser ? ++i : 0;
+                    }
+
+                    if (currentModInfoIndex > notificationsVisible)
+                    {
+                        currentModInfoIndex = currentModInfoIndex - 1;
+                    }
+
+                    if (currentModInfo = GetModInfoFromVisible(currentModInfoIndex))
+                    {
+                        SetModVisible(*currentModInfo, true);
+                        UpdateVisibleNotificationsList();
+                    }
+                    if (notificationsCounter)
+                    {
+                        notificationsCounter->Draw();
+                        notificationsCounter->Refresh();
+                    }
                 }
-                else if (processItem == hideAllButton)
+                else
                 {
                     SetVisible(false);
-                    int modsWrittenToIni = 0;
-                    // if mod has text, mark it as hidden
-                    for (auto &i : modInfos)
-                    {
-                        modsWrittenToIni += i.MarkAsHiddenByUser();
-                    }
-                    if (modsWrittenToIni)
-                    {
-                        Era::SaveIni(INI_FILE_NAME);
-                    }
                 }
-                else if (processItem == hideOneButton)
+                break;
+            case HIDE_ALL_BUTTON_ID:
+                SetVisible(false);
+                // if mod has text, mark it as hidden
+                for (auto &i : modInfos)
                 {
-
-                    // first, mark current mod as hidden
-                    if (currentModInfo->MarkAsHiddenByUser())
-                    {
-                        Era::SaveIni(INI_FILE_NAME);
-                    }
-
-                    // if there are more than one visible notification
-                    if (notificationsVisible > 1)
-                    {
-                        // hide current mod to make space for the next one
-
-                        SetModVisible(*currentModInfo, false);
-                        UpdateVisibleNotificationsList();
-
-                        volatile int i = 0;
-                        for (auto &it : modInfos)
-                        {
-                            it.displayedIndex = it.isVisible && !it.isHiddenByUser ? ++i : 0;
-                        }
-
-                        if (currentModInfoIndex > notificationsVisible)
-                        {
-                            currentModInfoIndex = currentModInfoIndex - 1;
-                        }
-
-                        if (currentModInfo = GetModInfoFromVisible(currentModInfoIndex))
-                        {
-                            SetModVisible(*currentModInfo, true);
-                            UpdateVisibleNotificationsList();
-                        }
-                        if (notificationsCounter)
-                        {
-                            notificationsCounter->Draw();
-                            notificationsCounter->Refresh();
-                        }
-                    }
-                    else
-                    {
-                        SetVisible(false);
-                    }
+                    modsWrittenToIni += i.MarkAsHiddenByUser();
                 }
-                else if (processItem == nextModButton)
+                if (modsWrittenToIni)
                 {
-                    SwitchModInfo(1);
+                    Era::SaveIni(INI_FILE_NAME);
                 }
-                else if (processItem == previousModButton)
-                {
-                    SwitchModInfo(-1);
-                }
+
+                break;
+
+            default:
+                break;
+            }
+        }
+        else if (const auto processItem = msg->ItemAtPosition(msg->GetDlg()))
+        {
+
+            // set cursor to hand
+            result = (currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink);
+
+            if (result && msg->IsLeftDown())
+            {
+                P_SoundManager->ClickSound();
+                OpenExternalFile(currentModInfo->externalLink);
             }
         }
 
@@ -959,25 +952,29 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
             {
                 for (auto &i : currentModInfo->items)
                 {
-                    i->Draw();
+                    if (i->IsVisible())
+                        i->Draw();
                 }
 
                 if (auto scroll = currentModInfo->descriptionTextScrollBar)
                 {
-                    if (auto _items = scroll->GetItems())
+                    if (scroll->IsVisible())
                     {
-                        for (auto &i : *_items)
+                        if (auto _items = scroll->GetItems())
                         {
-                            i->Draw();
+                            for (auto &i : *_items)
+                            {
+                                i->Draw();
+                            }
                         }
-                    }
 
-                    // manage scrollbar if it has more than one tick (visible)
-                    if (auto _i = scroll->GetTextScrollBar())
-                    {
-                        if (_i->GetTicksCount() > 1)
+                        // manage scrollbar if it has more than one tick (visible)
+                        if (auto _i = scroll->GetTextScrollBar())
                         {
-                            _i->Draw();
+                            if (_i->GetTicksCount() > 1)
+                            {
+                                _i->Draw();
+                            }
                         }
                     }
                 }
@@ -995,11 +992,7 @@ void NotificationPanel::ReloadLanguageData() noexcept
     {
         libc::sprintf(h3_TextBuffer, EraJS::read(panelText::BUTTON_FORMAT), notificationsTotal);
         parentCaller->SetText(h3_TextBuffer);
-        if (parentCaller->IsVisible())
-        {
-            parentCaller->Draw();
-            parentCaller->Refresh();
-        }
+        mainmenu::MainMenu_SetDialogButtonText(NotificationPanel::PARENT_BUTTON_CALLER_NAME, h3_TextBuffer);
     }
 
     const bool isVisibleBefore = isVisible;
