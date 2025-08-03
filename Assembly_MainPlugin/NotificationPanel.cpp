@@ -225,7 +225,7 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
             AddItem(panelTitle, true);
         }
 
-        const int switchX = width - FRAME_OFFSET * 2 - 140 + x;
+        const int switchX = width - FRAME_OFFSET * 2 - 157 + x;
         const int switchY = y + FRAME_OFFSET + 4;
         if (previousModButton =
                 H3DlgDefButton::Create(switchX, switchY, PREVIOUS_BUTTON_ID, "ntf_left.def", 0, 1, false, 0))
@@ -250,7 +250,7 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
         }
 
         constexpr UINT BTTN_HEIGHT = 40;
-        constexpr UINT MOD_AREA_OFFSET = 20;
+        constexpr UINT MOD_AREA_OFFSET = 25;
         CreateModAreaFrame(x + MOD_AREA_OFFSET, y + TITLE_HEIGHT + FRAME_OFFSET * 2 + MOD_AREA_OFFSET / 2,
                            width - MOD_AREA_OFFSET * 2,
                            height + MOD_AREA_OFFSET / 2 - (BTTN_HEIGHT + MOD_AREA_OFFSET) * 2);
@@ -487,7 +487,8 @@ void NotificationPanel::CreateModAreaFrame(const UINT x, const UINT y, const UIN
             _h -= 256;
         }
 
-        image.pcx->FrameRegion(0, 0, width, height, false, 1, false);
+        image.pcx->FrameRegion(0, 0, width, height, false, 1, true);
+        //       image.pcx->SimpleFrameRegion(0, 0, width, height);
 
         image.item->SetWidth(width);
         image.item->SetHeight(height);
@@ -500,7 +501,7 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
 {
 
     // first create each item w/o adding it into dlg/dl panel in order to not overlap with other items
-    constexpr int offset = 12;
+    constexpr int offset = 10;
     const int x = modBackground->GetX() + offset;
     const int y = modBackground->GetY() + offset - 4;
     const int width = modBackground->GetWidth() - offset * 2;
@@ -513,10 +514,8 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
 
         const int modNameWidth = fn->GetMaxLineWidth(modInfo.displayedName) + 2;
         const int underX = (width - modNameWidth) / 2 + x;
-        auto urlUnderline = H3DlgFrame::Create(underX, y + 24, modNameWidth, 1, linkColor);
-        modInfo.items.emplace_back(urlUnderline);
-        AddItem(urlUnderline);
-        modInfo.nameUnderline = urlUnderline;
+        modInfo.nameUnderline = H3DlgFrame::Create(underX, y + 24, modNameWidth, 1, linkColor);
+        modInfo.items.emplace_back(modInfo.nameUnderline);
     }
 
     const eTextColor textColor = modInfo.externalLink ? eTextColor::REGULAR : eTextColor::BLUE2;
@@ -526,8 +525,8 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
     modInfo.items.emplace_back(modInfo.modNameDlgText);
 
     H3RGB565 highLightColor(H3RGB888::Highlight());
-    auto delimiterFrame = H3DlgFrame::Create(x + 10, y + 30, width - 16, 1, highLightColor);
-    modInfo.items.emplace_back(delimiterFrame);
+    modInfo.delimiterFrame = H3DlgFrame::Create(x + 10, y + 30, width - 16, 1, highLightColor);
+    modInfo.items.emplace_back(modInfo.delimiterFrame);
 
     modInfo.descriptionTextScrollBar =
         H3DlgScrollableText::Create(modInfo.displayedText, x + 10, y + 40, width - 16, height - 53,
@@ -559,12 +558,10 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
         }
     }
 
-    // add items into dlg as hidden items
-    AddItem(delimiterFrame);
-
-    AddItem(modInfo.modNameDlgText);
-    AddItem(modInfo.descriptionTextScrollBar);
-    AddItem(modInfo.descriptionText);
+    for (auto &i : modInfo.items)
+    {
+        AddItem(i);
+    }
 }
 
 void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNotifications) noexcept
@@ -671,6 +668,8 @@ void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL visible) noex
         modBackground->Refresh();
     }
 
+    this->isVisible = visible;
+
     if (visible)
     {
         if (auto it = modInfo.modNameDlgText)
@@ -681,6 +680,13 @@ void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL visible) noex
         }
 
         if (auto it = modInfo.nameUnderline)
+        {
+            it->ShowActivate();
+            it->Draw();
+            it->Refresh();
+        }
+
+        if (auto it = modInfo.delimiterFrame)
         {
             it->ShowActivate();
             it->Draw();
@@ -737,6 +743,11 @@ void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL visible) noex
         }
 
         if (auto it = modInfo.nameUnderline)
+        {
+            it->HideDeactivate();
+        }
+
+        if (auto it = modInfo.delimiterFrame)
         {
             it->HideDeactivate();
         }

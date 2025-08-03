@@ -2,7 +2,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.78";
+const char *PLUGIN_VERSION = "1.79";
 const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";
@@ -27,7 +27,6 @@ BOOL __stdcall _IsIconic(HWND hwnd)
     return false;
 }
 
-#include <windows.h>
 // Объявление структуры и типа функции для регистрации виджета
 
 int __stdcall GameStart(LoHook *h, HookContext *c)

@@ -49,7 +49,8 @@ struct NotificationPanel
         UINT currentDescriptionHash = 0;
 
         H3DlgText *modNameDlgText = nullptr;
-        H3DlgFrame *nameUnderline = nullptr;
+        H3DlgFrame* nameUnderline = nullptr;
+        H3DlgFrame* delimiterFrame = nullptr;
 
         LPCSTR displayedText = nullptr;
         LPCSTR displayedName = nullptr;
