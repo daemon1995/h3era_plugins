@@ -51,7 +51,8 @@ struct NotificationPanel
         LPCSTR externalLink = nullptr;
 
         std::string modFolderName;
-        H3DlgScrollableText *descriptionTextScrollBar = nullptr;
+        H3DlgScrollableText* descriptionTextScrollBar = nullptr;
+        H3DlgText* descriptionText = nullptr;
 
         // H3DlgText *author = nullptr;
         //   H3DlgText *description = nullptr;

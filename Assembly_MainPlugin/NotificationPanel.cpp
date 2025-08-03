@@ -247,13 +247,13 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
             AddItem(notificationsCounter, true);
         }
 
-        constexpr int BTTN_HEIGHT = 40;
-        constexpr UINT MOD_AREA_OFFSET = 25;
+        constexpr UINT BTTN_HEIGHT = 40;
+        constexpr UINT MOD_AREA_OFFSET = 20;
         CreateModAreaFrame(x + MOD_AREA_OFFSET, y + TITLE_HEIGHT + FRAME_OFFSET * 2 + MOD_AREA_OFFSET / 2,
                            width - MOD_AREA_OFFSET * 2,
                            height + MOD_AREA_OFFSET / 2 - (BTTN_HEIGHT + MOD_AREA_OFFSET) * 2);
 
-        const int bttnWidth = 208; // -FRAME_OFFSET  2;
+        constexpr UINT bttnWidth = 208; // -FRAME_OFFSET  2;
 
         const int BTTN_X = x + MOD_AREA_OFFSET;
         const int BTTN_Y = y + height - BTTN_HEIGHT - FRAME_OFFSET * 6;
@@ -492,7 +492,7 @@ void NotificationPanel::CreateModAreaFrame(const UINT x, const UINT y, const UIN
             _h -= 256;
         }
 
-        image.pcx->FrameRegion(0, 0, width, height, false, 4, true);
+        image.pcx->FrameRegion(0, 0, width, height, false, 1, false);
 
         image.item->SetWidth(width);
         image.item->SetHeight(height);
@@ -505,7 +505,7 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
 {
 
     // first create each item w/o adding it into dlg/dl panel in order to not overlap with other items
-    constexpr int offset = 10;
+    constexpr int offset = 12;
     const int x = modBackground->GetX() + offset;
     const int y = modBackground->GetY() + offset - 4;
     const int width = modBackground->GetWidth() - offset * 2;
@@ -513,7 +513,7 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
 
     //  if (modInfo.externalLink)
     {
-        H3RGB565 linkColor(H3RGB888(0, 0xAA, 0xFF));
+        const H3RGB565 linkColor(H3RGB888(0, 0xAA, 0xFF));
         H3FontLoader fn(NH3Dlg::Text::MEDIUM);
 
         const int modNameWidth = fn->GetMaxLineWidth(modInfo.displayedName) + 2;
@@ -541,6 +541,13 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
     // modInfo.descriptionTextScrollBar->SetText(modInfo.displayedText);
     modInfo.items.emplace_back(modInfo.descriptionTextScrollBar);
 
+    modInfo.descriptionText =
+        H3DlgText::Create(x + 10, y + 40, width - 16, height - 53, modInfo.displayedText, // dummy text
+                          NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, 0, eTextAlignment::VTOP);
+    modInfo.descriptionText->HideDeactivate();
+    // modInfo.descriptionTextScrollBar->SetText(modInfo.displayedText);
+    modInfo.items.emplace_back(modInfo.descriptionText);
+
     if (auto scroll = modInfo.descriptionTextScrollBar)
     {
         if (auto items = scroll->GetItems())
@@ -562,6 +569,7 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
 
     AddItem(modInfo.modNameDlgText);
     AddItem(modInfo.descriptionTextScrollBar);
+    AddItem(modInfo.descriptionText);
 }
 
 void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNotifications) noexcept
@@ -658,47 +666,102 @@ void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNot
         }
     }
 }
-void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL isVisible) noexcept
+void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL visible) noexcept
 {
 
-    if (this->isVisible && isVisible == false)
+    if (this->isVisible && visible == false)
     {
         auto &modBackground = this->runtimes.modBackground.item;
         modBackground->Draw();
         modBackground->Refresh();
     }
 
-    for (auto &i : modInfo.items)
+    if (visible)
     {
-        isVisible ? i->ShowActivate(), i->Draw(), i->Refresh() : i->HideDeactivate();
-    }
-    if (modInfo.externalLink)
-    {
-    }
-
-    if (auto scroll = modInfo.descriptionTextScrollBar)
-    {
-        if (auto items = scroll->GetItems())
+        if (auto it = modInfo.modNameDlgText)
         {
-            for (auto &i : *items)
-            {
-                isVisible ? i->ShowActivate(), i->Draw(), i->Refresh() : i->HideDeactivate();
-            }
+            it->ShowActivate();
+            it->Draw();
+            it->Refresh();
         }
-        if (isVisible)
+
+        if (auto it = modInfo.nameUnderline)
         {
-            if (auto canvas = scroll->GetPcx())
+            it->ShowActivate();
+            it->Draw();
+            it->Refresh();
+        }
+
+        BOOL drawSlider = false;
+
+        if (auto scrollableText = modInfo.descriptionTextScrollBar)
+        {
+            auto slider = scrollableText->GetTextScrollBar();
+            drawSlider = slider && slider->GetTicksCount() > 1;
+
+            // draw black background
+            if (auto canvas = scrollableText->GetPcx())
             {
                 libc::memset(canvas->buffer, 0, canvas->buffSize);
             }
         }
 
-        // manage scrollbar if it has more than one tick (visible)
-        if (auto i = scroll->GetTextScrollBar())
+        if (drawSlider)
         {
-            if (i->GetTicksCount() > 1)
+            if (auto scrollableText = modInfo.descriptionTextScrollBar)
             {
-                isVisible ? i->ShowActivate(), i->Draw(), i->Refresh() : i->HideDeactivate();
+
+                scrollableText->ShowActivate(), scrollableText->Draw(), scrollableText->Refresh();
+                if (auto it = scrollableText->GetTextScrollBar())
+                {
+                    it->ShowActivate(), it->Draw(), it->Refresh();
+                }
+                for (auto &it : *scrollableText->GetItems())
+                {
+                    it->ShowActivate(), it->Draw(), it->Refresh();
+                }
+            }
+        }
+        else
+        {
+            if (auto it = modInfo.descriptionText)
+            {
+                it->ShowActivate();
+                it->Draw();
+                it->Refresh();
+            }
+        }
+    }
+    else
+    {
+
+        // hide all items
+        if (auto it = modInfo.modNameDlgText)
+        {
+            it->HideDeactivate();
+        }
+
+        if (auto it = modInfo.nameUnderline)
+        {
+            it->HideDeactivate();
+        }
+
+        if (auto it = modInfo.descriptionText)
+        {
+            it->HideDeactivate();
+        }
+
+        if (auto scrollableText = modInfo.descriptionTextScrollBar)
+        {
+
+            scrollableText->HideDeactivate();
+            if (auto it = scrollableText->GetTextScrollBar())
+            {
+                it->HideDeactivate();
+            }
+            for (auto &it : *scrollableText->GetItems())
+            {
+                it->HideDeactivate();
             }
         }
     }
@@ -953,6 +1016,7 @@ void NotificationPanel::ReloadLanguageData() noexcept
         if (i.displayedText && i.ReloadDescription())
         {
             i.descriptionTextScrollBar->SetText(i.displayedText);
+            i.descriptionText->SetText(i.displayedText);
             i.modNameDlgText->SetText(i.displayedName);
         }
     }

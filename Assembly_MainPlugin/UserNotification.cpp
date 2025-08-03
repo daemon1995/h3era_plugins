@@ -5,7 +5,7 @@
 
 #include "framework.h"
 
-UserNotification* UserNotification::instance = nullptr;
+UserNotification *UserNotification::instance = nullptr;
 UserNotification::UserNotification(PatcherInstance *_pi) : IGamePatch(_pi)
 {
 
