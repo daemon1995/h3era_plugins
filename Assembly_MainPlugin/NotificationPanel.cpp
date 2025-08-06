@@ -259,18 +259,9 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
 
         const int BTTN_X = x + MOD_AREA_OFFSET;
         const int BTTN_Y = y + height - BTTN_HEIGHT - FRAME_OFFSET * 6;
-        if (hideAllButton = H3DlgCaptionButton::Create(BTTN_X + FRAME_OFFSET, BTTN_Y, HIDE_ONE_BUTTON_ID,
-                                                       "ntf_hdal.def", EraJS::read(panelText::HIDE_ALL),
-                                                       NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR))
-        {
-            hideAllButton->SetClickFrame(1);
-            auto frame = H3DlgFrame::Create(hideAllButton, highLightColor, 0, 1);
-            AddItem(frame, true);
-            AddItem(hideAllButton, true);
-        }
 
         if (hideOneButton = H3DlgCaptionButton::Create(
-                x + width - MOD_AREA_OFFSET - bttnWidth - FRAME_OFFSET, BTTN_Y, HIDE_ALL_BUTTON_ID, "ntf_hide.def",
+                x + width - MOD_AREA_OFFSET - bttnWidth - FRAME_OFFSET, BTTN_Y, HIDE_ONE_BUTTON_ID, "ntf_hide.def",
                 EraJS::read(panelText::HIDE_ONE), NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR))
         {
 
@@ -278,6 +269,16 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
             auto frame = H3DlgFrame::Create(hideOneButton, highLightColor, 0, 1);
             AddItem(frame, true);
             AddItem(hideOneButton, true);
+        }
+
+        if (hideAllButton = H3DlgCaptionButton::Create(BTTN_X + FRAME_OFFSET, BTTN_Y, HIDE_ALL_BUTTON_ID,
+                                                       "ntf_hdal.def", EraJS::read(panelText::HIDE_ALL),
+                                                       NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR))
+        {
+            hideAllButton->SetClickFrame(1);
+            auto frame = H3DlgFrame::Create(hideAllButton, highLightColor, 0, 1);
+            AddItem(frame, true);
+            AddItem(hideAllButton, true);
         }
 
         for (auto &i : modInfos)
