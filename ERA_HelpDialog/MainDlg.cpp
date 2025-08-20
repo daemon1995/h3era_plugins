@@ -1,20 +1,18 @@
 #include "SystemFunctions.h"
 #include "framework.h"
-#include <regex>
-#include <sstream> // for std::istringstream
+LastActiveDlgModInfo ModInformation::lastActiveModInfo;
 
 namespace main
 {
 
-HelpDlg *HelpDlg::instance = nullptr;
-LastActiveDlgModInfo Mod::lastActiveModInfo;
+MainDlg *MainDlg::instance = nullptr;
 
-HelpDlg::HelpDlg(const int width, const int height, const int x, const int y) : H3Dlg(width, height, x, y, 1, 0)
+MainDlg::MainDlg(const int width, const int height, const int x, const int y) : H3Dlg(width, height, x, y, 1, 0)
 {
     // disable dlg shadow
     flags ^= 16;
 
-    HelpDlg::instance = this;
+    MainDlg::instance = this;
 
     // set black background
     background = H3LoadedPcx16::Create(h3_NullString, width, height);
@@ -110,10 +108,10 @@ HelpDlg::HelpDlg(const int width, const int height, const int x, const int y) : 
     }
 }
 
-HelpDlg::~HelpDlg()
+MainDlg::~MainDlg()
 {
     // clear dlg ptr
-    main::HelpDlg::instance = nullptr;
+    main::MainDlg::instance = nullptr;
 
     // clear panels
     for (auto &panel : panels.asArray)
@@ -124,23 +122,23 @@ HelpDlg::~HelpDlg()
     // clear mod data (and all inside)
     for (auto &mod : mods)
     {
-        mod->~Mod();
+        delete mod;
     }
 }
 
-const Content *HelpDlg::ActiveContent() const noexcept
+const Content *MainDlg::ActiveContent() const noexcept
 {
     return m_activeMod->activeCategory->content;
 }
 
-void HelpDlg::CallHelpInHelpDlg() const noexcept
+void MainDlg::CallHelpInHelpDlg() const noexcept
 {
-    help::HelpInHelpDlg dlg(500, 500);
+    help::GuideDlg dlg(500, 500);
 
     dlg.Start();
 }
 
-void HelpDlg::DisplayAllHotkeys() /*const*/ noexcept
+void MainDlg::DisplayAllHotkeys() /*const*/ noexcept
 {
     if (this->hotkeys.size())
     {
@@ -153,8 +151,9 @@ void HelpDlg::DisplayAllHotkeys() /*const*/ noexcept
 
 // this function calls dlg with mods
 // and return ptr to the selected one
-Mod *HelpDlg::CallModListDlg(const Mod *activeMod) const noexcept
+ModInformation *MainDlg::CallModListDlg(const ModInformation *activeMod) const noexcept
 {
+
     list::ModListDlg dlg(500, 500);
     dlg.Start();
     P_WindowManager->resultItemID;
@@ -164,35 +163,10 @@ Mod *HelpDlg::CallModListDlg(const Mod *activeMod) const noexcept
     return dlg.ResultMod();
 }
 
-//	return "";  // Возвращаем пустую строку, если ничего не найдено
-//}
-
-std::string ExtractModNameFromPath(const std::string &input)
-{
-    // Ищем начало пути
-    size_t startPos = input.find("$ <= $");
-    if (startPos == std::string::npos)
-        return "";
-    startPos += 12; // Пропускаем "$ <= $"
-
-    // Ищем конец пути до квадратной скобки
-    size_t endPos = input.find("[", startPos);
-    if (endPos == std::string::npos)
-        return "";
-
-    // Извлекаем путь и убираем пробелы по краям
-    std::string path = input.substr(startPos, endPos - startPos);
-    size_t first = path.find_first_not_of(' ');
-    size_t last = path.find_last_not_of(' ');
-
-    return path.substr(first, last - first + 1);
-}
-
 // this function creates mod list and returns "true"
 // if there is at least one mode that may be displayed
-BOOL HelpDlg::GetLoadedModsJsonInformation(const std::vector<std::string> &modNames)
+BOOL MainDlg::GetLoadedModsJsonInformation(const std::vector<std::string> &modNames)
 {
-    BOOL result = false;
 
     // parse string
     if (!modNames.empty())
@@ -202,11 +176,7 @@ BOOL HelpDlg::GetLoadedModsJsonInformation(const std::vector<std::string> &modNa
         for (auto &modName : modNames)
         {
 
-            Mod *mod = new Mod(modName.c_str(), modId++);
-            if (mod->hasSomeInfo)
-            {
-                result = true;
-            }
+            ModInformation *mod = new ModInformation(modName.c_str(), modId++);
             // if it has some info
             if (mod->hasSomeInfo)
             {
@@ -214,15 +184,15 @@ BOOL HelpDlg::GetLoadedModsJsonInformation(const std::vector<std::string> &modNa
             }
             else
             {
-                mod->~Mod();
+                delete mod;
             }
         }
     }
 
-    return result;
+    return !mods.empty();
 }
 
-void HelpDlg::SetActiveMod(/*const */ Mod *mod)
+void MainDlg::SetActiveMod(/*const */ ModInformation *mod)
 {
     if (m_activeMod != mod)
     {
@@ -240,7 +210,7 @@ void HelpDlg::SetActiveMod(/*const */ Mod *mod)
     }
 }
 
-BOOL HelpDlg::DialogProc(H3Msg &msg)
+BOOL MainDlg::DialogProc(H3Msg &msg)
 {
     if (msg.IsLeftClick())
     {
@@ -300,7 +270,7 @@ BOOL HelpDlg::DialogProc(H3Msg &msg)
     return 0;
 }
 
-void HelpDlg::AssignWithCalledDlg(const H3Town *town, const eCreature creature) noexcept
+void MainDlg::AssignWithCalledDlg(const H3Town *town, const eCreature creature) noexcept
 {
 
     if (town)
@@ -311,9 +281,124 @@ void HelpDlg::AssignWithCalledDlg(const H3Town *town, const eCreature creature) 
     }
 }
 
-BOOL HelpDlg::DlgExists()
+BOOL MainDlg::DlgExists()
 {
     return instance != nullptr;
+}
+
+const H3Town *townFromClick = nullptr;
+eCreature creatureFromClick = eCreature::UNDEFINED;
+enum H3DlgVTables : DWORD
+{
+
+    H3TownSmallDlg = 0x00640704,
+    H3CreatureSmallDlg = 0x06406DC,
+};
+
+void MainDlg::PrepareMainDlg(HookContext *c)
+{
+
+    if (!main::MainDlg::DlgExists())
+    {
+        // P_SoundManager->ClickSound();
+
+        Era::ReadStrFromIni("FullScreen", "Help", main::MainDlg::iniPath, h3_TextBuffer);
+
+        const H3Town *town = nullptr;
+
+        eCreature creature = eCreature::UNDEFINED;
+
+        const DWORD currentDlgVTable = *reinterpret_cast<DWORD *>(P_WindowManager->lastDlg);
+
+        if (currentDlgVTable)
+        {
+
+            switch (currentDlgVTable)
+            {
+            case H3DlgVTables::H3TownSmallDlg:
+                town = townFromClick;
+                break;
+            case H3DlgVTables::H3CreatureSmallDlg:
+                creature = creatureFromClick;
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (town)
+        {
+            //   H3Messagebox(town->name);
+            //            libc::sprintf(Era::z[0], "%s", town->name);
+            //          Era::ExecErmCmd("IF:L^%z1^;");
+        }
+        else
+        {
+            townFromClick = nullptr;
+        }
+        if (creature != eCreature::UNDEFINED)
+        {
+            //    H3Messagebox(P_CreatureInformation[creature].namePlural);
+        }
+        else
+        {
+
+            creatureFromClick = eCreature::UNDEFINED;
+        }
+        //   Era::y[55] = **reinterpret_cast<DWORD**>(P_WindowManager->lastDlg);
+        //  Era::ExecErmCmd("IF:L^%y55^;");
+        const int storeResult = P_WindowManager->resultItemID;
+        bool isFullScreen = atoi(h3_TextBuffer);
+
+        do
+        {
+            const int dialogWidth = isFullScreen ? H3GameWidth::Get() - 6 : 800;
+            const int dialogHeight = isFullScreen ? H3GameHeight::Get() - 6 : 600;
+
+            // create help dialog
+            main::MainDlg dialog(dialogWidth, dialogHeight);
+
+            // initialize help dialog
+            //	dialog.AssignWithCalledDlg();
+
+            // start help dialog
+
+            dialog.Start();
+
+            const int storeResultA = P_WindowManager->ClickedItemID();
+            storeResultA;
+            //            town ? dialog.RMB_Show(): dialog.Start();
+            if (c && town == nullptr && 0)
+            {
+                c->return_address = 0x04F8710;
+                // return NO_EXEC_DEFAULT;
+            }
+            // reverse isFullScreen after dialog closed
+
+            if (P_WindowManager->resultItemID == main::buttons::RESIZE_DLG)
+            {
+                Era::WriteStrToIni("FullScreen", (isFullScreen ^= 1) ? "1" : "0", "Help", main::MainDlg::iniPath);
+                Era::SaveIni(main::MainDlg::iniPath);
+            }
+            else
+            {
+                break;
+            }
+
+        } while (TRUE);
+        P_WindowManager->resultItemID = storeResult;
+    }
+}
+
+void MainDlg::MainMenuButtonProc(void *msg)
+{
+    if (auto mes = static_cast<H3Msg *>(msg))
+    {
+        if (mes->IsLeftClick())
+        {
+            PrepareMainDlg();
+        }
+    }
 }
 
 void H3DlgFramedPanel::CreateBorderFrame()
@@ -408,135 +493,6 @@ void HeaderMenuPanel::InitPanelItems()
         // this->AddItem(frame);
     }
     dlgPanel->CreateBorderFrame();
-}
-
-Mod::Mod(LPCSTR modFolderName, const UINT id) : name(modFolderName), hasSomeInfo(false), id(id), activeCategory(nullptr)
-{
-
-    json = jsonBase;
-    json.Append(modFolderName);
-
-    categories.clear();
-    // start parsing panelCategories
-    // first parse hotkeys
-
-    if (hotkeysCategory = CreateHotkeysCategory())
-    {
-        categories.emplace_back(hotkeysCategory);
-    }
-
-    // create native catigories while json is parsed
-    int startIndex = 0;
-    while (auto category = CreateNativeCategory(startIndex++))
-    {
-        categories.emplace_back(category);
-    }
-
-    if (!categories.empty())
-    {
-        hasSomeInfo = true;
-    }
-}
-
-Mod::~Mod()
-{
-    for (auto &cat : categories)
-    {
-        if (cat)
-        {
-            cat->~Category();
-        }
-        // delete cat->content;
-        //
-    }
-}
-
-HotKeysCategory *Mod::CreateHotkeysCategory() const noexcept
-{
-
-    HotKeysCategory *result = nullptr;
-    // H3String jsonKey = H3String::Format("%s.panelCategories.hotkeys",
-    // json.String());
-
-    bool readSucces = false;
-    std::vector<HotKey> hotkeys;
-    LPCSTR hkName = EraJS::read(H3String::Format("%s.categories.hotkeys.name", json.String()).String(), readSucces);
-    if (readSucces)
-    {
-        int hotkeyId = 0;
-        while (true)
-        {
-            H3String key = EraJS::read(
-                H3String::Format("%s.categories.hotkeys.content.%d.key", json.String(), hotkeyId).String(), readSucces);
-            if (!readSucces || key.Empty())
-            {
-                break;
-            }
-
-            const int type = EraJS::readInt(
-                H3String::Format("%s.categories.hotkeys.content.%d.type", json.String(), hotkeyId).String());
-            H3String description = EraJS::read(
-                H3String::Format("%s.categories.hotkeys.content.%d.description", json.String(), hotkeyId).String());
-
-            hotkeys.emplace_back(HotKey{hkcategories::eType(type), key, description});
-            hotkeyId++;
-        }
-    }
-    // if added at least one hotkey
-    if (hotkeys.size())
-    {
-
-        result = new HotKeysCategory();
-        result->hotkeys = hotkeys;
-        result->name = hkName;
-        result->content = new Content();
-    }
-
-    return result;
-}
-
-Category *Mod::CreateNativeCategory(const int index) const noexcept
-{
-    Category *result = nullptr;
-    bool readSucces = false;
-
-    LPCSTR catName = EraJS::read(H3String::Format("%s.categories.%d.name", json.String(), index).String(), readSucces);
-    if (readSucces)
-    {
-
-        if (result = new Category())
-        {
-            result->name = catName;
-
-            result->content = new Content();
-            result->content->text =
-                EraJS::read(H3String::Format("%s.categories.%d.content", json.String(), index).String());
-
-            // H3String defName =
-        }
-    }
-
-    return result;
-}
-
-const Category &Mod::ActiveCategory() const noexcept
-{
-    return *activeCategory;
-}
-
-size_t Mod::Size() const noexcept
-{
-    return categories.size();
-}
-
-void Mod::SetVisible(const BOOL state)
-{
-}
-
-void Mod::StoreModInfoAsActive() const noexcept
-{
-    // lastActiveModInfo.scrollBarPos  = this->activeCategory
-    lastActiveModInfo.categoryId = m_lastActiveCategoryId;
 }
 
 void ContentPanel::InitPanelItems()
@@ -734,7 +690,7 @@ void CategoriesPanel::InitPanelItems()
     dlgPanel->CreateBorderFrame();
 }
 
-void CategoriesPanel::AssignMod(Mod *mod)
+void CategoriesPanel::AssignMod(ModInformation *mod)
 {
     if (activeMod != mod)
     {
@@ -780,17 +736,7 @@ void CategoriesPanel::RedrawCategoryItems(const int firstItemId)
     }
 }
 
-Category::~Category()
-{
-    if (content)
-    {
-        delete content;
-        content = nullptr;
-    }
-}
-void Category::ShowContent() const noexcept
-{
-}
+
 // DlgPanel::DlgPanel(const DlgPanel &other)
 //     : DlgPanel(other.dlgPanel->GetX(), other.dlgPanel->GetY(), other.dlgPanel->GetWidth(), other.dlgPanel->GetY(),
 //              other.dlgPanel->Parent())

@@ -213,7 +213,7 @@
 //    dlgPanel->CreateBorderFrame();
 //}
 //
-//void CategoriesPanel::AssignMod(main::Mod *mod)
+//void CategoriesPanel::AssignMod(main::ModInformation *mod)
 //{
 //    if (activeMod != mod)
 //    {

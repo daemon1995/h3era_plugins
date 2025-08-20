@@ -1,21 +1,12 @@
 #pragma once
+#include "ModInformation.h"
 #include "DlgEnums.h"
 
 namespace main
 {
-struct Content;
-struct Category;
-struct BaseMod;
-struct Mod;
 struct HotKeysCategory;
 
-struct LastActiveDlgModInfo
-{
-    int modId = -1;
-    int categoryId = -1;
-    int scrollBarPos = 0;
-    const Mod *mod = nullptr;
-};
+
 
 class H3DlgFramedPanel : public H3DlgBasePanel
 {
@@ -115,7 +106,7 @@ class GameInfoContentPanel : public DlgPanel
 
 class CategoriesPanel : public DlgPanel
 {
-    Mod *activeMod = nullptr;
+    ModInformation *activeMod = nullptr;
     struct PanelCategory
     {
 
@@ -140,7 +131,7 @@ class CategoriesPanel : public DlgPanel
     virtual void InitPanelItems() override;
 
   public:
-    void AssignMod(Mod *mod);
+    void AssignMod(ModInformation *mod);
     void RedrawCategoryItems(const int firstItemId = 0);
 };
 
@@ -199,102 +190,20 @@ class ArtifactsContentPanel : public DlgPanel
   public:
     //   virtual void UpdateContent(const Content& content)  noexcept override;
 };
-
-struct BaseMod
+class CreaturesMod : public ModInformation
 {
 
-  protected:
-    static constexpr LPCSTR jsonBase = "help.mods.";
+    CreaturesContentPanel* panel;
+};
+class ArtifactsMod : public ModInformation
+{
+    ArtifactsContentPanel* panel;
 };
 
-struct Mod : public BaseMod
-{
-  private:
-    static LastActiveDlgModInfo lastActiveModInfo;
-
-  public:
-    // to check if some data is stored in the json
-    BOOL hasSomeInfo;
-    const UINT id;
-    H3String name;
-    H3String path;
-    H3String json;
-    int m_lastActiveCategoryId = -1;
-    Category *activeCategory = nullptr;
-    HotKeysCategory *hotkeysCategory = nullptr;
-    std::vector<Category *> categories;
-
-  public:
-    Mod(LPCSTR modFolderName, const UINT id);
-    virtual ~Mod();
-
-  private:
-    HotKeysCategory *CreateHotkeysCategory() const noexcept;
-    Category *CreateNativeCategory(const int index) const noexcept;
-
-  public:
-    //	virtual void Activate();
-    const Category &ActiveCategory() const noexcept;
-    size_t Size() const noexcept;
-    void GetInfo();
-    void SetVisible(const BOOL state);
-    void StoreModInfoAsActive() const noexcept;
-    static const LastActiveDlgModInfo &GetLastActiveModInfo() noexcept;
-
-    //		void DrawCategory(const int id) const noexcept;
-};
-
-class CreaturesMod : public Mod
+class MainDlg : public H3Dlg
 {
 
-    CreaturesContentPanel *panel;
-};
-class ArtifactsMod : public Mod
-{
-    ArtifactsContentPanel *panel;
-};
-
-struct Category
-{
-    H3LoadedPcx16 *iconPcx = nullptr;
-    H3String name;
-
-    Content *content = nullptr;
-    //	const UINT id;
-  public:
-    //	Category(LPCSTR jsonKeyName/*, const UINT id*/);
-
-    ~Category();
-
-  public:
-    const Category &Content() const noexcept;
-    void ShowContent() const noexcept;
-
-    // void
-};
-
-struct HotKey
-{
-    hkcategories::eType type;
-    H3String combination;
-    H3String description;
-};
-
-struct HotKeysCategory : public Category
-{
-    std::vector<HotKey> hotkeys;
-};
-
-struct Content
-{
-    // some hard/complex string
-    H3String text;
-};
-
-class HelpDlg : public H3Dlg
-{
-
-    static HelpDlg *instance;
+    static MainDlg *instance;
     BOOL needResize;
     BOOL isFullScreen = false;
 
@@ -312,18 +221,20 @@ class HelpDlg : public H3Dlg
     CreaturesContentPanel *creaturesContentPanel;
     ArtifactsContentPanel *artifactsContentPanel;
 
-    Mod *m_activeMod = nullptr;
+    ModInformation *m_activeMod = nullptr;
     int lastActiveModId = -1;
 
     std::vector<HotKey *> hotkeys;
-    std::vector<Mod *> mods;
+    std::vector<ModInformation *> mods;
 
   public:
     static constexpr LPCSTR iniPath = "ERA_HelpDialog.ini";
+    static constexpr LPCSTR MAIN_MENU_WIDGET_NAME = "main_menu_help_dialogue_made_by_a_confused_person";
+    static constexpr LPCSTR MAIN_MENU_WIDGET_TEXT = "help_dialogue_button";
 
   public:
-    HelpDlg(const int width, const int height, const int x = -1, const int y = -1);
-    virtual ~HelpDlg();
+    MainDlg(const int width, const int height, const int x = -1, const int y = -1);
+    virtual ~MainDlg();
 
   private:
     const Content *ActiveContent() const noexcept;
@@ -331,11 +242,11 @@ class HelpDlg : public H3Dlg
     void CallHelpInHelpDlg() const noexcept;
     void DisplayAllHotkeys() /*const*/ noexcept;
 
-    Mod *CallModListDlg(const Mod *activeMod) const noexcept;
+    ModInformation *CallModListDlg(const ModInformation *activeMod) const noexcept;
 
     BOOL GetLoadedModsJsonInformation(const std::vector<std::string> &modNames);
 
-    void SetActiveMod(/*const */ Mod *mod);
+    void SetActiveMod(/*const */ ModInformation *mod);
 
     virtual BOOL DialogProc(H3Msg &msg) override;
 
@@ -345,9 +256,11 @@ class HelpDlg : public H3Dlg
     void AssignWithCalledDlg(const H3Town *town = nullptr, const eCreature creature = eCreature::UNDEFINED) noexcept;
     // check if dlg exists
     static BOOL DlgExists();
-    BOOL NeedResizeScreen() const noexcept;
+    // BOOL NeedResizeScreen() const noexcept;
 
   public:
+    static void PrepareMainDlg(HookContext *c = nullptr);
+    static void MainMenuButtonProc(void *msg);
 };
 
 } // namespace main

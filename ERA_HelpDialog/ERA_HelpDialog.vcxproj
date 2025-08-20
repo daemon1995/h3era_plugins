@@ -73,8 +73,9 @@
   <ItemGroup>
     <ClInclude Include="DlgEnums.h" />
     <ClInclude Include="DlgPanels.h" />
-    <ClInclude Include="HelpDlg.h" />
-    <ClInclude Include="HelpInHelpDlg.h" />
+    <ClInclude Include="MainDlg.h" />
+    <ClInclude Include="GuideDlg.h" />
+    <ClInclude Include="ModInformation.h" />
     <ClInclude Include="ModListDlg.h" />
     <ClInclude Include="SystemFunctions.h" />
   </ItemGroup>
@@ -82,8 +83,9 @@
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="DlgPanels.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="HelpDlg.cpp" />
-    <ClCompile Include="HelpInHelpDlg.cpp" />
+    <ClCompile Include="MainDlg.cpp" />
+    <ClCompile Include="GuideDlg.cpp" />
+    <ClCompile Include="ModInformation.cpp" />
     <ClCompile Include="ModListDlg.cpp" />
     <ClCompile Include="SystemFunctions.cpp" />
   </ItemGroup>

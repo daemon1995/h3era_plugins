@@ -97,7 +97,7 @@
 //
 //class CategoriesPanel : public DlgPanel
 //{
-//    Mod* activeMod = nullptr;
+//    ModInformation* activeMod = nullptr;
 //    struct PanelCategory
 //    {
 //
@@ -122,7 +122,7 @@
 //    virtual void InitPanelItems() override;
 //
 //public:
-//    void AssignMod(Mod* mod);
+//    void AssignMod(ModInformation* mod);
 //    void RedrawCategoryItems(const int firstItemId = 0);
 //};
 //
