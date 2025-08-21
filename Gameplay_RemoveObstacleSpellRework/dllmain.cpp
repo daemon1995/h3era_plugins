@@ -6,7 +6,7 @@ namespace dllText
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *PLUGIN_VERSION = "1.0";
 constexpr const char *PLUGIN_DATA = __DATE__;
-constexpr const char *INSTANCE_NAME = "EraPlugin.Gameplay_SlayerSpellRework.daemon_n";
+constexpr const char *INSTANCE_NAME = "EraPlugin.Gameplay_RemoveObstacleSpellRework.daemon_n";
 } // namespace dllText
 
 Patcher *globalPatcher = nullptr;
@@ -52,6 +52,8 @@ void __stdcall OnSetupBattlefield(Era::TEvent *e)
         libc::sprintf(h3_TextBuffer, "shimmy_blizzard_spell_speed_decreasing_%d", i);
         removeObstacleCasting.spellEffect[i] = Era::GetAssocVarIntValue(h3_TextBuffer);
     }
+    slayerSpecialtyPower =
+        Clamp(1, Era::GetAssocVarIntValue("shimmy_slayer_spell_speciality_effect"), 100) / static_cast<float>(100);
 }
 int __stdcall BattleStack_DoPhysicalDamageAtAreaSpellCast(HiHook *h, H3CombatCreature *stack, const int damage)
 {
@@ -64,29 +66,19 @@ int __stdcall BattleStack_DoPhysicalDamageAtAreaSpellCast(HiHook *h, H3CombatCre
             const int spellEffect = removeObstacleCasting.spellEffect[removeObstacleCasting.removeObstacleSkillLevel];
             if (spellEffect)
             {
-                int currentSpeedDecrease = 0;
+                //  int currentSpeedDecrease = 0;
                 if (!stack->activeSpellDuration[eSpell::REMOVE_OBSTACLE])
                 {
                     stack->activeSpellNumber += 1; // increase active spell number
-                }
-                else
-                {
-                    currentSpeedDecrease =
-                        removeObstacleCasting.spellEffect[stack->activeSpellLevel[eSpell::REMOVE_OBSTACLE]];
-                }
 
-                if (stack->activeSpellLevel[eSpell::REMOVE_OBSTACLE] < spellEffect)
-                {
-                    stack->activeSpellLevel[eSpell::REMOVE_OBSTACLE] = spellEffect; // remove Remove Obstacle spell
-                }
+                    speed -= spellEffect; // remove speed penalty
 
+                    if (speed < 1)
+                    {
+                        speed = 1;
+                    }
+                }
                 stack->activeSpellDuration[eSpell::REMOVE_OBSTACLE] = 255; // remove Remove Obstacle spell
-                speed -= spellEffect - currentSpeedDecrease;               // remove speed penalty
-
-                if (speed < 1)
-                {
-                    speed = 1;
-                }
             }
         }
     }
@@ -144,13 +136,17 @@ void __stdcall BattleMgr_PrepareMessageTo_BattleLog(HiHook *h, H3CombatManager *
 
 void __stdcall OnAfterWog(Era::TEvent *event)
 {
-    _PI->WriteDword(0x0442178, 0xA4E9);
-    _PI->WriteByte(0x0442178 + 5, 0x90);
+    //_PI->WriteDword(0x0442178, 0xA4E9);
+    //_PI->WriteByte(0x0442178 + 5, 0x90);
 
-    _PI->WriteHiHook(0x0443040, THISCALL_, BattleStack_CalculateDamageBonus);
+    //_PI->WriteHiHook(0x0443040, THISCALL_, BattleStack_CalculateDamageBonus);
     //_PI->WriteHiHook(0x0443040, THISCALL_, BattleStack_GetSpeed);
 
-    slayerSpecialtyPower = Clamp(1, EraJS::readInt("shimmy.spells.55.speciality"), 100) / static_cast<float>(100);
+    // blizzard spell rework
+    auto &spell = P_Spell[eSpell::REMOVE_OBSTACLE];
+    spell.flags = P_Spell[eSpell::INFERNO].flags;
+    spell.level = 5;
+    spell.school = eSpellchool::WATER;
 
     _PI->WriteByte(0x059F9BC + 54, 5); // set chosen remove obstacle spell to Inferno spell
     _PI->WriteByte(0x043BB64 + 2, 2);  //  AI now handles Remove Obstacle spell as area casting spell

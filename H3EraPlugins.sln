@@ -41,7 +41,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_ExperienceSplit", "H
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_MainMenuAPI", "Interface_MainMenuAPI\Interface_MainMenuAPI.vcxproj", "{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_SlayerSpellRework", "Gameplay_SlayerSpellRework\Gameplay_SlayerSpellRework.vcxproj", "{78CD603D-B134-46FC-A397-A658F94AAC26}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_RemoveObstacleSpellRework", "Gameplay_RemoveObstacleSpellRework\Gameplay_RemoveObstacleSpellRework.vcxproj", "{78CD603D-B134-46FC-A397-A658F94AAC26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
