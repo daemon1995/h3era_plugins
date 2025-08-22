@@ -107,12 +107,6 @@ void __stdcall BattleMgr__TryToDispellSpell(HiHook *h, H3CombatCreature *stack, 
 _LHF_(BattleMgr__CastRemoveObstacleSpell)
 {
 
-    // if (IntAt(c->ebp + 0x8) == eSpell::REMOVE_OBSTACLE)
-    //{
-    //     ByteAt(0x05A0F6B +1) = eSpell::REMOVE_OBSTACLE;
-    //     return NO_EXEC_DEFAULT;
-    // }
-
     // cast areae spell void __thiscall CombatMan_CastAreaSpell(_BattleMgr_ *this, int GEX_ID, eSpells spellId, int
     // spel_lvl, int spellPower)
     removeObstacleCasting.isRemoveObstacleCasting = true; // set flag to apply speed penalty
@@ -133,20 +127,27 @@ void __stdcall BattleMgr_PrepareMessageTo_BattleLog(HiHook *h, H3CombatManager *
     }
     THISCALL_4(void, h->GetDefaultFunc(), bm, spellId, targetHex, a4);
 }
-
-void __stdcall OnAfterWog(Era::TEvent *event)
+void __stdcall BattleStack_DrawOrRedraw(HiHook *h, H3CombatCreature *stack, DWORD a2, DWORD a3, DWORD a4)
 {
-    //_PI->WriteDword(0x0442178, 0xA4E9);
-    //_PI->WriteByte(0x0442178 + 5, 0x90);
-
-    //_PI->WriteHiHook(0x0443040, THISCALL_, BattleStack_CalculateDamageBonus);
-    //_PI->WriteHiHook(0x0443040, THISCALL_, BattleStack_GetSpeed);
-
-    // blizzard spell rework
+    const auto stored = P_Spell[eSpell::REMOVE_OBSTACLE].type; // store original spell type
+    P_Spell[eSpell::REMOVE_OBSTACLE].type = eSpellTarget::ENEMY;
+    THISCALL_4(int, h->GetDefaultFunc(), stack, a2, a3, a4);
+    P_Spell[eSpell::REMOVE_OBSTACLE].type = stored;
+}
+_ERH_(OnAfterErmInstructions)
+{
+    // set Remove Obstacle spell level to Inferno spell level
     auto &spell = P_Spell[eSpell::REMOVE_OBSTACLE];
     spell.flags = P_Spell[eSpell::INFERNO].flags;
     spell.level = 5;
     spell.school = eSpellchool::WATER;
+}
+void __stdcall OnAfterWog(Era::TEvent *event)
+{
+
+    // blizzard spell rework
+
+    //  spell.type = P_Spell[eSpell::INFERNO].type;
 
     _PI->WriteByte(0x059F9BC + 54, 5); // set chosen remove obstacle spell to Inferno spell
     _PI->WriteByte(0x043BB64 + 2, 2);  //  AI now handles Remove Obstacle spell as area casting spell
@@ -158,6 +159,8 @@ void __stdcall OnAfterWog(Era::TEvent *event)
     _PI->WriteHiHook(0x05A198D, THISCALL_, BattleMgr__TryToDispellSpell); // area dispell cast
     _PI->WriteHiHook(0x0443F58, THISCALL_, BattleMgr__TryToDispellSpell); // stack dies
 
+    _PI->WriteHiHook(0x043DE60, THISCALL_, BattleStack_DrawOrRedraw);
+
     _PI->WriteHiHook(0x05A4DED, THISCALL_, BattleStack_DoPhysicalDamageAtAreaSpellCast);
     _PI->WriteHiHook(0x05A4A00, THISCALL_, BattleMgr_ShowSpellsHightLightes);
     _PI->WriteHiHook(0x059FD3F, THISCALL_, BattleMgr_ShowSpellsHightLightes);
@@ -166,10 +169,6 @@ void __stdcall OnAfterWog(Era::TEvent *event)
     {
         _PI->WriteHiHook(0x05A89A0, THISCALL_, BattleMgr_PrepareMessageTo_BattleLog);
     }
-
-    //
-    //
-    //
 }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -185,6 +184,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
             Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
             Era::RegisterHandler(OnAfterWog, "OnAfterWog");
+            Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
         }
         break;
 
