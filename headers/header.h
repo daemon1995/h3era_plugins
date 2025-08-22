@@ -24,6 +24,10 @@
 
 #include "Era/era.h"
 #include "Era/eraJson.hpp"
+#ifndef _ERH_
+#define _ERH_(func) void __stdcall func(Era::TEvent *evnt)
+#endif // !_ERH_
+
 #ifdef ERA_MODLIST
 #include "Era/eraModList.hpp"
 #endif // ERA_MOD_LIST
@@ -50,11 +54,21 @@ class IGamePatch
     IGamePatch(PatcherInstance *pi) : _pi(pi)
     {
     }
-
+    IGamePatch(LPCSTR instanceName) : IGamePatch(globalPatcher->CreateInstance(instanceName))
+    {
+    }
     PatcherInstance *_pi = nullptr;
 
     BOOL m_isInited = false;
     BOOL m_isEnabled = false;
+    inline LoHook *WriteLoHook(_ptr_ address, _LoHookFunc_ func)
+    {
+        return _pi->WriteLoHook(address, func);
+    }
+    inline HiHook *WriteHiHook(_ptr_ address, int calltype, void *new_func)
+    {
+        return _pi->WriteHiHook(address, calltype, new_func);
+    }
 
   public:
     void SetEnabled(bool state)
