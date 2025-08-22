@@ -8611,7 +8611,7 @@ namespace h3
         _H3API_ LPCSTR                 GetName() const;
         _H3API_ LPCSTR                 GetDescription() const;
         _H3API_ INT32                  GetCost() const;
-        _H3API_ eArtifact              GetCombinationArtifact() const;
+        _H3API_ eCombinationArtifacts  GetCombinationArtifact() const;
         _H3API_ eArtifact              GetId() const;
         _H3API_ eCombinationArtifacts  GetCombinationArtifactIndex() const;
         _H3API_ eArtifactSlots         GetSlot() const;
@@ -8663,7 +8663,7 @@ namespace h3
         /** @brief [14] index of the combo 0..11*/
         eCombinationArtifacts comboID;
         /** @brief [18] index of the artifact 0..143*/
-        eArtifact  combinationArtifactId;
+		eCombinationArtifacts  combinationArtifactId;
         /** @brief [1C] artifact is not available*/
         BOOL8 disabled;
         /** @brief [1D] spell added to spellbook*/
@@ -28228,7 +28228,7 @@ namespace h3
         return GetSetup().cost;
     }
 
-    _H3API_ eArtifact H3Artifact::GetCombinationArtifact() const
+    _H3API_ eCombinationArtifacts H3Artifact::GetCombinationArtifact() const
     {
         return GetSetup().combinationArtifactId;
     }
