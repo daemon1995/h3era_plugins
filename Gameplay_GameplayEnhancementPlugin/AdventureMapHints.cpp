@@ -180,7 +180,7 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
         if (keyIsHeld)
         {
             instance->playerID = P_Game->Get()->GetPlayerID();
-            sprintf(Era::z[0], "gem_adventure_map_object_hints_option_%d", instance->playerID); // ;
+            sprintf(Era::z[0], ERM_VARIABLE_FORMAT, instance->playerID); // ;
             instance->needDrawHints = Era::GetAssocVarIntValue(Era::z[0]);
         }
     }
@@ -234,6 +234,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                 H3LoadedPcx16 *tempBuffer = nullptr;
                 if (isHero)
                 {
+                    return;
 
                     H3DefLoader flagDef(NH3Dlg::Assets::CREST58);
                     currentItem->hero.index;

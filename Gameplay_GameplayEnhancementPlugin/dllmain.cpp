@@ -5,7 +5,7 @@ PatcherInstance *_PI = nullptr;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.5.0";
+const char *PLUGIN_VERSION = "1.6.0";
 const char *INSTANCE_NAME = "EraPlugin.GameplayFeatures.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -34,6 +34,8 @@ _LHF_(HooksInit)
     {
         advMapHints::AdventureMapHints::Init(globalPatcher->CreateInstance(vipPluginInstanceName));
     }
+	artifacts::ArtifactHints::Get();
+    
 
     return EXEC_DEFAULT;
 }

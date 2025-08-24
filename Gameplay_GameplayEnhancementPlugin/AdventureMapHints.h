@@ -32,7 +32,7 @@ struct AdventureHintsSettings : public ISettings
 };
 class AdventureMapHints : public IGamePatch
 {
-    // static constexpr LPCSTR flagDefNAme = NH3Dlg::Assets::CREST58;
+    static constexpr LPCSTR ERM_VARIABLE_FORMAT = "gem_adventure_map_object_hints_option_%d";
 
     static RECT m_mapView;
     // bool m_objectsToDraw[232];

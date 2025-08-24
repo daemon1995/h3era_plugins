@@ -5,6 +5,7 @@ namespace features
 {
 class GameplayFeature : public IGamePatch
 {
+    static constexpr LPCSTR THIEVES_GUILD_JSON_TEXT = "gem_plugin.tavern_dlg.captured_taverns";
 	static GameplayFeature* instance;
 
     GameplayFeature();

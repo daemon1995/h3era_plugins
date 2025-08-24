@@ -21,7 +21,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -57,7 +57,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
+      <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -92,6 +92,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AdventureMapHints.h" />
+    <ClInclude Include="ArtifactHints.h" />
     <ClInclude Include="CombatHints.h" />
     <ClInclude Include="GameplayFeature.h" />
     <ClInclude Include="GraphicsEnhancements.h" />
@@ -103,6 +104,7 @@
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="AdventureMapHints.cpp" />
+    <ClCompile Include="ArtifactHints.cpp" />
     <ClCompile Include="CombatHints.cpp" />
     <ClCompile Include="GameplayFeature.cpp" />
     <ClCompile Include="dllmain.cpp" />

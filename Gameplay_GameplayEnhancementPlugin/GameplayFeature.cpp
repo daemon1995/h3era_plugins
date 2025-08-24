@@ -6,7 +6,7 @@ GameplayFeature::GameplayFeature() : IGamePatch(_PI)
 {
     CreatePatches();
 }
-GameplayFeature * GameplayFeature::instance = nullptr;
+GameplayFeature *GameplayFeature::instance = nullptr;
 H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, int PosX, int PosY, int SizeX,
                                                int SizeY, int ItemInd, char *DefName, int cadre, int pressCadre,
                                                int CloseDialog, int HotKey, int Flags) noexcept
@@ -46,8 +46,9 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
         isKingdomOverView = true;
     }
     // auto *patch = _PI->WriteHiHook(0x4DA401, THISCALL_, H3DlgHero__Dismiss__BeforeRedraw);
-
+  //  ByteAt(0x04E1C30 + 1) = 0;
     const int result = FASTCALL_4(int, h->GetDefaultFunc(), heroId, hideDelButton, isKingdomOverView, isRightClick);
+   // ByteAt(0x04E1C30 + 1) = 1;
 
     //  patch->Destroy();
 
@@ -168,6 +169,27 @@ _LHF_(DlgEdit_CorrectInpulSymbol) noexcept
     return EXEC_DEFAULT;
 }
 
+H3Dlg *__stdcall H3TownDlg_OpenThievesGuild(HiHook *h, H3TownDlg *dlg, int tavernsNum)
+{
+    // open thieves guild dialog
+    H3Dlg *result = THISCALL_2(H3Dlg *, h->GetDefaultFunc(), dlg, tavernsNum);
+    if (result)
+    {
+        auto mes = "displayed info %d / %d "; // H3String::Format("gem_plugin.town_thieves_guild.%d",
+                                              // tavernsNum).String();
+
+        const int maxTavernsToShow = IntAt(0x05DDFF3 + 1); // max taverns in game
+
+        const int tavernsNum =
+            Clamp(0, THISCALL_2(int, 0x4CCAF0, P_Main->Get(), P_Main->GetPlayerID()), maxTavernsToShow);
+
+        libc::sprintf(h3_TextBuffer, mes, tavernsNum, maxTavernsToShow);
+        result->CreateText(12, result->GetHeight() - 45, result->GetWidth(), 20, h3_TextBuffer, NH3Dlg::Text::MEDIUM,
+                           eTextColor::REGULAR, -1);
+    }
+    return result;
+}
+
 void GameplayFeature::CreatePatches() noexcept
 {
     if (!m_isInited)
@@ -194,15 +216,19 @@ void GameplayFeature::CreatePatches() noexcept
         //_PI->WriteByte(0x4E1C3A, 0xEB);
         _pi->WriteHiHook(0x5D5323, FASTCALL_, H3HeroDlg_Main);
         _pi->WriteHiHook(0x5D5333, FASTCALL_, H3HeroDlg_Main);
+     //   _pi->WriteHiHook(0x5D52CA, FASTCALL_, H3HeroDlg_Main);
+        
+        // add text into thieves guild dialog
+        _pi->WriteHiHook(0x05D7FFF, THISCALL_, H3TownDlg_OpenThievesGuild);
 
         m_isInited = true;
     }
 }
 GameplayFeature &GameplayFeature::Get()
 {
-	if (!instance)
-		instance = new GameplayFeature();
-	return *instance;
+    if (!instance)
+        instance = new GameplayFeature();
+    return *instance;
 }
 
 } // namespace features
