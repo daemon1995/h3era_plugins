@@ -37,6 +37,7 @@
 #ifdef _WOG_
 #include "WoG/NPC.h"
 #include "WoG/WogClasses.h"
+#include "WoG/WogOptions.h"
 #endif // _WOG_
 
 #ifdef NLOHMAN_JSON
@@ -71,7 +72,7 @@ class IGamePatch
     }
 
   public:
-    void SetEnabled(bool state)
+    void SetEnabled(const bool state)
     {
         state ? _pi->ApplyAll() : _pi->UndoAll();
         m_isEnabled = state;

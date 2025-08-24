@@ -306,7 +306,7 @@ struct _DlgSetup_
     char *NextButtonHint; // хинт для кнопки Next
     char *BackButtonHint; // хинт для кнопки Back
     //  char ShowIntro;            // показывать/нет интро};
-    DWORD Flags;
+    unsigned int Flags;
     // 0x00000001 - показать/нет интро
     // 0x00000002 - разрешено изменение/нет
 
