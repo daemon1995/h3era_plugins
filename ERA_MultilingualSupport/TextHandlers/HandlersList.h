@@ -1,3 +1,4 @@
+#pragma once
 
 #ifndef HADLERSLIST_H
 #define HADLERSLIST_H
@@ -14,4 +15,5 @@
 #include "MapObjectHandler.h"
 #include "MonsterHandler.h"
 #include "TownHandler.h"
+
 #endif // HADLERSLIST_H

@@ -127,7 +127,7 @@ BOOL ExportManager::CreateArtifactsJson(LPCSTR filePath, const BOOL originalData
     constexpr int maxOriginalId = 170;
     const int outOfBound = GetMaxOriginalId("artifacts", maxOriginalId) + 1;
     const int minId = originalData ? 0 : outOfBound;
-    const int maxArtId = IntAt(0x49DD8E + 2) >> 2;
+    const int maxArtId = ArtifactHandler::GetArtifactsNumber();
     const int maxId = Clamp(0, additionalData ? maxArtId : outOfBound, maxArtId);
 
     const auto &event = ArtifactHandler::GetEventTable();
