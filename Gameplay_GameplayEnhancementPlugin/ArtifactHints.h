@@ -29,8 +29,9 @@ struct HintsText : public IPluginText
 class ArtifactHints : public IGamePatch
 {
     BOOL active = true;
-
-    Patch *drawMultyPicDlgPatch = nullptr;
+    INT swapSide = 0;
+    Patch* drawMultiPicDlgPatch = nullptr;
+    Patch* increaseMaxMessageBoxHeightPatch = nullptr;
     H3String hintTextBuffer;
     HintsText settings;
 
@@ -41,6 +42,7 @@ class ArtifactHints : public IGamePatch
     static constexpr LPCSTR COMPARED_STATS_FORMAT = "%d %s";
     static constexpr LPCSTR STATS_FORMAT = "%d";
 
+
     static ArtifactHints *instance;
 
     ArtifactHints();
@@ -49,11 +51,16 @@ class ArtifactHints : public IGamePatch
 
   protected:
     BOOL CreateStatsString(const H3Artifact *artifact, const H3Hero *heroToCompareStats, H3String *result) noexcept;
+    BOOL CreateCombinePartsString(const H3Artifact *artifact, const H3Hero *heroToCompareStats,
+                                  H3String *result) noexcept;
 
   private:
+    static void __stdcall SwapMgr_InteractArtifactSlot(HiHook *h, H3SwapManager *mgr, const int side, int slotIndex,
+                                                       int a4) noexcept;
     static H3String *__stdcall BuildUpArtifactDescription(HiHook *h, const H3Artifact *artifact,
                                                           H3String *result) noexcept;
-    static int __stdcall BuildMultyPicDlg(HiHook *h, H3Game *game);
+	static DWORD __stdcall Dlg8_ParseDialogStruct(HiHook* h, DWORD dlg) noexcept;
+    static int __stdcall BuildMultiPicDlg(HiHook *h, H3Game *game);
 
   public:
     static ArtifactHints &Get();

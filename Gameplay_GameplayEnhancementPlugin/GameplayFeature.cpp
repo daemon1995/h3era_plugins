@@ -46,9 +46,9 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
         isKingdomOverView = true;
     }
     // auto *patch = _PI->WriteHiHook(0x4DA401, THISCALL_, H3DlgHero__Dismiss__BeforeRedraw);
-  //  ByteAt(0x04E1C30 + 1) = 0;
+    //  ByteAt(0x04E1C30 + 1) = 0;
     const int result = FASTCALL_4(int, h->GetDefaultFunc(), heroId, hideDelButton, isKingdomOverView, isRightClick);
-   // ByteAt(0x04E1C30 + 1) = 1;
+    // ByteAt(0x04E1C30 + 1) = 1;
 
     //  patch->Destroy();
 
@@ -190,6 +190,66 @@ H3Dlg *__stdcall H3TownDlg_OpenThievesGuild(HiHook *h, H3TownDlg *dlg, int taver
     return result;
 }
 
+int GameplayFeature::HeroFullMP_Rem = 0;
+
+// Инициализация оставшихся полных очков перемещения героя.
+_LHF_(LoHook_HeroRoute_InitMaxMP)
+{
+    H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
+    H3Player *player = &P_Game->players[hero->owner];
+
+    // Получаем полные очки перемещения героя.
+    GameplayFeature::HeroFullMP_Rem = hero->maxMovement;
+
+    bool v4 = THISCALL_1(bool, 0x4BAA40, P_ActivePlayer->Get());
+
+    int curDayOfWeek = P_Game->date.day;
+
+    char is_human2 = player->is_human;
+    char v7 = P_ActivePlayer->Get()->is_human;
+
+    if (v4 || (is_human2 && v7 && v7 > is_human2) || v7 == is_human2 && P_CurrentPlayerID > hero->owner)
+    {
+        if ((hero->flags & 0x1000000) == 0) // cheats
+        {
+            // Лодка и конюшни
+            if ((hero->flags & 0x40000) == 0 && (hero->flags & 2) != 0 && curDayOfWeek >= 7)
+            {
+                GameplayFeature::HeroFullMP_Rem -= IntAt(0x0698AE4); // o_MoveTXT_Obj_94
+            }
+        }
+    }
+    if (!v4)
+    {
+        IntAt(c->ebp - 0x4) = 0;
+    }
+
+    return EXEC_DEFAULT;
+}
+// Уменьшение оставшихся полных очков перемещения героя.
+_LHF_(LoHook_HeroRoute_ReduceMaxMP)
+{
+    // Герой.
+    H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
+
+    // Уменьшаем полные очки перемещения героя на шаг.
+    GameplayFeature::HeroFullMP_Rem -=
+        FASTCALL_4(int, 0x4B1620, hero, c->esi, DwordAt(c->ebp - 0x1C), GameplayFeature::HeroFullMP_Rem);
+
+    return EXEC_DEFAULT;
+}
+
+// Показ особых стрелок, если путь дальше, чем максимальные очки перемещения героя.
+_LHF_(LoHook_HeroRoute_SpecRouteMaxMP)
+{
+    // Смещение кадра стрелок.
+    if (GameplayFeature::HeroFullMP_Rem < 0)
+    {
+        WordAt(c->edx + 2 * c->eax) += 25;
+    }
+
+    return EXEC_DEFAULT;
+}
 void GameplayFeature::CreatePatches() noexcept
 {
     if (!m_isInited)
@@ -216,11 +276,19 @@ void GameplayFeature::CreatePatches() noexcept
         //_PI->WriteByte(0x4E1C3A, 0xEB);
         _pi->WriteHiHook(0x5D5323, FASTCALL_, H3HeroDlg_Main);
         _pi->WriteHiHook(0x5D5333, FASTCALL_, H3HeroDlg_Main);
-     //   _pi->WriteHiHook(0x5D52CA, FASTCALL_, H3HeroDlg_Main);
-        
+        //   _pi->WriteHiHook(0x5D52CA, FASTCALL_, H3HeroDlg_Main);
+
         // add text into thieves guild dialog
         _pi->WriteHiHook(0x05D7FFF, THISCALL_, H3TownDlg_OpenThievesGuild);
 
+        // Инициализация оставшихся полных очков перемещения героя.
+        _PI->WriteLoHook(0x418F38, LoHook_HeroRoute_InitMaxMP); // 100F14C0
+
+        // Уменьшение оставшихся полных очков перемещения героя.
+        _PI->WriteLoHook(0x418FC5, LoHook_HeroRoute_ReduceMaxMP); // 1014BB40
+
+        // Показ особых стрелок, если путь дальше, чем максимальные очки перемещения героя.
+        _PI->WriteLoHook(0x4190DE, LoHook_HeroRoute_SpecRouteMaxMP);
         m_isInited = true;
     }
 }

@@ -9,6 +9,92 @@ ArtifactHints::ArtifactHints() : IGamePatch("EraPlugin.ArtifactHints.daemon_n")
 
     CreatePatches();
 }
+BOOL ArtifactHints::CreateCombinePartsString(const H3Artifact *artifact, const H3Hero *hero, H3String *result) noexcept
+{
+
+    if (artifact && hero)
+    {
+        const eCombinationArtifacts combArt = artifact->GetCombinationArtifact();
+        std::vector<int> combinedArtifactParts;
+        if (combArt != eCombinationArtifacts::NONE)
+        {
+            result->Erase();
+            const int lastArtifactId = IntAt(0x717020);
+            bool artsFound = false;
+            int combinedArtifactId = eArtifact::NONE;
+            for (size_t i = 0; i < lastArtifactId; i++)
+            {
+                //   if (i == artifact->id)
+                //      continue;
+                const auto &artPiece = P_ArtifactSetup[i];
+                if (artPiece.combinationArtifactId == combArt)
+                {
+                    combinedArtifactParts.push_back(i);
+                }
+                else if (!artsFound && artPiece.comboID == combArt)
+                {
+                    artsFound = true;
+                    combinedArtifactId = i;
+                }
+            }
+
+            if (!combinedArtifactParts.empty())
+            {
+
+                constexpr LPCSTR equippedColor = "{~LightGreen}";
+                constexpr LPCSTR storedColor = "{~Orange}";
+                constexpr LPCSTR missingColor = "{~Grey}";
+                H3String piecesText;
+                int equippedPeicesCount = 0;
+                for (const auto comboPartId : combinedArtifactParts)
+                {
+                    BOOL equipped = 0;
+                    int storedCount = 0;
+                    for (auto &i : hero->bodyArtifacts)
+                    {
+                        if (i.id == comboPartId)
+                        {
+                            equipped = 1;
+                            equippedPeicesCount += 1;
+                            break;
+                        }
+                    }
+                    for (auto &i : hero->backpackArtifacts)
+                    {
+                        storedCount += (i.id == comboPartId);
+                    }
+                    const char *textColor = equipped ? equippedColor : storedCount ? storedColor : missingColor;
+                    H3String overflowText;
+                    if (storedCount > 1)
+                    {
+                        overflowText = H3String::Format(" (%d)", storedCount);
+                    }
+
+                    libc::sprintf(h3_TextBuffer, "\n%s%s%s{~}", textColor, P_ArtifactSetup[comboPartId].name,
+                                  overflowText.String());
+                    piecesText += h3_TextBuffer;
+                    // result->Append(endl);
+                    // result->Append(h3_TextBuffer);
+                }
+
+                // create header line
+                LPCSTR artNameColor = equippedPeicesCount ? equippedColor : missingColor;
+                libc::sprintf(h3_TextBuffer, "\n%s%s (%d/%d):{~}\n", artNameColor,
+                              P_ArtifactSetup[combinedArtifactId].name, equippedPeicesCount,
+                              combinedArtifactParts.size());
+                // append colored artifact name
+                result->Append(h3_TextBuffer);
+
+                // append pieces list
+                result->Append(piecesText);
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 BOOL ArtifactHints::CreateStatsString(const H3Artifact *artifact, const H3Hero *hero, H3String *result) noexcept
 {
@@ -72,6 +158,13 @@ BOOL ArtifactHints::CreateStatsString(const H3Artifact *artifact, const H3Hero *
     return false;
 }
 
+void __stdcall ArtifactHints::SwapMgr_InteractArtifactSlot(HiHook *h, H3SwapManager *mgr, const int side, int slotIndex,
+                                                           int a4) noexcept
+{
+    instance->swapSide = side;
+    THISCALL_4(void, h->GetDefaultFunc(), mgr, side, slotIndex, a4);
+}
+
 H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H3Artifact *artifact,
                                                               H3String *resultString) noexcept
 {
@@ -83,72 +176,94 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
         return result;
     }
 
+    // try to get hero from dialog first
     auto hero = P_DialogHero->Get();
     if (!hero)
     {
+        // try to get hero from any of market dialogs
         hero = *reinterpret_cast<H3Hero **>(0x06AAAE0);
-        // auto mgr = H3SwapManager::Get();
-        // hero = mgr->hero[mgr->heroSelected];
+        if (!hero)
+        {
+            // try to get hero from swap manager if artifact was just swapped
+            if (auto mgr = H3SwapManager::Get())
+                hero = mgr->hero[instance->swapSide];
+        }
     }
     const int artifactId = artifact->id;
     const int playerID = P_Game->Get()->GetPlayerID();
-    sprintf(Era::z[0], PRIMARY_SKILLS_ERM_VARIABLE_FORMAT, playerID);
-    const bool isEnabled = Era::GetAssocVarIntValue(Era::z[0]);
+    libc::sprintf(Era::z[0], COMBINATIONS_ERM_VARIABLE_FORMAT, playerID);
+    const bool artHintsEnabled = Era::GetAssocVarIntValue(Era::z[0]);
 
-    if (isEnabled && artifactId > eArtifact::FIRST_AID_TENT)
+    if (hero && artHintsEnabled)
+    {
+        if (instance->CreateCombinePartsString(artifact, hero, &instance->hintTextBuffer))
+        {
+            *result += doubleEndl + (instance->hintTextBuffer);
+            instance->hintTextBuffer.Erase();
+            //  instance->increaseMaxMessageBoxHeightPatch->Apply();
+            instance->increaseMaxMessageBoxHeightPatch->Apply();
+        }
+    }
+
+    libc::sprintf(Era::z[0], PRIMARY_SKILLS_ERM_VARIABLE_FORMAT, playerID);
+    const bool statHintsEnabled = Era::GetAssocVarIntValue(Era::z[0]);
+
+    if (statHintsEnabled && artifactId > eArtifact::FIRST_AID_TENT)
     {
         if (instance->CreateStatsString(artifact, hero, &instance->hintTextBuffer))
         {
 
             if (instance->settings.addAsExtraObject)
             {
-                instance->drawMultyPicDlgPatch->Apply();
+                instance->drawMultiPicDlgPatch->Apply();
 
-                H3FontLoader fnt(NH3Dlg::Text::MEDIUM);
-
-                const int linesNum = fnt->GetLinesCountInText(result->String(), 256);
-
-                if (linesNum < 5)
-                {
-                    auto topTextLines = linesNum < 5 ? endl : doubleEndl;
-                    instance->settings.placeBelowText ? result->Append(doubleEndl) : *result = endl + *result;
-                }
+                instance->settings.placeBelowText ? result->Append(doubleEndl) : *result = endl + *result;
             }
             else if (instance->settings.placeBelowText)
             {
                 *result += doubleEndl + instance->hintTextBuffer;
                 instance->hintTextBuffer.Erase();
+                //  instance->increaseMaxMessageBoxHeightPatch->Apply();
             }
             else
             {
                 instance->hintTextBuffer += doubleEndl + *result;
                 result->Assign(instance->hintTextBuffer);
                 instance->hintTextBuffer.Erase();
+                //  instance->increaseMaxMessageBoxHeightPatch->Apply();
             }
+            instance->increaseMaxMessageBoxHeightPatch->Apply();
         }
-    }
-
-    libc::sprintf(Era::z[0], PRIMARY_SKILLS_ERM_VARIABLE_FORMAT, playerID);
-
-    if (Era::GetAssocVarIntValue(Era::z[0]))
-    {
     }
 
     return result;
 }
-int __stdcall ArtifactHints::BuildMultyPicDlg(HiHook *h, H3Game *game)
+DWORD __stdcall ArtifactHints::Dlg8_ParseDialogStruct(HiHook *h, DWORD dlg) noexcept
+{
+
+    const DWORD result = THISCALL_1(DWORD, h->GetDefaultFunc(), dlg);
+    h->Undo();
+    return result;
+}
+int __stdcall ArtifactHints::BuildMultiPicDlg(HiHook *h, H3Game *game)
 {
     if (auto dlg = **reinterpret_cast<H3Dlg ***>(0x04F71C4 + 1))
     {
-        const int dlgWidth = dlg->GetWidth();
-        const int dlgHeight = dlg->GetHeight();
+        if (instance->settings.addAsExtraObject)
+        {
 
-        constexpr int offset = 18;
-        const int textWidth = dlgWidth - (offset << 1);
-        const int placeY = instance->settings.placeBelowText ? dlgHeight - 25 - offset : offset;
-        dlg->CreateText(offset, placeY, textWidth, 20, instance->hintTextBuffer.String(), instance->settings.fontName,
-                        eTextColor::REGULAR, -1);
-        instance->hintTextBuffer.Erase();
+            const int dlgWidth = dlg->GetWidth();
+            const int dlgHeight = dlg->GetHeight();
+
+            constexpr int offset = 18;
+            const int textWidth = dlgWidth - (offset << 1);
+            const int placeY = instance->settings.placeBelowText ? dlgHeight - 25 - offset : offset;
+            dlg->CreateText(offset, placeY, textWidth, 20, instance->hintTextBuffer.String(),
+                            instance->settings.fontName, eTextColor::REGULAR, -1);
+            instance->hintTextBuffer.Erase();
+        }
+
+        instance->increaseMaxMessageBoxHeightPatch->Undo();
 
         h->Undo();
     }
@@ -241,8 +356,14 @@ void ArtifactHints::CreatePatches() noexcept
 {
     if (!m_isInited)
     {
+
+        WriteHiHook(0x05AF920, THISCALL_, SwapMgr_InteractArtifactSlot); // dolls
+        WriteHiHook(0x05AFD20, THISCALL_, SwapMgr_InteractArtifactSlot); // backpack
+
         WriteHiHook(0x04DB650, THISCALL_, BuildUpArtifactDescription);
-        drawMultyPicDlgPatch = _pi->CreateHiHook(0x4F71BB, CALL_, EXTENDED_, THISCALL_, BuildMultyPicDlg);
+
+        drawMultiPicDlgPatch = _pi->CreateHiHook(0x4F71BB, CALL_, EXTENDED_, THISCALL_, BuildMultiPicDlg);
+        increaseMaxMessageBoxHeightPatch = _pi->WriteDword(0x04F662F + 1, 255);
         settings.Load();
         m_isInited = true;
     }

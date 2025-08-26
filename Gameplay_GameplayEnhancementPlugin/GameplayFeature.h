@@ -12,6 +12,7 @@ class GameplayFeature : public IGamePatch
     virtual void CreatePatches() noexcept override;
 
   public:
+      static int HeroFullMP_Rem;
     static GameplayFeature &Get();
 };
 } // namespace features
