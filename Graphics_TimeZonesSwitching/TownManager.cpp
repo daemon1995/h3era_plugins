@@ -20,10 +20,8 @@ void TownMgr_RedirectBuildingGraphics(const UINT townType, const UINT time)
 
     if (townType < h3::limits::TOWNS)
     {
-        // static LPCSTR townTypeNames[h3::limits::TOWNS] = {
-        // "Castle","Rampart","Tower","Inferno","Necropolis","Dungeon","Stronghold","Fortress","Conflux" };
 
-        LPCSTR townPrefix = reinterpret_cast<LPCSTR *>(0x643050)[townType];
+        LPCSTR townPrefix = (*reinterpret_cast<LPCSTR **>(0x05C6E40 + 3))[townType];
         bool readSucces = false;
         LPCSTR townFolderName =
             EraJS::read(H3String::Format("todan.townTypeNames.%s", townPrefix).String(), readSucces);
@@ -71,28 +69,6 @@ const UINT GetTownTime(const H3Town *town)
     return result;
 }
 
-// not used
-// H3NetworkDlg* __stdcall MageGuildDlg_Create(HiHook* h, H3NetworkDlg* dlg)
-//{
-
-//	auto result = THISCALL_1(H3NetworkDlg*, h->GetDefaultFunc(), dlg);
-
-//	//const int time = GetTownTime(P_TownManager->town);
-//	const int index = Era::GetAssocVarIntValue(H3String::Format("DoT_town_%d_MG_id",
-//P_TownManager->town->number).String()); 	LPCSTR townPrefix =
-//reinterpret_cast<LPCSTR*>(0x643050)[P_TownManager->town->type];
-
-//	H3String bgName = H3String::Format("%sMG_%d.pcx", townPrefix, index);
-
-//	if (auto pcx = dlg->GetPcx16(0))
-//	{
-//		pcx->SendCommand(11,reinterpret_cast<DWORD>(bgName.String()));
-//	}
-//	//Era::RedirectFile();
-
-//	return result;
-
-//}
 int __cdecl TownManager::TownMgrDlg_CreateBackgroundImageName(HiHook *h, char *buffer, char *formatName,
                                                               char *townPrefixName)
 {
