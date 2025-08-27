@@ -1,6 +1,6 @@
 #include "MenuWidgetManager.h"
 
-void BaseGameWidgets::HideButtonProc(void *_msg)
+int __fastcall BaseGameWidgets::HideButtonProc(void *_msg)
 {
     if (auto msg = static_cast<H3Msg *>(_msg))
     {
@@ -11,6 +11,7 @@ void BaseGameWidgets::HideButtonProc(void *_msg)
             msg->GetDlg()->Redraw();
         }
     }
+    return true;
 }
 
 _LHF_(SystemOptionsDlgCtor)
@@ -31,7 +32,7 @@ _LHF_(SystemOptionsDlgCtor)
 
     return EXEC_DEFAULT;
 }
-void BaseGameWidgets::SystemOptionsButtonProc(void *_msg)
+int __fastcall BaseGameWidgets::SystemOptionsButtonProc(void *_msg)
 {
     if (auto msg = static_cast<H3Msg *>(_msg))
     {
@@ -50,9 +51,10 @@ void BaseGameWidgets::SystemOptionsButtonProc(void *_msg)
             skipButtonsCreation->Destroy();
         }
     }
+    return true;
 }
 
-void BaseGameWidgets::WoGOptionsButtonProc(void *_msg)
+int __fastcall BaseGameWidgets::WoGOptionsButtonProc(void *_msg)
 {
     if (auto msg = static_cast<H3Msg *>(_msg))
     {
@@ -69,6 +71,7 @@ void BaseGameWidgets::WoGOptionsButtonProc(void *_msg)
             IntAt(0x291A430) = storeValue;
         }
     }
+    return true;
 }
 
 void __stdcall BaseGameWidgets::OnAfterReloadLanguageData(Era::TEvent *e)

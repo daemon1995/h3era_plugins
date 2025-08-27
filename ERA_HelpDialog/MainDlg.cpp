@@ -390,7 +390,7 @@ void MainDlg::PrepareMainDlg(HookContext *c)
     }
 }
 
-void MainDlg::MainMenuButtonProc(void *msg)
+int __fastcall MainDlg::MainMenuButtonProc(void *msg)
 {
     if (auto mes = static_cast<H3Msg *>(msg))
     {
@@ -399,6 +399,8 @@ void MainDlg::MainMenuButtonProc(void *msg)
             PrepareMainDlg();
         }
     }
+
+    return true;
 }
 
 void H3DlgFramedPanel::CreateBorderFrame()
@@ -735,7 +737,6 @@ void CategoriesPanel::RedrawCategoryItems(const int firstItemId)
         activeMod->ActiveCategory().ShowContent();
     }
 }
-
 
 // DlgPanel::DlgPanel(const DlgPanel &other)
 //     : DlgPanel(other.dlgPanel->GetX(), other.dlgPanel->GetY(), other.dlgPanel->GetWidth(), other.dlgPanel->GetY(),

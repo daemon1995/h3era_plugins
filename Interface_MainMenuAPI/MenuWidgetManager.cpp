@@ -396,9 +396,10 @@ void MenuWidgetManager::HandleEvent(H3Msg *msg)
             const int widgetInd = msg->itemId - START_WIDGET_ID;
             const LocalMenuWidgetInfo *widget = createdWidgets[widgetInd];
 
-            if (widget->uiElement && widget->id == msg->itemId && widget->onClick)
+            if (widget->uiElement && widget->customProc && widget->id == msg->itemId)
             {
-                widget->onClick(msg);
+                if (widget->customProc(msg))
+                    return;
             }
         }
         else if (msg->IsLeftClick())
@@ -427,7 +428,12 @@ INT MenuWidgetManager::RegisteredNumber() const noexcept
 BOOL MenuWidgetManager::RegisterWidget(const mainmenu::MenuWidgetInfo &info)
 {
     std::string name = info.name;
-
+    if (name.empty())
+    {
+        std::string errorMsg = "Widget with name is empty!";
+        MessageBoxA(NULL, errorMsg.c_str(), "Widget Registration Error", MB_OK | MB_ICONERROR);
+        return FALSE;
+    }
     if (widgetIndexes.find(name) != widgetIndexes.end())
     {
         std::string errorMsg = "Widget with name '" + name + "' is already registered!";
@@ -517,6 +523,6 @@ extern "C" __declspec(dllexport) BOOL __stdcall MainMenu_SetDialogButtonText(con
 }
 
 LocalMenuWidgetInfo::LocalMenuWidgetInfo(const mainmenu::MenuWidgetInfo &ext)
-    : name(ext.name), text(ext.text), menuList(ext.menuList), onClick(ext.onClick), uiElement(nullptr), id(0)
+    : name(ext.name), text(ext.text), menuList(ext.menuList), customProc(ext.customProc), uiElement(nullptr), id(0)
 {
 }

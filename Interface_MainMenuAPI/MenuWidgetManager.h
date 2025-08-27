@@ -9,7 +9,7 @@ struct LocalMenuWidgetInfo
     std::string name; // Renamed from id
     std::string text;
     mainmenu::eMenuList menuList = mainmenu::eMenuList::MAIN;
-    void (*onClick)(void *) = nullptr;
+    int(__fastcall *customProc)(void *) = nullptr;
     H3DlgCaptionButton *uiElement = nullptr;
     int id = 0; // Integer ID for the dialog item
   public:

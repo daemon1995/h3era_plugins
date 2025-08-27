@@ -848,7 +848,7 @@ void NotificationPanel::SwitchModInfo(const int step) noexcept
 }
 void OpenExternalFile(const char *path, const char *msg = nullptr);
 
-void NotificationPanel::OnPanelCallerClick(void *msg) noexcept
+int __fastcall NotificationPanel::OnPanelCallerClick(void *msg) noexcept
 {
     if (auto *h3msg = reinterpret_cast<H3Msg *>(msg))
     {
@@ -857,6 +857,7 @@ void NotificationPanel::OnPanelCallerClick(void *msg) noexcept
             instance->SetVisible(!instance->isVisible, true);
         }
     }
+	return true;
 }
 
 BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept

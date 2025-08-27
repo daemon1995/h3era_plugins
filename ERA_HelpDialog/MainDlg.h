@@ -1,12 +1,10 @@
 #pragma once
-#include "ModInformation.h"
 #include "DlgEnums.h"
+#include "ModInformation.h"
 
 namespace main
 {
 struct HotKeysCategory;
-
-
 
 class H3DlgFramedPanel : public H3DlgBasePanel
 {
@@ -193,11 +191,11 @@ class ArtifactsContentPanel : public DlgPanel
 class CreaturesMod : public ModInformation
 {
 
-    CreaturesContentPanel* panel;
+    CreaturesContentPanel *panel;
 };
 class ArtifactsMod : public ModInformation
 {
-    ArtifactsContentPanel* panel;
+    ArtifactsContentPanel *panel;
 };
 
 class MainDlg : public H3Dlg
@@ -260,7 +258,7 @@ class MainDlg : public H3Dlg
 
   public:
     static void PrepareMainDlg(HookContext *c = nullptr);
-    static void MainMenuButtonProc(void *msg);
+    static int __fastcall MainMenuButtonProc(void *msg);
 };
 
 } // namespace main

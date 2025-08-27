@@ -22,7 +22,7 @@ bool LanguageSelectionDlg::CreateAssets(const BOOL forceRecreate)
 /// function to get last locale from vector
 // This function retrieves the last locale from the available locales
 // and returns it for further processing or display.
-void CurrentDlg_HandleLocaleDlgStart(void *_msg)
+int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
 {
     if (const auto msg = static_cast<H3Msg *>(_msg))
     {
@@ -90,6 +90,7 @@ void CurrentDlg_HandleLocaleDlgStart(void *_msg)
             }
         }
     }
+    return true;
 }
 
 LanguageSelectionDlg::LanguageSelectionDlg(const int x, const int y, const int width, const int height,

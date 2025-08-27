@@ -13,10 +13,10 @@ class BaseGameWidgets
     static constexpr LPCSTR WIDGET_TEXT_WOG_OPTIONS = "era.api.main_menu.widgets.wog_options.text";
 
   private:
-    static void HideButtonProc(void *_msg);
+    static int __fastcall HideButtonProc(void *_msg);
+    static int __fastcall SystemOptionsButtonProc(void *_msg);
+    static int __fastcall WoGOptionsButtonProc(void *_msg);
 
-    static void SystemOptionsButtonProc(void *_msg);
-    static void WoGOptionsButtonProc(void *_msg);
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
 
   public:
