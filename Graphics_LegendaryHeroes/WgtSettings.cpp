@@ -7,7 +7,7 @@ WgtSettings::ButtonsAlignment WgtSettings::buttonsAlignment;
 POINT WgtSettings::sacrifaceArtSlotPositions[19] = {
     {0x1AE, 0x11}, {0x1f3, 0x11},  {0x169, 0x11}, {0x137, 0x11},  {0x225, 0x11}, {0x169, 0x13F}, {0x137, 0x43},
     {0x225, 0x43}, {0x1F3, 0x13F}, {0x137, 0x77}, {0x137, 0xA9},  {0x137, 0xDB}, {0x137, 0x10D}, {0x225, 0xA9},
-    {0x225, 0xDB}, {0x225, 0x10D}, {0x225, 0x77}, {0x225, 0x13F}, {0x137, 0x13F} };
+    {0x225, 0xDB}, {0x225, 0x10D}, {0x225, 0x77}, {0x225, 0x13F}, {0x137, 0x13F}};
 
 void WgtSettings::loadArtSettings() noexcept
 {
@@ -20,7 +20,7 @@ void WgtSettings::loadArtSettings() noexcept
         artSlotPositions[i].y = EraJS::readInt(h3_TextBuffer);
     }
 }
-WgtSettings::WgtSettings(const std::string& jsonKey)
+WgtSettings::WgtSettings(const std::string &jsonKey)
 //: jsonKy(jsonKey)
 {
 
@@ -44,7 +44,7 @@ WgtSettings::WgtSettings(const std::string& jsonKey)
 }
 
 #include <sstream>
-HeroWgt::HeroWgt(const std::string& jsonKey) : WgtSettings(jsonKey)
+HeroWgt::HeroWgt(const std::string &jsonKey) : WgtSettings(jsonKey)
 {
     npcBttn.pos.x = EraJS::readInt(jsonKey + ".commander.x");
     npcBttn.pos.y = EraJS::readInt(jsonKey + ".commander.y");
@@ -83,7 +83,7 @@ HeroWgt::HeroWgt(const std::string& jsonKey) : WgtSettings(jsonKey)
     // buttonsToAline.Resize(1);
 }
 
-MeetWgt::MeetWgt(const std::string& jsonKey) : WgtSettings(jsonKey)
+MeetWgt::MeetWgt(const std::string &jsonKey) : WgtSettings(jsonKey)
 {
     bg.pos.x = EraJS::readInt(jsonKey + ".background.x");
     bg.pos.y = EraJS::readInt(jsonKey + ".background.y");

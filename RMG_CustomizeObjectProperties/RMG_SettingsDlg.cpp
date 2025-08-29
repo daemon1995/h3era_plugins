@@ -190,7 +190,6 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     : H3Dlg(width, height, x, y, false, false), m_currentPage(nullptr)
 {
 
-    // Era::ReloadLanguageData();
     RMG_SettingsDlg::ObjectsPanel::id = 0;
 
     // THISCALL_1(void, 0x5063F0, &P_Game->mainSetup);
@@ -914,6 +913,19 @@ H3Msg *__stdcall RMG_SettingsDlg::H3DlgEdit__TranslateInputKey(HiHook *h, H3Inpu
     }
 
     return msg;
+}
+int __fastcall RMG_SettingsDlg::RMGDlgOptionsButtonProc(void *msg)
+{
+    if (H3Msg *h3msg = static_cast<H3Msg *>(msg))
+    {
+        if (h3msg->IsLeftClick())
+        {
+            RMG_SettingsDlg dlg(800, 600);
+            dlg.Start();
+        }
+    }
+
+    return true;
 }
 RMG_SettingsDlg::~RMG_SettingsDlg()
 {
@@ -1870,8 +1882,8 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
     {
         // create text over button near at team setups (HD mod only)
         if (H3DlgText *text =
-                dlg->CreateText(248, 264, 128, 20, EraJS::read("RMG.text.title"), h3::NH3Dlg::Text::SMALL,
-                                eTextColor::HIGHLIGHT, itemIds::RMG_SETTINGS_TEXT_ID, eTextAlignment::MIDDLE_RIGHT))
+                dlg->CreateText(248, 264, 128, 20, EraJS::read(DLG_TEXT_JSON_KEY), h3::NH3Dlg::Text::SMALL,
+                                eTextColor::REGULAR, itemIds::RMG_SETTINGS_TEXT_ID, eTextAlignment::MIDDLE_RIGHT))
         {
             // hide button cause we assume it is not in the list of the items to display
             text->HideDeactivate();
@@ -2014,6 +2026,10 @@ void __stdcall GameStart(HiHook *hook, const DWORD a1)
         th.detach();
     }
 }
+_ERH_(RMG_SettingsDlg::OnAfterReloadLanguageData)
+{
+    mainmenu::MainMenu_SetDialogButtonText(MAIN_MENU_WIDGET_UUID, EraJS::read(MAIN_MENU_JSON_KEY));
+}
 
 void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
 {
@@ -2035,6 +2051,16 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
             _pi->WriteHiHook(0x4FB930, THISCALL_, GameStart);
 
             _pi->WriteHiHook(0x5BB1D1, THISCALL_, H3DlgEdit__TranslateInputKey);
+
+            Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
+
+            mainmenu::MenuWidgetInfo widgetInfo;
+            widgetInfo.name = MAIN_MENU_WIDGET_UUID;
+            widgetInfo.customProc = RMG_SettingsDlg::RMGDlgOptionsButtonProc;
+            widgetInfo.menuList = mainmenu::ALL;
+            widgetInfo.text = EraJS::read(MAIN_MENU_JSON_KEY);
+
+            mainmenu::MainMenu_RegisterWidget(widgetInfo);
         }
     }
 }

@@ -194,7 +194,7 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
     libc::sprintf(Era::z[0], COMBINATIONS_ERM_VARIABLE_FORMAT, playerID);
     const bool artHintsEnabled = Era::GetAssocVarIntValue(Era::z[0]);
 
-    if (hero && artHintsEnabled)
+    if (hero && artHintsEnabled && !instance->isUniteComboArtifactCall)
     {
         if (instance->CreateCombinePartsString(artifact, hero, &instance->hintTextBuffer))
         {
@@ -208,7 +208,7 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
     libc::sprintf(Era::z[0], PRIMARY_SKILLS_ERM_VARIABLE_FORMAT, playerID);
     const bool statHintsEnabled = Era::GetAssocVarIntValue(Era::z[0]);
 
-    if (statHintsEnabled && artifactId > eArtifact::FIRST_AID_TENT)
+    if (statHintsEnabled)
     {
         if (instance->CreateStatsString(artifact, hero, &instance->hintTextBuffer))
         {
@@ -238,11 +238,13 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
 
     return result;
 }
-DWORD __stdcall ArtifactHints::Dlg8_ParseDialogStruct(HiHook *h, DWORD dlg) noexcept
+int __stdcall ArtifactHints::UniteComboArtifacts(HiHook *h, const H3Hero *hero, const int artId) noexcept
 {
+    instance->isUniteComboArtifactCall = true;
 
-    const DWORD result = THISCALL_1(DWORD, h->GetDefaultFunc(), dlg);
-    h->Undo();
+    const DWORD result = THISCALL_2(int, h->GetDefaultFunc(), hero, artId);
+
+    instance->isUniteComboArtifactCall = false;
     return result;
 }
 int __stdcall ArtifactHints::BuildMultiPicDlg(HiHook *h, H3Game *game)
@@ -361,6 +363,7 @@ void ArtifactHints::CreatePatches() noexcept
         WriteHiHook(0x05AFD20, THISCALL_, SwapMgr_InteractArtifactSlot); // backpack
 
         WriteHiHook(0x04DB650, THISCALL_, BuildUpArtifactDescription);
+        WriteHiHook(0x04D9F30, THISCALL_, UniteComboArtifacts);
 
         drawMultiPicDlgPatch = _pi->CreateHiHook(0x4F71BB, CALL_, EXTENDED_, THISCALL_, BuildMultiPicDlg);
         increaseMaxMessageBoxHeightPatch = _pi->WriteDword(0x04F662F + 1, 255);

@@ -2,22 +2,22 @@
 
 namespace lh
 {
-    constexpr const char* backgroundPcxName = "nhTvrnBg.pcx";
-    constexpr const char* hintbarPcx = "nhtvrhnt.pcx";
-    constexpr const char* framePcxName = "nhtvfrm.pcx";
-    constexpr const char* selectionFramePcxName = "nhtvsclt.pcx";
-    constexpr const char* videoFrame = "nhTvrvfr.pcx";
-    constexpr const char* goldBack = "nhTvrGld.pcx";
+constexpr const char *backgroundPcxName = "nhTvrnBg.pcx";
+constexpr const char *hintbarPcx = "nhtvrhnt.pcx";
+constexpr const char *framePcxName = "nhtvfrm.pcx";
+constexpr const char *selectionFramePcxName = "nhtvsclt.pcx";
+constexpr const char *videoFrame = "nhTvrvfr.pcx";
+constexpr const char *goldBack = "nhTvrGld.pcx";
 
 }; // namespace lh
 
-TavernDlgHandler* TavernDlgHandler::instance = nullptr;
+TavernDlgHandler *TavernDlgHandler::instance = nullptr;
 
-TavernDlgHandler::TavernDlgHandler(PatcherInstance* pi) : IGamePatch(pi)
+TavernDlgHandler::TavernDlgHandler(PatcherInstance *pi) : IGamePatch(pi)
 {
 }
 
-void TavernDlgHandler::Init(PatcherInstance* _pi, H3LoadedPcx16* drawBuffer[2]) noexcept
+void TavernDlgHandler::Init(PatcherInstance *_pi, H3LoadedPcx16 *drawBuffer[2]) noexcept
 {
     if (!instance)
     {
@@ -81,7 +81,7 @@ _LHF_(TavernDlgHandler::BeforeCreate) //(LoHook* hook, HookContext* c)
 
 _LHF_(TavernDlgHandler::AfterCreate) //(LoHook* hook, HookContext* c)
 {
-    H3Dlg* dlg = *reinterpret_cast<H3Dlg**>(0x6AAA54); // get Dlg
+    H3Dlg *dlg = *reinterpret_cast<H3Dlg **>(0x6AAA54); // get Dlg
 
     if (!dlg)
         return EXEC_DEFAULT;
@@ -91,7 +91,7 @@ _LHF_(TavernDlgHandler::AfterCreate) //(LoHook* hook, HookContext* c)
     auto pcx = H3LoadedPcx16::Load(lh::videoFrame);
     if (pcx)
     {
-        H3DlgPcx16* dlgPcx = H3DlgPcx16::Create(124, 0x26, pcx->width, pcx->height, 0, 0);
+        H3DlgPcx16 *dlgPcx = H3DlgPcx16::Create(124, 0x26, pcx->width, pcx->height, 0, 0);
         dlgPcx->SetPcx(pcx);
         dlg->AddItem(dlgPcx);
     }
@@ -198,7 +198,7 @@ _LHF_(TavernDlgHandler::AfterCreate) //(LoHook* hook, HookContext* c)
         fr->DeActivate();
     }
 
-    H3Vector<H3DlgItem*>* wgts = reinterpret_cast<H3Vector<H3DlgItem*> *>(reinterpret_cast<int>(dlg) + 0x30);
+    H3Vector<H3DlgItem *> *wgts = reinterpret_cast<H3Vector<H3DlgItem *> *>(reinterpret_cast<int>(dlg) + 0x30);
     //
     // change portraits and selection frames
     for (size_t i = 0; i < 2; i++)
@@ -235,9 +235,9 @@ _LHF_(TavernDlgHandler::AfterCreate) //(LoHook* hook, HookContext* c)
     return EXEC_DEFAULT;
 }
 
-H3DlgPcx16* TavernDlgHandler::CreatePortraitPcx(H3DlgPcx* sourceItem, int heroId, H3LoadedPcx16* buffer)
+H3DlgPcx16 *TavernDlgHandler::CreatePortraitPcx(H3DlgPcx *sourceItem, int heroId, H3LoadedPcx16 *buffer)
 {
-    H3DlgPcx16* result = nullptr;
+    H3DlgPcx16 *result = nullptr;
     if (sourceItem && sourceItem->GetPcx())
     {
         auto framePcx = H3LoadedPcx16::Load(lh::framePcxName);
@@ -246,7 +246,7 @@ H3DlgPcx16* TavernDlgHandler::CreatePortraitPcx(H3DlgPcx* sourceItem, int heroId
         int frameHeight = framePcx->height;
 
         result = H3DlgPcx16::Create(sourceItem->GetX(), sourceItem->GetY(), frameWidth, frameHeight,
-            sourceItem->GetID(), nullptr);
+                                    sourceItem->GetID(), nullptr);
         if (result)
         {
             HeroLook::CorrectPcxNames(heroId);

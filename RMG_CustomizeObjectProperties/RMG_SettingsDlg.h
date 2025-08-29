@@ -45,6 +45,10 @@ class RMG_SettingsDlg : public H3Dlg
     static DWORD userRandSeed;
 
   public:
+    static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
+    static constexpr LPCSTR MAIN_MENU_JSON_KEY = "RMG.text.title";
+
+    static constexpr LPCSTR DLG_TEXT_JSON_KEY = MAIN_MENU_JSON_KEY;
     static constexpr LPCSTR SETTINGS_INI_SECTION = "DlgSettings";
     static constexpr LPCSTR INI_ALWAYS_RANDOM = "alwaysRandom";
     static constexpr LPCSTR INI_FILE_PATH = "Runtime/RMG_CustomizeObjectsProperties.ini";
@@ -272,6 +276,8 @@ class RMG_SettingsDlg : public H3Dlg
 
     static void __stdcall NewScenarioDlg_Create(HiHook *hook, H3SelectScenarioDialog *dlg, const DWORD dlgCallType);
     static H3Msg *__stdcall H3DlgEdit__TranslateInputKey(HiHook *h, H3InputManager *inpt, H3Msg *msg);
+    static int __fastcall RMGDlgOptionsButtonProc(void *msg);
+    static _ERH_(OnAfterReloadLanguageData);
 
   public:
     static void SetPatches(PatcherInstance *_pi);

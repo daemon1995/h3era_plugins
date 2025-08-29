@@ -3,7 +3,7 @@
 #define RESIZED_PCX
 #define ERA4
 #define ERA_MODLIST
-
+#define MAIN_MENU_API
 #ifndef PCH_H
 #define PCH_H
 // Добавьте сюда заголовочные файлы для предварительной компиляции

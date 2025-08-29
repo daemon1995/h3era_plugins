@@ -24,7 +24,7 @@ bool __stdcall LoadArtTraitsTxt(HiHook *h)
             READ_ART_FIELD(artInfo, name, i);
             READ_ART_FIELD(artInfo, description, i);
 
-            READ_ART_FIELD(artInfo, cost, i);
+            //READ_ART_FIELD(artInfo, cost, i);
             //     READ_ART_FIELD(artInfo, comboID, i)
             // READ_ART_FIELD(artInfo, event, i)
             // READ_ART_FIELD(artInfo, cost, i)

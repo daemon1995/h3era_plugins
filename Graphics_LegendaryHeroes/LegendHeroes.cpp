@@ -1,9 +1,9 @@
 ﻿#include "pch.h"
 
-LegendHeroes * LegendHeroes::instance = nullptr;
-H3LoadedPcx16* LegendHeroes::m_drawBuffer[] = {};
+LegendHeroes *LegendHeroes::instance = nullptr;
+H3LoadedPcx16 *LegendHeroes::m_drawBuffer[] = {};
 
-LegendHeroes::LegendHeroes(PatcherInstance* pi) : IGamePatch(pi)
+LegendHeroes::LegendHeroes(PatcherInstance *pi) : IGamePatch(pi)
 {
 
     WgtSettings::loadArtSettings();
@@ -19,7 +19,7 @@ LegendHeroes::LegendHeroes(PatcherInstance* pi) : IGamePatch(pi)
     // HeroLook::LoadIniSettings(m_heroLooks);
 }
 
-void LegendHeroes::Init(PatcherInstance* pi)
+void LegendHeroes::Init(PatcherInstance *pi)
 {
 
     if (!instance)
@@ -34,6 +34,7 @@ void LegendHeroes::Init(PatcherInstance* pi)
     }
 }
 
+
 void LegendHeroes::CreatePatches() noexcept
 {
     m_drawBuffer[0] = H3LoadedPcx16::Create(800, 600);
@@ -46,7 +47,7 @@ void LegendHeroes::CreatePatches() noexcept
 
     _pi->WriteLoHook(0x4DEF7A, HeroDlg_BeforeArtifactsPlacement);
 
-    _pi->WriteLoHook(0x4E1BD4, HeroDlg_AfterCreate);
+    _pi->WriteLoHook(0x04E1BCF, HeroDlg_AfterCreate);
     Era::RegisterHandler(OnPreHeroScreen, "OnPreHeroScreen");
     // Era::RegisterHandler(OnGameLeave, "OnGameLeave");
 
@@ -66,10 +67,10 @@ void LegendHeroes::CreatePatches() noexcept
     LvlUpDlgHandler::Init(globalPatcher->CreateInstance("LegendHeroes.LvlUpDlg.daemon_n"), m_drawBuffer[0]);
     TavernDlgHandler::Init(globalPatcher->CreateInstance("LegendHeroes.TavernDlg.daemon_n"), m_drawBuffer);
 
-    auto& wgt = *altarWgt;
+    auto &wgt = *altarWgt;
 
     _pi->WriteDword(0x560761 + 0x3,
-        (int)&WgtSettings::sacrifaceArtSlotPositions[0].y); // replace artifacts.def original pos
+                    (int)&WgtSettings::sacrifaceArtSlotPositions[0].y); // replace artifacts.def original pos
 
     _pi->WriteDword(0x5609B6 + 1, wgt.arrows[0].y); // replace left arrow original y pos
     _pi->WriteByte(0x5609BB + 1, wgt.arrows[0].x);  // replace left arrow original x pos
@@ -88,7 +89,7 @@ void LegendHeroes::CreatePatches() noexcept
         int xPos = WgtSettings::artSlotPositions[i].x + wgt.startPos.x;
         int yPos = WgtSettings::artSlotPositions[i].y + wgt.startPos.y;
 
-        WgtSettings::sacrifaceArtSlotPositions[i] = { xPos, yPos };
+        WgtSettings::sacrifaceArtSlotPositions[i] = {xPos, yPos};
     }
 
     m_isInited = true;
@@ -100,17 +101,17 @@ constexpr int DLG_CMD_SET_PCX = 11;
 constexpr int BG_PCX_HEIGHT = 407;
 constexpr int BG_PCX_WIDTH = 287;
 
-void __stdcall LegendHeroes::OnAfterErmInstructions(Era::TEvent* event)
+void __stdcall LegendHeroes::OnAfterErmInstructions(Era::TEvent *event)
 {
     auto heroLook = instance->m_heroLooks;
     for (int i = 0; i < HEROES_MAX_AMOUNT; i++)
     {
         if (!heroLook->forceOverride && !heroLook[i].original)
         {
-            libc::sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
-                heroLook[i].portraitIndex);
-            libc::sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
-                heroLook[i].portraitIndex);
+            libc::sprintf(const_cast<char *>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
+                          heroLook[i].portraitIndex);
+            libc::sprintf(const_cast<char *>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
+                          heroLook[i].portraitIndex);
         }
     }
 }
@@ -119,15 +120,15 @@ void __stdcall LegendHeroes::OnAfterErmInstructions(Era::TEvent* event)
 
 _LHF_(LegendHeroes::SwapDlg_BeforeShow)
 {
-    H3Dlg* dlg = reinterpret_cast<H3Dlg*>(c->eax);
-    H3SwapManager* swapMgr = H3SwapManager::Get(); // get swapMgr
+    H3Dlg *dlg = reinterpret_cast<H3Dlg *>(c->eax);
+    H3SwapManager *swapMgr = H3SwapManager::Get(); // get swapMgr
 
     for (UINT16 side = 0; side < 2; side++)
     {
 
         BaseDlg_AddBackGroundPcx(dlg, *instance->m_swapWgt[side], swapMgr->hero[side]->id, 1);
 
-        auto& wgt = *instance->m_swapWgt[side];
+        auto &wgt = *instance->m_swapWgt[side];
 
         int bkgId = wgt.bgId;
         const int xOff = instance->m_swapWgt[side]->startPos.x;
@@ -141,21 +142,21 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
             const int xPos = wgt.artSlotPositions[i].x + xOff;
             const int yPos = wgt.artSlotPositions[i].y + yOff;
 
-            if (H3DlgItem* originalArtBgWgt = dlg->GetH3DlgItem(artSlotBgId))
+            if (H3DlgItem *originalArtBgWgt = dlg->GetH3DlgItem(artSlotBgId))
             {
                 WordAt(reinterpret_cast<int>(originalArtBgWgt) + 0x10) += 20000; // set newID
                 originalArtBgWgt->HideDeactivate();
             }
             dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotBgId, "artifact.def", 0, 0, false,
-                0x10)); // add new items to dlg
+                                          0x10)); // add new items to dlg
 
-            if (H3DlgItem* originalArtWdgt = dlg->GetH3DlgItem(artSlotId))
+            if (H3DlgItem *originalArtWdgt = dlg->GetH3DlgItem(artSlotId))
             {
                 WordAt(reinterpret_cast<int>(originalArtWdgt) + 0x10) += 20000; // set newID
                 originalArtWdgt->HideDeactivate();
             }
             dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotId, "artifact.def", 0, 0, false,
-                0x10)); // add new items to dlg
+                                          0x10)); // add new items to dlg
         }
 
         for (int i = 0; i < 5; i++)
@@ -163,18 +164,18 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
             int artSlotId = side * 5 + i + 89;
 
             int xPos = i * wgt.backpack.interval +
-                wgt.backpack.pos.x; // std::atoi(GetEraJSON((jsonSubStr + ".backpack.interval").c_str())) +
+                       wgt.backpack.pos.x; // std::atoi(GetEraJSON((jsonSubStr + ".backpack.interval").c_str())) +
             // std::atoi(GetEraJSON((jsonSubStr + ".backpack.x").c_str()));// +xOffset;
             int yPos = wgt.backpack.pos.y; // +yOffset;
 
-            if (H3DlgItem* originalArtBgWgt = dlg->GetH3DlgItem(artSlotId))
+            if (H3DlgItem *originalArtBgWgt = dlg->GetH3DlgItem(artSlotId))
             {
                 WordAt(reinterpret_cast<int>(originalArtBgWgt) + 0x10) += 20000; // set newID
                 originalArtBgWgt->HideDeactivate();
             }
 
             dlg->AddItem(H3DlgDef::Create(xPos, yPos, 44, 44, artSlotId, "artifact.def", 0, 0, false,
-                0x10)); // add new items to dlg
+                                          0x10)); // add new items to dlg
         }
 
         for (int i = 0; i < 2; i++)
@@ -184,18 +185,18 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
             int xPos = wgt.arrows[i].x; // std::atoi(GetEraJSON((jsonSubStr + ".left_arrow.x").c_str()));
             int yPos = wgt.arrows[i].y;
 
-            if (H3DlgItem* arrowWgt = dlg->GetH3DlgItem(arrowId))
+            if (H3DlgItem *arrowWgt = dlg->GetH3DlgItem(arrowId))
             {
                 WordAt(reinterpret_cast<int>(arrowWgt) + 0x10) += 20000; // set newID
                 arrowWgt->HideDeactivate();
             }
             dlg->AddItem(H3DlgDefButton::Create(xPos, yPos, 22, 46, arrowId,
-                H3String::Format("hsbtns%d.def", i * 2 + 3).String(), 0, 1, 0,
-                0)); // add new items to dlg
+                                                H3String::Format("hsbtns%d.def", i * 2 + 3).String(), 0, 1, 0,
+                                                0)); // add new items to dlg
         }
 
         // align questlogs buttons for swap dlg
-        if (H3DlgItem* questWidget = dlg->GetH3DlgItem(85 + side))
+        if (H3DlgItem *questWidget = dlg->GetH3DlgItem(85 + side))
         {
             questWidget->SetWidth(wgt.buttonsAlignment.width);
             questWidget->SetHeight(wgt.buttonsAlignment.height);
@@ -204,7 +205,7 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
             questWidget->SetX(x + 8);
         }
         // allign backpacks buttons
-        if (H3DlgItem* backpackWidget = dlg->GetH3DlgItem(8000 + side))
+        if (H3DlgItem *backpackWidget = dlg->GetH3DlgItem(8000 + side))
         {
             backpackWidget->SetWidth(wgt.buttonsAlignment.width);
             backpackWidget->SetHeight(wgt.buttonsAlignment.height);
@@ -221,9 +222,9 @@ _LHF_(LegendHeroes::SwapDlg_BeforeShow)
 
 _LHF_(LegendHeroes::HeroDlg_BeforeArtifactsPlacement)
 {
-    H3Dlg* dlg = *reinterpret_cast<H3Dlg**>(c->ebp - 0x14);
+    H3Dlg *dlg = *reinterpret_cast<H3Dlg **>(c->ebp - 0x14);
 
-    auto& wgt = *instance->m_heroWgt;
+    auto &wgt = *instance->m_heroWgt;
     BaseDlg_AddBackGroundPcx(dlg, wgt, P_DialogHero->id);
 
     int btnId = wgt.mgrBttn.id;
@@ -233,7 +234,7 @@ _LHF_(LegendHeroes::HeroDlg_BeforeArtifactsPlacement)
     // create mgr button only if owner is here
     if (P_DialogHero->owner == P_Game->GetPlayerID() && P_Game->GetPlayerID() == P_CurrentPlayerID)
     {
-        H3DlgDefButton* managerButton =
+        H3DlgDefButton *managerButton =
             H3DlgDefButton::Create(0, 0, wgt.mgrBttn.id, wgt.mgrBttn.defName, 0 + nymOffset, 1 + nymOffset, 0, NULL);
 
         managerButton->SetHints(wgt.mgrBttn.hint, wgt.mgrBttn.hint, true);
@@ -247,12 +248,12 @@ _LHF_(LegendHeroes::HeroDlg_BeforeArtifactsPlacement)
 _LHF_(LegendHeroes::HeroDlg_AfterCreate)
 {
 
-    H3Dlg* dlg = reinterpret_cast<H3Dlg*>(c->ecx);
+    H3Dlg *dlg = reinterpret_cast<H3Dlg *>(c->ecx);
 
     // CALL_1(H3Dlg*, __thiscall, hook->GetDefaultFunc(), dlg);
-    H3DlgItem* it, * itBg;
+    H3DlgItem *it, *itBg;
 
-    auto& wgt = *instance->m_heroWgt;
+    auto &wgt = *instance->m_heroWgt;
     int xOffset = wgt.startPos.x; // std::atoi(GetEraJSON("nhd.hero_screen.x"));
     int yOffset = wgt.startPos.y; // std::atoi(GetEraJSON("nhd.hero_screen.y"));
     instance->m_heroLooks->needRedraw = true;
@@ -305,7 +306,7 @@ _LHF_(LegendHeroes::HeroDlg_AfterCreate)
         it->SendCommand(DLG_CMD_SET_DEF, (int)wgt.npcBttn.defName);
 
         INT8 nymOffset = instance->m_heroLooks->interfaceMod * 2;
-        H3DlgDefButton* defBttn = dlg->GetDefButton(NPC_BUTTON_ID);
+        H3DlgDefButton *defBttn = dlg->GetDefButton(NPC_BUTTON_ID);
 
         defBttn->SetFrame(0 + nymOffset);
         defBttn->SetClickFrame(1 + nymOffset);
@@ -323,16 +324,16 @@ _LHF_(LegendHeroes::HeroDlg_AfterCreate)
     return EXEC_DEFAULT;
 }
 
-void LegendHeroes::AlignButtons(H3BaseDlg* dlg)
+void LegendHeroes::AlignButtons(H3BaseDlg *dlg)
 {
-    H3Vector<H3DlgItem*> buttons; // create vector of buttons
-    H3DlgItem* it;
+    H3Vector<H3DlgItem *> buttons; // create vector of buttons
+    H3DlgItem *it;
 
-    auto& wgt = *m_heroWgt;
+    auto &wgt = *m_heroWgt;
 
     buttons.Reserve(wgt.buttonsAlignment.buttonsToAline.Size());
     int counter{};
-    for (auto& s : wgt.buttonsAlignment.buttonsToAline)
+    for (auto &s : wgt.buttonsAlignment.buttonsToAline)
     {
         // first try to get button Id by tag
         INT16 buttonId = Era::GetButtonID(s.c_str());
@@ -349,7 +350,7 @@ void LegendHeroes::AlignButtons(H3BaseDlg* dlg)
 
     if (buttonsNum) // if at least one button
     {
-        for (auto& b : buttons)
+        for (auto &b : buttons)
         {
 
             b->SetWidth(wgt.buttonsAlignment.width);
@@ -372,15 +373,15 @@ void LegendHeroes::AlignButtons(H3BaseDlg* dlg)
     }
 }
 
-void __stdcall LegendHeroes::OnPreHeroScreen(Era::TEvent* e)
+void __stdcall LegendHeroes::OnPreHeroScreen(Era::TEvent *e)
 {
 
-    auto& wgt = *instance->m_heroWgt;
+    auto &wgt = *instance->m_heroWgt;
 
     int bkgId = wgt.bgId; // std::atoi(GetEraJSON("nhd.hero_screen.bg_item_id"));
     int heroId = P_DialogHero->id;
 
-    H3BaseDlg* dlg = *reinterpret_cast<H3BaseDlg**>(0x698AC8);
+    H3BaseDlg *dlg = *reinterpret_cast<H3BaseDlg **>(0x698AC8);
 
     if (instance->m_heroLooks->needRedraw || instance->lastHeroLookSet != heroId)
     {
@@ -396,8 +397,8 @@ void __stdcall LegendHeroes::OnPreHeroScreen(Era::TEvent* e)
 // Market dlg - add new items before dlg created
 _LHF_(LegendHeroes::MarketDlg_BeforeArtifactsPlacement)
 {
-    H3Dlg* dlg = reinterpret_cast<H3Dlg*>(c->edi);
-    H3Hero* m_heroWgt = *reinterpret_cast<H3Hero**>(0x6AAAE0);
+    H3Dlg *dlg = reinterpret_cast<H3Dlg *>(c->edi);
+    H3Hero *m_heroWgt = *reinterpret_cast<H3Hero **>(0x6AAAE0);
     BaseDlg_AddBackGroundPcx(dlg, *instance->m_marketWgt, m_heroWgt->id);
 
     return EXEC_DEFAULT;
@@ -406,13 +407,13 @@ _LHF_(LegendHeroes::MarketDlg_BeforeArtifactsPlacement)
 // Market dlg - change widgets positions after creation
 _LHF_(LegendHeroes::MarketDlg_AfterArtifactsPlacement)
 {
-    H3Dlg* dlg = reinterpret_cast<H3Dlg*>(c->ecx);
-    auto& wgt = *instance->m_marketWgt;
+    H3Dlg *dlg = reinterpret_cast<H3Dlg *>(c->ecx);
+    auto &wgt = *instance->m_marketWgt;
 
-    H3DlgItem* it;
+    H3DlgItem *it;
     int xOffset = wgt.startPos.x;
     int yOffset = wgt.startPos.y;
-    H3Hero* m_heroWgt = *reinterpret_cast<H3Hero**>(0x6AAAE0);
+    H3Hero *m_heroWgt = *reinterpret_cast<H3Hero **>(0x6AAAE0);
     int lookId = wgt.bgId;
 
     for (UINT16 i = 0; i < 19; i++)
@@ -481,11 +482,11 @@ _LHF_(LegendHeroes::MarketDlg_AfterArtifactsPlacement)
     return EXEC_DEFAULT;
 }
 
-int __stdcall LegendHeroes::DlgHero_Proc(HiHook* hook, H3Dlg* dlg, H3Msg* msg)
+int __stdcall LegendHeroes::DlgHero_Proc(HiHook *hook, H3Dlg *dlg, H3Msg *msg)
 {
     if (msg->command == eMsgCommand::MOUSE_OVER)
     {
-        auto* it = dlg->ItemAtPosition(msg);
+        auto *it = dlg->ItemAtPosition(msg);
         if (it && it->GetID() == instance->m_heroWgt->mgrBttn.id)
         {
             dlg->SendCommandToAllItems(eMsgSubtype::SET_TEXT, 115, (int)it->GetHint());
@@ -497,7 +498,7 @@ int __stdcall LegendHeroes::DlgHero_Proc(HiHook* hook, H3Dlg* dlg, H3Msg* msg)
     return THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
 }
 
-void LegendHeroes::BaseDlg_AddBackGroundPcx(H3Dlg* dlg, WgtSettings& wgt, int heroId, bool initiate)
+void LegendHeroes::BaseDlg_AddBackGroundPcx(H3Dlg *dlg, WgtSettings &wgt, int heroId, bool initiate)
 {
 
     int width = wgt.width;
@@ -516,7 +517,7 @@ void LegendHeroes::BaseDlg_AddBackGroundPcx(H3Dlg* dlg, WgtSettings& wgt, int he
     dlg->AddItem(H3DlgPcx16::Create(xPos, yPos, width, height, bkgId, HeroLook::pcxNames[0].String()), initiate);
     dlg->AddItem(H3DlgPcx16::Create(xPos, yPos, width, height, ++bkgId, HeroLook::pcxNames[1].String()), initiate);
     dlg->AddItem(H3DlgPcx16::Create(xPos + 1, yPos, width, BG_PCX_HEIGHT - 57, ++bkgId, HeroLook::pcxNames[2].String()),
-        initiate);
+                 initiate);
     dlg->AddItem(
         H3DlgPcx16::Create(xPos + 1, wgt.backpack.altitude, width, 56, ++bkgId, HeroLook::pcxNames[3].String()),
         initiate);
@@ -524,8 +525,8 @@ void LegendHeroes::BaseDlg_AddBackGroundPcx(H3Dlg* dlg, WgtSettings& wgt, int he
 
 _LHF_(LegendHeroes::SacrifaceDlg_BeforeArtifactsPlacement) //(LoHook* hook, HookContext* c)
 {
-    H3Dlg* dlg = *reinterpret_cast<H3Dlg**>(c->ebp - 0x10); // get Dlg
-    H3Player* playerPtr = P_Game->GetPlayer();
+    H3Dlg *dlg = *reinterpret_cast<H3Dlg **>(c->ebp - 0x10); // get Dlg
+    H3Player *playerPtr = P_Game->GetPlayer();
 
     BaseDlg_AddBackGroundPcx(dlg, *instance->altarWgt, playerPtr->currentHero);
 

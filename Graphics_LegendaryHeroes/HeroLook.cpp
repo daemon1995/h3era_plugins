@@ -1,4 +1,3 @@
-@ - 1, 279 + 0, 0 @@
 #include "pch.h"
 
 UINT16 HeroLook::ornament;
@@ -52,7 +51,7 @@ void HeroLook::ResetSettings()
     constexpr int SIZE = 3;                                                        // 4;
     constexpr const char* keys[SIZE] = { "faction", "portraitIndex", "background" }; // , "originalPortrait"};
 
-    sprintf(h3_TextBuffer, "%d", 0); // set default buffer
+    libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
 
     if (Era::ReadStrFromIni("ornament", "main", iniPath, h3_TextBuffer))
         ornament = atoi(h3_TextBuffer);
@@ -98,9 +97,9 @@ void HeroLook::ResetSettings()
         {
             //	sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", *values[0], *values[1]);
             //	sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", *values[0], *values[1]);
-            sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
+            libc::sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
                 heroLook[i].portraitIndex);
-            sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
+            libc::sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
                 heroLook[i].portraitIndex);
         }
         UINT16* values[SIZE] = { &heroLook[i].faction, &heroLook[i].portraitIndex,
@@ -122,8 +121,8 @@ DllExport void GetNativePortraitName(const UINT heroId, char* large, char* small
 
     if (heroId < HEROES_MAX_AMOUNT)
     {
-        sprintf(large, HeroLook::heroLook[heroId].native.large.String());
-        sprintf(small, HeroLook::heroLook[heroId].native.small.String());
+        libc::sprintf(large, HeroLook::heroLook[heroId].native.large.String());
+        libc::sprintf(small, HeroLook::heroLook[heroId].native.small.String());
     }
 
     return;
@@ -143,8 +142,8 @@ DllExport void GetCurrentPortraitName(const UINT heroId, char* large, char* smal
 
     if (heroId < HEROES_MAX_AMOUNT)
     {
-        sprintf(large, P_HeroInfo[heroId].largePortrait);
-        sprintf(small, P_HeroInfo[heroId].smallPortrait);
+        libc::sprintf(large, P_HeroInfo[heroId].largePortrait);
+        libc::sprintf(small, P_HeroInfo[heroId].smallPortrait);
     }
 
     return;
@@ -157,8 +156,8 @@ DllExport void GetModPortraitName(const UINT heroId, char* large, char* small)
     {
         auto& h = HeroLook::heroLook[heroId];
 
-        sprintf(large, "nhl%d_%d.pcx", h.faction, h.portraitIndex);
-        sprintf(small, "nhs%d_%d.pcx", h.faction, h.portraitIndex);
+        libc::sprintf(large, "nhl%d_%d.pcx", h.faction, h.portraitIndex);
+        libc::sprintf(small, "nhs%d_%d.pcx", h.faction, h.portraitIndex);
     }
 
     return;
@@ -224,17 +223,17 @@ DllExport int SetPortraitName(const UINT heroId, LPCSTR large, LPCSTR small)
         //	sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
         // heroLook[i].portraitIndex);
         //
-        sprintf(h3_TextBuffer, large);
+        libc::sprintf(h3_TextBuffer, large);
         //	P_HeroInfo[heroId].largePortrait = H3String(h3_TextBuffer).String();
 
-        sprintf(buffer, P_HeroInfo[heroId].largePortrait);
+        libc::sprintf(buffer, P_HeroInfo[heroId].largePortrait);
 
         buffer;
 
-        sprintf(h3_TextBuffer, small);
+        libc::sprintf(h3_TextBuffer, small);
         //	P_HeroInfo[heroId].smallPortrait = H3String(h3_TextBuffer).String();
 
-        sprintf(buffer, P_HeroInfo[heroId].smallPortrait);
+        libc::sprintf(buffer, P_HeroInfo[heroId].smallPortrait);
     }
     buffer;
 
@@ -249,7 +248,7 @@ void HeroLook::LoadIniSettings(HeroLook* heroes)
     // auto m_heroWgt = heroes[0];
     constexpr const char* keys[SIZE] = { "faction", "portraitIndex", "background", "originalPortrait" };
 
-    sprintf(h3_TextBuffer, "%d", 0); // set default buffer
+    libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
 
     if (Era::ReadStrFromIni("ornament", "main", iniPath, h3_TextBuffer))
         ornament = atoi(h3_TextBuffer);

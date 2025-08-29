@@ -30,8 +30,9 @@ class ArtifactHints : public IGamePatch
 {
     BOOL active = true;
     INT swapSide = 0;
-    Patch* drawMultiPicDlgPatch = nullptr;
-    Patch* increaseMaxMessageBoxHeightPatch = nullptr;
+	BOOL isUniteComboArtifactCall = false;
+    Patch *drawMultiPicDlgPatch = nullptr;
+    Patch *increaseMaxMessageBoxHeightPatch = nullptr;
     H3String hintTextBuffer;
     HintsText settings;
 
@@ -41,7 +42,6 @@ class ArtifactHints : public IGamePatch
     static constexpr LPCSTR HINT_FORMAT_KEY = "gem_plugin.artifact_hints.primary_skills.text_format";
     static constexpr LPCSTR COMPARED_STATS_FORMAT = "%d %s";
     static constexpr LPCSTR STATS_FORMAT = "%d";
-
 
     static ArtifactHints *instance;
 
@@ -59,7 +59,7 @@ class ArtifactHints : public IGamePatch
                                                        int a4) noexcept;
     static H3String *__stdcall BuildUpArtifactDescription(HiHook *h, const H3Artifact *artifact,
                                                           H3String *result) noexcept;
-	static DWORD __stdcall Dlg8_ParseDialogStruct(HiHook* h, DWORD dlg) noexcept;
+    static int __stdcall UniteComboArtifacts(HiHook* h, const H3Hero *hero, const int artId) noexcept;
     static int __stdcall BuildMultiPicDlg(HiHook *h, H3Game *game);
 
   public:

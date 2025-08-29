@@ -98,6 +98,8 @@
     </Link>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>D:\SW\ExeMapCompiler\$(TargetName).map</MapFileName>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
