@@ -49,6 +49,10 @@
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp">
       <Filter>Extenders</Filter>
     </ClCompile>
+    <ClCompile Include="ExtenderManager.cpp">
+      <Filter>ExtenderAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="AdditionalProperties.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjectsExtender.h">
@@ -93,6 +97,10 @@
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
+    <ClInclude Include="ExtenderManager.h">
+      <Filter>ExtenderAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="AdditionalProperties.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="source files">
@@ -106,6 +114,9 @@
     </Filter>
     <Filter Include="Extenders">
       <UniqueIdentifier>{572dc5ac-3f4d-41de-b560-1a6862f4dfd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ExtenderAPI">
+      <UniqueIdentifier>{dcf95c20-2b30-424b-928e-4a99fe6afe19}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

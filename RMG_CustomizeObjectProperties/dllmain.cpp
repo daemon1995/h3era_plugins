@@ -68,7 +68,7 @@ _LHF_(CrBanksTxt_AfterLoad)
 {
 
     editor::RMGObjectsEditor::Get();
-
+    extender::ExtenderManager::Get();
     //! Get the CreatureBanksManager and initialize it
     cbanks::CreatureBanksExtender::Get();
     shrines::ShrinesExternder::Get();

@@ -1110,7 +1110,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *pa
         H3String str;
 
         const bool result =
-            extender::ObjectsExtender::ShowObjectExtendedInfo(rmgObject->objectInfo, rmgObject->attributes, str);
+            extender::ExtenderManager::ShowObjectExtendedInfo(rmgObject->objectInfo, rmgObject->attributes, str);
 
         if (!result)
         {

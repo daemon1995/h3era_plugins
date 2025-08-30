@@ -1,6 +1,5 @@
 #pragma once
 #include "RMGObjectsEditor.h"
-#include <unordered_set>
 namespace extender
 {
 constexpr int ERA_OBJECT_TYPE = 141;
@@ -8,50 +7,15 @@ constexpr int HOTA_OBJECT_TYPE = 144;
 constexpr int HOTA_PICKUPABLE_OBJECT_TYPE = 145;
 constexpr int HOTA_UNREACHABLE_YT_OBJECT_TYPE = 146;
 
-namespace limits
-{
-constexpr int EXTENDED = 1024;
-constexpr int COMMON = 255;
-} // namespace limits
-
-// temp struct to allow add line into protected field "H3Vector<LPCSTR> text;" at 0x1C
-struct EditableH3TextFile : public H3TextFile
-{
-    void AddLine(LPCSTR txt);
-    size_t GetLineCount() const noexcept;
-};
-
-struct ObjectProperty
-{
-
-    static std::unordered_map<std::string, std::string> additionalPropertiesMap;
-
-  public:
-    static const std::string *FindPropertyReplace(LPCSTR other) noexcept;
-    static std::string GetMapKey(LPCSTR other) noexcept;
-    static BOOL AddProperty(std::string &other) noexcept;
-};
-
-struct RMGObjectSetable
-{
-    int type;
-    int subtype;
-    struct HashFunction
-    {
-        size_t operator()(const RMGObjectSetable &obj) const noexcept;
-    };
-    bool operator==(const RMGObjectSetable &other) const noexcept;
-};
+// namespace limits
 
 class ObjectsExtender : public IGamePatch
 {
-
-    static std::vector<ObjectsExtender *> extenders;
+    friend class ExtenderManager;
 
   protected:
     static std::vector<RMGObjectInfo> additionalRmgObjects;
     static BOOL skipMapMessageByHdMod;
-    static BOOL patchesCreated;
 
   protected:
     ObjectsExtender(PatcherInstance *pi);
@@ -78,35 +42,15 @@ class ObjectsExtender : public IGamePatch
     // virtual BOOL HeroMapItemVisitFunction(HookContext* c, const H3Hero* hero, const H3MapItem* mapItem, const BOOL
     // isPlayer, const BOOL skipMapMessage);
 
-  private:
-    static _LHF_(Game__NewGameObjectIteration);
-    static _LHF_(Game__NewWeekObjectIteration);
-    static _LHF_(H3AdventureManager__ObjectVisit);
-    static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
-    static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
-    static _LHF_(AIHero_GetObjectPosWeight);
-
   protected:
     static H3RmgObjectGenerator *CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &info) noexcept;
 
   private:
-    // static methods to use them as General Objects Extending hooks
-    static void __stdcall H3GameMainSetup__LoadObjects(HiHook *h, const H3MainSetup *setup);
-    static _LHF_(LoadObjectsTxt);
-    static INT ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRightClick);
-    static void LoadMapObjectPropertiesByTypeSubtypes() noexcept;
-    static void LoadMapObjectPropertiesFromLoadedMods() noexcept;
     // static int __stdcall WoG_PlaceObject(HiHook *h, const int x, const int y, const int z, const int objType,
     //                                     const int objSubtype, const int objType2, const int objSubtype2,
     //                                     const DWORD a8);
-  public:
-    static void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList);
-    static BOOL ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                       H3String &resultString) noexcept;
-    // static void HandleRmgOjectGeneratorBeforeAdding(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
 
-    // static void __stdcall H3AdventureManager__ObjectVisit_SoundPlay(HiHook* h, const int objType, const int
-    // objSetup);
+    // static void HandleRmgOjectGeneratorBeforeAdding(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
 };
 
 } // namespace extender

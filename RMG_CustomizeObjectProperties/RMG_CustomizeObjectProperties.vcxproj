@@ -49,6 +49,8 @@
   <!-- Настройки отладки и компиляции определены в корневом Directory.Build.props -->
   <!-- Локальные настройки пользователя в Directory.Build.props.user -->
   <ItemGroup>
+    <ClInclude Include="AdditionalProperties.h" />
+    <ClInclude Include="ExtenderManager.h" />
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h" />
     <ClInclude Include="ObjectExtenders\UniversityExtender.h" />
     <ClInclude Include="SoundManager.h" />
@@ -67,7 +69,9 @@
   <ItemGroup>
     <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="AdditionalProperties.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ExtenderManager.cpp" />
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp" />
     <ClCompile Include="ObjectExtenders\UniversityExtender.cpp" />
     <ClCompile Include="SoundManager.cpp" />

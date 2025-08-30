@@ -1,4 +1,6 @@
 #include "../pch.h"
+
+#include <unordered_set>
 namespace university
 
 {
@@ -245,9 +247,9 @@ void UniversityExtender::CreatePatches()
     }
 }
 
-UniversityExtender* UniversityExtender::instance = nullptr;
+UniversityExtender *UniversityExtender::instance = nullptr;
 
-UniversityExtender& UniversityExtender::Get()
+UniversityExtender &UniversityExtender::Get()
 {
     if (!instance)
         instance = new UniversityExtender();

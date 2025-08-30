@@ -27,9 +27,6 @@ H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, 
     return result;
 }
 
-// void __stdcall H3DlgHero__Dismiss__BeforeRedraw(HiHook *h, int a1, int a2, int a3, int a4)
-//{
-// }
 
 signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButton, int isKingdomOverView,
                                     const int isRightClick) noexcept

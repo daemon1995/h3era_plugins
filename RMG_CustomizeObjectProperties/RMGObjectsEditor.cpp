@@ -1,5 +1,7 @@
-#include "pch.h"
 #include <thread>
+#include <unordered_set>
+
+#include "pch.h"
 
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
@@ -153,7 +155,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
     {
         // and add objects by properly allocated memory m_size and types (this case is CB)
 
-        extender::ObjectsExtender::AddObjectsToObjectGenList(rmgObjectsList);
+        extender::ExtenderManager::Get()->AddObjectsToObjectGenList(rmgObjectsList);
 
         // add scrolls level 6
         if (H3RmgObjectGenerator *objScrollGen = H3ObjectAllocator<_RMGObjGenScroll_>().allocate(1))

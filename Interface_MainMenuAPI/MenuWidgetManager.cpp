@@ -26,7 +26,8 @@ void MenuWidgetManager::SetVisible(const bool visible)
         framedBackground->SetPcx(visible         ? framedBackgroundPcx
                                  : placedOutside ? outsideBackupScreenPcx
                                                  : insideBackupScreenPcx);
-
+        
+        //Era::red
         for (size_t i = 0; i < createdWidgets.size(); i++)
         {
             auto *widget = createdWidgets[i];
