@@ -358,7 +358,6 @@ void ArtifactHints::CreatePatches() noexcept
 {
     if (!m_isInited)
     {
-
         WriteHiHook(0x05AF920, THISCALL_, SwapMgr_InteractArtifactSlot); // dolls
         WriteHiHook(0x05AFD20, THISCALL_, SwapMgr_InteractArtifactSlot); // backpack
 
@@ -366,7 +365,7 @@ void ArtifactHints::CreatePatches() noexcept
         WriteHiHook(0x04D9F30, THISCALL_, UniteComboArtifacts);
 
         drawMultiPicDlgPatch = _pi->CreateHiHook(0x4F71BB, CALL_, EXTENDED_, THISCALL_, BuildMultiPicDlg);
-        increaseMaxMessageBoxHeightPatch = _pi->WriteDword(0x04F662F + 1, 255);
+        increaseMaxMessageBoxHeightPatch = _pi->CreateDwordPatch(0x04F662F + 1, 255);
         settings.Load();
         m_isInited = true;
     }
