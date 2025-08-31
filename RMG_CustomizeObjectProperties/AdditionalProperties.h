@@ -20,7 +20,7 @@ struct AdditionalProperties
     static constexpr LPCSTR PROPERTY_TYPE_JSON = "RMG.%s.properties.%d";
     static constexpr LPCSTR PROPERTY_SUBTYPE_JSON = "RMG.%s.properties.%d.%d";
     static constexpr LPCSTR PROPERTY_COMMON_JSON = "RMG.objectGeneration.%d.%d.properties.%d";
-
+    static constexpr LPCSTR UNIQUE_PROPERTY_FORMAT = "%s_%s_%s";
     std::unordered_map<std::string, std::string> propertiesMap;
 
     BOOL AddProperty(std::string &other) noexcept;

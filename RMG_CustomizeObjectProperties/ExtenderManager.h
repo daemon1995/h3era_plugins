@@ -1,6 +1,6 @@
 #pragma once
-#include "RMGObjectsEditor.h"
 #include "ObjectsExtender.h"
+#include "RMGObjectsEditor.h"
 
 #include <map>
 #include <unordered_map>
@@ -25,8 +25,8 @@ struct RMGObjectSetable
 };
 
 class ExtenderManager : public IGamePatch
-
 {
+    BOOL skipMapMessageByHdMod = false;
 
     // contains all the extenders for objects addded by this and other plugins
     std::vector<ObjectsExtender *> objectExtenders;
@@ -70,7 +70,7 @@ class ExtenderManager : public IGamePatch
     void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList);
     static BOOL ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                        H3String &resultString) noexcept;
-    static BOOL AddExtender(ObjectsExtender*);
+    static BOOL AddExtender(ObjectsExtender *ext);
     static ExtenderManager *Get();
 };
 } // namespace extender

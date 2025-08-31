@@ -23,7 +23,7 @@ std::string AdditionalProperties::GetMapKey(LPCSTR propertyString) noexcept
     }
     // get map key from def + object type + object subtype
     std::transform(words[0].begin(), words[0].end(), words[0].begin(), ::tolower);
-    libc::sprintf(h3_TextBuffer, "%s_%s_%s", words[0].c_str(), words[5].c_str(), words[6].c_str());
+    libc::sprintf(h3_TextBuffer, UNIQUE_PROPERTY_FORMAT, words[0].c_str(), words[5].c_str(), words[6].c_str());
     words.clear();
     return h3_TextBuffer;
 }
@@ -171,7 +171,6 @@ size_t AdditionalProperties::InsertPropertiesIntoObjectsList(H3TextFile *_object
         // copy original objects added list into set
         std::unordered_set<LPCSTR> objectsSet(objectTxt->begin(), objectTxt->end());
 
-        UINT32 newProperties = 0;
         // iterate each added property
         for (auto &prop : propertiesMap)
         {
@@ -185,7 +184,7 @@ size_t AdditionalProperties::InsertPropertiesIntoObjectsList(H3TextFile *_object
                 // add that property into main objects list
                 objectTxt->AddLine(prop.second.c_str()); // add new txt entry
                 // increase added objects number
-                newProperties++;
+                addedProperties++;
             }
         }
         // Era::SaveIni("runtime/tum/properties.ini");

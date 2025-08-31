@@ -11,19 +11,13 @@ constexpr int HOTA_UNREACHABLE_YT_OBJECT_TYPE = 146;
 
 class ObjectsExtender : public IGamePatch
 {
-    friend class ExtenderManager;
 
-  protected:
-    static std::vector<RMGObjectInfo> additionalRmgObjects;
-    static BOOL skipMapMessageByHdMod;
 
-  protected:
     ObjectsExtender(PatcherInstance *pi);
     virtual ~ObjectsExtender();
 
     // virtual void GetObjectPreperties() noexcept = 0;
-  protected:
-    virtual void CreatePatches() override;
+  public:
     // required override for some complex structures like creature banks
     virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes);
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept = 0;
@@ -37,6 +31,7 @@ class ObjectsExtender : public IGamePatch
                                     int &aiResWeight, int *moveDistance, const H3Position pos) const noexcept;
     virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                              const H3String &defaltText) noexcept;
+
     //	virtual int AiMapItemWeightFunction(HookContext* c, const H3MapItem* mapItem, H3Player* player);
     // returns if object was visited by some of derived classes
     // virtual BOOL HeroMapItemVisitFunction(HookContext* c, const H3Hero* hero, const H3MapItem* mapItem, const BOOL
@@ -44,13 +39,6 @@ class ObjectsExtender : public IGamePatch
 
   protected:
     static H3RmgObjectGenerator *CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &info) noexcept;
-
-  private:
-    // static int __stdcall WoG_PlaceObject(HiHook *h, const int x, const int y, const int z, const int objType,
-    //                                     const int objSubtype, const int objType2, const int objSubtype2,
-    //                                     const DWORD a8);
-
-    // static void HandleRmgOjectGeneratorBeforeAdding(H3Vector<H3RmgObjectGenerator*>* rmgObjecsList);
 };
 
 } // namespace extender

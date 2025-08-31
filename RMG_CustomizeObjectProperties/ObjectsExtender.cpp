@@ -5,13 +5,10 @@
 namespace extender
 {
 
-std::vector<RMGObjectInfo> ObjectsExtender::additionalRmgObjects;
-BOOL ObjectsExtender::skipMapMessageByHdMod = false;
 
 ObjectsExtender::ObjectsExtender(PatcherInstance *pi) : IGamePatch(pi)
 {
-    ExtenderManager::AddExtender(this);
-    skipMapMessageByHdMod = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
+    ExtenderManager::Get()->AddExtender(this);
 }
 
 // call atoi for hte first txt file
@@ -24,11 +21,12 @@ ObjectsExtender::~ObjectsExtender()
 
 H3RmgObjectGenerator *ObjectsExtender::CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &objectInfo) noexcept
 {
-
-    H3RmgObjectGenerator *objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
-    THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
-               objectInfo.density);
-
+    H3RmgObjectGenerator *objGen = nullptr;
+    if (objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1))
+    {
+        THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
+                   objectInfo.density);
+    }
     return objGen;
 }
 H3RmgObjectGenerator *ObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
@@ -106,9 +104,6 @@ _LHF_(H3AdventureManager__GetPyramidObjectClickHint)
     return EXEC_DEFAULT;
 }
 
-void ObjectsExtender::CreatePatches()
-{
-}
 void ObjectsExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
 {
 }

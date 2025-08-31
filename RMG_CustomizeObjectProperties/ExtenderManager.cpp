@@ -3,7 +3,10 @@
 #include <unordered_set>
 namespace extender
 {
-
+#define READ_RMG_JSON_FIELD_1(field, objType)                                                                          \
+    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d." #field, objType).String())
+#define READ_RMG_JSON_FIELD_2(field, objType, objSubtype)                                                              \
+    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d." #field, objType, objSubtype).String())
 bool RMGObjectSetable::operator==(const RMGObjectSetable &other) const noexcept
 {
     return type == other.type && subtype == other.subtype; // ? type < other.type : subtype < other.subtype;
@@ -66,6 +69,9 @@ void ExtenderManager::CreatePatches()
 
         _PI->WriteLoHook(0x528559, AIHero_GetObjectPosWeight); // AI object visit stuff
 
+        skipMapMessageByHdMod = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
+
+
         // patch hota object types unable to be entered
         auto *settingsTable = H3GlobalObjectSettings::Get();
         for (size_t i = HOTA_PICKUPABLE_OBJECT_TYPE; i <= HOTA_UNREACHABLE_YT_OBJECT_TYPE; i++)
@@ -106,16 +112,16 @@ int ExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRigh
     return NO_EXEC_DEFAULT;
 }
 
-//ObjectsExtender *ExtenderManager::GetExtender(const INT16 mapItemType, const INT16 mapItemSubtype)
+// ObjectsExtender *ExtenderManager::GetExtender(const INT16 mapItemType, const INT16 mapItemSubtype)
 //{
 //
-//    // if (true)
-//    {
-//        return extendersMap[mapItemType << 16 | mapItemSubtype];
-//    }
+//     // if (true)
+//     {
+//         return extendersMap[mapItemType << 16 | mapItemSubtype];
+//     }
 //
-//    return nullptr;
-//}
+//     return nullptr;
+// }
 
 _LHF_(ExtenderManager::H3AdventureManager__GetDefaultObjectClickHint)
 {
@@ -242,9 +248,8 @@ void __stdcall ExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, const H3
 
         // first check only object type value/density
 
-        const int objectTypeValue = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.value", objType).String());
-        const int objectTypeDensity =
-            EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.density", objType).String());
+        const int objectTypeValue = READ_RMG_JSON_FIELD_1(value, objType);
+        const int objectTypeDensity = READ_RMG_JSON_FIELD_1(density, objType);
 
         bool objectTypeHasLoopSound = false;
         LPCSTR objectTypeWavName = EraJS::read(H3String::Format("RMG.objectGeneration.%d.sound.loop", objType).String(),
@@ -255,10 +260,10 @@ void __stdcall ExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, const H3
         for (size_t objSubtype = 0; objSubtype < maxSubtypes[objType]; objSubtype++)
         {
 
-            const int objectSubtypeValue =
-                EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.value", objType, objSubtype).String());
-            const int objectSubtypeDensity =
-                EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.density", objType, objSubtype).String());
+            const int objectSubtypeValue = READ_RMG_JSON_FIELD_2(value, objType, objSubtype);
+            // EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.value", objType, objSubtype).String());
+            const int objectSubtypeDensity = READ_RMG_JSON_FIELD_2(density, objType, objSubtype);
+            // EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.density", objType, objSubtype).String());
 
             // if we have any value/density
             // create rmgObjectInfo object
@@ -354,11 +359,11 @@ void ExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
 BOOL ExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                              H3String &stringResult) noexcept
 {
-    stringResult = "";
+    //stringResult.Erase();
     LPCSTR defName = attributes->defName.String();
     H3DefLoader def(defName);
 
-    stringResult += H3String::Format("{~>%s:0:%d block}", defName, rand() % def->groups[0]->count); // .Append(defPic);
+    stringResult = H3String::Format("{~>%s:0:%d block}", defName, rand() % def->groups[0]->count); // .Append(defPic);
     stringResult += info.GetName();
     stringResult.Append(H3String::Format(" (%d/%d)", info.type, info.subtype));
     auto &extenders = instance->objectExtenders;
@@ -373,11 +378,11 @@ BOOL ExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3
     return 0;
 }
 
-BOOL ExtenderManager::AddExtender(ObjectsExtender* ext)
+BOOL ExtenderManager::AddExtender(ObjectsExtender *ext)
 {
     if (ext)
     {
-        instance->objectExtenders.emplace_back(&*ext);
+        instance->objectExtenders.push_back(ext);
     }
     return 0;
 }
