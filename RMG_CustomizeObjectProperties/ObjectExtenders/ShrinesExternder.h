@@ -5,7 +5,7 @@ struct ExactSpellShrineMapItem
 {
 };
 
-class ShrinesExternder : public extender::ObjectsExtender
+class ShrinesExternder : public extender::ObjectExtender
 {
     static ShrinesExternder* instance;
 

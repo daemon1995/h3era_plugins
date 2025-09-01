@@ -3,7 +3,7 @@ namespace warehouses
 {
 
 WarehousesExtender::WarehousesExtender()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.WarehousesExtender.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.WarehousesExtender.daemon_n"))
 {
 
     CreatePatches();
@@ -161,7 +161,7 @@ H3RmgObjectGenerator *WarehousesExtender::CreateRMGObjectGen(const RMGObjectInfo
 {
     if (objectInfo.type == WAREHOUSE_OBJECT_TYPE)
     {
-        return ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return ObjectExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

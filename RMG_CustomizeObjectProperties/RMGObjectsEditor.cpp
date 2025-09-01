@@ -99,10 +99,11 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 
     RMGObjectInfo::InitDefaultProperties(limitsInfo, maxSubtypes);
 
-    // init pseudoGanerator
+    // init pseudoGenerator
 
     // skip pandora monster generation
-    auto patch = _pi->WriteByte(0x5390B7, 0xEB);
+    const auto storedByte = ByteAt(0x5390B7);
+    ByteAt(0x5390B7) = 0xEB;
     // pseudoH3RmgRandomMapGenerator.keyMasters.RemoveAll();
 
     isPseudoGeneration = true;
@@ -114,7 +115,7 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     originalRMGObjectGenerators = &pseudoH3RmgRandomMapGenerator.objectGenerators;
 
     isPseudoGeneration = false;
-    patch->Destroy();
+    ByteAt(0x5390B7) = storedByte;
 }
 
 const H3Vector<H3RmgObjectGenerator *> *RMGObjectsEditor::GetObjectGeneratorsList() const noexcept
@@ -155,7 +156,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
     {
         // and add objects by properly allocated memory m_size and types (this case is CB)
 
-        extender::ExtenderManager::Get()->AddObjectsToObjectGenList(rmgObjectsList);
+        extender::ObjectExtenderManager::Get()->AddObjectsToObjectGenList(rmgObjectsList);
 
         // add scrolls level 6
         if (H3RmgObjectGenerator *objScrollGen = H3ObjectAllocator<_RMGObjGenScroll_>().allocate(1))
@@ -975,10 +976,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     }
 
     // custom data for scrolls
-    auto &ref = defaultRMGObjectsInfoByType[eObject::SPELL_SCROLL];
 
-    const int isize = ref.size();
-    isize;
     // dwellings value calculation
     const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
     const int MAX_MON_ID = IntAt(0x4A1657);

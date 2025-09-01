@@ -4,7 +4,7 @@ namespace spellmarket
 {
 
 SpellMarketExtender::SpellMarketExtender()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.SpellMarketExtender.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.SpellMarketExtender.daemon_n"))
 {
 
     CreatePatches();
@@ -257,7 +257,7 @@ H3RmgObjectGenerator *SpellMarketExtender::CreateRMGObjectGen(const RMGObjectInf
 
     if (objectInfo.type == extender::HOTA_OBJECT_TYPE && objectInfo.subtype == SPELL_MARKET_OBJECT_SUBTYPE)
     {
-        return ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return ObjectExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

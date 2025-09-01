@@ -4,7 +4,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>source files</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectsExtender.cpp">
+    <ClCompile Include="ObjectExtender.cpp">
       <Filter>source files</Filter>
     </ClCompile>
     <ClCompile Include="RMGObjectsEditor.cpp">
@@ -49,13 +49,13 @@
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp">
       <Filter>Extenders</Filter>
     </ClCompile>
-    <ClCompile Include="ExtenderManager.cpp">
+    <ClCompile Include="ObjectExtenderManager.cpp">
       <Filter>ExtenderAPI</Filter>
     </ClCompile>
     <ClCompile Include="AdditionalProperties.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ObjectsExtender.h">
+    <ClInclude Include="ObjectExtender.h">
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="RMGObjectsEditor.h">
@@ -97,7 +97,7 @@
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
-    <ClInclude Include="ExtenderManager.h">
+    <ClInclude Include="ObjectExtenderManager.h">
       <Filter>ExtenderAPI</Filter>
     </ClInclude>
     <ClInclude Include="AdditionalProperties.h" />

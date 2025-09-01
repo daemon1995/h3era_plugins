@@ -50,7 +50,7 @@
   <!-- Локальные настройки пользователя в Directory.Build.props.user -->
   <ItemGroup>
     <ClInclude Include="AdditionalProperties.h" />
-    <ClInclude Include="ExtenderManager.h" />
+    <ClInclude Include="ObjectExtenderManager.h" />
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h" />
     <ClInclude Include="ObjectExtenders\UniversityExtender.h" />
     <ClInclude Include="SoundManager.h" />
@@ -61,7 +61,7 @@
     <ClInclude Include="ObjectExtenders\WarehousesExtender.h" />
     <ClInclude Include="ObjectExtenders\WateringPlaceExtender.h" />
     <ClInclude Include="ObjectExtenders\WoGObjectsExtender.h" />
-    <ClInclude Include="ObjectsExtender.h" />
+    <ClInclude Include="ObjectExtender.h" />
     <ClInclude Include="RMGObjectsEditor.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RMG_SettingsDlg.h" />
@@ -71,7 +71,7 @@
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="AdditionalProperties.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="ExtenderManager.cpp" />
+    <ClCompile Include="ObjectExtenderManager.cpp" />
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp" />
     <ClCompile Include="ObjectExtenders\UniversityExtender.cpp" />
     <ClCompile Include="SoundManager.cpp" />
@@ -82,7 +82,7 @@
     <ClCompile Include="ObjectExtenders\WarehousesExtender.cpp" />
     <ClCompile Include="ObjectExtenders\WateringPlaceExtender.cpp" />
     <ClCompile Include="ObjectExtenders\WoGObjectsExtender.cpp" />
-    <ClCompile Include="ObjectsExtender.cpp" />
+    <ClCompile Include="ObjectExtender.cpp" />
     <ClCompile Include="RMGObjectsEditor.cpp" />
     <ClCompile Include="RMG_SettingsDlg.cpp" />
   </ItemGroup>

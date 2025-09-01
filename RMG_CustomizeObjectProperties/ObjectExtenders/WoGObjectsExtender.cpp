@@ -5,7 +5,7 @@ namespace wog
 std::array<int, extender::limits::COMMON> WoGObjectsExtender::WoGObjectOptionsIds;
 
 WoGObjectsExtender::WoGObjectsExtender()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.WoGObjectsExternder.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.WoGObjectsExternder.daemon_n"))
 {
 
     CreatePatches();
@@ -33,7 +33,7 @@ H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo
 
     if (objectInfo.type == eObject::PYRAMID && objectInfo.subtype > 0)
     {
-        return ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return ObjectExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

@@ -20,7 +20,7 @@ struct H3MapItemGazebo
     static inline H3MapItemGazebo *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class GazeboExtender : public extender::ObjectsExtender
+class GazeboExtender : public extender::ObjectExtender
 {
     static GazeboExtender* instance;
 

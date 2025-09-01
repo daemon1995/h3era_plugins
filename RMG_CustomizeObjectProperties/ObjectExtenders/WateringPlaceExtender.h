@@ -17,7 +17,7 @@ struct H3MapItemWateringPlace
     static inline H3MapItemWateringPlace *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class WateringPlaceExtender : public extender::ObjectsExtender
+class WateringPlaceExtender : public extender::ObjectExtender
 {
     static WateringPlaceExtender* instance;
 

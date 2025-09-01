@@ -46,7 +46,7 @@ struct H3MapItemSpellMarket
   public:
     static inline H3MapItemSpellMarket *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
-class SpellMarketExtender : public extender::ObjectsExtender
+class SpellMarketExtender : public extender::ObjectExtender
 {
     static SpellMarketExtender* instance;
 

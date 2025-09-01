@@ -5,7 +5,7 @@ namespace shrines
 
 const H3MapItem *ShrinesExternder::currentShrineHint = nullptr;
 ShrinesExternder::ShrinesExternder()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
 {
 
     CreatePatches();

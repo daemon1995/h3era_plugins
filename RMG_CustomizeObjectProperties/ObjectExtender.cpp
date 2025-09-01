@@ -1,38 +1,36 @@
 #include "pch.h"
-#include <thread>
-#include <unordered_set>
 
 namespace extender
 {
 
-
-ObjectsExtender::ObjectsExtender(PatcherInstance *pi) : IGamePatch(pi)
+ObjectExtender::ObjectExtender()
 {
-    ExtenderManager::Get()->AddExtender(this);
+    ObjectExtenderManager::Get()->AddExtender(this);
 }
 
 // call atoi for hte first txt file
-// int __stdcall ObjectsExtender::LoadObjectsTxt(HiHook* h, const DWORD data)
+// int __stdcall ObjectExtender::LoadObjectsTxt(HiHook* h, const DWORD data)
 
-ObjectsExtender::~ObjectsExtender()
+ObjectExtender::~ObjectExtender()
 {
     // extenders.erase(this);
 }
 
-H3RmgObjectGenerator *ObjectsExtender::CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &objectInfo) noexcept
-{
-    H3RmgObjectGenerator *objGen = nullptr;
-    if (objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1))
-    {
-        THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
-                   objectInfo.density);
-    }
-    return objGen;
-}
-H3RmgObjectGenerator *ObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
-{
-    return CreateDefaultH3RmgObjectGenerator(objectInfo);
-}
+// H3RmgObjectGenerator *ObjectExtender::CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &objectInfo) noexcept
+//{
+//     H3RmgObjectGenerator *objGen = nullptr;
+//     if (objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1))
+//     {
+//         THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
+//                    objectInfo.density);
+//     }
+//     return objGen;
+// }
+
+// H3RmgObjectGenerator *ObjectExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+//{
+//     return ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
+// }
 
 _LHF_(H3AdventureManager__GetPyramidObjectHoverHint)
 {
@@ -104,34 +102,34 @@ _LHF_(H3AdventureManager__GetPyramidObjectClickHint)
     return EXEC_DEFAULT;
 }
 
-void ObjectsExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
+void ObjectExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
 {
 }
-BOOL ObjectsExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
-                                            const BOOL isRightClick) const noexcept
-{
-    return false;
-}
-BOOL ObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
-                                         int &aiMapItemWeight, int *moveDistance, const H3Position pos) const noexcept
+BOOL ObjectExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+                                           const BOOL isRightClick) const noexcept
 {
     return false;
 }
-BOOL ObjectsExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                                  const H3String &defaltText) noexcept
+BOOL ObjectExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
+                                        int &aiMapItemWeight, int *moveDistance, const H3Position pos) const noexcept
 {
     return false;
 }
-BOOL ObjectsExtender::InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept
+BOOL ObjectExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                                 const H3String &defaltText) noexcept
 {
     return false;
 }
-BOOL ObjectsExtender::InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept
+BOOL ObjectExtender::InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept
 {
     return false;
 }
-BOOL ObjectsExtender::VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
-                                   const BOOL isHuman) const noexcept
+BOOL ObjectExtender::InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept
+{
+    return false;
+}
+BOOL ObjectExtender::VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
+                                  const BOOL isHuman) const noexcept
 {
     return false;
 }

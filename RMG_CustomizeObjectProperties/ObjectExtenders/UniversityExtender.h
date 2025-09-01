@@ -2,7 +2,7 @@
 
 namespace university
 {
-class UniversityExtender : public extender::ObjectsExtender
+class UniversityExtender : public extender::ObjectExtender
 {
     static UniversityExtender* instance;
 

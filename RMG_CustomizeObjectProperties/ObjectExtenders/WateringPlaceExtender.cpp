@@ -2,7 +2,7 @@
 namespace wateringPlace
 {
 WateringPlaceExtender::WateringPlaceExtender()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.WateringPlaceExtender.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.WateringPlaceExtender.daemon_n"))
 {
 
     CreatePatches();

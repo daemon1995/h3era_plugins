@@ -13,7 +13,7 @@ ColosseumOfTheMagiExtender& ColosseumOfTheMagiExtender::Get()
 int H3MapItemColosseumOfTheMagi::colosseumOfTheMagiCounter = 0;
 
 ColosseumOfTheMagiExtender::ColosseumOfTheMagiExtender()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.ColosseumOfTheMagiExtender.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.ColosseumOfTheMagiExtender.daemon_n"))
 {
 
     CreatePatches();

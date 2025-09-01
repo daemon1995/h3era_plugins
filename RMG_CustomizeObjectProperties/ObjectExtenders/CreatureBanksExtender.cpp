@@ -144,7 +144,7 @@ BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, con
     return 0;
 }
 CreatureBanksExtender::CreatureBanksExtender()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.CreatureBanksExtender.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.CreatureBanksExtender.daemon_n"))
 {
     CreatePatches();
 }
@@ -906,7 +906,7 @@ H3RmgObjectGenerator *CreatureBanksExtender::CreateRMGObjectGen(const RMGObjectI
 {
     if (objectInfo.type == eObject::CREATURE_BANK)
     {
-        return ObjectsExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

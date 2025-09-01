@@ -26,7 +26,7 @@ size_t RMGObjectSetable::HashFunction::operator()(const RMGObjectSetable &obj) c
 /// type/subtype/mask but different other params
 /// </summary>
 /// <param name=""></param>
-_LHF_(ExtenderManager::LoadObjectsTxt)
+_LHF_(ObjectExtenderManager::LoadObjectsTxt)
 {
     // check if there are any object properties extenders
     if (H3TextFile *objectTxt = *reinterpret_cast<H3TextFile **>(c->ebp + 0x8))
@@ -39,14 +39,15 @@ _LHF_(ExtenderManager::LoadObjectsTxt)
 
     return EXEC_DEFAULT;
 }
-ExtenderManager *ExtenderManager::instance = nullptr;
+ObjectExtenderManager *ObjectExtenderManager::instance = nullptr;
 
-ExtenderManager::ExtenderManager() : IGamePatch("EraPlugin.RMG_CustomizeObjectProperties.ExtenderManager.daemon_n")
+ObjectExtenderManager::ObjectExtenderManager()
+    : IGamePatch("EraPlugin.RMG_CustomizeObjectProperties.ObjectExtenderManager.daemon_n")
 {
     CreatePatches();
     // Initialize your extenders here
 }
-void ExtenderManager::CreatePatches()
+void ObjectExtenderManager::CreatePatches()
 {
     if (!m_isInited)
     {
@@ -71,7 +72,6 @@ void ExtenderManager::CreatePatches()
 
         skipMapMessageByHdMod = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
 
-
         // patch hota object types unable to be entered
         auto *settingsTable = H3GlobalObjectSettings::Get();
         for (size_t i = HOTA_PICKUPABLE_OBJECT_TYPE; i <= HOTA_UNREACHABLE_YT_OBJECT_TYPE; i++)
@@ -85,7 +85,7 @@ void ExtenderManager::CreatePatches()
     }
 }
 
-int ExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRighClick)
+int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRighClick)
 {
     H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ebx);
     const H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp - 0x10);
@@ -112,7 +112,7 @@ int ExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRigh
     return NO_EXEC_DEFAULT;
 }
 
-// ObjectsExtender *ExtenderManager::GetExtender(const INT16 mapItemType, const INT16 mapItemSubtype)
+// ObjectExtender *ObjectExtenderManager::GetExtender(const INT16 mapItemType, const INT16 mapItemSubtype)
 //{
 //
 //     // if (true)
@@ -123,34 +123,30 @@ int ExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRigh
 //     return nullptr;
 // }
 
-_LHF_(ExtenderManager::H3AdventureManager__GetDefaultObjectClickHint)
+_LHF_(ObjectExtenderManager::H3AdventureManager__GetDefaultObjectClickHint)
 {
     return instance->ShowObjectHint(h, c, true);
 }
-_LHF_(ExtenderManager::H3AdventureManager__GetDefaultObjectHoverHint)
+_LHF_(ObjectExtenderManager::H3AdventureManager__GetDefaultObjectHoverHint)
 {
     return instance->ShowObjectHint(h, c, false);
 }
 
-_LHF_(ExtenderManager::AIHero_GetObjectPosWeight)
+_LHF_(ObjectExtenderManager::AIHero_GetObjectPosWeight)
 {
 
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
     {
-
-        H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
-        int *moveDistance = reinterpret_cast<int *>(c->edi);
-        const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
-        const H3Position pos = *reinterpret_cast<H3Position *>(c->ebp + 0x8);
-
-        INT aiResWeight = 0;
-        auto &extenders = instance->objectExtenders;
-
-        for (const auto &extender : extenders)
+        if (auto *extenders = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
         {
-            if (extender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight, moveDistance, pos))
-            {
+            H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
+            int *moveDistance = reinterpret_cast<int *>(c->edi);
+            const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
+            const H3Position pos = *reinterpret_cast<H3Position *>(c->ebp + 0x8);
 
+            INT aiResWeight = 0;
+            if (extenders->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight, moveDistance, pos))
+            {
                 c->eax = aiResWeight;
                 c->return_address = 0x05285A1;
                 return NO_EXEC_DEFAULT;
@@ -161,57 +157,45 @@ _LHF_(ExtenderManager::AIHero_GetObjectPosWeight)
     return EXEC_DEFAULT;
 }
 
-_LHF_(ExtenderManager::Game__NewGameObjectIteration)
+_LHF_(ObjectExtenderManager::Game__NewGameObjectIteration)
 {
     auto mapItem = reinterpret_cast<H3MapItem *>(c->esi);
-    auto &extenders = instance->objectExtenders;
-    for (const auto &extender : extenders)
-    {
-        if (extender->InitNewGameMapItemSetup(mapItem))
-        {
-            return EXEC_DEFAULT;
-        }
-    }
-    return EXEC_DEFAULT;
-}
-_LHF_(ExtenderManager::Game__NewWeekObjectIteration)
-{
-    auto mapItem = reinterpret_cast<H3MapItem *>(c->esi);
-    auto &extenders = instance->objectExtenders;
 
-    for (const auto &extender : extenders)
+    if (auto *objectExtender = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
     {
-        if (extender->InitNewWeekMapItemSetup(mapItem))
-        {
-            return EXEC_DEFAULT;
-        }
+        objectExtender->InitNewGameMapItemSetup(mapItem);
     }
+
     return EXEC_DEFAULT;
 }
-_LHF_(ExtenderManager::H3AdventureManager__ObjectVisit)
+_LHF_(ObjectExtenderManager::Game__NewWeekObjectIteration)
+{
+    auto mapItem = reinterpret_cast<H3MapItem *>(c->esi);
+    if (auto *objectExtender = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
+    {
+        objectExtender->InitNewWeekMapItemSetup(mapItem);
+    }
+
+    return EXEC_DEFAULT;
+}
+_LHF_(ObjectExtenderManager::H3AdventureManager__ObjectVisit)
 {
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->edi))
     {
-
-        H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
-
-        const H3Position position = DwordAt(c->ebp + 0x10);
-        const bool isHuman = DwordAt(c->ebp + 0x14);
-        auto &extenders = instance->objectExtenders;
-
-        for (const auto &extender : extenders)
+        if (auto *objectExtender = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
         {
-            if (extender->VisitMapItem(currentHero, mapItem, position, isHuman))
-            {
-                return EXEC_DEFAULT;
-            }
+            H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
+
+            const H3Position position = DwordAt(c->ebp + 0x10);
+            const bool isHuman = DwordAt(c->ebp + 0x14);
+            objectExtender->VisitMapItem(currentHero, mapItem, position, isHuman);
         }
     }
 
     return EXEC_DEFAULT;
 }
 
-void __stdcall ExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, const H3MainSetup *setup)
+void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, const H3MainSetup *setup)
 {
 
     // get Additional Propertise  <-  R E W R I T E   L A T E R   W I T H   N L O H M A N
@@ -311,7 +295,7 @@ void __stdcall ExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, const H3
     editor::RMGObjectsEditor::Init(maxSubtypes);
 }
 
-void ExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjectsList)
+void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjectsList)
 {
     // check if there are any object properties extenders
     if (objectExtenders.size())
@@ -346,20 +330,24 @@ void ExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *>
 
                 if (info.type == eObject::CREATURE_GENERATOR4)
                 {
-                    H3RmgObjectGenerator *objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
-                    THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, info.type, info.subtype, info.value,
-                               info.density);
-                    objGen->vTable = (H3RmgObjectGenerator::VTable *)0x0640BC8;
-                    rmgObjectsList->Push(objGen);
+                    if (auto objGen = CreateDefaultH3RmgObjectGenerator(info))
+                    {
+                        objGen->vTable = reinterpret_cast<H3RmgObjectGenerator::VTable *>(0x0640BC8);
+                        rmgObjectsList->Push(objGen);
+                    }
+                    /*                  H3RmgObjectGenerator *objGen =
+                       H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1); THISCALL_5(H3RmgObjectGenerator *,
+                       0x534640, objGen, info.type, info.subtype, info.value, info.density); objGen->vTable =
+                       (H3RmgObjectGenerator::VTable *)0x0640BC8; rmgObjectsList->Push(objGen);*/
                 }
             }
         }
     }
 }
-BOOL ExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                             H3String &stringResult) noexcept
+BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                                   H3String &stringResult) noexcept
 {
-    //stringResult.Erase();
+    // stringResult.Erase();
     LPCSTR defName = attributes->defName.String();
     H3DefLoader def(defName);
 
@@ -378,21 +366,34 @@ BOOL ExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3
     return 0;
 }
 
-BOOL ExtenderManager::AddExtender(ObjectsExtender *ext)
+BOOL ObjectExtenderManager::AddExtender(ObjectExtender *ext)
 {
-    if (ext)
+    LPCSTR ERROR_TITLE = nullptr;
+    if (allowRegistration)
     {
-        instance->objectExtenders.push_back(ext);
+        if (ext)
+        {
+            instance->objectExtenders.push_back(ext);
+            return TRUE;
+        }
+        ERROR_TITLE = "You must provide a valid ObjectExtender instance.";
     }
-    return 0;
+    MessageBoxA(NULL, ERROR_TITLE, "Error", MB_OK | MB_ICONERROR);
+
+    return FALSE;
 }
 
-ExtenderManager *ExtenderManager::Get()
+ObjectExtenderManager *ObjectExtenderManager::Get()
 {
 
     if (!instance)
-        instance = new ExtenderManager();
+        instance = new ObjectExtenderManager();
     return instance;
+}
+
+DllExport BOOL __stdcall RegisterObjectExtender(ObjectExtender *extender)
+{
+    return ObjectExtenderManager::Get()->AddExtender(extender);
 }
 
 } // namespace extender

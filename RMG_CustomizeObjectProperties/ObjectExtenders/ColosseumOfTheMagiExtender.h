@@ -19,7 +19,7 @@ struct H3MapItemColosseumOfTheMagi
     static inline H3MapItemColosseumOfTheMagi *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
 
-class ColosseumOfTheMagiExtender : public extender::ObjectsExtender
+class ColosseumOfTheMagiExtender : public extender::ObjectExtender
 {
     static ColosseumOfTheMagiExtender* instance;
     ColosseumOfTheMagiExtender();

@@ -6,7 +6,7 @@ using namespace h3;
 namespace dllText
 {
 const char *PLUGIN_VERSION = "1.25";
-const char *INSTANCE_NAME = "EraPlugin.ObjectsExtender.daemon_n";
+const char *INSTANCE_NAME = "EraPlugin.ObjectExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
 const char *PLUGIN_DATA = __DATE__;
@@ -68,7 +68,7 @@ _LHF_(CrBanksTxt_AfterLoad)
 {
 
     editor::RMGObjectsEditor::Get();
-    extender::ExtenderManager::Get();
+    extender::ObjectExtenderManager::Get();
     //! Get the CreatureBanksManager and initialize it
     cbanks::CreatureBanksExtender::Get();
     shrines::ShrinesExternder::Get();

@@ -7,7 +7,7 @@ namespace university
 
 INT8 UniversityExtender::bannedSkillsCopy[limits::SECONDARY_SKILLS];
 UniversityExtender::UniversityExtender()
-    : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.UniversityExtender.daemon_n"))
+    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.UniversityExtender.daemon_n"))
 {
 }
 
@@ -18,7 +18,7 @@ H3RmgObjectGenerator *UniversityExtender::CreateRMGObjectGen(const RMGObjectInfo
 {
     if (objectInfo.type == eObject::UNIVERSITY && objectInfo.subtype) // ignore existing university with subtype 0
     {
-        return extender::ObjectsExtender::CreateRMGObjectGen(objectInfo);
+        return extender::ObjectExtender::CreateRMGObjectGen(objectInfo);
     }
     return nullptr;
 }
@@ -143,14 +143,12 @@ BOOL UniversityExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, 
         // increase message box size
         if (drawnSkills > 7)
         {
-            IntAt(0x4F662f + 1) += 100;
             IntAt(0x04F65D4 + 2) += 100;
             IntAt(0x04F662F + 1) += 100;
         }
         H3Messagebox::RMB(additionalHint.String());
         if (drawnSkills > 7)
         {
-            IntAt(0x4F662f + 1) -= 100;
             IntAt(0x04F65D4 + 2) -= 100;
             IntAt(0x04F662F + 1) -= 100;
         }

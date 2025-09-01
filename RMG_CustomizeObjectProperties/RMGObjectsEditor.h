@@ -199,7 +199,7 @@ struct RMGFixes
 } // namespace fixes
 class RMGObjectsEditor : public IGamePatch
 {
-	static RMGObjectsEditor* instance;
+    static RMGObjectsEditor *instance;
     static GeneratedInfo generatedInfo;
 
   private:
@@ -214,7 +214,7 @@ class RMGObjectsEditor : public IGamePatch
     //  std::array<std::vector<RMGObjectInfo>, h3::limits::OBJECTS> defaultRMGObjectsInfoByType;
 
     // PseudoH3RmgRandomMapGenerator randomMapGenerator;
-    H3Vector<H3RmgObjectGenerator *> *originalRMGObjectGenerators;
+    H3Vector<H3RmgObjectGenerator *> *originalRMGObjectGenerators = nullptr;
     H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
 
   private:

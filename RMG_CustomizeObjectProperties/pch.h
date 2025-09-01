@@ -13,10 +13,10 @@
 #include "h3functions.hpp"
 constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
 #include "AdditionalProperties.h"
-#include "ExtenderManager.h"
+#include "ObjectExtenderManager.h"
 #include "SoundManager.h"
 
-#include "ObjectsExtender.h"
+#include "ObjectExtender.h"
 // #include "RMGObjectsEditor.h"
 
 // #include "CreatureBanksExtender.h"

@@ -19,7 +19,7 @@ struct H3MapItemWarehouse
     static inline H3MapItemWarehouse *GetWarehouse(H3MapItem *mapItem) noexcept;
 };
 
-class WarehousesExtender : public extender::ObjectsExtender
+class WarehousesExtender : public extender::ObjectExtender
 {
     static WarehousesExtender* instance;
 

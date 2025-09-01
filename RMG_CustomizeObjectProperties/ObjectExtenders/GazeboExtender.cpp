@@ -3,7 +3,7 @@ namespace gazebo
 {
 int H3MapItemGazebo::gazeboCounter = 0;
 
-GazeboExtender::GazeboExtender() : ObjectsExtender(globalPatcher->CreateInstance("EraPlugin.GazeboExtender.daemon_n"))
+GazeboExtender::GazeboExtender() : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.GazeboExtender.daemon_n"))
 {
 
     CreatePatches();
