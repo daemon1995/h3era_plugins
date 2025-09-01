@@ -26,8 +26,8 @@ void MenuWidgetManager::SetVisible(const bool visible)
         framedBackground->SetPcx(visible         ? framedBackgroundPcx
                                  : placedOutside ? outsideBackupScreenPcx
                                                  : insideBackupScreenPcx);
-        
-        //Era::red
+
+        // Era::red
         for (size_t i = 0; i < createdWidgets.size(); i++)
         {
             auto *widget = createdWidgets[i];
@@ -310,6 +310,16 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
                                                      widgetWidth, widgetHeight, widget->id, assetName,
                                                      widget->text.c_str(), fontName, 0, 0, 0, 0, eTextColor::REGULAR);
         widget->uiElement->SetClickFrame(1);
+    }
+
+    // assign hotkeys to first 10 widgets if no scrollbar
+    if (createScrollbar == false)
+    {
+        size_t maxHotkeyWidgetIndex = widgetsToDraw < 10 ? widgetsToDraw : 10;
+        for (size_t i = 0; i < maxHotkeyWidgetIndex; i++)
+        {
+            createdWidgets[i]->uiElement->AddHotkey(eVKey::H3VK_1 + i);
+        }
     }
     bottomWidgetId = currentId - 1; // Last widget ID
     // create hidden widgets

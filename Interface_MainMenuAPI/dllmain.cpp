@@ -3,7 +3,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.4";
+const char *PLUGIN_VERSION = "1.5";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
