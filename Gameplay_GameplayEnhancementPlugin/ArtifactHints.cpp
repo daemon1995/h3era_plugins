@@ -96,6 +96,13 @@ BOOL ArtifactHints::CreateCombinePartsString(const H3Artifact *artifact, const H
     return false;
 }
 
+void ArtifactHints::ChangeMessageBoxHeight(const int additionalHeight) noexcept
+{
+    IntAt(0x04F65D4 + 2) += additionalHeight;
+    IntAt(0x04F662F + 1) += additionalHeight;
+    messageboxHeightChange += additionalHeight;
+}
+
 BOOL ArtifactHints::CreateStatsString(const H3Artifact *artifact, const H3Hero *hero, H3String *result) noexcept
 {
     StatBytes artifactStats(*artifact);
@@ -200,8 +207,11 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
         {
             *result += doubleEndl + (instance->hintTextBuffer);
             instance->hintTextBuffer.Erase();
-            //  instance->increaseMaxMessageBoxHeightPatch->Apply();
-            instance->increaseMaxMessageBoxHeightPatch->Apply();
+
+            if (!instance->messageboxHeightChange)
+            {
+                instance->ChangeMessageBoxHeight(300);
+            }
         }
     }
 
@@ -223,16 +233,17 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
             {
                 *result += doubleEndl + instance->hintTextBuffer;
                 instance->hintTextBuffer.Erase();
-                //  instance->increaseMaxMessageBoxHeightPatch->Apply();
             }
             else
             {
                 instance->hintTextBuffer += doubleEndl + *result;
                 result->Assign(instance->hintTextBuffer);
                 instance->hintTextBuffer.Erase();
-                //  instance->increaseMaxMessageBoxHeightPatch->Apply();
             }
-            instance->increaseMaxMessageBoxHeightPatch->Apply();
+            if (!instance->messageboxHeightChange)
+            {
+                instance->ChangeMessageBoxHeight(100);
+            }
         }
     }
 
@@ -264,8 +275,10 @@ int __stdcall ArtifactHints::BuildMultiPicDlg(HiHook *h, H3Game *game)
                             instance->settings.fontName, eTextColor::REGULAR, -1);
             instance->hintTextBuffer.Erase();
         }
-
-        instance->increaseMaxMessageBoxHeightPatch->Undo();
+        if (instance->messageboxHeightChange)
+        {
+            instance->ChangeMessageBoxHeight(-instance->messageboxHeightChange);
+        }
 
         h->Undo();
     }
@@ -365,7 +378,6 @@ void ArtifactHints::CreatePatches() noexcept
         WriteHiHook(0x04D9F30, THISCALL_, UniteComboArtifacts);
 
         drawMultiPicDlgPatch = _pi->CreateHiHook(0x4F71BB, CALL_, EXTENDED_, THISCALL_, BuildMultiPicDlg);
-        increaseMaxMessageBoxHeightPatch = _pi->CreateDwordPatch(0x04F662F + 1, 255);
         settings.Load();
         m_isInited = true;
     }

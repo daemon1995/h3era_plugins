@@ -32,7 +32,7 @@ class ArtifactHints : public IGamePatch
     INT swapSide = 0;
 	BOOL isUniteComboArtifactCall = false;
     Patch *drawMultiPicDlgPatch = nullptr;
-    Patch *increaseMaxMessageBoxHeightPatch = nullptr;
+    INT messageboxHeightChange = 0;
     H3String hintTextBuffer;
     HintsText settings;
 
@@ -53,7 +53,7 @@ class ArtifactHints : public IGamePatch
     BOOL CreateStatsString(const H3Artifact *artifact, const H3Hero *heroToCompareStats, H3String *result) noexcept;
     BOOL CreateCombinePartsString(const H3Artifact *artifact, const H3Hero *heroToCompareStats,
                                   H3String *result) noexcept;
-
+	void ChangeMessageBoxHeight(const int additionalHeight) noexcept;
   private:
     static void __stdcall SwapMgr_InteractArtifactSlot(HiHook *h, H3SwapManager *mgr, const int side, int slotIndex,
                                                        int a4) noexcept;
