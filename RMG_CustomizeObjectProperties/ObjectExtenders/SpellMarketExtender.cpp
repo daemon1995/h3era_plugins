@@ -164,7 +164,7 @@ BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H
         {
             if (isHuman)
             {
-                ShowMessage(hero, mapItem, skipMapMessageByHdMod, visitError);
+                //ShowMessage(hero, mapItem, skipMapMessageByHdMod, visitError);
             }
         }
         else
@@ -240,7 +240,7 @@ BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H
                 }
                 else
                 {
-                    ShowMessage(hero, mapItem, skipMapMessageByHdMod, eVisitError::LEARNED);
+                    //ShowMessage(hero, mapItem, skipMapMessageByHdMod, eVisitError::LEARNED);
                 }
             }
             if (selectedSpellSlot != -1)
@@ -257,7 +257,7 @@ H3RmgObjectGenerator *SpellMarketExtender::CreateRMGObjectGen(const RMGObjectInf
 
     if (objectInfo.type == extender::HOTA_OBJECT_TYPE && objectInfo.subtype == SPELL_MARKET_OBJECT_SUBTYPE)
     {
-        return ObjectExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

@@ -216,7 +216,7 @@ inline H3MapItemColosseumOfTheMagi *H3MapItemColosseumOfTheMagi::GetFromMapItem(
         return const_cast<H3MapItemColosseumOfTheMagi *>(
             reinterpret_cast<const H3MapItemColosseumOfTheMagi *>(&mapItem->setup));
     }
-
+    Era::GetEraVersion();
     return nullptr;
 }
 
@@ -224,7 +224,7 @@ H3RmgObjectGenerator *ColosseumOfTheMagiExtender::CreateRMGObjectGen(const RMGOb
 {
     if (objectInfo.type == extender::HOTA_OBJECT_TYPE && objectInfo.subtype == COLOSSEUM_OF_THE_MAGI_OBJECT_SUBTYPE)
     {
-        return CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

@@ -242,7 +242,7 @@ H3RmgObjectGenerator *WateringPlaceExtender::CreateRMGObjectGen(const RMGObjectI
 {
     if (objectInfo.type == extender::HOTA_OBJECT_TYPE && objectInfo.subtype == WATERING_PLACE_OBJECT_SUBTYPE)
     {
-        return CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

@@ -29,7 +29,7 @@ class GazeboExtender : public extender::ObjectExtender
     virtual ~GazeboExtender();
 
   private:
-    virtual void CreatePatches() override;
+    virtual void CreatePatches();
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 

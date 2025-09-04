@@ -154,7 +154,10 @@ CreatureBanksExtender *CreatureBanksExtender::instance = nullptr;
 CreatureBanksExtender &CreatureBanksExtender::Get()
 {
     if (!instance)
+    {
         instance = new CreatureBanksExtender();
+		extender::ObjectExtenderManager::Get()->AddExtender(instance);
+    }
     return *instance;
 }
 
@@ -942,11 +945,11 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
     spellPoints =
         Clamp(0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankType, stateId), 999);
 
-    if (int _luck = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.luck", creatureBankType, stateId))
+    if (const int _luck = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.luck", creatureBankType, stateId))
     {
         luck = Clamp(-3, _luck, 3);
     }
-    if (int _morale = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.morale", creatureBankType, stateId))
+    if (const int _morale = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.morale", creatureBankType, stateId))
     {
         morale = Clamp(-3, _morale, 3);
     }
@@ -1230,6 +1233,7 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
             }
         }
     }
+    // patch memory to use new arrays
     if (addedBanksNumber > 0)
     {
         ValueAt<int *>(0x47A4A8 + 3) = monsterAwards.data();

@@ -26,7 +26,7 @@ class ColosseumOfTheMagiExtender : public extender::ObjectExtender
     virtual ~ColosseumOfTheMagiExtender();
 
   private:
-    virtual void CreatePatches() override;
+    virtual void CreatePatches() ;
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 

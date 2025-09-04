@@ -6,7 +6,7 @@ namespace extender
 #define READ_RMG_JSON_FIELD_1(field, objType)                                                                          \
     EraJS::readInt(H3String::Format("RMG.objectGeneration.%d." #field, objType).String())
 #define READ_RMG_JSON_FIELD_2(field, objType, objSubtype)                                                              \
-    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d." #field, objType, objSubtype).String())
+    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d." #field, objType, objSubtype).String())
 bool RMGObjectSetable::operator==(const RMGObjectSetable &other) const noexcept
 {
     return type == other.type && subtype == other.subtype; // ? type < other.type : subtype < other.subtype;
@@ -122,6 +122,16 @@ int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL 
 //
 //     return nullptr;
 // }
+H3RmgObjectGenerator *ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &objectInfo) noexcept
+{
+    H3RmgObjectGenerator *objGen = nullptr;
+    if (objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1))
+    {
+        THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
+                   objectInfo.density);
+    }
+    return objGen;
+}
 
 _LHF_(ObjectExtenderManager::H3AdventureManager__GetDefaultObjectClickHint)
 {
@@ -307,11 +317,9 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
             objectsSet.insert({rmgObj->type, rmgObj->subtype});
         }
         // iterate each added RMG INFO
-
         for (auto &info : additionalRmgObjects)
         {
             // check if it is possible to add object into the list
-
             if (objectsSet.insert({info.type, info.subtype}).second)
             {
                 // iterate all extenders container

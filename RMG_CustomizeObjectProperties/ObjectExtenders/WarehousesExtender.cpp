@@ -161,7 +161,7 @@ H3RmgObjectGenerator *WarehousesExtender::CreateRMGObjectGen(const RMGObjectInfo
 {
     if (objectInfo.type == WAREHOUSE_OBJECT_TYPE)
     {
-        return ObjectExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

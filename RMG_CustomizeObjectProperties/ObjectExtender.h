@@ -21,27 +21,35 @@ class ObjectExtender
   protected:
     int objectType = eObject::NO_OBJ;
     int objectSubtype = eObject::NO_OBJ;
+    BOOL m_isInited = FALSE;
+    PatcherInstance *_pi = nullptr;
 
   public:
+    ObjectExtender(PatcherInstance *_pi) : _pi(_pi)
+    {
+    }
+
     ObjectExtender();
     virtual ~ObjectExtender();
 
+  protected:
+    void CreatePatches();
     // virtual void GetObjectPreperties() noexcept = 0;
   public:
     // required override for some complex structures like creature banks
-    virtual void __thiscall AfterLoadingObjectTxtProc(const INT16 *maxSubtypes);
-    virtual H3RmgObjectGenerator *__thiscall CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept = 0;
+    virtual void  AfterLoadingObjectTxtProc(const INT16 *maxSubtypes);
+    virtual H3RmgObjectGenerator * CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept = 0;
 
-    virtual BOOL __thiscall InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept;
-    virtual BOOL __thiscall InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept;
-    virtual BOOL __thiscall VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
+    virtual BOOL  InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept;
+    virtual BOOL  InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept;
+    virtual BOOL  VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                                          const BOOL isHuman) const noexcept;
-    virtual BOOL __thiscall SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
+    virtual BOOL  SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
                                                   const H3Player *activePlayer, const BOOL isRightClick) const noexcept;
-    virtual BOOL __thiscall SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
+    virtual BOOL  SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
                                                int &aiResWeight, int *moveDistance,
                                                const H3Position pos) const noexcept;
-    virtual BOOL __thiscall RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+    virtual BOOL  RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                                         const H3String &defaultText) noexcept;
 
     //	virtual int AiMapItemWeightFunction(HookContext* c, const H3MapItem* mapItem, H3Player* player);
@@ -55,11 +63,11 @@ class ObjectExtender
     {
 
         constexpr const char *RMGPluginName = "RMG_CustomizeObjectProperties.era";
-        typedef int(__stdcall * RegisterExtender_t)(ObjectExtender *);
+        typedef int(__stdcall * RegisterObjectExtender_t)(ObjectExtender *);
         HMODULE pl = LoadLibraryA(RMGPluginName);
         if (pl)
         {
-            RegisterExtender_t f = RegisterExtender_t(GetProcAddress(pl, "_RegisterExtender@4"));
+            RegisterObjectExtender_t f = RegisterObjectExtender_t(GetProcAddress(pl, "_RegisterObjectExtender@4"));
             if (f)
                 return f(extender);
         }

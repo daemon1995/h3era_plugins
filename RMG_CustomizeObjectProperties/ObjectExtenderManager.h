@@ -52,14 +52,13 @@ class ObjectExtenderManager : public IGamePatch
     // std::vector< ObjectExtender*> objectExtendersTypeRelated[232];
     //  contains all the additional properties to add/replace in objects.txt
     AdditionalProperties additionalProperties;
-    struct ExtenderLookup;
-    std::unordered_map<int, ExtenderLookup> extendersByType;
-
     struct ExtenderLookup
     {
         ObjectExtender *forAllSubtypes = nullptr;            // если экстендер для всех подтипов
         std::unordered_map<int, ObjectExtender *> bySubtype; // если экстендеры для отдельных подтипов
     };
+    std::unordered_map<int, ExtenderLookup> extendersByType;
+
     static ObjectExtenderManager *instance;
 
   private:

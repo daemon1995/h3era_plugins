@@ -18,7 +18,7 @@ H3RmgObjectGenerator *UniversityExtender::CreateRMGObjectGen(const RMGObjectInfo
 {
     if (objectInfo.type == eObject::UNIVERSITY && objectInfo.subtype) // ignore existing university with subtype 0
     {
-        return extender::ObjectExtender::CreateRMGObjectGen(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

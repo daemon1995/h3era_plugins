@@ -215,7 +215,7 @@ H3RmgObjectGenerator *GazeboExtender::CreateRMGObjectGen(const RMGObjectInfo &ob
 {
     if (objectInfo.type == extender::HOTA_OBJECT_TYPE && objectInfo.subtype == GAZEBO_OBJECT_SUBTYPE)
     {
-        return CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

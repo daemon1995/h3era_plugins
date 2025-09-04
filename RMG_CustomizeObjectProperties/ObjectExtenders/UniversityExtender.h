@@ -24,7 +24,7 @@ class UniversityExtender : public extender::ObjectExtender
     virtual ~UniversityExtender();
 
   protected:
-    virtual void CreatePatches() override;
+    virtual void CreatePatches();
 
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
 

@@ -58,7 +58,7 @@ class SpellMarketExtender : public extender::ObjectExtender
     virtual ~SpellMarketExtender();
 
   protected:
-    virtual void CreatePatches() override;
+    virtual void CreatePatches();
 
     //	virtual void GetObjectPreperties() noexcept override final;
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;

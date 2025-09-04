@@ -33,7 +33,7 @@ H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo
 
     if (objectInfo.type == eObject::PYRAMID && objectInfo.subtype > 0)
     {
-        return ObjectExtender::CreateDefaultH3RmgObjectGenerator(objectInfo);
+        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
 }

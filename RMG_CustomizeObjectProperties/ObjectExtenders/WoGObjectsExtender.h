@@ -19,7 +19,7 @@ class WoGObjectsExtender : public extender::ObjectExtender
     virtual ~WoGObjectsExtender();
 
   protected:
-    virtual void CreatePatches() override;
+    virtual void CreatePatches();
 
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
     virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes) noexcept override final;
