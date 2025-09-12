@@ -17135,7 +17135,7 @@ namespace h3
 		/** @brief [54]*/
 		H3DlgText*            text;
 		/** @brief [58]*/
-		H3ScreenlogEdit*      screenlogEdit;
+		H3DlgEdit*      screenlogEdit;
 		/** @brief [5C]*/
 		H3ResourceBarPanel*   resourceBar;
 		/** @brief [60] also the location for the edit control*/
@@ -18470,7 +18470,7 @@ namespace h3
 		h3unk32 _f_040;
 	public:
 		/** @brief [44] */
-		struct H3Dlg* dlg;
+		H3AdventureMgrDlg* dlg;
 		/** @brief [48] [x][y][z] array storing id of frame to be drawn*/
 		UINT16* arrowPathFrames;
 	protected:
@@ -20615,6 +20615,7 @@ namespace h3
 		_H3API_ BOOL      SetCaret(UINT pos);
 		_H3API_ VOID      SetAutoredraw(BOOL on);
 		_H3API_ VOID      SetFocus(BOOL on = TRUE);
+		_H3API_ BOOL8      IsFocused() const;
 	};
 	_H3API_ASSERT_SIZE_(H3DlgEdit);
 
@@ -35575,6 +35576,11 @@ namespace h3
     {
         vSetFocus(on);
     }
+	_H3API_ BOOL8 H3DlgEdit::IsFocused() const
+	{
+		return focused;
+	}
+
 } /* namespace h3 */
 
 namespace h3
