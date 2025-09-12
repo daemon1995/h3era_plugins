@@ -29,9 +29,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_AlignClassName", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_ArtifactsQuickSwitching", "Interface_ArtifactsQuickSwitching\Interface_ArtifactsQuickSwitching.vcxproj", "{8391B032-2486-4D14-A85F-719627EFA19A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_EnhancedCreatureInformation", "Interface_EnhancedCreatureInformation\Interface_EnhancedCreatureInformation.vcxproj", "{BD8EB49A-36B9-458C-906A-B8C950EFE4C0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NewCombatDlgItems", "Interface_EnhancedCreatureInformation\Interface_EnhancedCreatureInformation.vcxproj", "{BD8EB49A-36B9-458C-906A-B8C950EFE4C0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_MainMenuLogo", "Interface_MainMenuLogo\Interface_MainMenuLogo.vcxproj", "{880405F0-B8EF-49D0-8231-89E1B9ED2F64}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NewMainMenuItems", "Interface_MainMenuLogo\Interface_MainMenuLogo.vcxproj", "{880405F0-B8EF-49D0-8231-89E1B9ED2F64}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RMG_CustomizeObjectProperties", "RMG_CustomizeObjectProperties\RMG_CustomizeObjectProperties.vcxproj", "{01700C95-8606-446E-AAB8-96975F7B1761}"
 EndProject
@@ -42,6 +42,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_MainMenuAPI", "Interface_MainMenuAPI\Interface_MainMenuAPI.vcxproj", "{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_RemoveObstacleSpellRework", "Gameplay_RemoveObstacleSpellRework\Gameplay_RemoveObstacleSpellRework.vcxproj", "{78CD603D-B134-46FC-A397-A658F94AAC26}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_ArtifactsExtender", "ERA_ArtifactsExtender\ERA_ArtifactsExtender.vcxproj", "{42B5985C-5448-4D01-B607-AE2CB255D21F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -129,6 +131,10 @@ Global
 		{78CD603D-B134-46FC-A397-A658F94AAC26}.Debug|x86.Build.0 = Debug|Win32
 		{78CD603D-B134-46FC-A397-A658F94AAC26}.Release|x86.ActiveCfg = Release|Win32
 		{78CD603D-B134-46FC-A397-A658F94AAC26}.Release|x86.Build.0 = Release|Win32
+		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Debug|x86.ActiveCfg = Debug|Win32
+		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Debug|x86.Build.0 = Debug|Win32
+		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Release|x86.ActiveCfg = Release|Win32
+		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
