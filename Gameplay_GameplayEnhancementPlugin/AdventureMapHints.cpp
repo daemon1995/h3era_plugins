@@ -42,6 +42,19 @@ void AdventureMapHints::CreatePatches() noexcept
             _pi->WriteHiHook(0x040F5D7, THISCALL_, AdvMgr_TileObjectDraw);
         }
 
+        // return;
+        // hero movement hint
+
+        // H3AdventureManager::ProcMapKeyPress - Нажатие кнопки
+        //_pi->WriteHiHook(0x408BA0, SPLICE_, EXTENDED_, THISCALL_, H3AdventureManager_ProcMapKeyPress);
+        // H3AdventureManager::ProcMapScreen - Отжатие кнопки
+        _pi->WriteHiHook(0x408710, SPLICE_, EXTENDED_, THISCALL_, H3AdventureManager_ProcMapScreen);
+        // H3AdventureManager::UpdateHintMessage - Перевод мыши на другой тайл
+        _pi->WriteHiHook(0x40b0b0, SPLICE_, EXTENDED_, THISCALL_, H3AdventureManager_SetHint);
+
+        // hero mp status at hero_obj mouse over
+        _pi->WriteLoHook(0x40BBEE, H3AdventureManager_SetHeroObjectHint);
+
         m_isInited = true;
     }
 }
@@ -125,8 +138,9 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
 
     // set "hint_from_plugin" flag
     Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 1);
-
+    instance->isCustomHintCreation = true;
     THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
+    instance->isCustomHintCreation = false;
 
     // remove "hint_from_plugin" flag
     Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 0);
@@ -404,6 +418,184 @@ void __stdcall AdventureMapHints::AdvMgr_DrawCornerFrames(HiHook *h, const H3Adv
     if (instance->drawnOjectIndexes.size())
     {
         instance->drawnOjectIndexes.clear();
+    }
+}
+// Хинт при нажатии ALT по количеству затрачиваемых мув-поинтов
+bool CreateKeyAltHint(H3AdventureManager *advMgr, H3MapItem *cell)
+{
+    ////////////////////////////////////////// КЕЙСЫ, КОГДА НЕ ВЫДАЕМ ХИНТ
+    //
+    // Если мышь за пределами карты - ничего не делаем
+    H3Position mousePosition = advMgr->mousePosition;
+    const int mapSize = H3MapSize::Get();
+    const int mouseX = mousePosition.GetX();
+    const int mouseY = mousePosition.GetY();
+    if (mouseX > mapSize || mouseX < 0 || mouseY > mapSize || mouseY < 0)
+    {
+        return false;
+    }
+
+    // Если навели на клетку, до которой не добраться, или герой не выбран - ничего не делаем
+    const int currentHero = P_Game->GetPlayer()->currentHero;
+    if (cell->IsBlocked() || currentHero < 0)
+    {
+        return false;
+    }
+    H3Hero *hero = P_Game->GetHero(currentHero);
+
+    // Если навели на героя - ничего не делаем
+    if (H3Position(hero->x, hero->y, hero->z) == mousePosition)
+    {
+        return false;
+    }
+
+    ////////////////////////////////////////// КЕЙСЫ, КОГДА ВЫДАЕМ ХИНТ
+    //
+    // Если уровни карты героя и наведения разные
+    if (hero->z != mousePosition.GetZ())
+    {
+        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);
+        return true;
+    }
+
+    int objectType = cell->objectType;
+
+    // Герой на лодке, клетка неводная и не якорь
+    if ((hero->flags & 0x40000) != 0 && cell->land != eTerrain::WATER && objectType != eObject::ANCHOR_POINT)
+    {
+        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);
+        return true;
+    }
+    // Клетка водная и либо что-то с флагом клетки, либо тип объекта на клетке не лодка, не герой, не кораблекрушение
+    else if (cell->land == eTerrain::WATER &&
+             ((*(WORD *)&cell->mirror & 0x1000) == 0 ||
+              objectType != eObject::BOAT && objectType != eObject::HERO && objectType != eObject::SHIPWRECK))
+    {
+        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);
+        return true;
+    }
+
+    advMgr->MovementCalculationsMouse();
+    H3PathNode *pathNode = P_Pathfinder->GetPathNode(mousePosition);
+    UINT32 flags = pathNode->access;
+    if ((flags & 1) == 0)
+    {
+        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);
+        return true;
+    }
+    const int movementCost = pathNode->movementCost;
+    const int movement = hero->movement;
+    if (movement >= movementCost && THISCALL_1(bool, 0x4BAA40, P_ActivePlayer->Get()))
+    {
+        const int movementLeft = movement - movementCost;
+        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_ENOUGH_POINTS), hero->name, movementCost, movementLeft);
+        return true;
+    }
+    else
+    {
+        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_NOT_ENOUGH_POINTS), hero->name, movementCost);
+        return true;
+    }
+}
+
+int __stdcall AdventureMapHints::H3AdventureManager_ProcMapKeyPress(HiHook *h, H3AdventureManager *advMgr, H3Msg *msg,
+                                                                    char *a3, H3Position *pos, DWORD a5)
+{
+    int result = THISCALL_5(int, h->GetDefaultFunc(), advMgr, msg, a3, pos, a5);
+    char focused = advMgr->dlg->screenlogEdit->IsFocused();
+
+    // Если не в чате, нажатие кнопки ALT и клетка подходящая под хинт
+    if (!focused && !instance->altIsPressed && msg->GetKey() == eVKey::H3VK_ALT &&
+        msg->command == eMsgCommand::KEY_DOWN)
+    {
+        instance->altIsPressed = true;
+        advMgr->UpdateHintMessage();
+    }
+
+    return result;
+}
+
+int __stdcall AdventureMapHints::H3AdventureManager_ProcMapScreen(HiHook *h, H3AdventureManager *advMgr, H3Msg *msg)
+{
+    char focused = advMgr->dlg->screenlogEdit->IsFocused();
+
+    // Если не в чате и отжатие кнопки ALT
+    if (!focused && msg->GetKey() == eVKey::H3VK_ALT)
+    {
+        switch (msg->command)
+        {
+        case eMsgCommand::KEY_DOWN:
+            if (!instance->altIsPressed)
+            {
+                instance->altIsPressed = true;
+
+                advMgr->UpdateHintMessage();
+            }
+            break;
+        case eMsgCommand::KEY_UP:
+            if (instance->altIsPressed)
+            {
+                instance->altIsPressed = false;
+
+                advMgr->UpdateHintMessage();
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    return THISCALL_2(int, h->GetDefaultFunc(), advMgr, msg);
+}
+
+_LHF_(AdventureMapHints::H3AdventureManager_SetHeroObjectHint)
+{
+    H3Hero *hero = reinterpret_cast<H3Hero *>(c->esi);
+
+    if (hero->owner == P_Game->GetPlayerID())
+    {
+        LPCSTR baseHint = reinterpret_cast<LPCSTR>(c->edi);
+        bool readResult = false;
+        LPCSTR addHint = EraJS::read(MOUSEOVER_HINT_MOVEPTS, readResult);
+        if (!readResult)
+        {
+            addHint = " (%d / %d)";
+        }
+        H3String resultHintStr = baseHint;
+        resultHintStr += addHint;
+
+        LPCSTR heroClassName = reinterpret_cast<LPCSTR>(c->eax);
+        libc::sprintf(h3_TextBuffer, resultHintStr.String(), hero->name, heroClassName, hero->movement,
+                      hero->maxMovement);
+
+        c->return_address = 0x40D09B;
+        return NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
+
+void __stdcall AdventureMapHints::H3AdventureManager_SetHint(HiHook *h, H3AdventureManager *advMgr, H3MapItem *cell,
+                                                             int x, int y)
+{
+
+    char focused = advMgr->dlg->screenlogEdit->IsFocused();
+    // bool isCustomHint = CreateKeyAltHint(advMgr, cell);
+
+    if (focused || instance->isCustomHintCreation || !instance->altIsPressed || !CreateKeyAltHint(advMgr, cell))
+    {
+        THISCALL_4(void, h->GetDefaultFunc(), advMgr, cell, x, y);
+    }
+    else
+    {
+
+        H3AdventureMgrDlg *dlg = advMgr->dlg;
+        H3DlgTextPcx *hintbar = dlg->hintbar;
+        const int itemId = hintbar->GetID();
+        dlg->SendCommandToItem(3, itemId, int(h3_TextBuffer));
+        THISCALL_4(BOOL8, 0x5FF5E0, dlg, 0, itemId, itemId); // redraw items
+        dlg->RedrawItem(itemId);
     }
 }
 
