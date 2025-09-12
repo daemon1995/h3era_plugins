@@ -3,19 +3,19 @@ namespace shrines
 
 {
 
-const H3MapItem *ShrinesExternder::currentShrineHint = nullptr;
-ShrinesExternder::ShrinesExternder()
+const H3MapItem *ShrinesExtender::currentShrineHint = nullptr;
+ShrinesExtender::ShrinesExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
 {
 
     CreatePatches();
 }
 
-ShrinesExternder::~ShrinesExternder()
+ShrinesExtender::~ShrinesExtender()
 {
 }
 
-BOOL ShrinesExternder::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                                    const H3String &defaultHint) noexcept
 {
     if (info.type >= eObject::SHRINE_OF_MAGIC_INCANTATION && info.type <= eObject::SHRINE_OF_MAGIC_THOUGHT)
@@ -39,7 +39,7 @@ BOOL ShrinesExternder::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, co
     }
     return 0;
 }
-H3RmgObjectGenerator *ShrinesExternder::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+H3RmgObjectGenerator *ShrinesExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
 {
 
     if (objectInfo.type == eObject::SHRINE_OF_MAGIC_INCANTATION ||
@@ -53,7 +53,7 @@ H3RmgObjectGenerator *ShrinesExternder::CreateRMGObjectGen(const RMGObjectInfo &
     }
     return nullptr;
 }
-BOOL ShrinesExternder::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
+BOOL ShrinesExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
                                           int &aiResWeight, int *moveDistance, const H3Position pos) const noexcept
 {
 
@@ -67,7 +67,7 @@ BOOL ShrinesExternder::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, cons
     return false;
 }
 
-_LHF_(ShrinesExternder::Game__AtShrineOfMagicIncantationSettingSpell)
+_LHF_(ShrinesExtender::Game__AtShrineOfMagicIncantationSettingSpell)
 {
 
     // set spell level generated coresponding to map item subtype (allows any level spells);
@@ -78,7 +78,7 @@ _LHF_(ShrinesExternder::Game__AtShrineOfMagicIncantationSettingSpell)
     return EXEC_DEFAULT;
 }
 
-_LHF_(ShrinesExternder::Game__AtShrineOfMagicGestureSettingSpell)
+_LHF_(ShrinesExtender::Game__AtShrineOfMagicGestureSettingSpell)
 {
 
     // object subtype is spell id
@@ -95,7 +95,7 @@ LPCSTR GetVisitText(const H3MapItem *shrine)
 {
     return 0;
 }
-_LHF_(ShrinesExternder::Shrine__AtVisit)
+_LHF_(ShrinesExtender::Shrine__AtVisit)
 {
 
     if (H3MapItem *shrine = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
@@ -116,7 +116,7 @@ _LHF_(ShrinesExternder::Shrine__AtVisit)
     }
     return EXEC_DEFAULT;
 }
-_LHF_(ShrinesExternder::Shrine__AtWisdomCheck)
+_LHF_(ShrinesExtender::Shrine__AtWisdomCheck)
 {
 
     const H3MapItem *shrine = currentShrineHint;
@@ -142,7 +142,7 @@ _LHF_(ShrinesExternder::Shrine__AtWisdomCheck)
     }
     return EXEC_DEFAULT;
 }
-LPCSTR ShrinesExternder::GetCustomName(const H3MapItem *shrine)
+LPCSTR ShrinesExtender::GetCustomName(const H3MapItem *shrine)
 {
     LPCSTR result = nullptr;
 
@@ -153,7 +153,7 @@ LPCSTR ShrinesExternder::GetCustomName(const H3MapItem *shrine)
     }
     return result;
 }
-_LHF_(ShrinesExternder::Shrine__AtGetName)
+_LHF_(ShrinesExtender::Shrine__AtGetName)
 {
     if (H3MapItem *shrine = *reinterpret_cast<H3MapItem **>(c->ebp + 0x8))
     {
@@ -172,7 +172,7 @@ _LHF_(ShrinesExternder::Shrine__AtGetName)
     return EXEC_DEFAULT;
 }
 
-LPCSTR ShrinesExternder::GetCustomHint(const H3MapItem *shrine)
+LPCSTR ShrinesExtender::GetCustomHint(const H3MapItem *shrine)
 {
     LPCSTR result = nullptr;
 
@@ -202,7 +202,7 @@ LPCSTR ShrinesExternder::GetCustomHint(const H3MapItem *shrine)
     return result;
 }
 
-_LHF_(ShrinesExternder::Shrine__AtGetHint)
+_LHF_(ShrinesExtender::Shrine__AtGetHint)
 {
     if (currentShrineHint)
     {
@@ -218,7 +218,7 @@ _LHF_(ShrinesExternder::Shrine__AtGetHint)
 
     return EXEC_DEFAULT;
 }
-void ShrinesExternder::CreatePatches()
+void ShrinesExtender::CreatePatches()
 {
     if (!m_isInited)
     {
@@ -235,12 +235,12 @@ void ShrinesExternder::CreatePatches()
     }
 }
 
-ShrinesExternder *ShrinesExternder::instance = nullptr;
+ShrinesExtender *ShrinesExtender::instance = nullptr;
 
-ShrinesExternder &ShrinesExternder::Get()
+ShrinesExtender &ShrinesExtender::Get()
 {
     if (!instance)
-        instance = new ShrinesExternder();
+        instance = new ShrinesExtender();
     return *instance;
 }
 

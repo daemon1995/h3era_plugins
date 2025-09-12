@@ -1051,15 +1051,18 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 
     if (readSucces)
     {
-
         result = jsonString;
     }
-    else
+    else if (type >= 0 && type < h3::limits::OBJECTS)
     {
         switch (type)
         {
         case eObject::ARTIFACT:
             result = P_Artifacts[subtype].name;
+            break;
+        case eObject::BORDERGUARD:
+        case eObject::KEYMASTER:
+            result = P_TentColors[subtype];
             break;
         case eObject::CREATURE_GENERATOR1:
             result = P_DwellingNames1[subtype];
@@ -1067,35 +1070,21 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
         case eObject::CREATURE_GENERATOR4:
             result = P_DwellingNames4[subtype];
             break;
+        case eObject::HERO:
+            result = P_HeroInfo[subtype].name;
+            break;
         case eObject::MINE:
             result = P_MineNames[subtype];
             break;
         case eObject::MONSTER:
         case eObject::RANDOM_MONSTER:
             result = P_Creatures[subtype].namePlural;
-        case eObject::PYRAMID:
-        case warehouses::WAREHOUSE_OBJECT_TYPE:
-        case extender::HOTA_OBJECT_TYPE:
-        case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
-        case extender::HOTA_UNREACHABLE_YT_OBJECT_TYPE:
-            result = jsonString;
             break;
+        // case eObject::PYRAMID:
+        //     break;
         case eObject::RESOURCE:
             result = P_ResourceName[subtype];
             break;
-        case eObject::SHRINE_OF_MAGIC_INCANTATION:
-        case eObject::SHRINE_OF_MAGIC_GESTURE:
-            if (subtype)
-            {
-                libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
-                result = EraJS::read(h3_TextBuffer);
-            }
-            else
-            {
-                result = P_ObjectName[type];
-            }
-            break;
-
         case eObject::TOWN:
             result = P_TownNames[subtype];
             break;

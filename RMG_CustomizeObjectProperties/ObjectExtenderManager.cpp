@@ -249,6 +249,8 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
         LPCSTR objectTypeWavName = EraJS::read(H3String::Format("RMG.objectGeneration.%d.sound.loop", objType).String(),
                                                objectTypeHasLoopSound);
 
+        instance->allowRegistration = false;
+
         auto &additionalRmgObjects = instance->additionalRmgObjects;
         // next check each object subtype value/density
         for (size_t objSubtype = 0; objSubtype < maxSubtypes[objType]; objSubtype++)
@@ -402,6 +404,13 @@ ObjectExtenderManager *ObjectExtenderManager::Get()
 DllExport BOOL __stdcall RegisterObjectExtender(ObjectExtender *extender)
 {
     return ObjectExtenderManager::Get()->AddExtender(extender);
+}
+
+DllExport ObjectExtender* __stdcall CreateObjectExtender(ObjectExtender* _this) noexcept
+{
+    //*_this[0]
+
+    return nullptr;
 }
 
 } // namespace extender

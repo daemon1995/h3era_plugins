@@ -19,13 +19,10 @@
     <ClCompile Include="ObjectExtenders\CreatureBanksExtender.cpp">
       <Filter>Extenders</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectExtenders\ShrinesExternder.cpp">
+    <ClCompile Include="ObjectExtenders\ShrinesExtender.cpp">
       <Filter>Extenders</Filter>
     </ClCompile>
     <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp">
-      <Filter>source files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>source files</Filter>
     </ClCompile>
     <ClCompile Include="ObjectExtenders\GazeboExtender.cpp">
@@ -53,6 +50,9 @@
       <Filter>ExtenderAPI</Filter>
     </ClCompile>
     <ClCompile Include="AdditionalProperties.cpp" />
+    <ClCompile Include="..\headers\Era\era.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjectExtender.h">
@@ -73,7 +73,7 @@
     <ClInclude Include="ObjectExtenders\WarehousesExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectExtenders\ShrinesExternder.h">
+    <ClInclude Include="ObjectExtenders\ShrinesExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
     <ClInclude Include="ObjectExtenders\GazeboExtender.h">

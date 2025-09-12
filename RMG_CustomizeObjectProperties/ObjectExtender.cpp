@@ -13,7 +13,6 @@ ObjectExtender::ObjectExtender()
 
 ObjectExtender::~ObjectExtender()
 {
-    // extenders.erase(this);
 }
 
 // H3RmgObjectGenerator *ObjectExtender::CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &objectInfo) noexcept
@@ -27,10 +26,10 @@ ObjectExtender::~ObjectExtender()
 //     return objGen;
 // }
 
-// H3RmgObjectGenerator *ObjectExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
-//{
-//     return ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
-// }
+ H3RmgObjectGenerator *ObjectExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+{
+     return ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
+ }
 
 _LHF_(H3AdventureManager__GetPyramidObjectHoverHint)
 {

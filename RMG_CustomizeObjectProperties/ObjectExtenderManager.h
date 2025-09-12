@@ -66,7 +66,6 @@ class ObjectExtenderManager : public IGamePatch
     void CreatePatches() override;
 
   private:
-  private:
     ObjectExtender *findExtender(int type, int subtype)
     {
         auto it = extendersByType.find(type);
@@ -79,11 +78,13 @@ class ObjectExtenderManager : public IGamePatch
         return lookup.forAllSubtypes;
     }
 
+  private:
     // hooks used before game loading
     // static methods to use them as General Objects Extending hooks
     static void __stdcall H3GameMainSetup__LoadObjects(HiHook *h, const H3MainSetup *setup);
     // used to increase properties in objects.txt (game main setup list)
     static _LHF_(LoadObjectsTxt);
+
     int ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRightClick);
     //  ObjectExtender *GetExtender(H3MapItem *mapItem);
     //    ObjectExtender *GetExtender(const INT16 mapItemType, const INT16 mapItemSubtype);
@@ -98,14 +99,18 @@ class ObjectExtenderManager : public IGamePatch
     static _LHF_(AIHero_GetObjectPosWeight);
 
   public:
-    static H3RmgObjectGenerator *CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &info) noexcept;
     void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList);
+    BOOL AddExtender(ObjectExtender *ext);
+
+  public:
+    static H3RmgObjectGenerator *CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &info) noexcept;
     static BOOL ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                        H3String &resultString) noexcept;
-    BOOL AddExtender(ObjectExtender *ext);
+
     static ObjectExtenderManager *Get();
 };
 DllExport BOOL __stdcall RegisterObjectExtender(ObjectExtender *extender) noexcept;
+DllExport ObjectExtender *__stdcall CreateObjectExtender(ObjectExtender *_this) noexcept;
 
 // Get the singleton instance
 

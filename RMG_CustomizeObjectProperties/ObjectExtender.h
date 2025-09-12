@@ -38,7 +38,7 @@ class ObjectExtender
   public:
     // required override for some complex structures like creature banks
     virtual void  AfterLoadingObjectTxtProc(const INT16 *maxSubtypes);
-    virtual H3RmgObjectGenerator * CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept = 0;
+    virtual H3RmgObjectGenerator * CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept ;
 
     virtual BOOL  InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept;
     virtual BOOL  InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept;

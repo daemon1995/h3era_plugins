@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.25";
+const char *PLUGIN_VERSION = "1.26";
 const char *INSTANCE_NAME = "EraPlugin.ObjectExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -68,17 +68,26 @@ _LHF_(CrBanksTxt_AfterLoad)
 {
 
     editor::RMGObjectsEditor::Get();
-    extender::ObjectExtenderManager::Get();
-    //! Get the CreatureBanksManager and initialize it
-    cbanks::CreatureBanksExtender::Get();
-    shrines::ShrinesExternder::Get();
-    warehouses::WarehousesExtender::Get();
-    gazebo::GazeboExtender::Get();
-    colosseumOfTheMagi::ColosseumOfTheMagiExtender::Get();
-    // wateringPlace::WateringPlaceExtender::Get();
-    wog::WoGObjectsExtender::Get();
-    spellmarket::SpellMarketExtender::Get();
-    university::UniversityExtender::Get();
+    if (auto mgr = extender::ObjectExtenderManager::Get())
+    {
+        extender::ObjectExtender *extendersList[] = {
+            &cbanks::CreatureBanksExtender::Get(),
+            &shrines::ShrinesExtender::Get(),
+            &warehouses::WarehousesExtender::Get(),
+            &gazebo::GazeboExtender::Get(),
+            &colosseumOfTheMagi::ColosseumOfTheMagiExtender::Get(),
+            &wateringPlace::WateringPlaceExtender::Get(),
+            &wog::WoGObjectsExtender::Get(),
+            //                                             &artifacts::ArtifactsExtender::Get()
+        };
+
+        constexpr size_t extendersCount = sizeof(extendersList) / sizeof(extender::ObjectExtender *);
+        //! Get the CreatureBanksManager and initialize it
+        for (size_t i = 0; i < extendersCount; i++)
+        {
+            mgr->AddExtender(*&extendersList[i]);
+        }
+    }
 
     //! Set patches for the RMG_SettingsDlg
 

@@ -5,9 +5,9 @@ struct ExactSpellShrineMapItem
 {
 };
 
-class ShrinesExternder : public extender::ObjectExtender
+class ShrinesExtender : public extender::ObjectExtender
 {
-    static ShrinesExternder* instance;
+    static ShrinesExtender* instance;
 
     static constexpr int LEVEL_REQUIRED = 15;
     static constexpr int SPELL_COST = 2000;
@@ -17,8 +17,8 @@ class ShrinesExternder : public extender::ObjectExtender
     static const H3MapItem *currentShrineHint;
 
   private:
-    ShrinesExternder();
-    virtual ~ShrinesExternder();
+    ShrinesExtender();
+    virtual ~ShrinesExtender();
 
   protected:
     virtual void CreatePatches();
@@ -45,7 +45,7 @@ class ShrinesExternder : public extender::ObjectExtender
     static LPCSTR GetCustomHint(const H3MapItem *shrine);
 
   public:
-    static ShrinesExternder &Get();
+    static ShrinesExtender &Get();
 };
 
 } // namespace shrines
