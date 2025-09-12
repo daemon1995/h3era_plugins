@@ -34,8 +34,7 @@ _LHF_(HooksInit)
     {
         advMapHints::AdventureMapHints::Init(globalPatcher->CreateInstance(vipPluginInstanceName));
     }
-	artifacts::ArtifactHints::Get();
-    
+    artifacts::ArtifactHints::Get();
 
     return EXEC_DEFAULT;
 }
