@@ -5,7 +5,6 @@
 #include <windows.h>
 
 NotificationPanel *NotificationPanel::instance = nullptr;
-H3DlgPcx16 *CreateOpenPanelTextPcxButton(H3BaseDlg *dlg, const size_t notificationAmount);
 bool FolderExists(const std::wstring &path);
 std::wstring GetAppDataPath();
 
@@ -80,10 +79,11 @@ BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
 
         H3FontLoader fn(NH3Dlg::Text::MEDIUM);
 
-        const int oldModNameWidth = fn->GetMaxLineWidth(displayedName) + 2;
+        const int maxUnderlineWidth = modNameDlgText->GetWidth();
+        const int oldModNameWidth = Clamp(1, fn->GetMaxLineWidth(displayedName) + 2, maxUnderlineWidth);
         displayedName = EraJS::read(h3_TextBuffer);
 
-        const int modNameWidth = fn->GetMaxLineWidth(displayedName) + 2;
+        const int modNameWidth = Clamp(1, fn->GetMaxLineWidth(displayedName) + 2, maxUnderlineWidth);
         const int xOffset = (oldModNameWidth - modNameWidth) / 2;
 
         if (nameUnderline)
@@ -380,35 +380,7 @@ void RedrawPcxText(H3LoadedPcx16 *pcx, const int notificationAmount)
         fnt->TextDraw(pcx, h3_TextBuffer, 0, 0, width, height);
     }
 }
-H3DlgPcx16 *CreateOpenPanelTextPcxButton(H3BaseDlg *dlg, const size_t notificationAmount)
-{
 
-    constexpr UINT width = 140;
-    constexpr UINT height = 20;
-    constexpr UINT border_width = 0;
-
-    constexpr UINT16 offset = height + 4 + border_width * 2;
-
-    const int borderHeight = H3GameHeight::Get() - 600;
-    constexpr int x = 0;
-    const int y = borderHeight > offset << 1 ? -1 * offset : 0;
-
-    auto *captionPcx = H3DlgPcx16::Create(x, y, width, height, 0, nullptr);
-
-    // H3RGB565 highLightColor(H3RGB888::Highlight());
-    // H3RGB565 lightBorderColor(H3RGB888(247, 222, 123));
-    // H3RGB565 darkBorderColor(H3RGB888(165, 140, 66));
-
-    auto pcx = H3LoadedPcx16::Create(width, height);
-
-    RedrawPcxText(pcx, notificationAmount);
-
-    captionPcx->SetPcx(pcx);
-
-    dlg->AddItem(captionPcx);
-
-    return captionPcx;
-}
 
 H3DlgItem *NotificationPanel::AddItem(H3DlgItem *item, const bool isCommon) noexcept
 {
@@ -513,7 +485,7 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
         const H3RGB565 linkColor(H3RGB888(0, 0xAA, 0xFF));
         H3FontLoader fn(NH3Dlg::Text::MEDIUM);
 
-        const int modNameWidth = fn->GetMaxLineWidth(modInfo.displayedName) + 2;
+        const int modNameWidth = Clamp(1, fn->GetMaxLineWidth(modInfo.displayedName) + 2, width);
         const int underX = (width - modNameWidth) / 2 + x;
         modInfo.nameUnderline = H3DlgFrame::Create(underX, y + 24, modNameWidth, 1, linkColor);
         modInfo.items.emplace_back(modInfo.nameUnderline);
@@ -857,7 +829,7 @@ int __fastcall NotificationPanel::OnPanelCallerClick(void *msg) noexcept
             instance->SetVisible(!instance->isVisible, true);
         }
     }
-	return true;
+    return true;
 }
 
 BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept

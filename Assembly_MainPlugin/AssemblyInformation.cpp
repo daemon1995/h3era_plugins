@@ -328,6 +328,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
     if (auto notificationPanel = NotificationPanel::instance)
     {
+        notificationPanel->SetVisible(false);
         delete notificationPanel;
     }
     Get().isVisible = false;
