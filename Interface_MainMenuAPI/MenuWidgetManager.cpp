@@ -312,10 +312,11 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
         widget->uiElement->SetClickFrame(1);
     }
 
-    // assign hotkeys to first 10 widgets if no scrollbar
+    // assign hotkeys to first 10 (MAX_WIDGETS_WITH_HOTKEYS) widgets if no scrollbar
     if (createScrollbar == false)
     {
-        size_t maxHotkeyWidgetIndex = widgetsToDraw < 10 ? widgetsToDraw : 10;
+        size_t maxHotkeyWidgetIndex =
+            widgetsToDraw < MAX_WIDGETS_WITH_HOTKEYS ? widgetsToDraw : MAX_WIDGETS_WITH_HOTKEYS;
         for (size_t i = 0; i < maxHotkeyWidgetIndex; i++)
         {
             createdWidgets[i]->uiElement->AddHotkey(eVKey::H3VK_1 + i);

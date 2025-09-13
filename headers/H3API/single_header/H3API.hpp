@@ -20372,6 +20372,7 @@ namespace h3
 		_H3API_ static H3DlgDefButton* Create(INT32 x, INT32 y, LPCSTR defName, INT32 frame, INT32 clickFrame);
 
 		_H3API_ VOID         AddHotkey(INT32 key);
+		_H3API_ VOID         RemoveHotkeys();
 		_H3API_ VOID         SetFrame(INT32 frame);
 		_H3API_ INT          ToggleFrame();
 		_H3API_ INT32        GetFrame() const;
@@ -35350,6 +35351,10 @@ namespace h3
     {
         hotkeys.Add(key);
     }
+	_H3API_ VOID H3DlgDefButton::RemoveHotkeys()
+	{
+		hotkeys.RemoveAll();
+	}
 	_H3API_ VOID H3DlgDefButton::SetText(H3String text)
 	{
 		return SetText(text.String());
