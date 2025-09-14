@@ -8651,23 +8651,23 @@ namespace h3
         _H3API_GET_INFO_(0x660B68, H3ArtifactSetup);
 
         /** @brief [0] */
-        LPCSTR name;
+        LPCSTR name = h3_NullString;
         /** @brief [4] gold cost*/
-        INT32 cost;
+        INT32 cost = 0;
         /** @brief [8]*/
-        eArtifactSlots position;
+        eArtifactSlots position = eArtifactSlots::NONE;
         /** @brief [C]*/
-        eArtifactType type;
+        eArtifactType type = eArtifactType(0);
         /** @brief [10]*/
-        LPCSTR description;
+        LPCSTR description = h3_NullString;
         /** @brief [14] index of the combo 0..11*/
-        eCombinationArtifacts comboID;
+        eCombinationArtifacts comboID = eCombinationArtifacts::NONE;
         /** @brief [18] index of the artifact 0..143*/
-		eCombinationArtifacts  combinationArtifactId;
+		eCombinationArtifacts combinationArtifactId = eCombinationArtifacts::NONE;
         /** @brief [1C] artifact is not available*/
-        BOOL8 disabled;
+        BOOL8 disabled = TRUE;
         /** @brief [1D] spell added to spellbook*/
-        eSpell  newSpell;
+        eSpell  newSpell = eSpell::SUMMON_BOAT;
 
         _H3API_ BOOL IsPartOfCombo() const;
     };
