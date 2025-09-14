@@ -29,7 +29,7 @@ struct HintsText : public IPluginText
 class ArtifactHints : public IGamePatch
 {
     BOOL active = true;
-    INT swapSide = 0;
+    INT swapSide = -1;
 	BOOL isUniteComboArtifactCall = false;
     Patch *drawMultiPicDlgPatch = nullptr;
     INT messageboxHeightChange = 0;

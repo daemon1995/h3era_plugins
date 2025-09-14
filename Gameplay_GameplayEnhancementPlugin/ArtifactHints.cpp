@@ -170,6 +170,7 @@ void __stdcall ArtifactHints::SwapMgr_InteractArtifactSlot(HiHook *h, H3SwapMana
 {
     instance->swapSide = side;
     THISCALL_4(void, h->GetDefaultFunc(), mgr, side, slotIndex, a4);
+    instance->swapSide = -1;
 }
 
 H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H3Artifact *artifact,
@@ -192,7 +193,8 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
         if (!hero)
         {
             // try to get hero from swap manager if artifact was just swapped
-            if (auto mgr = H3SwapManager::Get())
+            auto mgr = H3SwapManager::Get();
+            if (mgr && instance->swapSide != -1)
                 hero = mgr->hero[instance->swapSide];
         }
     }
