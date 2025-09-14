@@ -216,7 +216,6 @@ inline H3MapItemColosseumOfTheMagi *H3MapItemColosseumOfTheMagi::GetFromMapItem(
         return const_cast<H3MapItemColosseumOfTheMagi *>(
             reinterpret_cast<const H3MapItemColosseumOfTheMagi *>(&mapItem->setup));
     }
-    Era::GetEraVersion();
     return nullptr;
 }
 

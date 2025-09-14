@@ -147,6 +147,25 @@ _LHF_(ObjectExtenderManager::AIHero_GetObjectPosWeight)
 
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->esi))
     {
+
+        for (auto &objectExtender : instance->objectExtenders)
+        {
+            H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
+            int *moveDistance = reinterpret_cast<int *>(c->edi);
+            const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
+            const H3Position pos = *reinterpret_cast<H3Position *>(c->ebp + 0x8);
+
+            INT aiResWeight = 0;
+            if (objectExtender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight, moveDistance, pos))
+            {
+                c->eax = aiResWeight;
+                c->return_address = 0x05285A1;
+                return NO_EXEC_DEFAULT;
+            }
+        }
+
+        return EXEC_DEFAULT;
+
         if (auto *extenders = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
         {
             H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
@@ -171,6 +190,16 @@ _LHF_(ObjectExtenderManager::Game__NewGameObjectIteration)
 {
     auto mapItem = reinterpret_cast<H3MapItem *>(c->esi);
 
+    for (auto &objectExtender : instance->objectExtenders)
+    {
+        if (objectExtender->InitNewGameMapItemSetup(mapItem))
+        {
+            return EXEC_DEFAULT;
+        }
+    }
+
+    return EXEC_DEFAULT;
+
     if (auto *objectExtender = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
     {
         objectExtender->InitNewGameMapItemSetup(mapItem);
@@ -181,6 +210,16 @@ _LHF_(ObjectExtenderManager::Game__NewGameObjectIteration)
 _LHF_(ObjectExtenderManager::Game__NewWeekObjectIteration)
 {
     auto mapItem = reinterpret_cast<H3MapItem *>(c->esi);
+
+    for (auto &objectExtender : instance->objectExtenders)
+    {
+        if (objectExtender->InitNewWeekMapItemSetup(mapItem))
+        {
+            return EXEC_DEFAULT;
+        }
+    }
+
+    return EXEC_DEFAULT;
     if (auto *objectExtender = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
     {
         objectExtender->InitNewWeekMapItemSetup(mapItem);
@@ -192,6 +231,21 @@ _LHF_(ObjectExtenderManager::H3AdventureManager__ObjectVisit)
 {
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->edi))
     {
+
+        H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
+
+        const H3Position position = DwordAt(c->ebp + 0x10);
+        const bool isHuman = DwordAt(c->ebp + 0x14);
+
+        for (auto &objectExtender : instance->objectExtenders)
+        {
+            if (objectExtender->VisitMapItem(currentHero, mapItem, position, isHuman))
+            {
+                return EXEC_DEFAULT;
+            }
+        }
+        return EXEC_DEFAULT;
+
         if (auto *objectExtender = instance->findExtender(mapItem->objectType, mapItem->objectSubtype))
         {
             H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
@@ -406,7 +460,7 @@ DllExport BOOL __stdcall RegisterObjectExtender(ObjectExtender *extender)
     return ObjectExtenderManager::Get()->AddExtender(extender);
 }
 
-DllExport ObjectExtender* __stdcall CreateObjectExtender(ObjectExtender* _this) noexcept
+DllExport ObjectExtender *__stdcall CreateObjectExtender(ObjectExtender *_this) noexcept
 {
     //*_this[0]
 
