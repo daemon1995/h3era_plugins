@@ -116,11 +116,11 @@ inline int GetEraModList(std::vector<std::string> &modList, const BOOL toLower =
     }
     return modList.size();
 }
-inline std::vector<std::string> GetEraModList()
+inline std::vector<std::string> GetEraModList(const BOOL toLower = false)
 {
-    std::vector<std::string> modLsit;
-    GetEraModList(modLsit);
-    return modLsit;
+    std::vector<std::string> modList;
+    GetEraModList(modList, toLower);
+    return modList;
 }
 
 } // namespace modList

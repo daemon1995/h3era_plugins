@@ -31,7 +31,7 @@ _LHF_(ObjectExtenderManager::LoadObjectsTxt)
     // check if there are any object properties extenders
     if (H3TextFile *objectTxt = *reinterpret_cast<H3TextFile **>(c->ebp + 0x8))
     {
-        if (size_t newProperties = instance->additionalProperties.InsertPropertiesIntoObjectsList(objectTxt))
+        if (const size_t newProperties = instance->additionalProperties.InsertPropertiesIntoObjectsList(objectTxt))
         {
             c->eax += newProperties;
         }
