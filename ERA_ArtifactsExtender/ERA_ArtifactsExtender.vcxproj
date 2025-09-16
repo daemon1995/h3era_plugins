@@ -146,6 +146,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ArtifactData.h" />
     <ClInclude Include="ArtifactsExtender.h" />
     <ClInclude Include="ArtifactTablesManager.h" />
     <ClInclude Include="framework.h" />
@@ -153,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="ArtifactData.cpp" />
     <ClCompile Include="ArtifactsExtender.cpp" />
     <ClCompile Include="ArtifactTablesManager.cpp" />
     <ClCompile Include="dllmain.cpp" />

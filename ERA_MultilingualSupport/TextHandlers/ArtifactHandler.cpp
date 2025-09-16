@@ -6,7 +6,7 @@
 bool __stdcall LoadArtTraitsTxt(HiHook *h)
 {
     bool result = CDECL_0(bool, h->GetDefaultFunc());
-    if (result)
+   // if (result)
     {
         h->Undo();
 
@@ -57,7 +57,7 @@ inline int ArtifactHandler::GetArtifactsNumber() noexcept
 void ArtifactHandler::Init()
 {
     // Warning: this hook is after all txt read
-    _PI->WriteHiHook(0x04EDEA2, CDECL_, LoadArtTraitsTxt);
+    _PI->WriteHiHook(0x04EE036, CDECL_, LoadArtTraitsTxt);
 }
 
 // template <> static void ArtifactHandler::ReadField<LPCSTR>(LPCSTR &target, const char *format, int idx) noexcept

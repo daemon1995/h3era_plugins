@@ -2,19 +2,45 @@
 
 namespace artifacts
 {
+constexpr int TEST_ART_ID = 171; //
 constexpr int ARTIFACTS_OBJECT_TYPE = eObject::ARTIFACT;
 class ArtifactsExtender : public IGamePatch
 {
+    static constexpr LPCSTR advMapArtifactDefNameFormat =
+        "AVA%4d.def 011111111111111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 "
+        "111111111 000000001 5 %d 4 0";
     static ArtifactsExtender *instance;
 
-    static DWORD baseArtifactsNumber;
-    static DWORD newArtifactsNumber;
-    // new artifacts setups
+    struct ArtifactsNumber
+    {
+        DWORD base = 0;
+        DWORD added = 0;
+        DWORD current = 0;
+        static constexpr DWORD max = 1024;
+    } static artifactsNumber;
+    // static DWORD baseArtifactsNumber;
+    // static DWORD newArtifactsNumber;
+    // static DWORD newArtifactsNumber;
+    //  new artifacts setups
+
     static H3ArtifactSetup *artifactSetups;
+    static H3ArtifactSetup *wogArtifactSetupsToSwapNames;
+
+    struct ArtifactsTextZVars
+    {
+
+        DWORD artNameZvar = 0;
+        DWORD artDescriptionZvar = 0;
+    } static *artifactsTextZVars;
 
     static DWORD *primarySkillsBonusTable;
     static DWORD primarySkillsBonusTableAddr;
-//    static 
+
+    //    static DWORD primarySkillsBonusTableAddr;
+
+    // new art event text
+    static LPCSTR *eventTable;
+    //    static
 
   public:
   private:
@@ -27,15 +53,20 @@ class ArtifactsExtender : public IGamePatch
 
   protected:
     virtual void CreatePatches() override;
+    const int LoadNewArtifactsFromJson();
+
     void ReplaceArtifactSetupsTable();
     void ReplacePrimarySkillsBonusTable();
-	void ReplaceCombinationArtifactsTable();
-	void ReplaceAIValuesTable();
+    void ReplaceArtEventText();
+    void ReplaceCombinationArtifactsTable();
+    void ReplaceAIValuesTable();
+    void LoadArtifactPropertiesFromJson();
     //  private:
   public:
     static ArtifactsExtender &Get();
     static _ERH_(OnAfterWog);
-    static void __stdcall H3GameMainSetup__LoadObjects(HiHook *h, const H3MainSetup *setup);
+    static _LHF_(LoadArtTraits);
+    static void __stdcall H3GameMainSetup__LoadObjects(HiHook *h, H3MainSetup *setup);
 };
 
 } // namespace artifacts

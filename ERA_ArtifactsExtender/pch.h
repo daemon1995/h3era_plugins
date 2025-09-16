@@ -10,8 +10,11 @@
 // add headers that you want to pre-compile here
 
 #include "framework.h"
+#define ERA4
+#define ERA_MODLIST
 
 #include "../headers/header.h"
 
+#include "ArtifactData.h"
 #include "ArtifactsExtender.h"
 #endif // PCH_H
