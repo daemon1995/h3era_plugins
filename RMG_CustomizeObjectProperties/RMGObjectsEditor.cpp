@@ -669,6 +669,11 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteLoHook(0x05427DA, RMG__AtSecondSubterranianGatesPositioning);
         _pi->WriteLoHook(0x0542937, RMG__AtSecondSubterranianGatesPlacement);
 
+
+
+        // Prevent combo art pieces becoming the artifacts for Seer Huts
+        _PI->WriteLoHook(0x54B9C0, RMG__AtQuestArtifactListCounter);
+        _PI->WriteLoHook(0x54BA1B, RMG__AtQuestArtifactListSelectRandom);
         // Hook for the setting defaults
 
         m_isInited = true;

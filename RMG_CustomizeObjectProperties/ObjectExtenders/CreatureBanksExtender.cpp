@@ -156,7 +156,6 @@ CreatureBanksExtender &CreatureBanksExtender::Get()
     if (!instance)
     {
         instance = new CreatureBanksExtender();
-		extender::ObjectExtenderManager::Get()->AddExtender(instance);
     }
     return *instance;
 }

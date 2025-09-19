@@ -2048,20 +2048,20 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
             //_pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
             _pi->WriteLoHook(0x0588469, Dlg_SelectScenario_Proc);
 
-            _pi->WriteHiHook(0x4FB930, THISCALL_, GameStart);
 
             _pi->WriteHiHook(0x5BB1D1, THISCALL_, H3DlgEdit__TranslateInputKey);
 
             Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
-
-            mainmenu::MenuWidgetInfo widgetInfo;
-            widgetInfo.name = MAIN_MENU_WIDGET_UUID;
-            widgetInfo.customProc = RMG_SettingsDlg::RMGDlgOptionsButtonProc;
-            widgetInfo.menuList = mainmenu::ALL;
-            widgetInfo.text = EraJS::read(MAIN_MENU_JSON_KEY);
-
-            mainmenu::MainMenu_RegisterWidget(widgetInfo);
         }
+        _pi->WriteHiHook(0x4FB930, THISCALL_, GameStart);
+
+        mainmenu::MenuWidgetInfo widgetInfo;
+        widgetInfo.name = MAIN_MENU_WIDGET_UUID;
+        widgetInfo.customProc = RMG_SettingsDlg::RMGDlgOptionsButtonProc;
+        widgetInfo.menuList = mainmenu::ALL;
+        widgetInfo.text = EraJS::read(MAIN_MENU_JSON_KEY);
+
+        mainmenu::MainMenu_RegisterWidget(widgetInfo);
     }
 }
 
