@@ -34,7 +34,6 @@ void LegendHeroes::Init(PatcherInstance *pi)
     }
 }
 
-
 void LegendHeroes::CreatePatches() noexcept
 {
     m_drawBuffer[0] = H3LoadedPcx16::Create(800, 600);
@@ -433,16 +432,16 @@ _LHF_(LegendHeroes::MarketDlg_AfterArtifactsPlacement)
 
         if (it = dlg->GetH3DlgItem(artSlotId))
         {
-            int xPos = wgt.artSlotPositions[i].x + xOffset;
-            int yPos = wgt.artSlotPositions[i].y + yOffset;
+            const int xPos = wgt.artSlotPositions[i].x + xOffset;
+            const int yPos = wgt.artSlotPositions[i].y + yOffset;
             it->SetX(xPos);
             it->SetY(yPos);
         }
 
         if (it = dlg->GetH3DlgItem(artSlotPressedId))
         {
-            int xPos = wgt.artSlotPositions[i].x + xOffset - 2;
-            int yPos = wgt.artSlotPositions[i].y + yOffset - 2;
+            const int xPos = wgt.artSlotPositions[i].x + xOffset - 2;
+            const int yPos = wgt.artSlotPositions[i].y + yOffset - 2;
             it->SetX(xPos);
             it->SetY(yPos);
         }
@@ -450,8 +449,8 @@ _LHF_(LegendHeroes::MarketDlg_AfterArtifactsPlacement)
 
     for (UINT16 i = 0; i < 5; i++)
     {
-        int artSlotId = i + 102;
-        int artSlotPressedId = i + 125;
+        const int artSlotId = i + 102;
+        const int artSlotPressedId = i + 125;
 
         if (it = dlg->GetH3DlgItem(artSlotId))
         {
