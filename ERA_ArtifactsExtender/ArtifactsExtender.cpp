@@ -26,8 +26,9 @@ DWORD *ArtifactsExtender::primarySkillsBonusTable = nullptr;
 DWORD ArtifactsExtender::primarySkillsBonusTableAddr = 0;
 LPCSTR *ArtifactsExtender::eventTable = nullptr;
 
-void ArtifactsExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
+void ArtifactsExtender::AfterLoadingObjectTxtProc()
 {
+    
 
     const int artifactsAdded = LoadNewArtifactsFromJson();
 
@@ -407,7 +408,7 @@ void __stdcall ArtifactsExtender::H3GameMainSetup__LoadObjects(HiHook *h, H3Main
 _ERH_(ArtifactsExtender::OnAfterWog)
 {
 
-    if (0)
+    // if (0)
     {
         auto &ins = ArtifactsExtender::Get();
         if (true)
@@ -415,7 +416,6 @@ _ERH_(ArtifactsExtender::OnAfterWog)
         }
 
         //    MessageBoxA(nullptr, "OnAfterWog", "", MB_OK);
-        ins.AfterLoadingObjectTxtProc(0);
     }
 }
 _LHF_(ArtifactsExtender::LoadArtTraits)
@@ -429,6 +429,7 @@ ArtifactsExtender &ArtifactsExtender::Get()
     if (instance == nullptr)
     {
         instance = new ArtifactsExtender();
+        instance->AfterLoadingObjectTxtProc();
     }
     return *instance;
 }

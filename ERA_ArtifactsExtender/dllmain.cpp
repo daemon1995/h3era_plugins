@@ -44,11 +44,8 @@ _ERH_(OnAfterWog)
 
         globalPatcher = GetPatcher();
         _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
-
-        Era::RegisterHandler(artifacts::ArtifactsExtender::OnAfterWog, "OnAfterWog");
-    }
-    else
-    {
+        artifacts::ArtifactsExtender::Get();
+        //        Era::RegisterHandler(artifacts::ArtifactsExtender::OnAfterWog, "OnAfterWog");
     }
 }
 

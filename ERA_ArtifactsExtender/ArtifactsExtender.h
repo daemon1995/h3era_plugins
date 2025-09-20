@@ -6,9 +6,7 @@ constexpr int TEST_ART_ID = 171; //
 constexpr int ARTIFACTS_OBJECT_TYPE = eObject::ARTIFACT;
 class ArtifactsExtender : public IGamePatch
 {
-    static constexpr LPCSTR advMapArtifactDefNameFormat =
-        "AVA%4d.def 011111111111111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 "
-        "111111111 000000001 5 %d 4 0";
+
     static ArtifactsExtender *instance;
 
     struct ArtifactsNumber
@@ -49,7 +47,7 @@ class ArtifactsExtender : public IGamePatch
     virtual ~ArtifactsExtender();
 
   protected:
-    void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes);
+    void AfterLoadingObjectTxtProc();
 
   protected:
     virtual void CreatePatches() override;
