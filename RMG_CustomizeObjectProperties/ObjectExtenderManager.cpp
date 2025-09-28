@@ -375,34 +375,37 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
         // iterate each added RMG INFO
         for (auto &info : additionalRmgObjects)
         {
+            H3RmgObjectGenerator *objGen = nullptr;
+
             // check if it is possible to add object into the list
             if (objectsSet.insert({info.type, info.subtype}).second)
             {
-                // iterate all extenders container
 
-                for (auto &extender : objectExtenders)
+                switch (info.type)
                 {
+                case eObject::CREATURE_GENERATOR4:
+                    objGen = CreateDefaultH3RmgObjectGenerator(info);
+                    objGen->vTable = reinterpret_cast<H3RmgObjectGenerator::VTable *>(0x0640BC8);
 
-                    // if yes then create obj gen
-                    H3RmgObjectGenerator *objGen = extender->CreateRMGObjectGen(info);
-                    // and return to add into the list
-                    if (objGen)
+                    break;
+                case eObject::FREELANCERS_GUILD:
+                    objGen = CreateDefaultH3RmgObjectGenerator(info);
+
+                    break;
+                default:
+                    // iterate all extenders container
+
+                    for (auto &extender : objectExtenders)
                     {
-                        rmgObjectsList->Push(objGen);
+                        // if yes then create obj gen
+                        objGen = extender->CreateRMGObjectGen(info);
+                        // and return to add into the list
                     }
+                    break;
                 }
-
-                if (info.type == eObject::CREATURE_GENERATOR4)
+                if (objGen)
                 {
-                    if (auto objGen = CreateDefaultH3RmgObjectGenerator(info))
-                    {
-                        objGen->vTable = reinterpret_cast<H3RmgObjectGenerator::VTable *>(0x0640BC8);
-                        rmgObjectsList->Push(objGen);
-                    }
-                    /*                  H3RmgObjectGenerator *objGen =
-                       H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1); THISCALL_5(H3RmgObjectGenerator *,
-                       0x534640, objGen, info.type, info.subtype, info.value, info.density); objGen->vTable =
-                       (H3RmgObjectGenerator::VTable *)0x0640BC8; rmgObjectsList->Push(objGen);*/
+                    rmgObjectsList->Push(objGen);
                 }
             }
         }

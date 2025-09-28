@@ -5,7 +5,7 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.28";
+const char *PLUGIN_VERSION = "1.29";
 const char *INSTANCE_NAME = "EraPlugin.ObjectExtender.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
