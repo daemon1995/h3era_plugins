@@ -2,7 +2,7 @@
 
 namespace warehouses
 {
-constexpr int WAREHOUSE_OBJECT_TYPE = 142;
+constexpr int WAREHOUSE_OBJECT_TYPE = eObject::BLANK4;
 
 struct H3MapItemWarehouse
 {
@@ -21,7 +21,7 @@ struct H3MapItemWarehouse
 
 class WarehousesExtender : public extender::ObjectExtender
 {
-    static WarehousesExtender* instance;
+    static WarehousesExtender *instance;
 
     WarehousesExtender();
 

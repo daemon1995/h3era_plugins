@@ -19,8 +19,8 @@ void __stdcall OnReportVersion(Era::TEvent *e)
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
 }
-Patcher *globalPatcher;
-PatcherInstance *_PI;
+Patcher *globalPatcher = nullptr;
+PatcherInstance *_PI = nullptr;
 
 /* TODO List
 1. Assign settings from settings dlg with lmitizer - Done

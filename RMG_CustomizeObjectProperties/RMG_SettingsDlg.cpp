@@ -324,11 +324,12 @@ int __fastcall HelpButtonProc(H3Msg *msg)
 {
     if (msg->IsLeftClick())
     {
-        H3String shellExecutePath = EraJS::read("RMG.text.dlg.buttons.help.url");
 
-        BOOL isOk = H3Messagebox::Choice(EraJS::read("RMG.text.dlg.buttons.help.question"));
+        const BOOL isOk = H3Messagebox::Choice(EraJS::read("RMG.text.dlg.buttons.help.question"));
         if (isOk)
         {
+            H3String shellExecutePath = EraJS::read("RMG.text.dlg.buttons.help.url");
+
             // call ShellExecuteA from exe to open github download page
             INT_PTR intRes =
                 STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", shellExecutePath.String(), NULL, NULL, SW_SHOWNORMAL);
@@ -1718,8 +1719,8 @@ void GetObjectPrototypesLists()
 
          eObject::WINDMILL, eObject::WITCH_HUT,
 
-         warehouses::WAREHOUSE_OBJECT_TYPE, extender::HOTA_OBJECT_TYPE, extender::HOTA_PICKUPABLE_OBJECT_TYPE, 146,
-         eObject::FREELANCERS_GUILD},
+         warehouses::WAREHOUSE_OBJECT_TYPE, extender::HOTA_OBJECT_TYPE, extender::HOTA_PICKUPABLE_OBJECT_TYPE,
+         extender::HOTA_UNREACHABLE_YT_OBJECT_TYPE, eObject::FREELANCERS_GUILD},
         {eObject::CREATURE_GENERATOR1, eObject::CREATURE_GENERATOR4},
         {eObject::PYRAMID}
 
@@ -2047,7 +2048,6 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
             _pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
             //_pi->WriteLoHook(0x58207F, H3SelectScenarioDialog_HideRandomMapsSettings);
             _pi->WriteLoHook(0x0588469, Dlg_SelectScenario_Proc);
-
 
             _pi->WriteHiHook(0x5BB1D1, THISCALL_, H3DlgEdit__TranslateInputKey);
 
