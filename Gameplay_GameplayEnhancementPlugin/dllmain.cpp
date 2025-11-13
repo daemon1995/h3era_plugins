@@ -5,7 +5,7 @@ PatcherInstance *_PI = nullptr;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.6.3";
+const char *PLUGIN_VERSION = "1.6.4";
 const char *INSTANCE_NAME = "EraPlugin.GameplayFeatures.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -16,6 +16,44 @@ void __stdcall OnReportVersion(Era::TEvent *e)
     sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
+}
+
+constexpr LPCSTR GEM_OPTIONS_BUTTON_NAME = "gem_map_menu";
+constexpr LPCSTR GEM_COMBAT_BUTTON_NAMES[] = {"gem_real_bg", "gem_temp_bg", "manualf",  "automf",    "autowm",
+                                              "choiceB",     "optionB",     "mithrilB", "indicator", "mit_res"};
+
+// redraw adventure manager dialog buttons to player color in multiplayer
+void __stdcall H3AdventureMgrDlg__SetButtonsPlayerColor(HiHook *h, H3AdventureMgrDlg *dlg, char isMultiplayer, int a3)
+{
+    THISCALL_3(void, h->GetDefaultFunc(), dlg, isMultiplayer, a3);
+
+    if (isMultiplayer)
+    {
+        DWORD redrawFunction = (*reinterpret_cast<DWORD **>(dlg))[5];
+        const int buttonId = Era::GetButtonID(GEM_OPTIONS_BUTTON_NAME);
+        auto button = dlg->GetDefButton(buttonId);
+
+        if (button)
+        {
+            THISCALL_4(void, redrawFunction, dlg, 0, buttonId, buttonId); // redraw options button
+        }
+
+        int minButtonId = 0, maxButtonId = 0;
+        for (LPCSTR btnName : GEM_COMBAT_BUTTON_NAMES)
+        {
+            const int cmbButtonId = Era::GetButtonID(btnName);
+
+            if (cmbButtonId < minButtonId || minButtonId == 0)
+                minButtonId = cmbButtonId;
+            if (cmbButtonId > maxButtonId)
+                maxButtonId = cmbButtonId;
+        }
+
+        if (minButtonId && maxButtonId)
+        {
+            THISCALL_4(void, redrawFunction, dlg, 0, minButtonId, maxButtonId); // redraw combat buttons
+        }
+    }
 }
 
 _LHF_(HooksInit)
@@ -35,6 +73,8 @@ _LHF_(HooksInit)
         advMapHints::AdventureMapHints::Init(globalPatcher->CreateInstance(vipPluginInstanceName));
     }
     artifacts::ArtifactHints::Get();
+
+    _PI->WriteHiHook(0x0403F60, THISCALL_, H3AdventureMgrDlg__SetButtonsPlayerColor);
 
     return EXEC_DEFAULT;
 }
@@ -76,6 +116,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             demolishButtonPatch = _PI->CreateDwordPatch(0x04F738A + 1, (int)demoBttn);
             // move and resize iam00.def (next hero buttn)
             constexpr BYTE defWidth = 32;
+
             _PI->WriteByte(0x401A85 + 1, defWidth);        // set width
             _PI->WriteDword(0x401A8C + 1, 679 + defWidth); // set y
         }
