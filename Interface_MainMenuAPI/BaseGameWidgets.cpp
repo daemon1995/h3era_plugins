@@ -76,11 +76,12 @@ int __fastcall BaseGameWidgets::WoGOptionsButtonProc(void *_msg)
 
 void __stdcall BaseGameWidgets::OnAfterReloadLanguageData(Era::TEvent *e)
 {
-    LPCSTR buttonNames[3] = {BaseGameWidgets::WIDGET_NAME_SYSTEM_OPTIONS, BaseGameWidgets::WIDGET_NAME_WOG_OPTIONS,
-                             BaseGameWidgets::WIDGET_NAME_HIDE};
-    LPCSTR buttonTexts[3] = {BaseGameWidgets::WIDGET_TEXT_SYSTEM_OPTIONS, BaseGameWidgets::WIDGET_TEXT_WOG_OPTIONS,
-                             BaseGameWidgets::WIDGET_TEXT_HIDE};
-    for (size_t i = 0; i < 3; i++)
+    constexpr LPCSTR buttonNames[] = {BaseGameWidgets::WIDGET_NAME_SYSTEM_OPTIONS,
+                                      BaseGameWidgets::WIDGET_NAME_WOG_OPTIONS, BaseGameWidgets::WIDGET_NAME_HIDE};
+    constexpr LPCSTR buttonTexts[] = {BaseGameWidgets::WIDGET_TEXT_SYSTEM_OPTIONS,
+                                      BaseGameWidgets::WIDGET_TEXT_WOG_OPTIONS, BaseGameWidgets::WIDGET_TEXT_HIDE};
+    constexpr int size = std::size(buttonNames);
+    for (size_t i = 0; i < size; i++)
     {
         MenuWidgetManager::Get().SetWidgetText(buttonNames[i], EraJS::read(buttonTexts[i]));
     }

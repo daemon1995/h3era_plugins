@@ -408,7 +408,7 @@ void MenuWidgetManager::HandleEvent(H3Msg *msg)
             const int widgetInd = msg->itemId - START_WIDGET_ID;
             const LocalMenuWidgetInfo *widget = createdWidgets[widgetInd];
 
-            if (widget->uiElement && widget->customProc && widget->id == msg->itemId)
+            if (widget && widget->uiElement && widget->customProc && widget->id == msg->itemId)
             {
                 if (widget->customProc(msg))
                     return;
@@ -418,7 +418,6 @@ void MenuWidgetManager::HandleEvent(H3Msg *msg)
         {
 
             if (arrows[0] && msg->itemId == arrows[0]->GetID())
-
             {
                 const int previousId = topWidgetId - START_WIDGET_ID - 1;
                 RedrawWidgets(previousId, msg->GetDlg());

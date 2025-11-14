@@ -3,7 +3,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.5";
+const char *PLUGIN_VERSION = "1.6";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -30,8 +30,12 @@ int __stdcall DlgMainMenu_NewLoad_Dtor(HiHook *h, H3BaseDlg *dlg)
 int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 {
     // Custom processing for the main menu dialog
-    MenuWidgetManager::Get().HandleEvent(msg);
-    return FASTCALL_1(int, h->GetDefaultFunc(), msg);
+	const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
+    if (!result)
+    {
+        MenuWidgetManager::Get().HandleEvent(msg);
+    }
+    return result;
 }
 
 int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
