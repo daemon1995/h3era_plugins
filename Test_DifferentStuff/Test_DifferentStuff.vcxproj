@@ -49,7 +49,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Pol Revisitable Creature Bank\EraPlugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\WoG\EraPlugins\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Link>

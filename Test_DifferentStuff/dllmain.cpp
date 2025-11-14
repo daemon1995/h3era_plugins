@@ -1,6 +1,7 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 // #define _H3API_PLUGINS_
 #define _H3API_PLUGINS_
+#define ERA_MODLIST
 
 #include "TestDlg.h"
 #include "framework.h"
@@ -266,6 +267,30 @@ void __stdcall CrBank_BattleMgr_And_Reward(HiHook *hook, H3AdventureManager *adv
 }
 _LHF_(HooksInit)
 {
+
+    // auto &vec = modList::GetEraModList();
+    // for (auto &i : vec)
+    //{
+    //     std::string modNameP = i + '/' + std::to_string(i.length());
+    //     MessageBoxA(0, modNameP.c_str(), "", MB_OK);
+    // }
+    ////function IsSse42Supported : boolean; assembler;
+    // int aVar = 23;
+    //__asm
+    //{
+    //     push ebx
+    //     mov eax, 1
+    //     cpuid
+    //     shr ecx, 20
+    //     and ecx, 1
+    //     mov eax, ecx
+    //     mov aVar, eax
+    //     pop ebx
+    //  //   end;
+    // }
+    // MessageBoxA(0, Era::IntToStr(aVar).c_str(), "caption", MB_OK);
+
+    return EXEC_DEFAULT;
     data.blockUserMessage = _PI->WriteJmp(0x04A1352, 0x04A1486);
     data.blockUserMessage->Undo();
 
@@ -328,11 +353,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
         globalPatcher = GetPatcher();
         _PI = globalPatcher->CreateInstance(dllText::instanceName);
+        Era::ConnectEra(hModule, dllText::instanceName);
+
         _PI->WriteLoHook(0x4EEAF2, HooksInit);
 
         // if (ver.era()      )
         {
-            Era::ConnectEra(hModule, dllText::instanceName);
         }
 
     case DLL_THREAD_ATTACH:
