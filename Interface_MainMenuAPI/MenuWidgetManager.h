@@ -8,7 +8,7 @@ struct LocalMenuWidgetInfo
 {
     std::string name; // Renamed from id
     std::string text;
-    mainmenu::eMenuList menuList = mainmenu::eMenuList::MAIN;
+    mainmenu::eMenuFlags menuList = mainmenu::eMenuFlags::MAIN;
     int(__fastcall *customProc)(void *) = nullptr;
     H3DlgCaptionButton *uiElement = nullptr;
     int id = 0; // Integer ID for the dialog item
@@ -47,7 +47,7 @@ class MenuWidgetManager
     int topWidgetId = 0;
     int bottomWidgetId = 0;
     int displayedWidgetsCount = 0;
-    mainmenu::eMenuList menuType = mainmenu::eMenuList::MAIN;
+    mainmenu::eMenuFlags menuType = mainmenu::eMenuFlags::MAIN;
     H3LoadedPcx16 *framedBackgroundPcx = nullptr;
     H3LoadedPcx16 *insideBackupScreenPcx = nullptr;
     H3LoadedPcx16 *outsideBackupScreenPcx = nullptr;
@@ -67,7 +67,7 @@ class MenuWidgetManager
   public:
     INT RegisteredNumber() const noexcept;
     BOOL RegisterWidget(const mainmenu::MenuWidgetInfo &info);
-    void CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList menuList);
+    void CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags menuList);
     void DestroyWidgets(H3BaseDlg *dlg);
     void HandleEvent(H3Msg *msg);
     BOOL IsVisible() const noexcept;

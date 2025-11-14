@@ -70,7 +70,7 @@ _LHF_(HooksInit)
     _PI->WriteLoHook(0x4F8751, MainWindow_F1);
 
     mainmenu::MenuWidgetInfo buttonInfo{main::MainDlg::MAIN_MENU_WIDGET_NAME,
-                                        EraJS::read(main::MainDlg::MAIN_MENU_WIDGET_NAME), mainmenu::eMenuList::ALL,
+                                        EraJS::read(main::MainDlg::MAIN_MENU_WIDGET_NAME), mainmenu::eMenuFlags::ALL,
                                         main::MainDlg::MainMenuButtonProc};
     mainmenu::MainMenu_RegisterWidget(buttonInfo);
 

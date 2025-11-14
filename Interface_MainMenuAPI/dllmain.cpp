@@ -18,7 +18,7 @@ int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg);
 int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
 {
     const int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
-    MenuWidgetManager::Get().CreateWidgets(dlg, val ? mainmenu::eMenuList::LOAD_GAME : mainmenu::eMenuList::NEW_GAME);
+    MenuWidgetManager::Get().CreateWidgets(dlg, val ? mainmenu::eMenuFlags::LOAD_GAME : mainmenu::eMenuFlags::NEW_GAME);
     return result;
 }
 
@@ -30,8 +30,8 @@ int __stdcall DlgMainMenu_NewLoad_Dtor(HiHook *h, H3BaseDlg *dlg)
 int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 {
     // Custom processing for the main menu dialog
-	const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
-    if (!result)
+    const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
+    if (result != 2)
     {
         MenuWidgetManager::Get().HandleEvent(msg);
     }
@@ -54,7 +54,7 @@ int __stdcall DlgMainMenu_Campaign_Ctor(HiHook *h, H3BaseDlg *dlg)
 {
     const int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
 
-    MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuList::CAMPAIGN);
+    MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuFlags::CAMPAIGN);
     if (campaignData.dlg == nullptr)
     {
         campaignData.dlg = dlg;
@@ -115,7 +115,7 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
             _PI->WriteHiHook(0x04EF67A, THISCALL_, DlgMainMenu_NewLoad_Dtor);
             BaseGameWidgets::RegisterWidgets();
         }
-        MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuList::MAIN);
+        MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuFlags::MAIN);
     }
     else
     {

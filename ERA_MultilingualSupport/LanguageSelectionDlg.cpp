@@ -326,8 +326,9 @@ void LanguageSelectionDlg::Init()
     {
         using namespace mainmenu;
 
-        eMenuList menuList = eMenuList::ALL;
-        MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, LocaleManager::GetDisplayedName(), menuList,
+        const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
+
+        MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, LocaleManager::GetDisplayedName(), flags,
                                 &CurrentDlg_HandleLocaleDlgStart};
         MainMenu_RegisterWidget(langInfo);
     }

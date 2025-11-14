@@ -103,7 +103,7 @@ VOID __fastcall MenuWidgetManager::DlgScroll_Proc(INT32 tickId, H3BaseDlg *dlg)
     Get().RedrawWidgets(tickId, dlg);
 }
 
-void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList menuList)
+void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags menuList)
 {
 
     const size_t registeredWidgetsCount = registeredWidgets.size();
@@ -113,17 +113,37 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
         return;
     }
 
-    createdWidgets.clear();
-    createdWidgets.reserve(registeredWidgetsCount);
+    // createdWidgets.reserve(registeredWidgetsCount);
     menuType = menuList;
+
+    std::vector<LocalMenuWidgetInfo *> topWidgets, bottomWidgets, middleWidgets;
 
     for (auto &widget : registeredWidgets)
     {
-        if (widget.menuList & menuList)
+        const int widgetFlags = widget.menuList;
+        if (widgetFlags & menuList)
         {
-            createdWidgets.push_back(&widget);
+            if (widgetFlags & mainmenu::ON_TOP)
+            {
+                topWidgets.push_back(&widget);
+            }
+            else if (widgetFlags & mainmenu::AT_BOTTOM)
+            {
+                bottomWidgets.push_back(&widget);
+            }
+            else
+            {
+                middleWidgets.push_back(&widget);
+            }
         }
     }
+
+    createdWidgets.clear();
+    createdWidgets.reserve(topWidgets.size() + middleWidgets.size() + bottomWidgets.size());
+    createdWidgets.insert(createdWidgets.end(), topWidgets.begin(), topWidgets.end());
+    createdWidgets.insert(createdWidgets.end(), middleWidgets.begin(), middleWidgets.end());
+    createdWidgets.insert(createdWidgets.end(), bottomWidgets.begin(), bottomWidgets.end());
+
     createdWidgets.shrink_to_fit();
     size_t currentMenuTypeWidgets = createdWidgets.size();
 
@@ -189,7 +209,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuList 
 
     if (placedOutside && hideWidgetInd >= 0)
     {
-        std::swap(createdWidgets[0], createdWidgets.back());
+        memmove(&createdWidgets[0], &createdWidgets[1], (currentMenuTypeWidgets - 1) * sizeof(LocalMenuWidgetInfo *));
         currentMenuTypeWidgets -= 1; // Remove the hide widget from the list
         createdWidgets.pop_back();
     }
@@ -394,7 +414,7 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
     placedOutside = false;
     scrollbar = nullptr;
     memset(arrows, 0, sizeof(arrows));
-    menuType = mainmenu::eMenuList::MAIN;
+    menuType = mainmenu::eMenuFlags::MAIN;
     createdWidgets.clear();
 }
 

@@ -2055,10 +2055,13 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
         }
         _pi->WriteHiHook(0x4FB930, THISCALL_, GameStart);
 
-        mainmenu::MenuWidgetInfo widgetInfo;
+        using namespace mainmenu;
+        MenuWidgetInfo widgetInfo;
         widgetInfo.name = MAIN_MENU_WIDGET_UUID;
         widgetInfo.customProc = RMG_SettingsDlg::RMGDlgOptionsButtonProc;
-        widgetInfo.menuList = mainmenu::ALL;
+        const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::NEW_GAME | eMenuFlags::AT_BOTTOM);
+
+        widgetInfo.menuList = flags;
         widgetInfo.text = EraJS::read(MAIN_MENU_JSON_KEY);
 
         mainmenu::MainMenu_RegisterWidget(widgetInfo);
