@@ -127,13 +127,13 @@ Release/*.era
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
-
 # Rider
 .idea/
 *.sln.iml
 
 # Visual Studio Code
 .vscode/
+headers/H3API_for_copilot/
 
 # 📝 ФАЙЛЫ КОТОРЫЕ ВКЛЮЧАЕМ В GIT
 # =============================================================================
