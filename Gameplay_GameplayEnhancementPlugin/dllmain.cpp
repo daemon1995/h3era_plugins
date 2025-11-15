@@ -5,7 +5,7 @@ PatcherInstance *_PI = nullptr;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.6.4";
+const char *PLUGIN_VERSION = "1.7.0";
 const char *INSTANCE_NAME = "EraPlugin.GameplayFeatures.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -29,29 +29,28 @@ void __stdcall H3AdventureMgrDlg__SetButtonsPlayerColor(HiHook *h, H3AdventureMg
 
     if (isMultiplayer)
     {
-        DWORD redrawFunction = (*reinterpret_cast<DWORD **>(dlg))[5];
         const int buttonId = Era::GetButtonID(GEM_OPTIONS_BUTTON_NAME);
         auto button = dlg->GetDefButton(buttonId);
 
         if (button)
-        {
-            THISCALL_4(void, redrawFunction, dlg, 0, buttonId, buttonId); // redraw options button
-        }
+            button->Draw();
 
         int minButtonId = 0, maxButtonId = 0;
         for (LPCSTR btnName : GEM_COMBAT_BUTTON_NAMES)
         {
             const int cmbButtonId = Era::GetButtonID(btnName);
-
-            if (cmbButtonId < minButtonId || minButtonId == 0)
-                minButtonId = cmbButtonId;
-            if (cmbButtonId > maxButtonId)
-                maxButtonId = cmbButtonId;
+            if (cmbButtonId > -1)
+            {
+                if (cmbButtonId < minButtonId || minButtonId == 0)
+                    minButtonId = cmbButtonId;
+                if (cmbButtonId > maxButtonId)
+                    maxButtonId = cmbButtonId;
+            }
         }
 
         if (minButtonId && maxButtonId)
         {
-            THISCALL_4(void, redrawFunction, dlg, 0, minButtonId, maxButtonId); // redraw combat buttons
+            dlg->RedrawItemRange(a3, minButtonId, maxButtonId); // redraw combat buttons
         }
     }
 }

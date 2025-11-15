@@ -120,6 +120,249 @@ void GraphicsEnhancements::InitHeroClassData(const UINT classId) noexcept
         }
     }
 }
+
+_LHF_(AdventureManager_DrawHeroDef)
+{
+    if (const auto *hero = reinterpret_cast<H3Hero *>(c->edi))
+    {
+        if (auto def = GraphicsEnhancements::Hero_GetMapItemDef(hero))
+        {
+            c->Ecx(def);
+            return NO_EXEC_DEFAULT;
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+
+_LHF_(AdventureManager_DrawHeroDefTransparent)
+{
+    if (const auto *hero = reinterpret_cast<H3Hero *>(c->esi))
+    {
+        if (auto def = GraphicsEnhancements::Hero_GetMapItemDef(hero))
+        {
+            c->Ecx(def);
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+_LHF_(AdventureManager_DrawHeroDefShadow)
+{
+    if (const auto *hero = reinterpret_cast<H3Hero *>(c->ebx))
+    {
+        if (auto def = GraphicsEnhancements::Hero_GetMapItemDef(hero))
+        {
+            c->Ecx(def);
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+_LHF_(AdventureManager_Show)
+{
+    if (auto instance = GraphicsEnhancements::Get())
+    {
+        for (size_t i = 0; i < GraphicsEnhancements::MAX_UNIQUE_HEROES; i++)
+        {
+            instance->InitHeroData(i);
+        }
+        for (size_t i = 0; i < GraphicsEnhancements::MAX_UNIQUE_CLASSES; i++)
+        {
+            instance->InitHeroClassData(i);
+        }
+
+        instance->InitAdventureMapTownBuiltDefs();
+    }
+    return EXEC_DEFAULT;
+}
+
+_LHF_(AdventureManager_Hide)
+{
+    //  dereference hero unuique and classes defs
+    GraphicsEnhancements::Get()->CleanUpData();
+    return EXEC_DEFAULT;
+}
+void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
+{
+    // get max towns displayable built icons from config
+    constexpr int hdModMax = 7;
+    maxTownsDisplayableBuiltIcons = Clamp(5, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", 5), hdModMax);
+    // townBuiltDlgDefButtons.assign(nullptr);
+    const int firstDefButtonId = globalPatcher->VarGetValue<int>("HD.AdvMgr.ID32", 32);
+    auto &dlg = P_AdventureManager->dlg;
+    if (auto firstDef = dlg->GetH3DlgItem(firstDefButtonId))
+    {
+        const int xPos = firstDef->GetX() + 32;
+        const int yBase = firstDef->GetY();
+        auto &advMapDlg = builtDefButtons.advMapDlg;
+
+        for (size_t i = 0; i < hdModMax; i++)
+        {
+            H3String buttonName = H3String::Format(GraphicsEnhancements::BUILD_BUTTON_NAME_FORMAT_MAP, i);
+            const int buttonId = Era::GetButtonID(buttonName.String());
+            if (buttonId != -1)
+            {
+                auto &defButton = advMapDlg[i];
+                if (defButton = dlg->GetDefButton(buttonId))
+                {
+                    defButton->HideDeactivate();
+                    defButton->SetX(xPos);
+                    defButton->SetY(yBase + (i << 5) + 15);
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+}
+void AdjustTownBuiltButtonPosition(H3DlgDefButton *defButton, const int townIndex)
+{
+    if (townIndex == -1)
+    {
+        defButton->HideDeactivate();
+        return;
+    }
+
+    const H3Town *currentTown = &P_Game->towns[townIndex];
+    if (currentTown->builtThisTurn)
+    {
+        defButton->HideDeactivate();
+        return;
+    }
+
+    int finalFrame = 0;
+    for (size_t i = 0; i < limits::BUILDINGS; i++)
+    {
+        if (i == eBuildings::GRAIL)
+            continue;
+
+        // check if building is buildable in town
+        if (THISCALL_2(bool, 0x05C1120, currentTown, i))
+        {
+            // skip if building is already built
+            if (currentTown->IsBuildingBuilt(i))
+                continue;
+
+            // if player may afford that building
+            if (FASTCALL_2(bool, 0x0460D10, currentTown, i))
+            {
+                defButton->HideDeactivate();
+                return;
+            }
+            finalFrame = 2; // show "no money"
+        }
+    }
+    defButton->SetFrame(finalFrame); // show built
+    defButton->ShowActivate();
+}
+
+void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dlg, const BOOL draw,
+                                                           const BOOL updateScreen) noexcept
+{
+    if (const int forceHide = IntAt(0x699588))
+        return;
+
+    const auto mePlayer = P_Game->GetPlayer();
+
+    auto &advMapDlg = builtDefButtons.advMapDlg;
+
+    for (size_t i = 0; i < maxTownsDisplayableBuiltIcons; i++)
+    {
+        auto townIndex = mePlayer->towns[i + dlg->topTownSlotIndex];
+        if (townIndex != -1)
+        {
+            auto &defButton = advMapDlg[i];
+
+            AdjustTownBuiltButtonPosition(defButton, townIndex);
+            if (!draw || !defButton->IsVisible())
+                continue;
+
+            defButton->Draw();
+            const int buttonId = defButton->GetID();
+
+            if (updateScreen)
+                defButton->Refresh();
+        }
+    }
+}
+BOOL isSetActiveHeroOngoing = FALSE;
+
+void __stdcall AdvMgr__SetActiveHero(HiHook *h, H3AdventureManager *mgr, signed int heroId, char isReplay,
+                                     char isActivePlayer, char showAction)
+{
+    isSetActiveHeroOngoing = TRUE;
+    THISCALL_5(void, h->GetDefaultFunc(), mgr, heroId, isReplay, isActivePlayer, showAction);
+    // if (!isFullUpdateOngoing)
+    GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(mgr->dlg, showAction, showAction);
+    isSetActiveHeroOngoing = FALSE;
+}
+void __stdcall H3AdventureMgrDlg__RedrawTownSlots(HiHook *h, H3AdventureMgrDlg *dlg, signed int playrId, char updateDlg,
+                                                  char redrawScreen)
+{
+    THISCALL_4(void, h->GetDefaultFunc(), dlg, playrId, updateDlg, redrawScreen);
+    if (!isSetActiveHeroOngoing)
+    {
+        GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(dlg, updateDlg, redrawScreen);
+        Era::ExecErmCmd("IF:L^H3AdventureMgrDlg__RedrawTownSlots^");
+
+    }
+}
+void __stdcall H3AdventureMgrDlg__RedrawTownSlotsA(HiHook *h, H3AdventureMgrDlg *dlg, signed int playrId,
+                                                   char updateDlg, char redrawScreen)
+{
+    //THISCALL_4(void, h->GetDefaultFunc(), dlg, playrId, updateDlg, redrawScreen);
+
+    GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(dlg, 1, 1);
+       Era::ExecErmCmd("IF:L^H3AdventureMgrDlg__RedrawTownSlotsA^");
+}
+void __stdcall AdvMgr_FullUpdate(HiHook *h, H3AdventureMgrDlg *dlg, char redraw)
+{
+    THISCALL_2(void, h->GetDefaultFunc(), dlg, redraw);
+    if (!isSetActiveHeroOngoing)
+        GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(dlg, true, false);
+    else
+		Era::ExecErmCmd("IF:L^1^");
+}
+void __stdcall H3TownDlg__SetSmallTownFrame(HiHook *h, H3TownDialog *dlg, signed int townIndex)
+{
+    THISCALL_2(void, h->GetDefaultFunc(), dlg, townIndex);
+
+    H3String buttonName = H3String::Format(GraphicsEnhancements::BUILD_BUTTON_NAME_FORMAT_TOWN, townIndex);
+    const int buttonId = Era::GetButtonID(buttonName.String());
+
+    if (buttonId == -1)
+    {
+        return;
+    }
+
+    const auto mePlayer = P_Game->GetPlayer();
+    auto defButton = dlg->GetDefButton(buttonId);
+
+    if (townIndex >= mePlayer->townsCount)
+    {
+        defButton->HideDeactivate();
+        return;
+    }
+
+    const auto townId = mePlayer->towns[townIndex + dlg->townIndex];
+    if (townId != -1)
+    {
+        const auto originalDefId = dlg->GetDef(155 + townIndex);
+
+        defButton->SetX(originalDefId->GetX() + 32);
+        defButton->SetY(originalDefId->GetY() + 15);
+        AdjustTownBuiltButtonPosition(defButton, townId);
+        defButton->DeActivate();
+    }
+    else
+    {
+        defButton->HideDeactivate();
+    }
+}
+
 void GraphicsEnhancements::CleanUpData() noexcept
 {
     // clean unique hero defs
@@ -144,67 +387,10 @@ void GraphicsEnhancements::CleanUpData() noexcept
             }
         }
     }
-}
-
-_LHF_(AdventureManager_DrawHeroDef)
-{
-    if (const auto *hero = reinterpret_cast<H3Hero *>(c->edi))
-    {
-        if (auto def = GraphicsEnhancements::Hero_GetMapItemDef(hero))
-        {
-            c->ecx = reinterpret_cast<int>(def);
-            return NO_EXEC_DEFAULT;
-        }
-    }
-
-    return EXEC_DEFAULT;
-}
-
-_LHF_(AdventureManager_DrawHeroDefTransparent)
-{
-    if (const auto *hero = reinterpret_cast<H3Hero *>(c->esi))
-    {
-        if (auto def = GraphicsEnhancements::Hero_GetMapItemDef(hero))
-        {
-            c->ecx = reinterpret_cast<int>(def);
-            // return NO_EXEC_DEFAULT;
-        }
-    }
-
-    return EXEC_DEFAULT;
-}
-_LHF_(AdventureManager_DrawHeroDefShadow)
-{
-    if (const auto *hero = reinterpret_cast<H3Hero *>(c->ebx))
-    {
-        if (auto def = GraphicsEnhancements::Hero_GetMapItemDef(hero))
-        {
-            c->ecx = reinterpret_cast<int>(def);
-        }
-    }
-
-    return EXEC_DEFAULT;
-}
-_LHF_(AdventureManager_Show)
-{
-    if (auto instance = GraphicsEnhancements::Get())
-    {
-        for (size_t i = 0; i < GraphicsEnhancements::MAX_UNIQUE_HEROES; i++)
-        {
-            instance->InitHeroData(i);
-        }
-        for (size_t i = 0; i < GraphicsEnhancements::MAX_UNIQUE_CLASSES; i++)
-        {
-            instance->InitHeroClassData(i);
-        }
-    }
-    return EXEC_DEFAULT;
-}
-_LHF_(AdventureManager_Hide)
-{
-    // dereference hero unuique and classes defs
-    GraphicsEnhancements::Get()->CleanUpData();
-    return EXEC_DEFAULT;
+    auto &advMapDlg = builtDefButtons.advMapDlg;
+    libc::memset(advMapDlg.data(), 0, std::size(advMapDlg));
+    auto &townDlg = builtDefButtons.townDlg;
+    libc::memset(townDlg.data(), 0, std::size(townDlg));
 }
 void GraphicsEnhancements::CreatePatches() noexcept
 {
@@ -212,7 +398,7 @@ void GraphicsEnhancements::CreatePatches() noexcept
     _pi->WriteLoHook(0x4C980D, Game_AtTownSettingMapItemDef);
 
     // set different heroes on map views
-    // hok is at "mov ecx" so chnage ecx and return NO_EXEC_DEFAULT;
+    // hook is at "mov ecx" so chnage ecx and return NO_EXEC_DEFAULT;
     _pi->WriteLoHook(0x47F443, AdventureManager_DrawHeroDef); // @Hawaiing
     _pi->WriteLoHook(0x47F876, AdventureManager_DrawHeroDef); // @Hawaiing
 
@@ -222,8 +408,23 @@ void GraphicsEnhancements::CreatePatches() noexcept
     _pi->WriteLoHook(0x047F592, AdventureManager_DrawHeroDefShadow);      // @Hawaiing
 
     // is needed to load/unload defs
+    _pi->WriteLoHook(0x040730F, AdventureManager_Show);
     _pi->WriteLoHook(0x04077B6, AdventureManager_Hide);
-    _pi->WriteLoHook(0x0407302, AdventureManager_Show);
+
+    WriteHiHook(0x0417A80, THISCALL_, AdvMgr__SetActiveHero);
+    //   WriteHiHook(0x0417790, THISCALL_, H3AdventureMgrDlg__SetActiveTown);
+    WriteHiHook(0x00403420, THISCALL_, H3AdventureMgrDlg__RedrawTownSlots);
+    WriteHiHook(0x0417E79, THISCALL_, H3AdventureMgrDlg__RedrawTownSlotsA);
+
+    WriteHiHook(0x00417446, THISCALL_, AdvMgr_FullUpdate);
+
+    WriteHiHook(0x05C5EBC, THISCALL_, H3TownDlg__SetSmallTownFrame);
+
+    // WriteHiHook(0x04038C0, THISCALL_, AdvMap_Dlg_sub_004038C0);
+
+    // draw "is everything built" town view
+
+    // const int townsNum = ;
 }
 
 GraphicsEnhancements::GraphicsEnhancements()
