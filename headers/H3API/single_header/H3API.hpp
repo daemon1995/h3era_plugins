@@ -16981,6 +16981,7 @@ namespace h3
 		_H3API_ H3DlgItem* AddItem(H3DlgItem* item, BOOL initiate = TRUE);
 		_H3API_ VOID       Redraw(INT32 x, INT32 y, INT32 dx, INT32 dy); // redraw part of dialog
 		_H3API_ VOID       Redraw(); // redraw whole dialog
+		_H3API_ VOID       RedrawItemRange(BOOL redrawScreen, UINT16 startID, UINT16 endID); // redraw item range
 		_H3API_ INT32      DefaultProc(H3Msg* msg);
 		_H3API_ INT32      DefaultProc(H3Msg& msg);
 
@@ -17143,7 +17144,7 @@ namespace h3
 		/** @brief [64]*/
 		INT32                 topHeroSlotIndex;
 		/** @brief [68]*/
-		h3unk32               _f_68;
+		h3unk32               topTownSlotIndex;
 		/** @brief [6C]*/
 		h3unk8                _f_6C;
 		/** @brief [70]*/
@@ -33105,6 +33106,11 @@ namespace h3
 	_H3API_ VOID H3BaseDlg::Redraw()
 	{
 		vRedraw(TRUE, -65535, 65535);
+	}
+	_H3API_ VOID H3BaseDlg::RedrawItemRange(BOOL redrawScreen, UINT16 startID, UINT16 endID)
+	{
+		const DWORD redrawFunction = (*reinterpret_cast<DWORD**>(this))[5];
+		THISCALL_4(void, redrawFunction, this, redrawScreen, startID, endID);
 	}
 	_H3API_ INT32 H3BaseDlg::DefaultProc(H3Msg* msg)
 	{
