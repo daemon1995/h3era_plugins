@@ -265,9 +265,25 @@ void __stdcall CrBank_BattleMgr_And_Reward(HiHook *hook, H3AdventureManager *adv
         }
     }
 }
+//_LHF_(AICombat_CheckECX)
+//{
+//    // if ECX == 0, skip the check and return true
+//    if (c->ecx < 0)
+//    {
+//		H3Messagebox("pol_AiCombat: ECX < 0 detected, skipping check and returning true.");
+//
+//    }
+//    if (c->eax<-1 || c->eax > 999)
+//    {
+//        H3Messagebox("pol_AiCombat: EAX < 0 detected, skipping check and returning true.");
+//
+//    }
+//    return EXEC_DEFAULT;
+//}
+
 _LHF_(HooksInit)
 {
-
+   // _PI->WriteLoHook(0x04242B1, AICombat_CheckECX);
     // auto &vec = modList::GetEraModList();
     // for (auto &i : vec)
     //{

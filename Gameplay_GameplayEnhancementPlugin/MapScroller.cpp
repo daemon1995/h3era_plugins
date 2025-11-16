@@ -2,7 +2,7 @@
 
 namespace scroll
 {
-MapScroller * MapScroller::instance = nullptr;
+MapScroller *MapScroller::instance = nullptr;
 
 MapScroller::MapScroller() noexcept
     : IGamePatch(globalPatcher->CreateInstance("EraPlugin.MapScrolling.daemon_n")),
@@ -16,8 +16,8 @@ MapScroller::MapScroller() noexcept
 MapScroller &MapScroller::Get() noexcept
 {
 
-	if(instance == nullptr)
-		instance = new MapScroller();
+    if (instance == nullptr)
+        instance = new MapScroller();
     return *instance;
 }
 
