@@ -272,10 +272,12 @@ void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dl
 
     for (size_t i = 0; i < maxTownsDisplayableBuiltIcons; i++)
     {
-        auto townIndex = mePlayer->towns[i + dlg->topTownSlotIndex];
+        const auto townIndex = mePlayer->towns[i + dlg->topTownSlotIndex];
         if (townIndex != -1)
         {
             auto &defButton = advMapDlg[i];
+            if (defButton == nullptr)
+                continue;
 
             AdjustTownBuiltButtonPosition(defButton, townIndex);
             if (!draw || !defButton->IsVisible())
