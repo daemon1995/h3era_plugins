@@ -69,26 +69,21 @@ const UINT GetTownTime(const H3Town *town)
     return result;
 }
 
-int __stdcall TownManager::TownMgrDlg_CreateBackgroundImageName(HiHook *h, char *buffer, char *formatName,
-                                                                char *townPrefixName)
+int __cdecl TownManager::TownMgrDlg_CreateBackgroundImageName(HiHook *h, char *buffer, char *formatName,
+                                                              char *townPrefixName)
 {
-    int result = CDECL_3(int, h->GetDefaultFunc(), buffer, formatName, townPrefixName);
+    const H3Town *town = P_TownManager->town;
 
-    if (H3Town *town = P_TownManager->town)
-    {
-        if (town->type < h3::limits::TOWNS)
-        {
-            const UINT thisTownTime = GetTownTime(town);
-            TownMgr_RedirectBuildingGraphics(town->type, thisTownTime);
-            Get().backgroundDrawInfo.Update(townPrefixName, thisTownTime);
-            Get().animationDrawInfo.Update(townPrefixName, thisTownTime);
+    if (!town || town->type >= h3::limits::TOWNS)
+        return CDECL_3(int, h->GetDefaultFunc(), buffer, formatName, townPrefixName);
 
-            // set new background name
-            result = h3::libc::sprintf(buffer, "%s_%dBG.pcx", townPrefixName, thisTownTime);
-        }
-    }
+    const UINT thisTownTime = GetTownTime(town);
+    TownMgr_RedirectBuildingGraphics(town->type, thisTownTime);
+    Get().backgroundDrawInfo.Update(townPrefixName, thisTownTime);
+    Get().animationDrawInfo.Update(townPrefixName, thisTownTime);
 
-    return result;
+    // set new background name
+    return h3::libc::sprintf(buffer, "%s_%dBG.pcx", townPrefixName, thisTownTime);
 }
 void __stdcall TownManager::TownMgrDlg_DrawBackgroundImageNameInProc(HiHook *h, H3DlgPcx16 *background)
 {

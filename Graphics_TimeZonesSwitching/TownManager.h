@@ -42,7 +42,7 @@ class TownManager : public IGamePatch
     } animationDrawInfo;
 
   private:
-    static int __stdcall TownMgrDlg_CreateBackgroundImageName(HiHook *h, char *buffer, char *formatName,
+    static int __cdecl TownMgrDlg_CreateBackgroundImageName(HiHook *h, char *buffer, char *formatName,
                                                               char *townPrefixName);
     static void __stdcall TownMgrDlg_DrawBackgroundImageNameInProc(HiHook *h, H3DlgPcx16 *background);
     static void __stdcall TownMgrDlg_BuildingsWindowsRedraw(HiHook *h, H3WindowManager *wndMgr, const int x,
