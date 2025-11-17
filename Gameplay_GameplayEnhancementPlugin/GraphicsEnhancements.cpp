@@ -263,10 +263,12 @@ void AdjustTownBuiltButtonPosition(H3DlgDefButton *defButton, const int townInde
 void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dlg, const BOOL draw,
                                                            const BOOL updateScreen) noexcept
 {
-    if (const int forceHide = IntAt(0x699588))
+    if (IntAt(0x699588)) // check if force hide map
         return;
 
     const auto mePlayer = P_Game->GetPlayer();
+    if (mePlayer->ownerID != P_CurrentPlayerID) // check if not current player
+        return;
 
     auto &advMapDlg = builtDefButtons.advMapDlg;
 
@@ -298,6 +300,16 @@ void __stdcall AdvMgr__AtSetActiveHero_BeforeScreenRedraw(HiHook *h, H3WindowMan
     GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(P_AdventureManager->dlg, true, false);
     THISCALL_5(void, h->GetDefaultFunc(), mgr, x, y, width, height);
 }
+
+void __stdcall H3AdventureMgrDlg__RedrawHeroSlots(HiHook *h, H3AdventureMgrDlg *dlg, signed int playrId, char updateDlg,
+                                                  char redrawScreen)
+{
+    THISCALL_4(void, h->GetDefaultFunc(), dlg, playrId, updateDlg, redrawScreen);
+
+    if (P_Game->GetPlayer()->is_human2)
+        GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(dlg, updateDlg, redrawScreen);
+}
+
 void __stdcall H3AdventureMgrDlg__RedrawTownSlots(HiHook *h, H3AdventureMgrDlg *dlg, signed int playrId, char updateDlg,
                                                   char redrawScreen)
 {
@@ -433,8 +445,7 @@ void GraphicsEnhancements::CreatePatches() noexcept
     {
         WriteHiHook(0x0417FFB, THISCALL_, AdvMgr__AtSetActiveHero_BeforeScreenRedraw);
         WriteHiHook(0x00403420, THISCALL_, H3AdventureMgrDlg__RedrawTownSlots);
-
-        // WriteHiHook(0x0417E79, THISCALL_, H3AdventureMgrDlg__RedrawTownSlotsA);
+        WriteHiHook(0x004032E0, THISCALL_, H3AdventureMgrDlg__RedrawHeroSlots);
 
         WriteHiHook(0x00417446, THISCALL_, AdvMgr_AtFullUpdate);
 
