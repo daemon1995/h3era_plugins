@@ -14,28 +14,27 @@ LegendHeroes::LegendHeroes(PatcherInstance *pi) : IGamePatch(pi)
     m_swapWgt[1] = new MeetWgt("nhd.hero_right");
     m_heroWgt = new HeroWgt("nhd.hero_screen");
 
-    m_heroLooks = HeroLook::heroLook;
     HeroLook::ResetSettings();
+    m_heroLooks = HeroLook::heroLook;
+
     // HeroLook::LoadIniSettings(m_heroLooks);
 }
 
 void LegendHeroes::Init(PatcherInstance *pi)
 {
-
     if (!instance)
     {
         instance = new LegendHeroes(pi);
-        if (instance)
-        {
-            instance->_pi = pi;
-            instance->CreatePatches();
-            instance->m_isInited = true;
-        }
+        instance->CreatePatches();
     }
 }
 
 void LegendHeroes::CreatePatches() noexcept
 {
+    if (m_isInited)
+    {
+        return;
+    }
     m_drawBuffer[0] = H3LoadedPcx16::Create(800, 600);
     m_drawBuffer[1] = H3LoadedPcx16::Create(800, 600);
 
@@ -93,7 +92,7 @@ void LegendHeroes::CreatePatches() noexcept
 
     m_isInited = true;
 }
-constexpr int HEROES_MAX_AMOUNT = 155;
+
 constexpr UINT16 NPC_BUTTON_ID = 4445;
 constexpr int DLG_CMD_SET_DEF = 9;
 constexpr int DLG_CMD_SET_PCX = 11;
@@ -103,14 +102,16 @@ constexpr int BG_PCX_WIDTH = 287;
 void __stdcall LegendHeroes::OnAfterErmInstructions(Era::TEvent *event)
 {
     auto heroLook = instance->m_heroLooks;
-    for (int i = 0; i < HEROES_MAX_AMOUNT; i++)
+
+    if (heroLook->forceOverride)
     {
-        if (!heroLook->forceOverride && !heroLook[i].original)
+        return;
+    }
+    for (int i = 0; i < heroLook->heroCount; i++)
+    {
+        if (!heroLook[i].original)
         {
-            libc::sprintf(const_cast<char *>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
-                          heroLook[i].portraitIndex);
-            libc::sprintf(const_cast<char *>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
-                          heroLook[i].portraitIndex);
+            heroLook->AssignPngPortrait(i);
         }
     }
 }

@@ -7,19 +7,23 @@ bool HeroLook::needRedraw = false;
 bool HeroLook::changeButtons = false;
 
 H3String HeroLook::pcxNames[4];
-constexpr UINT16 HEROES_MAX_AMOUNT = h3::limits::HEROES;
+
 constexpr UINT16 CAMPAIGN_FACTION_ID = 99;
-HeroLook HeroLook::heroLook[HEROES_MAX_AMOUNT];
+HeroLook *HeroLook::heroLook = nullptr;
+int HeroLook::heroCount = h3::limits::HEROES;
+char HeroLook::portraitNameBuffer[13] = {};
+
+// [HEROES_MAX_AMOUNT] ;
 
 // UINT16 HeroLook::ornament;
 // constexpr const char* HeroLook::pcxPngNames = {""};
 
-constexpr const char* NHD_EMPTY_PCX = "nhd_look.pcx";
+constexpr const char *NHD_EMPTY_PCX = "nhd_look.pcx";
 
 void HeroLook::CorrectPcxNames(const UINT heroId)
 {
 
-    HeroLook& m_heroWgt = heroLook[heroId];
+    HeroLook &m_heroWgt = heroLook[heroId];
     pcxNames[0] = H3String::Format(defaultPcxPngNames[0], m_heroWgt.background);
     pcxNames[1] = H3String::Format(defaultPcxPngNames[1], m_heroWgt.faction, m_heroWgt.portraitIndex);
     pcxNames[2] = H3String::Format(defaultPcxPngNames[2], m_heroWgt.ornament);
@@ -31,12 +35,12 @@ void HeroLook::CorrectPcxNames(const UINT heroId)
             pcxNames[i] = NHD_EMPTY_PCX;
 }
 
-void HeroLook::SaveIniSettings(const HeroLook& m_heroWgt, const UINT heroId)
+void HeroLook::SaveIniSettings(const HeroLook &m_heroWgt, const UINT heroId)
 {
     constexpr int SIZE = 4;
 
-    const UINT16 values[SIZE] = { m_heroWgt.faction, m_heroWgt.portraitIndex, m_heroWgt.background, m_heroWgt.original };
-    constexpr const char* keys[SIZE] = { "faction", "portraitIndex", "background", "originalPortrait" };
+    const UINT16 values[SIZE] = {m_heroWgt.faction, m_heroWgt.portraitIndex, m_heroWgt.background, m_heroWgt.original};
+    constexpr const char *keys[SIZE] = {"faction", "portraitIndex", "background", "originalPortrait"};
 
     for (size_t i = 0; i < SIZE; i++)
     {
@@ -49,8 +53,10 @@ void HeroLook::SaveIniSettings(const HeroLook& m_heroWgt, const UINT heroId)
 void HeroLook::ResetSettings()
 {
     constexpr int SIZE = 3;                                                        // 4;
-    constexpr const char* keys[SIZE] = { "faction", "portraitIndex", "background" }; // , "originalPortrait"};
+    constexpr const char *keys[SIZE] = {"faction", "portraitIndex", "background"}; // , "originalPortrait"};
 
+    heroCount = P_HeroCount;
+    heroLook = new HeroLook[heroCount];
     libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
 
     if (Era::ReadStrFromIni("ornament", "main", iniPath, h3_TextBuffer))
@@ -70,7 +76,7 @@ void HeroLook::ResetSettings()
         forceOverride = atoi(h3_TextBuffer);
     int index = 0;
     int campaignInex = 0;
-    for (int i = 0; i < HEROES_MAX_AMOUNT; i++)
+    for (int i = 0; i < heroCount; i++)
     {
         if (i && P_HeroInfo[i].heroClass / 2 != P_HeroInfo[i - 1].heroClass / 2) // set next class type
             index = 0;
@@ -95,31 +101,37 @@ void HeroLook::ResetSettings()
 
         if (!forceOverride && !heroLook[i].original)
         {
-            //	sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", *values[0], *values[1]);
-            //	sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", *values[0], *values[1]);
-            libc::sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
-                heroLook[i].portraitIndex);
-            libc::sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
-                heroLook[i].portraitIndex);
-        }
-        UINT16* values[SIZE] = { &heroLook[i].faction, &heroLook[i].portraitIndex,
-                                &heroLook[i].background }; // , & heroLook[i].original};
+            AssignPngPortrait(i);
 
-        for (size_t j = 0; j < SIZE; j++)
-            if (Era::ReadStrFromIni(keys[j], std::to_string(i).c_str(), iniPath, h3_TextBuffer))
-                *values[j] = atoi(h3_TextBuffer);
+            UINT16 *values[SIZE] = {&heroLook[i].faction, &heroLook[i].portraitIndex,
+                                    &heroLook[i].background}; // , &heroLook[i].original};
+
+            for (size_t j = 0; j < SIZE; j++)
+                if (Era::ReadStrFromIni(keys[j], std::to_string(i).c_str(), iniPath, h3_TextBuffer))
+                    *values[j] = libc::atoi(h3_TextBuffer);
+        }
     }
 }
+void HeroLook::AssignPngPortrait(const UINT heroId)
+{
 
+    libc::sprintf(portraitNameBuffer, "nhl%d_%d.pcx", heroLook[heroId].faction, heroLook[heroId].portraitIndex);
+    if (Era::PcxPngExists(portraitNameBuffer))
+        libc::sprintf(const_cast<char *>(P_HeroInfo[heroId].largePortrait), "%s", portraitNameBuffer);
+
+    libc::sprintf(portraitNameBuffer, "nhs%d_%d.pcx", heroLook[heroId].faction, heroLook[heroId].portraitIndex);
+    if (Era::PcxPngExists(portraitNameBuffer))
+        libc::sprintf(const_cast<char *>(P_HeroInfo[heroId].smallPortrait), "%s", portraitNameBuffer);
+}
 DllExport void SetNymDependecies(bool newInterMod)
 {
     HeroLook::interfaceMod = newInterMod;
 }
 
-DllExport void GetNativePortraitName(const UINT heroId, char* large, char* small)
+DllExport void GetNativePortraitName(const UINT heroId, char *large, char *small)
 {
 
-    if (heroId < HEROES_MAX_AMOUNT)
+    if (heroId < HeroLook::heroCount)
     {
         libc::sprintf(large, HeroLook::heroLook[heroId].native.large.String());
         libc::sprintf(small, HeroLook::heroLook[heroId].native.small.String());
@@ -127,20 +139,20 @@ DllExport void GetNativePortraitName(const UINT heroId, char* large, char* small
 
     return;
 }
-DllExport void GetPortaitStatus(int* heroesArray)
+DllExport void GetPortaitStatus(int *heroesArray)
 {
 
-    for (size_t i = 0; i < HEROES_MAX_AMOUNT; i++)
+    for (size_t i = 0; i < HeroLook::heroCount; i++)
     {
         heroesArray[i] = HeroLook::heroLook[i].original;
     }
     return;
 }
 
-DllExport void GetCurrentPortraitName(const UINT heroId, char* large, char* small)
+DllExport void GetCurrentPortraitName(const UINT heroId, char *large, char *small)
 {
 
-    if (heroId < HEROES_MAX_AMOUNT)
+    if (heroId < HeroLook::heroCount)
     {
         libc::sprintf(large, P_HeroInfo[heroId].largePortrait);
         libc::sprintf(small, P_HeroInfo[heroId].smallPortrait);
@@ -149,12 +161,12 @@ DllExport void GetCurrentPortraitName(const UINT heroId, char* large, char* smal
     return;
 }
 
-DllExport void GetModPortraitName(const UINT heroId, char* large, char* small)
+DllExport void GetModPortraitName(const UINT heroId, char *large, char *small)
 {
 
-    if (heroId >= 0 && heroId < HEROES_MAX_AMOUNT)
+    if (heroId >= 0 && heroId < HeroLook::heroCount)
     {
-        auto& h = HeroLook::heroLook[heroId];
+        auto &h = HeroLook::heroLook[heroId];
 
         libc::sprintf(large, "nhl%d_%d.pcx", h.faction, h.portraitIndex);
         libc::sprintf(small, "nhs%d_%d.pcx", h.faction, h.portraitIndex);
@@ -169,12 +181,12 @@ DllExport void RedrawHeroScreen(bool needRedraw)
 }
 
 DllExport void SetHeroLook(const UINT heroId, const int faction, const int portraitIndex, const int background,
-    const int ornament, const bool original, bool save = 0)
+                           const int ornament, const bool original, bool save = 0)
 {
 
-    if (heroId < HEROES_MAX_AMOUNT)
+    if (heroId < HeroLook::heroCount)
     {
-        auto& h = HeroLook::heroLook[heroId];
+        auto &h = HeroLook::heroLook[heroId];
         h.faction = faction;
         h.portraitIndex = portraitIndex;
         h.background = background;
@@ -189,13 +201,13 @@ DllExport void SetHeroLook(const UINT heroId, const int faction, const int portr
     return;
 }
 
-DllExport void GetHeroLook(const UINT heroId, int* faction, int* portraitIndex, int* background, int* ornament,
-    bool* original)
+DllExport void GetHeroLook(const UINT heroId, int *faction, int *portraitIndex, int *background, int *ornament,
+                           bool *original)
 {
 
-    if (heroId < HEROES_MAX_AMOUNT)
+    if (heroId < HeroLook::heroCount)
     {
-        auto& h = HeroLook::heroLook[heroId];
+        auto &h = HeroLook::heroLook[heroId];
         if (faction)
             *faction = h.faction;
         if (portraitIndex)
@@ -213,50 +225,38 @@ DllExport void GetHeroLook(const UINT heroId, int* faction, int* portraitIndex, 
 
 DllExport int SetPortraitName(const UINT heroId, LPCSTR large, LPCSTR small)
 {
-    bool result = heroId < HEROES_MAX_AMOUNT;
-    char buffer[13];
+    bool result = heroId < HeroLook::heroCount;
 
     if (result)
     {
-        // sprintf(const_cast<char*>(P_HeroInfo[i].largePortrait), "nhl%d_%d.pcx", heroLook[i].faction,
-        // heroLook[i].portraitIndex);
-        //	sprintf(const_cast<char*>(P_HeroInfo[i].smallPortrait), "nhs%d_%d.pcx", heroLook[i].faction,
-        // heroLook[i].portraitIndex);
-        //
+        auto buffer = HeroLook::portraitNameBuffer;
         libc::sprintf(h3_TextBuffer, large);
-        //	P_HeroInfo[heroId].largePortrait = H3String(h3_TextBuffer).String();
-
         libc::sprintf(buffer, P_HeroInfo[heroId].largePortrait);
 
-        buffer;
-
         libc::sprintf(h3_TextBuffer, small);
-        //	P_HeroInfo[heroId].smallPortrait = H3String(h3_TextBuffer).String();
-
         libc::sprintf(buffer, P_HeroInfo[heroId].smallPortrait);
     }
-    buffer;
 
     return result;
 }
 
-void HeroLook::LoadIniSettings(HeroLook* heroes)
+void HeroLook::LoadIniSettings(HeroLook *heroes)
 {
     return;
     constexpr int SIZE = 4;
 
     // auto m_heroWgt = heroes[0];
-    constexpr const char* keys[SIZE] = { "faction", "portraitIndex", "background", "originalPortrait" };
+    constexpr const char *keys[SIZE] = {"faction", "portraitIndex", "background", "originalPortrait"};
 
     libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
 
     if (Era::ReadStrFromIni("ornament", "main", iniPath, h3_TextBuffer))
         ornament = atoi(h3_TextBuffer);
 
-    for (size_t i = 0; i < HEROES_MAX_AMOUNT; i++)
+    for (size_t i = 0; i < HeroLook::heroCount; i++)
     {
-        UINT16* values[SIZE] = { &heroLook[i].faction, &heroLook[i].portraitIndex, &heroLook[i].background,
-                                &heroLook[i].original };
+        UINT16 *values[SIZE] = {&heroLook[i].faction, &heroLook[i].portraitIndex, &heroLook[i].background,
+                                &heroLook[i].original};
 
         for (size_t j = 0; j < SIZE; j++)
             if (Era::ReadStrFromIni(keys[j], std::to_string(i).c_str(), iniPath, h3_TextBuffer))

@@ -433,7 +433,6 @@ void GraphicsEnhancements::CreatePatches() noexcept
     {
         WriteHiHook(0x0417FFB, THISCALL_, AdvMgr__AtSetActiveHero_BeforeScreenRedraw);
         WriteHiHook(0x00403420, THISCALL_, H3AdventureMgrDlg__RedrawTownSlots);
-        // _pi->WriteLoHook(0x0417FA6, AdvMgr_Draw_MiniMap);
 
         // WriteHiHook(0x0417E79, THISCALL_, H3AdventureMgrDlg__RedrawTownSlotsA);
 
