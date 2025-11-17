@@ -70,7 +70,7 @@ const UINT GetTownTime(const H3Town *town)
 }
 
 int __stdcall TownManager::TownMgrDlg_CreateBackgroundImageName(HiHook *h, char *buffer, char *formatName,
-                                                              char *townPrefixName)
+                                                                char *townPrefixName)
 {
     int result = CDECL_3(int, h->GetDefaultFunc(), buffer, formatName, townPrefixName);
 

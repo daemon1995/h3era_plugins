@@ -58,6 +58,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>D:\SW\ExeMapCompiler\$(ProjectName).map</MapFileName>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -77,6 +79,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>D:\SW\ExeMapCompiler\$(ProjectName).map</MapFileName>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
