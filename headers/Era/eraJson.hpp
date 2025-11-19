@@ -18,28 +18,28 @@ inline Era::static_str _tr(const char *key)
 
     return result;
 }
-inline const bool isEmpty(const char *keyName) noexcept
+inline bool isEmpty(const char *keyName) noexcept
 {
     return !strcmp(TR(keyName), keyName);
 }
 
-inline const int readInt(const char *keyName) noexcept
+inline int readInt(const char *keyName) noexcept
 {
     return atoi(TR(keyName));
 }
 
-inline const int readInt(const std::string &keyName) noexcept
+inline int readInt(const std::string &keyName) noexcept
 {
     return readInt(keyName.data());
 }
 
-inline const int readInt(const char *keyName, bool &success) noexcept
+inline int readInt(const char *keyName, bool &success) noexcept
 {
     char *result = TR(keyName);
     success = strcmp(result, keyName) != 0;
     return atoi(result);
 }
-inline const int readInt(const std::string &keyName, bool &success) noexcept
+inline int readInt(const std::string &keyName, bool &success) noexcept
 {
     return readInt(keyName.data(), success);
 }
@@ -62,21 +62,21 @@ inline char *read(const std::string &keyName, bool &success) noexcept
 {
     return read(keyName.c_str(), success);
 }
-inline const double readFloat(const char *keyName) noexcept
+inline double readFloat(const char *keyName) noexcept
 {
     return atof(TR(keyName));
 }
-inline const double readFloat(const std::string &keyName) noexcept
+inline double readFloat(const std::string &keyName) noexcept
 {
     return readFloat(keyName.data());
 }
-inline const double readFloat(const char *keyName, bool &success) noexcept
+inline double readFloat(const char *keyName, bool &success) noexcept
 {
     char *result = TR(keyName);
     success = strcmp(result, keyName) != 0;
     return atof(result);
 }
-inline const double readFloat(const std::string &keyName, bool &success) noexcept
+inline double readFloat(const std::string &keyName, bool &success) noexcept
 {
     return readFloat(keyName.data(), success);
 }
