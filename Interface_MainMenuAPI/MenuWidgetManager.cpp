@@ -368,7 +368,7 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
             {
                 framedBackground->SetPcx(insideBackupScreenPcx);
                 framedBackground->Draw();
-                framedBackground->Refresh();
+                // framedBackground->Refresh();
             }
             else if (outsideBackupScreenPcx)
             {
@@ -377,7 +377,7 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
                 framedBackground->SetPcx(outsideBackupScreenPcx);
 
                 framedBackground->Draw();
-                framedBackground->Refresh();
+                //  framedBackground->Refresh();
             }
         }
 
