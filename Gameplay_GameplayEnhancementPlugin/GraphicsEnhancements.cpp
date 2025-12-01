@@ -219,6 +219,43 @@ void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
         }
     }
 }
+enum eBuildingInfoFrames : int
+{
+    AVAILABLE_TO_BUILD = -1,
+    NOTHING_TO_BUILD = 0,
+    CANT_BUILD = 1,
+    CANT_AFFORD = 2,
+};
+eBuildingInfoFrames Town_GetExtendedInfoFrameId(const H3Town *town)
+{
+
+    if (town->builtThisTurn)
+    {
+        return eBuildingInfoFrames::CANT_BUILD;
+    }
+
+    eBuildingInfoFrames result = eBuildingInfoFrames::NOTHING_TO_BUILD;
+
+    for (size_t i = 0; i < limits::BUILDINGS; i++)
+    {
+        if (i == eBuildings::GRAIL)
+            continue;
+        // check if building is buildable in town
+        if (THISCALL_2(bool, 0x05C1120, town, i))
+        {
+            // skip if building is already built
+            if (town->IsBuildingBuilt(i))
+                continue;
+            // if player may afford that building
+            if (FASTCALL_2(bool, 0x0460D10, town, i))
+            {
+                return eBuildingInfoFrames::AVAILABLE_TO_BUILD;
+            }
+            result = eBuildingInfoFrames::CANT_AFFORD;
+        }
+    }
+    return result;
+}
 void AdjustTownBuiltButtonPosition(H3DlgDefButton *defButton, const int townIndex)
 {
     if (townIndex == -1)
@@ -228,36 +265,36 @@ void AdjustTownBuiltButtonPosition(H3DlgDefButton *defButton, const int townInde
     }
 
     const H3Town *currentTown = &P_Game->towns[townIndex];
-    if (currentTown->builtThisTurn)
+
+    const auto result = Town_GetExtendedInfoFrameId(currentTown);
+
+    if (result == eBuildingInfoFrames::NOTHING_TO_BUILD || result == eBuildingInfoFrames::CANT_AFFORD)
+    {
+        defButton->SetFrame(result); // show built
+        defButton->ShowActivate();
+    }
+    else
     {
         defButton->HideDeactivate();
-        return;
     }
-
-    int finalFrame = 0;
-    for (size_t i = 0; i < limits::BUILDINGS; i++)
+    /**
+    * TESTING ALTERNATIVE LOGIC
+    switch (result)
     {
-        if (i == eBuildings::GRAIL)
-            continue;
+    case eBuildingInfoFrames::AVAILABLE_TO_BUILD:
+    case eBuildingInfoFrames::CANT_BUILD:
 
-        // check if building is buildable in town
-        if (THISCALL_2(bool, 0x05C1120, currentTown, i))
-        {
-            // skip if building is already built
-            if (currentTown->IsBuildingBuilt(i))
-                continue;
+        defButton->HideDeactivate();
+        break;
 
-            // if player may afford that building
-            if (FASTCALL_2(bool, 0x0460D10, currentTown, i))
-            {
-                defButton->HideDeactivate();
-                return;
-            }
-            finalFrame = 2; // show "no money"
-        }
+    case eBuildingInfoFrames::NOTHING_TO_BUILD:
+    case eBuildingInfoFrames::CANT_AFFORD:
+        defButton->SetFrame(result); // show built
+        defButton->ShowActivate();
+    default:
+        break;
     }
-    defButton->SetFrame(finalFrame); // show built
-    defButton->ShowActivate();
+    */
 }
 
 void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dlg, const BOOL draw,
@@ -331,7 +368,7 @@ void GraphicsEnhancements::InitTownDlgDefButtons(H3TownDialog *dlg) noexcept
     {
         const int xPos = firstDefButton->GetX() + 32;
         const int yBase = firstDefButton->GetY();
-        for (size_t i = 0; i < 3; i++)
+        for (size_t i = 0; i < 4; i++)
         {
             H3String buttonName = H3String::Format(BUILD_BUTTON_NAME_FORMAT_TOWN, i);
             const int buttonId = Era::GetButtonID(buttonName.String());
@@ -351,31 +388,54 @@ void GraphicsEnhancements::InitTownDlgDefButtons(H3TownDialog *dlg) noexcept
     }
 }
 
-void GraphicsEnhancements::DrawTownDlgBuiltStatus(H3TownDialog *dlg, const INT townIndex) noexcept
+void GraphicsEnhancements::DrawTownDlgBuiltStatus(H3TownDialog *dlg) noexcept
 {
 
     const auto mePlayer = P_Game->GetPlayer();
-    auto defButton = builtDefButtons.townDlg[townIndex];
 
-    if (townIndex >= mePlayer->townsCount)
+    for (size_t i = 0; i < 3; i++)
     {
-        defButton->HideDeactivate();
-        return;
+        auto defButton = builtDefButtons.townDlg[i];
+
+        if (i >= mePlayer->townsCount)
+        {
+            defButton->HideDeactivate();
+            return;
+        }
+
+        const auto townId = mePlayer->towns[i + dlg->townIndex];
+        if (townId != -1)
+        {
+            const auto originalDef = dlg->GetDef(155 + i);
+
+            defButton->SetX(originalDef->GetX() + 31);
+            defButton->SetY(originalDef->GetY() + 15);
+            AdjustTownBuiltButtonPosition(defButton, townId);
+            defButton->DeActivate();
+        }
+        else
+        {
+            defButton->HideDeactivate();
+        }
     }
 
-    const auto townId = mePlayer->towns[townIndex + dlg->townIndex];
-    if (townId != -1)
+    auto defButton = builtDefButtons.townDlg[3];
+    if (defButton)
     {
-        const auto originalDefId = dlg->GetDef(155 + townIndex);
+        const auto townId = P_TownManager->town->number;
+        if (townId != -1)
+        {
+            const auto originalDef = dlg->GetDef(150);
 
-        defButton->SetX(originalDefId->GetX() + 32);
-        defButton->SetY(originalDefId->GetY() + 15);
-        AdjustTownBuiltButtonPosition(defButton, townId);
-        defButton->DeActivate();
-    }
-    else
-    {
-        defButton->HideDeactivate();
+            defButton->SetX(originalDef->GetX() + 42);
+            defButton->SetY(originalDef->GetY() + 48);
+            AdjustTownBuiltButtonPosition(defButton, townId);
+            defButton->DeActivate();
+        }
+        else
+        {
+            defButton->HideDeactivate();
+        }
     }
 }
 
@@ -388,7 +448,30 @@ void __stdcall H3TownManager__AfterDlgCtor(HiHook *h, H3TownManager *mgr, const 
 void __stdcall H3TownDlg__SetSmallTownFrame(HiHook *h, H3TownDialog *dlg, signed int townIndex)
 {
     THISCALL_2(void, h->GetDefaultFunc(), dlg, townIndex);
-    GraphicsEnhancements::Get()->DrawTownDlgBuiltStatus(dlg, townIndex);
+
+    if (townIndex == 2)
+    {
+        GraphicsEnhancements::Get()->DrawTownDlgBuiltStatus(dlg);
+    }
+}
+DWORD __stdcall Dlg_RightClick_Town_Create(HiHook *h, H3BaseDlg *dlg, H3Town *town, DWORD a3)
+{
+
+    DWORD result = THISCALL_3(DWORD, h->GetDefaultFunc(), dlg, town, a3);
+    auto extendedInfoFrameId = Town_GetExtendedInfoFrameId(town);
+    if (extendedInfoFrameId == eBuildingInfoFrames::NOTHING_TO_BUILD ||
+        extendedInfoFrameId == eBuildingInfoFrames::CANT_AFFORD)
+    {
+        if (const auto originalDlgDef = dlg->GetDef(2001))
+        {
+            H3LoadedDef *def = H3LoadedDef::Load("tpthchk.def");
+            const int x = originalDlgDef->GetX() + originalDlgDef->GetWidth() - def->widthDEF;
+            const int y = originalDlgDef->GetY() + originalDlgDef->GetHeight() - def->heightDEF;
+            H3DlgDef *buildingIndicataorButton = H3DlgDef::Create(x, y, 2002, def->GetName(), extendedInfoFrameId);
+            dlg->AddItem(buildingIndicataorButton);
+        }
+    }
+    return result;
 }
 
 void GraphicsEnhancements::CleanUpData() noexcept
@@ -450,6 +533,7 @@ void GraphicsEnhancements::CreatePatches() noexcept
         WriteHiHook(0x00417446, THISCALL_, AdvMgr_AtFullUpdate);
 
         WriteHiHook(0x05C5EBC, THISCALL_, H3TownDlg__SetSmallTownFrame);
+        WriteHiHook(0x0530600, THISCALL_, Dlg_RightClick_Town_Create);
     }
 }
 

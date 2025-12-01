@@ -45,7 +45,7 @@ namespace defines
     }
 } // namespace defines
 
-CreatureBanksExtender::Current CreatureBanksExtender::currentCreatureBank;
+CreatureBanksExtender::Current CreatureBanksExtender::currentCreatureBank{};
 
 BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
                     const bool withoutBrackets = true) noexcept
@@ -1472,6 +1472,7 @@ void __stdcall CreatureBanksExtender::OnGameLeave(Era::TEvent *Event)
     {
         currentCreatureBank.positionsPatch->Destroy();
     }
+    // reset current creature bank data
     currentCreatureBank = {};
 }
 

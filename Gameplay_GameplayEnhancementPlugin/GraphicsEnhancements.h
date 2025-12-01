@@ -26,7 +26,7 @@ class GraphicsEnhancements : public IGamePatch
     struct BuiltDefButtons
     {
         std::array<H3DlgDefButton *, 7> advMapDlg;
-        std::array<H3DlgDefButton *, 3> townDlg;
+        std::array<H3DlgDefButton *, 4> townDlg;
     } builtDefButtons;
 
   protected:
@@ -43,7 +43,7 @@ class GraphicsEnhancements : public IGamePatch
                                          const BOOL updateScreen = true) noexcept;
 
     void InitTownDlgDefButtons(H3TownDialog *dlg) noexcept;
-    void DrawTownDlgBuiltStatus(H3TownDialog *dlg, const INT townIndex) noexcept;
+    void DrawTownDlgBuiltStatus(H3TownDialog *dlg) noexcept;
 
     void CleanUpData() noexcept;
 };
