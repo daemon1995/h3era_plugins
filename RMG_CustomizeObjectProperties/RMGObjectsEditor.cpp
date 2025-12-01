@@ -669,8 +669,6 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteLoHook(0x05427DA, RMG__AtSecondSubterranianGatesPositioning);
         _pi->WriteLoHook(0x0542937, RMG__AtSecondSubterranianGatesPlacement);
 
-
-
         // Prevent combo art pieces becoming the artifacts for Seer Huts
         _PI->WriteLoHook(0x54B9C0, RMG__AtQuestArtifactListCounter);
         _PI->WriteLoHook(0x54BA1B, RMG__AtQuestArtifactListSelectRandom);
@@ -893,11 +891,8 @@ inline const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const int objType, 
     return currentRMGObjectsInfoByType[objType][subtype];
 }
 
-inline const std::vector<RMGObjectInfo> (&RMGObjectInfo::CurrentObjectInfo())[limits::OBJECTS]
-{
-
-    return RMGObjectInfo::currentRMGObjectsInfoByType;
-}
+inline const std::vector<RMGObjectInfo> (&RMGObjectInfo::CurrentObjectInfo())
+    [limits::OBJECTS] { return RMGObjectInfo::currentRMGObjectsInfoByType; }
 
 void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator &generator)
 {

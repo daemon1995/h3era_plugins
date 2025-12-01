@@ -1,9 +1,9 @@
 #include "../pch.h"
 namespace colosseumOfTheMagi
 {
-ColosseumOfTheMagiExtender* ColosseumOfTheMagiExtender::instance = nullptr;
+ColosseumOfTheMagiExtender *ColosseumOfTheMagiExtender::instance = nullptr;
 
-ColosseumOfTheMagiExtender& ColosseumOfTheMagiExtender::Get()
+ColosseumOfTheMagiExtender &ColosseumOfTheMagiExtender::Get()
 {
     if (!instance)
         instance = new ColosseumOfTheMagiExtender();

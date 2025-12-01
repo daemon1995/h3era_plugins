@@ -74,7 +74,7 @@ void ObjectExtenderManager::CreatePatches()
 
         // patch hota object types unable to be entered
         auto *settingsTable = H3GlobalObjectSettings::Get();
-        for (size_t i = HOTA_PICKUPABLE_OBJECT_TYPE; i <= HOTA_UNREACHABLE_YT_OBJECT_TYPE; i++)
+        for (size_t i = HOTA_PICKUPABLE_OBJECT_TYPE; i <= HOTA_UNREACHABLE_OBJECT_TYPE; i++)
         {
             settingsTable[i].cannotEnter = true;
             settingsTable[i].exitTop = true;
@@ -370,7 +370,7 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
         // create set of the objects to add only unique objects
         for (auto rmgObj : *rmgObjectsList)
         {
-            objectsSet.insert({rmgObj->type, rmgObj->subtype});
+            objectsSet.insert(RMGObjectSetable{rmgObj->type, rmgObj->subtype});
         }
         // iterate each added RMG INFO
         for (auto &info : additionalRmgObjects)
@@ -378,7 +378,7 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
             H3RmgObjectGenerator *objGen = nullptr;
 
             // check if it is possible to add object into the list
-            if (objectsSet.insert({info.type, info.subtype}).second)
+            if (objectsSet.insert(RMGObjectSetable{info.type, info.subtype}).second)
             {
 
                 switch (info.type)
@@ -398,7 +398,9 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
                     for (auto &extender : objectExtenders)
                     {
                         // if yes then create obj gen
-                        objGen = extender->CreateRMGObjectGen(info);
+
+                        if (objGen = extender->CreateRMGObjectGen(info))
+                            break;
                         // and return to add into the list
                     }
                     break;

@@ -7,7 +7,7 @@ struct ExactSpellShrineMapItem
 
 class ShrinesExtender : public extender::ObjectExtender
 {
-    static ShrinesExtender* instance;
+    static ShrinesExtender *instance;
 
     static constexpr int LEVEL_REQUIRED = 15;
     static constexpr int SPELL_COST = 2000;

@@ -220,9 +220,9 @@ H3RmgObjectGenerator *GazeboExtender::CreateRMGObjectGen(const RMGObjectInfo &ob
     return nullptr;
 }
 
-GazeboExtender* GazeboExtender::instance = nullptr;
+GazeboExtender *GazeboExtender::instance = nullptr;
 
-GazeboExtender& GazeboExtender::Get()
+GazeboExtender &GazeboExtender::Get()
 {
     if (!instance)
         instance = new GazeboExtender();

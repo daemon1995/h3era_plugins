@@ -21,12 +21,12 @@ struct H3MapItemColosseumOfTheMagi
 
 class ColosseumOfTheMagiExtender : public extender::ObjectExtender
 {
-    static ColosseumOfTheMagiExtender* instance;
+    static ColosseumOfTheMagiExtender *instance;
     ColosseumOfTheMagiExtender();
     virtual ~ColosseumOfTheMagiExtender();
 
   private:
-    virtual void CreatePatches() ;
+    virtual void CreatePatches();
     //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 

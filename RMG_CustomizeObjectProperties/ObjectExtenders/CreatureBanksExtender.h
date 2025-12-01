@@ -145,9 +145,9 @@ class CreatureBanksExtender : public extender::ObjectExtender
     virtual ~CreatureBanksExtender();
 
   protected:
-    virtual void CreatePatches() ;
+    virtual void CreatePatches();
     virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes) override final;
-    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept;
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept override;
 
     // virtual void GetObjectPreperties() noexcept override  final;
   private:

@@ -48,7 +48,7 @@ struct H3MapItemSpellMarket
 };
 class SpellMarketExtender : public extender::ObjectExtender
 {
-    static SpellMarketExtender* instance;
+    static SpellMarketExtender *instance;
 
   private:
     static std::vector<SpellMarket> spellMarkets;

@@ -5,7 +5,7 @@ namespace extender
 constexpr int ERA_OBJECT_TYPE = eObject::BLANK3;
 constexpr int HOTA_OBJECT_TYPE = eObject::BLANK5;
 constexpr int HOTA_PICKUPABLE_OBJECT_TYPE = eObject::BLANK6;
-constexpr int HOTA_UNREACHABLE_YT_OBJECT_TYPE = eObject::BLANK7;
+constexpr int HOTA_UNREACHABLE_OBJECT_TYPE = eObject::BLANK7;
 
 // namespace limits
 struct RMGObjectProperties

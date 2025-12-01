@@ -6,7 +6,7 @@ constexpr DWORD WOG_OPTIONS_ARRAY = 0x02771920;
 
 class WoGObjectsExtender : public extender::ObjectExtender
 {
-    static WoGObjectsExtender* instance;
+    static WoGObjectsExtender *instance;
 
   private:
     static constexpr LPCSTR jsonKeyFormat = "RMG.objectGeneration.%d.%d.optionId";
