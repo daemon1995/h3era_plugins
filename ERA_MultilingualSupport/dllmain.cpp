@@ -6,7 +6,7 @@ using namespace h3;
 namespace dllText
 {
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
-constexpr const char *PLUGIN_VERSION = "2.3";
+constexpr const char *PLUGIN_VERSION = "2.4";
 constexpr const char *PLUGIN_DATA = __DATE__;
 constexpr const char *INSTANCE_NAME = "EraPlugin.LanguageSelectionDlg.daemon_n";
 } // namespace dllText
@@ -28,11 +28,15 @@ _LHF_(HooksInit)
 
     MapObjectHandler::Init();
     TownHandler::Init();
-    HeroHandler::Init();
     // ArtifactHandler::Init();
     LanguageSelectionDlg::Init();
 
     return EXEC_DEFAULT;
+}
+
+_ERH_(OnAfterCreateWindow)
+{
+    HeroHandler::Init();
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
@@ -53,7 +57,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
                 Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
                 Era::RegisterHandler(OnReportVersion, "OnReportVersion");
-
+                //   Era::RegisterHandler(OnAfterWog, "OnAfterWog");
+                Era::RegisterHandler(OnAfterCreateWindow, "OnAfterCreateWindow");
                 globalPatcher = GetPatcher();
                 _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
                 // must have hooks before other

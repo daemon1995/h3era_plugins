@@ -8,32 +8,55 @@ void HeroHandler::Init()
 
     const int heroCount = H3HeroCount::Get();
 
+    // libc::sprintf(h3_TextBuffer, formats::BIOGRAPHY, 0);
+    // MessageBoxA(NULL, EraJS::read(h3_TextBuffer), "ERA Multilingual Support", MB_OK);
+
+    // MessageBoxA(NULL, EraJS::read(h3_TextBuffer), "ERA Multilingual Support", MB_OK);
+    // MessageBoxA(NULL, EraJS::read(h3_TextBuffer), "ERA Multilingual Support", MB_OK);
+    // MessageBoxA(NULL, EraJS::read(h3_TextBuffer), "ERA Multilingual Support", MB_OK);
+    // MessageBoxA(NULL, EraJS::read(h3_TextBuffer), "ERA Multilingual Support", MB_OK);
     for (size_t i = 0; i < heroCount; i++)
     {
 
-        sprintf(h3_TextBuffer, formats::BIOGRAPHY, i);
+        libc::sprintf(h3_TextBuffer, formats::BIOGRAPHY, i);
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
         if (readSuccess)
+        {
             table[i] = readResult;
-
-        sprintf(h3_TextBuffer, formats::NAME, i);
+        }
+        libc::sprintf(h3_TextBuffer, formats::NAME, i);
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
         if (readSuccess)
+        {
             P_HeroInfo[i].name = readResult;
+        }
 
-        sprintf(h3_TextBuffer, formats::SPECIALTY_SHORT, i);
+        libc::sprintf(h3_TextBuffer, formats::SPECIALTY_SHORT, i);
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
         if (readSuccess)
-            P_HeroSpecialty[i].spShort = readResult;
+        {
+           P_HeroSpecialty[i].spShort = readResult;
+        }
 
-        sprintf(h3_TextBuffer, formats::SPECIALTY_FULL, i);
+        libc::sprintf(h3_TextBuffer, formats::SPECIALTY_FULL, i);
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
         if (readSuccess)
+        {
             P_HeroSpecialty[i].spFull = readResult;
+        }
 
-        sprintf(h3_TextBuffer, formats::SPECIALTY_DESCRIPTION, i);
+        libc::sprintf(h3_TextBuffer, formats::SPECIALTY_DESCRIPTION, i);
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
         if (readSuccess)
+        {
             P_HeroSpecialty[i].spDescr = readResult;
+        }
+        // if (i == 203)
+        //{
+        //     auto &spec = P_HeroSpecialty[i];
+
+        //    int test = 0;
+        //    // H3Messagebox();
+        //}
     }
 }

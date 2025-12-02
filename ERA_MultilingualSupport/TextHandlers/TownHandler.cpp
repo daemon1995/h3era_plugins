@@ -22,12 +22,12 @@ void TownHandler::Init()
         {
             const UINT stringId = i * dwellinsPerTown + j;
 
-            sprintf(h3_TextBuffer, formats::DWELLING, jsonTownId, j);
+            libc::sprintf(h3_TextBuffer, formats::DWELLING, jsonTownId, j);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
                 townDwellingNames[stringId] = readResult;
 
-            sprintf(h3_TextBuffer, formats::DWELLING_DESCRIPTION, jsonTownId, j);
+            libc::sprintf(h3_TextBuffer, formats::DWELLING_DESCRIPTION, jsonTownId, j);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess)
                 townDwellingDescriptions[stringId] = readResult;

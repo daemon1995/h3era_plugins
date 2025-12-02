@@ -25,7 +25,7 @@
 #include "Era/era.h"
 #include "Era/eraJson.hpp"
 #ifndef _ERH_
-#define _ERH_(func) void __stdcall func(Era::TEvent *evnt)
+#define _ERH_(func) void __stdcall func(Era::TEvent *event)
 #endif // !_ERH_
 
 #ifdef ERA_MODLIST
