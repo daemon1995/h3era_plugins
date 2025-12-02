@@ -68,7 +68,7 @@ class MenuWidgetManager
     INT RegisteredNumber() const noexcept;
     BOOL RegisterWidget(const mainmenu::MenuWidgetInfo &info);
     void CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags menuList);
-    void DestroyWidgets(H3BaseDlg *dlg);
+    void DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw = false);
     void HandleEvent(H3Msg *msg);
     BOOL IsVisible() const noexcept;
     void SetVisible(const bool visible);

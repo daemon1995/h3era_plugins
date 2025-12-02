@@ -3,7 +3,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.7";
+const char *PLUGIN_VERSION = "1.8";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -40,8 +40,12 @@ int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
 int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
-    MenuWidgetManager::Get().DestroyWidgets(dlg);
+    const int dlgJump = P_WindowManager->resultItemID;
 
+    const BOOL forceRedraw =
+        dlgJump == Era::EGameMenuTarget::PAGE_HIGH_SCORE || dlgJump == Era::EGameMenuTarget::PAGE_CREDITS;
+
+    MenuWidgetManager::Get().DestroyWidgets(dlg, forceRedraw);
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
 

@@ -356,7 +356,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     }
     displayedWidgetsCount = widgetsToDraw;
 }
-void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
+void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw)
 {
 
     if (framedBackground)
@@ -377,7 +377,8 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg)
                 framedBackground->SetPcx(outsideBackupScreenPcx);
 
                 framedBackground->Draw();
-                //  framedBackground->Refresh();
+                if (forceRedraw)
+                    framedBackground->Refresh();
             }
         }
 
