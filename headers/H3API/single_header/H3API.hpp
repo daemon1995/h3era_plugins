@@ -17221,6 +17221,8 @@ namespace h3
 		_H3API_ INT32 GetHeight() const;
 		_H3API_ INT32 GetX() const;
 		_H3API_ INT32 GetY() const;
+		_H3API_ H3BaseDlg* GetParent() const;
+
 	};
 	_H3API_ASSERT_SIZE_(H3DlgBasePanel);
 
@@ -33587,6 +33589,11 @@ namespace h3
 	{
 		return y;
 	}
+	_H3API_ H3BaseDlg* H3DlgBasePanel::GetParent() const
+	{
+		return parent;
+	}
+
 } /* namespace h3 */
 
 namespace h3

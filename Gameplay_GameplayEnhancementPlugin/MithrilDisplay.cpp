@@ -292,25 +292,28 @@ void __stdcall ExtendedResourcesInfo::H3ResourceBarPanel__Hide(HiHook *h, H3Reso
     return THISCALL_1(void, h->GetDefaultFunc(), resourceBarPanel);
 }
 
-void __stdcall ExtendedResourcesInfo::H3AdventureMgrDlg__RedrawResources(HiHook *h, H3AdventureMgrDlg *dlg,
-                                                                         const BOOL redraw, const BOOL redrawScreen)
+void __stdcall ExtendedResourcesInfo::H3ResourceBarPanel__Refresh(HiHook *h, H3ResourceBarPanel *resourceBarPanel,
+                                                                  const BOOL redraw, const BOOL redrawScreen)
 {
 
-    if (dlg)
+    if (resourceBarPanel)
     {
-
-        const int mePlayerId = IntAt(0x6977DC);
-        if (H3DlgText *mithrilTextItem = dlg->GetText(MITHRIL_TEXT_ID))
+        auto dlg = resourceBarPanel->GetParent();
+        if (dlg && dlg == P_AdventureManager->dlg)
         {
-            mithrilTextItem->SetText(H3String::Format("%d", GetPlayerMithril(mePlayerId)));
-        }
-        if (H3DlgPcx *mithrilBack = dlg->GetPcx(MITHRIL_BACK_PCX_ID))
-        {
-            mithrilBack->ColorToPlayer(mePlayerId);
+            const int mePlayerId = IntAt(0x6977DC);
+            if (H3DlgText *mithrilTextItem = dlg->GetText(MITHRIL_TEXT_ID))
+            {
+                mithrilTextItem->SetText(H3String::Format("%d", GetPlayerMithril(mePlayerId)));
+            }
+            if (H3DlgPcx *mithrilBack = dlg->GetPcx(MITHRIL_BACK_PCX_ID))
+            {
+                mithrilBack->ColorToPlayer(mePlayerId);
+            }
         }
     }
 
-    return THISCALL_3(void, h->GetDefaultFunc(), dlg, redraw, redrawScreen);
+    return THISCALL_3(void, h->GetDefaultFunc(), resourceBarPanel, redraw, redrawScreen);
 }
 
 void ExtendedResourcesInfo::CreatePatches()
@@ -320,7 +323,7 @@ void ExtendedResourcesInfo::CreatePatches()
     _PI->WriteLoHook(0x51F042, ExtendedResourcesInfo::OnKingdomOverviewDlgResBarCreate); // KingdomOverviewDlg
     _PI->WriteLoHook(0x408945, ExtendedResourcesInfo::OnAdvMgrDlgRightClick);            // H3AdventureMgrDlg
 
-    _PI->WriteHiHook(0x403F00, THISCALL_, ExtendedResourcesInfo::H3AdventureMgrDlg__RedrawResources);
+    _PI->WriteHiHook(0x559170, THISCALL_, ExtendedResourcesInfo::H3ResourceBarPanel__Refresh);
     //_PI->WriteLoHook(0x417380, ExtendedResourcesInfo::OnResourceBarDlgUpdate);
     _PI->WriteHiHook(0x559270, THISCALL_, ExtendedResourcesInfo::H3ResourceBarPanel__Hide);
     _PI->WriteHiHook(0x521E20, THISCALL_, ExtendedResourcesInfo::KingdomOverviewDlgProc);

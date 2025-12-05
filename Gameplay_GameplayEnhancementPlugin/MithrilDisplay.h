@@ -31,7 +31,7 @@ class ExtendedResourcesInfo : public IGamePatch
     static BOOL8 BuildMithril(H3ResourceBarPanel *resourceBarPanel, int textItemWidth, bool buildFrame = true);
     static _LHF_(OnAdvMgrDlgResBarCreate);
     static _LHF_(OnKingdomOverviewDlgResBarCreate);
-    static void __stdcall H3AdventureMgrDlg__RedrawResources(HiHook *h, H3AdventureMgrDlg *dlg, const BOOL redraw,
+    static void __stdcall H3ResourceBarPanel__Refresh(HiHook *h, H3ResourceBarPanel *resourceBarPanel, const BOOL redraw,
                                                              const BOOL redrawScreen);
 
     static void __stdcall H3ResourceBarPanel__Hide(HiHook *h, H3ResourceBarPanel *resourceBarPanel);
