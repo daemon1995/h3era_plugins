@@ -207,7 +207,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 {
                     for (auto &attr : *vec)
                     {
-                        RMGObjectInfo info(attr.first.type, attr.first.subtype);
+                        RMGObjectInfo info(attr.attributes->type, attr.attributes->subtype);
                         info.SetRandom();
                         info.MakeReal();
                     }

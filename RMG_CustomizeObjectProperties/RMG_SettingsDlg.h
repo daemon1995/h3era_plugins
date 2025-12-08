@@ -7,6 +7,12 @@ namespace rmgdlg
 ///
 /// </summary>
 
+struct GraphicalAttributes
+{
+    const H3ObjectAttributes *attributes = nullptr;
+    H3LoadedPcx16 *objectPcx = nullptr;
+};
+
 class RMGObject
 {
 
@@ -17,13 +23,6 @@ class RMGObject
     const H3ObjectAttributes *attributes;
     // displayd resized pcx16 - should be deleted before dlg close
     H3LoadedPcx16 *objectPcx = nullptr;
-
-    struct Graphics
-    {
-        const H3ObjectAttributes *attributes;
-        H3LoadedPcx16 *objectPcx = nullptr;
-    };
-
     // std::vector<Graphics> objectPictures;
     // UINT lastDrawnFrame = NULL;
 
@@ -33,7 +32,7 @@ class RMGObject
   public:
     //	Object(const H3ObjectAttributes& attributes, const RMGObjectInfo& objectInfo);
     // Object(const H3ObjectAttributes& attributes);
-    RMGObject(const H3ObjectAttributes &attributes, H3LoadedPcx16 *objectPcx = nullptr);
+    RMGObject(const H3ObjectAttributes *attributes, H3LoadedPcx16 *objectPcx = nullptr);
     // Object(std::pair < H3ObjectAttributes, H3LoadedPcx16*> info);
     //~Object();
 };
@@ -87,7 +86,7 @@ class RMG_SettingsDlg : public H3Dlg
         H3DlgDefButton *defaultButton = nullptr;
 
         std::vector<H3DlgItem *> items;
-
+		DWORD lastChangedPictureTime = 0;
         ObjectsPanel(const int x, const int y, Page *parent);
         virtual ~ObjectsPanel();
 
@@ -150,15 +149,14 @@ class RMG_SettingsDlg : public H3Dlg
         } lastSorting;
 
         // used to have copies
-        const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *objectAttrbts;
+        const std::vector<GraphicalAttributes> *objectAttributes;
         // std::vector<H3ObjectAttributes> displayedAttributes;
         BOOL ignoreSubtypes;
 
         std::vector<ObjectsPanel *> objectsPanels;
         std::vector<RMGObject> RMGObjects;
 
-        ObjectsPage(H3DlgCaptionButton *captionbttn,
-                    const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &attributes,
+        ObjectsPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &attributes,
                     const BOOL ignoreSubtypes = false);
         virtual ~ObjectsPage();
 
@@ -185,8 +183,7 @@ class RMG_SettingsDlg : public H3Dlg
 
     struct BanksPage : public ObjectsPage
     {
-        BanksPage(H3DlgCaptionButton *captionbttn,
-                  const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &data,
+        BanksPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data,
                   const BOOL ignoreSubtypes = false);
         virtual ~BanksPage();
 
@@ -199,8 +196,7 @@ class RMG_SettingsDlg : public H3Dlg
     {
         // virtual void ShowObjectExtendedInfo(const ObjectsPanel* panel) const noexcept final override;
 
-        MiscPage(H3DlgCaptionButton *captionbttn,
-                 const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &data);
+        MiscPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data);
         virtual ~MiscPage();
 
         // static void __fastcall ObjectPage_ScrollBarProc(INT32 tick, H3BaseDlg* dlg);
@@ -212,9 +208,8 @@ class RMG_SettingsDlg : public H3Dlg
     {
         // virtual void ShowObjectExtendedInfo(const ObjectsPanel* panel) const noexcept final override;
 
-        DwellingsPage(H3DlgCaptionButton *captionbttn,
-                      const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &data);
-        // virtual ~DwellingsPage();
+        DwellingsPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data);
+        virtual ~DwellingsPage();
 
         // static void __fastcall ObjectPage_ScrollBarProc(INT32 tick, H3BaseDlg* dlg);
 
@@ -236,11 +231,11 @@ class RMG_SettingsDlg : public H3Dlg
     static RMG_SettingsDlg *instance;
     static BOOL isDlgTextEditInput;
 
-    static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_banks;
-    static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_commonObjects;
-    static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_dwellings;
-    static std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> m_wogObjects;
-    static const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> m_objectAttributes;
+    static std::vector<GraphicalAttributes> m_creatureBanks;
+    static std::vector<GraphicalAttributes> m_commonObjects;
+    static std::vector<GraphicalAttributes> m_creatureGenerators;
+    static std::vector<GraphicalAttributes> m_wogObjects;
+    static const std::vector<std::vector<GraphicalAttributes> *> m_objectAttributes;
 
     // ctors
   public:
@@ -281,8 +276,10 @@ class RMG_SettingsDlg : public H3Dlg
 
   public:
     static void SetPatches(PatcherInstance *_pi);
-    static const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> &
-    GetObjectAttributes() noexcept;
+    static const std::vector<std::vector<GraphicalAttributes> *> &GetObjectAttributes() noexcept;
+    static std::vector<GraphicalAttributes> *GetObjectAttributesVector(const int type) noexcept;
+    static BOOL CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators);
+
     static DWORD GetUserRandSeedInput() noexcept;
 };
 

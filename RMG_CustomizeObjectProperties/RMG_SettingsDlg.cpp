@@ -1,6 +1,6 @@
 #include "pch.h"
 #include <thread>
-// void CreateGraphics(const H3Vector<H3RmgObjectGenerator*>& rmgObjList);
+#include <unordered_set>
 
 /**
 @TODO:
@@ -137,45 +137,35 @@ namespace rmgdlg
 {
 DWORD RMG_SettingsDlg::userRandSeed = 0;
 
-std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> RMG_SettingsDlg::m_banks;
-std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> RMG_SettingsDlg::m_commonObjects;
-std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> RMG_SettingsDlg::m_dwellings;
-std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> RMG_SettingsDlg::m_wogObjects;
-const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> RMG_SettingsDlg::m_objectAttributes = {
-    &m_banks, &m_commonObjects, &m_dwellings, &m_wogObjects};
+std::vector<GraphicalAttributes> RMG_SettingsDlg::m_creatureBanks, RMG_SettingsDlg::m_commonObjects,
+    RMG_SettingsDlg::m_creatureGenerators, RMG_SettingsDlg::m_wogObjects;
+
+const std::vector<std::vector<GraphicalAttributes> *> RMG_SettingsDlg::m_objectAttributes = {
+    &m_creatureBanks, &m_commonObjects, &m_creatureGenerators, &m_wogObjects};
 
 DllExport BOOL RMGObjectSupportsGeneration(const int objType, const int objSubtype = -1)
 {
     BOOL result = false;
     if (objType > eObject::NO_OBJ && objType < H3_MAX_OBJECTS)
     {
-        auto &attr = RMG_SettingsDlg::GetObjectAttributes();
-        for (auto vec : attr)
+        const auto vec = RMG_SettingsDlg::GetObjectAttributesVector(eObject(objType));
+        for (auto &prop : *vec)
         {
-            for (auto &prop : *vec)
+            if (prop.attributes->type == objType)
             {
-                if (prop.first.type == objType)
-                {
-                    result = true;
-                    break;
-                }
-            }
-            if (result)
-            {
-                break;
+                return true;
             }
         }
     }
 
-    return result;
+    return false;
 }
 
 RMG_SettingsDlg *RMG_SettingsDlg::Page::dlg = nullptr;
 RMG_SettingsDlg *RMG_SettingsDlg::instance = nullptr;
 BOOL RMG_SettingsDlg::isDlgTextEditInput = false;
 
-const std::vector<std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> *> &RMG_SettingsDlg::
-    GetObjectAttributes() noexcept
+const std::vector<std::vector<GraphicalAttributes> *> &RMG_SettingsDlg::GetObjectAttributes() noexcept
 {
     return m_objectAttributes;
 }
@@ -311,11 +301,11 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
         }
     }
 
-    m_pages.emplace_back(new BanksPage{captionButtons[0], m_banks});
+    m_pages.emplace_back(new BanksPage{captionButtons[0], m_creatureBanks});
 
     // create with ignored subtypes to display less data but should affect RMGObjects anyway
     m_pages.emplace_back(new ObjectsPage{captionButtons[1], m_commonObjects, false});
-    m_pages.emplace_back(new ObjectsPage{captionButtons[2], m_dwellings, false});
+    m_pages.emplace_back(new ObjectsPage{captionButtons[2], m_creatureGenerators, false});
     m_pages.emplace_back(new ObjectsPage{captionButtons[3], m_wogObjects, false});
     ReadIniDlgSettings();
 }
@@ -677,8 +667,7 @@ void RMG_SettingsDlg::ObjectsPage::CreateHorizontalScrollBar()
     }
 }
 
-RMG_SettingsDlg::BanksPage::BanksPage(H3DlgCaptionButton *captionbttn,
-                                      const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &data,
+RMG_SettingsDlg::BanksPage::BanksPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data,
                                       const BOOL ignoreSubtypes)
     : ObjectsPage(captionbttn, data, ignoreSubtypes)
 {
@@ -1009,8 +998,7 @@ void RMG_SettingsDlg::ObjectsPage::SetDefault()
 }
 
 RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
-                                          const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &attributes,
-                                          const BOOL ignoreSubtypes)
+                                          const std::vector<GraphicalAttributes> &attributes, const BOOL ignoreSubtypes)
     : Page(captionbttn), ignoreSubtypes(ignoreSubtypes)
 
 {
@@ -1031,7 +1019,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
     //	}
     //}
 
-    objectAttrbts = &attributes;
+    objectAttributes = &attributes;
 
     auto &workingVector = ignoreSubtypes ? attributes : attributes;
 
@@ -1046,7 +1034,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
     // create local RMGObjects
     for (size_t i = 0; i < SIZE; i++)
     {
-        RMGObjects.emplace_back(workingVector[i].first, workingVector[i].second);
+        RMGObjects.emplace_back(workingVector[i].attributes, workingVector[i].objectPcx);
     }
     RMGObjects.shrink_to_fit();
 
@@ -1128,6 +1116,7 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
 {
     BOOL result = ObjectsPage::ShowObjectExtendedInfo(panel, msg);
     return result;
+    /**/
     BOOL resultA = true;
     const auto rmgObject = panel->rmgObject;
     const int cbID =
@@ -1177,10 +1166,44 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
 
     BOOL result = false;
 
-    if (msg.IsKeyDown())
+    // if (msg.IsKeyDown())
+    //  {
+    //  }
+    //  msg.GetKey();
+    // iterate all panels to redraw pcx if needed
+
+    const DWORD time = GetTime();
+    for (auto &objectsPanel : objectsPanels)
     {
+        if (objectsPanel->visible && objectsPanel->rmgObject)
+        {
+            // if pcx needs redraw
+            if (objectsPanel->pictureItem->GetPcx())
+            {
+                // if (time - objectsPanel->lastChangedPictureTime > 1000)
+                //{
+                //     objectsPanel->lastChangedPictureTime = time;
+
+                //    bool shown = objectsPanel->pictureItem->IsVisible();
+                //    if (shown)
+                //    {
+                //        objectsPanel->pictureItem->HideDeactivate();
+                //    }
+                //    else
+                //    {
+                //        objectsPanel->pictureItem->ShowActivate();
+                //    }
+                //    objectsPanel->pictureItem->Draw();
+                //    objectsPanel->pictureItem->Refresh();
+
+                // shown ^= true;
+                //  objectsPanel->pictureItem->Redraw();
+                //  needDlgRedraw = true;
+                //  }
+            }
+        }
     }
-    msg.GetKey();
+
     if (itemId && msg.command == eMsgCommand::ITEM_COMMAND)
     {
 
@@ -1456,67 +1479,13 @@ BOOL RMG_SettingsDlg::SetActivePage(Page *page) noexcept
     return result;
 }
 
-RMGObject::RMGObject(const H3ObjectAttributes &attributes, H3LoadedPcx16 *objectPcx)
-    : attributes(&attributes), objectPcx(objectPcx)
+RMGObject::RMGObject(const H3ObjectAttributes *attributes, H3LoadedPcx16 *objectPcx)
+    : attributes(attributes), objectPcx(objectPcx)
 {
     // Get data from global array
 
-    objectInfo = RMGObjectInfo::CurrentObjectInfo(attributes.type, attributes.subtype);
-    return;
-
-    constexpr int PCX_WIDTH = 44;
-    constexpr int PCX_HEIGHT = 44;
-
-    // use binary loader to handel Dtor and load def by attributes->defName
-    H3DefLoader def = H3LoadedDef::Load(attributes.defName.String());
-
-    const int srcWidth = def->widthDEF;
-    const int srcHeight = def->heightDEF;
-
-    objectPcx = H3LoadedPcx16::Create(srcWidth, srcHeight);
-    libc::memset(objectPcx->buffer, 0, objectPcx->buffSize);
-
-    return;
-    // create temp pcx to draw def there
-    if (H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(srcWidth, srcHeight))
-    {
-        // fill with black color
-        libc::memset(tempPcx->buffer, 0, tempPcx->buffSize);
-
-        const auto frame = def->GetGroupFrame(0, 0);
-
-        // copy def to temp pcx
-        frame->DrawToPcx16(frame->marginLeft, frame->marginTop, frame->frameWidth, frame->height, tempPcx, 0, 0,
-                           def->palette565);
-        // def->DrawToPcx16(0, 0, tempPcx, 0, 0);
-
-        // create pcx to draw resized temp pcx there
-        H3LoadedPcx16 *resizedPcx = H3LoadedPcx16::Create(PCX_WIDTH, PCX_HEIGHT);
-        libc::memset(resizedPcx->buffer, 0, resizedPcx->buffSize);
-
-        // place picture into "Squere" thanks to @Berserker ...
-        const int maxDim = std::max(srcWidth, srcHeight);
-
-        const int dstWidth = static_cast<int>(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
-        const int dstHeight = static_cast<int>(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
-
-        const int dstX = (PCX_WIDTH - dstWidth) >> 1;
-        const int dstY = (PCX_HEIGHT - dstHeight) >> 1;
-
-        //			resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(resizedPcx, tempPcx, srcWidth, srcHeight,
-        // dstX, dstY, dstWidth, dstHeight);
-
-        objectPcx = tempPcx;
-
-        // destroy temp picture
-        // tempPcx->Destroy();
-    }
+    objectInfo = RMGObjectInfo::CurrentObjectInfo(attributes->type, attributes->subtype);
 }
-
-// Object::Object(const H3ObjectAttributes& attributes)
-//	:Object(attributes, { attributes.type, attributes.subtype })
-//{
-// }
 
 RMG_SettingsDlg::ObjectsPage::PageHeader::PageHeader(const int x, const int y, const int width, const int height,
                                                      const int objectsNum)
@@ -1578,8 +1547,7 @@ void RMG_SettingsDlg::ObjectsPage::PageHeader::SetVisible(bool state)
     visible = state;
 }
 
-RMG_SettingsDlg::MiscPage::MiscPage(H3DlgCaptionButton *captionbttn,
-                                    const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &data)
+RMG_SettingsDlg::MiscPage::MiscPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data)
     : ObjectsPage(captionbttn, data)
 {
 }
@@ -1589,150 +1557,163 @@ RMG_SettingsDlg::MiscPage::~MiscPage()
 }
 
 RMG_SettingsDlg::DwellingsPage::DwellingsPage(H3DlgCaptionButton *captionbttn,
-                                              const std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &data)
+                                              const std::vector<GraphicalAttributes> &data)
     : ObjectsPage(captionbttn, data)
 {
 }
 
-void GetObjectPrototypesByTypes(std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &dataVec, const int *arr,
-                                const size_t size)
+RMG_SettingsDlg::DwellingsPage::~DwellingsPage()
 {
-    dataVec.clear();
-
-    for (size_t i = 0; i < size; i++)
-    {
-        for (const auto &obj : P_Game->mainSetup.objectLists[arr[i]])
-        {
-            const auto result = std::find_if(
-                dataVec.cbegin(), dataVec.cend(),
-                [&](const std::pair<H3ObjectAttributes, H3LoadedPcx16 *> &atr) -> bool {
-                    return atr.first.type == obj.type &&
-                           atr.first.subtype ==
-                               obj.subtype; // (ignoreSubtypes ? obj.subtype != 0 : atr.subtype == obj.subtype);
-                });
-
-            if (result == dataVec.end())
-            {
-                dataVec.emplace_back(std::make_pair(obj, nullptr));
-            }
-        }
-    }
 }
 
-void FindDataInObjectGeneratorsList(std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> &dataVec)
+std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(const int objectType) noexcept
 {
 
-    auto &attributesList = dataVec;
-
-    if (attributesList.size())
+    // spacing is added to show not adjusted object types
+    switch (objectType)
     {
-        std::vector<std::pair<H3ObjectAttributes, H3LoadedPcx16 *>> temp;
-        temp.reserve(attributesList.size());
+    case eObject::CREATURE_BANK:
+    case eObject::DERELICT_SHIP:
+    case eObject::DRAGON_UTOPIA:
+    case eObject::CRYPT:
+    case eObject::SHIPWRECK:
+        return &m_creatureBanks;
+    case eObject::ARENA:
+        /*
+         * eObject::KEYMASTER, @todo: place into another page
+         */
+    case eObject::BLACK_MARKET:
 
-        if (const auto objList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList())
+    case eObject::CARTOGRAPHER:
+    case eObject::SWAN_POND:
+
+    case eObject::CORPSE:
+    case eObject::MARLETTO_TOWER:
+
+    case eObject::FAERIE_RING:
+
+    case eObject::GARDEN_OF_REVELATION:
+    case eObject::IDOL_OF_FORTUNE:
+
+    case eObject::LIBRARY_OF_ENLIGHTENMENT:
+
+    case eObject::SCHOOL_OF_MAGIC:
+
+    case eObject::MAGIC_WELL:
+
+    case eObject::MERCENARY_CAMP:
+    case eObject::STAR_AXIS:
+
+    case eObject::FOUNTAIN_OF_FORTUNE:
+    case eObject::FOUNTAIN_OF_YOUTH:
+
+    case eObject::HILL_FORT:
+
+    case eObject::LEAN_TO:
+    case eObject::MAGIC_SPRING:
+
+    case eObject::MYSTICAL_GARDEN:
+    case eObject::OASIS:
+    case eObject::OBELISK:
+    case eObject::REDWOOD_OBSERVATORY:
+
+    case eObject::PILLAR_OF_FIRE:
+
+    case eObject::RALLY_FLAG:
+
+    case eObject::REFUGEE_CAMP:
+
+    case eObject::SCHOLAR:
+
+    case eObject::SEER_HUT:
+
+    case eObject::SHRINE_OF_MAGIC_INCANTATION:
+    case eObject::SHRINE_OF_MAGIC_GESTURE:
+    case eObject::SHRINE_OF_MAGIC_THOUGHT:
+
+    case eObject::SIRENS:
+
+    case eObject::STABLES:
+    case eObject::TAVERN:
+    case eObject::TEMPLE:
+    case eObject::DEN_OF_THIEVES:
+    case eObject::TRADING_POST:
+    case eObject::LEARNING_STONE:
+
+    case eObject::TREE_OF_KNOWLEDGE:
+
+    case eObject::UNIVERSITY:
+    case eObject::WAGON:
+    case eObject::WAR_MACHINE_FACTORY:
+    case eObject::SCHOOL_OF_WAR:
+    case eObject::WARRIORS_TOMB:
+    case eObject::WATER_WHEEL:
+    case eObject::WATERING_HOLE:
+
+    case eObject::WINDMILL:
+    case eObject::WITCH_HUT:
+
+    case warehouses::WAREHOUSE_OBJECT_TYPE:
+
+    case extender::HOTA_OBJECT_TYPE:
+    case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
+    case extender::HOTA_UNREACHABLE_OBJECT_TYPE:
+
+    case eObject::FREELANCERS_GUILD:
+        return &m_commonObjects;
+
+    case eObject::CREATURE_GENERATOR1:
+    case eObject::CREATURE_GENERATOR4:
+        return &m_creatureGenerators;
+    case eObject::PYRAMID:
+        return &m_wogObjects;
+
+    default:
+        return nullptr;
+
+        break;
+    }
+    return nullptr;
+}
+BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators)
+{
+    if (objectGenerators == nullptr)
+    {
+        return false;
+    }
+
+    // Create object prototypes copies from the loaded generators list
+
+    // we iterate all the RMG prototypes and create copies of H3ObjectAttributes into local array taken from game
+    // objects list
+
+    std::unordered_set<DWORD> uniqueObjectsAdded;
+    std::vector<GraphicalAttributes> *workingVector = nullptr;
+
+    for (const auto &objGen : *objectGenerators)
+    {
+        const int objectType = objGen->type;
+
+        if (workingVector = GetObjectAttributesVector(objectType))
         {
+            const int objectSubtype = objGen->subtype;
+            const DWORD pair = (objectType << 16) | objectSubtype;
+            auto &objectTypeVector = P_Game->mainSetup.objectLists[objectType];
 
-            for (const auto *rmgGenObj : *objList)
+            for (auto &attributes : objectTypeVector)
             {
-                auto result = std::find_if(
-                    attributesList.begin(), attributesList.end(),
-                    [&](const std::pair<H3ObjectAttributes, H3LoadedPcx16 *> &atr) -> bool {
-                        return atr.first.type == rmgGenObj->type &&
-                               atr.first.subtype ==
-                                   rmgGenObj
-                                       ->subtype; // (ignoreSubtypes ? obj.subtype != 0 : atr.subtype == obj.subtype);
-                    });
-
-                if (result != attributesList.end())
+                if (attributes.subtype == objectSubtype)
                 {
-                    // H3ObjectAttributes attr = *result;
-                    temp.emplace_back(*result); //);std::make_pair(attr,nullptr));
+                    if (uniqueObjectsAdded.insert(pair).second)
+                    {
+                        workingVector->emplace_back(GraphicalAttributes{&attributes, nullptr});
+                    }
                 }
             }
-
-            temp.shrink_to_fit();
-
-            // reassign array data
-            attributesList = temp;
         }
     }
-}
 
-void GetObjectPrototypesLists()
-{
-    // get all creature creatureBanks by type/subptye
-
-    std::array<std::vector<int>, 4> objectTypes{
-        std::vector<int>{eObject::CREATURE_BANK, eObject::DERELICT_SHIP, eObject::DRAGON_UTOPIA, eObject::CRYPT,
-                         eObject::SHIPWRECK},
-        {eObject::ARENA,
-         /*
-          * eObject::KEYMASTER, @todo: place into another page
-          */
-         eObject::BLACK_MARKET,
-
-         eObject::CARTOGRAPHER, eObject::SWAN_POND,
-
-         eObject::CORPSE, eObject::MARLETTO_TOWER,
-
-         eObject::FAERIE_RING,
-
-         eObject::GARDEN_OF_REVELATION, eObject::IDOL_OF_FORTUNE,
-
-         eObject::LIBRARY_OF_ENLIGHTENMENT,
-
-         eObject::SCHOOL_OF_MAGIC,
-
-         eObject::MAGIC_WELL,
-
-         eObject::MERCENARY_CAMP, eObject::STAR_AXIS,
-
-         eObject::FOUNTAIN_OF_FORTUNE, eObject::FOUNTAIN_OF_YOUTH,
-
-         eObject::HILL_FORT,
-
-         eObject::LEAN_TO, eObject::MAGIC_SPRING,
-
-         eObject::MYSTICAL_GARDEN, eObject::OASIS, eObject::OBELISK, eObject::REDWOOD_OBSERVATORY,
-
-         eObject::PILLAR_OF_FIRE,
-
-         eObject::RALLY_FLAG,
-
-         eObject::REFUGEE_CAMP,
-
-         eObject::SCHOLAR,
-
-         eObject::SEER_HUT,
-
-         eObject::SHRINE_OF_MAGIC_INCANTATION, eObject::SHRINE_OF_MAGIC_GESTURE, eObject::SHRINE_OF_MAGIC_THOUGHT,
-
-         eObject::SIRENS,
-
-         eObject::STABLES, eObject::TAVERN, eObject::TEMPLE, eObject::DEN_OF_THIEVES, eObject::TRADING_POST,
-         eObject::LEARNING_STONE,
-
-         eObject::TREE_OF_KNOWLEDGE,
-
-         eObject::UNIVERSITY, eObject::WAGON, eObject::WAR_MACHINE_FACTORY, eObject::SCHOOL_OF_WAR,
-         eObject::WARRIORS_TOMB, eObject::WATER_WHEEL, eObject::WATERING_HOLE,
-
-         eObject::WINDMILL, eObject::WITCH_HUT,
-
-         warehouses::WAREHOUSE_OBJECT_TYPE, extender::HOTA_OBJECT_TYPE, extender::HOTA_PICKUPABLE_OBJECT_TYPE,
-         extender::HOTA_UNREACHABLE_OBJECT_TYPE, eObject::FREELANCERS_GUILD},
-        {eObject::CREATURE_GENERATOR1, eObject::CREATURE_GENERATOR4},
-        {eObject::PYRAMID}
-
-    };
-
-    for (size_t i = 0; i < objectTypes.size(); i++)
-    {
-        auto &arr = *RMG_SettingsDlg::GetObjectAttributes()[i];
-
-        GetObjectPrototypesByTypes(arr, objectTypes[i].data(), objectTypes[i].size());
-        FindDataInObjectGeneratorsList(arr);
-    }
+    return true;
 }
 
 _LHF_(RMG_SettingsDlg::Dlg_SelectScenario_Proc)
@@ -1953,7 +1934,7 @@ void CreateResizedObjectPcx()
     {
         for (auto &attributes : *vec)
         {
-            if (H3LoadedPcx16 *tempPcx = attributes.second)
+            if (H3LoadedPcx16 *tempPcx = attributes.objectPcx)
             {
                 // create pcx to draw resized temp pcx there
                 if (H3LoadedPcx16 *resizedPcx = H3LoadedPcx16::Create(PCX_WIDTH, PCX_HEIGHT))
@@ -1975,7 +1956,7 @@ void CreateResizedObjectPcx()
                     resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(resizedPcx, tempPcx, srcWidth, srcHeight,
                                                                            dstX, dstY, dstWidth, dstHeight);
 
-                    attributes.second = resizedPcx;
+                    attributes.objectPcx = resizedPcx;
                 }
 
                 tempPcx->Destroy();
@@ -1984,7 +1965,7 @@ void CreateResizedObjectPcx()
     }
 }
 
-void CreateGraphics(const H3Vector<H3RmgObjectGenerator *> &rmgObjList)
+void CopyOriginalObjectDefsIntoPcx16()
 {
 
     const auto &objectAttributes = RMG_SettingsDlg::GetObjectAttributes();
@@ -1993,35 +1974,38 @@ void CreateGraphics(const H3Vector<H3RmgObjectGenerator *> &rmgObjList)
     {
         for (auto &attributes : *vec)
         {
-            H3LoadedDef *def = H3LoadedDef::Load(attributes.first.defName.String());
+            H3LoadedDef *def = H3LoadedDef::Load(attributes.attributes->defName.String());
+            const auto frame = def->GetGroupFrame(0, 0);
 
             //    create temp pcx to draw def there
-            if (H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(def->widthDEF, def->heightDEF))
+            if (H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(frame->width, frame->height))
             {
                 // fill with black color
                 libc::memset(tempPcx->buffer, 0, tempPcx->buffSize);
-                const auto frame = def->GetGroupFrame(0, 0);
                 // copy def to temp pcx
 
                 frame->DrawToPcx16(frame->marginLeft, frame->marginTop, frame->frameWidth, frame->height, tempPcx, 0, 0,
                                    def->palette565);
-                attributes.second = tempPcx;
+                // def->DrawTransparent(0, tempPcx, 52,52, 1,1);
+                // def->DrawToPcx16(0, 0, tempPcx, 0, 0);
+                attributes.objectPcx = tempPcx;
             }
             def->Dereference();
         }
     }
 }
+// void CopyOriginalObjectDefsIntoPcx16();
 
+// create resized graphics for dialog
 void __stdcall GameStart(HiHook *hook, const DWORD a1)
 {
     THISCALL_1(int, hook->GetDefaultFunc(), a1);
 
     hook->Undo();
-
-    GetObjectPrototypesLists();
-    if (const auto genList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList())
+    const auto genList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList();
+    if (RMG_SettingsDlg::CreateObjectPrototypesLists(genList))
     {
-        CreateGraphics(*genList);
+        CopyOriginalObjectDefsIntoPcx16();
         // CreateResizedObjectPcx();
         std::thread th(CreateResizedObjectPcx);
         th.detach();

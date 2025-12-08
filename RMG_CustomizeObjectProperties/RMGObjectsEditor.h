@@ -213,7 +213,6 @@ class RMGObjectsEditor : public IGamePatch
     //  std::vector<RMGObjectInfo> defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
     //  std::array<std::vector<RMGObjectInfo>, h3::limits::OBJECTS> defaultRMGObjectsInfoByType;
 
-    // PseudoH3RmgRandomMapGenerator randomMapGenerator;
     H3Vector<H3RmgObjectGenerator *> *originalRMGObjectGenerators = nullptr;
     H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
 
