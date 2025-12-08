@@ -1,10 +1,48 @@
 #include "TestDlg.h"
 
-TestDlg::TestDlg(int width, int height, int x, int y) : H3Dlg(width, height, x, y, false, false)
+TestDlg::TestDlg(int width, int height, int x, int y) : H3Dlg(width, height, x, y, false)
 {
-    this->CreateOKButton();
-}
 
+    this->CreateOKButton();
+    auto baseDef = H3LoadedDef::Load("Secskill.def");
+    const int w = baseDef->widthDEF;
+    const int h = baseDef->heightDEF;
+    H3Hero *hero = nullptr;
+    for (size_t i = 0; i < 4; i++)
+    {
+        for (size_t l = 0; l < 7; l++)
+        {
+            int frameIndex = i * 7 + l;
+
+            auto &dlgPcx16 = skillsDlgPcx[frameIndex];
+
+            H3LoadedPcx16 *skillPcx = H3LoadedPcx16::Create(w, h);
+            baseDef->DrawTransparent(frameIndex * 3 + 5, skillPcx, 0, 0);
+            // if (hero && hero->secSkill[frameIndex])
+            {
+                skillPcx->GrayScaleArea(0, 0, w, h);
+            }
+            skillsDlgPcx[frameIndex] =
+                H3DlgPcx16::Create(50 + l * (w + 10), 50 + i * (h + 10), w, h, 100 + frameIndex, 0);
+            dlgPcx16->SetPcx(skillPcx);
+            AddItem(dlgPcx16);
+        }
+    }
+}
+TestDlg::~TestDlg()
+{
+    for (size_t i = 0; i < h3::limits::SECONDARY_SKILLS; i++)
+    {
+        if (auto dlgPcx = skillsDlgPcx[i])
+        {
+            if (auto pcx = dlgPcx->GetPcx())
+            {
+                pcx->Destroy();
+                dlgPcx->SetPcx(nullptr);
+            }
+        }
+    }
+}
 BOOL TestDlg::DialogProc(H3Msg &msg)
 {
     return 1;
@@ -16,9 +54,6 @@ H3Vector<H3DlgItem *> &TestDlg::items()
     // TODO: вставьте здесь оператор return
 }
 
-TestDlg::~TestDlg()
-{
-}
 //
 //_LHF_(gem_Dlg_MainMenu_Create)
 //{

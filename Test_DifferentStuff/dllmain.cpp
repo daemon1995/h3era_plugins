@@ -280,10 +280,18 @@ void __stdcall CrBank_BattleMgr_And_Reward(HiHook *hook, H3AdventureManager *adv
 //    }
 //    return EXEC_DEFAULT;
 //}
+_ERH_(OnGameEnter)
+{
+    return;
+    TestDlg dlg(500, 500);
+    dlg.Start();
+}
 
 _LHF_(HooksInit)
 {
-   // _PI->WriteLoHook(0x04242B1, AICombat_CheckECX);
+    Era::RegisterHandler(OnGameEnter, "OnGameEnter");
+
+    // _PI->WriteLoHook(0x04242B1, AICombat_CheckECX);
     // auto &vec = modList::GetEraModList();
     // for (auto &i : vec)
     //{
