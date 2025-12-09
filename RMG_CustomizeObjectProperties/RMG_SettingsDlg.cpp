@@ -1,6 +1,7 @@
-#include "pch.h"
 #include <thread>
-#include <unordered_set>
+#include <unordered_map>
+
+#include "pch.h"
 
 /**
 @TODO:
@@ -20,10 +21,9 @@ constexpr INT16 LAST = RMG_RANDOMIZE_BUTTON_ID;
 
 } // namespace itemIds
 
-UINT rmgdlg::RMG_SettingsDlg::ObjectsPanel::id = 0;
-
 namespace rmgdlg
 {
+UINT rmgdlg::RMG_SettingsDlg::ObjectsPanel::id = 0;
 
 namespace sorting
 {
@@ -40,11 +40,11 @@ enum eSorting : char
     BY_DENSITY
 };
 
-void SortRmgObjects(std::vector<RMGObject> &objVector, const eSorting sortingType = BY_TYPE, bool isReverse = false)
+void SortRmgObjects(std::vector<RMGDlgObject> &objVector, const eSorting sortingType = BY_TYPE, bool isReverse = false)
 {
-    // sort map RMGObjects by dfferent types
+    // sort map rmgDlgObjects by dfferent types
 
-    std::sort(objVector.begin(), objVector.end(), [&](const RMGObject &first, const RMGObject &second) -> bool {
+    std::sort(objVector.begin(), objVector.end(), [&](const RMGDlgObject &first, const RMGDlgObject &second) -> bool {
         const int cbIdFirst =
             cbanks::CreatureBanksExtender::GetCreatureBankType(first.objectInfo.type, first.objectInfo.subtype);
         const int cbIdSecond =
@@ -303,7 +303,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
 
     m_pages.emplace_back(new BanksPage{captionButtons[0], m_creatureBanks});
 
-    // create with ignored subtypes to display less data but should affect RMGObjects anyway
+    // create with ignored subtypes to display less data but should affect rmgDlgObjects anyway
     m_pages.emplace_back(new ObjectsPage{captionButtons[1], m_commonObjects, false});
     m_pages.emplace_back(new ObjectsPage{captionButtons[2], m_creatureGenerators, false});
     m_pages.emplace_back(new ObjectsPage{captionButtons[3], m_wogObjects, false});
@@ -597,7 +597,7 @@ BOOL RMG_SettingsDlg::SaveRMGObjectsInfo(const BOOL saveIni) const noexcept
         if (auto *mapObjectPage = dynamic_cast<ObjectsPage *>(page))
         { // try to cast to map object page
 
-            for (RMGObject &object : mapObjectPage->RMGObjects)
+            for (RMGDlgObject &object : mapObjectPage->rmgDlgObjects)
             {
                 auto &info = object.objectInfo;
                 info.Clamp();
@@ -620,7 +620,7 @@ void RMG_SettingsDlg::ObjectsPage::CreateVerticalScrollBar()
     constexpr int itemId = 100;
 
     const int PANELS_NUM = objectsPanels.size();
-    const int DATA_NUM = RMGObjects.size();
+    const int DATA_NUM = rmgDlgObjects.size();
     // if needed m_size > space -> create custom scroll bar
     if (PANELS_NUM < DATA_NUM)
     {
@@ -770,12 +770,12 @@ void RMG_SettingsDlg::ObjectsPanel::SetVisible(const BOOL state) noexcept
     }
 }
 
-void RMG_SettingsDlg::ObjectsPanel::SetObject(RMGObject *mapObject) noexcept
+void RMG_SettingsDlg::ObjectsPanel::SetObject(RMGDlgObject *mapObject) noexcept
 {
     if (mapObject != nullptr)
     {
         rmgObject = mapObject;
-        pictureItem->SetPcx(rmgObject->objectPcx);
+        pictureItem->SetPcx(rmgObject->graphicalAttributes->objectPcx);
         objectNameItem->SetText(rmgObject->objectInfo.GetName());
     }
 
@@ -846,8 +846,6 @@ void RMG_SettingsDlg::ObjectsPanel::PanelInfoToObjectInfo() noexcept
 
 RMG_SettingsDlg::Page::~Page()
 {
-
-    // delete pageHeader;
 }
 
 RMG_SettingsDlg::ObjectsPage::~ObjectsPage()
@@ -863,26 +861,26 @@ RMG_SettingsDlg::ObjectsPage::~ObjectsPage()
     delete pageHeader;
     objectsPanels.clear();
 
-    // clear RMGObjects pcx
-    for (auto &object : RMGObjects)
-    {
-        // if (object.objectPictures.size())
-        //{
-        //	for (auto& pcx : object.objectPictures)
-        //	{
-        //		pcx.objectPcx->Destroy();
-        //		pcx.objectPcx = nullptr;
+    //// clear rmgDlgObjects pcx
+    // for (auto &object : rmgDlgObjects)
+    //{
+    //     // if (object.objectPictures.size())
+    //     //{
+    //     //	for (auto& pcx : object.objectPictures)
+    //     //	{
+    //     //		pcx.objectPcx->Destroy();
+    //     //		pcx.objectPcx = nullptr;
 
-        //	}
-        //}
+    //    //	}
+    //    //}
 
-        if (auto &pcx = object.objectPcx)
-        {
-            pcx = nullptr;
-        }
-    }
+    //    if (auto &pcx = object.graphicalAttributes->objectPcx)
+    //    {
+    //        //  pcx = nullptr;
+    //    }
+    //}
 
-    RMGObjects.clear();
+    rmgDlgObjects.clear();
 }
 
 H3Msg *__stdcall RMG_SettingsDlg::H3DlgEdit__TranslateInputKey(HiHook *h, H3InputManager *inpt, H3Msg *msg)
@@ -947,9 +945,11 @@ void RMG_SettingsDlg::ObjectsPage::SetVisible(bool state)
         state ? horizontalScrollBar->ShowActivate() : horizontalScrollBar->HideDeactivate();
     }
 
+    auto time = GetTime();
     for (auto &p : objectsPanels)
     {
         p->SetVisible(state);
+        p->lastChangedPictureTime = time;
     }
 
     visible = state;
@@ -980,7 +980,7 @@ void RMG_SettingsDlg::ObjectsPage::SetRandom(const H3Msg &msg)
 
         // ECHO();
     }
-    for (auto &rmgObject : RMGObjects)
+    for (auto &rmgObject : rmgDlgObjects)
     {
         rmgObject.objectInfo.SetRandom();
     }
@@ -990,7 +990,7 @@ void RMG_SettingsDlg::ObjectsPage::SetRandom(const H3Msg &msg)
 
 void RMG_SettingsDlg::ObjectsPage::SetDefault()
 {
-    for (auto &object : RMGObjects)
+    for (auto &object : rmgDlgObjects)
     {
         object.objectInfo.RestoreDefault();
     }
@@ -999,46 +999,29 @@ void RMG_SettingsDlg::ObjectsPage::SetDefault()
 
 RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
                                           const std::vector<GraphicalAttributes> &attributes, const BOOL ignoreSubtypes)
-    : Page(captionbttn), ignoreSubtypes(ignoreSubtypes)
+    : Page(captionbttn), ignoreSubtypes(ignoreSubtypes), objectAttributes(&attributes)
 
 {
 
     this->ignoreSubtypes = false;
 
-    // if we ignore sbtypes we should ddisplay only subtype == 0
-    // if (ignoreSubtypes)
-    //{
-    //	displayedAttributes.reserve(attributes.size());
-
-    //	for (const auto& obj : attributes)
-    //	{
-    //		if (obj.subtype == 0)
-    //		{
-    //			displayedAttributes.emplace_back(obj);
-    //		}
-    //	}
-    //}
-
-    objectAttributes = &attributes;
-
-    auto &workingVector = ignoreSubtypes ? attributes : attributes;
-
     // resizedPcx16.RemoveAll();
 
-    const size_t SIZE = workingVector.size();
+    const size_t SIZE = attributes.size();
 
-    RMGObjects.reserve(SIZE);
+    rmgDlgObjects.reserve(SIZE);
 
     // Crreate Object Parameteres
 
-    // create local RMGObjects
+    // create local rmgDlgObjects
     for (size_t i = 0; i < SIZE; i++)
     {
-        RMGObjects.emplace_back(workingVector[i].attributes, workingVector[i].objectPcx);
+        auto *attr = const_cast<GraphicalAttributes *>(&attributes[i]);
+        rmgDlgObjects.emplace_back(attr);
     }
-    RMGObjects.shrink_to_fit();
+    rmgDlgObjects.shrink_to_fit();
 
-    sorting::SortRmgObjects(RMGObjects, sorting::eSorting::BY_TYPE);
+    sorting::SortRmgObjects(rmgDlgObjects, sorting::eSorting::BY_TYPE);
     lastSorting.type = sorting::eSorting::BY_TYPE;
 
     // auto* dlg = dlg;
@@ -1050,14 +1033,14 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
     constexpr int HEADER_HEIGHT = 38;
 
     // create page header
-    pageHeader = new PageHeader(x, y, PANEL_WINDTH, HEADER_HEIGHT, RMGObjects.size());
+    pageHeader = new PageHeader(x, y, PANEL_WINDTH, HEADER_HEIGHT, rmgDlgObjects.size());
 
     // later add all its items into main dlg
     for (auto it : pageHeader->items)
         dlg->AddItem(it);
 
     // prepare creating page dlg Items aka as CreateDlgPanels
-    const size_t objectsNum = RMGObjects.size();
+    const size_t objectsNum = rmgDlgObjects.size();
 
     const size_t panelsNum = Clamp(0, objectsNum, 8);
     for (size_t i = 0; i < panelsNum; i++)
@@ -1072,7 +1055,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
 void RMG_SettingsDlg::ObjectsPage::FillObjects(int firstItem)
 {
     const size_t PANELS_NUM = objectsPanels.size();
-    const size_t DATA_NUM = RMGObjects.size();
+    const size_t DATA_NUM = rmgDlgObjects.size();
 
     for (size_t i = 0; i < PANELS_NUM; i++)
     {
@@ -1083,7 +1066,7 @@ void RMG_SettingsDlg::ObjectsPage::FillObjects(int firstItem)
         if (inRange)
         {
             objectsPanels[i]->UnfocusEdits(false);
-            objectsPanels[i]->SetObject(&RMGObjects[dataIndex]);
+            objectsPanels[i]->SetObject(&rmgDlgObjects[dataIndex]);
         }
     }
 }
@@ -1098,8 +1081,8 @@ BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *pa
 
         H3String str;
 
-        const bool result =
-            extender::ObjectExtenderManager::ShowObjectExtendedInfo(rmgObject->objectInfo, rmgObject->attributes, str);
+        const bool result = extender::ObjectExtenderManager::ShowObjectExtendedInfo(
+            rmgObject->objectInfo, rmgObject->graphicalAttributes->attributes, str);
 
         if (!result)
         {
@@ -1166,40 +1149,26 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
 
     BOOL result = false;
 
-    // if (msg.IsKeyDown())
-    //  {
-    //  }
-    //  msg.GetKey();
-    // iterate all panels to redraw pcx if needed
-
     const DWORD time = GetTime();
     for (auto &objectsPanel : objectsPanels)
     {
         if (objectsPanel->visible && objectsPanel->rmgObject)
         {
+            auto rmgDlgObject = objectsPanel->rmgObject;
             // if pcx needs redraw
-            if (objectsPanel->pictureItem->GetPcx())
+            if (rmgDlgObject && time - objectsPanel->lastChangedPictureTime > 3000)
             {
-                // if (time - objectsPanel->lastChangedPictureTime > 1000)
-                //{
-                //     objectsPanel->lastChangedPictureTime = time;
+                objectsPanel->lastChangedPictureTime = time;
 
-                //    bool shown = objectsPanel->pictureItem->IsVisible();
-                //    if (shown)
-                //    {
-                //        objectsPanel->pictureItem->HideDeactivate();
-                //    }
-                //    else
-                //    {
-                //        objectsPanel->pictureItem->ShowActivate();
-                //    }
-                //    objectsPanel->pictureItem->Draw();
-                //    objectsPanel->pictureItem->Refresh();
-
-                // shown ^= true;
-                //  objectsPanel->pictureItem->Redraw();
-                //  needDlgRedraw = true;
-                //  }
+                if (rmgDlgObject->SwitchToNextPicture())
+                {
+                    auto &dlgPcx = objectsPanel->pictureItem;
+                    dlgPcx->SetPcx(rmgDlgObject->graphicalAttributes->objectPcx);
+                    {
+                        dlgPcx->Draw();
+                        dlgPcx->Refresh();
+                    }
+                }
             }
         }
     }
@@ -1237,7 +1206,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                         arrow->SetFrame(frameId);
                     }
 
-                    sorting::SortRmgObjects(RMGObjects, sort, reverse);
+                    sorting::SortRmgObjects(rmgDlgObjects, sort, reverse);
 
                     FillObjects(firstItemCount);
                     needDlgRedraw = true;
@@ -1280,7 +1249,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                             const int newSetup = objectsPanel->rmgObject->objectInfo.enabled ^= true;
                             if (doMassEnable || doMassReverse)
                             {
-                                for (auto &obj : this->RMGObjects)
+                                for (auto &obj : this->rmgDlgObjects)
                                 {
                                     obj.objectInfo.enabled = doMassReverse ? obj.objectInfo.enabled ^ true : newSetup;
                                 }
@@ -1479,12 +1448,23 @@ BOOL RMG_SettingsDlg::SetActivePage(Page *page) noexcept
     return result;
 }
 
-RMGObject::RMGObject(const H3ObjectAttributes *attributes, H3LoadedPcx16 *objectPcx)
-    : attributes(attributes), objectPcx(objectPcx)
+RMGDlgObject::RMGDlgObject(GraphicalAttributes *graphicalAttributes) : graphicalAttributes(graphicalAttributes)
 {
     // Get data from global array
 
-    objectInfo = RMGObjectInfo::CurrentObjectInfo(attributes->type, attributes->subtype);
+    objectInfo = RMGObjectInfo::CurrentObjectInfo(graphicalAttributes->attributes->type,
+                                                  graphicalAttributes->attributes->subtype);
+}
+
+BOOL RMGDlgObject::SwitchToNextPicture() noexcept
+{
+    if (graphicalAttributes && graphicalAttributes != graphicalAttributes->next)
+    {
+        graphicalAttributes = graphicalAttributes->next;
+        return true;
+    }
+
+    return false;
 }
 
 RMG_SettingsDlg::ObjectsPage::PageHeader::PageHeader(const int x, const int y, const int width, const int height,
@@ -1506,7 +1486,7 @@ RMG_SettingsDlg::ObjectsPage::PageHeader::PageHeader(const int x, const int y, c
     // LPCSTR(0x6839DC);
     LPCSTR defName = 1 ? LPCSTR(0x6839DC) : "ScnrBDn.def";
 
-    // create frame and description for the map RMGObjects fields
+    // create frame and description for the map rmgDlgObjects fields
 
     constexpr int _x[] = {20, 88, 350, 450, 550, 650};
     constexpr int _w[] = {65, 238, 65, 65, 65, 65};
@@ -1675,6 +1655,39 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
     }
     return nullptr;
 }
+
+void RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16()
+{
+    for (auto &vec : m_objectAttributes)
+    {
+        for (auto &attributes : *vec)
+        {
+            auto *workingAttributes = &attributes;
+
+            do
+            {
+                H3LoadedDef *def = H3LoadedDef::Load(workingAttributes->attributes->defName.String());
+                const auto frame = def->GetGroupFrame(0, 0);
+
+                //    create temp pcx to draw def there
+                if (H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(frame->width, frame->height))
+                {
+                    // fill with black color
+                    libc::memset(tempPcx->buffer, 0, tempPcx->buffSize);
+                    // copy def to temp pcx
+
+                    frame->DrawToPcx16(frame->marginLeft, frame->marginTop, frame->frameWidth, frame->height, tempPcx,
+                                       0, 0, def->palette565);
+                    // def->DrawTransparent(0, tempPcx, 52,52, 1,1);
+                    // def->DrawToPcx16(0, 0, tempPcx, 0, 0);
+                    workingAttributes->objectPcx = tempPcx;
+                }
+                def->Dereference();
+                // if we have more graphics
+            } while (workingAttributes = workingAttributes->next);
+        }
+    }
+}
 BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators)
 {
     if (objectGenerators == nullptr)
@@ -1684,12 +1697,12 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
 
     // Create object prototypes copies from the loaded generators list
 
-    // we iterate all the RMG prototypes and create copies of H3ObjectAttributes into local array taken from game
-    // objects list
-
-    std::unordered_set<DWORD> uniqueObjectsAdded;
     std::vector<GraphicalAttributes> *workingVector = nullptr;
 
+    std::unordered_map<DWORD, size_t> uniqueObjectsIndex;
+
+    // we iterate all the RMG prototypes and store copies of H3ObjectAttributes into local array taken from game
+    // objects list
     for (const auto &objGen : *objectGenerators)
     {
         const int objectType = objGen->type;
@@ -1704,9 +1717,29 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
             {
                 if (attributes.subtype == objectSubtype)
                 {
-                    if (uniqueObjectsAdded.insert(pair).second)
+                    auto itIndex = uniqueObjectsIndex.find(pair);
+
+                    if (itIndex == uniqueObjectsIndex.end())
                     {
-                        workingVector->emplace_back(GraphicalAttributes{&attributes, nullptr});
+                        workingVector->emplace_back(GraphicalAttributes{&attributes});
+                        uniqueObjectsIndex[pair] = workingVector->size() - 1;
+                    }
+                    else
+                    {
+                        const size_t addedInTheListItemId = uniqueObjectsIndex[pair];
+
+                        GraphicalAttributes *tail = &(*workingVector)[addedInTheListItemId];
+                        while (tail->next)
+                        {
+                            tail = tail->next;
+                        }
+
+                        // create linked list of graphical attributes for same type/subtype objects
+                        // last item points to the original attributes
+                        // ATTENTION
+                        // access set only via loop
+                        // and deleting only when the game ends
+                        tail->next = new GraphicalAttributes{&attributes};
                     }
                 }
             }
@@ -1934,67 +1967,53 @@ void CreateResizedObjectPcx()
     {
         for (auto &attributes : *vec)
         {
-            if (H3LoadedPcx16 *tempPcx = attributes.objectPcx)
+            auto workingAttributes = &attributes;
+
+            do
             {
-                // create pcx to draw resized temp pcx there
-                if (H3LoadedPcx16 *resizedPcx = H3LoadedPcx16::Create(PCX_WIDTH, PCX_HEIGHT))
+                if (H3LoadedPcx16 *tempPcx = workingAttributes->objectPcx)
                 {
-                    memset(resizedPcx->buffer, 0, resizedPcx->buffSize);
+                    // create pcx to draw resized temp pcx there
+                    if (H3LoadedPcx16 *resizedPcx = H3LoadedPcx16::Create(PCX_WIDTH, PCX_HEIGHT))
+                    {
+                        memset(resizedPcx->buffer, 0, resizedPcx->buffSize);
 
-                    const int srcWidth = tempPcx->width;
-                    const int srcHeight = tempPcx->height;
+                        const int srcWidth = tempPcx->width;
+                        const int srcHeight = tempPcx->height;
 
-                    // place picture into "Square" thanks to @Berserker ...
-                    const int maxDim = std::max(srcWidth, srcHeight);
+                        // place picture into "Square" thanks to @Berserker ...
+                        const int maxDim = std::max(srcWidth, srcHeight);
 
-                    const int dstWidth = static_cast<int>(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
-                    const int dstHeight = static_cast<int>(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
+                        const int dstWidth = static_cast<int>(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
+                        const int dstHeight = static_cast<int>(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
 
-                    const int dstX = (PCX_WIDTH - dstWidth) >> 1;
-                    const int dstY = (PCX_HEIGHT - dstHeight) >> 1;
+                        const int dstX = (PCX_WIDTH - dstWidth) >> 1;
+                        const int dstY = (PCX_HEIGHT - dstHeight) >> 1;
 
-                    resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(resizedPcx, tempPcx, srcWidth, srcHeight,
-                                                                           dstX, dstY, dstWidth, dstHeight);
+                        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(resizedPcx, tempPcx, srcWidth, srcHeight,
+                                                                               dstX, dstY, dstWidth, dstHeight);
 
-                    attributes.objectPcx = resizedPcx;
+                        workingAttributes->objectPcx = resizedPcx;
+                    }
+
+                    tempPcx->Destroy();
                 }
-
-                tempPcx->Destroy();
-            }
+                // if we have more graphics
+                if (workingAttributes->next)
+                {
+                    // repeat creation pictures for them
+                    workingAttributes = workingAttributes->next;
+                }
+                else
+                {
+                    // otherwise break the loop
+                    workingAttributes->next = &attributes;
+                    break;
+                }
+            } while (workingAttributes);
         }
     }
 }
-
-void CopyOriginalObjectDefsIntoPcx16()
-{
-
-    const auto &objectAttributes = RMG_SettingsDlg::GetObjectAttributes();
-
-    for (auto &vec : objectAttributes)
-    {
-        for (auto &attributes : *vec)
-        {
-            H3LoadedDef *def = H3LoadedDef::Load(attributes.attributes->defName.String());
-            const auto frame = def->GetGroupFrame(0, 0);
-
-            //    create temp pcx to draw def there
-            if (H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(frame->width, frame->height))
-            {
-                // fill with black color
-                libc::memset(tempPcx->buffer, 0, tempPcx->buffSize);
-                // copy def to temp pcx
-
-                frame->DrawToPcx16(frame->marginLeft, frame->marginTop, frame->frameWidth, frame->height, tempPcx, 0, 0,
-                                   def->palette565);
-                // def->DrawTransparent(0, tempPcx, 52,52, 1,1);
-                // def->DrawToPcx16(0, 0, tempPcx, 0, 0);
-                attributes.objectPcx = tempPcx;
-            }
-            def->Dereference();
-        }
-    }
-}
-// void CopyOriginalObjectDefsIntoPcx16();
 
 // create resized graphics for dialog
 void __stdcall GameStart(HiHook *hook, const DWORD a1)
@@ -2005,7 +2024,7 @@ void __stdcall GameStart(HiHook *hook, const DWORD a1)
     const auto genList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList();
     if (RMG_SettingsDlg::CreateObjectPrototypesLists(genList))
     {
-        CopyOriginalObjectDefsIntoPcx16();
+        RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16();
         // CreateResizedObjectPcx();
         std::thread th(CreateResizedObjectPcx);
         th.detach();

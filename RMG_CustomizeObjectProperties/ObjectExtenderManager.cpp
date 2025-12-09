@@ -1,6 +1,8 @@
-﻿#include "pch.h"
-#include <thread>
+﻿#include <thread>
 #include <unordered_set>
+
+#include "pch.h"
+
 namespace extender
 {
 #define READ_RMG_JSON_FIELD_1(field, objType)                                                                          \

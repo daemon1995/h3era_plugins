@@ -204,7 +204,6 @@ class RMGObjectsEditor : public IGamePatch
 
   private:
     // used to store default generated data
-    PseudoH3RmgRandomMapGenerator pseudoH3RmgRandomMapGenerator;
     BOOL isPseudoGeneration = false;
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
@@ -213,8 +212,9 @@ class RMGObjectsEditor : public IGamePatch
     //  std::vector<RMGObjectInfo> defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
     //  std::array<std::vector<RMGObjectInfo>, h3::limits::OBJECTS> defaultRMGObjectsInfoByType;
 
-    H3Vector<H3RmgObjectGenerator *> *originalRMGObjectGenerators = nullptr;
+    //  H3Vector<H3RmgObjectGenerator *> *originalRMGObjectGenerators = nullptr;
     H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
+    H3Vector<H3RmgObjectGenerator *> originalRMGObjectGenerators;
 
   private:
     RMGObjectsEditor();

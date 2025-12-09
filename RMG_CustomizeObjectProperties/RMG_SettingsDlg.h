@@ -11,28 +11,33 @@ struct GraphicalAttributes
 {
     const H3ObjectAttributes *attributes = nullptr;
     H3LoadedPcx16 *objectPcx = nullptr;
-};
 
-class RMGObject
+    GraphicalAttributes *next = nullptr;
+};
+class RMGDlgObject
 {
 
   public:
     // displayed/edited rmgObjInfo
     RMGObjectInfo objectInfo;
     // properties of the real object - dont change
-    const H3ObjectAttributes *attributes;
+    //   const H3ObjectAttributes *attributes;
     // displayd resized pcx16 - should be deleted before dlg close
-    H3LoadedPcx16 *objectPcx = nullptr;
+    //  H3LoadedPcx16 *objectPcx = nullptr;
+    GraphicalAttributes *graphicalAttributes;
     // std::vector<Graphics> objectPictures;
     // UINT lastDrawnFrame = NULL;
 
   private:
-    RMGObject();
+    RMGDlgObject();
 
   public:
     //	Object(const H3ObjectAttributes& attributes, const RMGObjectInfo& objectInfo);
     // Object(const H3ObjectAttributes& attributes);
-    RMGObject(const H3ObjectAttributes *attributes, H3LoadedPcx16 *objectPcx = nullptr);
+    RMGDlgObject(GraphicalAttributes *graphicalAttributes);
+
+  public:
+    BOOL SwitchToNextPicture() noexcept;
     // Object(std::pair < H3ObjectAttributes, H3LoadedPcx16*> info);
     //~Object();
 };
@@ -64,7 +69,7 @@ class RMG_SettingsDlg : public H3Dlg
 
         BOOL visible = false;
         Page *parentPage = nullptr;
-        RMGObject *rmgObject = nullptr;
+        RMGDlgObject *rmgObject = nullptr;
 
         H3DlgPcx16 *pictureItem = nullptr;
         H3DlgPcx16 *backgroundPcx = nullptr;
@@ -86,13 +91,13 @@ class RMG_SettingsDlg : public H3Dlg
         H3DlgDefButton *defaultButton = nullptr;
 
         std::vector<H3DlgItem *> items;
-		DWORD lastChangedPictureTime = 0;
+        DWORD lastChangedPictureTime = 0;
         ObjectsPanel(const int x, const int y, Page *parent);
         virtual ~ObjectsPanel();
 
       public:
         void SetVisible(const BOOL state) noexcept;
-        void SetObject(RMGObject *mapObject) noexcept;
+        void SetObject(RMGDlgObject *mapObject) noexcept;
         //	void ObjectInfoToPanelInfo() noexcept;
         void ObjectInfoToPanelInfo() noexcept;
         void PanelInfoToObjectInfo() noexcept;
@@ -154,7 +159,7 @@ class RMG_SettingsDlg : public H3Dlg
         BOOL ignoreSubtypes;
 
         std::vector<ObjectsPanel *> objectsPanels;
-        std::vector<RMGObject> RMGObjects;
+        std::vector<RMGDlgObject> rmgDlgObjects;
 
         ObjectsPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &attributes,
                     const BOOL ignoreSubtypes = false);
@@ -279,7 +284,7 @@ class RMG_SettingsDlg : public H3Dlg
     static const std::vector<std::vector<GraphicalAttributes> *> &GetObjectAttributes() noexcept;
     static std::vector<GraphicalAttributes> *GetObjectAttributesVector(const int type) noexcept;
     static BOOL CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators);
-
+    static void CopyOriginalObjectDefsIntoPcx16();
     static DWORD GetUserRandSeedInput() noexcept;
 };
 

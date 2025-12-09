@@ -109,10 +109,12 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     isPseudoGeneration = true;
     // pseudoH3RmgRandomMapGenerator.objectPrototypes[eObject::KEYMASTER] =
     // P_Game->mainSetup.objectLists[eObject::KEYMASTER];
+    PseudoH3RmgRandomMapGenerator pseudoH3RmgRandomMapGenerator;
 
     THISCALL_1(void, 0x539000, &pseudoH3RmgRandomMapGenerator); // RMG__CreateObjectGenerators
 
-    originalRMGObjectGenerators = &pseudoH3RmgRandomMapGenerator.objectGenerators;
+    originalRMGObjectGenerators = pseudoH3RmgRandomMapGenerator.objectGenerators;
+    // originalRMGObjectGenerators = &originalRMGObjectGeneratorsA;
 
     isPseudoGeneration = false;
     ByteAt(0x5390B7) = storedByte;
@@ -120,7 +122,7 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 
 const H3Vector<H3RmgObjectGenerator *> *RMGObjectsEditor::GetObjectGeneratorsList() const noexcept
 {
-    return originalRMGObjectGenerators; // .objectGenerators;
+    return &originalRMGObjectGenerators; // .objectGenerators;
 }
 
 RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
