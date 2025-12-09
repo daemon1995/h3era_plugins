@@ -71,7 +71,7 @@ class MenuWidgetManager
     void DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw = false);
     void HandleEvent(H3Msg *msg);
     BOOL IsVisible() const noexcept;
-    void SetVisible(const bool visible);
+    void SetVisible(const BOOL visible, const BOOL forceRedraw = false);
 
     // Новый API для доступа к виджетам по id
     H3DlgCaptionButton *GetWidgetByName(LPCSTR name) const;

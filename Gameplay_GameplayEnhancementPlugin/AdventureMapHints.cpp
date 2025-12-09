@@ -520,29 +520,42 @@ int __stdcall AdventureMapHints::H3AdventureManager_ProcMapScreen(HiHook *h, H3A
     char focused = advMgr->dlg->screenlogEdit->IsFocused();
 
     // Если не в чате и отжатие кнопки ALT
-    if (!focused && msg->GetKey() == eVKey::H3VK_ALT)
+    if (!focused)
     {
-        switch (msg->command)
+
+        if (msg->GetKey() == eVKey::H3VK_ALT)
         {
-        case eMsgCommand::KEY_DOWN:
-            if (!instance->altIsPressed)
+            switch (msg->command)
             {
-                instance->altIsPressed = true;
+            case eMsgCommand::KEY_DOWN:
+                if (!instance->altIsPressed)
+                {
+                    instance->altIsPressed = true;
 
-                advMgr->UpdateHintMessage();
+                    advMgr->UpdateHintMessage();
+                }
+                break;
+            case eMsgCommand::KEY_UP:
+                if (instance->altIsPressed)
+                {
+                    instance->altIsPressed = false;
+
+                    advMgr->UpdateHintMessage();
+                }
+                break;
+
+            default:
+
+                break;
             }
-            break;
-        case eMsgCommand::KEY_UP:
-            if (instance->altIsPressed)
+        }
+        else if (instance->altIsPressed)
+        {
+            if (msg->flags & h3::eMsgFlag::ALT)
             {
-                instance->altIsPressed = false;
-
-                advMgr->UpdateHintMessage();
+                //  instance->altIsPressed = false;
+                // advMgr->UpdateHintMessage();
             }
-            break;
-
-        default:
-            break;
         }
     }
 

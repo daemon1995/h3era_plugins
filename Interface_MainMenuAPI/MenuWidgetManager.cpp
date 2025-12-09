@@ -10,7 +10,7 @@ BOOL MenuWidgetManager::IsVisible() const noexcept
     return isVisible;
 }
 
-void MenuWidgetManager::SetVisible(const bool visible)
+void MenuWidgetManager::SetVisible(const BOOL visible, const BOOL forceRedraw)
 {
     if (visible != this->isVisible)
     {
@@ -26,7 +26,11 @@ void MenuWidgetManager::SetVisible(const bool visible)
         framedBackground->SetPcx(visible         ? framedBackgroundPcx
                                  : placedOutside ? outsideBackupScreenPcx
                                                  : insideBackupScreenPcx);
-
+        if (visible && forceRedraw)
+        {
+            framedBackground->Draw();
+            framedBackground->Refresh();
+        }
         // Era::red
         for (size_t i = 0; i < createdWidgets.size(); i++)
         {
@@ -431,7 +435,16 @@ void MenuWidgetManager::HandleEvent(H3Msg *msg)
 
             if (widget && widget->uiElement && widget->customProc && widget->id == msg->itemId)
             {
-                if (widget->customProc(msg))
+                // test thingy to hide the menu while processing the event
+                // const bool needToHide = false;
+                // if (needToHide)
+                //{
+                //    this->SetVisible(false);
+                //}
+                const bool result = widget->customProc(msg);
+                // if (needToHide)
+                //     this->SetVisible(true, true);
+                if (result)
                     return;
             }
         }
