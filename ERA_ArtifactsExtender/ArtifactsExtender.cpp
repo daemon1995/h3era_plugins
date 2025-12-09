@@ -1,4 +1,5 @@
-#include "map"
+#include <unordered_map>
+
 #include "pch.h"
 
 namespace artifacts
@@ -73,7 +74,7 @@ const int ArtifactsExtender::LoadNewArtifactsFromJson()
 {
     int addedArts = 0;
     const auto loadedMods = modList::GetEraModList(1);
-    std::map<int, artifacts::ArtifactData> modNamesMap;
+    std::unordered_map<int, artifacts::ArtifactData> modNamesMap;
     int maxArtId = 0;
     for (const auto &mod : loadedMods)
     {
