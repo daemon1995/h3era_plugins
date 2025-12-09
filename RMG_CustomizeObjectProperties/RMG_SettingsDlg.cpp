@@ -1603,9 +1603,13 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
 
     case eObject::REFUGEE_CAMP:
 
+    case eObject::SANCTUARY:
     case eObject::SCHOLAR:
+        // case eObject::SEA_CHEST:
 
     case eObject::SEER_HUT:
+
+        // case eObject::SHIPWRECK_SURVIVOR:
 
     case eObject::SHRINE_OF_MAGIC_INCANTATION:
     case eObject::SHRINE_OF_MAGIC_GESTURE:
@@ -1640,6 +1644,11 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
     case extender::HOTA_UNREACHABLE_OBJECT_TYPE:
 
     case eObject::FREELANCERS_GUILD:
+        /** doesn't work cause game generates TRADING_POST and but puts TRADING_POST_2
+        *
+            case eObject::TRADING_POST_SNOW:
+
+        */
         return &m_commonObjects;
 
     case eObject::CREATURE_GENERATOR1:

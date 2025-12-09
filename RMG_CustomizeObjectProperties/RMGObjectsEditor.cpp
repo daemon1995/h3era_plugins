@@ -368,7 +368,12 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
             }
 
             break;
-
+        case eObject::TRADING_POST_SNOW:
+            // fix generated snow trade posts counnter
+            prototype->type = eObject::TRADING_POST;
+            generatedInfo.IncreaseObjectsCounters(prototype, c->ecx);
+            prototype->type = eObject::TRADING_POST_SNOW;
+            break;
         default:
             generatedInfo.IncreaseObjectsCounters(prototype, c->ecx);
 
