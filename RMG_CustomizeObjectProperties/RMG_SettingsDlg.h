@@ -11,9 +11,9 @@ struct GraphicalAttributes
 {
     const H3ObjectAttributes *attributes = nullptr;
     H3LoadedPcx16 *objectPcx = nullptr;
-
     GraphicalAttributes *next = nullptr;
 };
+
 class RMGDlgObject
 {
 
@@ -92,6 +92,8 @@ class RMG_SettingsDlg : public H3Dlg
 
         std::vector<H3DlgItem *> items;
         DWORD lastChangedPictureTime = 0;
+
+      public:
         ObjectsPanel(const int x, const int y, Page *parent);
         virtual ~ObjectsPanel();
 
@@ -132,6 +134,8 @@ class RMG_SettingsDlg : public H3Dlg
 
     struct ObjectsPage : public Page
     {
+        static constexpr DWORD REFRESH_RATE_FREQUENCY = 2500;
+
         struct PageHeader
         {
 

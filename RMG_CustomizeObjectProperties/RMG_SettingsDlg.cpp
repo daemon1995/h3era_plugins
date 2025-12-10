@@ -131,10 +131,7 @@ enum eZoneType : INT
     TREASURE,
     JUNCTION
 };
-} // namespace rmgdlg
 
-namespace rmgdlg
-{
 DWORD RMG_SettingsDlg::userRandSeed = 0;
 
 std::vector<GraphicalAttributes> RMG_SettingsDlg::m_creatureBanks, RMG_SettingsDlg::m_commonObjects,
@@ -1156,7 +1153,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
         {
             auto rmgDlgObject = objectsPanel->rmgObject;
             // if pcx needs redraw
-            if (rmgDlgObject && time - objectsPanel->lastChangedPictureTime > 3000)
+            if (rmgDlgObject && time - objectsPanel->lastChangedPictureTime > REFRESH_RATE_FREQUENCY)
             {
                 objectsPanel->lastChangedPictureTime = time;
 
@@ -1644,11 +1641,8 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
     case extender::HOTA_UNREACHABLE_OBJECT_TYPE:
 
     case eObject::FREELANCERS_GUILD:
-        /** doesn't work cause game generates TRADING_POST and but puts TRADING_POST_2
-        *
-            case eObject::TRADING_POST_SNOW:
-
-        */
+        // doesn't work properly cause game generates TRADING_POST and but puts TRADING_POST_2
+    case eObject::TRADING_POST_SNOW:
         return &m_commonObjects;
 
     case eObject::CREATURE_GENERATOR1:
@@ -1697,6 +1691,48 @@ void RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16()
         }
     }
 }
+
+void AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen, std::vector<GraphicalAttributes> *workingVector,
+                                 std::unordered_map<DWORD, size_t> &uniqueObjectsIndex, const int objectTypeAlias)
+{
+    // const int objectType = objGen->type;
+    auto &objectTypeVector = P_Game->mainSetup.objectLists[objectTypeAlias];
+
+    const int objectSubtype = objGen->subtype;
+
+    const DWORD pair = (objGen->type << 16) | objectSubtype;
+
+    for (auto &attributes : objectTypeVector)
+    {
+        if (attributes.subtype == objectSubtype)
+        {
+            auto itIndex = uniqueObjectsIndex.find(pair);
+
+            if (itIndex == uniqueObjectsIndex.end())
+            {
+                workingVector->emplace_back(GraphicalAttributes{&attributes});
+                uniqueObjectsIndex[pair] = workingVector->size() - 1;
+            }
+            else
+            {
+                const size_t addedInTheListItemId = uniqueObjectsIndex[pair];
+
+                GraphicalAttributes *tail = &(*workingVector)[addedInTheListItemId];
+                while (tail->next)
+                {
+                    tail = tail->next;
+                }
+                // create linked list of graphical attributes for same type/subtype objects
+                // last item points to the original attributes
+                // ATTENTION
+                // access set only via loop
+                // and deleting only when the game ends
+                tail->next = new GraphicalAttributes{&attributes};
+            }
+        }
+    }
+}
+
 BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators)
 {
     if (objectGenerators == nullptr)
@@ -1718,39 +1754,11 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
 
         if (workingVector = GetObjectAttributesVector(objectType))
         {
-            const int objectSubtype = objGen->subtype;
-            const DWORD pair = (objectType << 16) | objectSubtype;
-            auto &objectTypeVector = P_Game->mainSetup.objectLists[objectType];
 
-            for (auto &attributes : objectTypeVector)
+            AssignPrototypeToObjectGens(objGen, workingVector, uniqueObjectsIndex, objectType);
+            if (objectType == eObject::TRADING_POST)
             {
-                if (attributes.subtype == objectSubtype)
-                {
-                    auto itIndex = uniqueObjectsIndex.find(pair);
-
-                    if (itIndex == uniqueObjectsIndex.end())
-                    {
-                        workingVector->emplace_back(GraphicalAttributes{&attributes});
-                        uniqueObjectsIndex[pair] = workingVector->size() - 1;
-                    }
-                    else
-                    {
-                        const size_t addedInTheListItemId = uniqueObjectsIndex[pair];
-
-                        GraphicalAttributes *tail = &(*workingVector)[addedInTheListItemId];
-                        while (tail->next)
-                        {
-                            tail = tail->next;
-                        }
-
-                        // create linked list of graphical attributes for same type/subtype objects
-                        // last item points to the original attributes
-                        // ATTENTION
-                        // access set only via loop
-                        // and deleting only when the game ends
-                        tail->next = new GraphicalAttributes{&attributes};
-                    }
-                }
+                AssignPrototypeToObjectGens(objGen, workingVector, uniqueObjectsIndex, eObject::TRADING_POST_SNOW);
             }
         }
     }
