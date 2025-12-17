@@ -2,7 +2,7 @@
 // #define _H3API_PLUGINS_
 #define _H3API_PLUGINS_
 #define ERA_MODLIST
-
+#define _WOG_
 #include "TestDlg.h"
 #include "framework.h"
 // #include "..\..\headers\H3API_RK\single_header\H3API.hpp"
@@ -13,7 +13,7 @@ Patcher *globalPatcher;
 PatcherInstance *_PI;
 namespace dllText
 {
-LPCSTR instanceName = "EraPlugin.pol_ChallengeableCreatureBank.daemon_n";
+LPCSTR instanceName = "EraPlugin.Testing.daemon_n";
 }
 namespace db
 {
@@ -280,6 +280,24 @@ void __stdcall CrBank_BattleMgr_And_Reward(HiHook *hook, H3AdventureManager *adv
 //    }
 //    return EXEC_DEFAULT;
 //}
+#include <cstdio>
+#include <initializer_list>
+#include <type_traits>
+
+template <typename... Ints> void Debug(Ints... values) noexcept
+{
+    char buffer[1024];
+
+    size_t pos = 0;
+
+    (void)std::initializer_list<int>{
+        ([&] { pos += std::snprintf(buffer + pos, sizeof(buffer) - pos, "%d ", int(values)); }(), 0)...};
+
+    if (pos > 0)
+        buffer[pos - 1] = '\0';
+    libc::sprintf(Era::z[1], "%s", buffer);
+    Era::ExecErmCmd("IF:L^%z1^");
+}
 _ERH_(OnGameEnter)
 {
     return;
@@ -287,9 +305,218 @@ _ERH_(OnGameEnter)
     dlg.Start();
 }
 
+_LHF_(WoG_CrExpo_Recalc)
+{
+
+    Debug(1);
+    c->return_address = 0x07184D5;
+
+    return NO_EXEC_DEFAULT;
+}
+
+_LHF_(MapTeamOpen)
+{
+
+    c->DL() = static_cast<UINT8>(1 << IntAt(c->ebp + 0x14));
+    c->return_address = 0x049CE18;
+
+    return NO_EXEC_DEFAULT;
+}
+
+struct CrExpo
+{
+    INT32 experience;
+    INT32 number;
+    struct Fl
+    {
+        unsigned __int32 Act : 1;
+        unsigned __int32 Type : 4;
+        unsigned __int32 MType : 8;
+        unsigned __int32 mHasArt : 1;
+        unsigned __int32 mArt : 2;
+        unsigned __int32 mCopyArt : 2;
+        unsigned __int32 mSubArt : 4;
+        unsigned __int32 _un : 10;
+    } flags;
+    union MonExpUnion {
+        DWORD UniData;
+        DWORD MixPos;
+        struct _Hero
+        {
+            __int16 Id;
+            __int16 Slot;
+        } hero;
+        //_Map Map;
+        //_Town Town;
+        //_Mine Mine;
+        //_Horn Horn;
+    } place;
+};
+_LHF_(WoG_SetNewExp_AtExpPush)
+{
+
+    // c->DL() = static_cast<UINT8>(1 << IntAt(c->ebp + 0x14));
+
+    const int sourceExpoOffset = IntAt(c->ebp - 0x4);
+    const int dstExpoOffset = IntAt(c->ebp - 0x10);
+    const int sourceNumber = IntAt(c->ebp + 0x20);
+    const int dstNumber = IntAt(c->ebp + 0x24);
+
+    auto *expTable = reinterpret_cast<CrExpo *>(0x0860550);
+    // auto& sourceExpo = expTable[sourceExpoOffset];
+    // auto& dstExpo = expTable[dstExpoOffset];
+
+    INT64 totalNewExp = static_cast<INT64>(expTable[sourceExpoOffset].experience) * sourceNumber;
+    totalNewExp += static_cast<INT64>(expTable[dstExpoOffset].experience) * dstNumber;
+    totalNewExp /= (sourceNumber + dstNumber);
+    Debug(totalNewExp);
+    c->eax = static_cast<int>(totalNewExp);
+
+    c->return_address = 0x0719BEA;
+    return NO_EXEC_DEFAULT;
+}
+
+_LHF_(WoG_CreatureSplitDlg_AtSourceExp)
+{
+    auto &srcExpo = ValueAt<CrExpo>(0x28602AC);
+    auto &dstExpo = ValueAt<CrExpo>(0x2860294);
+
+    const int srcNum = IntAt(c->ebp - 0x10);
+
+    const int baseNum = IntAt(0x282A77C);
+    INT64 totalNewExp = (static_cast<INT64>((srcNum - baseNum)) * srcExpo.experience +
+                         static_cast<INT64>(baseNum) * dstExpo.experience) /
+                        srcNum;
+    IntAt(c->ebp - 0x20) = static_cast<int>(totalNewExp);
+    c->return_address = 0x07662D9;
+    return NO_EXEC_DEFAULT;
+}
+_LHF_(WoG_CreatureSplitDlg_AtDestExp)
+{
+    auto &srcExpo = ValueAt<CrExpo>(0x28602AC);
+    auto &dstExpo = ValueAt<CrExpo>(0x2860294);
+
+    const int baseNum = IntAt(0x282A35C);
+
+    const int dstNum = IntAt(c->ebp - 0x68);
+
+    INT64 totalNewExp = (static_cast<INT64>((dstNum - baseNum)) * dstExpo.experience +
+                         static_cast<INT64>(baseNum) * srcExpo.experience) /
+                        dstNum;
+    IntAt(c->ebp - 0x3C) = static_cast<int>(totalNewExp);
+    c->return_address = 0x0766341;
+    return NO_EXEC_DEFAULT;
+}
+struct ArmySlotExperience
+{
+    int number;
+    int experience;
+} armySlots[14];
+
+_LHF_(WoG_InTowmArmyMerge_GuardIterator)
+{
+    const int slotId = c->eax;
+
+    armySlots[slotId].experience = IntAt(c->ebp - 0x10C);
+    armySlots[slotId].number = ValueAt<H3Army>(0x2846BF0).count[slotId];
+    c->ecx = 1 << slotId;
+
+    return EXEC_DEFAULT;
+}
+_LHF_(WoG_InTowmArmyMerge_VisitorIterator)
+{
+    const int slotId = c->ecx + 7;
+
+    armySlots[slotId].experience = IntAt(c->ebp - 0x10C);
+    armySlots[slotId].number = ValueAt<H3Army>(0x2846C28).count[slotId - 7];
+    c->edx = 1 << slotId;
+
+    return EXEC_DEFAULT;
+}
+_LHF_(WoG_InTowmArmyMerge_ExperienceCreatorIterator)
+{
+
+    // put final experience
+    const int slotId = IntAt(c->ebp - 0x18);
+
+    INT64 resultExp = 0;
+    INT totalCreatures = IntAt(c->ebp - 0x14);
+
+    H3Army &expArmy = ValueAt<H3Army>(c->ebp - 0xC8);
+
+    const int slotsMerged = expArmy.count[slotId];
+    for (size_t i = 0; i < 14; i++)
+    {
+        if (const int slotBit = slotsMerged & (1 << i))
+        {
+            resultExp += static_cast<INT64>(armySlots[i].experience) * armySlots[i].number;
+        }
+    }
+
+    c->eax = totalCreatures ? static_cast<int>(resultExp / totalCreatures) : 0;
+
+    c->return_address = 0x0759A2E;
+    return NO_EXEC_DEFAULT;
+}
+enum eExpType
+{
+    CE_HERO = 0x1,
+    CE_MAP = 0x2,
+    CE_TOWN = 0x3,
+    CE_MINE = 0x4,
+    CE_HORN = 0x5,
+};
+
 _LHF_(HooksInit)
 {
+    // _PI->WriteLoHook(0x049CDF6, MapTeamOpen);
+
     Era::RegisterHandler(OnGameEnter, "OnGameEnter");
+
+    if (0)
+    {
+        _PI->WriteLoHook(0x07184A5, WoG_CrExpo_Recalc);
+        _PI->WriteLoHook(0x0719BE3, WoG_SetNewExp_AtExpPush);
+        _PI->WriteLoHook(0x07662B2, WoG_CreatureSplitDlg_AtSourceExp);
+        _PI->WriteLoHook(0x076631A, WoG_CreatureSplitDlg_AtDestExp);
+
+        _PI->WriteLoHook(0x0759749, WoG_InTowmArmyMerge_GuardIterator);
+        _PI->WriteLoHook(0x0759870, WoG_InTowmArmyMerge_VisitorIterator);
+
+        _PI->WriteLoHook(0x0759A24, WoG_InTowmArmyMerge_ExperienceCreatorIterator);
+
+        constexpr auto srcExpPatch = "8DB0 50058600 8B06 F76D 20 F77E 04 8906 8B4D 20 894E 04";
+        /*
+        lea     esi, [WOG__CrExpo__Table + eax]   ; esi = &Table[src]
+        mov     eax, [esi]                        ; eax = Expo
+        imul    dword ptr [ebp+source_mon_number] ; edx:eax = Expo * src (64-bit)
+        idiv    dword ptr [esi+4]                 ; eax = (Expo*src)/Num
+
+        mov     [esi], eax                        ; Table[src].Expo = eax
+
+        mov     ecx, [ebp+source_mon_number]
+        mov     [esi+4], ecx                     ; Table[src].Num = src
+        */
+
+        _PI->WriteHexPatch(0x0719993, srcExpPatch); // patch experience
+        _PI->WriteCodePatch(0x07199A9, "%n", 28);   // nop extra code
+
+        constexpr auto dstExpPatch = "8DB1 50058600 8B06 F76D 24 F77E 04 8906 8B4D 24 894E 04";
+        /*
+        lea     esi, [WOG__CrExpo__Table + ecx]   ; esi = &Table[dst]
+        mov     eax, [esi]                        ; eax = Expo
+        imul    dword ptr [ebp+dst_mon_number] ; edx:eax = Expo * dst (64-bit)
+        idiv    dword ptr [esi+4]                 ; eax = (Expo*dst)/Num
+
+        mov     [esi], eax                        ; Table[dst].Expo = eax
+
+        mov     ecx, [ebp+dst_mon_number]
+        mov     [esi+4], ecx                     ; Table[dst].Num = dst
+        */
+
+        _PI->WriteHexPatch(0x0719A55, dstExpPatch); // patch experience
+        _PI->WriteCodePatch(0x0719A6B, "%n", 28);   // nop extra code
+    }
 
     // _PI->WriteLoHook(0x04242B1, AICombat_CheckECX);
     // auto &vec = modList::GetEraModList();
