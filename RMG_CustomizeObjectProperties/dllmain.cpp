@@ -15,7 +15,7 @@ void __stdcall OnReportVersion(Era::TEvent *e)
 {
 
     // show plugin name, version and compilation time
-    sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
+    libc::sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
 }
@@ -64,7 +64,7 @@ PatcherInstance *_PI = nullptr;
 16. fix Dlg Memory leaks with new ERA memory check tools - Done
 */
 
-_LHF_(CrBanksTxt_AfterLoad)
+_LHF_(CrBanksTxt_BeforeLoad)
 {
 
     editor::RMGObjectsEditor::Get();
@@ -80,11 +80,12 @@ _LHF_(CrBanksTxt_AfterLoad)
             &wog::WoGObjectsExtender::Get(),
         };
 
-        constexpr size_t extendersCount = sizeof(extendersList) / sizeof(extender::ObjectExtender *);
-        //! Get the CreatureBanksManager and initialize it
+        constexpr size_t extendersCount =
+            std::size(extendersList); // sizeof(extendersList) / sizeof(extender::ObjectExtender*);
+        //! Get the extenders and initialize
         for (size_t i = 0; i < extendersCount; i++)
         {
-            mgr->AddExtender(*&extendersList[i]);
+            mgr->AddExtender(extendersList[i]);
         }
     }
 
@@ -128,7 +129,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             // Era::RegisterHandler(OnAdventureMapRightMouseClick, "OnAdventureMapRightMouseClick");
             //! Create an instance of the plugin
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
-            _PI->WriteLoHook(0x4EDE42, CrBanksTxt_AfterLoad);
+            _PI->WriteLoHook(0x4EDE42, CrBanksTxt_BeforeLoad);
         }
         break;
     }

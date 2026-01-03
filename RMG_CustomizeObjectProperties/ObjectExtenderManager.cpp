@@ -425,6 +425,31 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
     stringResult = H3String::Format("{~>%s:0:%d block}", defName, rand() % def->groups[0]->count); // .Append(defPic);
     stringResult += info.GetName();
     stringResult.Append(H3String::Format(" (%d/%d)", info.type, info.subtype));
+
+    // display terrain types that object can be placed on
+
+    H3String terrainStr;
+    bool hasTerrain = false;
+    for (size_t i = 0; i < 10; i++)
+    {
+        if (attributes->maskTerrain.bitfield.GetState(i))
+        {
+            LPCSTR terrainDefName = (*reinterpret_cast<LPCSTR **>(0x04071E7 + 1))[i];
+            auto defTerrain = H3LoadedDef::Load(terrainDefName); // [i] ;
+            if (defTerrain)
+            {
+                const int frameIndex = defTerrain->groups[0]->count < 60 ? 15 : 60;
+                terrainStr += H3String::Format("{~>%s:0:%d valign=top}", terrainDefName, frameIndex);
+                hasTerrain = true;
+            }
+        }
+    }
+    if (hasTerrain)
+    {
+        stringResult.Append("\n");
+        stringResult += terrainStr;
+    }
+
     auto &extenders = instance->objectExtenders;
 
     for (auto &i : extenders)
