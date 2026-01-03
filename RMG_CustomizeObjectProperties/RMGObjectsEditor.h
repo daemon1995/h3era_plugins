@@ -35,6 +35,8 @@ struct _RMGObjGenPandoraExp_ : public H3RmgObjectGenerator
 };
 struct RMGObjectInfo
 {
+    // used for thread safety in when read from ini/json
+    static char localBuffer[512];
 
     constexpr static int SIZE = 5;
     constexpr static int UNDEFINED = -1;

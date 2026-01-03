@@ -5,6 +5,7 @@
 
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
+char RMGObjectInfo::localBuffer[512];
 
 namespace exports
 {
@@ -879,9 +880,11 @@ inline void RMGObjectInfo::ReadFromINI() noexcept
 
     for (size_t i = 0; i < SIZE; i++)
     {
-        if (Era::ReadStrFromIni(PROPERTY_NAMES[i], sectionName.String(), INI_FILE_PATH, h3_TextBuffer))
+        if (Era::ReadStrFromIni(PROPERTY_NAMES[i], sectionName.String(), INI_FILE_PATH,
+                                localBuffer)) // used for thread safety in when read from ini/json
+
         {
-            const int iniValue = atoi(h3_TextBuffer);
+            const int iniValue = atoi(localBuffer);
             if (data[i] != iniValue)
             {
                 data[i] = iniValue;
