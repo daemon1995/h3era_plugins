@@ -55,6 +55,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_HalvedAttackAndDefen
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BloodDragon_HalvedVampirism", "BloodDragon_HalvedVampirism\BloodDragon_HalvedVampirism.vcxproj", "{C1D16FB1-E073-9082-FB12-5E6F708192A3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_BallisticsIncreasesShootingRange", "Combat_BallisticsIncreasesShootingRange\Combat_BallisticsIncreasesShootingRange.vcxproj", "{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_LeadershipDecreasesFactionsNum", "Combat_LeadershipDecreasesFactionsNum\Combat_LeadershipDecreasesFactionsNum.vcxproj", "{F1E2D3C4-B5A6-47B8-9C0D-1E2F3A4B5C6D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -165,6 +169,14 @@ Global
 		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Debug|x86.Build.0 = Debug|Win32
 		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Release|x86.ActiveCfg = Release|Win32
 		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Release|x86.Build.0 = Release|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Debug|x86.ActiveCfg = Debug|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Debug|x86.Build.0 = Debug|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Release|x86.ActiveCfg = Release|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Release|x86.Build.0 = Release|Win32
+		{F1E2D3C4-B5A6-47B8-9C0D-1E2F3A4B5C6D}.Debug|x86.ActiveCfg = Debug|Win32
+		{F1E2D3C4-B5A6-47B8-9C0D-1E2F3A4B5C6D}.Debug|x86.Build.0 = Debug|Win32
+		{F1E2D3C4-B5A6-47B8-9C0D-1E2F3A4B5C6D}.Release|x86.ActiveCfg = Release|Win32
+		{F1E2D3C4-B5A6-47B8-9C0D-1E2F3A4B5C6D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
