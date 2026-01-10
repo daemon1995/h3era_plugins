@@ -10,9 +10,32 @@ namespace dllText
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
 
-const double shootingDistancePenalty = 0.25; // 25% -- decreases damage by 4 times
-const double shootingObstaclePenalty = 0.25; // 25% -- decreases damage by 4 times
+double shootingObstaclePenalty = 0.4; // 40%
+double shootingDistancePenalty = 0.4; // 40%
 
+namespace valueKey
+{
+LPCSTR distance = "suft.combat.ranged.penalties.distance";
+LPCSTR obstacle = "suft.combat.ranged.penalties.obstacle";
+} // namespace valueKey
+
+_LHF_(HooksInit)
+{
+    if (double obstaclePenalty = EraJS::readFloat(valueKey::obstacle))
+    {
+        shootingObstaclePenalty = obstaclePenalty;
+    }
+
+    _PI->WriteDword(0x04439A5 + 2, (DWORD)&shootingObstaclePenalty);
+
+    if (double distancePenalty = EraJS::readFloat(valueKey::distance))
+    {
+        shootingDistancePenalty = distancePenalty;
+    }
+    _PI->WriteDword(0x04439C2 + 2, (DWORD)&shootingDistancePenalty);
+
+    return EXEC_DEFAULT;
+}
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     static bool pluginInitialized = false;
@@ -26,8 +49,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             Era::ConnectEra(hModule, dllText::instanceName);
 
-            _PI->WriteDword(0x04439A5 + 2, (DWORD)&shootingObstaclePenalty);
-            _PI->WriteDword(0x04439C2 + 2, (DWORD)&shootingDistancePenalty);
+            _PI->WriteLoHook(0x4EEAF2, HooksInit);
         }
 
     case DLL_THREAD_ATTACH:

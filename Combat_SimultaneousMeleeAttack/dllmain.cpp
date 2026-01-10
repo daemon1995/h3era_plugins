@@ -54,6 +54,12 @@ BOOL8 __stdcall BattleStack_BeforeAttackEnemy(HiHook *hook, H3CombatCreature *at
         defender->retaliations == 0)
     {
         skipIsDiedCheck->Undo();
+        if (!defender->numberAlive)
+        {
+            defender->ApplyPhysicalDamage(0);
+            P_CombatManager->ApplyAnimationToLastHitArmy(-1, false);
+        }
+        defenderState.stack = nullptr;
     }
     else
     {
