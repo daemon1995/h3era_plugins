@@ -14300,15 +14300,15 @@ namespace h3
 		INT32 isLucky;
 		/** @brief [74] copy of H3CreatureInformation using combat values in some places*/
 		H3CreatureInformation info;
-	protected: // these need confirmations
+	public: // these need confirmations
 		/** @brief [E8] stack needs to be hit by fire shield*/
 		BOOL8 applyFireShield;
 		/** @brief [E9] ?at least one creature has died?*/
 		BOOL8 hasLosses;
-		/** @brief [EA] ?at least one creature has died?*/
-		BOOL8 hasLosses2;
-		/** @brief [EB] all creatures have died*/
+		/** @brief [EA] all creatures have died*/
 		BOOL8 isDead;
+		/** @brief [EB] ?all creatures have died?*/
+		BOOL8 isDead2;
 	public:
 		/** @brief [EC] set in After-Hit spell subroutine 0x440220*/
 		INT32 spellToApply;

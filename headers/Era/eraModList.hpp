@@ -5,7 +5,8 @@
 namespace modList
 {
 static std::vector<std::string> globalModList;
-
+constexpr INT CASE_TO_LOWER = 1;
+constexpr INT CASE_DEFAULT = 0;
 // Функция для получения каталога исполняемого процесса
 inline std::string GetExecutableDirectory()
 {
@@ -95,7 +96,7 @@ inline BOOL GetEraMappedModList(std::vector<std::string> &modLsit)
     return false;
 }
 
-inline int GetEraModList(std::vector<std::string> &modList, const BOOL toLower = false)
+inline int GetEraModList(std::vector<std::string> &modList, const BOOL toLower = CASE_DEFAULT)
 {
     modList.clear();
 
@@ -117,7 +118,7 @@ inline int GetEraModList(std::vector<std::string> &modList, const BOOL toLower =
     }
     return modList.size();
 }
-inline std::vector<std::string> GetEraModList(const BOOL toLower = false)
+inline std::vector<std::string> GetEraModList(const BOOL toLower = modList::CASE_DEFAULT)
 {
     std::vector<std::string> modList;
     GetEraModList(modList, toLower);
