@@ -1547,6 +1547,10 @@ void CreatureBanksExtender::CreatePatches()
             Era::RegisterHandler(OnAfterSaveGame, "OnAfterSaveGame");
             Era::RegisterHandler(OnAfterLoadGame, "OnAfterLoadGame");
             Era::RegisterHandler(OnGameLeave, "OnGameLeave");
+            //_REH_(OnBeforeSaveGame);
+            //_REH_(OnAfterSaveGame);
+            //_REH_(OnAfterLoadGame);
+            //_REH_(OnGameLeave);
         }
 
         // renaming creature banks

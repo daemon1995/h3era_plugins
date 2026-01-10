@@ -35,7 +35,7 @@ const std::string *AdditionalProperties::FindPropertyReplace(LPCSTR other) noexc
     return it != propertiesMap.end() ? &it->second : nullptr;
 }
 
-void AdditionalProperties::LoadCommonProperies() noexcept
+void AdditionalProperties::LoadCommonProperties() noexcept
 {
     bool readSuccess = false;
 
@@ -60,10 +60,8 @@ void AdditionalProperties::LoadCommonProperies() noexcept
         }
         */
 
-        const size_t maxSubtype = objType == eObject::ARTIFACT || objType == eObject::CREATURE_GENERATOR1
-                                      ? extender::limits::EXTENDED
-                                      : extender::limits::COMMON;
-
+        const size_t maxSubtype =
+            objType == eObject::CREATURE_GENERATOR1 ? extender::limits::EXTENDED : extender::limits::COMMON;
         for (size_t objSubtype = 0; objSubtype < maxSubtype; objSubtype++)
         {
             size_t propertyIdCounter = 0;
@@ -88,7 +86,7 @@ void AdditionalProperties::LoadAdditionalPropertiesFromMods() noexcept
 {
 
     std::vector<std::string> modList;
-    modList::GetEraModList(modList, true);
+    modList::GetEraModList(modList, modList::CASE_TO_LOWER);
 
     for (auto &modName : modList)
     {

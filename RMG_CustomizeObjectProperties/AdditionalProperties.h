@@ -27,7 +27,7 @@ struct AdditionalProperties
     const std::string *FindPropertyReplace(LPCSTR other) noexcept;
 
   public:
-    void LoadCommonProperies() noexcept;
+    void LoadCommonProperties() noexcept;
     void LoadAdditionalPropertiesFromMods() noexcept;
 
   public:

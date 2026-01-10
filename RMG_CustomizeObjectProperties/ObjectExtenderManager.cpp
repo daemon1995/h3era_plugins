@@ -266,7 +266,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
 
     // get Additional Propertise  <-  R E W R I T E   L A T E R   W I T H   N L O H M A N
     auto &additionalProperties = instance->additionalProperties;
-    additionalProperties.LoadCommonProperies();
+    additionalProperties.LoadCommonProperties();
     // load additional unique objects properties from each loaded mod json key
     additionalProperties.LoadAdditionalPropertiesFromMods();
 
@@ -441,6 +441,7 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
                 const int frameIndex = defTerrain->groups[0]->count < 60 ? 15 : 60;
                 terrainStr += H3String::Format("{~>%s:0:%d valign=top}", terrainDefName, frameIndex);
                 hasTerrain = true;
+                defTerrain->Dereference();
             }
         }
     }

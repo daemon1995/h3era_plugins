@@ -49,8 +49,10 @@
     <ClCompile Include="ObjectExtenderManager.cpp">
       <Filter>ExtenderAPI</Filter>
     </ClCompile>
-    <ClCompile Include="AdditionalProperties.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp">
+      <Filter>source files</Filter>
+    </ClCompile>
+    <ClCompile Include="AdditionalProperties.cpp">
       <Filter>source files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -100,7 +102,9 @@
     <ClInclude Include="ObjectExtenderManager.h">
       <Filter>ExtenderAPI</Filter>
     </ClInclude>
-    <ClInclude Include="AdditionalProperties.h" />
+    <ClInclude Include="AdditionalProperties.h">
+      <Filter>headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="source files">
