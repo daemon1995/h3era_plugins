@@ -45,6 +45,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_RemoveObstacleSpel
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_ArtifactsExtender", "ERA_ArtifactsExtender\ERA_ArtifactsExtender.vcxproj", "{42B5985C-5448-4D01-B607-AE2CB255D21F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_SimultaneousMeleeAttack", "Combat_SimultaneousMeleeAttack\Combat_SimultaneousMeleeAttack.vcxproj", "{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_RangedRetaliation", "Combat_RangedRetaliation\Combat_RangedRetaliation.vcxproj", "{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_DoubledRangeAndObstaclePenalty", "Combat_DoubledRangeAndObstaclePenalty\Combat_DoubledRangeAndObstaclePenalty.vcxproj", "{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_HalvedAttackAndDefenceBonuses", "Combat_HalvedAttackAndDefenceBonuses\Combat_HalvedAttackAndDefenceBonuses.vcxproj", "{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BloodDragon_HalvedVampirism", "BloodDragon_HalvedVampirism\BloodDragon_HalvedVampirism.vcxproj", "{C1D16FB1-E073-9082-FB12-5E6F708192A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -135,6 +145,26 @@ Global
 		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Debug|x86.Build.0 = Debug|Win32
 		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Release|x86.ActiveCfg = Release|Win32
 		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Release|x86.Build.0 = Release|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Debug|x86.ActiveCfg = Debug|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Debug|x86.Build.0 = Debug|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Release|x86.ActiveCfg = Release|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Release|x86.Build.0 = Release|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Debug|x86.ActiveCfg = Debug|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Debug|x86.Build.0 = Debug|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Release|x86.ActiveCfg = Release|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Release|x86.Build.0 = Release|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Debug|x86.ActiveCfg = Debug|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Debug|x86.Build.0 = Debug|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Release|x86.ActiveCfg = Release|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Release|x86.Build.0 = Release|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Debug|x86.ActiveCfg = Debug|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Debug|x86.Build.0 = Debug|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Release|x86.ActiveCfg = Release|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Release|x86.Build.0 = Release|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Debug|x86.ActiveCfg = Debug|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Debug|x86.Build.0 = Debug|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Release|x86.ActiveCfg = Release|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
