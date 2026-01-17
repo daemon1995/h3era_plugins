@@ -26,7 +26,6 @@ struct DefenderState
 BOOL8 __stdcall BattleStack_BeforeAttackEnemy(HiHook *hook, H3CombatCreature *attacker, H3CombatCreature *defender,
                                               const int direction)
 {
-
     // if no retaliation ten return native logic
     if (attacker->info.noRetaliation)
     {
