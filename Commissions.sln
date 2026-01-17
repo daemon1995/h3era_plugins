@@ -1,0 +1,102 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_SwitchingCreatureAction", "Commissions\Combat_SwitchingCreatureAction\Combat_SwitchingCreatureAction.vcxproj", "{3BB04884-C58A-465E-B8C7-46A363B91EC2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_SimultaneousMeleeAttack", "Commissions\Combat_SimultaneousMeleeAttack\Combat_SimultaneousMeleeAttack.vcxproj", "{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_RangedRetaliation", "Commissions\Combat_RangedRetaliation\Combat_RangedRetaliation.vcxproj", "{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_DoubledRangeAndObstaclePenalty", "Commissions\Combat_DoubledRangeAndObstaclePenalty\Combat_DoubledRangeAndObstaclePenalty.vcxproj", "{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_HalvedAttackAndDefenceBonuses", "Commissions\Combat_HalvedAttackAndDefenceBonuses\Combat_HalvedAttackAndDefenceBonuses.vcxproj", "{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BloodDragon_HalvedVampirism", "Commissions\BloodDragon_HalvedVampirism\BloodDragon_HalvedVampirism.vcxproj", "{C1D16FB1-E073-9082-FB12-5E6F708192A3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_ChangeStartingParameters", "Commissions\Heroes_ChangeStartingParameters\Heroes_ChangeStartingParameters.vcxproj", "{F310FAA9-AC75-4C9A-814E-F371ADC0C98C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_ExperienceSplit", "Commissions\Heroes_ExperienceSplit\Heroes_ExperienceSplit.vcxproj", "{7374708D-BD32-4484-8661-3276656318DD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Graphics_LegendaryHeroes", "Commissions\Graphics_LegendaryHeroes\Graphics_LegendaryHeroes.vcxproj", "{C974D039-D3A0-4E86-A083-4EC87685E904}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Graphics_TimeZonesSwitching", "Commissions\Graphics_TimeZonesSwitching\Graphics_TimeZonesSwitching.vcxproj", "{5E315790-65D3-4333-BB53-1635AC7C7B65}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_BallisticsIncreasesShootingRange", "Commissions\Combat_BallisticsIncreasesShootingRange\Combat_BallisticsIncreasesShootingRange.vcxproj", "{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_RemoveObstacleSpellRework", "Commissions\Gameplay_RemoveObstacleSpellRework\Gameplay_RemoveObstacleSpellRework.vcxproj", "{78CD603D-B134-46FC-A397-A658F94AAC26}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_BaseCommissionPlugin", "Commissions\Test_BaseCommissionPlugin\Test_BaseCommissionPlugin.vcxproj", "{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_SetUniqueCombatGraphics", "Commissions\Heroes_SetUniqueCombatGraphics\Heroes_SetUniqueCombatGraphics.vcxproj", "{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.ActiveCfg = Debug|Win32
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.Build.0 = Debug|Win32
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Release|x86.ActiveCfg = Release|Win32
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Release|x86.Build.0 = Release|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Debug|x86.ActiveCfg = Debug|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Debug|x86.Build.0 = Debug|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Release|x86.ActiveCfg = Release|Win32
+		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Release|x86.Build.0 = Release|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Debug|x86.ActiveCfg = Debug|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Debug|x86.Build.0 = Debug|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Release|x86.ActiveCfg = Release|Win32
+		{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}.Release|x86.Build.0 = Release|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Debug|x86.ActiveCfg = Debug|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Debug|x86.Build.0 = Debug|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Release|x86.ActiveCfg = Release|Win32
+		{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}.Release|x86.Build.0 = Release|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Debug|x86.ActiveCfg = Debug|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Debug|x86.Build.0 = Debug|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Release|x86.ActiveCfg = Release|Win32
+		{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}.Release|x86.Build.0 = Release|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Debug|x86.ActiveCfg = Debug|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Debug|x86.Build.0 = Debug|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Release|x86.ActiveCfg = Release|Win32
+		{C1D16FB1-E073-9082-FB12-5E6F708192A3}.Release|x86.Build.0 = Release|Win32
+		{F310FAA9-AC75-4C9A-814E-F371ADC0C98C}.Debug|x86.ActiveCfg = Debug|Win32
+		{F310FAA9-AC75-4C9A-814E-F371ADC0C98C}.Debug|x86.Build.0 = Debug|Win32
+		{F310FAA9-AC75-4C9A-814E-F371ADC0C98C}.Release|x86.ActiveCfg = Release|Win32
+		{F310FAA9-AC75-4C9A-814E-F371ADC0C98C}.Release|x86.Build.0 = Release|Win32
+		{7374708D-BD32-4484-8661-3276656318DD}.Debug|x86.ActiveCfg = Debug|Win32
+		{7374708D-BD32-4484-8661-3276656318DD}.Debug|x86.Build.0 = Debug|Win32
+		{7374708D-BD32-4484-8661-3276656318DD}.Release|x86.ActiveCfg = Release|Win32
+		{7374708D-BD32-4484-8661-3276656318DD}.Release|x86.Build.0 = Release|Win32
+		{C974D039-D3A0-4E86-A083-4EC87685E904}.Debug|x86.ActiveCfg = Debug|Win32
+		{C974D039-D3A0-4E86-A083-4EC87685E904}.Debug|x86.Build.0 = Debug|Win32
+		{C974D039-D3A0-4E86-A083-4EC87685E904}.Release|x86.ActiveCfg = Release|Win32
+		{C974D039-D3A0-4E86-A083-4EC87685E904}.Release|x86.Build.0 = Release|Win32
+		{5E315790-65D3-4333-BB53-1635AC7C7B65}.Debug|x86.ActiveCfg = Debug|Win32
+		{5E315790-65D3-4333-BB53-1635AC7C7B65}.Debug|x86.Build.0 = Debug|Win32
+		{5E315790-65D3-4333-BB53-1635AC7C7B65}.Release|x86.ActiveCfg = Release|Win32
+		{5E315790-65D3-4333-BB53-1635AC7C7B65}.Release|x86.Build.0 = Release|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Debug|x86.ActiveCfg = Debug|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Debug|x86.Build.0 = Debug|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Release|x86.ActiveCfg = Release|Win32
+		{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}.Release|x86.Build.0 = Release|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Debug|x86.ActiveCfg = Debug|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Debug|x86.Build.0 = Debug|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Release|x86.ActiveCfg = Release|Win32
+		{78CD603D-B134-46FC-A397-A658F94AAC26}.Release|x86.Build.0 = Release|Win32
+		{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}.Debug|x86.ActiveCfg = Debug|Win32
+		{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}.Debug|x86.Build.0 = Debug|Win32
+		{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}.Release|x86.ActiveCfg = Release|Win32
+		{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}.Release|x86.Build.0 = Release|Win32
+		{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}.Debug|x86.ActiveCfg = Debug|Win32
+		{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}.Debug|x86.Build.0 = Debug|Win32
+		{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}.Release|x86.ActiveCfg = Release|Win32
+		{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C2F9A3E4-3D4B-4F4A-BB22-1234567890AB}
+	EndGlobalSection
+EndGlobal

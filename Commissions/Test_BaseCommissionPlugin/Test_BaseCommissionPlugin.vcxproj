@@ -13,9 +13,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{96374a46-2883-41e8-a242-c2195b772ef7}</ProjectGuid>
-    <RootNamespace>ERAOptionsMenu</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
+    <ProjectGuid>{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}</ProjectGuid>
+    <RootNamespace>TestBaseCommissionPlugin</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>Test_BaseCommissionPlugin</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -45,12 +46,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\era_menu\eraplugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Commissions\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\era_menu\eraplugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Commissions\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -61,15 +62,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -77,26 +69,16 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="EMod.h" />
-    <ClInclude Include="EModPage.h" />
-    <ClInclude Include="EModPageCategory.h" />
-    <ClInclude Include="EOption.h" />
-    <ClInclude Include="EraMenuDlg.h" />
-    <ClInclude Include="MenuItem.h" />
-    <ClInclude Include="ModListReader.h" />
-    <ClInclude Include="pch.h" />
+    <ClInclude Include="framework.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="EMod.cpp" />
-    <ClCompile Include="EModPage.cpp" />
-    <ClCompile Include="EModPageCategory.cpp" />
-    <ClCompile Include="EOption.cpp" />
-    <ClCompile Include="EraMenuDlg.cpp" />
-    <ClCompile Include="MenuItem.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

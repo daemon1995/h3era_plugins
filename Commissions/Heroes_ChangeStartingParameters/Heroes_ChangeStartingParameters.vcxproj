@@ -13,23 +13,25 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{96374a46-2883-41e8-a242-c2195b772ef7}</ProjectGuid>
-    <RootNamespace>ERAOptionsMenu</RootNamespace>
-    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
+    <ProjectGuid>{f310faa9-ac75-4c9a-814e-f371adc0c98c}</ProjectGuid>
+    <RootNamespace>heroesStartingParameters</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -45,12 +47,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\era_menu\eraplugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Commissions\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\era_menu\eraplugins\</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Commissions\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -61,15 +63,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -79,24 +72,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="EMod.h" />
-    <ClInclude Include="EModPage.h" />
-    <ClInclude Include="EModPageCategory.h" />
-    <ClInclude Include="EOption.h" />
-    <ClInclude Include="EraMenuDlg.h" />
-    <ClInclude Include="MenuItem.h" />
-    <ClInclude Include="ModListReader.h" />
-    <ClInclude Include="pch.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="TownSelectionDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="EMod.cpp" />
-    <ClCompile Include="EModPage.cpp" />
-    <ClCompile Include="EModPageCategory.cpp" />
-    <ClCompile Include="EOption.cpp" />
-    <ClCompile Include="EraMenuDlg.cpp" />
-    <ClCompile Include="MenuItem.cpp" />
+    <ClCompile Include="TownSelectionDlg.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

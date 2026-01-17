@@ -27,7 +27,7 @@
 #ifndef _ERH_
 #define _ERH_(func) void __stdcall func(Era::TEvent *event)
 #endif // !_ERH_
-#ifndef _REH_(func)
+#ifndef _REH_
 #define _REH_(func) Era::RegisterHandler(func, #func)
 #endif // !_ERH_
 #ifdef ERA_MODLIST
