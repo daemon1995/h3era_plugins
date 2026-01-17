@@ -32,7 +32,7 @@ void __stdcall MapScroller::WndMgr_AddNewDlg(HiHook *h, const H3WindowManager *w
     {
         if (mapScroller.lastAdddedDlg)
         {
-            mapScroller.Stop();
+            mapScroller.StopMapScrolling();
         }
         else
         {
@@ -66,7 +66,7 @@ _LHF_(MapScroller::BaseDlg_OnRightClickHold) noexcept
         }
         else
         {
-            mapScroller.Stop(); // disable rmc flag to have some erm scripts compatibilityw
+            mapScroller.StopMapScrolling(); // disable rmc flag to have some erm scripts compatibilityw
         }
     }
 
@@ -79,8 +79,8 @@ int __stdcall MapScroller::AdvMgr_MapScreenProcedure(HiHook *h, H3AdventureManag
 
     auto &scroller = Get();
 
-    scroller.isMapView = msg->GetX() >= MAP_MARGIN && msg->GetX() <= MAP_MARGIN + scroller.mapViewW &&
-                         msg->position.x >= MAP_MARGIN && msg->position.y <= MAP_MARGIN + scroller.mapViewH;
+    scroller.isMapView = msg->position.x >= MAP_MARGIN && msg->position.x <= MAP_MARGIN + scroller.mapViewW &&
+                         msg->position.y >= MAP_MARGIN && msg->position.y <= MAP_MARGIN + scroller.mapViewH;
 
     if (scroller.isMapView &&
         (msg->command == eMsgCommand::MOUSE_BUTTON && msg->subtype == eMsgSubtype::RBUTTON_DOWN ||
@@ -118,7 +118,7 @@ int __stdcall MapScroller::AdvMgr_MapScreenProcedure(HiHook *h, H3AdventureManag
     if (msg->command == eMsgCommand::RBUTTON_UP || msg->command == eMsgCommand::LCLICK_OUTSIDE ||
         msg->command == eMsgCommand::LBUTTON_UP)
     {
-        scroller.Stop();
+        scroller.StopMapScrolling();
     }
 
     if (msg->command == eMsgCommand::MOUSE_OVER || msg->command == eMsgCommand::MOUSE_BUTTON)
@@ -208,13 +208,13 @@ int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, 
     }
     else // if not holding then reset variable
     {
-        mapScroller.Stop();
+        mapScroller.StopMapScrolling();
     }
 
     return THISCALL_3(int, h->GetDefaultFunc(), adv, x, y);
 }
 
-void MapScroller::Stop() noexcept
+void MapScroller::StopMapScrolling() noexcept
 {
     rmcAtMapScreen = false;
     SetMapEdgeScrollStatus(true);

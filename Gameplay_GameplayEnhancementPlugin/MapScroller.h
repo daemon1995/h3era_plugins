@@ -50,7 +50,7 @@ class MapScroller : public IGamePatch
     virtual void CreatePatches() noexcept final;
 
   private:
-    void Stop() noexcept;
+    void StopMapScrolling() noexcept;
     void SetMapEdgeScrollStatus(const BOOL state) noexcept;
 
   private:
