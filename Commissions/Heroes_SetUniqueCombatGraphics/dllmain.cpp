@@ -11,8 +11,21 @@ namespace dllText
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
 
-_LHF_(HooksInit)
+_LHF_(CombatManager_LoadCombatHeroAsset)
 {
+
+    if (auto hero = P_CombatManager->hero[c->edi])
+    {
+        bool hasUniqueGraphic = false;
+        libc::sprintf(h3_TextBuffer, "ssm.custom_hero_def.%d", hero->id);
+        LPCSTR customDefName = EraJS::read(h3_TextBuffer, hasUniqueGraphic);
+        if (hasUniqueGraphic)
+        {
+            c->Ecx<LPCSTR>(customDefName);
+        }
+    }
+
+
     return EXEC_DEFAULT;
 }
 
@@ -28,7 +41,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             Era::ConnectEra(hModule, dllText::instanceName);
-            _PI->WriteLoHook(0x4EEAF2, HooksInit);
+            _PI->WriteLoHook(0x46307D, CombatManager_LoadCombatHeroAsset);
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
