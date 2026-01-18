@@ -213,13 +213,24 @@ _ERH_(OnGameEnter)
     dlg.Start();
 }
 
+H3LoadedDef *__stdcall LoadDEF(HiHook *hook, LPCSTR defName)
+{
+    H3LoadedDef *result = THISCALL_1(H3LoadedDef *, hook->GetDefaultFunc(), defName);
+
+    result->ColorToPlayer(rand() % 8);
+    // H3Messagebox("pol_LoadDEF called.");
+    return result;
+}
+
 _LHF_(HooksInit)
 {
+
     // _PI->WriteLoHook(0x049CDF6, MapTeamOpen);
     Era::RegisterHandler(OnGameEnter, "OnGameEnter");
 
     if (0)
     {
+        _PI->WriteHiHook(0x055C9C0, THISCALL_, LoadDEF);
     }
 
     return EXEC_DEFAULT;
@@ -288,7 +299,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         Era::ConnectEra(hModule, dllText::instanceName);
 
         _PI->WriteLoHook(0x4EEAF2, HooksInit);
-
 
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
