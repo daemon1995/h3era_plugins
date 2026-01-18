@@ -91,6 +91,10 @@ H3LoadedDef *GraphicsEnhancements::Hero_GetMapItemDef(const H3Hero *hero) noexce
     }
     return result;
 }
+int GraphicsEnhancements::GetMaxTownBuildingCount() noexcept
+{
+    return instance->maxTownsBuildings;
+}
 H3LoadedDef *GraphicsEnhancements::InitHeroData(const UINT heroId) noexcept
 {
     H3LoadedDef *result = nullptr;
@@ -236,7 +240,8 @@ eBuildingInfoFrames Town_GetExtendedInfoFrameId(const H3Town *town)
 
     eBuildingInfoFrames result = eBuildingInfoFrames::NOTHING_TO_BUILD;
 
-    for (size_t i = 0; i < limits::BUILDINGS; i++)
+    const int maxTownsBuildings = GraphicsEnhancements::GetMaxTownBuildingCount();
+    for (size_t i = 0; i < maxTownsBuildings; i++)
     {
         if (i == eBuildings::GRAIL)
             continue;
@@ -526,6 +531,9 @@ void GraphicsEnhancements::CreatePatches() noexcept
 
     if (EraJS::readInt("gem_plugin.building_hints.enable"))
     {
+
+        maxTownsBuildings = globalPatcher->VarGetValue<int>("ERA.Towns.max_buildings_count", limits::BUILDINGS);
+        //        maxTownsBuildings
         WriteHiHook(0x0417FFB, THISCALL_, AdvMgr__AtSetActiveHero_BeforeScreenRedraw);
         WriteHiHook(0x00403420, THISCALL_, H3AdventureMgrDlg__RedrawTownSlots);
         WriteHiHook(0x004032E0, THISCALL_, H3AdventureMgrDlg__RedrawHeroSlots);

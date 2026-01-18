@@ -22,7 +22,7 @@ class GraphicsEnhancements : public IGamePatch
 
     // towns is build graphics pointers
     int maxTownsDisplayableBuiltIcons = 5;
-
+	int maxTownsBuildings = h3::limits::BUILDINGS;
     struct BuiltDefButtons
     {
         std::array<H3DlgDefButton *, 7> advMapDlg;
@@ -36,6 +36,8 @@ class GraphicsEnhancements : public IGamePatch
   public:
     static GraphicsEnhancements *Get() noexcept;
     static H3LoadedDef *Hero_GetMapItemDef(const H3Hero *hero) noexcept;
+
+	static int GetMaxTownBuildingCount() noexcept;
     H3LoadedDef *InitHeroData(const UINT heroId) noexcept;
     void InitHeroClassData(const UINT classId) noexcept;
     void InitAdventureMapTownBuiltDefs() noexcept;
