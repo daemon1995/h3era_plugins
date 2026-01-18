@@ -190,7 +190,7 @@ _LHF_(AdventureManager_Hide)
 void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
 {
     // get max towns displayable built icons from config
-    constexpr int hdModMax = 7;
+    constexpr INT16 hdModMax = 7;
     maxTownsDisplayableBuiltIcons = Clamp(5, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", 5), hdModMax);
     // townBuiltDlgDefButtons.assign(nullptr);
     const int firstDefButtonId = globalPatcher->VarGetValue<int>("HD.AdvMgr.ID32", 32);
@@ -198,11 +198,11 @@ void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
 
     if (auto firstDef = dlg->GetH3DlgItem(firstDefButtonId))
     {
-        const int xPos = firstDef->GetX() + 32;
-        const int yBase = firstDef->GetY();
+        const INT16 xPos = firstDef->GetX() + 32;
+        const INT16 yBase = firstDef->GetY();
         auto &advMapDlg = builtDefButtons.advMapDlg;
 
-        for (size_t i = 0; i < hdModMax; i++)
+        for (INT16 i = 0; i < hdModMax; i++)
         {
             H3String buttonName = H3String::Format(GraphicsEnhancements::BUILD_BUTTON_NAME_FORMAT_MAP, i);
             const int buttonId = Era::GetButtonID(buttonName.String());
@@ -240,7 +240,7 @@ eBuildingInfoFrames Town_GetExtendedInfoFrameId(const H3Town *town)
 
     eBuildingInfoFrames result = eBuildingInfoFrames::NOTHING_TO_BUILD;
 
-    const int maxTownsBuildings = GraphicsEnhancements::GetMaxTownBuildingCount();
+    const int maxTownsBuildings = h3::limits::BUILDINGS; // GraphicsEnhancements::GetMaxTownBuildingCount();
     for (size_t i = 0; i < maxTownsBuildings; i++)
     {
         if (i == eBuildings::GRAIL)
@@ -314,7 +314,7 @@ void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dl
 
     auto &advMapDlg = builtDefButtons.advMapDlg;
 
-    for (size_t i = 0; i < maxTownsDisplayableBuiltIcons; i++)
+    for (int i = 0; i < maxTownsDisplayableBuiltIcons; i++)
     {
         const auto townIndex = mePlayer->towns[i + dlg->topTownSlotIndex];
         if (townIndex != -1)
@@ -371,9 +371,9 @@ void GraphicsEnhancements::InitTownDlgDefButtons(H3TownDialog *dlg) noexcept
     auto firstDefButton = dlg->GetH3DlgItem(155);
     if (firstDefButton)
     {
-        const int xPos = firstDefButton->GetX() + 32;
-        const int yBase = firstDefButton->GetY();
-        for (size_t i = 0; i < 4; i++)
+        const INT16 xPos = firstDefButton->GetX() + 32;
+        const INT16 yBase = firstDefButton->GetY();
+        for (INT16 i = 0; i < 4; i++)
         {
             H3String buttonName = H3String::Format(BUILD_BUTTON_NAME_FORMAT_TOWN, i);
             const int buttonId = Era::GetButtonID(buttonName.String());
@@ -398,7 +398,7 @@ void GraphicsEnhancements::DrawTownDlgBuiltStatus(H3TownDialog *dlg) noexcept
 
     const auto mePlayer = P_Game->GetPlayer();
 
-    for (size_t i = 0; i < 3; i++)
+    for (INT8 i = 0; i < 3; i++)
     {
         auto defButton = builtDefButtons.townDlg[i];
 
