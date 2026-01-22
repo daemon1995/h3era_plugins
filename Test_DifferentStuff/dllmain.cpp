@@ -15,6 +15,7 @@ namespace dllText
 {
 LPCSTR instanceName = "EraPlugin.Testing.daemon_n";
 }
+void ShowCreatureTableDialog();
 
 _LHF_(MainWindow_F1)
 {
@@ -206,8 +207,11 @@ template <typename... Ints> void Debug(Ints... values) noexcept
     libc::sprintf(Era::z[1], "%s", buffer);
     Era::ExecErmCmd("IF:L^%z1^");
 }
+
 _ERH_(OnGameEnter)
 {
+    // ShowCreatureTableDialog();
+
     return;
     TestDlg dlg(500, 500);
     dlg.Start();
@@ -306,4 +310,47 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         break;
     }
     return TRUE;
+}
+
+// Функция для отрисовки диалога
+void ShowCreatureTableDialog()
+{
+    // 1. Создаем диалог
+    // Размеры: ширина ~280, высота ~240 (под 5x5 и кнопку)
+    H3Dlg dlg(280, 240, -1, -1, 1);
+
+    const int startX = 25;
+    const int startY = 20;
+    const int stepX = 48; // Ширина CprSmall.def примерно 48px
+    const int stepY = 34; // Высота CprSmall.def примерно 32px
+
+    for (int i = 0; i < 25; ++i)
+    {
+        int col = i % 5;
+        int row = i / 5;
+
+        int x = startX + (col * stepX);
+        int y = startY + (row * stepY);
+
+        // Создаем элемент Def (портрет существа)
+        // "CprSmall.def" — стандартный файл с иконками существ
+        // frame = i (ID существа: 0=Копейщик, 1=Алебардщик, и т.д.)
+        H3DlgDef *portrait = H3DlgDef::Create(x, y, "CprSmall.def", i);
+
+        // Добавляем элемент в диалог
+        dlg.AddItem(portrait);
+
+        // Опционально: можно добавить подсказку при наведении
+        portrait->SetHint(P_CreatureInformation[i].nameSingular);
+    }
+
+    // 4. Добавляем кнопку OK внизу
+    // "iOk.def" — стандартная кнопка ОК
+    // ID кнопки = 30722 (стандартный ID для закрытия с результатом OK)
+    // HK_ENTER — горячая клавиша Enter
+    H3DlgDefButton *btnOk = H3DlgDefButton::Create(110, 200, "iOk.def", 0, 1);
+    dlg.AddItem(btnOk);
+
+    // 5. Запускаем диалог
+    dlg.Start();
 }
