@@ -8,9 +8,10 @@ Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 namespace dllText
 {
-LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
+constexpr LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
 
+float wallHpMultiplier = 3.0f; // 3 times wall HP
 void __stdcall CombatManager_InitTownWalls(HiHook *h, H3CombatManager *cmbMgr)
 {
     THISCALL_1(void, h->GetDefaultFunc(), cmbMgr);
@@ -18,14 +19,25 @@ void __stdcall CombatManager_InitTownWalls(HiHook *h, H3CombatManager *cmbMgr)
     {
         for (auto &i : cmbMgr->fortWallsHp)
         {
-            i *= 2.5f; // Double wall HP
+            i *= wallHpMultiplier; // Triple wall HP
         }
     }
 }
 
 _LHF_(HooksInit)
 {
-    _PI->WriteHiHook(0x465E70, THISCALL_, CombatManager_InitTownWalls);
+
+    bool readSuccess = false;
+
+    float temp = EraJS::readFloat("suft.combat.siege.walls.health_points_multiplier", readSuccess);
+    if (readSuccess && temp > 0)
+    {
+        wallHpMultiplier = temp;
+    }
+    if (wallHpMultiplier > 0.f && wallHpMultiplier != 1.f)
+    {
+        _PI->WriteHiHook(0x465E70, THISCALL_, CombatManager_InitTownWalls);
+    }
 
     return EXEC_DEFAULT;
 }
