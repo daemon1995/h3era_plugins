@@ -24,18 +24,27 @@
 
 #include "Era/era.h"
 #include "Era/eraJson.hpp"
+
 #ifndef _ERH_
 #define _ERH_(func) void __stdcall func(Era::TEvent *event)
 #endif // !_ERH_
+
 #ifndef _REH_
 #define _REH_(func) Era::RegisterHandler(func, #func)
 #endif // !_ERH_
+
 #ifdef ERA_MODLIST
 #include "Era/eraModList.hpp"
 #endif // ERA_MOD_LIST
+
 #ifdef MAIN_MENU_API
 #include "EraPluginsAPI/MainMenuAPI.hpp"
 #endif // MAIN_MENU_API
+
+#ifdef OBJECTS_EXTENDER_API
+#include "EraPluginsAPI/ObjectExtenderDispatchAPI.h"
+#endif // OBJECTS_EXTENDER_API
+
 #ifdef _WOG_
 #include "WoG/NPC.h"
 #include "WoG/WogClasses.h"

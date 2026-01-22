@@ -28,6 +28,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_RemoveObstacleSpel
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_BaseCommissionPlugin", "Commissions\Test_BaseCommissionPlugin\Test_BaseCommissionPlugin.vcxproj", "{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecondarySkills_EditNecromancyValues", "Commissions\SecondarySkills_EditNecromancyValues\SecondarySkills_EditNecromancyValues.vcxproj", "{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_SetUniqueCombatGraphics", "Commissions\Heroes_SetUniqueCombatGraphics\Heroes_SetUniqueCombatGraphics.vcxproj", "{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_IncreaseWallsHealthPoints", "Commissions\Combat_IncreaseWallsHealthPoints\Combat_IncreaseWallsHealthPoints.vcxproj", "{D4E5F6A7-B8C9-5DAB-AE1F-456789012F01}"
@@ -94,6 +96,10 @@ Global
 		{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}.Debug|x86.Build.0 = Debug|Win32
 		{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}.Release|x86.ActiveCfg = Release|Win32
 		{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}.Release|x86.Build.0 = Release|Win32
+		{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}.Debug|x86.ActiveCfg = Debug|Win32
+		{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}.Debug|x86.Build.0 = Debug|Win32
+		{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}.Release|x86.ActiveCfg = Release|Win32
+		{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}.Release|x86.Build.0 = Release|Win32
 		{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}.Debug|x86.ActiveCfg = Debug|Win32
 		{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}.Debug|x86.Build.0 = Debug|Win32
 		{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}.Release|x86.ActiveCfg = Release|Win32

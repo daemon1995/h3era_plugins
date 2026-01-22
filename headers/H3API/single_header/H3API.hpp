@@ -18862,7 +18862,7 @@ namespace h3
 		}towers[3];
 		/** @brief [13DE4] */
 		BOOL32 waitPhase;
-	protected:
+	public:
 		/** @brief [13DE8] */
 		INT32 heroDAttack;
 		/** @brief [13DEC] */
@@ -20306,6 +20306,7 @@ namespace h3
 		_H3API_ VOID       AddState(eControlState state);
 		_H3API_ VOID       RemoveState(eControlState state);
 		_H3API_ LPCSTR     GetHint() const;
+		_H3API_ LPCSTR     GetRightClickHint() const;
 		_H3API_ VOID       SetHint(LPCSTR msg);
 		_H3API_ UINT16     GetID() const;
 		_H3API_ VOID       ParentRedraw(); // redraw through parent
@@ -35280,6 +35281,10 @@ namespace h3
     {
         return hint;
     }
+	_H3API_ LPCSTR H3DlgItem::GetRightClickHint() const
+	{
+		return rightClickHint;
+	}
     _H3API_ VOID H3DlgItem::SetHint(LPCSTR msg)
     {
         hint = msg;
