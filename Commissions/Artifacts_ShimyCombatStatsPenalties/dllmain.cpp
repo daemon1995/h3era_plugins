@@ -50,6 +50,12 @@ struct HeroStats
 
 } heroStats[2];
 
+struct PluginSettings
+{
+    BOOL enableArtifactPenalties{TRUE};
+    BOOL enableComboEffects{TRUE};
+} pluginSettings;
+
 _LHF_(BattleMgr_InitLogicLo)
 {
     auto _this = c->Esi<H3CombatManager *>();
@@ -81,7 +87,7 @@ _LHF_(BattleMgr_InitLogicLo)
             if (artsCounter)
             {
                 heroStats[1 - i].isChanged = TRUE;
-                if (artsCounter == 3)
+                if (artsCounter == 3 && pluginSettings.enableComboEffects)
                 {
                     for (size_t sk = 0; sk < 3; sk++)
                     {
@@ -92,7 +98,7 @@ _LHF_(BattleMgr_InitLogicLo)
                     heroStats[1 - i].spellPoints = hostileHero->spellPoints / 4;
                     hostileHero->spellPoints -= heroStats[1 - i].spellPoints;
                 }
-                else
+                else if (pluginSettings.enableArtifactPenalties)
                 {
                     for (size_t sk = 0; sk < 4; sk++)
                     {
@@ -143,9 +149,14 @@ _LHF_(HooksInit)
     //- Cards of Prophecy: triple enemy spell cost
     _PI->WriteHiHook(0x4E54B0, THISCALL_, Hero__GetSpellCost);
 
-    _PI->WriteLoHook(0x463B09, BattleMgr_InitLogicLo);
-    //  _PI->WriteHiHook(0x4627B5, THISCALL_, BattleMgr_InitLogic);
-    _PI->WriteHiHook(0x475CFD, THISCALL_, BattleMgr_EndBattle);
+    pluginSettings.enableArtifactPenalties = EraJS::readInt("shimy.artifacts.diplomacy.enabled.single");
+    pluginSettings.enableComboEffects = EraJS::readInt("shimy.artifacts.diplomacy.enabled.combo");
+    if (pluginSettings.enableArtifactPenalties || pluginSettings.enableComboEffects)
+    {
+        _PI->WriteLoHook(0x463B09, BattleMgr_InitLogicLo);
+        //  _PI->WriteHiHook(0x4627B5, THISCALL_, BattleMgr_InitLogic);
+        _PI->WriteHiHook(0x475CFD, THISCALL_, BattleMgr_EndBattle);
+    }
 
     return EXEC_DEFAULT;
 }
