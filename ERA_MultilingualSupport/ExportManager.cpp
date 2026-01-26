@@ -10,17 +10,17 @@ constexpr int ITEMS_PER_PANEL = 3;
 std::string ExportManager::LPCSTR_to_wstring(LPCSTR ansi_str)
 {
     // 1. Получаем длину без нуль-терминатора
-    const int src_len = strlen(ansi_str);
+    const int src_len = libc::strlen(ansi_str);
 
     // 2. ANSI → UTF-16
-    const int wlen = MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, NULL, 0);
+    const int wlen = libc::MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, NULL, 0);
     std::wstring wstr(wlen, 0);
-    MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, &wstr[0], wlen);
+    libc::MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, &wstr[0], wlen);
 
     // 3. UTF-16 → UTF-8
-    const int ulen = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, NULL, 0, NULL, NULL);
+    const int ulen = libc::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, NULL, 0, NULL, NULL);
     std::string utf8_str(ulen, 0);
-    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, &utf8_str[0], ulen, NULL, NULL);
+    libc::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, &utf8_str[0], ulen, NULL, NULL);
 
     return utf8_str;
 }

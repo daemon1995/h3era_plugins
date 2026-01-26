@@ -10,7 +10,12 @@ namespace dllText
 {
 constexpr LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
-
+struct PluginSettings
+{
+    INT singleArtStatsPenalty{20};
+    INT comboArtsStatsPenalty{25};
+    INT spellCostMultiplier{3};
+} pluginSettings;
 //- Cards of Prophecy: triple enemy spell cost
 
 int __stdcall Hero__GetSpellCost(HiHook *h, H3Hero *heroCaster, const int spell, const H3Army *hostileArmy,
@@ -33,8 +38,7 @@ int __stdcall Hero__GetSpellCost(HiHook *h, H3Hero *heroCaster, const int spell,
             if (auto hostileHero = heroes[1])
             {
                 if (hostileHero->WearsArtifact(eArtifact::CARDS_OF_PROPHECY))
-                    ;
-                spellCost *= 3;
+                    spellCost *= pluginSettings.spellCostMultiplier;
             }
         }
     }
@@ -49,12 +53,6 @@ struct HeroStats
     int spellPoints{0};
 
 } heroStats[2];
-
-struct PluginSettings
-{
-    BOOL enableArtifactPenalties{TRUE};
-    BOOL enableComboEffects{TRUE};
-} pluginSettings;
 
 _LHF_(BattleMgr_InitLogicLo)
 {
@@ -71,23 +69,23 @@ _LHF_(BattleMgr_InitLogicLo)
             auto hostileHero = _this->hero[1 - i];
             if (wearingHero->WearsArtifact(eArtifact::STATESMANS_MEDAL))
             {
-                decreaseBy[ePrimary::ATTACK] = 20;
+                decreaseBy[ePrimary::ATTACK] = pluginSettings.singleArtStatsPenalty;
                 artsCounter++;
             }
             if (wearingHero->WearsArtifact(eArtifact::AMBASSADORS_SASH))
             {
-                decreaseBy[ePrimary::DEFENSE] = 20;
+                decreaseBy[ePrimary::DEFENSE] = pluginSettings.singleArtStatsPenalty;
                 artsCounter++;
             }
             if (wearingHero->WearsArtifact(eArtifact::DIPLOMATS_RING))
             {
-                decreaseBy[ePrimary::SPELL_POWER] = 20;
+                decreaseBy[ePrimary::SPELL_POWER] = pluginSettings.singleArtStatsPenalty;
                 artsCounter++;
             }
             if (artsCounter)
             {
                 heroStats[1 - i].isChanged = TRUE;
-                if (artsCounter == 3 && pluginSettings.enableComboEffects)
+                if (artsCounter == 3 && pluginSettings.comboArtsStatsPenalty)
                 {
                     for (size_t sk = 0; sk < 3; sk++)
                     {
@@ -98,7 +96,7 @@ _LHF_(BattleMgr_InitLogicLo)
                     heroStats[1 - i].spellPoints = hostileHero->spellPoints / 4;
                     hostileHero->spellPoints -= heroStats[1 - i].spellPoints;
                 }
-                else if (pluginSettings.enableArtifactPenalties)
+                else if (pluginSettings.singleArtStatsPenalty)
                 {
                     for (size_t sk = 0; sk < 4; sk++)
                     {
@@ -147,11 +145,16 @@ void __stdcall BattleMgr_EndBattle(HiHook *h, H3CombatManager *_this, const int 
 _LHF_(HooksInit)
 {
     //- Cards of Prophecy: triple enemy spell cost
-    _PI->WriteHiHook(0x4E54B0, THISCALL_, Hero__GetSpellCost);
+    pluginSettings.spellCostMultiplier =
+        EraJS::readInt("shimy.artifacts.cards_of_prophecy.hostile_spell_cost_multiplier");
+    if (pluginSettings.spellCostMultiplier > 0)
+    {
+        _PI->WriteHiHook(0x4E54B0, THISCALL_, Hero__GetSpellCost);
+    }
 
-    pluginSettings.enableArtifactPenalties = EraJS::readInt("shimy.artifacts.diplomacy.enabled.single");
-    pluginSettings.enableComboEffects = EraJS::readInt("shimy.artifacts.diplomacy.enabled.combo");
-    if (pluginSettings.enableArtifactPenalties || pluginSettings.enableComboEffects)
+    pluginSettings.singleArtStatsPenalty = EraJS::readInt("shimy.artifacts.diplomacy.single_art_penalty");
+    pluginSettings.comboArtsStatsPenalty = EraJS::readInt("shimy.artifacts.diplomacy.combo_art_penalty");
+    if (pluginSettings.singleArtStatsPenalty || pluginSettings.comboArtsStatsPenalty)
     {
         _PI->WriteLoHook(0x463B09, BattleMgr_InitLogicLo);
         //  _PI->WriteHiHook(0x4627B5, THISCALL_, BattleMgr_InitLogic);
