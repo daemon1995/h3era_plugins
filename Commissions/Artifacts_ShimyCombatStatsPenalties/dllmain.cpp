@@ -87,24 +87,29 @@ _LHF_(BattleMgr_InitLogicLo)
                 heroStats[1 - i].isChanged = TRUE;
                 if (artsCounter == 3 && pluginSettings.comboArtsStatsPenalty)
                 {
+
+                    const float penaltyFactor = (100 - pluginSettings.comboArtsStatsPenalty) / 100.0f;
+
                     for (size_t sk = 0; sk < 3; sk++)
                     {
                         heroStats[1 - i].primarySkill[sk] = hostileHero->primarySkill[sk];
                         hostileHero->primarySkill[sk] =
-                            static_cast<UINT8>(static_cast<float>(hostileHero->primarySkill[sk]) * 0.75f);
+                            static_cast<UINT8>(static_cast<float>(hostileHero->primarySkill[sk]) * penaltyFactor);
                     }
                     heroStats[1 - i].spellPoints = hostileHero->spellPoints / 4;
                     hostileHero->spellPoints -= heroStats[1 - i].spellPoints;
                 }
-                else if (pluginSettings.singleArtStatsPenalty)
+                else if (const int singleArtPenalty = pluginSettings.singleArtStatsPenalty)
                 {
+
+                    const float penaltyFactor = (100 - singleArtPenalty) / 100.0f;
                     for (size_t sk = 0; sk < 4; sk++)
                     {
                         if (int decrease = decreaseBy[sk])
                         {
                             heroStats[1 - i].primarySkill[sk] = hostileHero->primarySkill[sk];
                             hostileHero->primarySkill[sk] =
-                                static_cast<UINT8>(static_cast<float>(hostileHero->primarySkill[sk]) * 0.8f);
+                                static_cast<UINT8>(static_cast<float>(hostileHero->primarySkill[sk]) * penaltyFactor);
                         }
                     }
                 }

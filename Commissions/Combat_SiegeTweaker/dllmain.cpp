@@ -11,17 +11,29 @@ namespace dllText
 constexpr LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
 
-float wallHpMultiplier = 3.0f; // 3 times wall HP
-void __stdcall CombatManager_InitTownWalls(HiHook *h, H3CombatManager *cmbMgr)
+struct PluginSettings
+{
+    float wallHpMultiplier = 3.0f;           // 3 times wall HP
+    float arrowTowerDamageMultiplier = 3.0f; // 3 times arrow tower damage
+
+} pluginSettings;
+static void __stdcall CombatManager_InitTownWalls(HiHook *h, H3CombatManager *cmbMgr)
 {
     THISCALL_1(void, h->GetDefaultFunc(), cmbMgr);
     if (!cmbMgr->creatureBank && cmbMgr->siegeKind2 > 0)
     {
         for (auto &i : cmbMgr->fortWallsHp)
         {
-            i *= wallHpMultiplier; // Triple wall HP
+            i *= pluginSettings.wallHpMultiplier; // Triple wall HP
         }
     }
+}
+
+static long double __stdcall BattleStack_DoDamageByArrowTower(HiHook *h, const H3CombatCreature *stack,
+                                                              const BOOL checkAirShield)
+{
+    return THISCALL_2(long double, h->GetDefaultFunc(), stack, checkAirShield) *
+           pluginSettings.arrowTowerDamageMultiplier;
 }
 
 _LHF_(HooksInit)
@@ -32,11 +44,20 @@ _LHF_(HooksInit)
     float temp = EraJS::readFloat("suft.combat.siege.walls.health_points_multiplier", readSuccess);
     if (readSuccess && temp > 0)
     {
-        wallHpMultiplier = temp;
+        pluginSettings.wallHpMultiplier = temp;
     }
-    if (wallHpMultiplier > 0.f && wallHpMultiplier != 1.f)
+    if (pluginSettings.wallHpMultiplier > 0.f && pluginSettings.wallHpMultiplier != 1.f)
     {
         _PI->WriteHiHook(0x465E70, THISCALL_, CombatManager_InitTownWalls);
+    }
+    temp = EraJS::readFloat("suft.combat.siege.arrow_tower.damage", readSuccess);
+    if (readSuccess && temp > 0)
+    {
+        pluginSettings.arrowTowerDamageMultiplier = temp;
+    }
+    if (pluginSettings.arrowTowerDamageMultiplier > 0.f && pluginSettings.arrowTowerDamageMultiplier != 1.f)
+    {
+        _PI->WriteHiHook(0x0443AB0, THISCALL_, BattleStack_DoDamageByArrowTower);
     }
 
     return EXEC_DEFAULT;

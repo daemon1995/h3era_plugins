@@ -32,11 +32,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecondarySkills_EditNecroma
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_SetUniqueCombatGraphics", "Commissions\Heroes_SetUniqueCombatGraphics\Heroes_SetUniqueCombatGraphics.vcxproj", "{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_IncreaseWallsHealthPoints", "Commissions\Combat_IncreaseWallsHealthPoints\Combat_IncreaseWallsHealthPoints.vcxproj", "{D4E5F6A7-B8C9-5DAB-AE1F-456789012F01}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_SiegeTweaker", "Commissions\Combat_SiegeTweaker\Combat_SiegeTweaker.vcxproj", "{D4E5F6A7-B8C9-5DAB-AE1F-456789012F01}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AIHeroes_ComboSecondarySkillsValues", "Commissions\AIHeroes_ComboSecondarySkillsValues\AIHeroes_ComboSecondarySkillsValues.vcxproj", "{2B8BB498-7C67-45A6-8EBF-59A13603CF20}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Artifacts_ShimyCombatStatsPenalties", "Commissions\Artifacts_ShimyCombatStatsPenalties\Artifacts_ShimyCombatStatsPenalties.vcxproj", "{D4E5F6A7-B8C9-49CA-9D0E-4567890123EF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_StatusSpellCumulativeEffect", "Commissions\Combat_StatusSpellCumulativeEffect\Combat_StatusSpellCumulativeEffect.vcxproj", "{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -116,6 +118,10 @@ Global
 		{D4E5F6A7-B8C9-49CA-9D0E-4567890123EF}.Debug|x86.Build.0 = Debug|Win32
 		{D4E5F6A7-B8C9-49CA-9D0E-4567890123EF}.Release|x86.ActiveCfg = Release|Win32
 		{D4E5F6A7-B8C9-49CA-9D0E-4567890123EF}.Release|x86.Build.0 = Release|Win32
+		{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}.Debug|x86.ActiveCfg = Debug|Win32
+		{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}.Debug|x86.Build.0 = Debug|Win32
+		{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}.Release|x86.ActiveCfg = Release|Win32
+		{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

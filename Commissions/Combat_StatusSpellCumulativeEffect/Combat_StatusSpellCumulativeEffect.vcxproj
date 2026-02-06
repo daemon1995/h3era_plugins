@@ -13,10 +13,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{D4E5F6A7-B8C9-5DAB-AE1F-456789012F01}</ProjectGuid>
-    <RootNamespace>CombatIncreaseWallsHealthPoints</RootNamespace>
+    <ProjectGuid>{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}</ProjectGuid>
+    <RootNamespace>CombatStatusSpellCumulativeEffect</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>Combat_IncreaseWallsHealthPoints</ProjectName>
+    <ProjectName>Combat_StatusSpellCumulativeEffect</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
