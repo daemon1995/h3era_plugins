@@ -28,7 +28,7 @@ class UniversityExtender : public extender::ObjectExtender
 
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
 
-    virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes) override final;
+    virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) override final;
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept override final;
     virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,

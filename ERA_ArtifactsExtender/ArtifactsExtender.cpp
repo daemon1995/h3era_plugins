@@ -27,7 +27,7 @@ DWORD *ArtifactsExtender::primarySkillsBonusTable = nullptr;
 DWORD ArtifactsExtender::primarySkillsBonusTableAddr = 0;
 LPCSTR *ArtifactsExtender::eventTable = nullptr;
 
-void ArtifactsExtender::AfterLoadingObjectTxtProc()
+void ArtifactsExtender::AfterLoadingObjectsTxtProc()
 {
     
 
@@ -430,7 +430,7 @@ ArtifactsExtender &ArtifactsExtender::Get()
     if (instance == nullptr)
     {
         instance = new ArtifactsExtender();
-        instance->AfterLoadingObjectTxtProc();
+        instance->AfterLoadingObjectsTxtProc();
     }
     return *instance;
 }

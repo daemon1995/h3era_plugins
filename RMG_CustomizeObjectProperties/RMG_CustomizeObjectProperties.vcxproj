@@ -86,7 +86,6 @@
     <ClCompile Include="ObjectExtenders\WarehousesExtender.cpp" />
     <ClCompile Include="ObjectExtenders\WateringPlaceExtender.cpp" />
     <ClCompile Include="ObjectExtenders\WoGObjectsExtender.cpp" />
-    <ClCompile Include="ObjectExtender.cpp" />
     <ClCompile Include="RMGObjectsEditor.cpp" />
     <ClCompile Include="RMG_SettingsDlg.cpp" />
   </ItemGroup>

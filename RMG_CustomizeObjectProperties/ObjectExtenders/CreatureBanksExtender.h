@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-
+struct ObjectExtenderDesc;
 namespace cbanks
 {
 
@@ -139,6 +139,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
                                    const bool withoutBrackets = true) noexcept;
        */ // static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, const int x, const int y,
     // H3Army *army) noexcept;
+    ObjectExtenderDesc api;
 
   private:
     CreatureBanksExtender();
@@ -146,7 +147,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
 
   protected:
     virtual void CreatePatches();
-    virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes) override final;
+    virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) override final;
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept override;
 
     // virtual void GetObjectPreperties() noexcept override  final;
@@ -165,7 +166,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
     static _LHF_(Game_AfterInitMapItem);
     static _LHF_(Game_SetMapItemDef);
 
-    static __int64 __stdcall AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos);
+    static INT __stdcall AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos);
 
     static _LHF_(CrBank_DisplayPreCombatMessage);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);

@@ -27,7 +27,7 @@ class WateringPlaceExtender : public extender::ObjectExtender
 
   private:
     virtual void CreatePatches();
-    //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
+    //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 
     // static _LHF_(H3AdventureManager__ObjectVisit);

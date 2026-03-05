@@ -1,9 +1,23 @@
 ﻿#pragma once
-
+#ifndef RESIZED_PCX
 #define RESIZED_PCX
+#endif
+#ifndef ERA4
 #define ERA4
+#endif
+#ifndef ERA_MODLIST
 #define ERA_MODLIST
+#endif
+#ifndef MAIN_MENU_API
 #define MAIN_MENU_API
+#endif
+#ifndef ERA4
+#define ERA4
+#endif
+#ifndef OBJECTS_EXTENDER_API
+#define OBJECTS_EXTENDER_API
+#endif
+
 #ifndef PCH_H
 #define PCH_H
 // Добавьте сюда заголовочные файлы для предварительной компиляции

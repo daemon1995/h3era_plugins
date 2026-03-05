@@ -40,7 +40,7 @@ void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
     Get().InitDefaultProperties(maxSubtypes);
 
     // load ini data in the separate thread
-    std::thread th(&RMGObjectInfo::LoadUserProperties, maxSubtypes);
+    std::thread th(&RMGObjectInfo::LoadUserProperties);
     th.detach();
 }
 
@@ -858,7 +858,7 @@ BOOL RMGObjectInfo::WriteToINI() const noexcept
     constexpr int zoneType = 0;
     H3String sectionName = H3String::Format(OBJECT_INFO_INI_FORMAT, type, subtype, zoneType);
     // save changed settings only
-    for (size_t i = 0; i < SIZE; i++)
+    for (size_t i = 0; i < DATA_SIZE; i++)
     {
         if (defaultRMGObjectsInfoByType[type][subtype].data[i] != data[i])
         {
@@ -878,7 +878,7 @@ inline void RMGObjectInfo::ReadFromINI() noexcept
 
     H3String sectionName = H3String::Format(OBJECT_INFO_INI_FORMAT, type, subtype, zoneType);
 
-    for (size_t i = 0; i < SIZE; i++)
+    for (size_t i = 0; i < DATA_SIZE; i++)
     {
         if (Era::ReadStrFromIni(PROPERTY_NAMES[i], sectionName.String(), INI_FILE_PATH,
                                 localBuffer)) // used for thread safety in when read from ini/json
@@ -939,13 +939,13 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
 
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     {
-        const int maxSubtype = maxSubtypes[objType];
-        defaultRMGObjectsInfoByType[objType].resize(maxSubtype);
+        const int subtypesAmount = maxSubtypes[objType] + 1;
+        defaultRMGObjectsInfoByType[objType].resize(subtypesAmount);
 
-        int typeData[5] = {true, limitsInfo.mapTypesLimit[objType], limitsInfo.zoneTypeLimits[objType], UNDEFINED,
-                           UNDEFINED};
+        int typeData[DATA_SIZE] = {true, limitsInfo.mapTypesLimit[objType], limitsInfo.zoneTypeLimits[objType],
+                                   UNDEFINED, UNDEFINED};
 
-        for (size_t keyIndex = 0; keyIndex < SIZE; keyIndex++)
+        for (size_t keyIndex = 0; keyIndex < DATA_SIZE; keyIndex++)
         {
 
             // read default data from json for objTypes only
@@ -962,7 +962,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         }
 
         // now iterate all the subtpyes of that type
-        for (size_t objSubtype = 0; objSubtype < maxSubtype; objSubtype++)
+        for (size_t objSubtype = 0; objSubtype < subtypesAmount; objSubtype++)
         {
             // get RmgObjectInfo ptr
             objInfo = &defaultRMGObjectsInfoByType[objType][objSubtype];
@@ -971,7 +971,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
             objInfo->type = objType;
             objInfo->subtype = objSubtype;
 
-            for (size_t keyIndex = 0; keyIndex < SIZE; keyIndex++)
+            for (size_t keyIndex = 0; keyIndex < DATA_SIZE; keyIndex++)
             {
                 // read default data from json for the exact subtype
                 const int subtypeData = EraJS::readInt(H3String::Format(OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT,
@@ -1018,7 +1018,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     }
 }
 
-void RMGObjectInfo::LoadUserProperties(const INT16 *maxSubtypes)
+void RMGObjectInfo::LoadUserProperties()
 {
     // copy default objects to the current one
     for (auto i = 0; i < h3::limits::OBJECTS; i++)
@@ -1129,12 +1129,12 @@ LPCSTR RMGObjectInfo::GetObjectDescription(const INT32 type, const INT32 subtype
     }
     return h3_NullString;
 }
-inline int *create3DArray(int X, int Y, int Z)
+static inline int *create3DArray(int X, int Y, int Z)
 {
     return new int[X * Y * Z];
 }
 
-inline int *create2DArray(int X, int Y)
+static inline int *create2DArray(int X, int Y)
 {
     return new int[X * Y];
 }
@@ -1176,20 +1176,17 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
 
         for (auto *p_ObjGen : rmg->objectGenerators)
         {
-            // each object gen of that type has hihgher subptype
+            // each object gen of that type has higher subtype
             if (p_ObjGen->subtype >= maxSubtypes[p_ObjGen->type])
             {
                 // assume that object t/s must be max limit array m_size
-                maxSubtypes[p_ObjGen->type] = p_ObjGen->subtype + 1;
+                maxSubtypes[p_ObjGen->type] = p_ObjGen->subtype;
             }
-            if (p_ObjGen->subtype > maxObjectSubtype)
+            if (p_ObjGen->subtype >= maxObjectSubtype)
             {
-                maxObjectSubtype = p_ObjGen->subtype + 1;
+                maxObjectSubtype = p_ObjGen->subtype;
             }
         }
-
-        // sprintf(h3_TextBuffer, "maxObjectSubtype: %d", maxSubtypes[eObject::SPELL_SCROLL]);
-        // H3Mes sagebox(h3_TextBuffer);
 
         // create counters and limits
         eachZoneGeneratedBySubtype = create3DArray(zonesAmount, H3_MAX_OBJECTS, maxObjectSubtype);
@@ -1208,7 +1205,7 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         LPCSTR iniFile = "Runtime/Rmg/Debug.ini";
         LPCSTR section = "MAIN";
 
-        if (1)
+        if (0)
         {
 
             Era::ClearIniCache(iniFile);

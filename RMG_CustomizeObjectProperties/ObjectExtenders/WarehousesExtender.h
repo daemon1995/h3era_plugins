@@ -29,7 +29,7 @@ class WarehousesExtender : public extender::ObjectExtender
 
   private:
     virtual void CreatePatches();
-    //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
+    //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
                                        const BOOL isRightClick) const noexcept override final;

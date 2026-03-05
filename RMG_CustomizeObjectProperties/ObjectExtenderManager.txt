@@ -62,10 +62,6 @@ DllExport bool __stdcall RegisterObjectExtender(const ObjectExtenderDesc *desc)
 
     return true;
 }
-DllExport LPCSTR __stdcall GetResolvedObjectName(const int objectType, const int subtype)
-{
-    return RMGObjectInfo::GetObjectName(objectType, subtype);
-}
 
 namespace extender
 {

@@ -30,7 +30,7 @@ class ShrinesExtender : public extender::ObjectExtender
     virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                              const H3String &defaltText) noexcept override final;
 
-    //	virtual void AfterLoadingObjectTxtProc(const INT16* maxSubtypes) override final;
+    //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
 

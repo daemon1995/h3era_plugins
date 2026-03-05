@@ -47,7 +47,7 @@ class ArtifactsExtender : public IGamePatch
     virtual ~ArtifactsExtender();
 
   protected:
-    void AfterLoadingObjectTxtProc();
+    void AfterLoadingObjectsTxtProc();
 
   protected:
     virtual void CreatePatches() override;

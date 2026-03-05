@@ -239,7 +239,8 @@ class RMG_SettingsDlg : public H3Dlg
   private:
     static RMG_SettingsDlg *instance;
     static BOOL isDlgTextEditInput;
-
+    static BOOL isHdMod;
+    static H3MainSetup *mainSetup; // used to get default objects info from zaobj or obje txt;
     static std::vector<GraphicalAttributes> m_creatureBanks;
     static std::vector<GraphicalAttributes> m_commonObjects;
     static std::vector<GraphicalAttributes> m_creatureGenerators;
@@ -289,6 +290,11 @@ class RMG_SettingsDlg : public H3Dlg
     static std::vector<GraphicalAttributes> *GetObjectAttributesVector(const int type) noexcept;
     static BOOL CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators);
     static void CopyOriginalObjectDefsIntoPcx16();
+    static void AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen,
+                                            std::vector<GraphicalAttributes> *workingVector,
+                                            std::unordered_map<DWORD, size_t> &uniqueObjectsIndex,
+                                            const int objectTypeAlias) noexcept;
+
     static DWORD GetUserRandSeedInput() noexcept;
 };
 

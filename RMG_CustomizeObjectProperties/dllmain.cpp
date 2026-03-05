@@ -5,11 +5,11 @@ using namespace h3;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.32";
-const char *INSTANCE_NAME = "EraPlugin.ObjectExtender.daemon_n";
-const char *PLUGIN_AUTHOR = "daemon_n";
+constexpr const char *PLUGIN_VERSION = "1.4.0";
+constexpr const char *PLUGIN_AUTHOR = "daemon_n";
+constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
-const char *PLUGIN_DATA = __DATE__;
+constexpr const char *PLUGIN_DATA = __DATE__;
 } // namespace dllText
 void __stdcall OnReportVersion(Era::TEvent *e)
 {
@@ -90,23 +90,14 @@ _LHF_(CrBanksTxt_BeforeLoad)
     }
 
     //! Set patches for the RMG_SettingsDlg
-
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
 
     return EXEC_DEFAULT;
 }
-namespace EraMemory
-{
-extern volatile size_t *allocatedMemorySize;
-}
-void __stdcall OnAdventureMapRightMouseClick(Era::TEvent *e)
-{
-    //  Era::ShowMessage(Era::IntToStr(*EraMemory::allocatedMemorySize).c_str());
-    //  new int[25];
-}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-    static BOOL plugin_On = 0; //!< Flag to indicate if the plugin is on
+    static BOOL pluginIsOn = 0; //!< Flag to indicate if the plugin is on
 
     // TODO: Perform actions based on the reason for calling
 
@@ -116,9 +107,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         //!< Attach process, initialize the plugin if it hasn't been initialized before
 
         //! Check if the plugin is already on
-        if (!plugin_On)
+        if (!pluginIsOn)
         {
-            plugin_On = 1;
+            pluginIsOn = 1;
 
             //! Connect to the Era framework
             Era::ConnectEra(hModule, dllText::INSTANCE_NAME);

@@ -23,7 +23,7 @@ H3RmgObjectGenerator *UniversityExtender::CreateRMGObjectGen(const RMGObjectInfo
     return nullptr;
 }
 
-void UniversityExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
+void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 {
     const int length = maxSubtypes[eObject::UNIVERSITY];
 

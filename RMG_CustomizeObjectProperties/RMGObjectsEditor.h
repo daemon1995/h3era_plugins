@@ -38,7 +38,7 @@ struct RMGObjectInfo
     // used for thread safety in when read from ini/json
     static char localBuffer[512];
 
-    constexpr static int SIZE = 5;
+    constexpr static int DATA_SIZE = 5;
     constexpr static int UNDEFINED = -1;
 
     //	zoneType 0..3 human-computer-treasure-junction*/
@@ -54,7 +54,7 @@ struct RMGObjectInfo
             INT32 value;
             INT32 density;
         };
-        INT32 data[5] = {};
+        INT32 data[DATA_SIZE] = {};
     };
     // BOOL fromTxt = false;
 
@@ -97,7 +97,7 @@ struct RMGObjectInfo
 
     static void InitFromRmgObjectGenerator(const H3RmgObjectGenerator &);
     static void InitDefaultProperties(const ObjectLimitsInfo &limitInfo, const INT16 *maxSubtypes);
-    static void LoadUserProperties(const INT16 *maxSubtypes);
+    static void LoadUserProperties();
     static LPCSTR GetObjectName(const INT32 type, const INT32 subtype);
     static LPCSTR GetObjectName(const H3MapItem *mapItem);
     static LPCSTR GetObjectDescription(const INT32 type, const INT32 subtype);
@@ -149,38 +149,38 @@ namespace editor
 
 struct PseudoH3RmgRandomMapGenerator
 {
-    h3func *vTable{};      /**< @brief [00]*/
-    UINT32 randomSeed{};   /**< @brief [04]*/
-    INT32 gameVersion = 3; /**< @brief [08]*/
-    H3RmgMap map;          /**< @brief [0C]*/
-    char _f_024[0x10];
-    H3Vector<H3ObjectAttributes> objectPrototypes[232];
-    char _f_0EB4[0x10];                                /**< @brief [EB4]*/
-    char _f_0EC4[0x10];                                /**< @brief [EB4]*/
-    h3unk32 progress;                                  /**< @brief [ED4]*/
-    BOOL8 isHuman[8];                                  /**< @brief [ED8]*/
-    INT32 playerOwner[8];                              /**< @brief [EE0]*/
-    h3unk _f_f00[36];                                  /**< @brief [F00]*/
-    INT32 playerTown[8];                               /**< @brief [F24]*/
-    INT32 monsterOrObjectCount;                        /**< @brief [F44]*/
-    INT32 humanCount;                                  /**< @brief [F48]*/
-    INT32 humanTeams;                                  /**< @brief [F4C]*/
-    INT32 computerCount;                               /**< @brief [F50]*/
-    INT32 computerTeams;                               /**< @brief [F54]*/
-    h3unk _f_f58[8];                                   /**< @brief [F58]*/
-    INT32 townsCount;                                  /**< @brief [F60]*/
-    h3unk _f_f64[4];                                   /**< @brief [F64]*/
-    h3unk _f_f68[32];                                  /**< @brief [F68]*/
-    BOOL8 bannedHeroes[156];                           /**< @brief [F88]*/
-    BOOL8 bannedArtifacts[144];                        /**< @brief [1024]*/
-    h3unk _f_10B4[4];                                  /**< @brief [10B4]*/
-    INT32 waterAmount;                                 /**< @brief [10B8]*/
-    INT32 monsterStrength;                             /**< @brief [10BC]*/
-    H3String templateName;                             /**< @brief [10C0]*/
-    char randomTemplates[0x10];                        /**< @brief [10D0]*/
-    char zoneGenerators[0x10];                         /**< @brief [10E0]*/
-    H3Vector<H3RmgObjectGenerator *> objectGenerators; /**< @brief [10F0]*/
-    H3Vector<DWORD> keyMasters;                        /**< @brief [1100]*/
+    h3func *vTable{};                                         /**< @brief [00]*/
+    UINT32 randomSeed{};                                      /**< @brief [04]*/
+    INT32 gameVersion = 3;                                    /**< @brief [08]*/
+    H3RmgMap map;                                             /**< @brief [0C]*/
+    H3Vector<H3RmgObjectProperties> objectsTxt;               /**< @brief [24] all of the the object properties*/
+    H3Vector<H3RmgObjectProperties **> objectPrototypes[232]; /**< @brief [34] object properties classified by type*/
+    char _f_0EB4[0x10];                                       /**< @brief [EB4]*/
+    char _f_0EC4[0x10];                                       /**< @brief [EB4]*/
+    h3unk32 progress;                                         /**< @brief [ED4]*/
+    BOOL8 isHuman[8];                                         /**< @brief [ED8]*/
+    INT32 playerOwner[8];                                     /**< @brief [EE0]*/
+    h3unk _f_f00[36];                                         /**< @brief [F00]*/
+    INT32 playerTown[8];                                      /**< @brief [F24]*/
+    INT32 monsterOrObjectCount;                               /**< @brief [F44]*/
+    INT32 humanCount;                                         /**< @brief [F48]*/
+    INT32 humanTeams;                                         /**< @brief [F4C]*/
+    INT32 computerCount;                                      /**< @brief [F50]*/
+    INT32 computerTeams;                                      /**< @brief [F54]*/
+    h3unk _f_f58[8];                                          /**< @brief [F58]*/
+    INT32 townsCount;                                         /**< @brief [F60]*/
+    h3unk _f_f64[4];                                          /**< @brief [F64]*/
+    h3unk _f_f68[32];                                         /**< @brief [F68]*/
+    BOOL8 bannedHeroes[156];                                  /**< @brief [F88]*/
+    BOOL8 bannedArtifacts[144];                               /**< @brief [1024]*/
+    h3unk _f_10B4[4];                                         /**< @brief [10B4]*/
+    INT32 waterAmount;                                        /**< @brief [10B8]*/
+    INT32 monsterStrength;                                    /**< @brief [10BC]*/
+    H3String templateName;                                    /**< @brief [10C0]*/
+    char randomTemplates[0x10];                               /**< @brief [10D0]*/
+    char zoneGenerators[0x10];                                /**< @brief [10E0]*/
+    H3Vector<H3RmgObjectGenerator *> objectGenerators;        /**< @brief [10F0]*/
+    H3Vector<DWORD> keyMasters;                               /**< @brief [1100]*/
 };
 
 namespace fixes
@@ -210,11 +210,7 @@ class RMGObjectsEditor : public IGamePatch
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
     std::array<INT, limits::SPELLS> spellLvls = {};
-    // std::vector<RMGObjectInfo> currentRMGObjectsInfoByType[h3::limits::OBJECTS];
-    //  std::vector<RMGObjectInfo> defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
-    //  std::array<std::vector<RMGObjectInfo>, h3::limits::OBJECTS> defaultRMGObjectsInfoByType;
 
-    //  H3Vector<H3RmgObjectGenerator *> *originalRMGObjectGenerators = nullptr;
     H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
     H3Vector<H3RmgObjectGenerator *> originalRMGObjectGenerators;
 

@@ -3,6 +3,7 @@
 namespace extender
 {
 constexpr int ERA_OBJECT_TYPE = eObject::BLANK3;
+constexpr int WAREHOUSE_OBJECT_TYPE = eObject::BLANK4;
 constexpr int HOTA_OBJECT_TYPE = eObject::BLANK5;
 constexpr int HOTA_PICKUPABLE_OBJECT_TYPE = eObject::BLANK6;
 constexpr int HOTA_UNREACHABLE_OBJECT_TYPE = eObject::BLANK7;
@@ -29,34 +30,88 @@ class ObjectExtender
     {
     }
 
-    ObjectExtender();
-    virtual ~ObjectExtender();
+    ObjectExtender() = default;
+    virtual ~ObjectExtender()
+    {
+    }
 
   protected:
     void CreatePatches();
     // virtual void GetObjectPreperties() noexcept = 0;
+
   public:
     // required override for some complex structures like creature banks
-    virtual void AfterLoadingObjectTxtProc(const INT16 *maxSubtypes);
-    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept;
+    virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
+    {
+    }
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+    {
+        //   return ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(info);
+        H3RmgObjectGenerator *objGen = nullptr;
+        if (objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1))
+        {
+            THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
+                       objectInfo.density);
+        }
+        return objGen;
+    }
 
-    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept;
-    virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept
+    {
+        return false;
+    }
+    virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept
+    {
+        return false;
+    }
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
-                              const BOOL isHuman) const noexcept;
+                              const BOOL isHuman) const noexcept
+    {
+        return false;
+    }
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
-                                       const BOOL isRightClick) const noexcept;
+                                       const BOOL isRightClick) const noexcept
+    {
+        return false;
+    }
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
-                                    int &aiResWeight, int *moveDistance, const H3Position pos) const noexcept;
-    virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                             const H3String &defaultText) noexcept;
+                                    int &aiResWeight, int *moveDistance, const H3Position pos) const noexcept
+    {
+        return false;
+    }
 
+    virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                             const H3String &defaultText) noexcept
+    {
+        return false;
+    }
+
+  public:
+    int GetObjectType() const noexcept
+    {
+        return objectType;
+    }
+    int GetObjectSubtype() const noexcept
+    {
+        return objectSubtype;
+    }
+
+    BOOL Register() noexcept
+    {
+        return RegisterExtender(this) != NULL;
+    }
     //	virtual int AiMapItemWeightFunction(HookContext* c, const H3MapItem* mapItem, H3Player* player);
     // returns if object was visited by some of derived classes
     // virtual BOOL HeroMapItemVisitFunction(HookContext* c, const H3Hero* hero, const H3MapItem* mapItem, const BOOL
     // isPlayer, const BOOL skipMapMessage);
 
-  protected:
+  public:
+    static ObjectExtender *CreateExtenderInstance(int objectType, PatcherInstance *pi) noexcept
+    {
+
+        return nullptr;
+    }
+
   public:
     static inline int RegisterExtender(ObjectExtender *extender) noexcept
     {

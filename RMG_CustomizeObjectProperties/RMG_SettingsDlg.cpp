@@ -7,7 +7,6 @@
 @TODO:
     -- Add categories for the all pages as dropdown list
 */
-
 namespace itemIds
 {
 
@@ -160,7 +159,9 @@ DllExport BOOL RMGObjectSupportsGeneration(const int objType, const int objSubty
 
 RMG_SettingsDlg *RMG_SettingsDlg::Page::dlg = nullptr;
 RMG_SettingsDlg *RMG_SettingsDlg::instance = nullptr;
+H3MainSetup *RMG_SettingsDlg::mainSetup = nullptr;
 BOOL RMG_SettingsDlg::isDlgTextEditInput = false;
+BOOL RMG_SettingsDlg::isHdMod = false;
 
 const std::vector<std::vector<GraphicalAttributes> *> &RMG_SettingsDlg::GetObjectAttributes() noexcept
 {
@@ -179,7 +180,6 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
 
     RMG_SettingsDlg::ObjectsPanel::id = 0;
 
-    // THISCALL_1(void, 0x5063F0, &P_Game->mainSetup);
     this->flags = 2;
 
     AddBackground(0, 0, width, height, false, false, 1, true);
@@ -392,7 +392,7 @@ VOID RMG_SettingsDlg::OnHelp() const noexcept
     dlg.CreateScrollableText(mes.String(), offset, offset, textWidth, textHeight, NH3Dlg::Text::MEDIUM,
                              eTextColor::SILVER);
 
-    return dlg.Start();
+    dlg.Start();
 }
 
 BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
@@ -478,7 +478,7 @@ BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
     {
         if (H3DlgItem *item = GetH3DlgItem(msg.itemId))
         {
-            if (LPCSTR rmcHint = *reinterpret_cast<LPCSTR *>(reinterpret_cast<char *>(item) + 0x24))
+            if (LPCSTR rmcHint = item->GetRightClickHint())
             {
                 H3Messagebox::RMB(rmcHint);
             }
@@ -783,13 +783,13 @@ void RMG_SettingsDlg::ObjectsPanel::SetObject(RMGDlgObject *mapObject) noexcept
 const BOOL RMG_SettingsDlg::ObjectsPanel::UnfocusEdits(const BOOL saveChanges) noexcept
 {
 
-    for (auto edit : edits)
+    for (auto &edit : edits)
     {
-        if (*reinterpret_cast<char *>(reinterpret_cast<char *>(edit) + 0x6D))
+        if (edit->IsFocused())
         {
+            // edit->SetFocus(false);
             *reinterpret_cast<char *>(reinterpret_cast<char *>(edit) + 0x6D) = false;
 
-            // edit->SetFocus(false);
             if (saveChanges)
             {
                 PanelInfoToObjectInfo();
@@ -1292,7 +1292,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                         constexpr int SIZE = 4;
                         for (auto &i : objectsPanel->edits)
                         {
-                            if (*reinterpret_cast<char *>(reinterpret_cast<char *>(i) + 0x6D))
+                            if (i->IsFocused())
                             {
                                 //   needDlgRedraw = true;
                                 objectsPanel->PanelInfoToObjectInfo();
@@ -1692,11 +1692,12 @@ void RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16()
     }
 }
 
-void AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen, std::vector<GraphicalAttributes> *workingVector,
-                                 std::unordered_map<DWORD, size_t> &uniqueObjectsIndex, const int objectTypeAlias)
+void RMG_SettingsDlg::AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen,
+                                                  std::vector<GraphicalAttributes> *workingVector,
+                                                  std::unordered_map<DWORD, size_t> &uniqueObjectsIndex,
+                                                  const int objectTypeAlias) noexcept
 {
-    // const int objectType = objGen->type;
-    auto &objectTypeVector = P_Game->mainSetup.objectLists[objectTypeAlias];
+    auto &objectTypeVector = mainSetup->objectLists[objectTypeAlias];
 
     const int objectSubtype = objGen->subtype;
 
@@ -1735,7 +1736,39 @@ void AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen, std::vector
 
 BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators)
 {
-    if (objectGenerators == nullptr)
+    if (isHdMod == false || objectGenerators == nullptr || mainSetup != nullptr)
+    {
+        return false;
+    }
+
+    const DWORD zaobjtsTxtAddr = DwordAt(0x05366FB + 1);
+    const DWORD objtsTxtAddr = DwordAt(0x0506422 + 1);
+
+    // create main setup copy to load graphics data
+    H3MainSetup *pseudoSetup = nullptr;
+    if (objtsTxtAddr != zaobjtsTxtAddr)
+    {
+
+        pseudoSetup = H3ObjectAllocator<H3MainSetup>().allocate(1);
+
+        // init pointers and data
+        THISCALL_1(void, 0x04FD6B0, pseudoSetup);
+
+        // load objects from zaobjects txt file and properly parse the properties for the prototypes
+        DwordAt(0x0506422 + 1) = zaobjtsTxtAddr;
+
+        THISCALL_1(void, 0x5063F0, pseudoSetup);
+        mainSetup = pseudoSetup;
+
+        // restore original address
+        DwordAt(0x0506422 + 1) = objtsTxtAddr;
+    }
+    else
+    {
+        mainSetup = &P_Game->mainSetup;
+    }
+
+    if (mainSetup == nullptr)
     {
         return false;
     }
@@ -1760,9 +1793,10 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
             {
                 AssignPrototypeToObjectGens(objGen, workingVector, uniqueObjectsIndex, eObject::TRADING_POST_SNOW);
             }
+            /*  const int objectTypeAlias = objectType == eObject::TRADING_POST ? eObject::TRADING_POST_SNOW :
+              objectType; AssignPrototypeToObjectGens(objGen, workingVector, uniqueObjectsIndex, objectTypeAlias, 1);*/
         }
     }
-
     return true;
 }
 
@@ -1770,7 +1804,7 @@ _LHF_(RMG_SettingsDlg::Dlg_SelectScenario_Proc)
 {
     //	THISCALL_1(int, h->GetDefaultFunc(), msg);
 
-    if (H3Msg *msg = reinterpret_cast<H3Msg *>(c->ebx))
+    if (H3Msg *msg = c->Ebx<H3Msg *>())
     {
         const int itemId = msg->itemId;
         const int subtype = msg->subtype;
@@ -1921,7 +1955,7 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
             text->HideDeactivate();
         }
 
-        // create clicl button that calls the dlg
+        // create click button that calls the dlg
         if (H3DlgCaptionButton *bttn = dlg->CreateCaptionButton(
                 246, 291, 128, 20, itemIds::DLG_SETTINGS_BUTTON_ID, *reinterpret_cast<char **>(0x57A93B + 1),
                 EraJS::read("RMG.text.buttons.setup.name"), h3::NH3Dlg::Text::SMALL, 0, 0, 0, 0, eTextColor::HIGHLIGHT))
@@ -2039,6 +2073,9 @@ void __stdcall GameStart(HiHook *hook, const DWORD a1)
 
     hook->Undo();
     const auto genList = editor::RMGObjectsEditor::Get().GetObjectGeneratorsList();
+
+    //    auto replaceObjectTxtWithZaobjectTxtPatch = _PI->Write
+
     if (RMG_SettingsDlg::CreateObjectPrototypesLists(genList))
     {
         RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16();
@@ -2059,6 +2096,7 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
         // H3DLL wndPlugin = h3::H3DLL::H3DLL("wog native dialogs.era")
         if (GetModuleHandleA("HD_WOG.dll"))
         {
+            isHdMod = true;
             _pi->WriteHiHook(0x579CE0, THISCALL_, NewScenarioDlg_Create);
 
             _pi->WriteHiHook(0x0536630, CDECL_, RMG_SetRandSeed);

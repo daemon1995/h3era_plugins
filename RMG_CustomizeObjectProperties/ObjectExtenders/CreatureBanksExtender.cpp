@@ -146,6 +146,7 @@ BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, con
 CreatureBanksExtender::CreatureBanksExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.CreatureBanksExtender.daemon_n"))
 {
+    this->objectType = eObject::CREATURE_BANK;
     CreatePatches();
 }
 
@@ -183,18 +184,17 @@ void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *eve
     }
 }
 
-__int64 __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance,
-                                                                 UINT mixedPos)
+INT __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos)
 {
 
-    __int64 result = FASTCALL_3(__int64, h->GetDefaultFunc(), hero, moveDistance, mixedPos);
+    INT result = FASTCALL_3(INT, h->GetDefaultFunc(), hero, moveDistance, mixedPos);
 
     if (result && result > IntAt(0x0528B2B + 2))
     {
         if (const auto mapItem = P_AdventureManager->GetMapItem(mixedPos))
         {
             const int creatureBankType = GetCreatureBankType(mapItem);
-            if (creatureBankType != eObject::NO_OBJ) // && !mapItem->creatureBank.taken)
+            if (creatureBankType != eObject::NO_OBJ && !mapItem->creatureBank.taken)
             {
                 if (const auto customReward = Get().GetCustomCreatureBank(mapItem))
                 {
@@ -848,13 +848,13 @@ int CreatureBanksExtender::GetCreatureBankType(const int objType, const int objS
     return cbId;
 }
 
-eObject CreatureBanksExtender::GetCreatureBankObjectType(const int creatureBankType) noexcept
+eObject CreatureBanksExtender::GetCreatureBankObjectType(const int creatureBankId) noexcept
 {
     // get CB object type for some edits later
     eObject objectType = eObject::NO_OBJ;
-    if (creatureBankType >= 0)
+    if (creatureBankId >= 0)
     {
-        switch (creatureBankType)
+        switch (creatureBankId)
         {
 
         case eCrBank::SHIPWRECK:
@@ -878,7 +878,7 @@ eObject CreatureBanksExtender::GetCreatureBankObjectType(const int creatureBankT
     return objectType;
 }
 
-void CreatureBanksExtender::AfterLoadingObjectTxtProc(const INT16 *maxSubtypes)
+void CreatureBanksExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 {
     // Get Default Banks Number from H3Vector<H3CreatureBankSetup::Ctor>::Size()
     defaultBanksNumber = ByteAt(0x47A3BA + 0x1);
@@ -1030,10 +1030,10 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
 
     //  allocate space for new creature banks
     Reserve(maxSubtype + 1 - defaultBanksNumber);
-    for (INT16 creatureBankType = 0; creatureBankType < maxSubtype; creatureBankType++)
+    for (INT16 cbId = 0; cbId <= maxSubtype; cbId++)
     {
-        const int objectType = CreatureBanksExtender::GetCreatureBankObjectType(creatureBankType);
-        const int objectSubtype = objectType == eObject::CREATURE_BANK ? creatureBankType : 0;
+        const int objectType = CreatureBanksExtender::GetCreatureBankObjectType(cbId);
+        const int objectSubtype = objectType == eObject::CREATURE_BANK ? cbId : 0;
         if (objectType != eObject::NO_OBJ)
         {
 
@@ -1041,9 +1041,9 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
             H3CreatureBankSetup setup;
 
             // copy original creature bank data
-            if (creatureBankType < defaultBanksNumber)
+            if (cbId < defaultBanksNumber)
             {
-                setup = setups[creatureBankType];
+                setup = setups[cbId];
             }
             else
             {
@@ -1162,11 +1162,11 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
             }
 
             // init custom rewards
-            std::array<CustomRewardSetupState, STATES_AMOUNT> customReward{[creatureBankType]() {
+            std::array<CustomRewardSetupState, STATES_AMOUNT> customReward{[cbId]() {
                 std::array<CustomRewardSetupState, STATES_AMOUNT> arr;
                 for (size_t i = 0; i < STATES_AMOUNT; ++i)
                 {
-                    arr[i] = CustomRewardSetupState(creatureBankType, i);
+                    arr[i] = CustomRewardSetupState(cbId, i);
                 }
                 return arr;
             }()};
@@ -1207,14 +1207,14 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
                 }
             }
 
-            if (creatureBankType < defaultBanksNumber)
+            if (cbId < defaultBanksNumber)
             {
-                setups[creatureBankType] = setup;
-                customRewardSetups[creatureBankType] = customReward;
-                isBankSettings[creatureBankType] = isBankSetting;
-                customPositions[creatureBankType] = positions;
+                setups[cbId] = setup;
+                customRewardSetups[cbId] = customReward;
+                isBankSettings[cbId] = isBankSetting;
+                customPositions[cbId] = positions;
 
-                monsterAwards[creatureBankType] = setup.states[0].creatureRewardType;
+                monsterAwards[cbId] = setup.states[0].creatureRewardType;
             }
             else
             {

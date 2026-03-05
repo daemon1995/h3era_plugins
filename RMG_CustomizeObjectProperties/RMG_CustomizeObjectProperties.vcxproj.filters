@@ -4,9 +4,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>source files</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectExtender.cpp">
-      <Filter>source files</Filter>
-    </ClCompile>
     <ClCompile Include="RMGObjectsEditor.cpp">
       <Filter>source files</Filter>
     </ClCompile>
