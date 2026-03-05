@@ -27,7 +27,6 @@ H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, 
     return result;
 }
 
-
 signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButton, int isKingdomOverView,
                                     const int isRightClick) noexcept
 {
@@ -166,22 +165,31 @@ _LHF_(DlgEdit_CorrectInpulSymbol) noexcept
     return EXEC_DEFAULT;
 }
 
-H3Dlg *__stdcall H3TownDlg_OpenThievesGuild(HiHook *h, H3TownDlg *dlg, int tavernsNum)
+H3Dlg *__stdcall ThievesGuildDlg_Ctor(HiHook *h, H3Dlg *dlg, const int tavernsNum)
 {
     // open thieves guild dialog
     H3Dlg *result = THISCALL_2(H3Dlg *, h->GetDefaultFunc(), dlg, tavernsNum);
     if (result)
     {
-        auto mes = "displayed info %d / %d "; // H3String::Format("gem_plugin.town_thieves_guild.%d",
-                                              // tavernsNum).String();
+        auto hintBarItem = result->GetText(41);
+        if (!hintBarItem)
+            return result;
+
+        bool readSuccess = false;
+        LPCSTR format = EraJS::read(GameplayFeature::THIEVES_GUILD_TEXT_FORMAT, readSuccess);
+        if (!readSuccess || !format)
+            return result;
 
         const int maxTavernsToShow = IntAt(0x05DDFF3 + 1); // max taverns in game
 
         const int tavernsNum =
             Clamp(0, THISCALL_2(int, 0x4CCAF0, P_Main->Get(), P_Main->GetPlayerID()), maxTavernsToShow);
 
-        libc::sprintf(h3_TextBuffer, mes, tavernsNum, maxTavernsToShow);
-        result->CreateText(12, result->GetHeight() - 45, result->GetWidth(), 20, h3_TextBuffer, NH3Dlg::Text::MEDIUM,
+        libc::sprintf(h3_TextBuffer, format, tavernsNum, maxTavernsToShow);
+        const int textX = hintBarItem->GetX();
+        const int textWidth = hintBarItem->GetWidth();
+
+        result->CreateText(textX, result->GetHeight() - 45, textWidth, 20, h3_TextBuffer, NH3Dlg::Text::MEDIUM,
                            eTextColor::REGULAR, -1);
     }
     return result;
@@ -276,7 +284,8 @@ void GameplayFeature::CreatePatches() noexcept
         //   _pi->WriteHiHook(0x5D52CA, FASTCALL_, H3HeroDlg_Main);
 
         // add text into thieves guild dialog
-        _pi->WriteHiHook(0x05D7FFF, THISCALL_, H3TownDlg_OpenThievesGuild);
+        if (H3GameHeight::Get() > 607)
+            _pi->WriteHiHook(0x05C8590, THISCALL_, ThievesGuildDlg_Ctor);
 
         // Инициализация оставшихся полных очков перемещения героя.
         _PI->WriteLoHook(0x418F38, LoHook_HeroRoute_InitMaxMP); // 100F14C0

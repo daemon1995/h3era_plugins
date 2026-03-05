@@ -5,14 +5,14 @@ namespace features
 {
 class GameplayFeature : public IGamePatch
 {
-    static constexpr LPCSTR THIEVES_GUILD_JSON_TEXT = "gem_plugin.tavern_dlg.captured_taverns";
-	static GameplayFeature* instance;
+    static GameplayFeature *instance;
 
     GameplayFeature();
     virtual void CreatePatches() noexcept override;
 
   public:
-      static int HeroFullMP_Rem;
+    static int HeroFullMP_Rem;
+    static constexpr LPCSTR THIEVES_GUILD_TEXT_FORMAT = "gem_plugin.thieves_guild_dlg.displayed_info.text_format";
     static GameplayFeature &Get();
 };
 } // namespace features
