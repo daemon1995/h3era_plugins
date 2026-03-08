@@ -3,6 +3,27 @@
 
 #include "pch.h"
 
+#include "RMG_SettingsDlg.h"
+
+namespace cbanks
+{
+class CreatureBanksExtender : public extender::ObjectExtender
+{
+  public:
+    static int GetCreatureBankType(const int type, const int subtype);
+};
+} // namespace cbanks
+namespace wog
+{
+class WoGObjectsExtender : public extender::ObjectExtender
+{
+  public:
+    static BOOL IsWoGObject(const H3RmgObjectGenerator *p_ObjGen) noexcept;
+    static BOOL WoGObjectHasOptionEnabled(const H3RmgObjectGenerator *p_ObjGen) noexcept;
+};
+
+} // namespace wog
+
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
 char RMGObjectInfo::localBuffer[512];
@@ -50,7 +71,6 @@ int RMGObjectsEditor::MaxMapTypeLimit(const UINT objType) const noexcept
 }
 inline BOOL ObjectMayBeGenerated(H3RmgObjectGenerator *p_ObjGen)
 {
-
     return wog::WoGObjectsExtender::IsWoGObject(p_ObjGen) ? wog::WoGObjectsExtender::WoGObjectHasOptionEnabled(p_ObjGen)
                                                           : true;
 }

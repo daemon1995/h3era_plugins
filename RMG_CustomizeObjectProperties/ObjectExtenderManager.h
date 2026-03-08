@@ -1,11 +1,12 @@
 #pragma once
-#include "ObjectExtender.h"
-#include "RMGObjectsEditor.h"
-
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "AdditionalProperties.h"
+#include "ObjectExtender.h"
+
 namespace extender
 {
 namespace limits
@@ -24,19 +25,19 @@ struct RMGObjectSetable
     };
     bool operator==(const RMGObjectSetable &other) const noexcept;
 };
-//enum ObjectExtenderMethods
+// enum ObjectExtenderMethods
 //{
 //
-//    AFTER_LOADING_OBJECTS_TXT = 0,
-//    CREATE_RMG_OBJECT_GEN,
-//    NEW_GAME_OBJECT_ITERATION,
-//    NEW_WEEK_OBJECT_ITERATION,
-//    HERO_MAP_ITEM_VISIT,
-//    SET_HINT_IN_H3_TEXT_BUFFER,
-//    AI_MAP_ITEM_WEIGHT,
-//    RMG_DLG_SHOW_CUSTOM_OBJECT_HINT,
-//    METHODS_COUNT
-//};
+//     AFTER_LOADING_OBJECTS_TXT = 0,
+//     CREATE_RMG_OBJECT_GEN,
+//     NEW_GAME_OBJECT_ITERATION,
+//     NEW_WEEK_OBJECT_ITERATION,
+//     HERO_MAP_ITEM_VISIT,
+//     SET_HINT_IN_H3_TEXT_BUFFER,
+//     AI_MAP_ITEM_WEIGHT,
+//     RMG_DLG_SHOW_CUSTOM_OBJECT_HINT,
+//     METHODS_COUNT
+// };
 
 class ObjectExtenderManager : public IGamePatch
 {

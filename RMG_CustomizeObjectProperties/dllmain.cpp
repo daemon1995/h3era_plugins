@@ -1,11 +1,25 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #include "pch.h"
+
+#include "RMG_SettingsDlg.h"
+
+#define OBJECT_EXTENDER_DECLATOR(className, nameSpaceName)                                                             \
+    namespace nameSpaceName                                                                                            \
+    {                                                                                                                  \
+    class className : public extender::ObjectExtender                                                                  \
+    {                                                                                                                  \
+      public:                                                                                                          \
+        static className &className::Get();                                                                            \
+    };                                                                                                                 \
+    }
+#define OBJECT_EXTENDER_GETTER(className, nameSpaceName) &nameSpaceName::className::Get()
+
 // #include "framework.h"
 using namespace h3;
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "1.4.0";
+constexpr const char *PLUGIN_VERSION = "1.4.1";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -64,6 +78,18 @@ PatcherInstance *_PI = nullptr;
 16. fix Dlg Memory leaks with new ERA memory check tools - Done
 */
 
+OBJECT_EXTENDER_DECLATOR(ColosseumOfTheMagiExtender, colosseumOfTheMagi)
+OBJECT_EXTENDER_DECLATOR(CreatureBanksExtender, cbanks)
+OBJECT_EXTENDER_DECLATOR(GazeboExtender, gazebo)
+OBJECT_EXTENDER_DECLATOR(ShrinesExtender, shrines)
+OBJECT_EXTENDER_DECLATOR(SpellMarketExtender, spellMarket)
+OBJECT_EXTENDER_DECLATOR(UniversityExtender, university)
+OBJECT_EXTENDER_DECLATOR(WarehousesExtender, warehouses)
+OBJECT_EXTENDER_DECLATOR(WateringPlaceExtender, wateringPlace)
+OBJECT_EXTENDER_DECLATOR(WoGObjectsExtender, wog)
+
+// namespace colosseumOfTheMagi
+
 _LHF_(CrBanksTxt_BeforeLoad)
 {
 
@@ -71,17 +97,18 @@ _LHF_(CrBanksTxt_BeforeLoad)
     if (auto mgr = extender::ObjectExtenderManager::Get())
     {
         extender::ObjectExtender *extendersList[] = {
-            &cbanks::CreatureBanksExtender::Get(),
-            &shrines::ShrinesExtender::Get(),
-            &warehouses::WarehousesExtender::Get(),
-            &gazebo::GazeboExtender::Get(),
-            &colosseumOfTheMagi::ColosseumOfTheMagiExtender::Get(),
-            &wateringPlace::WateringPlaceExtender::Get(),
-            &wog::WoGObjectsExtender::Get(),
-        };
+            OBJECT_EXTENDER_GETTER(ColosseumOfTheMagiExtender, colosseumOfTheMagi),
+            OBJECT_EXTENDER_GETTER(CreatureBanksExtender, cbanks), OBJECT_EXTENDER_GETTER(GazeboExtender, gazebo),
+            OBJECT_EXTENDER_GETTER(ShrinesExtender, shrines), OBJECT_EXTENDER_GETTER(SpellMarketExtender, spellMarket),
+            OBJECT_EXTENDER_GETTER(UniversityExtender, university),
+            OBJECT_EXTENDER_GETTER(WarehousesExtender, warehouses),
+            // OBJECT_EXTENDER_GETTER(WateringPlaceExtender, wateringPlace),
+            OBJECT_EXTENDER_GETTER(WoGObjectsExtender, wog)};
 
         constexpr size_t extendersCount =
             std::size(extendersList); // sizeof(extendersList) / sizeof(extender::ObjectExtender*);
+
+        static_assert(extendersCount == 8, "Unexpected number of extenders");
         //! Get the extenders and initialize
         for (size_t i = 0; i < extendersCount; i++)
         {

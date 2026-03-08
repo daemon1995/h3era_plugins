@@ -3,6 +3,17 @@
 
 #include "pch.h"
 
+#include "RMG_SettingsDlg.h"
+
+
+namespace cbanks
+{
+class CreatureBanksExtender : public extender::ObjectExtender
+{
+  public:
+    static int GetCreatureBankType(const int type, const int subtype);
+};
+} // namespace cbanks
 /**
 @TODO:
     -- Add categories for the all pages as dropdown list
@@ -1096,7 +1107,7 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
 {
     BOOL result = ObjectsPage::ShowObjectExtendedInfo(panel, msg);
     return result;
-    /**/
+    /**
     BOOL resultA = true;
     const auto rmgObject = panel->rmgObject;
     const int cbID =
@@ -1131,7 +1142,7 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
 
         ddl.RMB_Show();
     }
-    return resultA;
+    return resultA; */
 }
 
 RMG_SettingsDlg::BanksPage::~BanksPage()
@@ -1634,7 +1645,7 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
     case eObject::WINDMILL:
     case eObject::WITCH_HUT:
 
-    case warehouses::WAREHOUSE_OBJECT_TYPE:
+    case extender::WAREHOUSE_OBJECT_TYPE:
 
     case extender::HOTA_OBJECT_TYPE:
     case extender::HOTA_PICKUPABLE_OBJECT_TYPE:

@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "SoundManager.h"
+
 namespace sound
 {
 SoundManager SoundManager::soundManager;

@@ -1,5 +1,5 @@
 #pragma once
-namespace spellmarket
+namespace spellMarket
 {
 
 constexpr int SPELL_MARKET_OBJECT_SUBTYPE = 12;
@@ -58,11 +58,11 @@ class SpellMarketExtender : public extender::ObjectExtender
     virtual ~SpellMarketExtender();
 
   protected:
-    virtual void CreatePatches();
+    virtual void CreatePatches() override;
 
     //	virtual void GetObjectPreperties() noexcept override final;
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
-    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
     virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept override;
     virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept override;

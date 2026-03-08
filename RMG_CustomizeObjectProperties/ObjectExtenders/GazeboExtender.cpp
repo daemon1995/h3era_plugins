@@ -1,4 +1,7 @@
 #include "../pch.h"
+
+#include "GazeboExtender.h"
+
 namespace gazebo
 {
 int H3MapItemGazebo::gazeboCounter = 0;
@@ -165,7 +168,7 @@ _LHF_(Game__NewGameBeforeSetObjectsInitialParameters)
     return EXEC_DEFAULT;
 }
 
-BOOL GazeboExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero, const H3Player *activePlayer,
+BOOL GazeboExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero, const int interactPlayerId,
                                            const BOOL isRightClick) const noexcept
 {
 

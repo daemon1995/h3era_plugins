@@ -1,6 +1,8 @@
+#include <unordered_set>
+
 #include "../pch.h"
 
-#include <unordered_set>
+#include "UniversityExtender.h"
 namespace university
 
 {
@@ -91,7 +93,7 @@ void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 }
 
 BOOL UniversityExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
-                                               const H3Player *activePlayer, const BOOL isRightClick) const noexcept
+                                               const int interactPlayerId, const BOOL isRightClick) const noexcept
 {
     if (mapItem->objectType == eObject::UNIVERSITY && mapItem->objectSubtype > 0)
     {

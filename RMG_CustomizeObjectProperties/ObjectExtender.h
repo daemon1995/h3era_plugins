@@ -36,7 +36,7 @@ class ObjectExtender
     }
 
   protected:
-    void CreatePatches();
+    virtual void CreatePatches() {};
     // virtual void GetObjectPreperties() noexcept = 0;
 
   public:
@@ -69,7 +69,7 @@ class ObjectExtender
     {
         return false;
     }
-    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept
     {
         return false;

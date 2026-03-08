@@ -1,5 +1,7 @@
 #include "../pch.h"
-namespace spellmarket
+
+#include "SpellMarketExtender.h"
+namespace spellMarket
 
 {
 
@@ -98,7 +100,7 @@ void ShowMessage(const H3Hero *hero, const H3MapItem *mapItem, const BOOL skipMa
 }
 
 BOOL SpellMarketExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
-                                                const H3Player *activePlayer, const BOOL isRightClick) const noexcept
+                                                const int interactPlayerId, const BOOL isRightClick) const noexcept
 {
     if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))
     {

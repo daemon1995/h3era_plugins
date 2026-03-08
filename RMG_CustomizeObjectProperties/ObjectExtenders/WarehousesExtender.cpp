@@ -1,4 +1,6 @@
 #include "../pch.h"
+
+#include "WarehousesExtender.h"
 namespace warehouses
 {
 
@@ -42,7 +44,7 @@ void ShowMessage(const H3MapItem *mapItem, const int resType, const int resNum)
 }
 
 BOOL WarehousesExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
-                                               const H3Player *activePlayer, const BOOL isRightClick) const noexcept
+                                               const int interactPlayerId, const BOOL isRightClick) const noexcept
 {
     if (const auto warehouse = H3MapItemWarehouse::GetWarehouse(mapItem))
     {

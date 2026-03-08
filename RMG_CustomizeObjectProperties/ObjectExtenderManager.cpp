@@ -3,6 +3,8 @@
 
 #include "pch.h"
 
+#include "SoundManager.h"
+
 // Реальная dispatch-table
 DispatchCell dispatchTable[MAX_TYPES][MAX_SUBTYPES]{};
 
@@ -156,11 +158,11 @@ int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL 
     H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ebx);
     const H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp - 0x10);
 
+    const int interactPlayerId = IntAt(0x6977DC); // P_MePlayerID *(INT32 *)0x6977DC
     BOOL hintIsSet = false;
     for (auto &extender : objectExtenders)
     {
-        hintIsSet = extender->SetHintInH3TextBuffer(mapItem, currentHero, P_ActivePlayer->Get(), isRighClick);
-
+        hintIsSet = extender->SetHintInH3TextBuffer(mapItem, currentHero, interactPlayerId, isRighClick);
         if (hintIsSet)
         {
             break;
@@ -171,7 +173,7 @@ int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL 
     {
         if (auto extender = FindExtender(mapItem))
         {
-            hintIsSet = extender->SetHintInH3TextBuffer(mapItem, currentHero, P_ActivePlayer->Get(), isRighClick);
+            hintIsSet = extender->SetHintInH3TextBuffer(mapItem, currentHero, interactPlayerId, isRighClick);
         }
     }
     if (!hintIsSet)

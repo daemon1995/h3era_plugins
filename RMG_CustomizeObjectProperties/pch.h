@@ -26,28 +26,7 @@
 #include "..\headers\header.h"
 #include "h3functions.hpp"
 constexpr UINT16 H3_MAX_OBJECTS = h3::limits::OBJECTS;
-#include "AdditionalProperties.h"
 #include "ObjectExtenderManager.h"
-#include "SoundManager.h"
-
-#include "ObjectExtender.h"
-// #include "RMGObjectsEditor.h"
-
-// #include "CreatureBanksExtender.h"
-// #include "ShrinesExtender.h"
-// #include "WarehousesExtender.h"
-// #include "ShrinesExtender.h"
-// #include "WarehousesExtender.h"
-#include "ObjectExtenders/ColosseumOfTheMagiExtender.h"
-#include "ObjectExtenders/CreatureBanksExtender.h"
-#include "ObjectExtenders/GazeboExtender.h"
-#include "ObjectExtenders/ShrinesExtender.h"
-#include "ObjectExtenders/SpellMarketExtender.h"
-#include "ObjectExtenders/UniversityExtender.h"
-#include "ObjectExtenders/WarehousesExtender.h"
-#include "ObjectExtenders/WateringPlaceExtender.h"
-#include "ObjectExtenders/WoGObjectsExtender.h"
-#include "RMG_SettingsDlg.h"
 
 // 1. Place all the obj props into mod/data/objects/*.txt and parse all the mods
 

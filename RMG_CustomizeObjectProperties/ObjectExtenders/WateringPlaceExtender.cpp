@@ -1,4 +1,6 @@
 #include "../pch.h"
+
+#include "WateringPlaceExtender.h"
 namespace wateringPlace
 {
 WateringPlaceExtender::WateringPlaceExtender()
@@ -140,7 +142,7 @@ BOOL WateringPlaceExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const
     return false;
 }
 
-BOOL WateringPlaceExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero, const H3Player *activePlayer,
+BOOL WateringPlaceExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero, const int interactPlayerId,
                                                   const BOOL isRightClick) const noexcept
 {
 
@@ -247,9 +249,9 @@ H3RmgObjectGenerator *WateringPlaceExtender::CreateRMGObjectGen(const RMGObjectI
     return nullptr;
 }
 
-WateringPlaceExtender* WateringPlaceExtender::instance = nullptr;
+WateringPlaceExtender *WateringPlaceExtender::instance = nullptr;
 
-WateringPlaceExtender& WateringPlaceExtender::Get()
+WateringPlaceExtender &WateringPlaceExtender::Get()
 {
     if (!instance)
         instance = new WateringPlaceExtender();

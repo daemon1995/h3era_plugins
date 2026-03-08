@@ -1,4 +1,6 @@
 #include "../pch.h"
+
+#include "WoGObjectsExtender.h"
 namespace wog
 
 {

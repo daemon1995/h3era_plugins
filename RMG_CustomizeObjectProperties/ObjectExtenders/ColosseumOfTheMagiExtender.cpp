@@ -1,4 +1,6 @@
 #include "../pch.h"
+
+#include "ColosseumOfTheMagiExtender.h"
 namespace colosseumOfTheMagi
 {
 ColosseumOfTheMagiExtender *ColosseumOfTheMagiExtender::instance = nullptr;
@@ -172,7 +174,7 @@ _LHF_(Game__NewGameBeforeSetObjectsInitialParameters)
 }
 
 BOOL ColosseumOfTheMagiExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero,
-                                                       const H3Player *activePlayer,
+                                                       const int interactPlayerId,
                                                        const BOOL isRightClick) const noexcept
 {
 

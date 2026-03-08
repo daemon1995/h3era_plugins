@@ -19,7 +19,7 @@ struct H3MapItemWateringPlace
 
 class WateringPlaceExtender : public extender::ObjectExtender
 {
-    static WateringPlaceExtender* instance;
+    static WateringPlaceExtender *instance;
 
     WateringPlaceExtender();
 
@@ -36,7 +36,7 @@ class WateringPlaceExtender : public extender::ObjectExtender
     // static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
     // static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
 
-    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
     // virtual BOOL InitNewGameMapItemSetup(H3MapItem* mapItem) const noexcept override final;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,

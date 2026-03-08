@@ -1,5 +1,9 @@
-#include "..\pch.h"
 #include <unordered_set>
+
+#include "..\pch.h"
+
+#include "CreatureBanksExtender.h"
+
 namespace cbanks
 {
 namespace defines

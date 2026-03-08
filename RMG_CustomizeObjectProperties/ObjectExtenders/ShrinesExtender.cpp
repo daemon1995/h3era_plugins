@@ -1,11 +1,11 @@
 #include "../pch.h"
+
+#include "ShrinesExtender.h"
+
 namespace shrines
-
 {
-
 const H3MapItem *ShrinesExtender::currentShrineHint = nullptr;
-ShrinesExtender::ShrinesExtender()
-    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
+ShrinesExtender::ShrinesExtender() : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
 {
 
     CreatePatches();
@@ -16,7 +16,7 @@ ShrinesExtender::~ShrinesExtender()
 }
 
 BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                                   const H3String &defaultHint) noexcept
+                                                  const H3String &defaultHint) noexcept
 {
     if (info.type >= eObject::SHRINE_OF_MAGIC_INCANTATION && info.type <= eObject::SHRINE_OF_MAGIC_THOUGHT)
     {
@@ -54,7 +54,7 @@ H3RmgObjectGenerator *ShrinesExtender::CreateRMGObjectGen(const RMGObjectInfo &o
     return nullptr;
 }
 BOOL ShrinesExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
-                                          int &aiResWeight, int *moveDistance, const H3Position pos) const noexcept
+                                         int &aiResWeight, int *moveDistance, const H3Position pos) const noexcept
 {
 
     if (mapItem->objectType == eObject::SHRINE_OF_MAGIC_GESTURE && mapItem->objectSubtype > 0 &&

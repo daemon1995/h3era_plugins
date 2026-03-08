@@ -28,10 +28,10 @@ class WarehousesExtender : public extender::ObjectExtender
     virtual ~WarehousesExtender();
 
   private:
-    virtual void CreatePatches();
+    virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
-    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const H3Player *activePlayer,
+    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
     virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept override final;
     virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept override final;

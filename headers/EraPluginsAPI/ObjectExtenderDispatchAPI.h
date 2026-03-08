@@ -107,8 +107,8 @@ struct ObjectExtenderDesc
 // ------------------------
 extern "C"
 {
-    EXT_API bool __stdcall RegisterObjectExtender(const ObjectExtenderDesc *desc);
-    EXT_API const char *__stdcall GetResolvedObjectName(const int objectType, const int subtype);
+    // EXT_API bool __stdcall RegisterObjectExtender(const ObjectExtenderDesc *desc);
+    // EXT_API const char *__stdcall GetResolvedObjectName(const int objectType, const int subtype);
 }
 struct ObjectExtenderAPI
 {
