@@ -409,14 +409,7 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
                 const int creatureTown = info.town;
                 if (creatureTown != zoneGen->townType2 && i == 0)
                 {
-                    if (i == 0)
-                    {
-                        return resultValue;
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                    return resultValue; // -1
                 }
 
                 if (const int aiValue = info.aiValue)
@@ -425,23 +418,22 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
 
                     if (totalTownsCount && creatureTown != eTown::NEUTRAL)
                     {
-
                         if (const int totalCreatureTypeTowns = rmg->townsCountByType[creatureTown])
                         {
                             dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
                         }
+                        resultValue += dwellingSlotValue + (totalTownsCount * aiValue >> 1);
                     }
-                    resultValue += dwellingSlotValue;
 
-                    if (creatureTown != eTown::NEUTRAL)
+                    if (creatureTown == eTown::NEUTRAL)
                     {
-                        resultValue += totalTownsCount * aiValue >> 1;
+                        resultValue += dwellingSlotValue;
                     }
                 }
             }
         }
 
-        return resultValue;
+        return resultValue >> 2;
     }
 
     const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
