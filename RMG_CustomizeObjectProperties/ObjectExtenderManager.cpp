@@ -424,7 +424,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
     instance->allowRegistration = false;
     // clear registered extenders from previous loads
     instance->registeredExtenders.clear();
-    instance->InitializeExtendersTypes();
+    // instance->InitializeExtendersTypes();
 
     // block objec entry tile passability for HOTA_PICKUPABLE_OBJECT_TYPE
     auto &extenders = instance->objectExtenders;
@@ -475,11 +475,11 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
                     if (dispatchTable)
                     {
                     }
-                    // iterate all extenders container
-                    if (typeRelatedObjectExtender = FindExtender(info.type, info.subtype))
-                    {
-                        typeRelatedObjectExtender->CreateRMGObjectGen(info);
-                    }
+                    // if (typeRelatedObjectExtender = FindExtender(info.type, info.subtype))
+                    //{
+                    //     typeRelatedObjectExtender->CreateRMGObjectGen(info);
+                    // }
+                    //  iterate all extenders container
                     for (auto &extender : objectExtenders)
                     {
                         // if yes then create obj gen

@@ -2,6 +2,7 @@
 #include "RMGObjectsEditor.h"
 namespace extender
 {
+constexpr int WOG_OBJECT_TYPE = eObject::PYRAMID;
 constexpr int ERA_OBJECT_TYPE = eObject::BLANK3;
 constexpr int WAREHOUSE_OBJECT_TYPE = eObject::BLANK4;
 constexpr int HOTA_OBJECT_TYPE = eObject::BLANK5;
