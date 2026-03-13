@@ -522,7 +522,7 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
             if (defTerrain)
             {
                 const int frameIndex = defTerrain->groups[0]->count < 60 ? 15 : 60;
-                terrainStr += H3String::Format("{~>%s:0:%d valign=top}", terrainDefName, frameIndex);
+                terrainStr += H3String::Format("{~>%s:0:%d valign=bottom}", terrainDefName, frameIndex);
                 hasTerrain = true;
                 defTerrain->Dereference();
             }
@@ -530,8 +530,8 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
     }
     if (hasTerrain)
     {
-        stringResult.Append("\n");
-        stringResult += terrainStr;
+        stringResult.Append("\n\n\n");
+        stringResult += terrainStr += '\n';
     }
 
     auto &extenders = instance->objectExtenders;

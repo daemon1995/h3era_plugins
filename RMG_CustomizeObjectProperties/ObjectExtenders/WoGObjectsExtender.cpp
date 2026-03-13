@@ -43,7 +43,7 @@ H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo
 void WoGObjectsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) noexcept
 {
     const int maxSubtype = maxSubtypes[WOG_OBJECT_TYPE];
-    for (size_t i = 1; i < maxSubtype; i++)
+    for (size_t i = 1; i <= maxSubtype; i++)
     {
         WoGObjectOptionsIds[i] = EraJS::readInt(H3String::Format(jsonKeyFormat, WOG_OBJECT_TYPE, i).String());
     }
