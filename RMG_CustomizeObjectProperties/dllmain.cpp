@@ -19,7 +19,7 @@ using namespace h3;
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "1.4.1";
+constexpr const char *PLUGIN_VERSION = "1.4.2";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
