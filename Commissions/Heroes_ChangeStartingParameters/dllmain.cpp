@@ -16,8 +16,9 @@ void ChangeHeroStartingParameters(H3HeroInfo &heroInfo, int id)
 
     // std::string jsonKeyStart = "gem.%d";
 
-    heroInfo.campaignHero = false;
-    heroInfo.expansionHero = true;
+    //    heroInfo.campaignHero = false;
+    //    heroInfo.expansionHero = true;
+
     sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.hasSpellBook", id);
     std::string trResult = Era::tr(h3_TextBuffer);
 
@@ -194,13 +195,8 @@ enum eItemIds
     TOWN_PINK = 377,
     TOWN_LAST = TOWN_PINK
 };
-void StartPlayerDlg(H3SelectScenarioDialog* dlg, H3ScenarioPlayer* player, int playerId, int humanPLayerId)
+void StartPlayerDlg(H3SelectScenarioDialog *dlg, H3ScenarioPlayer *player, int playerId, int humanPLayerId)
 {
-
-
-
-
-
 }
 int __stdcall H3SelectScenarioDialog__Proc(HiHook *h, H3SelectScenarioDialog *dlg, H3Msg *msg)
 {
@@ -247,8 +243,7 @@ int __stdcall H3SelectScenarioDialog__Proc(HiHook *h, H3SelectScenarioDialog *dl
         if (msg->IsLeftDown())
         {
 
-           // StartPlayerDlg()
-
+            // StartPlayerDlg()
         }
 
         // if (!dlg->mapPlayersHuman[playerIndex].player2 == playerIndex)
@@ -372,20 +367,22 @@ _LHF_(H3SelectScenarioDialog__NewGame_LeftClick)
 
 _LHF_(HooksInit)
 {
-    // Фикс Димера - герой имеет продвинутую разведку на старте
     if (h3::H3HeroInfo *hero_info_table = P_HeroInfo->Get())
     {
-        hero_info_table[eHero::DEEMER].sskills[1].level = eSecSkillLevel::BASIC;
+        // Фикс Димера - герой имеет продвинутую разведку на старте
+        // hero_info_table[eHero::DEEMER].sskills[1].level = eSecSkillLevel::BASIC;
 
+        const int heroesCount = P_HeroCount;
         NPCStats::SetDefault();
-        npcStatsVec.reserve(HEROES_COUNT);
+        npcStatsVec.reserve(heroesCount);
 
-        for (size_t i = 0; i < HEROES_COUNT; i++)
+        for (size_t i = 0; i < heroesCount; i++)
         {
             ChangeHeroStartingParameters(hero_info_table[i], i);
             npcStatsVec.emplace_back(NPCStats{i});
         }
     }
+    return EXEC_DEFAULT;
 
     _PI->WriteLoHook(0x0058692A, H3SelectScenarioDialog__NewGame_LeftClick);
     //_PI->WriteLoHook(0x0058260B, hook_0058260B);
