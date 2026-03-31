@@ -12,31 +12,6 @@ constexpr const char *INSTANCE_NAME = "EraPlugin.Gameplay_RemoveObstacleSpellRew
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 
-float slayerSpecialtyPower = 0.05f;
-
-int __stdcall BattleStack_CalculateDamageBonus(HiHook *h, H3CombatCreature *_this, signed int damage, char shoot,
-                                               H3CombatCreature *enemy, int IsRealDamage, signed int StepsTaken)
-{
-    int result = THISCALL_6(int, h->GetDefaultFunc(), _this, damage, shoot, enemy, IsRealDamage, StepsTaken);
-    if (_this->activeSpellDuration[eSpell::SLAYER])
-    {
-        if (float slayerPower = P_Spell[eSpell::SLAYER].baseValue[_this->slayerType])
-        {
-            if (auto hero = _this->GetOwner())
-            {
-                const auto &speciality = P_HeroSpecialty[hero->id];
-                if (speciality.type == eHeroSpecialty::SPELL && speciality.GetSpell() == eSpell::SLAYER)
-                {
-                    slayerPower += ceil(slayerPower * static_cast<float>(hero->level / (_this->info.level + 1)) *
-                                        slayerSpecialtyPower);
-                }
-            }
-            // apply slayer bonus
-            result += static_cast<int>(static_cast<float>(damage * (slayerPower / 100)));
-        }
-    }
-    return result;
-}
 struct RemoveObstacleCasting
 {
     BOOL isRemoveObstacleCasting = FALSE;
@@ -44,7 +19,7 @@ struct RemoveObstacleCasting
     INT spellEffect[4] = {0, 0, 0, 0};                              // store spell durations
 } removeObstacleCasting;
 
-void __stdcall OnSetupBattlefield(Era::TEvent *e)
+_ERH_(OnSetupBattlefield)
 {
 
     for (size_t i = 0; i < 4; i++)
@@ -52,8 +27,6 @@ void __stdcall OnSetupBattlefield(Era::TEvent *e)
         libc::sprintf(h3_TextBuffer, "shimmy_blizzard_spell_speed_decreasing_%d", i);
         removeObstacleCasting.spellEffect[i] = Era::GetAssocVarIntValue(h3_TextBuffer);
     }
-    slayerSpecialtyPower =
-        Clamp(1, Era::GetAssocVarIntValue("shimmy_slayer_spell_speciality_effect"), 100) / static_cast<float>(100);
 }
 int __stdcall BattleStack_DoPhysicalDamageAtAreaSpellCast(HiHook *h, H3CombatCreature *stack, const int damage)
 {
@@ -78,7 +51,7 @@ int __stdcall BattleStack_DoPhysicalDamageAtAreaSpellCast(HiHook *h, H3CombatCre
                         speed = 1;
                     }
                 }
-                stack->activeSpellDuration[eSpell::REMOVE_OBSTACLE] = 255; // remove Remove Obstacle spell
+                stack->activeSpellDuration[eSpell::REMOVE_OBSTACLE] = 255; // renew Remove Obstacle spell
             }
         }
     }
@@ -117,7 +90,8 @@ _LHF_(BattleMgr__CastRemoveObstacleSpell)
 
     return NO_EXEC_DEFAULT;
 }
-void __stdcall BattleMgr_PrepareMessageTo_BattleLog(HiHook *h, H3CombatManager *bm, int spellId, int targetHex, int a4)
+void __stdcall BattleMgr_PrepareMessageTo_BattleLog(HiHook *h, H3CombatManager *bm, const int spellId,
+                                                    const int targetHex, const int a4)
 {
     if (spellId == eSpell::REMOVE_OBSTACLE)
     {
@@ -142,12 +116,10 @@ _ERH_(OnAfterErmInstructions)
     spell.level = 5;
     spell.school = eSpellchool::WATER;
 }
-void __stdcall OnAfterWog(Era::TEvent *event)
+_ERH_(OnAfterWog)
 {
 
     // blizzard spell rework
-
-    //  spell.type = P_Spell[eSpell::INFERNO].type;
 
     _PI->WriteByte(0x059F9BC + 54, 5); // set chosen remove obstacle spell to Inferno spell
     _PI->WriteByte(0x043BB64 + 2, 2);  //  AI now handles Remove Obstacle spell as area casting spell
@@ -164,11 +136,14 @@ void __stdcall OnAfterWog(Era::TEvent *event)
     _PI->WriteHiHook(0x05A4DED, THISCALL_, BattleStack_DoPhysicalDamageAtAreaSpellCast);
     _PI->WriteHiHook(0x05A4A00, THISCALL_, BattleMgr_ShowSpellsHightLightes);
     _PI->WriteHiHook(0x059FD3F, THISCALL_, BattleMgr_ShowSpellsHightLightes);
-    Era::RegisterHandler(OnSetupBattlefield, "OnSetupBattlefield");
+    _REH_(OnSetupBattlefield);
     if (globalPatcher->GetInstance("ERA Spells Description"))
     {
         _PI->WriteHiHook(0x05A89A0, THISCALL_, BattleMgr_PrepareMessageTo_BattleLog);
     }
+    H3MagicAnimation::GetAnim(eSpell::REMOVE_OBSTACLE)->type =
+        H3MagicAnimation::GetAnim(eSpell::INFERNO)
+            ->type; // set Remove Obstacle spell animation type to Inferno spell animation
 }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -183,8 +158,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 
             Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
-            Era::RegisterHandler(OnAfterWog, "OnAfterWog");
-            Era::RegisterHandler(OnAfterErmInstructions, "OnAfterErmInstructions");
+            _REH_(OnAfterWog);
+            _REH_(OnAfterErmInstructions);
         }
         break;
 
