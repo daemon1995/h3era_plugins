@@ -330,16 +330,13 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 // works for Human Only
 _LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
 {
-
     if (c->esi == MITHRIL_ID && currentCreatureBank.mithrilToAdd) // add one more iteration of next resource is mitrhil
     {
         // change  gold picture from money to gold if we have mithril
-        ;
         if (H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54))
         {
             if (!pictureCategories->IsEmpty())
             {
-
                 H3PictureCategories *lastCategory = pictureCategories->Last();
                 if (lastCategory && lastCategory->type == ePictureCategories::MONEY)
                 {
@@ -359,7 +356,6 @@ _LHF_(CreatureBanksExtender::CrBank_AfterDrawingResources)
 
 _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
 {
-
     if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
     {
         const int creatureBankType = GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype);
@@ -368,6 +364,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
         {
             return EXEC_DEFAULT;
         }
+
         H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
 
         auto &message = currentCreatureBank.message;
@@ -391,6 +388,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
                 primarySkillAdded = true;
             }
         }
+
         if (experienceAdded || primarySkillAdded)
         {
             libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(176), hero->name);
@@ -445,6 +443,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
                 }
             }
         }
+
         if (addSpells)
         {
             libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(strIdx), hero->name);
@@ -506,21 +505,6 @@ H3String *__cdecl CreatureBanksExtender::CrBank_AwardMessageFormatReadingFromTxt
     return result;
 }
 
-int __stdcall CreatureBanksExtender::CrBank_AwardMessageCompletion(HiHook *h, H3String *mes, H3String *baseText,
-                                                                   const DWORD a3, const DWORD a4) noexcept
-{
-
-    int result = THISCALL_4(int, h->GetDefaultFunc(), mes, baseText, a3, a4);
-    //
-    if (!mes->Empty() && !currentCreatureBank.message.Empty())
-    {
-        //  mes->Append('\n').Append(currentCreatureBank.message);
-        //  mes->Append('\n').Append(currentCreatureBank.message);
-    }
-
-    return result;
-}
-
 // works for Human and AI
 _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
 {
@@ -538,8 +522,6 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
 
     return EXEC_DEFAULT;
 }
-
-bool stateChagesDef = false;
 
 _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
 {
@@ -1551,8 +1533,6 @@ void CreatureBanksExtender::CreatePatches()
                 _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
                 // adding custom text to original reward message (appending it to the end)
                 _pi->WriteHiHook(0x04ABFBA, CDECL_, CrBank_AwardMessageFormatReadingFromTxt);
-                //_pi->WriteHiHook(0x04ABFD2, THISCALL_, CrBank_AwardMessageCompletion); // temprorary disabled to be
-                // removed later
             }
 
             // giving mithril

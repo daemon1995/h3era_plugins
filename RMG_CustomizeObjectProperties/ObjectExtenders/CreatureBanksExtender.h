@@ -189,8 +189,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
     static H3String *__cdecl CrBank_AwardMessageFormatReadingFromTxt(HiHook *h, char *buffer, const char *textFormat,
                                                                      const char *creatureNames,
                                                                      const char *rewardText) noexcept;
-    static int __stdcall CrBank_AwardMessageCompletion(HiHook *h, H3String *mes, H3String *baseText, const DWORD a3,
-                                                       const DWORD a4) noexcept;
+
 
     static _LHF_(CrBank_BeforeGivingResources);
 

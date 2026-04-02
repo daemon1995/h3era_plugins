@@ -84,4 +84,4 @@ class SpellMarketExtender : public extender::ObjectExtender
     static SpellMarketExtender &Get();
 };
 
-} // namespace spellmarket
+} // namespace spellMarket

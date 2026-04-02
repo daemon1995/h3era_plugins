@@ -5,7 +5,6 @@
 
 #include "RMG_SettingsDlg.h"
 
-
 namespace cbanks
 {
 class CreatureBanksExtender : public extender::ObjectExtender
@@ -1094,7 +1093,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *pa
 
         if (!result)
         {
-			constexpr int additionalHeight = 100;
+            constexpr int additionalHeight = 100;
             IntAt(0x04F65D4 + 2) += additionalHeight;
             IntAt(0x04F662F + 1) += additionalHeight;
             H3Messagebox::RMB(str.String());
