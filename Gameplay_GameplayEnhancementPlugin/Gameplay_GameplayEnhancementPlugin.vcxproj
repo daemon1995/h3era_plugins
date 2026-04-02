@@ -109,7 +109,6 @@
     <ClCompile Include="GameplayFeature.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GraphicsEnhancements.cpp" />
-    <ClCompile Include="ISettings.cpp" />
     <ClCompile Include="MapScroller.cpp" />
     <ClCompile Include="MithrilDisplay.cpp" />
   </ItemGroup>

@@ -1,4 +1,5 @@
 #pragma once
+#include "pch.h"
 class ISettings
 {
   public:
@@ -8,7 +9,9 @@ class ISettings
     int vKey;
     LPCSTR settingsVersion = "1.0";
 
-    ISettings(const char *filePath, const char *sectionName);
+    ISettings(const char *filePath, const char *sectionName) : filePath(filePath), sectionName(sectionName)
+    {
+    }
 
   public:
     virtual void reset() = 0;

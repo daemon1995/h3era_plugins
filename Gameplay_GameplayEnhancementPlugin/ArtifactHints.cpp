@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "ArtifactHints.h"
 
 namespace artifacts
 {

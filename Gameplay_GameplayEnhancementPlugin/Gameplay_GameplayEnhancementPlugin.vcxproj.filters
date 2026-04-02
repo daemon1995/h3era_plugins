@@ -58,9 +58,6 @@
     <ClCompile Include="AdventureMapHints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ISettings.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsEnhancements.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

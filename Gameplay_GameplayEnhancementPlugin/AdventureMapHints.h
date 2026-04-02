@@ -1,4 +1,6 @@
 #pragma once
+#include "pch.h"
+
 #include <unordered_set>
 
 namespace advMapHints
@@ -38,6 +40,9 @@ class AdventureMapHints : public IGamePatch
     static constexpr LPCSTR ERM_VARIABLE_FORMAT = "gem_adventure_map_object_hints_option_%d";
 
     static RECT m_mapView;
+    static AdventureMapHints *instance;
+    static constexpr LPCSTR vipPluginInstanceName = "EraPlugin.AdventureMapHints.daemon_n";
+
     // bool m_objectsToDraw[232];
 
     Patch *blockAdventureHintDraw = nullptr;
@@ -61,9 +66,7 @@ class AdventureMapHints : public IGamePatch
                        const int mapZ) noexcept;
 
   public:
-    static AdventureMapHints *instance;
-
-    static void Init(PatcherInstance *pi);
+    static AdventureMapHints &Get();
 
     void CreatePatches() noexcept override;
     // bool * ObjectsToDraw()  noexcept;

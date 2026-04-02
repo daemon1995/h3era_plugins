@@ -1,5 +1,4 @@
 #include "GameplayFeature.h"
-
 namespace features
 {
 GameplayFeature::GameplayFeature() : IGamePatch(_PI)

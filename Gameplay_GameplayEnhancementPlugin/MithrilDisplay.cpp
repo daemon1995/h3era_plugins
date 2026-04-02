@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "MithrilDisplay.h"
 
 namespace ERI
 {
@@ -178,7 +178,8 @@ const int ExtendedResourcesInfo::LastHintItemId() const noexcept
     return m_resbarLastHintItemId;
 }
 
-BOOL8 ExtendedResourcesInfo::BuildMithril(H3ResourceBarPanel *resourceBarPanel, int xOffset, bool buildFrame)
+BOOL8 ExtendedResourcesInfo::BuildMithril(H3ResourceBarPanel *resourceBarPanel, const int textItemWidth,
+                                          const eFrameState buildFrame)
 {
 
     if (resourceBarPanel)
@@ -256,7 +257,7 @@ _LHF_(ExtendedResourcesInfo::OnKingdomOverviewDlgResBarCreate)
 {
     if (H3GameHeight::Get() >= 608)
     {
-        BuildMithril(reinterpret_cast<H3ResourceBarPanel *>(c->eax), 35, false);
+        BuildMithril(reinterpret_cast<H3ResourceBarPanel *>(c->eax), 35, FRAME_STATE_NONE);
         // mithril->lastHintIsMitril = false;
     }
 
@@ -267,7 +268,7 @@ _LHF_(ExtendedResourcesInfo::OnAdvMgrDlgResBarCreate)
 
     h3::H3ResourceBarPanel *resourceBarPanel = reinterpret_cast<H3ResourceBarPanel *>(c->eax);
 
-    BuildMithril(resourceBarPanel, 2);
+    BuildMithril(resourceBarPanel, 2, FRAME_STATE_BUILD);
 
     return EXEC_DEFAULT;
 }
@@ -318,10 +319,12 @@ void __stdcall ExtendedResourcesInfo::H3ResourceBarPanel__Refresh(HiHook *h, H3R
 
 void ExtendedResourcesInfo::CreatePatches()
 {
-
+    // hooks of resource bar creation:
     _PI->WriteLoHook(0x4021B2, ExtendedResourcesInfo::OnAdvMgrDlgResBarCreate);          // H3AdventureMgrDlg
     _PI->WriteLoHook(0x51F042, ExtendedResourcesInfo::OnKingdomOverviewDlgResBarCreate); // KingdomOverviewDlg
-    _PI->WriteLoHook(0x408945, ExtendedResourcesInfo::OnAdvMgrDlgRightClick);            // H3AdventureMgrDlg
+    _PI->WriteLoHook(0x5C6976, ExtendedResourcesInfo::OnAdvMgrDlgResBarCreate);          // H3TownMgrDlg
+
+    _PI->WriteLoHook(0x408945, ExtendedResourcesInfo::OnAdvMgrDlgRightClick); // H3AdventureMgrDlg
 
     _PI->WriteHiHook(0x559170, THISCALL_, ExtendedResourcesInfo::H3ResourceBarPanel__Refresh);
     //_PI->WriteLoHook(0x417380, ExtendedResourcesInfo::OnResourceBarDlgUpdate);

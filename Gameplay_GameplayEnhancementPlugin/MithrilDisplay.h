@@ -1,5 +1,5 @@
 #pragma once
-using namespace h3;
+#include "pch.h"
 namespace ERI
 {
 constexpr int MITHRIL_TEXT_ID = 1016;
@@ -28,11 +28,17 @@ class ExtendedResourcesInfo : public IGamePatch
     BOOL ShowMithrilRMCHint(const H3Msg *msg, H3DlgItem *hintZone) const noexcept;
 
   private:
-    static BOOL8 BuildMithril(H3ResourceBarPanel *resourceBarPanel, int textItemWidth, bool buildFrame = true);
+    enum eFrameState
+    {
+        FRAME_STATE_NONE,
+        FRAME_STATE_BUILD,
+    };
+    static BOOL8 BuildMithril(H3ResourceBarPanel *resourceBarPanel, const int textItemWidth,
+                              const eFrameState buildFrame);
     static _LHF_(OnAdvMgrDlgResBarCreate);
     static _LHF_(OnKingdomOverviewDlgResBarCreate);
-    static void __stdcall H3ResourceBarPanel__Refresh(HiHook *h, H3ResourceBarPanel *resourceBarPanel, const BOOL redraw,
-                                                             const BOOL redrawScreen);
+    static void __stdcall H3ResourceBarPanel__Refresh(HiHook *h, H3ResourceBarPanel *resourceBarPanel,
+                                                      const BOOL redraw, const BOOL redrawScreen);
 
     static void __stdcall H3ResourceBarPanel__Hide(HiHook *h, H3ResourceBarPanel *resourceBarPanel);
     static _LHF_(OnAdvMgrDlgRightClick);

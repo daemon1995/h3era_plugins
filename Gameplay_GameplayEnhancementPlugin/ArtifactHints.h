@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pch.h"
+
 namespace artifacts
 {
 struct StatBytes
@@ -30,7 +32,7 @@ class ArtifactHints : public IGamePatch
 {
     BOOL active = true;
     INT swapSide = -1;
-	BOOL isUniteComboArtifactCall = false;
+    BOOL isUniteComboArtifactCall = false;
     Patch *drawMultiPicDlgPatch = nullptr;
     INT messageboxHeightChange = 0;
     H3String hintTextBuffer;
@@ -53,13 +55,14 @@ class ArtifactHints : public IGamePatch
     BOOL CreateStatsString(const H3Artifact *artifact, const H3Hero *heroToCompareStats, H3String *result) noexcept;
     BOOL CreateCombinePartsString(const H3Artifact *artifact, const H3Hero *heroToCompareStats,
                                   H3String *result) noexcept;
-	void ChangeMessageBoxHeight(const int additionalHeight) noexcept;
+    void ChangeMessageBoxHeight(const int additionalHeight) noexcept;
+
   private:
     static void __stdcall SwapMgr_InteractArtifactSlot(HiHook *h, H3SwapManager *mgr, const int side, int slotIndex,
                                                        int a4) noexcept;
     static H3String *__stdcall BuildUpArtifactDescription(HiHook *h, const H3Artifact *artifact,
                                                           H3String *result) noexcept;
-    static int __stdcall UniteComboArtifacts(HiHook* h, const H3Hero *hero, const int artId) noexcept;
+    static int __stdcall UniteComboArtifacts(HiHook *h, const H3Hero *hero, const int artId) noexcept;
     static int __stdcall BuildMultiPicDlg(HiHook *h, H3Game *game);
 
   public:

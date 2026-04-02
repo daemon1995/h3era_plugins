@@ -1,18 +1,19 @@
-#include "pch.h"
+#include "AdventureMapHints.h"
 
 namespace advMapHints
 {
 RECT AdventureMapHints::m_mapView;
 
 AdventureMapHints *AdventureMapHints::instance = nullptr;
-void AdventureMapHints::Init(PatcherInstance *pi)
+AdventureMapHints &AdventureMapHints::Get()
 {
     if (!instance)
     {
+        auto pi = globalPatcher->CreateInstance(vipPluginInstanceName);
         instance = new AdventureMapHints(pi);
     }
+    return *instance;
 }
-
 AdventureMapHints::AdventureMapHints(PatcherInstance *pi)
     : IGamePatch(pi), settings("Runtime/gem_AdventureMapHints.ini", "StaticHintsDrawByType")
 
@@ -466,7 +467,8 @@ bool CreateKeyAltHint(H3AdventureManager *advMgr, H3MapItem *cell)
         libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);
         return true;
     }
-    // Клетка водная и либо что-то с флагом клетки, либо тип объекта на клетке не лодка, не герой, не кораблекрушение
+    // Клетка водная и либо что-то с флагом клетки, либо тип объекта на клетке не лодка, не герой, не
+    // кораблекрушение
     else if (cell->land == eTerrain::WATER &&
              ((*(WORD *)&cell->mirror & 0x1000) == 0 ||
               objectType != eObject::BOAT && objectType != eObject::HERO && objectType != eObject::SHIPWRECK))

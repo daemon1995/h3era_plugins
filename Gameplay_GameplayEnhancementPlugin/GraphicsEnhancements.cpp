@@ -165,7 +165,7 @@ _LHF_(AdventureManager_DrawHeroDefShadow)
 }
 _LHF_(AdventureManager_Show)
 {
-    if (auto instance = GraphicsEnhancements::Get())
+    if (auto instance = &GraphicsEnhancements::Get())
     {
         for (size_t i = 0; i < GraphicsEnhancements::MAX_UNIQUE_HEROES; i++)
         {
@@ -184,7 +184,7 @@ _LHF_(AdventureManager_Show)
 _LHF_(AdventureManager_Hide)
 {
     //  dereference hero unuique and classes defs
-    GraphicsEnhancements::Get()->CleanUpData();
+    GraphicsEnhancements::Get().CleanUpData();
     return EXEC_DEFAULT;
 }
 void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
@@ -339,7 +339,7 @@ void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dl
 void __stdcall AdvMgr__AtSetActiveHero_BeforeScreenRedraw(HiHook *h, H3WindowManager *mgr, const int x, const int y,
                                                           const int width, const int height)
 {
-    GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(P_AdventureManager->dlg, true, false);
+    GraphicsEnhancements::Get().DrawAdventureMapTownBuiltStatus(P_AdventureManager->dlg, true, false);
     THISCALL_5(void, h->GetDefaultFunc(), mgr, x, y, width, height);
 }
 
@@ -349,20 +349,20 @@ void __stdcall H3AdventureMgrDlg__RedrawHeroSlots(HiHook *h, H3AdventureMgrDlg *
     THISCALL_4(void, h->GetDefaultFunc(), dlg, playrId, updateDlg, redrawScreen);
 
     if (P_Game->GetPlayer()->is_human2)
-        GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(dlg, updateDlg, redrawScreen);
+        GraphicsEnhancements::Get().DrawAdventureMapTownBuiltStatus(dlg, updateDlg, redrawScreen);
 }
 
 void __stdcall H3AdventureMgrDlg__RedrawTownSlots(HiHook *h, H3AdventureMgrDlg *dlg, signed int playrId, char updateDlg,
                                                   char redrawScreen)
 {
     THISCALL_4(void, h->GetDefaultFunc(), dlg, playrId, updateDlg, redrawScreen);
-    GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(dlg, updateDlg, redrawScreen);
+    GraphicsEnhancements::Get().DrawAdventureMapTownBuiltStatus(dlg, updateDlg, redrawScreen);
 }
 
 void __stdcall AdvMgr_AtFullUpdate(HiHook *h, H3AdventureMgrDlg *dlg, char redraw)
 {
     THISCALL_2(void, h->GetDefaultFunc(), dlg, redraw);
-    GraphicsEnhancements::Get()->DrawAdventureMapTownBuiltStatus(dlg, true, false);
+    GraphicsEnhancements::Get().DrawAdventureMapTownBuiltStatus(dlg, true, false);
 }
 
 void GraphicsEnhancements::InitTownDlgDefButtons(H3TownDialog *dlg) noexcept
@@ -446,7 +446,7 @@ void GraphicsEnhancements::DrawTownDlgBuiltStatus(H3TownDialog *dlg) noexcept
 
 void __stdcall H3TownManager__AfterDlgCtor(HiHook *h, H3TownManager *mgr, const int fadeIn)
 {
-    GraphicsEnhancements::Get()->InitTownDlgDefButtons(mgr->dlg);
+    GraphicsEnhancements::Get().InitTownDlgDefButtons(mgr->dlg);
     THISCALL_2(void, h->GetDefaultFunc(), mgr, fadeIn);
 }
 
@@ -456,7 +456,7 @@ void __stdcall H3TownDlg__SetSmallTownFrame(HiHook *h, H3TownDialog *dlg, signed
 
     if (townIndex == 2)
     {
-        GraphicsEnhancements::Get()->DrawTownDlgBuiltStatus(dlg);
+        GraphicsEnhancements::Get().DrawTownDlgBuiltStatus(dlg);
     }
 }
 DWORD __stdcall Dlg_RightClick_Town_Create(HiHook *h, H3BaseDlg *dlg, H3Town *town, DWORD a3)
@@ -550,13 +550,13 @@ GraphicsEnhancements::GraphicsEnhancements()
 {
     CreatePatches();
 }
-GraphicsEnhancements *GraphicsEnhancements::Get() noexcept
+GraphicsEnhancements &GraphicsEnhancements::Get() noexcept
 {
     if (!instance)
     {
         instance = new GraphicsEnhancements();
     }
-    return instance;
+    return *instance;
 }
 
 } // namespace graphics
