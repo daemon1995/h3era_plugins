@@ -1,8 +1,6 @@
+#include "CreatureBanksExtender.h"
 
 #include <unordered_set>
-
-#include "framework.h"
-
 namespace cbanks
 {
 namespace defines
@@ -49,6 +47,7 @@ namespace defines
 } // namespace defines
 
 CreatureBanksExtender::Current CreatureBanksExtender::currentCreatureBank{};
+INT CreatureBanksExtender::CustomRewardSetupState::maxArtId = h3::limits::ARTIFACTS;
 
 BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
                     const bool withoutBrackets = true) noexcept
@@ -146,9 +145,9 @@ BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, con
 
     return 0;
 }
-CreatureBanksExtender::CreatureBanksExtender() : IGamePatch(_PI)
+CreatureBanksExtender::CreatureBanksExtender()
+    : IGamePatch(globalPatcher->CreateInstance("EraPlugin.CreatureBanksExtender.daemon_n"))
 {
-    // this->objectType = eObject::CREATURE_BANK;
     CreatePatches();
 }
 
@@ -185,87 +184,79 @@ void __stdcall CreatureBanksExtender::OnAfterReloadLanguageData(Era::TEvent *eve
         }
     }
 }
-
-INT __stdcall CreatureBanksExtender::AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos)
+_LHF_(CreatureBanksExtender::AIHero_GetCreatureBankItemWeight)
 {
-
-    INT result = FASTCALL_3(INT, h->GetDefaultFunc(), hero, moveDistance, mixedPos);
-
-    if (result && result > IntAt(0x0528B2B + 2))
+    auto bank = reinterpret_cast<H3CreatureBank *>(c->edi);
+    if (!bank)
     {
-        if (const auto mapItem = P_AdventureManager->GetMapItem(mixedPos))
-        {
-            const int creatureBankType = GetCreatureBankType(mapItem);
-            if (creatureBankType != eObject::NO_OBJ && !mapItem->creatureBank.taken)
-            {
-                if (const auto customReward = Get().GetCustomCreatureBank(mapItem))
-                {
-                    int bonusValue = 0;
-                    if (const UINT mithrilAmount = customReward->mithrilAmount)
-                    {
-                        const H3Player *player = THISCALL_1(H3Player *, 0x04E5920, hero);
-
-                        bonusValue +=
-                            static_cast<int>(player->resourceImportance[eResource::GOLD] * mithrilAmount * 1000);
-                    }
-                    if (const auto experience = customReward->experience)
-                    {
-                        float fExperience = static_cast<float>(experience) * h3functions::GetHeroLearningPower(hero);
-                        bonusValue += static_cast<int>(fExperience * hero->AI_experienceEffectiveness);
-                    }
-
-                    const int needExpoToNextLvl = h3functions::NeedExpoToNextLevel(hero->level);
-
-                    for (size_t i = 0; i < SKILLS_AMOUNT; i++)
-                    {
-                        if (const auto skill = customReward->primarySkills[i])
-                        {
-                            bonusValue +=
-                                static_cast<int>(skill * needExpoToNextLvl * hero->AI_experienceEffectiveness);
-                        }
-                    }
-                    // if (const int luck = customReward->luck)
-                    //{
-                    //     double tempdouble = FASTCALL_2(double, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //     float tempfloat = FASTCALL_2(float, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //     __int64 temp__int64 = FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1),
-                    //     luck); int tempint = FASTCALL_2(int, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    //     bonusValue += FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
-                    // }
-                    // if (const int morale = customReward->morale)
-                    //{
-                    //     float temp = FASTCALL_2(float, 0x0435480, hero->GetMoraleBonus(nullptr, 0, 1), morale);
-
-                    //    bonusValue += FASTCALL_2(__int64, 0x0435480, hero->GetMoraleBonus(nullptr, 0, 1), morale);
-                    //}
-                    if (hero->WearsArtifact(eArtifact::SPELLBOOK))
-                    {
-                        const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
-                        for (size_t i = 0; i < SPELLS_AMOUNT; i++)
-                        {
-                            const eSpell &spellId = customReward->spells[i];
-
-                            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
-                                P_Spell[spellId].level > maxSpellLevel)
-                            {
-                                continue;
-                            }
-
-                            bonusValue += h3functions::GetAIHeroSpellValue(hero, spellId);
-                        }
-                    }
-
-                    result += bonusValue;
-                }
-            }
-        }
+        return EXEC_DEFAULT;
     }
 
-    return result;
+    const auto customReward = Get().GetCustomCreatureBank(bank);
+    if (!customReward)
+    {
+        return EXEC_DEFAULT;
+    }
+
+    int bonusValue = 0;
+    auto hero = reinterpret_cast<H3Hero *>(c->ebx);
+    if (const UINT mithrilAmount = customReward->mithrilAmount)
+    {
+        const H3Player *player = THISCALL_1(H3Player *, 0x04E5920, hero);
+        bonusValue += static_cast<int>(player->resourceImportance[eResource::GOLD] * mithrilAmount * 1000);
+    }
+    if (const auto experience = customReward->experience)
+    {
+        float fExperience = static_cast<float>(experience) * h3functions::GetHeroLearningPower(hero);
+        bonusValue += static_cast<int>(fExperience * hero->AI_experienceEffectiveness);
+    }
+
+    const int needExpoToNextLvl = h3functions::NeedExpoToNextLevel(hero->level);
+
+    for (size_t i = 0; i < SKILLS_AMOUNT; i++)
+    {
+        if (const auto skill = customReward->primarySkills[i])
+        {
+            bonusValue += static_cast<int>(skill * needExpoToNextLvl * hero->AI_experienceEffectiveness);
+        }
+    }
+    // if (const int luck = customReward->luck)
+    //{
+    //     double tempdouble = FASTCALL_2(double, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+    //     float tempfloat = FASTCALL_2(float, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+    //     __int64 temp__int64 = FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1),
+    //     luck); int tempint = FASTCALL_2(int, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+    //     bonusValue += FASTCALL_2(__int64, 0x04355B0, hero->GetLuckBonus(nullptr, 0, 1), luck);
+    // }
+    // if (const int morale = customReward->morale)
+    //{
+    //     float temp = FASTCALL_2(float, 0x0435480, hero->GetMoraleBonus(nullptr, 0, 1), morale);
+
+    //    bonusValue += FASTCALL_2(__int64, 0x0435480, hero->GetMoraleBonus(nullptr, 0, 1), morale);
+    //}
+    if (hero->WearsArtifact(eArtifact::SPELLBOOK))
+    {
+        const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
+        for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+        {
+            const eSpell &spellId = customReward->spells[i];
+
+            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] || P_Spell[spellId].level > maxSpellLevel)
+            {
+                continue;
+            }
+
+            bonusValue += h3functions::GetAIHeroSpellValue(hero, spellId);
+        }
+    }
+    if (bonusValue)
+        IntAt(c->ebp + 0x8) += bonusValue;
+
+    return EXEC_DEFAULT;
 }
+
 _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
 {
-
     if (const auto mapItem = ValueAt<H3MapItem *>(c->ebp + 0xC))
     {
 
@@ -275,61 +266,60 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
             mapItem->creatureBank.id < Get().manager.customCreatureBanksVector.size())
         {
 
-            auto customBank = Get().GetCustomCreatureBank(mapItem);
-
             currentCreatureBank.spellsToLearn.fill(eSpell::NONE);
             currentCreatureBank.spellPointsToAdd = 0;
             currentCreatureBank.mithrilToAdd = 0;
             currentCreatureBank.experiencePointsToAdd = 0;
             currentCreatureBank.hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
-
-            if (customBank)
+            auto customBank = Get().GetCustomCreatureBank(mapItem);
+            if (!customBank)
             {
-                // if mithril is enabled
-                if (DwordAt(0x27F99AC))
+                return EXEC_DEFAULT;
+            }
+            // if mithril is enabled
+            if (DwordAt(0x27F99AC))
+            {
+                currentCreatureBank.mithrilToAdd = customBank->mithrilAmount;
+            }
+
+            if (auto &hero = currentCreatureBank.hero)
+            {
+
+                currentCreatureBank.experiencePointsToAdd += static_cast<int>(
+                    static_cast<float>(customBank->experience) * h3functions::GetHeroLearningPower(hero));
+
+                THISCALL_4(void, 0x4E3620, hero, currentCreatureBank.experiencePointsToAdd, false, true);
+                const UINT heroSpellPoints = hero->spellPoints;
+                const UINT maxSpellPoints = IntAt(0x049F99F + 2);
+                if (hero->spellPoints < maxSpellPoints)
                 {
-                    currentCreatureBank.mithrilToAdd = customBank->mithrilAmount;
+                    currentCreatureBank.spellPointsToAdd =
+                        Clamp(0, customBank->spellPoints, maxSpellPoints - heroSpellPoints);
+                    hero->spellPoints += currentCreatureBank.spellPointsToAdd;
                 }
 
-                if (auto &hero = currentCreatureBank.hero)
+                hero->moraleBonus += customBank->morale;
+                hero->luckBonus += customBank->luck;
+                if (hero->WearsArtifact(eArtifact::SPELLBOOK))
                 {
-
-                    currentCreatureBank.experiencePointsToAdd += static_cast<int>(
-                        static_cast<float>(customBank->experience) * h3functions::GetHeroLearningPower(hero));
-
-                    THISCALL_4(void, 0x4E3620, hero, currentCreatureBank.experiencePointsToAdd, false, true);
-                    const UINT heroSpellPoints = hero->spellPoints;
-                    const UINT maxSpellPoints = IntAt(0x049F99F + 2);
-                    if (hero->spellPoints < maxSpellPoints)
+                    const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
+                    for (size_t i = 0; i < SPELLS_AMOUNT; i++)
                     {
-                        currentCreatureBank.spellPointsToAdd =
-                            Clamp(0, customBank->spellPoints, maxSpellPoints - heroSpellPoints);
-                        hero->spellPoints += currentCreatureBank.spellPointsToAdd;
-                    }
 
-                    hero->moraleBonus += customBank->morale;
-                    hero->luckBonus += customBank->luck;
-                    if (hero->WearsArtifact(eArtifact::SPELLBOOK))
-                    {
-                        const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
-                        for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+                        const eSpell &spellId = customBank->spells[i];
+                        if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
+                            P_Spell[spellId].level > maxSpellLevel)
                         {
-
-                            const eSpell &spellId = customBank->spells[i];
-                            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
-                                P_Spell[spellId].level > maxSpellLevel)
-                            {
-                                continue;
-                            }
-                            currentCreatureBank.spellsToLearn[i] = spellId;
-                            // learn spell
-                            h3functions::HeroLearnSpell(hero, spellId);
+                            continue;
                         }
+                        currentCreatureBank.spellsToLearn[i] = spellId;
+                        // learn spell
+                        h3functions::HeroLearnSpell(hero, spellId);
                     }
-                    for (size_t i = 0; i < SKILLS_AMOUNT; i++)
-                    {
-                        hero->primarySkill[i] += customBank->primarySkills[i];
-                    }
+                }
+                for (size_t i = 0; i < SKILLS_AMOUNT; i++)
+                {
+                    hero->primarySkill[i] += customBank->primarySkills[i];
                 }
             }
         }
@@ -373,98 +363,92 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
     if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
     {
         const int creatureBankType = GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype);
-        if (creatureBankType != eObject::NO_OBJ)
+        const auto customCreatureBank = Get().GetCustomCreatureBank(mapItem);
+        if (creatureBankType == eObject::NO_OBJ || customCreatureBank == nullptr)
+        {
+            return EXEC_DEFAULT;
+        }
+        H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
+
+        auto &message = currentCreatureBank.message;
+        auto &hero = currentCreatureBank.hero;
+        bool experienceAdded = false;
+        bool primarySkillAdded = false;
+        if (const UINT experience = currentCreatureBank.experiencePointsToAdd)
+        {
+            H3PictureCategories pair = H3PictureCategories::Experience(experience);
+            pictureCategories->Add(pair);
+            experienceAdded = true;
+        }
+
+        for (size_t i = 0; i < SKILLS_AMOUNT; i++)
         {
 
-            if (const auto customCreatureBank = Get().GetCustomCreatureBank(mapItem))
+            if (const UINT skillNum = customCreatureBank->primarySkills[i])
             {
-                H3PictureVector *pictureCategories = reinterpret_cast<H3PictureVector *>(c->ebp - 0x54);
+                H3PictureCategories pair = H3PictureCategories::PrimarySkill(ePrimary(i), skillNum);
+                pictureCategories->Add(pair);
+                primarySkillAdded = true;
+            }
+        }
+        if (experienceAdded || primarySkillAdded)
+        {
+            libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(176), hero->name);
+            message.Append(' ').Append(h3_TextBuffer);
+        }
 
-                auto &message = currentCreatureBank.message;
-                auto &hero = currentCreatureBank.hero;
-                bool experienceAdded = false;
-                bool primarySkillAdded = false;
-                if (const UINT experience = currentCreatureBank.experiencePointsToAdd)
-                {
+        if (const UINT spellPoints = currentCreatureBank.spellPointsToAdd)
+        {
+            H3PictureCategories pair = H3PictureCategories::SpellPoints(spellPoints);
+            pictureCategories->Add(pair);
 
-                    H3PictureCategories pair = H3PictureCategories::Experience(experience);
-                    pictureCategories->Add(pair);
-                    experienceAdded = true;
-                }
+            libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(178), hero->name);
+            message.Append(' ').Append(h3_TextBuffer);
+        }
 
-                for (size_t i = 0; i < SKILLS_AMOUNT; i++)
-                {
+        if (const INT luck = customCreatureBank->luck)
+        {
+            H3PictureCategories pair = H3PictureCategories::Luck(luck);
+            pictureCategories->Add(pair);
 
-                    if (const UINT skillNum = customCreatureBank->primarySkills[i])
-                    {
-                        H3PictureCategories pair = H3PictureCategories::PrimarySkill(ePrimary(i), skillNum);
-                        pictureCategories->Add(pair);
-                        primarySkillAdded = true;
-                    }
-                }
-                if (experienceAdded || primarySkillAdded)
-                {
-                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(176), hero->name);
-                    message.Append(' ').Append(h3_TextBuffer);
-                }
+            libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(luck > 0 ? 182 : 181), hero->name);
+            message.Append(' ').Append(h3_TextBuffer);
+        }
 
-                if (const UINT spellPoints = currentCreatureBank.spellPointsToAdd)
-                {
+        if (const INT morale = customCreatureBank->morale)
+        {
+            H3PictureCategories pair = H3PictureCategories::Morale(morale);
+            pictureCategories->Add(pair);
 
-                    H3PictureCategories pair = H3PictureCategories::SpellPoints(spellPoints);
-                    pictureCategories->Add(pair);
+            libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(morale > 0 ? 180 : 179), hero->name);
+            message.Append(' ').Append(h3_TextBuffer);
+        }
 
-                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(178), hero->name);
-                    message.Append(' ').Append(h3_TextBuffer);
-                }
-
-                if (const INT luck = customCreatureBank->luck)
-                {
-                    H3PictureCategories pair = H3PictureCategories::Luck(luck);
-                    pictureCategories->Add(pair);
-
-                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(luck > 0 ? 182 : 181), hero->name);
-                    message.Append(' ').Append(h3_TextBuffer);
-                }
-
-                if (const INT morale = customCreatureBank->morale)
-                {
-
-                    H3PictureCategories pair = H3PictureCategories::Morale(morale);
-                    pictureCategories->Add(pair);
-
-                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(morale > 0 ? 180 : 179), hero->name);
-                    message.Append(' ').Append(h3_TextBuffer);
-                }
-
-                bool addSpells = false;
-                int strIdx = 0;
-                for (size_t i = 0; i < SPELLS_AMOUNT; i++)
-                {
-                    eSpell &spellId = currentCreatureBank.spellsToLearn[i];
-                    if (spellId != eSpell::NONE)
-                    {
-
-                        H3PictureCategories pair = H3PictureCategories::Spell(spellId);
-                        pictureCategories->Add(pair);
-                        spellId = eSpell::NONE;
-                        if (addSpells)
-                        {
-                            strIdx = 189;
-                        }
-                        else
-                        {
-                            addSpells = true;
-                            strIdx = 185;
-                        }
-                    }
-                }
+        bool addSpells = false;
+        int strIdx = 0;
+        for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+        {
+            eSpell &spellId = currentCreatureBank.spellsToLearn[i];
+            if (spellId != eSpell::NONE)
+            {
+                H3PictureCategories pair = H3PictureCategories::Spell(spellId);
+                pictureCategories->Add(pair);
+                spellId = eSpell::NONE;
                 if (addSpells)
                 {
-                    libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(strIdx), hero->name);
-                    message.Append(' ').Append(h3_TextBuffer);
+                    strIdx = 189;
+                }
+                else
+                {
+                    addSpells = true;
+                    strIdx = 185;
                 }
             }
+        }
+        if (addSpells)
+        {
+            libc::sprintf(h3_TextBuffer, P_AdveventText->GetText(strIdx), hero->name);
+            message.Append(' ').Append(h3_TextBuffer);
         }
     }
     // skip strings vector parsing if it is empty to avoid crash
@@ -480,15 +464,58 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
     return EXEC_DEFAULT;
 }
 
-int __stdcall CreatureBanksExtender::CrBank_BeforeEndingText(HiHook *h, H3String *mes, const size_t len, const DWORD a3,
-                                                             const DWORD a4) noexcept
+H3String *__cdecl CreatureBanksExtender::CrBank_AwardMessageFormatReadingFromTxt(HiHook *h, char *buffer,
+                                                                                 const char *textFormat,
+                                                                                 const char *creatureNames,
+                                                                                 const char *rewardText) noexcept
 {
 
-    int result = THISCALL_4(int, h->GetDefaultFunc(), mes, len, a3, a4);
+    bool readSuccess = false;
+    auto &mapItem = currentCreatureBank.mapItem;
+    auto &bank = currentCreatureBank.bank;
+
+    char *customVictoryText = EraJS::read(
+        H3String::Format("RMG.objectGeneration.%d.%d.text.victory", mapItem->objectType, mapItem->objectSubtype)
+            .String(),
+        readSuccess);
+
+    if (readSuccess)
+    {
+        textFormat = customVictoryText;
+    }
+
+    H3String finalMessage;
+    if (EraJS::readInt("RMG.settings.creatureBanks.displayName") &&
+        mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
+    {
+        finalMessage = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
+    }
+
+    if (finalMessage.Length() > 0)
+    {
+        finalMessage.Append("\n\n").Append(textFormat);
+        textFormat = finalMessage.String();
+    }
+
+    auto result = CDECL_4(H3String *, h->GetDefaultFunc(), buffer, textFormat, creatureNames, rewardText);
+
+    if (result && !result->Empty() && !currentCreatureBank.message.Empty())
+    {
+        result->Append('\n').Append(currentCreatureBank.message);
+    }
+    return result;
+}
+
+int __stdcall CreatureBanksExtender::CrBank_AwardMessageCompletion(HiHook *h, H3String *mes, H3String *baseText,
+                                                                   const DWORD a3, const DWORD a4) noexcept
+{
+
+    int result = THISCALL_4(int, h->GetDefaultFunc(), mes, baseText, a3, a4);
     //
     if (!mes->Empty() && !currentCreatureBank.message.Empty())
     {
-        mes->Append('\n').Append(currentCreatureBank.message);
+        //  mes->Append('\n').Append(currentCreatureBank.message);
+        //  mes->Append('\n').Append(currentCreatureBank.message);
     }
 
     return result;
@@ -506,6 +533,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
         }
         mithrilToAdd = 0;
     }
+    // reset data after CB visiting
     currentCreatureBank = CreatureBanksExtender::Current();
 
     return EXEC_DEFAULT;
@@ -700,9 +728,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeCombatStart)
 void CustomAskForCombatStartDlg(char *originalText, H3MapItem *mapItem, const int messageType = 2, const int x = -1,
                                 const int y = -1)
 {
-
     auto creatureBank = &P_Game->creatureBanks[mapItem->creatureBank.id];
-
     ShowMultiplePicsArmyMessage(originalText, 2, -1, -1, &creatureBank->guardians);
 }
 _LHF_(CreatureBanksExtender::SpecialCrBank_DisplayPreCombatMessage)
@@ -715,7 +741,6 @@ _LHF_(CreatureBanksExtender::SpecialCrBank_DisplayPreCombatMessage)
         }
         else
         {
-
             CustomAskForCombatStartDlg(*reinterpret_cast<char **>(c->ebp + 0x10), mapItem, 2, -1, -1);
             c->return_address = 0x04AC1BE;
         }
@@ -787,7 +812,7 @@ void __stdcall CreatureBanksExtender::CrBank_AskForVisitMessage(HiHook *h, char 
     if (EraJS::readInt("RMG.settings.creatureBanks.displayName") &&
         mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
     {
-        finalMessage = H3String::Format("{%s}", GetResolvedObjectName(mapItem->objectType, mapItem->objectSubtype));
+        finalMessage = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
     }
 
     if (finalMessage.Length())
@@ -963,7 +988,7 @@ CreatureBanksExtender::CustomRewardSetupState::CustomRewardSetupState(const INT 
             readSuccess);
         if (readSuccess)
         {
-            artifactIds[i] = eArtifact(Clamp(eArtifact::NONE, artId, currentCreatureBank.MAX_ART_ID));
+            artifactIds[i] = eArtifact(Clamp(eArtifact::NONE, artId, maxArtId));
         }
         primarySkills[i] = Clamp(
             0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i),
@@ -1014,78 +1039,76 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
 
     int addedBanksNumber = 0;
 
-    const int MAX_MON_ID = IntAt(0x4A1657);
-    currentCreatureBank.MAX_ART_ID = IntAt(0x49DD8E + 2) / 4;
+    const int maxMonId = IntAt(0x4A1657) - 1;
+    CustomRewardSetupState::maxArtId = IntAt(0x49DD8E + 2) / 4;
 
     // init  default positions
     std::array<int, 14> defaultPositions{};
     constexpr int positionsAddress = 0x063D0E0;
     libc::memcpy(defaultPositions.data(), reinterpret_cast<int *>(positionsAddress), sizeof(defaultPositions));
 
-    Resize(defaultBanksNumber);
+    const int banksAmount = maxSubtype + 1;
+    Resize(banksAmount);
 
     CopyDefaultData(defaultBanksNumber, defaultPositions);
 
     bool trSuccess = false;
-    std::array<int, GUARDES_AMOUNT> tempArr = {};
-    tempArr.fill(-1);
+    int tempArr[GUARDES_AMOUNT] = {-1, -1, -1, -1, -1};
 
     //  allocate space for new creature banks
-    Reserve(maxSubtype + 1 - defaultBanksNumber);
-    for (INT16 cbId = 0; cbId <= maxSubtype; cbId++)
+    for (INT16 cbId = 0; cbId < banksAmount; cbId++)
     {
         const int objectType = CreatureBanksExtender::GetCreatureBankObjectType(cbId);
         const int objectSubtype = objectType == eObject::CREATURE_BANK ? cbId : 0;
-        if (objectType != eObject::NO_OBJ)
+
+        // states
+        H3CreatureBankSetup &setup = setups[cbId]; // : H3CreatureBankSetup{};
+
+        // for new banks added init clean data
+        if (cbId >= defaultBanksNumber)
         {
-
-            // states
-            H3CreatureBankSetup setup;
-
-            // copy original creature bank data
-            if (cbId < defaultBanksNumber)
-            {
-                setup = setups[cbId];
-            }
-            else
-            {
-                setup.states[0].chance = 100; // default.chance
-                for (size_t i = 0; i < STATES_AMOUNT; i++)
-                {
-                    for (size_t j = 0; j < ARTIFACTS_AMOUNT; j++)
-                    {
-                        setup.states[i].artifactTypeCounts[j] = 0;
-                    }
-                }
-            }
-
-            // assign new CB name from json/default
-            H3String name = EraJS::read(
-                H3String::Format("RMG.objectGeneration.%d.%d.name", objectType, objectSubtype).String(), trSuccess);
-            if (trSuccess)
-            {
-                setup.name = name;
-            }
-            else if (setup.name.Empty())
-            {
-                setup.name = H3ObjectName::Get()[eObject::CREATURE_BANK];
-            }
-
+            setup.states[0].chance = 100; // default.chance
             for (size_t i = 0; i < STATES_AMOUNT; i++)
             {
-                auto &state = setup.states[i];
-
-                const int creatureRewardType =
-                    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.creatureRewardType",
-                                                    objectType, objectSubtype, i)
-                                       .String(),
-                                   trSuccess);
-
-                if (trSuccess)
+                for (size_t j = 0; j < ARTIFACTS_AMOUNT; j++)
                 {
-                    state.creatureRewardType =
-                        Clamp(eCreature::UNDEFINED, creatureRewardType, MAX_MON_ID); // creatureRewardType;
+                    setup.states[i].artifactTypeCounts[j] = 0;
                 }
+                setup.states[i].creatureRewardCount = 0;
+                setup.states[i].creatureRewardType = eCreature::UNDEFINED;
+            }
+        }
+
+        // assign new CB name from json/default
+        H3String name = EraJS::read(
+            H3String::Format("RMG.objectGeneration.%d.%d.name", objectType, objectSubtype).String(), trSuccess);
+        if (trSuccess)
+        {
+            setup.name = name;
+        }
+        else if (setup.name.Empty())
+        {
+            setup.name = H3ObjectName::Get()[eObject::CREATURE_BANK];
+        }
+
+        // now load data from json
+        for (size_t i = 0; i < STATES_AMOUNT; i++)
+        {
+            auto &state = setup.states[i];
+
+            const int creatureRewardType =
+                EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.creatureRewardType", objectType,
+                                                objectSubtype, i)
+                                   .String(),
+                               trSuccess);
+
+            if (trSuccess)
+            {
+                state.creatureRewardType = Clamp(eCreature::UNDEFINED, creatureRewardType, maxMonId);
+            }
+
+            if (state.creatureRewardType != eCreature::UNDEFINED)
+            {
                 const int creatureRewardCount =
                     EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.creatureRewardCount",
                                                     objectType, objectSubtype, i)
@@ -1095,144 +1118,130 @@ int CreatureBanksExtender::CreatureBankManager::LoadCreatureBanksFromJson(const 
                 {
                     state.creatureRewardCount = Clamp(0, creatureRewardCount, 127);
                 }
-
-                const int chance = EraJS::readInt(
-                    H3String::Format("RMG.objectGeneration.%d.%d.states.%d.chance", objectType, objectSubtype, i)
-                        .String(),
-                    trSuccess);
-                if (trSuccess)
-                {
-                    state.chance = Clamp(0, chance, 100);
-                }
-
-                const int upgrade = EraJS::readInt(
-                    H3String::Format("RMG.objectGeneration.%d.%d.states.%d.upgrade", objectType, objectSubtype, i)
-                        .String(),
-                    trSuccess);
-                if (trSuccess)
-                {
-                    state.upgrade = Clamp(0, upgrade, 100);
-                }
-
-                for (size_t artLvl = 0; artLvl < 4; artLvl++)
-                {
-                    const int artsNum =
-                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.artifactTypeCounts.%d",
-                                                        objectType, objectSubtype, i, artLvl)
-                                           .String(),
-                                       trSuccess);
-                    if (trSuccess)
-                    {
-                        state.artifactTypeCounts[artLvl] = Clamp(0, artsNum, 127);
-                    }
-                }
-
-                for (size_t j = 0; j < 7; j++)
-                {
-
-                    const int guardType =
-                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.guardians.type.%d",
-                                                        objectType, objectSubtype, i, j)
-                                           .String(),
-                                       trSuccess);
-                    if (trSuccess)
-                    {
-                        state.guardians.type[j] =
-                            Clamp(eCreature::UNDEFINED, guardType, MAX_MON_ID); // creatureRewardType;
-                    }
-
-                    const int guardCount =
-                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.guardians.count.%d",
-                                                        objectType, objectSubtype, i, j)
-                                           .String(),
-                                       trSuccess);
-                    if (trSuccess)
-                    {
-                        state.guardians.count[j] = Clamp(0, guardCount, INT32_MAX); // creatureRewardType;
-                    }
-
-                    const int resources =
-                        EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.resources.%d", objectType,
-                                                        objectSubtype, i, j)
-                                           .String(),
-                                       trSuccess);
-                    if (trSuccess)
-                    {
-                        state.resources.asArray[j] = Clamp(0, resources, INT32_MAX); // creatureRewardType;
-                    }
-                }
             }
 
-            // init custom rewards
-            std::array<CustomRewardSetupState, STATES_AMOUNT> customReward{[cbId]() {
-                std::array<CustomRewardSetupState, STATES_AMOUNT> arr;
-                for (size_t i = 0; i < STATES_AMOUNT; ++i)
-                {
-                    arr[i] = CustomRewardSetupState(cbId, i);
-                }
-                return arr;
-            }()};
-
-            // placement troops in combat
-
-            bool isBank = EraJS::readInt(
-                H3String::Format("RMG.objectGeneration.%d.%d.troopPlacement.isBank", objectType, objectSubtype)
-                    .String(),
+            const int chance = EraJS::readInt(
+                H3String::Format("RMG.objectGeneration.%d.%d.states.%d.chance", objectType, objectSubtype, i).String(),
                 trSuccess);
-
-            const bool isBankSetting = trSuccess ? isBank : true;
-
-            std::array<int, 14> positions = defaultPositions;
-
-            for (size_t i = 0; i < 7; i++)
+            if (trSuccess)
             {
-                if (const int jsonAttackerPosition = ReadJsonInt(
-                        "RMG.objectGeneration.%d.%d.troopPlacement.attackers.%d", objectType, objectSubtype, i))
+                state.chance = Clamp(0, chance, 100);
+            }
+
+            const int upgrade = EraJS::readInt(
+                H3String::Format("RMG.objectGeneration.%d.%d.states.%d.upgrade", objectType, objectSubtype, i).String(),
+                trSuccess);
+            if (trSuccess)
+            {
+                state.upgrade = Clamp(0, upgrade, 100);
+            }
+
+            for (size_t artLvl = 0; artLvl < 4; artLvl++)
+            {
+                const int artsNum =
+                    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.artifactTypeCounts.%d",
+                                                    objectType, objectSubtype, i, artLvl)
+                                       .String(),
+                                   trSuccess);
+                if (trSuccess)
                 {
-
-                    const BOOL atackerPositionIsValid =
-                        !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 || jsonAttackerPosition % 17 == 0 ||
-                          jsonAttackerPosition % 17 == 16);
-
-                    if (atackerPositionIsValid)
-                        positions[i] = jsonAttackerPosition;
-                }
-
-                if (const int jsonDefenderPosition = ReadJsonInt(
-                        "RMG.objectGeneration.%d.%d.troopPlacement.defenders.%d", objectType, objectSubtype, i))
-                {
-                    const BOOL defenderPositionIsValid =
-                        !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 || jsonDefenderPosition % 17 == 0 ||
-                          jsonDefenderPosition % 17 == 16);
-                    if (defenderPositionIsValid)
-                        positions[i + 7] = jsonDefenderPosition;
+                    state.artifactTypeCounts[artLvl] = Clamp(0, artsNum, 127);
                 }
             }
 
-            if (cbId < defaultBanksNumber)
+            for (size_t j = 0; j < 7; j++)
             {
-                setups[cbId] = setup;
-                customRewardSetups[cbId] = customReward;
-                isBankSettings[cbId] = isBankSetting;
-                customPositions[cbId] = positions;
 
-                monsterAwards[cbId] = setup.states[0].creatureRewardType;
-            }
-            else
-            {
-                setups.emplace_back(setup);
-                customRewardSetups.emplace_back(customReward);
-                isBankSettings.emplace_back(isBankSetting);
-                customPositions.emplace_back(positions);
+                const int guardType =
+                    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.guardians.type.%d",
+                                                    objectType, objectSubtype, i, j)
+                                       .String(),
+                                   trSuccess);
+                if (trSuccess)
+                {
+                    state.guardians.type[j] = Clamp(eCreature::UNDEFINED, guardType, maxMonId); // creatureRewardType;
+                }
 
-                monsterAwards.emplace_back(setup.states[0].creatureRewardType);
-                memcpy(&tempArr[0], &setup.states[0].guardians.type[0], sizeof(tempArr));
-                monsterGuards.emplace_back(tempArr);
+                const int guardCount =
+                    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.guardians.count.%d",
+                                                    objectType, objectSubtype, i, j)
+                                       .String(),
+                                   trSuccess);
+                if (trSuccess)
+                {
+                    state.guardians.count[j] = Clamp(0, guardCount, INT32_MAX); // creatureRewardType;
+                }
 
-                // increase number of added banks
-                addedBanksNumber++;
+                const int resources =
+                    EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.states.%d.resources.%d", objectType,
+                                                    objectSubtype, i, j)
+                                       .String(),
+                                   trSuccess);
+                if (trSuccess)
+                {
+                    state.resources.asArray[j] = Clamp(0, resources, INT32_MAX); // creatureRewardType;
+                }
             }
         }
+
+        // init custom rewards
+        std::array<CustomRewardSetupState, STATES_AMOUNT> customReward{[cbId]() {
+            std::array<CustomRewardSetupState, STATES_AMOUNT> arr;
+            for (size_t i = 0; i < STATES_AMOUNT; ++i)
+            {
+                arr[i] = CustomRewardSetupState(cbId, i);
+            }
+            return arr;
+        }()};
+
+        // placement troops in combat
+
+        bool isBank = EraJS::readInt(
+            H3String::Format("RMG.objectGeneration.%d.%d.troopPlacement.isBank", objectType, objectSubtype).String(),
+            trSuccess);
+
+        const bool isBankSetting = trSuccess ? isBank : true;
+
+        std::array<int, 14> positions = defaultPositions;
+
+        for (size_t i = 0; i < 7; i++)
+        {
+            if (const int jsonAttackerPosition =
+                    ReadJsonInt("RMG.objectGeneration.%d.%d.troopPlacement.attackers.%d", objectType, objectSubtype, i))
+            {
+
+                const BOOL atackerPositionIsValid =
+                    !(jsonAttackerPosition < 1 || jsonAttackerPosition > 186 || jsonAttackerPosition % 17 == 0 ||
+                      jsonAttackerPosition % 17 == 16);
+
+                if (atackerPositionIsValid)
+                    positions[i] = jsonAttackerPosition;
+            }
+
+            if (const int jsonDefenderPosition =
+                    ReadJsonInt("RMG.objectGeneration.%d.%d.troopPlacement.defenders.%d", objectType, objectSubtype, i))
+            {
+                const BOOL defenderPositionIsValid =
+                    !(jsonDefenderPosition < 1 || jsonDefenderPosition > 186 || jsonDefenderPosition % 17 == 0 ||
+                      jsonDefenderPosition % 17 == 16);
+                if (defenderPositionIsValid)
+                    positions[i + 7] = jsonDefenderPosition;
+            }
+        }
+
+        setups[cbId] = setup;
+        customRewardSetups[cbId] = customReward;
+        isBankSettings[cbId] = isBankSetting;
+        customPositions[cbId] = positions;
+
+        if (cbId >= defaultBanksNumber)
+        {
+            libc::memcpy(tempArr, &setup.states[0].guardians.type[0], sizeof(tempArr));
+
+            // increase number of added banks
+            addedBanksNumber++;
+        }
+        monsterAwards[cbId] = setup.states[0].creatureRewardType;
     }
     // patch memory to use new arrays
     if (addedBanksNumber > 0)
@@ -1318,9 +1327,17 @@ void CreatureBanksExtender::CreatureBankManager::ShrinkToFit() noexcept
 }
 
 const CreatureBanksExtender::CustomCreatureBank *CreatureBanksExtender::GetCustomCreatureBank(
-    const H3MapItem *mapItem) noexcept
+    const H3MapItem *mapItem) const noexcept
 {
     return mapItem->creatureBank.id >= Size() ? nullptr : &manager.customCreatureBanksVector[mapItem->creatureBank.id];
+}
+
+const CreatureBanksExtender::CustomCreatureBank *CreatureBanksExtender::GetCustomCreatureBank(
+    const H3CreatureBank *creatureBank) const noexcept
+{
+
+    const int creatureBankId = P_Game->creatureBanks.GetIndexOf(*creatureBank);
+    return creatureBank ? &manager.customCreatureBanksVector[creatureBankId] : nullptr;
 }
 
 void CreatureBanksExtender::CustomCreatureBank::GenerateSpells(const CustomRewardSetupState &setup)
@@ -1494,8 +1511,9 @@ void CreatureBanksExtender::CreatePatches()
         _pi->WriteLoHook(0x04C1E32, Game_AfterInitMapItem);
         _pi->WriteLoHook(0x04C96D1, Game_SetMapItemDef);
 
-        _pi->WriteHiHook(0x0528520, FASTCALL_, AIHero_GetMapItemWeight); // creature bank new Rewards AI weight
-
+        // new Rewards AI weight
+        // _pi->WriteHiHook(0x0528520, FASTCALL_, AIHero_GetMapItemWeight); // any item
+        _pi->WriteLoHook(0x0528B8D, AIHero_GetCreatureBankItemWeight); // bank/utopia/derelict ship
         // chaging creature bank text patches
         {
             // Pre-combat message
@@ -1520,7 +1538,6 @@ void CreatureBanksExtender::CreatePatches()
         _pi->WriteHiHook(0x4ABBCB, THISCALL_, CrBank_CombatStart);
 
         // giving custom rewards after combat won
-        // if (0)
         {
             // Adding custom rewards to winner (except mithril)
             _pi->WriteLoHook(0x04ABBFF, CrBank_AfterCombatWon);
@@ -1533,7 +1550,9 @@ void CreatureBanksExtender::CreatePatches()
                 // creating custom rewards text taken from Pandora's Box award
                 _pi->WriteLoHook(0x04ABE4C, CrBank_BeforeShowingRewardMessage);
                 // adding custom text to original reward message (appending it to the end)
-                _pi->WriteHiHook(0x04ABFD2, THISCALL_, CrBank_BeforeEndingText);
+                _pi->WriteHiHook(0x04ABFBA, CDECL_, CrBank_AwardMessageFormatReadingFromTxt);
+                //_pi->WriteHiHook(0x04ABFD2, THISCALL_, CrBank_AwardMessageCompletion); // temprorary disabled to be
+                // removed later
             }
 
             // giving mithril
