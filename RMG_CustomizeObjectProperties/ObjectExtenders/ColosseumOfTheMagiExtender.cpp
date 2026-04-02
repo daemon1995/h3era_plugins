@@ -1,6 +1,5 @@
-#include "../pch.h"
-
 #include "ColosseumOfTheMagiExtender.h"
+
 namespace colosseumOfTheMagi
 {
 ColosseumOfTheMagiExtender *ColosseumOfTheMagiExtender::instance = nullptr;

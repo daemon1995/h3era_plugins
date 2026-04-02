@@ -19,7 +19,7 @@ using namespace h3;
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "1.4.2";
+constexpr const char *PLUGIN_VERSION = "1.5.0";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 // const char* PROJECT_NAME = "$(ProjectName)";
@@ -27,7 +27,6 @@ constexpr const char *PLUGIN_DATA = __DATE__;
 } // namespace dllText
 void __stdcall OnReportVersion(Era::TEvent *e)
 {
-
     // show plugin name, version and compilation time
     libc::sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);

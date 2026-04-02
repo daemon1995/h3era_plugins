@@ -5259,6 +5259,7 @@ namespace h3
 		UINT32 Size() const;
 		UINT32 Count() const;
 		UINT32 CountMax() const;
+		UINT32 GetIndexOf(const _Elem& item) const;
 		UINT32 RawSize() const;
 		UINT32 RawSizeAllocated() const;
 		VOID RemoveLast();
@@ -5579,6 +5580,11 @@ namespace h3
 	inline UINT32 H3Vector<_Elem>::CountMax() const
 	{
 		return m_capacity - m_first;
+	}
+	template<typename _Elem>
+	inline UINT32 H3Vector<_Elem>::GetIndexOf(const _Elem& item) const
+	{
+		return &item - m_first;
 	}
 	template<typename _Elem>
 	inline UINT32 H3Vector<_Elem>::RawSize() const

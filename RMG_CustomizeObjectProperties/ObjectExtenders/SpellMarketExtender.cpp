@@ -1,14 +1,11 @@
-#include "../pch.h"
-
 #include "SpellMarketExtender.h"
-namespace spellMarket
 
+namespace spellMarket
 {
 
 SpellMarketExtender::SpellMarketExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.SpellMarketExtender.daemon_n"))
 {
-
     CreatePatches();
 }
 
@@ -441,4 +438,4 @@ inline H3MapItemSpellMarket *H3MapItemSpellMarket::GetFromMapItem(const H3MapIte
     return nullptr;
 }
 
-} // namespace spellmarket
+} // namespace spellMarket

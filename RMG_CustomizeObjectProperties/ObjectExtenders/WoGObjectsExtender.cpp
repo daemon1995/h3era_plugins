@@ -1,8 +1,6 @@
-#include "../pch.h"
-
 #include "WoGObjectsExtender.h"
-namespace wog
 
+namespace wog
 {
 std::array<int, extender::limits::COMMON> WoGObjectsExtender::WoGObjectOptionsIds;
 

@@ -1,4 +1,6 @@
 #pragma once
+#include "../pch.h"
+
 namespace wog
 {
 constexpr int WOG_OBJECT_TYPE = eObject::PYRAMID;

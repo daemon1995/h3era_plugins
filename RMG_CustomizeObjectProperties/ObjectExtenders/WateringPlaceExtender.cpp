@@ -1,6 +1,5 @@
-#include "../pch.h"
-
 #include "WateringPlaceExtender.h"
+
 namespace wateringPlace
 {
 WateringPlaceExtender::WateringPlaceExtender()

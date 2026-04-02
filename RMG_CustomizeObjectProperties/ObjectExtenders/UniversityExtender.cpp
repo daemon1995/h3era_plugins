@@ -1,10 +1,6 @@
-#include <unordered_set>
-
-#include "../pch.h"
-
 #include "UniversityExtender.h"
-namespace university
 
+namespace university
 {
 
 INT8 UniversityExtender::bannedSkillsCopy[limits::SECONDARY_SKILLS];

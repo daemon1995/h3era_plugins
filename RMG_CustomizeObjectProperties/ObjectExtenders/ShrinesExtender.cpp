@@ -1,5 +1,3 @@
-#include "../pch.h"
-
 #include "ShrinesExtender.h"
 
 namespace shrines

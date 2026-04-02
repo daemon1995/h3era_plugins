@@ -1,4 +1,6 @@
 #pragma once
+#include "../pch.h"
+
 namespace spellMarket
 {
 
@@ -46,6 +48,7 @@ struct H3MapItemSpellMarket
   public:
     static inline H3MapItemSpellMarket *GetFromMapItem(const H3MapItem *mapItem) noexcept;
 };
+
 class SpellMarketExtender : public extender::ObjectExtender
 {
     static SpellMarketExtender *instance;

@@ -1,4 +1,6 @@
 #pragma once
+#include "../pch.h"
+
 namespace shrines
 {
 struct ExactSpellShrineMapItem

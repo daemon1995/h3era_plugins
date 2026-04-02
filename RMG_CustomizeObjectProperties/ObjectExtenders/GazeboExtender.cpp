@@ -1,5 +1,3 @@
-#include "../pch.h"
-
 #include "GazeboExtender.h"
 
 namespace gazebo

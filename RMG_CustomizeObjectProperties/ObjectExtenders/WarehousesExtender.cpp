@@ -1,6 +1,5 @@
-#include "../pch.h"
-
 #include "WarehousesExtender.h"
+
 namespace warehouses
 {
 

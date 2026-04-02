@@ -1,4 +1,5 @@
 #pragma once
+#include "..\pch.h"
 
 #include <array>
 struct ObjectExtenderDesc;
@@ -7,7 +8,6 @@ namespace cbanks
 
 class CreatureBanksExtender : public extender::ObjectExtender
 {
-    static CreatureBanksExtender *instance;
 
     static constexpr UINT STATES_AMOUNT = 4;
     static constexpr UINT GUARDES_AMOUNT = 5;
@@ -28,11 +28,12 @@ class CreatureBanksExtender : public extender::ObjectExtender
 
         std::array<eSpell, SPELLS_AMOUNT> spellsToLearn = {eSpell::NONE, eSpell::NONE, eSpell::NONE, eSpell::NONE};
         UINT mithrilToAdd = 0;
-        H3String message = "";
+        H3String message;
         UINT spellPointsToAdd = 0;
         UINT experiencePointsToAdd = 0;
-        INT MAX_ART_ID = limits::ARTIFACTS;
     };
+
+    static CreatureBanksExtender *instance;
     static Current currentCreatureBank;
 
   private:
@@ -41,6 +42,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
 
     struct CustomRewardSetupState
     {
+        static INT maxArtId;
 
         BOOL enabled = true;
         UINT stateId = 0;
@@ -152,7 +154,8 @@ class CreatureBanksExtender : public extender::ObjectExtender
 
     // virtual void GetObjectPreperties() noexcept override  final;
   private:
-    const CustomCreatureBank *GetCustomCreatureBank(const H3MapItem *mapItem) noexcept;
+    const CustomCreatureBank *GetCustomCreatureBank(const H3MapItem *mapItem) const noexcept;
+    const CustomCreatureBank *GetCustomCreatureBank(const H3CreatureBank *creatureBank) const noexcept;
 
   private:
     static _LHF_(CrBank_BeforeSetupFromState);
@@ -166,8 +169,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
     static _LHF_(Game_AfterInitMapItem);
     static _LHF_(Game_SetMapItemDef);
 
-    static INT __stdcall AIHero_GetMapItemWeight(HiHook *h, H3Hero *hero, int *moveDistance, UINT mixedPos);
-
+    static _LHF_(AIHero_GetCreatureBankItemWeight);
     static _LHF_(CrBank_DisplayPreCombatMessage);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
     static void __stdcall CrBank_AskForVisitMessage(HiHook *h, char *mes, const int messageType, const int x,
@@ -183,8 +185,12 @@ class CreatureBanksExtender : public extender::ObjectExtender
 
     static _LHF_(CrBank_AfterDrawingResources);
     static _LHF_(CrBank_BeforeShowingRewardMessage);
-    static int __stdcall CrBank_BeforeEndingText(HiHook *h, H3String *mes, const size_t len, const DWORD a3,
-                                                 const DWORD a4) noexcept;
+
+    static H3String *__cdecl CrBank_AwardMessageFormatReadingFromTxt(HiHook *h, char *buffer, const char *textFormat,
+                                                                     const char *creatureNames,
+                                                                     const char *rewardText) noexcept;
+    static int __stdcall CrBank_AwardMessageCompletion(HiHook *h, H3String *mes, H3String *baseText, const DWORD a3,
+                                                       const DWORD a4) noexcept;
 
     static _LHF_(CrBank_BeforeGivingResources);
 
