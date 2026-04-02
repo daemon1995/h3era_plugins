@@ -8,7 +8,6 @@ namespace cbanks
 
 class CreatureBanksExtender : public extender::ObjectExtender
 {
-
     static constexpr UINT STATES_AMOUNT = 4;
     static constexpr UINT GUARDES_AMOUNT = 5;
     static constexpr UINT MITHRIL_ID = 7;
@@ -21,16 +20,16 @@ class CreatureBanksExtender : public extender::ObjectExtender
         INT type = -1;
         INT stateId = -1;
         H3CreatureBank *bank = nullptr;
-        H3MapItem *mapItem = nullptr;
+        const H3MapItem *mapItem = nullptr;
         H3Hero *hero = nullptr;
         Patch *positionsPatch = nullptr;
         LPCSTR customDefName = nullptr;
 
         std::array<eSpell, SPELLS_AMOUNT> spellsToLearn = {eSpell::NONE, eSpell::NONE, eSpell::NONE, eSpell::NONE};
         UINT mithrilToAdd = 0;
-        H3String message;
         UINT spellPointsToAdd = 0;
         UINT experiencePointsToAdd = 0;
+        H3String message;
     };
 
     static CreatureBanksExtender *instance;
@@ -137,9 +136,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
 
     } manager;
 
-    /*    static BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
-                                   const bool withoutBrackets = true) noexcept;
-       */ // static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, const int x, const int y,
+    // static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageType, const int x, const int y,
     // H3Army *army) noexcept;
     ObjectExtenderDesc api;
 
@@ -177,22 +174,21 @@ class CreatureBanksExtender : public extender::ObjectExtender
                                                     const int picType2, const int picSubtype2, const int par,
                                                     const int time, const int picType3, const int picSubtype3);
 
-    static _LHF_(CrBank_BeforeCombatStart);
+    static signed int __stdcall CrBank_CombatAndRewardProc(HiHook *h, H3AdventureManager *advMan, const H3Hero *attHero,
+                                                           const H3MapItem *mapItem, LPCSTR text, const UINT PisMixed,
+                                                           const BOOL isPlayer);
     static signed int __stdcall CrBank_CombatStart(HiHook *h, H3AdventureManager *advMan, UINT PisMixed,
                                                    const H3Hero *attHero, UINT attArmy, int PlayerIndex, UINT defTown,
                                                    UINT defHero, UINT defArmy, int seed, signed int a10, int isBank);
     static _LHF_(CrBank_AfterCombatWon);
-
     static _LHF_(CrBank_AfterDrawingResources);
     static _LHF_(CrBank_BeforeShowingRewardMessage);
-
     static H3String *__cdecl CrBank_AwardMessageFormatReadingFromTxt(HiHook *h, char *buffer, const char *textFormat,
                                                                      const char *creatureNames,
                                                                      const char *rewardText) noexcept;
-
-
     static _LHF_(CrBank_BeforeGivingResources);
 
+    // save/load data management
     static void __stdcall OnBeforeSaveGame(Era::TEvent *Event);
     static void __stdcall OnAfterSaveGame(Era::TEvent *Event);
     static void __stdcall OnAfterLoadGame(Era::TEvent *Event);
