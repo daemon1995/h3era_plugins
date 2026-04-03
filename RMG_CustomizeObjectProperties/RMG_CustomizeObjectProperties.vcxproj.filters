@@ -52,6 +52,9 @@
     <ClCompile Include="AdditionalProperties.cpp">
       <Filter>source files</Filter>
     </ClCompile>
+    <ClCompile Include="ObjectExtenders\CreatureBankManager.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjectExtender.h">
@@ -101,6 +104,9 @@
     </ClInclude>
     <ClInclude Include="AdditionalProperties.h">
       <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\CreatureBankManager.h">
+      <Filter>Extenders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
