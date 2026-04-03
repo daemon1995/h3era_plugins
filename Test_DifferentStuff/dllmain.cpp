@@ -7,6 +7,11 @@
 #include "framework.h"
 // #include "..\..\headers\H3API_RK\single_header\H3API.hpp"
 
+class CombatEmulator
+{
+  public:
+    static void Init();
+};
 using namespace h3;
 
 Patcher *globalPatcher = nullptr;
@@ -228,6 +233,7 @@ H3LoadedDef *__stdcall LoadDEF(HiHook *hook, LPCSTR defName)
 
 _LHF_(HooksInit)
 {
+    CombatEmulator::Init();
 
     // _PI->WriteLoHook(0x049CDF6, MapTeamOpen);
     Era::RegisterHandler(OnGameEnter, "OnGameEnter");

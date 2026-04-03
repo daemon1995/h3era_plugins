@@ -6,4 +6,6 @@
 #include <windows.h>
 
 #include "..\headers\header.h"
+template <typename... Ints> void Debug(Ints... values) noexcept;
+
 //#include "CombatHooks.h"

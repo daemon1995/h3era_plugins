@@ -16965,6 +16965,7 @@ namespace h3
 		_H3API_ INT32 GetX() const;
 		_H3API_ INT32 GetY() const;
 		_H3API_ BOOL  IsTopDialog() const;
+		_H3API_ BOOL  Deactivate(const BOOL deactivate);
 		/**
 		 * @brief Adds the specified state to control id
 		 * @param id Control identifier
@@ -18441,6 +18442,7 @@ namespace h3
 
 		_H3API_ VOID SetPreviousManager(H3Manager* prev);
 		_H3API_ VOID SetNextManager(H3Manager* next);
+		_H3API_ VOID SetManagers(H3Manager* prev, H3Manager* next);
 	};
 	_H3API_ASSERT_SIZE_(H3Manager);
 
@@ -33162,6 +33164,10 @@ namespace h3
 	{
 		return nextDialog == nullptr;
 	}
+	_H3API_ BOOL  H3BaseDlg::Deactivate(const BOOL deactivate)
+	{
+		return THISCALL_2(BOOL, 0x05FFB70, this, deactivate);
+	}
 	_H3API_ VOID H3BaseDlg::AddControlState(INT32 id, eControlState state)
 	{
 		THISCALL_3(VOID, 0x5FF490, this, id, state);
@@ -34578,6 +34584,11 @@ namespace h3
 	}
 	_H3API_ VOID H3Manager::SetNextManager(H3Manager* next)
 	{
+		child = next;
+	}
+	_H3API_ VOID H3Manager::SetManagers(H3Manager* prev, H3Manager* next)
+	{
+		parent = prev;
 		child = next;
 	}
 } /* namespace h3 */

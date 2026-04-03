@@ -71,12 +71,14 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CombatEmulator.h" />
     <ClInclude Include="CombatHooks.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="TestDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="CombatEmulator.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="TestDlg.cpp" />
   </ItemGroup>
