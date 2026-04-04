@@ -459,7 +459,7 @@ ExportDlg::SelectionPanel *ExportDlg::CreateSelectionPanel(const int x, const in
 ExportDlg::ExportDlg(const int width, const int height, const int x, const int y, const DlgStyle &style)
     : H3Dlg(width, height, x, y, false, false)
 {
-    this->AddBackground(true, false, true);
+    this->AddBackground(true, false, ePlayer::RED);
     this->flags ^= 0x10; // disable dlg shadow
     CreateDlgItems();
 }
