@@ -40,6 +40,8 @@ struct CustomRewardSetupState
 struct CustomCreatureBank
 {
 
+    // add slots for more creature type rwards;
+    // provide an API that allows to handle custom rewards (!!CB:);
 #define DECLARE_FIELD(type, name, defaultValue)                                                                        \
     type name = defaultValue;                                                                                          \
     static constexpr LPCSTR name##Format = "RMG_CreatureBankId_%d_" #name;
