@@ -86,50 +86,146 @@ void AssemblyInformation::Version::AdjustItemText() noexcept
     }
 }
 
-void OpenExternalFile(const char *path, const char *msg = nullptr)
+std::string GetAppForExtension(const std::string &extension)
 {
-    if (path)
+    // Проверяем, что расширение начинается с точки
+    std::string extWithDot = (extension[0] == '.') ? extension : "." + extension;
+
+    DWORD bufferSize = 0;
+    // Первый вызов нужен, чтобы узнать необходимый размер буфера
+    HRESULT hr =
+        AssocQueryStringA(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_EXECUTABLE, extWithDot.c_str(), NULL, NULL, &bufferSize);
+
+    if (hr == S_FALSE && bufferSize > 0)
     {
-        const bool isUrl = PathIsURLA(path);
-
-        // BOOL isOk = true;
-        if (msg)
+        std::string appPath(bufferSize, '\0');
+        // Второй вызов для получения самого пути
+        hr = AssocQueryStringA(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_EXECUTABLE, extWithDot.c_str(), NULL, &appPath[0],
+                               &bufferSize);
+        if (hr == S_OK)
         {
-            std::string _msg = msg;
-            libc::sprintf(h3_TextBuffer, _msg.c_str(), path);
-        }
-        else
-        {
-            LPCSTR jsonKey = isUrl ? panelText::OPEN_URL : panelText::OPEN_FILE;
-            libc::sprintf(h3_TextBuffer, EraJS::read(jsonKey), path);
-        }
-
-        BOOL isOk = H3Messagebox::Choice(h3_TextBuffer);
-
-        if (isOk)
-        {
-            // call ShellExecuteA from exe to open github download page
-            INT_PTR intRes = STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", path, NULL, NULL, SW_SHOWNORMAL);
-
-            /** https://learn.microsoft.com/ru-ru/windows/win32/api/shellapi/nf-shellapi-shellexecutea */
-            if (intRes <= 32)
-            {
-                LPSTR messageBuffer = nullptr;
-
-                // �������������� ��������� �� ������
-                size_t size = FormatMessageA(
-                    FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                    nullptr, intRes, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
-
-                std::string message(messageBuffer, size);
-                H3Messagebox(message.c_str());
-
-                // ������������ ������
-                LocalFree(messageBuffer);
-            }
+            appPath.resize(bufferSize - 1);
+            return appPath;
         }
     }
+    // Если программа не найдена, возвращаем пустую строку
+    return h3_NullString;
 }
+
+std::string LPCSTR_to_wstring(LPCSTR ansi_str)
+{
+    // 1. Получаем длину без нуль-терминатора
+    const int src_len = libc::strlen(ansi_str);
+
+    // 2. ANSI → UTF-16
+    const int wlen = libc::MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, NULL, 0);
+    std::wstring wstr(wlen, 0);
+    libc::MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, &wstr[0], wlen);
+
+    // 3. UTF-16 → UTF-8
+    const int ulen = libc::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, NULL, 0, NULL, NULL);
+    std::string utf8_str(ulen, 0);
+    libc::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, &utf8_str[0], ulen, NULL, NULL);
+
+    return utf8_str;
+}
+
+std::wstring GetFriendlyAppNameForExtension(const std::wstring &extension)
+{
+    std::wstring extWithDot = (extension[0] == L'.') ? extension : L"." + extension;
+    DWORD bufferSize = 0;
+
+    // Узнаём необходимый размер буфера
+    HRESULT hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_FRIENDLYAPPNAME, extWithDot.c_str(), NULL, NULL,
+                                   &bufferSize);
+    if (hr == S_FALSE && bufferSize > 0)
+    {
+        std::wstring appName(bufferSize, L'\0');
+        // Получаем имя
+        hr = AssocQueryStringW(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_FRIENDLYAPPNAME, extWithDot.c_str(), NULL,
+                               &appName[0], &bufferSize);
+        if (hr == S_OK)
+        {
+            appName.resize(bufferSize - 1);
+            return appName;
+        }
+    }
+    return L"";
+}
+std::string GetFriendlyAppNameForExtensionA(const std::string &extension)
+{
+    std::string extWithDot = (extension[0] == '.') ? extension : "." + extension;
+    DWORD bufferSize = 0;
+
+    // Узнаём необходимый размер буфера
+    HRESULT hr = AssocQueryStringA(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_FRIENDLYAPPNAME, extWithDot.c_str(), NULL, NULL,
+                                   &bufferSize);
+    if (hr == S_FALSE && bufferSize > 0)
+    {
+        std::string appName(bufferSize, '\0');
+        // Получаем имя
+        hr = AssocQueryStringA(ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR_FRIENDLYAPPNAME, extWithDot.c_str(), NULL,
+                               &appName[0], &bufferSize);
+        if (hr == S_OK)
+        {
+            appName.resize(bufferSize - 1);
+            return appName;
+        }
+    }
+    return h3_NullString;
+}
+void OpenExternalFile(const char *path, const char *msg = nullptr)
+{
+    if (!path)
+        return;
+
+    const bool isUrl = PathIsURLA(path);
+    // BOOL isOk = true;
+    if (msg)
+    {
+        std::string _msg = msg;
+        libc::sprintf(h3_TextBuffer, _msg.c_str(), path);
+    }
+    else
+    {
+        LPCSTR jsonKey = isUrl ? panelText::OPEN_URL : panelText::OPEN_FILE;
+        libc::sprintf(h3_TextBuffer, EraJS::read(jsonKey), path);
+    }
+
+    if (!isUrl)
+    {
+        auto ext = PathFindExtensionA(path);
+        auto appPath = GetAppForExtension(ext);
+        auto friendlyAppName = GetFriendlyAppNameForExtensionA(ext);
+        libc::sprintf(h3_TextBuffer, "%s", friendlyAppName.c_str());
+    }
+
+    BOOL isOk = H3Messagebox::Choice(h3_TextBuffer);
+
+    if (!isOk)
+        return;
+
+    // call ShellExecuteA from exe to open github download page
+    INT_PTR intRes = STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", path, NULL, NULL, SW_SHOWNORMAL);
+
+    /** https://learn.microsoft.com/ru-ru/windows/win32/api/shellapi/nf-shellapi-shellexecutea */
+    if (intRes <= 32)
+    {
+        LPSTR messageBuffer = nullptr;
+
+        // �������������� ��������� �� ������
+        size_t size = FormatMessageA(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
+            intRes, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
+
+        std::string message(messageBuffer, size);
+        H3Messagebox(message.c_str());
+
+        // ������������ ������
+        LocalFree(messageBuffer);
+    }
+}
+
 void AssemblyInformation::Version::ClickProcedure() const noexcept
 {
     if (!shellExecutePath.Empty())
