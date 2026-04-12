@@ -429,8 +429,6 @@ BOOL CreatureDlgHandler::AddExperienceButton()
 
 BOOL CreatureDlgHandler::AddSpellEfects()
 {
-	const int xPos = 182;
-	const int yPos = 307;
 
 	H3Vector<INT32> active_spells(stack->activeSpellNumber);
 	int counter = 0;
@@ -467,16 +465,16 @@ BOOL CreatureDlgHandler::AddSpellEfects()
 		switch (active_spells[i])
 		{
 		case h3::eSpell::BIND:
-			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(682));
+			libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(682));
 			break;
 		case h3::eSpell::BERSERK:
-			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(683));
+			libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(683));
 			break;
 		case h3::eSpell::DISRUPTING_RAY:
-			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(684));
+			libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(), H3GeneralText::Get()->GetText(684));
 			break;
 		default:
-			sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(612), spellName.String(), stack->activeSpellDuration[active_spells[i]]);
+			libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(612), spellName.String(), stack->activeSpellDuration[active_spells[i]]);
 			break;
 		}
 
