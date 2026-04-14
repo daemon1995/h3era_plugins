@@ -16,7 +16,7 @@ PatcherInstance *_PI = nullptr;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.8.0";
+const char *PLUGIN_VERSION = "1.8.1";
 const char *INSTANCE_NAME = "EraPlugin.GameplayFeatures.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -24,7 +24,7 @@ const char *PLUGIN_DATA = __DATE__;
 
 void __stdcall OnReportVersion(Era::TEvent *e)
 {
-    sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
+    libc::sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
 }

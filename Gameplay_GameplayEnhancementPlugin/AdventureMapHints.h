@@ -77,9 +77,7 @@ class AdventureMapHints : public IGamePatch
                                                 int screenX, int screenY);
     static void __stdcall AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *advMan);
 
-    // H3AdventureManager::ProcMapKeyPress - Нажатие кнопки
-    static int __stdcall H3AdventureManager_ProcMapKeyPress(HiHook *h, H3AdventureManager *advMgr, H3Msg *msg, char *a3,
-                                                            H3Position *pos, DWORD a5);
+
     static int __stdcall H3AdventureManager_ProcMapScreen(HiHook *h, H3AdventureManager *advMgr, H3Msg *msg);
     static void __stdcall H3AdventureManager_SetHint(HiHook *h, H3AdventureManager *advMgr, H3MapItem *cell, int x,
                                                      int y);
