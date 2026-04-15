@@ -163,7 +163,7 @@ H3DlgItem *ExtendedResourcesInfo::GetMitrilBarHintZone(DWORD patchAddress) noexc
     auto it = map.find(patchAddress);
     if (it != map.end())
     {
-        return it->second.mithrilDefItem;
+        return it->second.mithrilDlgItem;
     }
 
     return nullptr;
@@ -279,14 +279,25 @@ H3DlgItem *ExtendedResourcesInfo::BuildMithril(HookContext *c, ResourceBarInfo &
     mithrilText->ShowActivate();
     barInfo.mithrilTextItem = mithrilText;
 
-    H3DlgItem *mithrilDef = H3DlgDef::Create(xPos + buildFrame * 2, 4, MITHRIL_DLG_DEF_ITEM_ID, MITHRIL_DEF_NAME);
+    H3DlgItem *mithrilItem = nullptr;
+    if (xOffset)
+    {
+        mithrilItem = H3ObjectAllocator<H3DlgItem>().allocate(1);
+        mithrilItem = THISCALL_7(H3DlgItem *, 0x044FBE0, mithrilItem, xPos + buildFrame * 2, 4, defOverlayWidth, 16,
+                                 MITHRIL_DLG_DEF_ITEM_ID, 1);
+    }
+    else
+    {
+        mithrilItem = H3DlgDef::Create(xPos + buildFrame * 2, 4, MITHRIL_DLG_DEF_ITEM_ID, MITHRIL_DEF_NAME);
+    }
+
     // to set as hint zone to cover both the icon and the text
-    mithrilDef->SetWidth(defOverlayWidth + textWidth);
+    mithrilItem->SetWidth(defOverlayWidth + textWidth);
 
-    panel->AddItem(mithrilDef);
-    mithrilDef->ShowActivate();
+    panel->AddItem(mithrilItem);
+    mithrilItem->ShowActivate();
 
-    barInfo.mithrilDefItem = mithrilDef;
+    barInfo.mithrilDlgItem = mithrilItem;
 
     return mithrilText;
 }

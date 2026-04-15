@@ -31,7 +31,7 @@ struct ResourceBarInfo
     int customTextItemWidth = 0;
     int itemStep = 0;
     eFrameState frameState = FRAME_STATE_NONE;
-    H3DlgItem *mithrilDefItem = nullptr;
+    H3DlgItem *mithrilDlgItem = nullptr;
     H3DlgItem *mithrilTextItem = nullptr;
     H3LoadedPcx *mithrilBackPcxCache = nullptr;
 };
