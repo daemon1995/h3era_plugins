@@ -1,19 +1,16 @@
 #pragma once
 #include "pch.h"
 
-//namespace em {
-	class EModPageCategory :
-		public MenuItem
-	{
-	public:
-		//std::vector<EOption*> options;
+// namespace em {
+class EModPageCategory : public MenuItem
+{
+  public:
+    // std::vector<EOption*> options;
 
-		EModPageCategory(H3String name, MenuItem* parent, H3String hint = "", H3String popup = "", H3String tag = "");
-		~EModPageCategory();
-		void SetupText() override;
-
-
-	};
-
+    EModPageCategory(LPCSTR name, MenuItem *parent, LPCSTR hint = h3_NullString, LPCSTR popup = h3_NullString,
+                     LPCSTR tag = h3_NullString);
+    ~EModPageCategory();
+    void SetupText() override;
+};
 
 //}

@@ -18,9 +18,6 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ModListReader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="EraMenuDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -62,7 +59,7 @@
     <ClCompile Include="MenuItem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\headers\Era\era.cpp">
+    <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

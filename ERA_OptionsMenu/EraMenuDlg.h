@@ -1,53 +1,43 @@
 #pragma once
-//#include "header.h"
-#include "pch.h"
-
-//#include "EModPage.h"
-//#include "EModPageCategory.h"
-//#include "EOption.h"
+// #include "header.h"
+#include "EMod.h"
+// #include "EModPageCategory.h"
+// #include "EOption.h"
 constexpr int MAX_OPTION_COUNT = 1000;
 using namespace h3;
-struct EMod;
-class EraMenuDlg :
-	public H3Dlg, MenuItem 
+class EraMenuDlg : virtual public H3Dlg, public MenuItem
 {
 
-	bool m_needRestart = false;
-	H3String m_searchInput;
+    bool m_needRestart = false;
+    H3String m_searchInput;
 
-	H3DlgEdit* m_searchWidget;
-public:
-	INT16 options[MAX_OPTION_COUNT]{};
-	int m_ratio{};
-	std::vector<EMod*> mods;
+    H3DlgEdit *m_searchWidget = nullptr;
 
-	EraMenuDlg(int width, int height, std::vector<H3String> &modNames);
-	bool NeedRestart() const;
-	virtual ~EraMenuDlg();
+  protected:
+    INT16 options[MAX_OPTION_COUNT]{};
+    int m_ratio{};
+    std::vector<EMod *> mods;
 
-	//void 
+    EraMenuDlg(int width, int height, std::vector<std::string> &modNames);
+    bool NeedRestart() const;
+    virtual ~EraMenuDlg();
 
-	BOOL DialogProc(H3Msg& msg) override;
-	//BOOL OnLeftClick(INT itemId, H3Msg& msg) override;
-	//BOOL OnLeftClickOutside() override;
-	//BOOL OnMouseWheel(INT32 direction) override;
-	//BOOL OnNotify(H3DlgItem* it, H3Msg& msg) override;
+    // void
 
-	
-	BOOL CreateMods(EMod& mod, int i);
+    BOOL DialogProc(H3Msg &msg) override;
+    // BOOL OnLeftClick(INT itemId, H3Msg& msg) override;
+    // BOOL OnLeftClickOutside() override;
+    // BOOL OnMouseWheel(INT32 direction) override;
+    // BOOL OnNotify(H3DlgItem* it, H3Msg& msg) override;
 
+    BOOL CreateMods(EMod &mod, int i);
 
-	BOOL CreateWidgets();
-	//BOOL InitMods(std::vector<H3String>& modNames);
+    BOOL CreateWidgets();
+    // BOOL InitMods(std::vector<H3String>& modNames);
+  public:
+    static BOOL CreateAndRun();
 
-	static BOOL Create();
-
-
-	//BOOL OnM
-//	BOOL OnRightClickOutside() override;
-//	BOOL OnRightClick(H3DlgItem* it) override;
-
-	
+    // BOOL OnM
+    //	BOOL OnRightClickOutside() override;
+    //	BOOL OnRightClick(H3DlgItem* it) override;
 };
-
-

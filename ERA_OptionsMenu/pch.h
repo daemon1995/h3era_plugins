@@ -6,19 +6,15 @@
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif // _CRT_SECURE_NO_WARNINGS
+#ifndef ERA_MODLIST
+#define ERA_MODLIST
+#endif // _CRT_SECURE_NO_WARNINGS
 
 #ifndef PCH_H
 #define PCH_H
 
 // add headers that you want to pre-compile here
 #include "..\headers\header.h"
-
-#include "ModListReader.h"
 #include "MenuItem.h"
-#include "EOption.h"
-#include "EModPageCategory.h"
-#include "EModPage.h"
-#include "EMod.h"
-#include "EraMenuDlg.h"
-extern std::vector<H3String> modList;
-#endif //PCH_H
+extern std::vector<std::string> gameModList;
+#endif // PCH_H

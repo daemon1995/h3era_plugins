@@ -1,58 +1,46 @@
 #pragma once
 #include "pch.h"
 
-using namespace h3;
-//const bool JSONKeyExists(H3String str);
+class MenuItem
+{
+    // protected:
+    static int item_id;
+    int id = -1;
 
-//namespace em
-//{
-	//class EMod;
+  public:
+    UINT8 index = -1;
+    // H3DlgItem* it = nullptr;
+    MenuItem *parent = nullptr;
+    H3String key_ptr;
 
-	//class EModPage;
-	//class EModPageCategory;
-	//class EOption;
+    LPCSTR name = nullptr;
+    LPCSTR hint = nullptr;
 
-	class MenuItem
-	{
-	//protected:
-		static int item_id;
-		int id;
+    LPCSTR popup = nullptr;
+    bool enabled = false;
+    UINT8 state = 0;
+    MenuItem();
 
-	public:
-		UINT8 index;
-		//H3DlgItem* it = nullptr;
-		MenuItem* parent;
-		H3String key_ptr;
+    MenuItem(LPCSTR name, MenuItem *parent = nullptr, LPCSTR hint = h3_NullString, LPCSTR popup = h3_NullString);
 
-		H3String name;
-		H3String hint;
+    void SendCommand(h3::H3DlgItem &it, h3::H3Msg &msg);
+    MenuItem *GetParent() const noexcept;
+    void SetEnabled(bool state) noexcept;
+    // virtual MenuItem& GetParent() =0;
+    int GetId() const noexcept
+    {
+        return id;
+    }
+    virtual void GetKey();
+    virtual void SetupText();
 
-		H3String popup;
-		bool enabled;
-		UINT8 state;
-		MenuItem();
+    LPCSTR GetName();
+    LPCSTR GetHint();
+    LPCSTR GetPopup();
 
-		MenuItem(H3String name, MenuItem* parent = nullptr, H3String hint = "", H3String popup = "");
-		
+    virtual ~MenuItem();
 
-
-		void SendCommand(h3::H3DlgItem& it, h3::H3Msg& msg);
-		MenuItem* GetParent() const noexcept;
-		void SetEnabled(bool state) noexcept;
-		//virtual MenuItem& GetParent() =0;
-		int GetId() { return id; }
-		virtual void GetKey();
-		virtual void SetupText();
-
-		H3String GetName();
-		H3String GetHint();
-		H3String GetPopup();
-
-		virtual ~MenuItem();
-
-	//	virtual MenuItem& GetParent() = 0;
-	//	virtual MenuItem& GetChild() = 0;
-
-
-	};
+    //	virtual MenuItem& GetParent() = 0;
+    //	virtual MenuItem& GetChild() = 0;
+};
 //} /*end namespace em*/
