@@ -84,7 +84,6 @@
     <EnableCOMDATFolding>true</EnableCOMDATFolding>
     <OptimizeReferences>true</OptimizeReferences>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PostBuildEventCommand>xcopy "$(TargetPath)" "$(LocalGameTestPath)\Mods\wog\eraplugins\" /Y /I</PostBuildEventCommand>
   </PropertyGroup>
 
   <!-- Глобально определяем ProjectName для всех проектов -->

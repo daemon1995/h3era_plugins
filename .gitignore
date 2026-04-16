@@ -113,8 +113,6 @@ Generated\ Files/
 Artifacts_AddingNewFeatures/
 
 # Лишние solution файлы в подпапках (используем только главный H3EraPlugins.sln)
-*/*.sln
-!H3EraPlugins.sln
 
 # Результаты плагинов (.era файлы в рабочих папках)
 # Но НЕ исключаем их из папок релизов!
