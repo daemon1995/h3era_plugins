@@ -4,21 +4,21 @@
 
 using namespace h3;
 
-Patcher* globalPatcher = nullptr;
-PatcherInstance* _PI = nullptr;
+Patcher *globalPatcher = nullptr;
+PatcherInstance *_PI = nullptr;
 namespace dllText
 {
-    LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
+LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
 
-void __stdcall BattleStack_BeforeShoot(HiHook* h, H3CombatCreature* attacker, H3CombatCreature* defender)
+void __stdcall BattleStack_BeforeShoot(HiHook *h, H3CombatCreature *attacker, H3CombatCreature *defender)
 
 {
     // native shooter
 
     THISCALL_2(void, h->GetDefaultFunc(), attacker, defender);
 
-    if (!THISCALL_2(BOOL8, 0x442610, defender, nullptr) // can't shoot
+    if (!defender || !THISCALL_2(BOOL8, 0x442610, defender, nullptr) // can't shoot
         || attacker->info.noRetaliation || defender->blinded || defender->paralyzed ||
         defender->activeSpellDuration[eSpell::STONE] || defender->retaliations < 1)
     {
@@ -29,7 +29,6 @@ void __stdcall BattleStack_BeforeShoot(HiHook* h, H3CombatCreature* attacker, H3
     THISCALL_2(void, 0x043F620, defender, attacker);
     P_CombatManager->currentActiveSide = 1 - P_CombatManager->currentActiveSide;
     --defender->retaliations;
-
 }
 void SetRangedRetaliation()
 {
@@ -40,7 +39,7 @@ void SetRangedRetaliation()
 _LHF_(HooksInit)
 {
     SetRangedRetaliation();
-	return EXEC_DEFAULT;
+    return EXEC_DEFAULT;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
