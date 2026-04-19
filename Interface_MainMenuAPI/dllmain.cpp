@@ -109,9 +109,8 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 
             _PI->WriteHiHook(0x04F078A, THISCALL_, DlgMainMenu_Campaign_Ctor);
 
-            campaignData.processHook =
-                _PI->WriteHiHook(0x05FFAC0, THISCALL_, DlgMainMenu_Campaign_Proc); // Main Main Menu Dlg Proc
-            campaignData.processHook->Undo();
+            campaignData.processHook = _PI->CreateHiHook(0x05FFAC0, SPLICE_, EXTENDED_, THISCALL_,
+                                                         DlgMainMenu_Campaign_Proc); // Main Main Menu Dlg Proc
 
             _PI->WriteHiHook(0x04F07A4, THISCALL_, DlgMainMenu_Campaign_Dtor);
 
