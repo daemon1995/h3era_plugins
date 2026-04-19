@@ -1,103 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <!-- 
-    Общие настройки для монорепозитория Heroes of Might and Magic 3 ERA плагинов
-    Этот файл применяется ко всем проектам в репозитории автоматически
-  -->
-  
-  <!-- Импортируем пользовательские настройки, если они существуют -->
-  <Import Project="Directory.Build.props.user" Condition="Exists('Directory.Build.props.user')" />
-  
-  <!-- Подтверждение загрузки файла -->
-  
-  <!-- Глобальные настройки для всех проектов в монорепо -->
+
+  <!-- ===================== -->
+  <!-- GLOBAL BASE -->
+  <!-- ===================== -->
+
   <PropertyGroup>
-    <!-- Базовые пути для отладки и компиляции (по умолчанию) -->
+    <ProjectName>$(MSBuildProjectName)</ProjectName>
+
+    <!-- Paths (can be overridden in user file) -->
     <LocalGamePath Condition="'$(LocalGamePath)' == ''">D:\games\HoMM 3 ERA</LocalGamePath>
     <LocalGameTestPath Condition="'$(LocalGameTestPath)' == ''">D:\games\HoMM 3 ERA test</LocalGameTestPath>
     <LocalToolsPath Condition="'$(LocalToolsPath)' == ''">D:\SW</LocalToolsPath>
-    <LocalHeadersPath Condition="'$(LocalHeadersPath)' == ''">$(MSBuildThisFileDirectory)headers\</LocalHeadersPath>
+
+    <!-- Output -->
+    <OutDir Condition="'$(OutDir)'==''">$(LocalGamePath)\Mods\WoG\eraplugins\</OutDir>
+
+    <!-- General -->
+    <WarningLevel>Level3</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <PlatformToolset>v141</PlatformToolset>
+    <LanguageStandard>Default</LanguageStandard>
+    <EnableUAC>false</EnableUAC>
+    <SubSystem>Windows</SubSystem>
+
+    <!-- Output naming -->
+    <TargetExt>.era</TargetExt>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
 
-  <!-- Настройки для Debug конфигураций -->
+  <!-- ===================== -->
+  <!-- USER OVERRIDES -->
+  <!-- ===================== -->
+
+  <Import Project="Directory.Build.props.user"
+          Condition="Exists('Directory.Build.props.user')" />
+
+  <!-- ===================== -->
+  <!-- DEBUG SETTINGS -->
+  <!-- ===================== -->
+
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-    <GenerateDebugInformation>true</GenerateDebugInformation>
-    <EnableUAC>false</EnableUAC>
-    <GenerateMapFile>true</GenerateMapFile>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+
+    <!-- Debugger -->
+    <LocalDebuggerCommand>$(LocalGamePath)\h3era hd.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(LocalGamePath)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommandArguments></LocalDebuggerCommandArguments>
   </PropertyGroup>
 
-  <!-- Настройки для Release конфигураций -->
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <SDLCheck>false</SDLCheck>
+      <CharacterSet>MultiByte</CharacterSet>
+    </ClCompile>
+
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>false</OptimizeReferences>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
+      <LinkIncremental>true</LinkIncremental>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- ===================== -->
+  <!-- RELEASE SETTINGS -->
+  <!-- ===================== -->
+
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <FunctionLevelLinking>true</FunctionLevelLinking>
-    <IntrinsicFunctions>true</IntrinsicFunctions>
-    <EnableCOMDATFolding>true</EnableCOMDATFolding>
-    <OptimizeReferences>true</OptimizeReferences>
-    <GenerateDebugInformation>true</GenerateDebugInformation>
-    <EnableUAC>false</EnableUAC>
-    <GenerateMapFile>true</GenerateMapFile>
-  </PropertyGroup>
-
-  <!-- Общие настройки компилятора -->
-  <PropertyGroup>
-    <WarningLevel>Level3</WarningLevel>
-    <SubSystem>Windows</SubSystem>
-    <TargetExt>.era</TargetExt>
-  </PropertyGroup>
-
-  <!-- Настройки для Win32 платформы -->
-  <PropertyGroup Condition="'$(Platform)' == 'Win32'">
-    <OutDir>$(LocalGamePath)\Mods\WoG\eraplugins\</OutDir>
-    <MapFileName Condition="'$(Configuration)' == 'Debug'">$(LocalGamePath)\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
-    <MapFileName Condition="'$(Configuration)' == 'Release'">$(LocalToolsPath)\ExeMapCompiler\$(ProjectName).map</MapFileName>
-	<TargetName>$(ProjectName)</TargetName>
-    <TargetExt>.era</TargetExt>
-  </PropertyGroup>
-
-  <!-- Настройки для Debug Win32 -->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <SDLCheck>false</SDLCheck>
-    <ConformanceMode>false</ConformanceMode>
-    <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    <LanguageStandard>Default</LanguageStandard>
-  </PropertyGroup>
-
-  <!-- Настройки для Release Win32 -->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <SDLCheck>false</SDLCheck>
-    <ConformanceMode>false</ConformanceMode>
-    <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    <LanguageStandard>Default</LanguageStandard>
-    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-    <BufferSecurityCheck>true</BufferSecurityCheck>
-    <StructMemberAlignment>Default</StructMemberAlignment>
-    <Optimization>MaxSpeed</Optimization>
-    <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-    <FunctionLevelLinking>true</FunctionLevelLinking>
-    <IntrinsicFunctions>true</IntrinsicFunctions>
-    <EnableCOMDATFolding>true</EnableCOMDATFolding>
-    <OptimizeReferences>true</OptimizeReferences>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
 
-  <!-- Глобально определяем ProjectName для всех проектов -->
-  <PropertyGroup>
-    <ProjectName>$(MSBuildProjectName)</ProjectName>
-  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <SDLCheck>false</SDLCheck>
+      <CharacterSet>MultiByte</CharacterSet>
+    </ClCompile>
 
-  <!-- Глобально добавляем макрос PROJECT_NAME, _CRT_SECURE_NO_WARNINGS и отключаем предкомпилированные заголовки для всех проектов -->
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <LinkIncremental>false</LinkIncremental>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- ===================== -->
+  <!-- PLATFORM SPECIFIC -->
+  <!-- ===================== -->
+
+  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32' AND '$(Configuration)'=='Debug'">
+    <Link>
+      <MapFileName>$(LocalGamePath)\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32' AND '$(Configuration)'=='Release'">
+    <Link>
+      <MapFileName>$(LocalToolsPath)\ExeMapCompiler\$(ProjectName).map</MapFileName>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- ===================== -->
+  <!-- GLOBAL DEFINES -->
+  <!-- ===================== -->
+
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>PROJECT_NAME="$(ProjectName)";_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>
+        UNICODE=0;
+        _UNICODE=0;
+        PROJECT_NAME="$(ProjectName)";
+        _CRT_SECURE_NO_WARNINGS;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>
