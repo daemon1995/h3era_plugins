@@ -1,4 +1,6 @@
 #pragma once
+#define ERA_MODLIST
+
 #include "framework.h"
 class CombatEmulator
 {

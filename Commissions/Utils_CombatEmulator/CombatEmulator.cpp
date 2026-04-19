@@ -16,16 +16,28 @@ DllExport BOOL StartCombatEmulator(H3Hero *attHero, H3Hero *defHero, const BOOL 
     return StartRealCombat(attHero, defHero, blockMagic, specialTerrain, blockRunning);
 }
 
+DllExport BOOL GameModIsLoaded(LPCSTR modName)
+{
+    if (!modName)
+    {
+        return false;
+    }
+
+    auto modList = modList::GetEraModList(true);
+    return std::find(modList.begin(), modList.end(), modName) != modList.end();
+}
+
 struct PseudoCombatManager
 {
 
     H3Hero heroCopies[2];
+    BOOL inCombat = false;
+
     int blockMagic;
     int blockRunning;
     int specialTerrain;
 
 } pseudoCmb;
-BOOL inCombat = false;
 
 enum eHeroError
 {
@@ -115,16 +127,18 @@ BOOL StartRealCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, 
     }
     if (blockMagic)
     {
-
         patchesToBlockAiMagic[0] = _PI->WriteCodePatch(0x0478191, "%n", 5);
         patchesToBlockAiMagic[1] = _PI->WriteCodePatch(0x04781AD, "%n", 5);
     }
 
-    //   IntAt(0x06987CC) = true;
+    pseudoCmb.inCombat = true;
+    const BOOL isQuick = IntAt(0x06987CC);
+    IntAt(0x06987CC) = true;
     auto result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), pos, atkHero, &atkHero->army, 0, nullptr,
                               defHero, &defHero->army, -1, 1, 0);
+    IntAt(0x06987CC) = isQuick;
 
-    inCombat = false;
+    pseudoCmb.inCombat = false;
     if (patchToBlockDlgScreen)
     {
         patchToBlockDlgScreen->Destroy();
@@ -134,13 +148,12 @@ BOOL StartRealCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, 
 
         patchToBlockRun->Destroy();
 
-    for (auto& patch : patchesToBlockAiMagic)
+    for (auto &patch : patchesToBlockAiMagic)
     {
         if (patch)
         {
             patch->Destroy();
         }
-
     }
     // CombatEmulator::GetInstance()->StartCombat(attHero, defHero, mapItem);
 
@@ -165,19 +178,18 @@ char __stdcall CombatEmulator::GameMgr_CreateSaveGameFile(HiHook *h, H3Game *gam
                                                           const DWORD a4, const DWORD a5, const DWORD a6)
 {
 
-    if (inCombat)
+    if (pseudoCmb.inCombat)
         return 0;
 
     return THISCALL_6(char, h->GetDefaultFunc(), gameMgr, saveName, a3, a4, a5, a6);
 }
 void __stdcall CombatMgr_ChooseSpecialTerrain(HiHook *h, H3CombatManager *cmb)
 {
-    if (inCombat)
+    if (pseudoCmb.inCombat)
     {
-        cmb->specialTerrain = pseudoCmb.specialTerrain;
-        return;
+        return THISCALL_1(void, h->GetDefaultFunc(), cmb);
     }
-    return THISCALL_1(void, h->GetDefaultFunc(), cmb);
+    cmb->specialTerrain = pseudoCmb.specialTerrain;
 }
 void CombatEmulator::CreatePatches(PatcherInstance *_pi)
 {
