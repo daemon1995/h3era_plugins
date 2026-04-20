@@ -230,13 +230,11 @@ enum eBuildingInfoFrames : int
     CANT_BUILD = 1,
     CANT_AFFORD = 2,
 };
-eBuildingInfoFrames Town_GetExtendedInfoFrameId(const H3Town *town)
-{
 
+static eBuildingInfoFrames Town_GetExtendedInfoFrameId(const H3Town *town)
+{
     if (town->builtThisTurn)
-    {
         return eBuildingInfoFrames::CANT_BUILD;
-    }
 
     eBuildingInfoFrames result = eBuildingInfoFrames::NOTHING_TO_BUILD;
 
@@ -282,24 +280,6 @@ void AdjustTownBuiltButtonPosition(H3DlgDefButton *defButton, const int townInde
     {
         defButton->HideDeactivate();
     }
-    /**
-    * TESTING ALTERNATIVE LOGIC
-    switch (result)
-    {
-    case eBuildingInfoFrames::AVAILABLE_TO_BUILD:
-    case eBuildingInfoFrames::CANT_BUILD:
-
-        defButton->HideDeactivate();
-        break;
-
-    case eBuildingInfoFrames::NOTHING_TO_BUILD:
-    case eBuildingInfoFrames::CANT_AFFORD:
-        defButton->SetFrame(result); // show built
-        defButton->ShowActivate();
-    default:
-        break;
-    }
-    */
 }
 
 void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dlg, const BOOL draw,
@@ -459,21 +439,91 @@ void __stdcall H3TownDlg__SetSmallTownFrame(HiHook *h, H3TownDialog *dlg, signed
         GraphicsEnhancements::Get().DrawTownDlgBuiltStatus(dlg);
     }
 }
-DWORD __stdcall Dlg_RightClick_Town_Create(HiHook *h, H3BaseDlg *dlg, H3Town *town, DWORD a3)
+void __stdcall KingdomOverviewDlg_CreateAndRedrawItems(HiHook *h, H3Game *game, const BOOL redrawDlg,
+                                                       const BOOL createItems)
 {
 
-    DWORD result = THISCALL_3(DWORD, h->GetDefaultFunc(), dlg, town, a3);
+    THISCALL_3(void, h->GetDefaultFunc(), game, redrawDlg, createItems);
+
+    const BOOL isTownsView = IntAt(0x069CCA0) == 1;
+
+    const auto firstItemIdDrawn = reinterpret_cast<int *>(0x069CCA4)[1];
+    auto playerTowns = game->GetPlayer()->towns;
+
+    auto dlg = *reinterpret_cast<H3BaseDlg **>(0x069CC88);
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        const int itemId = 40 * (i * 5 + 5) + 4;
+        auto townId = playerTowns[i + firstItemIdDrawn];
+
+        const auto originalDlgDef = dlg->GetH3DlgItem(itemId);
+        if (originalDlgDef == nullptr || townId < 0)
+            continue;
+
+        const auto town = &game->towns[townId];
+
+        const int indeicatorButtonId = itemId + 21;
+        H3DlgDef *buildingIndicatorButton = dlg->GetDef(indeicatorButtonId);
+
+        if (!originalDlgDef->IsVisible() && buildingIndicatorButton)
+        {
+            buildingIndicatorButton->Hide();
+            continue;
+        }
+
+        if (!isTownsView)
+            continue;
+
+        if (buildingIndicatorButton == nullptr)
+        {
+            H3DefLoader def("tpthchk.def");
+            const int x = originalDlgDef->GetX() + originalDlgDef->GetWidth() - def->widthDEF;
+            const int y = originalDlgDef->GetY() + originalDlgDef->GetHeight() - def->heightDEF;
+            buildingIndicatorButton = H3DlgDef::Create(x, y, indeicatorButtonId, def->GetName());
+            dlg->AddItem(buildingIndicatorButton);
+            buildingIndicatorButton->DeActivate();
+        }
+
+        if (buildingIndicatorButton)
+        {
+            const auto extendedInfoFrameId = Town_GetExtendedInfoFrameId(town);
+            if (extendedInfoFrameId == eBuildingInfoFrames::NOTHING_TO_BUILD ||
+                extendedInfoFrameId == eBuildingInfoFrames::CANT_AFFORD)
+            {
+                buildingIndicatorButton->SetFrame(extendedInfoFrameId);
+                buildingIndicatorButton->Show();
+                buildingIndicatorButton->Draw();
+                buildingIndicatorButton->Refresh();
+            }
+            else
+            {
+                buildingIndicatorButton->Hide();
+            }
+        }
+    }
+}
+
+DWORD __stdcall Dlg_RightClick_Town_Create(HiHook *h, H3BaseDlg *dlg, H3Town *town, const int viewAccessLevel)
+{
+
+    DWORD result = THISCALL_3(DWORD, h->GetDefaultFunc(), dlg, town, viewAccessLevel);
+    if (viewAccessLevel < 3) // either town owner or ally or vision power == 3
+    {
+        return result;
+    }
+
     auto extendedInfoFrameId = Town_GetExtendedInfoFrameId(town);
     if (extendedInfoFrameId == eBuildingInfoFrames::NOTHING_TO_BUILD ||
         extendedInfoFrameId == eBuildingInfoFrames::CANT_AFFORD)
     {
         if (const auto originalDlgDef = dlg->GetDef(2001))
         {
-            H3LoadedDef *def = H3LoadedDef::Load("tpthchk.def");
+            H3DefLoader def("tpthchk.def");
             const int x = originalDlgDef->GetX() + originalDlgDef->GetWidth() - def->widthDEF;
             const int y = originalDlgDef->GetY() + originalDlgDef->GetHeight() - def->heightDEF;
-            H3DlgDef *buildingIndicataorButton = H3DlgDef::Create(x, y, 2002, def->GetName(), extendedInfoFrameId);
-            dlg->AddItem(buildingIndicataorButton);
+            H3DlgDef *buildingIndicatorButton = H3DlgDef::Create(x, y, 2002, def->GetName(), extendedInfoFrameId);
+            dlg->AddItem(buildingIndicatorButton);
         }
     }
     return result;
@@ -542,6 +592,7 @@ void GraphicsEnhancements::CreatePatches() noexcept
 
         WriteHiHook(0x05C5EBC, THISCALL_, H3TownDlg__SetSmallTownFrame);
         WriteHiHook(0x0530600, THISCALL_, Dlg_RightClick_Town_Create);
+        WriteHiHook(0x051C210, THISCALL_, KingdomOverviewDlg_CreateAndRedrawItems);
     }
 }
 
