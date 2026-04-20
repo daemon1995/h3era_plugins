@@ -1,6 +1,7 @@
 #include "CombatEmulator.h"
 
 CombatEmulator *CombatEmulator::instance = nullptr;
+#pragma comment(linker, "/EXPORT:StartCombatEmulator=_StartCombatEmulator@20")
 
 //
 // signed int __thiscall AdvMgr::StartBattle(H3AdventureManager *AdvMan, int PosMixed, H3Hero *attHero, H3Army *attArmy,
@@ -10,21 +11,10 @@ CombatEmulator *CombatEmulator::instance = nullptr;
 // AdvMgr_Hero_BattleMgr_With_Neutral_Monsters(this, hero, v8, &a3, v5, PosMixed, -1, 0, 0, -1, 0, 0);
 BOOL StartRealCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const int specialTerrain,
                      const BOOL blockRunning);
-DllExport BOOL StartCombatEmulator(H3Hero *attHero, H3Hero *defHero, const BOOL blockMagic, const int specialTerrain,
-                                   const BOOL blockRunning)
+DllExport BOOL __stdcall StartCombatEmulator(H3Hero *attHero, H3Hero *defHero, const BOOL blockMagic,
+                                             const int specialTerrain, const BOOL blockRunning)
 {
     return StartRealCombat(attHero, defHero, blockMagic, specialTerrain, blockRunning);
-}
-
-DllExport BOOL GameModIsLoaded(LPCSTR modName)
-{
-    if (!modName)
-    {
-        return false;
-    }
-
-    auto modList = modList::GetEraModList(true);
-    return std::find(modList.begin(), modList.end(), modName) != modList.end();
 }
 
 struct PseudoCombatManager

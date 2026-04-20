@@ -48,12 +48,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.era</TargetExt>
-    <OutDir>$(LocalGamePath)\Mods\Commissions\eraplugins\</OutDir>
+    <OutDir>$(LocalGamePath)\Mods\goldfish - Combat Emulator\eraplugins\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.era</TargetExt>
-    <OutDir>$(LocalGamePath)\Mods\Commissions\eraplugins\</OutDir>
+    <OutDir>$(LocalGamePath)\Mods\goldfish - Combat Emulator\eraplugins\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Link>

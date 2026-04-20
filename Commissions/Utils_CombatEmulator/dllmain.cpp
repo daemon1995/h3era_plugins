@@ -1,8 +1,22 @@
 // dllmain.cpp : Определяет точку входа для приложения DLL.
 #define _H3API_PLUGINS_
+#define ERA_MODLIST
 #include "framework.h"
+#pragma comment(linker, "/EXPORT:GameModIsLoaded=_GameModIsLoaded@4")
 
-using namespace h3;
+DllExport BOOL __stdcall GameModIsLoaded(LPCSTR modName)
+{
+    if (!modName)
+    {
+        return false;
+    }
+
+    std::string modNameStr(modName);
+    std::transform(modNameStr.begin(), modNameStr.end(), modNameStr.begin(), ::tolower);
+
+    auto modList = modList::GetEraModList(true);
+    return std::find(modList.begin(), modList.end(), modName) != modList.end();
+}
 
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
