@@ -2,10 +2,9 @@
 #define _H3API_PLUGINS_
 #include "framework.h"
 
-using namespace h3;
-
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
+
 namespace dllText
 {
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
