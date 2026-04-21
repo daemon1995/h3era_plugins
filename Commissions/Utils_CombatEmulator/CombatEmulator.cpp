@@ -2,29 +2,43 @@
 
 CombatEmulator *CombatEmulator::instance = nullptr;
 #pragma comment(linker, "/EXPORT:StartCombatEmulator=_StartCombatEmulator@20")
+#pragma comment(linker, "/EXPORT:ApplyBlockingPatches=_ApplyBlockingPatches@12")
+#pragma comment(linker, "/EXPORT:UndoBlockingPatches=_UndoBlockingPatches@0")
 
-//
-// signed int __thiscall AdvMgr::StartBattle(H3AdventureManager *AdvMan, int PosMixed, H3Hero *attHero, H3Army *attArmy,
-//                                          int PlayerIndex, H3Town *defTown, H3Hero *defHero, H3Army *defArmy, int
-//                                          seed, signed int a10, int isBank)
-
-// AdvMgr_Hero_BattleMgr_With_Neutral_Monsters(this, hero, v8, &a3, v5, PosMixed, -1, 0, 0, -1, 0, 0);
-BOOL StartRealCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const int specialTerrain,
-                     const BOOL blockRunning);
-DllExport BOOL __stdcall StartCombatEmulator(H3Hero *attHero, H3Hero *defHero, const BOOL blockMagic,
-                                             const int specialTerrain, const BOOL blockRunning)
+INT StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const BOOL blockRunning,
+                      const int specialTerrain);
+DllExport INT __stdcall StartCombatEmulator(H3Hero *attHero, H3Hero *defHero, const BOOL blockMagic,
+                                            const int specialTerrain, const BOOL blockRunning)
 {
-    return StartRealCombat(attHero, defHero, blockMagic, specialTerrain, blockRunning);
+    return StartPseudoCombat(attHero, defHero, blockMagic, blockRunning, specialTerrain);
 }
 
+DllExport BOOL __stdcall ApplyBlockingPatches(const BOOL blockCombatResultDlg, const BOOL blockMagic,
+                                              const BOOL blockRunning)
+{
+    CombatEmulator::instance->BeforeCombatStart(blockCombatResultDlg, blockMagic, blockRunning);
+    return 1;
+}
+
+DllExport BOOL __stdcall UndoBlockingPatches()
+{
+    CombatEmulator::instance->AfterCombatEnd();
+    return 1;
+}
+
+void CombatEmulator::Init()
+{
+    if (!instance)
+    {
+        instance = new CombatEmulator();
+        instance->CreatePatches(_PI);
+    }
+}
 struct PseudoCombatManager
 {
-
     H3Hero heroCopies[2];
+    WoG::NPC npcCopies[2];
     BOOL inCombat = false;
-
-    int blockMagic;
-    int blockRunning;
     int specialTerrain;
 
 } pseudoCmb;
@@ -39,7 +53,6 @@ enum eHeroError
 eHeroError ValidateHero(H3Hero *hero)
 {
 
-    P_CombatManager->specialTerrain = 0;
     if (!hero)
     {
         return HERO_ERROR_NO_HERO;
@@ -53,137 +66,112 @@ eHeroError ValidateHero(H3Hero *hero)
 
     return HERO_NO_ERROR;
 }
-BOOL StartRealCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const int specialTerrain,
-                     const BOOL blockRunning)
+INT StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const BOOL blockRunning,
+                      const int specialTerrain)
 {
-
     if (ValidateHero(_attHero) != HERO_NO_ERROR || ValidateHero(_defHero) != HERO_NO_ERROR)
     {
         // H3Messagebox("Invalid hero(s) provided to StartCombatEmulator. Combat will not start. Error");
-        // return 0;
+        return -2;
     }
-    pseudoCmb.blockMagic = blockMagic;
-    pseudoCmb.blockRunning = blockRunning;
-    pseudoCmb.specialTerrain = specialTerrain;
 
-    UINT pos = 0; // _attHero->mixedPosition;
-    // inCombat = true;
-    // if (0)
-    //{
+    // copy original NPC
+    auto atkNpc = WoG::NPC::Get(_attHero->id);
+    libc::memcpy(&pseudoCmb.npcCopies[0], atkNpc, sizeof(WoG::NPC));
+    auto defNpc = WoG::NPC::Get(_defHero->id);
+    libc::memcpy(&pseudoCmb.npcCopies[1], defNpc, sizeof(WoG::NPC));
 
-    //    if (mapItem)
-    //    {
-    //        pos = mapItem->GetCoordinates().Pack();
-    //    }
+    // init passed arguments
 
-    //    int count = 123;
-    //    auto result = THISCALL_12(int, 0x04AC270, P_AdventureManager->Get(), _attHero, 1, &count, nullptr, pos, -1, 0,
-    //                              0, -1, 0, 0);
-
-    //    return 1;
-    //}
-
-    // P_AdventureManager->SetNextManager(P_CombatManager->Get());
-    auto cmb = P_CombatManager->Get();
-    auto adv = P_AdventureManager->Get();
-    auto win = P_WindowManager->Get();
-    auto mos = P_MouseManager->Get();
-    //	P_InputManager->SetPreviousManager(P_CombatManager->Get());
-    // adv->SetManagers(0, win);
-
-    //    win->SetManagers(cmb, mos);
-    //	cmb->SetPreviousManager(adv);
-    // adv->DemobilizeHero();
-
-    auto atkHero = &pseudoCmb.heroCopies[0];
-    auto defHero = &pseudoCmb.heroCopies[1];
+    constexpr UINT pos = 0;                  // _attHero->mixedPosition;
+    auto atkHero = &pseudoCmb.heroCopies[0]; // create hero copies to avoid modifying original heroes during combat
     libc::memcpy(atkHero, _attHero, sizeof(H3Hero));
+    constexpr H3Town *const town = nullptr;
+    auto defHero = &pseudoCmb.heroCopies[1];
     libc::memcpy(defHero, _defHero, sizeof(H3Hero));
-    Patch *patchToBlockDlgScreen = nullptr, *patchToBlockRun = nullptr;
-    Patch *patchesToBlockAiMagic[2] = {0, 0}; // nullptr, * patchToBlockRun = nullptr;
-    if (atkHero->owner == -1)
-    {
-        patchToBlockDlgScreen = _PI->WriteJmp(0x0475CF4, 0x0475D02);
-        atkHero->owner = 1;
-    }
-    if (blockRunning)
-    {
-        patchToBlockRun = _PI->WriteJmp(0x041E6FB, 0x041EC2D);
-    }
+    constexpr int seed = -1; // generate seed
+    constexpr BOOL combatIsLocal = TRUE;
+    constexpr BOOL isBank = FALSE;
 
-    if (defHero->owner == -1)
-    {
-        defHero->owner = 1;
-    }
-    if (blockMagic)
-    {
-        patchesToBlockAiMagic[0] = _PI->WriteCodePatch(0x0478191, "%n", 5);
-        patchesToBlockAiMagic[1] = _PI->WriteCodePatch(0x04781AD, "%n", 5);
-    }
+    // modify combat settings based on passed arguments
+    ApplyBlockingPatches(TRUE, blockMagic, blockRunning);
+    const BOOL isQuick = IntAt(0x06987CC); // isQuickCombatEnabled
+    IntAt(0x06987CC) = true;               // set combat quick
 
-    pseudoCmb.inCombat = true;
-    const BOOL isQuick = IntAt(0x06987CC);
-    IntAt(0x06987CC) = true;
-    auto result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), pos, atkHero, &atkHero->army, 0, nullptr,
-                              defHero, &defHero->army, -1, 1, 0);
-    IntAt(0x06987CC) = isQuick;
+    const int atId = atkHero->id;
+    P_AdventureManager->DemobilizeHero();
+    atkHero->owner = -1;
+    defHero->owner = -1;
 
+    h3::H3HeroInfo *hero_info_table = P_HeroInfo->Get();
+
+    pseudoCmb.inCombat = true; // set flag to indicate combat is active, so hooks can modify behavior accordingly
+    auto result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), pos, atkHero, &atkHero->army, -1, town,
+                              defHero, &defHero->army, seed, combatIsLocal, isBank);
     pseudoCmb.inCombat = false;
-    if (patchToBlockDlgScreen)
-    {
-        patchToBlockDlgScreen->Destroy();
-    }
+    IntAt(0x06987CC) = isQuick; // restore original quick combat setting
+    UndoBlockingPatches();
 
-    if (patchToBlockRun)
-
-        patchToBlockRun->Destroy();
-
-    for (auto &patch : patchesToBlockAiMagic)
-    {
-        if (patch)
-        {
-            patch->Destroy();
-        }
-    }
-    // CombatEmulator::GetInstance()->StartCombat(attHero, defHero, mapItem);
-
-    return 1;
+    // restore original NPC data to prevent side effects on the rest of the game
+    libc::memcpy(atkNpc, &pseudoCmb.npcCopies[0], sizeof(WoG::NPC));
+    libc::memcpy(defNpc, &pseudoCmb.npcCopies[1], sizeof(WoG::NPC));
+    return result;
 }
 
-void CombatEmulator::Init()
+void CombatEmulator::BeforeCombatStart(const BOOL blockCombatResultDlg, const BOOL blockMagic, const BOOL blockRunning)
 {
-
-    if (!instance)
+    BOOL args[] = {blockCombatResultDlg, blockMagic, blockRunning};
+    for (size_t i = 0; i < 3; i++)
     {
-        instance = new CombatEmulator();
-        CreatePatches(_PI);
+        if (args[i])
+            patches[i]->Apply();
     }
+    patchToAfterCombatProc->Apply();
 }
 
-void CombatEmulator::BeforeCombatStart()
+void CombatEmulator::AfterCombatEnd()
 {
+    for (auto &patch : patches)
+    {
+        patch->Undo();
+    }
 }
 
 char __stdcall CombatEmulator::GameMgr_CreateSaveGameFile(HiHook *h, H3Game *gameMgr, LPCSTR saveName, const DWORD a3,
                                                           const DWORD a4, const DWORD a5, const DWORD a6)
 {
-
     if (pseudoCmb.inCombat)
-        return 0;
+        return 1;
 
     return THISCALL_6(char, h->GetDefaultFunc(), gameMgr, saveName, a3, a4, a5, a6);
 }
 void __stdcall CombatMgr_ChooseSpecialTerrain(HiHook *h, H3CombatManager *cmb)
 {
-    if (pseudoCmb.inCombat)
-    {
+    if (!pseudoCmb.inCombat)
         return THISCALL_1(void, h->GetDefaultFunc(), cmb);
-    }
+
     cmb->specialTerrain = pseudoCmb.specialTerrain;
 }
+
 void CombatEmulator::CreatePatches(PatcherInstance *_pi)
 {
+    if (isIinited)
+        return;
+    isIinited = true;
 
     _pi->WriteHiHook(0x04BEB60, THISCALL_, GameMgr_CreateSaveGameFile);
     _pi->WriteHiHook(0x046381E, THISCALL_, CombatMgr_ChooseSpecialTerrain);
+
+    patchToBlockDlgScreen = _PI->WriteJmp(0x0475CF4, 0x0475D02);
+    patchToBlockDlgScreen->Undo();
+
+    patchToBlockAiMagic = _PI->WriteJmp(0x0422F4E, 0x04230BC);
+    patchToBlockAiMagic->Undo();
+
+    patchToBlockRun = _PI->WriteJmp(0x041E6FB, 0x041EC2D);
+    patchToBlockRun->Undo();
+
+    // block whole after combat proc
+    patchToAfterCombatProc = _PI->WriteJmp(0x04AE010, 0x04AE61B);
+    patchToAfterCombatProc->Undo();
 }

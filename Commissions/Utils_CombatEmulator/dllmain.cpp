@@ -4,29 +4,41 @@
 #include "framework.h"
 #pragma comment(linker, "/EXPORT:GameModIsLoaded=_GameModIsLoaded@4")
 
-DllExport BOOL __stdcall GameModIsLoaded(LPCSTR modName)
-{
-    if (!modName)
-    {
-        return false;
-    }
-
-    std::string modNameStr(modName);
-    std::transform(modNameStr.begin(), modNameStr.end(), modNameStr.begin(), ::tolower);
-
-    auto modList = modList::GetEraModList(true);
-    return std::find(modList.begin(), modList.end(), modName) != modList.end();
-}
-
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
+LPCSTR pluginVersion = "0.7.0";
+} // namespace dllText
+class CombatEmulator
+{
+  public:
+    static void Init();
+};
+
+DllExport BOOL __stdcall GameModIsLoaded(LPCSTR modName)
+{
+    if (!modName || libc::strcmp(modName, h3_NullString) == 0)
+    {
+        return false;
+    }
+
+    const auto &modList = modList::GetEraModList();
+    for (auto &i : modList)
+    {
+        if (libc::strcmpi(modName, i.c_str()) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 _LHF_(HooksInit)
 {
+    CombatEmulator::Init();
+
     return EXEC_DEFAULT;
 }
 
