@@ -4,34 +4,9 @@
 
 namespace modList
 {
-static std::vector<std::string> globalModList;
+static std::vector<std::string> globalModList, lowerCaseModList;
 constexpr INT CASE_TO_LOWER = 1;
 constexpr INT CASE_DEFAULT = 0;
-// Функция для получения каталога исполняемого процесса
-inline std::string GetExecutableDirectory()
-{
-    // Буфер для хранения полного пути
-    char path[MAX_PATH];
-
-    // Получаем полный путь к исполняемому файлу
-    if (GetModuleFileNameA(NULL, path, MAX_PATH) == 0)
-    {
-        return ""; // В случае ошибки возвращаем пустую строку
-    }
-
-    // Преобразуем путь в строку C++
-    std::string fullPath(path);
-
-    // Находим последнюю обратную косую черту (разделитель каталогов)
-    size_t lastSlashPos = fullPath.find_last_of("\\/");
-    if (lastSlashPos == std::string::npos)
-    {
-        return ""; // Если разделитель не найден, возвращаем пустую строку
-    }
-
-    // Возвращаем подстроку до последней обратной косой черты
-    return fullPath.substr(0, lastSlashPos);
-}
 
 // Чтение int из буфера (предположим, little endian)
 inline int ReadInt(const char *&p)
@@ -100,22 +75,20 @@ inline int GetEraModList(std::vector<std::string> &modList, const BOOL toLower =
 {
     modList.clear();
 
-    // std::istringstream stream(GetEraMappedModList());
-    // std::string line;
-
     if (globalModList.empty())
     {
         GetEraMappedModList(globalModList);
     }
-    modList = globalModList;
-
-    if (toLower)
+    if (toLower && lowerCaseModList.empty())
     {
-        for (auto &modName : modList)
+        lowerCaseModList = globalModList;
+        for (auto &modName : lowerCaseModList)
         {
             std::transform(modName.begin(), modName.end(), modName.begin(), ::tolower);
         }
     }
+    modList = toLower ? lowerCaseModList : globalModList;
+
     return modList.size();
 }
 inline std::vector<std::string> GetEraModList(const BOOL toLower = modList::CASE_DEFAULT)
