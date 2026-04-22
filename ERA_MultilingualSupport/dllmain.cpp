@@ -6,9 +6,9 @@ using namespace h3;
 namespace dllText
 {
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
-constexpr const char *PLUGIN_VERSION = "2.4";
+constexpr const char *PLUGIN_VERSION = "2.5";
 constexpr const char *PLUGIN_DATA = __DATE__;
-constexpr const char *INSTANCE_NAME = "EraPlugin.LanguageSelectionDlg.daemon_n";
+constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
 
 Patcher *globalPatcher = nullptr;
@@ -18,7 +18,7 @@ void __stdcall OnReportVersion(Era::TEvent *e)
 {
 
     // show plugin name, version and compilation time
-    sprintf(h3_TextBuffer, "{%s} v%s (%s)", "ERA_MultilingualSupport", dllText::PLUGIN_VERSION, __DATE__);
+    sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
 }
@@ -56,9 +56,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             {
 
                 Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
-                Era::RegisterHandler(OnReportVersion, "OnReportVersion");
-                //   Era::RegisterHandler(OnAfterWog, "OnAfterWog");
-                Era::RegisterHandler(OnAfterCreateWindow, "OnAfterCreateWindow");
+                _REH_(OnReportVersion);
+                // _REH_(OnAfterWog);
+                _REH_(OnAfterCreateWindow);
+
                 globalPatcher = GetPatcher();
                 _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
                 // must have hooks before other

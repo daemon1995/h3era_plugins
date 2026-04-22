@@ -104,16 +104,16 @@ BOOL ExportManager::CreateMonstersJson(LPCSTR filePath, const BOOL originalData,
     {
         auto &creatureInfo = P_CreatureInformation[i];
         auto &ptr = creatureInfo.nameSingular;
-        if (ptr && stricmp(ptr, h3_NullString))
+        if (ptr && libc::strcmpi(ptr, h3_NullString))
             j["era"]["monsters"][std::to_string(i)]["name"]["singular"] = LPCSTR_to_wstring(ptr);
 
         ptr = creatureInfo.namePlural;
-        if (ptr && stricmp(ptr, h3_NullString))
+        if (ptr && libc::strcmpi(ptr, h3_NullString))
             j["era"]["monsters"][std::to_string(i)]["name"]["plural"] = LPCSTR_to_wstring(ptr);
 
         // Если описание не пустое, добавляем его в JSON
         ptr = creatureInfo.description;
-        if (ptr && stricmp(ptr, h3_NullString))
+        if (ptr && libc::strcmpi(ptr, h3_NullString))
             j["era"]["monsters"][std::to_string(i)]["name"]["description"] = LPCSTR_to_wstring(ptr);
     }
 
@@ -163,7 +163,7 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
     LPCSTR *table = H3ObjectName::Get();
     for (size_t i = 0; i < objectsNum; ++i)
     {
-        if (stricmp(table[i], h3_NullString))
+        if (libc::strcmpi(table[i], h3_NullString))
             j["era"]["objects"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
     table = H3DwellingNames1::Get();
@@ -176,7 +176,7 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
 
     for (size_t i = minId1; i < maxId1; ++i)
     {
-        if (stricmp(table[i], h3_NullString))
+        if (libc::strcmpi(table[i], h3_NullString))
             j["era"]["dwellings1"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
 
@@ -192,7 +192,7 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
 
     for (size_t i = minId4; i < maxId4; ++i)
     {
-        if (stricmp(table[i], h3_NullString))
+        if (libc::strcmpi(table[i], h3_NullString))
             j["era"]["dwellings4"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
 
@@ -353,24 +353,24 @@ BOOL ExportManager::CreateHeroesJson(LPCSTR filePath, const BOOL originalData, c
     {
 
         str = P_HeroInfo[heroType].name;
-        if (str && (stricmp(str, h3_NullString)))
+        if (str && (libc::strcmpi(str, h3_NullString)))
             j["era"]["heroes"][std::to_string(heroType)]["name"] = LPCSTR_to_wstring(str);
 
         // Export hero data
         str = P_HeroSpecialty[heroType].spShort;
-        if (str && (stricmp(str, h3_NullString)))
+        if (str && (libc::strcmpi(str, h3_NullString)))
             j["era"]["heroes"][std::to_string(heroType)]["specialty"]["short"] = LPCSTR_to_wstring(str);
 
         str = P_HeroSpecialty[heroType].spFull;
-        if (str && (stricmp(str, h3_NullString)))
+        if (str && (libc::strcmpi(str, h3_NullString)))
             j["era"]["heroes"][std::to_string(heroType)]["specialty"]["full"] = LPCSTR_to_wstring(str);
 
         str = P_HeroSpecialty[heroType].spDescr;
-        if (str && (stricmp(str, h3_NullString)))
+        if (str && (libc::strcmpi(str, h3_NullString)))
             j["era"]["heroes"][std::to_string(heroType)]["specialty"]["description"] = LPCSTR_to_wstring(str);
 
         str = (*reinterpret_cast<LPCSTR **>(0x005B9A18 + 2))[heroType + 1];
-        if (str && (stricmp(str, h3_NullString)))
+        if (str && (libc::strcmpi(str, h3_NullString)))
         {
             j["era"]["heroes"][std::to_string(heroType)]["biography"] = LPCSTR_to_wstring(str);
         }
