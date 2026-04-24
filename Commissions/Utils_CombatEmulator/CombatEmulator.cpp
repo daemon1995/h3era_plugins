@@ -106,8 +106,8 @@ INT StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic,
     h3::H3HeroInfo *hero_info_table = P_HeroInfo->Get();
 
     pseudoCmb.inCombat = true; // set flag to indicate combat is active, so hooks can modify behavior accordingly
-    auto result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), pos, atkHero, &atkHero->army, -1, town,
-                              defHero, &defHero->army, seed, combatIsLocal, isBank);
+    auto result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), pos, atkHero, &atkHero->army, defHero->owner,
+                              town, defHero, &defHero->army, seed, combatIsLocal, isBank);
     pseudoCmb.inCombat = false;
     IntAt(0x06987CC) = isQuick; // restore original quick combat setting
     UndoBlockingPatches();
