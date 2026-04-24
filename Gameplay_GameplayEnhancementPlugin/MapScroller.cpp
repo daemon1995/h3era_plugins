@@ -152,15 +152,10 @@ int __stdcall MapScroller::AdvMgr_MouseMove(HiHook *h, H3AdventureManager *adv, 
         {
             if (h3::GetTime() - mapScroller.sinceLastDrawTime >= 8) // thanks to baratorch for idea
             {
-                int mapX = adv->screenPosition.GetX();
-                int mapY = adv->screenPosition.GetY();
-                const int mapZ = adv->screenPosition.GetZ();
+                UINT mapX = adv->screenPosition.GetX();
+                UINT mapY = adv->screenPosition.GetY();
+                const UINT mapZ = adv->screenPosition.GetZ();
                 const size_t mapSize = *P_MapSize;
-
-                if (mapX >= mapSize)
-                    mapX -= 1024; // draw outside map tiles
-                if (mapY >= mapSize)
-                    mapY -= 1024;
 
                 H3POINT totalOffset(x - mapScroller.startMousePoint.x, y - mapScroller.startMousePoint.y);
 
@@ -224,7 +219,8 @@ Calculator::Calculator(const H3POINT &p, const H3Position &pos) noexcept : point
 {
     UINT mapX = pos.GetX();
     UINT mapY = pos.GetY();
-    int mapSize = *P_MapSize;
+
+    const UINT mapSize = *P_MapSize;
 
     if (mapX >= mapSize)
         mapX -= 1024; // draw outside map tiles

@@ -394,9 +394,9 @@ void __fastcall SettingsDlg::HeightScrollBarProc(INT32 value, H3BaseDlg *dlg)
 
     if (auto stnngsDlg = dynamic_cast<SettingsDlg *>(dlg))
     {
-        stnngsDlg->settings->height = value - HP_LABEL_MAX_OFFSET;
+        stnngsDlg->settings->height = static_cast<float>(value - HP_LABEL_MAX_OFFSET);
 
-        stnngsDlg->labelForHp->SetY(stnngsDlg->originalLabel->GetY() - stnngsDlg->settings->height);
+        stnngsDlg->labelForHp->SetY(stnngsDlg->originalLabel->GetY() - static_cast<int>(stnngsDlg->settings->height));
         dlg->Redraw();
 
         stnngsDlg->HitPointsBarDraw();
@@ -665,7 +665,9 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
 
 BOOL Settings::validateScanCode(eVKey scanCode) const noexcept
 {
-    return scanCode >= 2 && scanCode <= 14 || scanCode >= 16 && scanCode <= 27 || scanCode >= 29 && scanCode <= 58;
+    return scanCode >= eVKey::H3VK_1 && scanCode <= eVKey::H3VK_BACKSPACE ||
+           scanCode >= eVKey::H3VK_Q && scanCode <= eVKey::H3VK_RIGHT_BRACKET ||
+           scanCode >= eVKey::H3VK_CTRL && scanCode <= eVKey::H3VK_ALT;
 }
 
 H3String SettingsDlg::getVirtualKeyName(int vKey) const noexcept
@@ -768,18 +770,17 @@ BOOL Settings::save()
 BOOL Settings::load()
 {
 
-    sprintf(h3_TextBuffer, "%d", 1); // set default buffer
+    libc::sprintf(h3_TextBuffer, "%d", 1); // set default buffer
     if (Era::ReadStrFromIni("enabled", section, iniPath, h3_TextBuffer))
-        isEnabled = atoi(h3_TextBuffer);
+        isEnabled = libc::atoi(h3_TextBuffer);
 
-    sprintf(h3_TextBuffer, "%d", 0); // set default buffer
+    libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
     if (Era::ReadStrFromIni("held", section, iniPath, h3_TextBuffer))
-        isHeld = atoi(h3_TextBuffer);
-
-    sprintf(h3_TextBuffer, "%d", MapVirtualKeyA(VK_CONTROL, MAPVK_VK_TO_CHAR)); // set default buffer
+        isHeld = libc::atoi(h3_TextBuffer);
+    libc::sprintf(h3_TextBuffer, "%d", MapVirtualKeyA(VK_CONTROL, MAPVK_VK_TO_CHAR)); // set default buffer
     if (Era::ReadStrFromIni("keyCode", section, iniPath, h3_TextBuffer))
     {
-        int tempVirtualKey = atoi(h3_TextBuffer);
+        int tempVirtualKey = libc::atoi(h3_TextBuffer);
         int _scanCode = MapVirtualKeyA(tempVirtualKey, MAPVK_VK_TO_VSC);
         if (validateScanCode(eVKey(_scanCode)))
         {
@@ -792,28 +793,27 @@ BOOL Settings::load()
     constexpr const char *keys[SIZE] = {"fillColor", "lossColor", "colorSaturation", "yLabelShift"};
     float *values[SIZE] = {&fcolorFill, &fcolorLoss, &fsaturation, &height};
     // Era::ReadStrFromIni("1", "12","Runtime/game_enhancement_mod.ini", "12");
-    sprintf(h3_TextBuffer, "%.2f", -1.0f); // set default buffer
+    libc::sprintf(h3_TextBuffer, "%.2f", -1.0f); // set default buffer
 
     for (size_t i = 0; i < SIZE; i++)
     {
-        if (Era::ReadStrFromIni(keys[i], section, iniPath, h3_TextBuffer))
+        if (!Era::ReadStrFromIni(keys[i], section, iniPath, h3_TextBuffer))
+            continue;
+
+        const double temp = libc::atof(h3_TextBuffer);
+        if (i == 3)
         {
-            double temp = atof(h3_TextBuffer);
-            if (i == 3)
-            {
-                if (temp >= -HP_LABEL_MAX_OFFSET && temp <= HP_LABEL_MAX_OFFSET)
-                {
-                    *values[i] = temp;
-                }
-            }
-            else
-            {
-                if (temp >= 0.0f && temp <= 1.f)
-                {
-                    *values[i] = temp;
-                }
-            }
+            const int tempInt = static_cast<int>(temp);
+            if (tempInt < -HP_LABEL_MAX_OFFSET || tempInt > HP_LABEL_MAX_OFFSET)
+                continue;
         }
+        else
+        {
+            if (temp < 0.0f || temp > 1.f)
+                continue;
+        }
+
+        *(values[i]) = static_cast<float>(temp);
     }
 
     return 0;

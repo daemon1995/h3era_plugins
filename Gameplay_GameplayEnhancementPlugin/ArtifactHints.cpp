@@ -19,7 +19,7 @@ BOOL ArtifactHints::CreateCombinePartsString(const H3Artifact *artifact, const H
         if (combArt != eCombinationArtifacts::NONE)
         {
             result->Erase();
-            const int lastArtifactId = IntAt(0x717020);
+            const UINT lastArtifactId = IntAt(0x717020);
             bool artsFound = false;
             int combinedArtifactId = eArtifact::NONE;
             for (size_t i = 0; i < lastArtifactId; i++)
@@ -306,14 +306,14 @@ StatBytes::StatBytes(const H3Artifact &art)
     {
         // original stats
         auto source = &reinterpret_cast<INT8 *>(DwordAt(0x04E2E94 + 1))[art.id << 2];
-        memcpy(stats, source, sizeof(stats));
+        libc::memcpy(stats, source, sizeof(stats));
 
         // combo parts stats
         const eCombinationArtifacts combArt = art.GetCombinationArtifactIndex();
 
         if (eCombinationArtifacts::NONE != combArt)
         {
-            const int lastArtifactId = IntAt(0x717020);
+            const UINT lastArtifactId = IntAt(0x717020);
             for (size_t i = 0; i < lastArtifactId; i++)
             {
                 const auto &artPiece = P_ArtifactSetup[i];
@@ -327,7 +327,7 @@ StatBytes::StatBytes(const H3Artifact &art)
 }
 StatBytes::StatBytes()
 {
-    memset(stats, 0, sizeof(stats));
+    libc::memset(stats, 0, sizeof(stats));
 }
 StatBytes::operator bool() const
 {

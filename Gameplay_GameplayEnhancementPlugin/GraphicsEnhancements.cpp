@@ -239,7 +239,7 @@ static eBuildingInfoFrames Town_GetExtendedInfoFrameId(const H3Town *town)
     eBuildingInfoFrames result = eBuildingInfoFrames::NOTHING_TO_BUILD;
 
     const int maxTownsBuildings = GraphicsEnhancements::GetMaxTownBuildingCount();
-    for (size_t i = 0; i < maxTownsBuildings; i++)
+    for (int i = 0; i < maxTownsBuildings; i++)
     {
         if (i == eBuildings::GRAIL)
             continue;

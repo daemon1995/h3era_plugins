@@ -209,7 +209,8 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
     if (instance->needDrawHints)
     {
         // check if tile may have object and visible by user
-        if (mapX >= 0 && mapY >= 0 && mapX < *P_MapSize && mapY < *P_MapSize &&
+        const int mapSize = *P_MapSize;
+        if (mapX >= 0 && mapY >= 0 && mapX < mapSize && mapY < mapSize &&
             H3TileVision::CanViewTile(mapX, mapY, mapZ, instance->playerID))
         {
 
@@ -441,7 +442,7 @@ bool CreateKeyAltHint(H3AdventureManager *advMgr, H3MapItem *cell)
     H3Hero *hero = P_Game->GetHero(currentHero);
 
     // Если навели на героя - ничего не делаем
-    if (H3Position(hero->x, hero->y, hero->z) == mousePosition)
+    if (H3Position(hero->x, hero->y, static_cast<INT8>(hero->z)) == mousePosition)
     {
         return false;
     }

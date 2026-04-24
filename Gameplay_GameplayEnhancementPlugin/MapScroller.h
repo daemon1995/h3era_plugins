@@ -27,8 +27,8 @@ class MapScroller : public IGamePatch
 
   private:
     const RECT scrollLimits;
-    const UINT mapViewW;
-    const UINT mapViewH;
+    const INT mapViewW;
+    const INT mapViewH;
 
     H3Position startMousePosition;
     H3POINT startMousePoint;
