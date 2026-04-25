@@ -22,7 +22,7 @@ const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
 } // namespace dllText
 
-void __stdcall OnReportVersion(Era::TEvent *e)
+_ERH_(OnReportVersion)
 {
     libc::sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
@@ -121,7 +121,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             pluginIsOn = true;
 
             Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
-            Era::RegisterHandler(OnReportVersion, "OnReportVersion");
+            _REH_(OnReportVersion);
 
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
