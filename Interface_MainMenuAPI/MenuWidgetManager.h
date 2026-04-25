@@ -85,7 +85,7 @@ class MenuWidgetManager
 };
 
 // Экспорт для других плагинов
-extern "C" __declspec(dllexport) BOOL __stdcall MainMenu_RegisterWidget(const mainmenu::MenuWidgetInfo &info);
-extern "C" __declspec(dllexport) H3DlgCaptionButton *__stdcall MainMenu_GetDialogButton(const char *name);
-extern "C" __declspec(dllexport) int __stdcall MainMenu_GetDialogButtonId(const char *name);
-extern "C" __declspec(dllexport) BOOL __stdcall MainMenu_SetDialogButtonText(const char *name, const char *text);
+DllExport BOOL __stdcall MainMenu_RegisterWidget(const mainmenu::MenuWidgetInfo &info);
+DllExport H3DlgCaptionButton *__stdcall MainMenu_GetDialogButton(const char *name);
+DllExport int __stdcall MainMenu_GetDialogButtonId(const char *name);
+DllExport BOOL __stdcall MainMenu_SetDialogButtonText(const char *name, const char *text);

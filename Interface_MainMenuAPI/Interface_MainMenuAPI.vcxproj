@@ -70,12 +70,11 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
-      <FunctionLevelLinking>
-      </FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <ConformanceMode>false</ConformanceMode>
     </ClCompile>
@@ -90,6 +89,7 @@
       <ModuleDefinitionFile>Interface_MainMenuAPI.def</ModuleDefinitionFile>
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>D:\SW\ExeMapCompiler\$(TargetName).map</MapFileName>
+      <EnableUAC>false</EnableUAC>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

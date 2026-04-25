@@ -3,7 +3,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.8";
+const char *PLUGIN_VERSION = "1.9";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -131,12 +131,6 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
     return result;
 }
 
-void __stdcall OnAfterWog(Era::TEvent *e)
-{
-
-    // This function is called after the Wog event
-}
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 
@@ -150,7 +144,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
             globalPatcher = GetPatcher();
             // Era::RegisterHandler(OnReportVersion, "OnReportVersion");
-            Era::RegisterHandler(OnAfterWog, "OnAfterWog");
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
             _PI->WriteHiHook(0x04EF247, THISCALL_, DlgMainMenu_Create);
 

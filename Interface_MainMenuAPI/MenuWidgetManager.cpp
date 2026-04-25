@@ -539,28 +539,28 @@ BOOL MenuWidgetManager::SetWidgetText(const std::string &name, LPCSTR text)
     return false;
 }
 
-extern "C" __declspec(dllexport) BOOL __stdcall MainMenu_RegisterWidget(const mainmenu::MenuWidgetInfo &info)
+DllExport BOOL __stdcall MainMenu_RegisterWidget(const mainmenu::MenuWidgetInfo &info)
 {
     if (!info.name)
         return false;
     return MenuWidgetManager::Get().RegisterWidget(info);
 }
 
-extern "C" __declspec(dllexport) H3DlgCaptionButton *__stdcall MainMenu_GetDialogButton(const char *name)
+DllExport H3DlgCaptionButton *__stdcall MainMenu_GetDialogButton(const char *name)
 {
     if (!name)
         return nullptr;
     return MenuWidgetManager::Get().GetWidgetByName(name);
 }
 
-extern "C" __declspec(dllexport) int __stdcall MainMenu_GetDialogButtonId(const char *name)
+DllExport int __stdcall MainMenu_GetDialogButtonId(const char *name)
 {
     if (!name)
         return 0;
     return MenuWidgetManager::Get().GetWidgetId(name);
 }
 
-extern "C" __declspec(dllexport) BOOL __stdcall MainMenu_SetDialogButtonText(const char *name, const char *text)
+DllExport BOOL __stdcall MainMenu_SetDialogButtonText(const char *name, const char *text)
 {
     if (!name || !text)
         return 0;
