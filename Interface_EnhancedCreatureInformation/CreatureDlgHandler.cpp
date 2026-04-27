@@ -477,10 +477,10 @@ BOOL CreatureDlgHandler::AddSpellEfects()
     return false;
 }
 
-CreatureDlgHandler::~CreatureDlgHandler()
-{
-    //	creatureSkills.clear();
-}
+// CreatureDlgHandler::~CreatureDlgHandler()
+//{
+//     //	creatureSkills.clear();
+// }
 
 int __stdcall H3CreatureInfoDlg_Proc(HiHook *hook, H3CreatureInfoDlg *dlg, H3Msg *msg)
 {
@@ -548,7 +548,7 @@ H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_NotBattleCtor(HiHook *h, H3Creatu
 
     if (dlg->GetY() + DLG_HEIGHT + 145 > P_AdventureMgr->dlg->GetHeight())
     {
-        IntAt((int)dlg + 0x1C) = P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT - 145;
+        dlg->SetY(P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT - 145);
     }
 
     CreatureDlgHandler handler(result, nullptr, army, slotId);
@@ -606,11 +606,11 @@ EXTERN_C __declspec(dllexport) void AddExternalCreatureSkill(const char *name, c
 BOOL CreatureDlgHandler::CreateCreatureSkillsList()
 {
 
-    int montype = dlg->creatureId;
+    const int montype = dlg->creatureId;
 
     // make dlg creature active for wog creature expo bonuses
 
-    int expoCreatureType = CDECL_1(int, 0x716C8E, stack);
+    const int expoCreatureType = CDECL_1(int, 0x716C8E, stack);
 
     // call fucntion that writes experience bonus into buffer
     CDECL_2(void, 0x728120, expoCreatureType, montype);
@@ -637,51 +637,51 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
     {
         experience = IntAt(crExpo);
     }
-
+    // void __cdecl CrExpBon_Dlg_PrepareInfo(unsigned int mon_id, signed int a2, int a3, CrExpo *this, int hasHero)
     CDECL_5(void, 0x71EF2B, montype, dlg->numberCreatures, experience, crExpo, 0);
     _DlgCreatureExpoInfo_ *dlgCreatureExpoInfo = reinterpret_cast<_DlgCreatureExpoInfo_ *>(0x845880);
 
     creatureSkills.clear();
     UINT32 picsCount = dlgCreatureExpoInfo->IcoPropertiesCount;
     creatureSkills.reserve(picsCount * 2);
-
-    if (auto *skillsDef = H3LoadedDef::Load(n_DlgExpMon))
+    auto *skillsDef = H3LoadedDef::Load(n_DlgExpMon);
+    if (!skillsDef)
     {
-
-        if (auto *skillSlt = H3LoadedPcx16::Load(n_SkillSlotPcx))
-        {
-
-            H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(skillsDef->widthDEF, skillsDef->heightDEF);
-            for (size_t i = 0; i < picsCount; i++)
-            {
-                int skillPicIndex = (int)dlgCreatureExpoInfo->IcoProperties[i];
-                H3LoadedPcx16 *skillPic = H3LoadedPcx16::Create(skillSlt->width, skillSlt->height);
-
-                memcpy(skillPic->buffer, skillSlt->buffer, skillPic->buffSize);
-                memset(skillPic->buffer, 0, skillPic->buffSize);
-
-                //	skillsDef->DrawToPcx16(0, 159, skillPic, 0, 0);
-
-                skillsDef->DrawToPcx16(0, skillPicIndex, tempPcx, 0, 0);
-
-                resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(skillPic, tempPcx, tempPcx->width,
-                                                                       tempPcx->height, 2, 2, skillPic->width - 4,
-                                                                       skillPic->height - 4);
-
-                creatureSkills.emplace_back(*new CreatureSkill{0, 0, 0, 0, skillPic});
-            }
-            tempPcx->Destroy();
-            // H3Messagebox::RMB(Era::IntToStr(type).c_str());
-            for (size_t k = 0; k < 20; k++)
-            {
-                CrExpBonLine *line = reinterpret_cast<CrExpBonLine *>(0x847D98 + k * 17);
-            }
-
-            skillSlt->Dereference();
-        }
-
-        skillsDef->Dereference();
+        return 0;
     }
+    auto *skillSlt = H3LoadedPcx16::Load(n_SkillSlotPcx);
+    if (!skillSlt)
+    {
+        skillsDef->Dereference();
+        return 0;
+    }
+
+    H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(skillsDef->widthDEF, skillsDef->heightDEF);
+    for (size_t i = 0; i < picsCount; i++)
+    {
+        int skillPicIndex = (int)dlgCreatureExpoInfo->IcoProperties[i];
+        H3LoadedPcx16 *skillPic = H3LoadedPcx16::Create(skillSlt->width, skillSlt->height);
+
+        //  libc::memcpy(skillPic->buffer, skillSlt->buffer, skillPic->buffSize);
+        libc::memset(skillPic->buffer, 0, skillPic->buffSize);
+
+        //	skillsDef->DrawToPcx16(0, 159, skillPic, 0, 0);
+
+        skillsDef->DrawToPcx16(0, skillPicIndex, tempPcx, 0, 0);
+
+        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(skillPic, tempPcx, tempPcx->width, tempPcx->height, 2, 2,
+                                                               skillPic->width - 4, skillPic->height - 4);
+
+        creatureSkills.emplace_back(*new CreatureSkill{0, 0, 0, 0, skillPic});
+    }
+    tempPcx->Destroy();
+    // H3Messagebox::RMB(Era::IntToStr(type).c_str());
+    for (size_t k = 0; k < 20; k++)
+    {
+        CrExpBonLine *line = reinterpret_cast<CrExpBonLine *>(0x847D98 + k * 17);
+    }
+
+    skillSlt->Dereference();
 
     // JackSlater block - trying to access an army stack and exp
     //	H3Hero* hero = reinterpret_cast <H3Hero*>(c->esi);

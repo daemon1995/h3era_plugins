@@ -16964,6 +16964,10 @@ namespace h3
 		_H3API_ INT32 GetHeight() const;
 		_H3API_ INT32 GetX() const;
 		_H3API_ INT32 GetY() const;
+		_H3API_ VOID  SetWidth(const INT32 width);
+		_H3API_ VOID  SetHeight(const INT32 height);
+		_H3API_ VOID  SetX(const INT32 x);
+		_H3API_ VOID  SetY(const INT32 y);
 		_H3API_ BOOL  IsTopDialog() const;
 		_H3API_ BOOL  Deactivate(const BOOL deactivate);
 		/**
@@ -33160,6 +33164,22 @@ namespace h3
 	_H3API_ INT32 H3BaseDlg::GetY() const
 	{
 		return yDlg;
+	}
+	_H3API_ VOID H3BaseDlg::SetWidth(const INT32 width)
+	{
+		widthDlg = width;
+	}
+	_H3API_ VOID H3BaseDlg::SetHeight(const INT32 height)
+	{
+		heightDlg = height;
+	}
+	_H3API_ VOID H3BaseDlg::SetX(const INT32 x)
+	{
+		xDlg = x;
+	}
+	_H3API_ VOID H3BaseDlg::SetY(const INT32 y)
+	{
+		yDlg = y;
 	}
 	_H3API_ BOOL H3BaseDlg::IsTopDialog() const
 	{
