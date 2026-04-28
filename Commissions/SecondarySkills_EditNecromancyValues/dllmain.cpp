@@ -19,11 +19,10 @@ struct NecromancySettings
     float amplifierPower{0.05f};                           // halved default value for necromancy amplifier building
     float obeliskPower{0.1f};                              // halved default value for obelisk building
     int raisedCreature[4]{NH3Creatures::SKELETON, NH3Creatures::WALKING_DEAD, NH3Creatures::WIGHT,
-                                NH3Creatures::WIGHT}; // creature to raise with necromancy skill
+                          NH3Creatures::WIGHT}; // creature to raise with necromancy skill
 } necroSettings;
 
 static constexpr LPCSTR baseKey = "suft.necromancy.";
-
 
 void SetFloatPointerPatch(LPCSTR key, const DWORD patchAddress, float &settingValue)
 {
@@ -52,7 +51,7 @@ void SetFloatArrayPointerPatch(LPCSTR key, const DWORD patchAddress, float *sett
     _PI->WriteDword(patchAddress, (DWORD)settingValue);
 }
 
-void SetIntPatch(LPCSTR key, const DWORD patchAddress, int& settingValue)
+void SetIntPatch(LPCSTR key, const DWORD patchAddress, int &settingValue)
 {
     bool readSuccess = false;
     const int temp = EraJS::readInt((H3String(baseKey) + key).String(), readSuccess);
@@ -63,6 +62,15 @@ void SetIntPatch(LPCSTR key, const DWORD patchAddress, int& settingValue)
     _PI->WriteDword(patchAddress, settingValue);
 }
 
+// герои-некроманты с некромантией всегда будут нападать на монстров
+int __stdcall AIH3Hero_GetNeutralMonstersCombatValue(HiHook *h, H3Hero *hero, DWORD pos)
+{
+    if (hero->GetNecromancyPower(false) > 0)
+    {
+        return 1;
+    }
+    return THISCALL_2(int, h->GetDefaultFunc(), hero, pos);
+}
 _LHF_(HooksInit)
 {
     SetFloatArrayPointerPatch("skill_power", 0x4E3F56 + 3, necroSettings.skillPower, 4);
@@ -83,6 +91,11 @@ _LHF_(HooksInit)
     SetIntPatch("creatures.2", 0x4E3F29 + 1, necroSettings.raisedCreature[2]);
     SetIntPatch("creatures.3", 0x4E3F1E + 1, necroSettings.raisedCreature[3]);
 
+    // AI-
+    if (true)
+    {
+        _PI->WriteHiHook(0x04A6B13, THISCALL_, AIH3Hero_GetNeutralMonstersCombatValue);
+    }
 
     return EXEC_DEFAULT;
 }

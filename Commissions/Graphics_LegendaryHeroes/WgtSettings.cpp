@@ -14,9 +14,9 @@ void WgtSettings::loadArtSettings() noexcept
 
     for (size_t i = 0; i < 19; i++)
     {
-        sprintf(h3_TextBuffer, "nhd.artifact_slots.slot_%d.x", i);
+        libc::sprintf(h3_TextBuffer, "nhd.artifact_slots.slot_%d.x", i);
         artSlotPositions[i].x = EraJS::readInt(h3_TextBuffer);
-        sprintf(h3_TextBuffer, "nhd.artifact_slots.slot_%d.y", i);
+        libc::sprintf(h3_TextBuffer, "nhd.artifact_slots.slot_%d.y", i);
         artSlotPositions[i].y = EraJS::readInt(h3_TextBuffer);
     }
 }
