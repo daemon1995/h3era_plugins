@@ -20289,6 +20289,7 @@ namespace h3
 		_H3API_ BOOL TranslateUnprocessedMessage(H3Msg& msg);
 
 	public:
+		_H3API_ H3DlgItem* Destroy(BOOL8 deallocate = TRUE);
 		_H3API_ VOID       EnableItem(BOOL enable);
 		_H3API_ VOID       Enable();
 		_H3API_ VOID       Disable();
@@ -35195,6 +35196,11 @@ namespace h3
         return FALSE;
     }
 
+    _H3API_ H3DlgItem* H3DlgItem::Destroy(BOOL8 deallocate)
+    {
+        vDestroy(deallocate);
+        return this;
+    }
     _H3API_ VOID H3DlgItem::EnableItem(BOOL enable)
     {
         vEnable(enable);

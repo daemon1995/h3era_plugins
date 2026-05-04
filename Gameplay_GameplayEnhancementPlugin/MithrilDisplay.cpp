@@ -282,9 +282,8 @@ H3DlgItem *ExtendedResourcesInfo::BuildMithril(HookContext *c, ResourceBarInfo &
     H3DlgItem *mithrilItem = nullptr;
     if (xOffset)
     {
-        mithrilItem = H3ObjectAllocator<H3DlgItem>().allocate(1);
-        mithrilItem = THISCALL_7(H3DlgItem *, 0x044FBE0, mithrilItem, xPos + buildFrame * 2, 4, defOverlayWidth, 16,
-                                 MITHRIL_DLG_DEF_ITEM_ID, 1);
+        mithrilItem =
+            H3DlgTransparentItem::Create(xPos + buildFrame * 2, 4, defOverlayWidth, 16, MITHRIL_DLG_DEF_ITEM_ID);
     }
     else
     {
