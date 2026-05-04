@@ -15,6 +15,8 @@ struct PluginSettings
 {
     float wallHpMultiplier = 3.0f;           // 3 times wall HP
     float arrowTowerDamageMultiplier = 3.0f; // 3 times arrow tower damage
+    float ballisticsSkillDamageBonus[eSecSkillLevel::EXPERT + 1] = {0.f, 0.1f, 0.15f,
+                                                                    0.2f}; // Ballistics skill damage bonus per level
 
 } pluginSettings;
 static void __stdcall CombatManager_InitTownWalls(HiHook *h, H3CombatManager *cmbMgr)
@@ -32,13 +34,25 @@ static void __stdcall CombatManager_InitTownWalls(HiHook *h, H3CombatManager *cm
 static long double __stdcall BattleStack_DoDamageByArrowTower(HiHook *h, const H3CombatCreature *stack,
                                                               const BOOL checkAirShield)
 {
-    return THISCALL_2(long double, h->GetDefaultFunc(), stack, checkAirShield) *
-           pluginSettings.arrowTowerDamageMultiplier;
+
+    auto baseDamage = THISCALL_2(long double, h->GetDefaultFunc(), stack, checkAirShield);
+
+    if (auto hero = stack->GetOwner())
+    {
+        const float ballisticsBonus = pluginSettings.ballisticsSkillDamageBonus[hero->secSkill[eSecondary::BALLISTICS]];
+        if (ballisticsBonus > 0.f)
+        {
+            baseDamage *= 1.f + ballisticsBonus; // Apply Ballistics skill damage bonus
+        }
+    }
+    if (pluginSettings.arrowTowerDamageMultiplier > 0)
+    {
+        baseDamage *= pluginSettings.arrowTowerDamageMultiplier;
+    }
+    return baseDamage;
 }
-
-_LHF_(HooksInit)
+_ERH_(OnAfterWog)
 {
-
     bool readSuccess = false;
 
     float temp = EraJS::readFloat("suft.combat.siege.walls.health_points_multiplier", readSuccess);
@@ -55,12 +69,18 @@ _LHF_(HooksInit)
     {
         pluginSettings.arrowTowerDamageMultiplier = temp;
     }
-    if (pluginSettings.arrowTowerDamageMultiplier > 0.f && pluginSettings.arrowTowerDamageMultiplier != 1.f)
+    for (size_t i = 0; i < 4; i++)
+    {
+        temp = EraJS::readFloat("suft.combat.siege.ballistics_skill.damage_bonus." + std::to_string(i), readSuccess);
+        if (readSuccess && temp > 0)
+        {
+            pluginSettings.ballisticsSkillDamageBonus[i] = temp;
+        }
+    }
+    // if (pluginSettings.arrowTowerDamageMultiplier > 0.f && pluginSettings.arrowTowerDamageMultiplier != 1.f)
     {
         _PI->WriteHiHook(0x0443AB0, THISCALL_, BattleStack_DoDamageByArrowTower);
     }
-
-    return EXEC_DEFAULT;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
@@ -75,7 +95,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             Era::ConnectEra(hModule, dllText::instanceName);
-            _PI->WriteLoHook(0x4EEAF2, HooksInit);
+            _REH_(OnAfterWog);
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
