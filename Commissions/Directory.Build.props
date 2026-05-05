@@ -14,7 +14,7 @@
     <LocalToolsPath Condition="'$(LocalToolsPath)' == ''">D:\SW</LocalToolsPath>
 
     <!-- Output -->
-    <OutDir Condition="'$(OutDir)'==''">$(LocalGamePath)\Mods\WoG\eraplugins\</OutDir>
+    <OutDir Condition="'$(OutDir)'==''">$(LocalGamePath)\Mods\Commissions\eraplugins\</OutDir>
 
     <!-- General -->
     <WarningLevel>Level3</WarningLevel>
