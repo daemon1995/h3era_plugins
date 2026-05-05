@@ -1,7 +1,6 @@
 #include "pch.h"
 
-
-MainMenuPlugin* MainMenuPlugin::instance = nullptr;
+MainMenuPlugin *MainMenuPlugin::instance = nullptr;
 MainMenuPlugin::MainMenuPlugin(PatcherInstance *pi) : IGamePatch(pi)
 {
     mainMenu.LoadInfo("main");
@@ -144,7 +143,7 @@ MainMenuPlugin &MainMenuPlugin::Get()
     {
         instance = new MainMenuPlugin(_PI);
     }
-    //static MainMenuPlugin instance(_PI);
+    // static MainMenuPlugin instance(_PI);
     return *instance;
     // TODO: insert return statement here
 }

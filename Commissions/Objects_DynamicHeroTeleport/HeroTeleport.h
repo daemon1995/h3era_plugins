@@ -13,11 +13,37 @@ class TeleportDlg : public H3Dlg
 {
     static constexpr int MAX_DESTINATIONS = 9;
     static constexpr int DESTINATION_PANEL_HEIGHT = 40;
+
+    H3DlgScrollbar *scrollBar = nullptr;
     struct DestinationPanel
     {
         H3DlgDef *icon = nullptr;
         H3DlgText *text = nullptr;
-        HeroTeleport *target = nullptr;
+        const HeroTeleport *target = nullptr;
+
+      public:
+        void SetTarget(const HeroTeleport *teleport, const BOOL refresh)
+        {
+
+            if (teleport)
+            {
+                text->SetText(teleport->displayedName);
+                icon->ShowActivate();
+            }
+            else
+            {
+                text->SetText(h3_NullString);
+                icon->HideDeactivate();
+            }
+            target = teleport;
+            if (refresh)
+            {
+                text->Draw();
+                text->Refresh();
+                icon->Draw();
+                icon->Refresh();
+            }
+        }
     };
 
     std::vector<DestinationPanel> destinationPanels;
