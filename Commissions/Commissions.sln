@@ -32,6 +32,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utils_CombatEmulator", "Uti
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Objects_DynamicHeroTeleport", "Objects_DynamicHeroTeleport\Objects_DynamicHeroTeleport.vcxproj", "{10203040-5060-4708-90A0-B1C2D3E4F5A6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RMG_ZoneTerrainRules", "RMG_ZoneTerrainRules\RMG_ZoneTerrainRules.vcxproj", "{383D8FF3-688D-4D25-A334-31C5B2D2C1CC}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecondarySkills_EditNecromancyValues", "SecondarySkills_EditNecromancyValues\SecondarySkills_EditNecromancyValues.vcxproj", "{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Heroes_SetUniqueCombatGraphics", "Heroes_SetUniqueCombatGraphics\Heroes_SetUniqueCombatGraphics.vcxproj", "{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}"
@@ -110,6 +112,10 @@ Global
 		{10203040-5060-4708-90A0-B1C2D3E4F5A6}.Debug|x86.Build.0 = Debug|Win32
 		{10203040-5060-4708-90A0-B1C2D3E4F5A6}.Release|x86.ActiveCfg = Release|Win32
 		{10203040-5060-4708-90A0-B1C2D3E4F5A6}.Release|x86.Build.0 = Release|Win32
+		{383D8FF3-688D-4D25-A334-31C5B2D2C1CC}.Debug|x86.ActiveCfg = Debug|Win32
+		{383D8FF3-688D-4D25-A334-31C5B2D2C1CC}.Debug|x86.Build.0 = Debug|Win32
+		{383D8FF3-688D-4D25-A334-31C5B2D2C1CC}.Release|x86.ActiveCfg = Release|Win32
+		{383D8FF3-688D-4D25-A334-31C5B2D2C1CC}.Release|x86.Build.0 = Release|Win32
 		{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}.Debug|x86.ActiveCfg = Debug|Win32
 		{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}.Debug|x86.Build.0 = Debug|Win32
 		{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}.Release|x86.ActiveCfg = Release|Win32
