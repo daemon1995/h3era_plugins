@@ -114,6 +114,8 @@ void MainMenuPlugin::CreatePatches()
 {
     if (!m_isInited)
     {
+        m_isInited = true;
+
         if (mainMenu.enable)
         {
             _PI->WriteHiHook(0x4FB930, THISCALL_, DlgMainMenu_Create);
@@ -132,8 +134,6 @@ void MainMenuPlugin::CreatePatches()
             _PI->WriteLoHook(0x5813D0, SelectScenarioDlg_ShowRandomMap);
             _PI->WriteLoHook(0x580D40, SelectScenarioDlg_ShowAvailableScenarios);
         }
-
-        m_isInited = true;
     }
 }
 
@@ -145,7 +145,6 @@ MainMenuPlugin &MainMenuPlugin::Get()
     }
     // static MainMenuPlugin instance(_PI);
     return *instance;
-    // TODO: insert return statement here
 }
 
 void MainMenuPlugin::MenuInformation::LoadInfo(const char *jsonSubKey)
@@ -159,5 +158,6 @@ void MainMenuPlugin::MenuInformation::LoadInfo(const char *jsonSubKey)
         x = EraJS::readInt(H3String::Format("nmmi.menu_info.%s.x", jsonSubKey).String());
         y = EraJS::readInt(H3String::Format("nmmi.menu_info.%s.y", jsonSubKey).String());
         dlgItemId = EraJS::readInt(H3String::Format("nmmi.menu_info.%s.item_id", jsonSubKey).String());
+        alwaysDraw = EraJS::readInt(H3String::Format("nmmi.menu_info.%s.always_draw", jsonSubKey).String());
     }
 }

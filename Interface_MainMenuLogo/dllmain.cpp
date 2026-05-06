@@ -9,7 +9,7 @@ PatcherInstance* _PI;
 namespace dllText
 {
 	constexpr const char* PLUGIN_AUTHOR = "daemon_n";
-	constexpr const char* PLUGIN_VERSION = "1.3";
+	constexpr const char* PLUGIN_VERSION = "1.4";
 	constexpr const char* PLUGIN_DATA = __DATE__;
 	constexpr const char* INSTANCE_NAME = "EraPlugin.MainMenuLogo.daemon_n";
 }
