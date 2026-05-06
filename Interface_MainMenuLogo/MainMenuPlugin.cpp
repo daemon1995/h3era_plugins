@@ -150,10 +150,10 @@ MainMenuPlugin &MainMenuPlugin::Get()
 void MainMenuPlugin::MenuInformation::LoadInfo(const char *jsonSubKey)
 {
     bool readSuccess = false;
-    std::string temp = EraJS::read(H3String::Format("nmmi.menu_info.%s.pcx_name", jsonSubKey).String(), readSuccess);
-    if (readSuccess && !temp.empty())
+    char *result = EraJS::read(H3String::Format("nmmi.menu_info.%s.pcx_name", jsonSubKey).String(), readSuccess);
+    if (readSuccess && result && result[0])
     {
-        pcxName = temp.c_str();
+        pcxName = result;
         enable = EraJS::readInt(H3String::Format("nmmi.menu_info.%s.enable", jsonSubKey).String());
         x = EraJS::readInt(H3String::Format("nmmi.menu_info.%s.x", jsonSubKey).String());
         y = EraJS::readInt(H3String::Format("nmmi.menu_info.%s.y", jsonSubKey).String());
