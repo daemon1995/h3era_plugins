@@ -9,11 +9,11 @@ namespace dllText
 {
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
-_ERH_(OnAfterWog)
+static _ERH_(OnAfterWog)
 {
 }
 
-_LHF_(HooksInit)
+static _LHF_(HooksInit)
 {
     return EXEC_DEFAULT;
 }
