@@ -454,7 +454,7 @@ int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumbe
 
         // placement troops in combat
 
-        bool isBank = EraJS::readInt(
+        const bool isBank = EraJS::readInt(
             H3String::Format("RMG.objectGeneration.%d.%d.troopPlacement.isBank", objectType, objectSubtype).String(),
             trSuccess);
 
