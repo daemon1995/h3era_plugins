@@ -19,7 +19,6 @@
     <!-- General -->
     <WarningLevel>Level3</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <PlatformToolset>v141</PlatformToolset>
     <LanguageStandard>Default</LanguageStandard>
     <EnableUAC>false</EnableUAC>
     <SubSystem>Windows</SubSystem>
