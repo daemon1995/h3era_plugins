@@ -412,8 +412,6 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
 
     if (objGen->type == eObject::CREATURE_GENERATOR4)
     {
-        // return -1; // resultValue / 2;
-
         const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
 
         const int creatureValue = RMGObjectInfo::CurrentObjectInfo(objGen->type, objGen->subtype).value;
@@ -425,7 +423,7 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
 
             if (creatureType != eCreature::UNDEFINED)
             {
-                auto &info = P_CreatureInformation[creatureType];
+                const auto &info = P_CreatureInformation[creatureType];
                 const int creatureTown = info.town;
                 if (creatureTown != zoneGen->townType2 && i == 0)
                 {
@@ -455,6 +453,8 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
 
         return resultValue >> 2;
     }
+
+    // type 17
 
     const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
     const int creatureType = DwordAt(dwellingsPtr + 4 * objGen->subtype);
@@ -997,19 +997,19 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         }
     }
 
-    // custom data for scrolls
-
     // dwellings value calculation
     const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
     const int MAX_MON_ID = IntAt(0x4A1657);
 
     for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR1])
     {
+        if (dwellingObjInfo.value != UNDEFINED)
+            continue;
+
         const int dwellingCreatureType = DwordAt(dwellings1Ptr + (dwellingObjInfo.subtype << 2));
         if (dwellingCreatureType < MAX_MON_ID)
         {
-            const int creatureAIValue = P_CreatureInformation[dwellingCreatureType].aiValue;
-            dwellingObjInfo.value = creatureAIValue;
+            dwellingObjInfo.value = P_CreatureInformation[dwellingCreatureType].aiValue;
         }
     }
 
@@ -1017,8 +1017,10 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
 
     for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR4])
     {
-        dwellingObjInfo.value = 0; // creatureAIValue;
+        if (dwellingObjInfo.value != UNDEFINED)
+            continue;
 
+        dwellingObjInfo.value = 0; // creatureAIValue;
         for (size_t i = 0; i < 4; i++)
         {
             const int dwellingCreatureType = DwordAt(dwellings4Ptr + (i << 2));
