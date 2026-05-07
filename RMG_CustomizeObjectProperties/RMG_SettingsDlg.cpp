@@ -171,7 +171,7 @@ RMG_SettingsDlg *RMG_SettingsDlg::Page::dlg = nullptr;
 RMG_SettingsDlg *RMG_SettingsDlg::instance = nullptr;
 H3MainSetup *RMG_SettingsDlg::mainSetup = nullptr;
 BOOL RMG_SettingsDlg::isDlgTextEditInput = false;
-BOOL RMG_SettingsDlg::isHdMod = false;
+BOOL RMG_SettingsDlg::userHasAccessToDlg = false;
 
 const std::vector<std::vector<GraphicalAttributes> *> &RMG_SettingsDlg::GetObjectAttributes() noexcept
 {
@@ -1572,11 +1572,14 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
     case eObject::SHIPWRECK:
         return &m_creatureBanks;
     case eObject::ARENA:
+
+    case eObject::BLACK_MARKET:
+
+        // case eObject::BORDERGUARD:
+        //  case eObject::KEYMASTER:
         /*
          * eObject::KEYMASTER, @todo: place into another page
          */
-    case eObject::BLACK_MARKET:
-
     case eObject::CARTOGRAPHER:
     case eObject::SWAN_POND:
 
@@ -1752,7 +1755,7 @@ void RMG_SettingsDlg::AssignPrototypeToObjectGens(const H3RmgObjectGenerator *ob
 
 BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators)
 {
-    if (isHdMod == false || objectGenerators == nullptr || mainSetup != nullptr)
+    if (userHasAccessToDlg == false || objectGenerators == nullptr || mainSetup != nullptr)
     {
         return false;
     }
@@ -2112,7 +2115,7 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
         // H3DLL wndPlugin = h3::H3DLL::H3DLL("wog native dialogs.era")
         if (GetModuleHandleA("HD_WOG.dll"))
         {
-            isHdMod = true;
+            userHasAccessToDlg = true;
             _pi->WriteHiHook(0x579CE0, THISCALL_, NewScenarioDlg_Create);
 
             _pi->WriteHiHook(0x0536630, CDECL_, RMG_SetRandSeed);
@@ -2138,7 +2141,10 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
         widgetInfo.menuList = flags;
         widgetInfo.text = EraJS::read(MAIN_MENU_JSON_KEY);
 
-        mainmenu::MainMenu_RegisterWidget(widgetInfo);
+        if (mainmenu::MainMenu_RegisterWidget(widgetInfo))
+        {
+            userHasAccessToDlg = true;
+        }
     }
 }
 

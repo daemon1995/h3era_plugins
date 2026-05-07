@@ -245,7 +245,8 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 {
                     // add these objects w/o any restrictions
                 case eObject::PANDORAS_BOX:
-                case eObject::KEYMASTER:
+                // case eObject::BORDERGUARD:
+                // case eObject::KEYMASTER:
                 case eObject::PRISON:
                 case eObject::SEER_HUT:
 
@@ -1198,7 +1199,7 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
             }
             if (p_ObjGen->subtype >= maxObjectSubtype)
             {
-                maxObjectSubtype = p_ObjGen->subtype;
+                maxObjectSubtype = p_ObjGen->subtype + 1;
             }
         }
 
@@ -1210,10 +1211,10 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
 
         const int arraylength = H3_MAX_OBJECTS * maxObjectSubtype * sizeof(int);
 
-        memset(eachZoneGeneratedBySubtype, 0, zonesAmount * arraylength);
-        memset(mapGeneratedBySubtype, 0, arraylength);
-        memset(zoneLimitsBySubtype, 0, arraylength);
-        memset(mapLimitsBySubtype, 0, arraylength);
+        libc::memset(eachZoneGeneratedBySubtype, 0, zonesAmount * arraylength);
+        libc::memset(mapGeneratedBySubtype, 0, arraylength);
+        libc::memset(zoneLimitsBySubtype, 0, arraylength);
+        libc::memset(mapLimitsBySubtype, 0, arraylength);
 
         const int maxSubtype = maxObjectSubtype;
         LPCSTR iniFile = "Runtime/Rmg/Debug.ini";

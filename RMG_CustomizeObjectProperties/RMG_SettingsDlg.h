@@ -239,7 +239,7 @@ class RMG_SettingsDlg : public H3Dlg
   private:
     static RMG_SettingsDlg *instance;
     static BOOL isDlgTextEditInput;
-    static BOOL isHdMod;
+    static BOOL userHasAccessToDlg;
     static H3MainSetup *mainSetup; // used to get default objects info from zaobj or obje txt;
     static std::vector<GraphicalAttributes> m_creatureBanks;
     static std::vector<GraphicalAttributes> m_commonObjects;
