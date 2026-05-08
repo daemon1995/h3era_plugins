@@ -12,9 +12,11 @@ LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 
 static _LHF_(MainMenu_OpenVideo)
 {
-
-    c->edx = 0;
-    IntAt(c->ebp + 0x8) = 0;
+    if (c->ecx == 33) // index video check
+    {
+        c->edx = 0;
+        IntAt(c->ebp + 0x8) = 0;
+    }
 
     return EXEC_DEFAULT;
 }
