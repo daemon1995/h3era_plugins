@@ -50,6 +50,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Artifacts_ShimyCombatStatsP
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_StatusSpellCumulativeEffect", "Combat_StatusSpellCumulativeEffect\Combat_StatusSpellCumulativeEffect.vcxproj", "{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_CasterCreatureSpellSelector", "Combat_CasterCreatureSpellSelector\Combat_CasterCreatureSpellSelector.vcxproj", "{F2A3B4C5-D6E7-4890-91A2-B3C4D5E6F7A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -152,6 +154,10 @@ Global
 		{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}.Debug|x86.Build.0 = Debug|Win32
 		{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}.Release|x86.ActiveCfg = Release|Win32
 		{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}.Release|x86.Build.0 = Release|Win32
+		{F2A3B4C5-D6E7-4890-91A2-B3C4D5E6F7A8}.Debug|x86.ActiveCfg = Debug|Win32
+		{F2A3B4C5-D6E7-4890-91A2-B3C4D5E6F7A8}.Debug|x86.Build.0 = Debug|Win32
+		{F2A3B4C5-D6E7-4890-91A2-B3C4D5E6F7A8}.Release|x86.ActiveCfg = Release|Win32
+		{F2A3B4C5-D6E7-4890-91A2-B3C4D5E6F7A8}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
