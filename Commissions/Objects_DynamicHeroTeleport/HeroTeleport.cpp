@@ -1,4 +1,8 @@
+#pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@8")
+
 #include "HeroTeleport.h"
+DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam);
+
 eObject HeroTeleport::objectType = eObject::NO_OBJ;
 int HeroTeleport::objectSubtype = 0;
 
@@ -33,4 +37,16 @@ void TeleportDlg::CreateItems()
 
     CreateOKButton();
     CreateCancelButton();
+}
+
+DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam)
+{
+    auto hero = P_Game->GetHero(heroId);
+    if (!hero)
+    {
+        return false;
+    }
+    TeleportDlg dlg(hero);
+    dlg.Start();
+    return true;
 }

@@ -13,7 +13,7 @@ class TeleportDlg : public H3Dlg
 {
     static constexpr int MAX_DESTINATIONS = 9;
     static constexpr int DESTINATION_PANEL_HEIGHT = 40;
-
+    H3Hero *hero = nullptr;
     H3DlgScrollbar *scrollBar = nullptr;
     struct DestinationPanel
     {
@@ -50,7 +50,7 @@ class TeleportDlg : public H3Dlg
     std::vector<HeroTeleport> destinations;
 
   public:
-    TeleportDlg() : H3Dlg(306, 469, -1, -1, TRUE, TRUE)
+    TeleportDlg(H3Hero *hero) : H3Dlg(306, 469, -1, -1, TRUE, TRUE), hero(hero)
     {
     }
 
