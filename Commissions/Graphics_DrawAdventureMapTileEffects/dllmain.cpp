@@ -38,6 +38,11 @@ void __stdcall AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *adv, int map
     const int mapSize = *P_MapSize;
     if (mapX >= 0 && mapY >= 0 && mapX < mapSize && mapY < mapSize && settings.framesAmount)
     {
+        auto mapItem = P_Game->GetMapItem(H3Position(mapX, mapY, mapZ));
+        if (mapItem && mapItem->land == eTerrain::ROCK)
+        {
+            return;
+        }
 
         constexpr int TILE_WIDTH = 32;
         constexpr int TEMP_PCX_WIDTH = TILE_WIDTH;
@@ -97,8 +102,9 @@ static _LHF_(HooksInit)
     settings.rainDef = H3LoadedDef::Load("zrain00.def");
     settings.framesAmount = settings.rainDef->groups[0]->count;
 
-    _PI->WriteHiHook(0x040F5D7, THISCALL_, AdvMgr_TileObjectDraw);
     _PI->WriteLoHook(0x040F5AB, AdvMgr_BeforeObjectsDraw);
+    _PI->WriteHiHook(0x040F5D7, THISCALL_, AdvMgr_TileObjectDraw);
+
     return EXEC_DEFAULT;
 }
 
