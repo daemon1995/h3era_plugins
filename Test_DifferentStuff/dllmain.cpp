@@ -7,7 +7,6 @@
 #include "framework.h"
 // #include "..\..\headers\H3API_RK\single_header\H3API.hpp"
 
-
 using namespace h3;
 
 Patcher *globalPatcher = nullptr;
@@ -26,170 +25,6 @@ _LHF_(MainWindow_F1)
     return EXEC_DEFAULT;
 }
 
-constexpr int BANK_SUBTYPE = 22;   // Creature Bank subtype
-constexpr int BANK_MAX_LEVEL = 20; // Creature Bank subtype
-struct HookData
-{
-    H3Hero *hero = nullptr;
-    BOOL offerReplay = false;
-    INT replayIndex = 0;
-    Patch *blockUserMessage = nullptr;
-} data;
-LPCSTR replayFormat = "pol_creature_bank_replays_counter_%d";
-
-BOOL SetBankGuard(H3CreatureBank &bank, const int bankPower)
-{
-    // const auto &baseState= P_CreatureBankSetup->Get()[BANK_SUBTYPE].states[0];
-
-    if (bankPower > BANK_MAX_LEVEL)
-    {
-        return false;
-    }
-    auto &baseArmy = bank.guardians;
-    const int baseArmyValue = baseArmy.GetArmyValue();
-
-    eCreature monFromTheBank = eCreature::UNDEFINED;
-    int monsPerSlot = 0;
-    for (auto &i : baseArmy)
-    {
-        if (i.Type() != eCreature::UNDEFINED)
-        {
-            monFromTheBank = eCreature(i.Type());
-            monsPerSlot = i.Count();
-            break;
-        }
-    }
-    if (monFromTheBank != eCreature::UNDEFINED && monsPerSlot > 0)
-    {
-        const float bankPowerFactor = 1.0f + bankPower * 0.3f;
-
-        const int armySlots = Clamp(1, bankPower / 3 + 4, 7);
-
-        const float valuePerSlot =
-            bankPowerFactor * bankPowerFactor * P_CreatureInformation[monFromTheBank].aiValue * monsPerSlot;
-
-        const int minMonLevel = 0; // Clamp(0, H3Random::Rand(), 6);
-        const int maxMonLevel = 6; // Clamp(0, P_CreatureInformation[monFromTheBank].level, 6);
-
-        const eCreature randomMonByLevel = THISCALL_3(eCreature, 0x4C8F80, P_Game->Get(), minMonLevel, maxMonLevel);
-        const int monValue = P_CreatureInformation[randomMonByLevel].aiValue;
-        const int newMonNum = Clamp(1, static_cast<int>(valuePerSlot / monValue), INT32_MAX);
-        for (size_t i = 0; i < armySlots; i++)
-        {
-            baseArmy.type[i] = randomMonByLevel;
-            baseArmy.count[i] = newMonNum;
-        }
-        // give resources to the bank
-        for (size_t i = 0; i < 7; i++)
-        {
-            auto &res = bank.resources[i];
-            if (H3Random::Rand(0, 99) < 20 + bankPower * 4)
-            {
-                res += i < eResource::GOLD ? H3Random::Rand(1, 10) : H3Random::Rand(1000, 5000);
-                res *= bankPowerFactor; // Gold is always present, other resources are random
-            }
-            if (res > 0)
-                res *= bankPowerFactor;
-        }
-        // give artifacts to the bank
-        if (const int artsToAdd = H3Random::Rand(0, bankPower / 2))
-        {
-
-            for (size_t i = 0; i < artsToAdd; i++)
-            {
-                if (H3Random::Rand(0, 99) <
-                    20 + bankPower * 4) // 20% chance to have an artifact with adjusted probability
-                {
-                    const int artType = Clamp(eArtifactType::TREASURE,
-                                              static_cast<eArtifact>(H3Random::Rand(eArtifactType::TREASURE,
-                                                                                    eArtifactType::MAJOR + bankPower)),
-                                              eArtifactType::ALL) &
-                                        ~eArtifactType::SPECIAL;
-                    const int artId = P_Game->GetRandomArtifactOfLevel(artType);
-                    if (artId > 0)
-                    {
-                        bank.artifacts.Add(artId);
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        return false;
-    }
-
-    return true;
-}
-void __stdcall AdvMgr_CrBank_Visit(HiHook *hook, H3AdventureManager *advMgr, H3Hero *hero, H3MapItem *map_item,
-                                   int *XYZ, int isPlayer)
-{
-
-    data.hero = hero;
-
-    THISCALL_5(int, hook->GetDefaultFunc(), advMgr, hero, map_item, XYZ, isPlayer);
-    auto patch = _PI->WriteJmp(0x04A1352, 0x04A1486);
-    //  int bankPower = 1;
-    data.blockUserMessage->Apply();
-
-    while (data.offerReplay)
-    {
-        const int bankId = map_item->creatureBank.id;
-        // libc::sprintf(h3_TextBuffer, replayFormat, bankId);
-        // const int replayCounter = Era::GetAssocVarIntValue(h3_TextBuffer) + 1;
-        // Era::SetAssocVarIntValue(h3_TextBuffer, replayCounter);
-
-        data.offerReplay = false;
-        auto &cbank = P_Game->creatureBanks[bankId];
-        map_item->creatureBank.taken = false;
-        cbank.artifacts.RemoveAll();
-
-        // call the original function to reset the bank
-        FASTCALL_2(void, 0x047A6C0, &cbank, BANK_SUBTYPE);
-        if (SetBankGuard(cbank, ++data.replayIndex))
-        {
-            THISCALL_5(int, hook->GetOriginalFunc(), advMgr, hero, map_item, XYZ, isPlayer);
-        }
-
-        // visit the bank again
-    }
-    data.hero = nullptr;
-    data.replayIndex = 0;
-    data.blockUserMessage->Undo();
-}
-
-void __stdcall CrBank_BattleMgr_And_Reward(HiHook *hook, H3AdventureManager *advMgr, H3Hero *hero, H3MapItem *map_item,
-                                           LPCSTR text, int *XYZ, int isPlayer)
-{
-
-    THISCALL_6(int, hook->GetDefaultFunc(), advMgr, hero, map_item, text, XYZ, isPlayer);
-    if (isPlayer && map_item->objectSubtype == BANK_SUBTYPE && hero && hero == data.hero && hero->owner != -1)
-    {
-        if (data.replayIndex <= BANK_MAX_LEVEL)
-        {
-            data.offerReplay = H3Messagebox::Choice(EraJS::read("pol.text.question"));
-        }
-        else
-        {
-            H3Messagebox::Show(EraJS::read("pol.text.completed"));
-        }
-    }
-}
-//_LHF_(AICombat_CheckECX)
-//{
-//    // if ECX == 0, skip the check and return true
-//    if (c->ecx < 0)
-//    {
-//		H3Messagebox("pol_AiCombat: ECX < 0 detected, skipping check and returning true.");
-//
-//    }
-//    if (c->eax<-1 || c->eax > 999)
-//    {
-//        H3Messagebox("pol_AiCombat: EAX < 0 detected, skipping check and returning true.");
-//
-//    }
-//    return EXEC_DEFAULT;
-//}
 #include <cstdio>
 #include <initializer_list>
 #include <type_traits>
@@ -226,12 +61,62 @@ H3LoadedDef *__stdcall LoadDEF(HiHook *hook, LPCSTR defName)
     // H3Messagebox("pol_LoadDEF called.");
     return result;
 }
+H3LoadedPcx16 *tempBuffer = nullptr;
+int bufferHeight = 13;
+int bufferX = 0;
 
+_LHF_(AfterAdvMapTilesDraw)
+{
+
+    libc::memset(tempBuffer->buffer, 123, tempBuffer->buffSize);
+
+    constexpr int marginX = 1;
+    constexpr int marginY = 1;
+    const int workingHeight = bufferHeight - marginY * 2;
+    const int max = tempBuffer->width - (marginX * 2);
+    // Подставляем в плейсхолдеры значения и загружаем в буфер
+
+    static int counter = 0;
+
+    const int value = counter;
+
+    // Отрисовываем
+
+    if (counter++ >= max)
+    {
+        counter = 0;
+    }
+    //  tempBuffer->AdjustHueSaturation(marginX, marginY, value, workingHeight, 0.75f, 1.f);
+    libc::sprintf(h3_TextBuffer, "%d/%d", value, max);
+
+    H3FontLoader fnt(NH3Dlg::Text::TINY);
+    // fnt->TextDraw(tempBuffer, h3_TextBuffer, marginX, marginY, tempBuffer->width, workingHeight);
+
+    auto drawBuffer = P_WindowManager->GetDrawBuffer();
+    tempBuffer->DrawToPcx16(bufferX, 8, 1, drawBuffer, value);
+
+    return EXEC_DEFAULT;
+}
 _LHF_(HooksInit)
 {
 
+    // draw progress bar on adventure map
+    if (0)
+    {
+        const int mapViewW = H3GameWidth::Get() - 208;
+        const int mapViewH = H3GameHeight::Get() - 56;
+        bufferHeight = mapViewH; // / 2;
+        const int bufferWidth = mapViewW / 2;
+        bufferX = (mapViewW - bufferWidth) / 2;
+        tempBuffer = H3LoadedPcx16::Create(bufferWidth, bufferHeight);
+        _PI->WriteLoHook(0x040F6CE, AfterAdvMapTilesDraw);
+    }
+
     // _PI->WriteLoHook(0x049CDF6, MapTeamOpen);
     Era::RegisterHandler(OnGameEnter, "OnGameEnter");
+
+    /* _PI->WriteDword(0x0541013 + 2, 808);
+     _PI->WriteDword(0x0541159 + 1, 196);*/
 
     if (0)
     {
@@ -239,12 +124,6 @@ _LHF_(HooksInit)
     }
 
     return EXEC_DEFAULT;
-    data.blockUserMessage = _PI->WriteJmp(0x04A1352, 0x04A1486);
-    data.blockUserMessage->Undo();
-
-    _PI->WriteHiHook(0x04A894E, THISCALL_, AdvMgr_CrBank_Visit);
-
-    _PI->WriteHiHook(0x04A1497, THISCALL_, CrBank_BattleMgr_And_Reward);
 
     return EXEC_DEFAULT;
     ////_PI->WriteLoHook(0x4FBD71, gem_Dlg_MainMenu_Create);

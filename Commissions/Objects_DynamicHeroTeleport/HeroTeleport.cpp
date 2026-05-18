@@ -1,7 +1,7 @@
-#pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@8")
+#pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@12")
 
 #include "HeroTeleport.h"
-DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam);
+DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam, const int arraySize);
 
 eObject HeroTeleport::objectType = eObject::NO_OBJ;
 int HeroTeleport::objectSubtype = 0;
@@ -39,14 +39,28 @@ void TeleportDlg::CreateItems()
     CreateCancelButton();
 }
 
-DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam)
+inline static void TeleportHero(const H3Hero *hero, const H3Position &position)
+{
+    THISCALL_7(void, 0x041DAB0, P_AdventureManager->Get(), hero, position, P_Spell[eSpell::DIMENSION_DOOR].soundName,
+               FALSE, TRUE, FALSE);
+}
+
+DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam, const int arraySize)
 {
     auto hero = P_Game->GetHero(heroId);
-    if (!hero)
-    {
+    if (!hero || !someOtherParam || arraySize < 1)
         return false;
-    }
+
     TeleportDlg dlg(hero);
+    dlg.resultDestination = H3Position(0, 0, 0);
     dlg.Start();
+
+
+
+    H3Position heroPos = H3Position(hero->x, hero->y, hero->z);
+    if (heroPos != dlg.resultDestination)
+    {
+        TeleportHero(hero, dlg.resultDestination);
+    }
     return true;
 }

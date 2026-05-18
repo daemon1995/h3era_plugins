@@ -4,6 +4,8 @@ struct HeroTeleport
 {
     static eObject objectType;
     static int objectSubtype;
+    static constexpr LPCSTR NAME_FORMAT = "mrart.teleport_names.%d";
+
     H3Position position;
     H3PlayersBitfield playerBitfield;
     H3String displayedName;
@@ -50,8 +52,12 @@ class TeleportDlg : public H3Dlg
     std::vector<HeroTeleport> destinations;
 
   public:
+    H3Position resultDestination = H3Position(0, 0, 0);
+
+  public:
     TeleportDlg(H3Hero *hero) : H3Dlg(306, 469, -1, -1, TRUE, TRUE), hero(hero)
     {
+        CreateItems();
     }
 
     virtual ~TeleportDlg()
