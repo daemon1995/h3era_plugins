@@ -1,9 +1,10 @@
-#pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@12")
+#pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@20")
 
 #include "HeroTeleport.h"
-DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam, const int arraySize);
+DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int objectType, const int objectSubtype,
+                                              const int *objectIndexes, const int arraySize);
 
-eObject HeroTeleport::objectType = eObject::NO_OBJ;
+int HeroTeleport::objectType = eObject::NO_OBJ;
 int HeroTeleport::objectSubtype = 0;
 
 void TeleportDlg::RedrawDestinationPanels(const int index, const BOOL redrawDlg)
@@ -25,42 +26,62 @@ void __fastcall TeleportDlg::ScrollBarHandler(INT32 itemID, H3BaseDlg *dlg)
     const int scrollPos = scrollBar->GetTick();
     scrollBar->Draw();
     scrollBar->Refresh();
-    teleportDlg->RedrawDestinationPanels(itemID, true);
+   // teleportDlg->RedrawDestinationPanels(itemID, true);
 }
 
 void TeleportDlg::CreateItems()
 {
-
     constexpr int scrollbarHeight = MAX_DESTINATIONS * DESTINATION_PANEL_HEIGHT;
     const BOOL ticksCount = destinations.size() > MAX_DESTINATIONS;
     scrollBar = CreateScrollbar(widthDlg - 50, 60, 16, scrollbarHeight, 12, ticksCount, ScrollBarHandler);
+    const size_t length = std::min(destinations.size(), MAX_DESTINATIONS);
+    destinationPanels.resize(length);
+
+    for (size_t i = 0; i < length; i++)
+    {
+        auto &panel = destinationPanels[i];
+        auto &destination = destinations[i];
+
+        const int x = 20;
+        const int y = 60 + i * DESTINATION_PANEL_HEIGHT;
+        panel.icon = CreateDef(x, y, 1 + i * 3, "smalres.def", 0);
+        panel.text = CreateText(x + 20, y, widthDlg - 80, DESTINATION_PANEL_HEIGHT - 4, h3_NullString,
+                                NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, 2 + i * 3);
+        panel.SetTarget(&destination, false);
+    }
 
     CreateOKButton();
     CreateCancelButton();
 }
 
-inline static void TeleportHero(const H3Hero *hero, const H3Position &position)
-{
-    THISCALL_7(void, 0x041DAB0, P_AdventureManager->Get(), hero, position, P_Spell[eSpell::DIMENSION_DOOR].soundName,
-               FALSE, TRUE, FALSE);
-}
-
-DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int someOtherParam, const int arraySize)
+DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int objectType, const int objectSubtype,
+                                              const int *objectIndexes, const int arraySize)
 {
     auto hero = P_Game->GetHero(heroId);
-    if (!hero || !someOtherParam || arraySize < 1)
-        return false;
+    if (!hero || !objectIndexes || arraySize < 1)
+        return -1;
+    std::vector<HeroTeleport> destinations;
+    destinations.reserve(arraySize);
 
-    TeleportDlg dlg(hero);
-    dlg.resultDestination = H3Position(0, 0, 0);
-    dlg.Start();
+    HeroTeleport::objectType = objectType;
+    HeroTeleport::objectSubtype = objectSubtype;
 
-
-
-    H3Position heroPos = H3Position(hero->x, hero->y, hero->z);
-    if (heroPos != dlg.resultDestination)
+    for (size_t i = 0; i < arraySize; i++)
     {
-        TeleportHero(hero, dlg.resultDestination);
+        const int index = objectIndexes[i];
+        if (index >= 0)
+        {
+            HeroTeleport teleport(index);
+            destinations.emplace_back(teleport);
+        }
     }
-    return true;
+    if (destinations.size())
+    {
+
+        TeleportDlg dlg(hero, destinations);
+        dlg.Start();
+
+        return dlg.selectedIndex;
+    }
+    return -1;
 }
