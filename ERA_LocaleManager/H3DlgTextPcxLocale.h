@@ -1,6 +1,5 @@
 #pragma once
-class DlgStyle;
-class Locale;
+#include "framework.h"
 class H3DlgPcx16Locale : public H3DlgPcx16
 {
     static H3LoadedPcx16 *backgroundPcx;

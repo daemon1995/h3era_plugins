@@ -13,12 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\TextHandlers">
-      <UniqueIdentifier>{c79dd983-0938-4430-9a55-387a1776cfb0}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LanguageSelectionDlg.h">
@@ -36,30 +33,12 @@
     <ClInclude Include="ExportManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TextHandlers\ArtifactHandler.h">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClInclude>
-    <ClInclude Include="TextHandlers\HeroHandler.h">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClInclude>
-    <ClInclude Include="TextHandlers\MapObjectHandler.h">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClInclude>
-    <ClInclude Include="TextHandlers\MonsterHandler.h">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClInclude>
-    <ClInclude Include="TextHandlers\TownHandler.h">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="LanguageSelectionDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Locale.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H3DlgTextPcxLocale.cpp">
@@ -73,21 +52,6 @@
     </ClCompile>
     <ClCompile Include="ExportManager.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TextHandlers\ArtifactHandler.cpp">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClCompile>
-    <ClCompile Include="TextHandlers\HeroHandler.cpp">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClCompile>
-    <ClCompile Include="TextHandlers\MapObjectHandler.cpp">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClCompile>
-    <ClCompile Include="TextHandlers\MonsterHandler.cpp">
-      <Filter>Source Files\TextHandlers</Filter>
-    </ClCompile>
-    <ClCompile Include="TextHandlers\TownHandler.cpp">
-      <Filter>Source Files\TextHandlers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

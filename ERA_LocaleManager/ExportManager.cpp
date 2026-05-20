@@ -1,21 +1,19 @@
-﻿#include "pch.h"
-
+﻿#include "ExportManager.h"
 #ifdef CREATE_JSON
 
 #include <fstream>
-#include <string>
 
 // Структура для хранения данных о монстре
-constexpr int ITEMS_PER_PANEL = 3;
 std::string ExportManager::LPCSTR_to_wstring(LPCSTR ansi_str)
 {
     // 1. Получаем длину без нуль-терминатора
     const int src_len = libc::strlen(ansi_str);
 
     // 2. ANSI → UTF-16
-    const int wlen = libc::MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, NULL, 0);
+    const DWORD acp = Era::GetCodePage();
+    const int wlen = libc::MultiByteToWideChar(acp, 0, ansi_str, src_len, NULL, 0);
     std::wstring wstr(wlen, 0);
-    libc::MultiByteToWideChar(CP_ACP, 0, ansi_str, src_len, &wstr[0], wlen);
+    libc::MultiByteToWideChar(acp, 0, ansi_str, src_len, &wstr[0], wlen);
 
     // 3. UTF-16 → UTF-8
     const int ulen = libc::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, NULL, 0, NULL, NULL);
@@ -121,16 +119,16 @@ BOOL ExportManager::CreateMonstersJson(LPCSTR filePath, const BOOL originalData,
 }
 
 BOOL ExportManager::CreateArtifactsJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData)
-
 {
     nlohmann::ordered_json j;
+
     constexpr int maxOriginalId = 170;
     const int outOfBound = GetMaxOriginalId("artifacts", maxOriginalId) + 1;
     const int minId = originalData ? 0 : outOfBound;
-    const int maxArtId = ArtifactHandler::GetArtifactsNumber();
+    const int maxArtId = ArtifactInfo::GetArtifactsNumber();
     const int maxId = Clamp(0, additionalData ? maxArtId : outOfBound, maxArtId);
 
-    const auto &event = ArtifactHandler::GetEventTable();
+    const auto &event = ArtifactInfo::GetEventTable();
     // Создаем структуру JSON
     for (size_t i = minId; i < maxId; ++i)
     {
@@ -171,7 +169,7 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
     constexpr int maxOriginalId1 = 100;
     const int outOfBound1 = GetMaxOriginalId("dwellings1", maxOriginalId1) + 1;
     const int minId1 = originalData ? 0 : outOfBound1;
-    const int maxAmount1 = MapObjectHandler::GetSubtypesAmount(eObject::CREATURE_GENERATOR1);
+    const int maxAmount1 = MapObjectInfo::GetSubtypesAmount(eObject::CREATURE_GENERATOR1);
     const int maxId1 = Clamp(0, additionalData ? maxAmount1 : outOfBound1, maxAmount1);
 
     for (size_t i = minId1; i < maxId1; ++i)
@@ -180,12 +178,12 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
             j["era"]["dwellings1"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
 
-    const int dwellings4Num = MapObjectHandler::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
+    const int dwellings4Num = MapObjectInfo::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
 
     constexpr int maxOriginalId4 = 1;
     const int outOfBound4 = GetMaxOriginalId("dwellings4", maxOriginalId4) + 1;
     const int minId4 = originalData ? 0 : outOfBound4;
-    const int maxAmount4 = MapObjectHandler::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
+    const int maxAmount4 = MapObjectInfo::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
     const int maxId4 = Clamp(0, additionalData ? maxAmount4 : outOfBound4, maxAmount4);
 
     table = H3DwellingNames4::Get();
@@ -299,8 +297,8 @@ BOOL ExportManager::CreateTownBuildingsJson(LPCSTR filePath, const BOOL original
     const UINT townsNum = DwordAt(0x05B9962 + 2) / dwellinsPerTown;
 
     const UINT neutralTownId = townsNum - 1;
-    const auto townDwellingNames = TownHandler::GetTownDwellingNames();
-    const auto townDwellingDescriptions = TownHandler::GetTownDwellingDescriptions();
+    const auto townDwellingNames = TownBuildingInfo::GetTownDwellingNames();
+    const auto townDwellingDescriptions = TownBuildingInfo::GetTownDwellingDescriptions();
     nlohmann::ordered_json j;
 
     constexpr int maxOriginalId = 10;
@@ -399,7 +397,7 @@ void ExportDlg::CreateDlgItems()
         ExportManager::CreateObjectsJson,       ExportManager::CreateCreatureBanksJson,
         ExportManager::CreateTownBuildingsJson, ExportManager::CreateHeroesJson};
     LPCSTR panelPaths[] = {ExportManager::MonsterInfo::DEFAULT_PATH,      ExportManager::ArtifactInfo::DEFAULT_PATH,
-                           ExportManager::ObjectInfo::DEFAULT_PATH,       ExportManager::CreatureBankInfo::DEFAULT_PATH,
+                           ExportManager::MapObjectInfo::DEFAULT_PATH,    ExportManager::CreatureBankInfo::DEFAULT_PATH,
                            ExportManager::TownBuildingInfo::DEFAULT_PATH, ExportManager::HeroInfo::DEFAULT_PATH};
     constexpr size_t panelsNum = std::size(selectionPanelExportFunctions);
     constexpr int startId = 1;
@@ -456,7 +454,7 @@ ExportDlg::SelectionPanel *ExportDlg::CreateSelectionPanel(const int x, const in
     return panel;
 }
 
-ExportDlg::ExportDlg(const int width, const int height, const int x, const int y, const DlgStyle &style)
+ExportDlg::ExportDlg(const int width, const int height, const int x, const int y)
     : H3Dlg(width, height, x, y, false, false)
 {
     this->AddBackground(true, false, ePlayer::RED);
@@ -490,10 +488,9 @@ BOOL ExportDlg::DialogProc(H3Msg &msg)
 }
 VOID ExportDlg::OnOK()
 {
-    bool exportSuccess = false;
+    // bool exportSuccess = false;
     std::string message, list;
 
-    Era::ExecErmCmd("UN:J9/0/1");
     std::string exportPath = Era::z[1] + std::string(SUBFOLDER_NAME);
     for (auto &i : selectionPanels)
     {

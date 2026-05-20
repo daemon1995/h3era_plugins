@@ -3,12 +3,8 @@
 #ifndef HADLERSLIST_H
 #define HADLERSLIST_H
 
-#include "..\pch.h"
+#include "..\framework.h"
 // add headers that you want to pre-compile here
-
-#ifdef CREATE_JSON
-#include "..\ExportManager.h"
-#endif // CREATE_JSON
 
 #include "ArtifactHandler.h"
 #include "HeroHandler.h"

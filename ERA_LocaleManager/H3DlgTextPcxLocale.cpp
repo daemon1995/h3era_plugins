@@ -1,11 +1,10 @@
-#include "pch.h"
+#include "H3DlgTextPcxLocale.h"
 
 H3LoadedPcx16 *H3DlgPcx16Locale::backgroundPcx = nullptr;
 void H3DlgPcx16Locale::SetLocale(const Locale *locale)
 {
     m_locale = locale;
     LPCSTR localName = m_locale ? m_locale->displayedName.c_str() : h3_NullString;
-    //    SetText(localName);
 
     if (auto pcx = loadedPcx16)
     {
@@ -15,7 +14,13 @@ void H3DlgPcx16Locale::SetLocale(const Locale *locale)
         loadedPcx16->CopyRegion(backgroundPcx, 0, 0);
         if (font)
         {
-            font->TextDraw(pcx, localName, 0, 0, width, height);
+            std::string text = localName;
+            if (m_locale && !m_locale->displayedName.empty())
+            {
+                text += " (" + m_locale->name + ")";
+            }
+
+            font->TextDraw(pcx, text.c_str(), 0, 0, width, height, eTextColor::REGULAR, align);
         }
     }
 }

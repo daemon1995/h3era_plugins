@@ -1,22 +1,6 @@
 #pragma once
+#include "H3DlgTextPcxLocale.h"
 
-struct DlgStyle
-{
-    enum STYLE_ID
-    {
-        BROWN_BACK = 0,
-        BLUE_BACK
-    };
-    const UINT width;
-    const UINT height;
-    UINT maxRows;
-    const BOOL createExportButton = true;
-    const BOOL isBlueBack = false;
-    LPCSTR pcxName = nullptr;
-    H3String fontName;
-    DlgStyle(const UINT width, const UINT height, const UINT maxRows, const BOOL createExportButton,
-             const BOOL isBlueBack, LPCSTR fontName);
-};
 
 class LanguageSelectionDlg : public H3Dlg
 {

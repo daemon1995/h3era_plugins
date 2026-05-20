@@ -1,8 +1,8 @@
 #pragma once
-#include <Windows.h>
-#include <string>
-#include <vector>
 
+#include <unordered_set>
+
+#include "framework.h"
 class ExportDlg : public H3Dlg
 {
   public:
@@ -14,6 +14,8 @@ class ExportDlg : public H3Dlg
     static constexpr int PANEL_TEXT_WIDTH = 200;
     static constexpr int CHECKBOX_PADDING = 200;
     static constexpr int PANELS_PADDING = 30;
+    static constexpr int ITEMS_PER_PANEL = 3;
+
     struct SelectionPanel
     {
 
@@ -30,7 +32,7 @@ class ExportDlg : public H3Dlg
                                          BOOL (*exportFunc)(LPCSTR, const BOOL, const BOOL));
 
   public:
-    ExportDlg(const int width, const int height, const int x, const int y, const DlgStyle &style);
+    ExportDlg(const int width, const int height, const int x, const int y);
     virtual ~ExportDlg();
 
     virtual BOOL DialogProc(H3Msg &msg) override;
@@ -51,10 +53,27 @@ class ExportManager
     struct ArtifactInfo
     {
         static constexpr LPCSTR DEFAULT_PATH = "ArtifactText.json";
+        static inline LPCSTR *GetEventTable() noexcept
+        {
+            return *reinterpret_cast<LPCSTR **>(0x49F51B + 3);
+        }
+        static inline int GetArtifactsNumber() noexcept
+        {
+            return IntAt(0x717020);
+        }
     };
-    struct ObjectInfo
+    struct MapObjectInfo
     {
         static constexpr LPCSTR DEFAULT_PATH = "ObjectText.json";
+        static int GetSubtypesAmount(const eObject type) noexcept
+        {
+            std::unordered_set<int> objectSubtypes;
+            for (auto &i : P_Game->mainSetup.objectLists[type])
+            {
+                objectSubtypes.insert(i.subtype);
+            }
+            return objectSubtypes.size();
+        }
     };
     struct CreatureBankInfo
     {
@@ -63,6 +82,14 @@ class ExportManager
     struct TownBuildingInfo
     {
         static constexpr LPCSTR DEFAULT_PATH = "TownText.json";
+        static inline LPCSTR *GetTownDwellingNames() noexcept
+        {
+            return *reinterpret_cast<LPCSTR **>(0x05B9923 + 2);
+        }
+        static inline LPCSTR *GetTownDwellingDescriptions() noexcept
+        {
+            return *reinterpret_cast<LPCSTR **>(0x05B9957 + 2);
+        }
     };
     struct HeroInfo
     {

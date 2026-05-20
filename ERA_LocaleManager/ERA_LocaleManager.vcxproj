@@ -16,20 +16,21 @@
     <ProjectGuid>{9cf6680a-4176-463d-86eb-1fb9f6955224}</ProjectGuid>
     <RootNamespace>ERAMultilingualSupport</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>ERA_LocaleManager</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -45,12 +46,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\WoG\EraPlugins</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\WoG\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\games\HoMM 3 ERA\Mods\WoG\EraPlugins</OutDir>
+    <OutDir>D:\games\HoMM 3 ERA\Mods\WoG\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -83,12 +84,7 @@
     <ClInclude Include="LanguageSelectionDlg.h" />
     <ClInclude Include="Locale.h" />
     <ClInclude Include="LocaleManager.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="TextHandlers\ArtifactHandler.h" />
-    <ClInclude Include="TextHandlers\HeroHandler.h" />
-    <ClInclude Include="TextHandlers\MapObjectHandler.h" />
-    <ClInclude Include="TextHandlers\MonsterHandler.h" />
-    <ClInclude Include="TextHandlers\TownHandler.h" />
+    <ClInclude Include="framework.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
@@ -96,13 +92,7 @@
     <ClCompile Include="ExportManager.cpp" />
     <ClCompile Include="H3DlgTextPcxLocale.cpp" />
     <ClCompile Include="LanguageSelectionDlg.cpp" />
-    <ClCompile Include="Locale.cpp" />
     <ClCompile Include="LocaleManager.cpp" />
-    <ClCompile Include="TextHandlers\ArtifactHandler.cpp" />
-    <ClCompile Include="TextHandlers\HeroHandler.cpp" />
-    <ClCompile Include="TextHandlers\MapObjectHandler.cpp" />
-    <ClCompile Include="TextHandlers\MonsterHandler.cpp" />
-    <ClCompile Include="TextHandlers\TownHandler.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

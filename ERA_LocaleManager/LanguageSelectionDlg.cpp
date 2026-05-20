@@ -1,4 +1,8 @@
-#include "pch.h"
+#include "LanguageSelectionDlg.h"
+
+#ifdef CREATE_JSON
+#include "ExportManager.h"
+#endif // CREATE_JSON
 
 constexpr UINT16 FRAME_WIDGET_ID = 2;
 constexpr UINT16 FIRST_SELECTION_WIDGET_ID = 3;
@@ -233,7 +237,6 @@ void LanguageSelectionDlg::PlaceFrameAtWidget(const H3DlgPcx16Locale *it) const 
 
 BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
 {
-
     if (msg.IsLeftDown())
     {
         if (msg.itemId == FRAME_WIDGET_ID)
@@ -250,7 +253,8 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
             // check if locale description is broken
             if (locale->broken)
             {
-                comment = H3String::Format(EraJS::read(LocaleManager::error::name), locale->name.c_str()).String();
+                comment =
+                    H3String::Format(EraJS::read(LocaleManager::format::error::name), locale->name.c_str()).String();
             }
 
             libc::sprintf(h3_TextBuffer, formatPtr, locale->name.c_str(), locale->displayedName.c_str(), comment);
@@ -273,7 +277,7 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
         {
             P_SoundManager->ClickSound();
             // create export dialog
-            ExportDlg exportDlg(630, 300, -1, -1, style);
+            ExportDlg exportDlg(630, 300, -1, -1);
             exportDlg.Start();
         }
     }
@@ -320,6 +324,11 @@ void LanguageSelectionDlg::DlgText::Load() noexcept
     localeHasNoDescriptionFormat = EraJS::read("era.locale.dlg.noDescription");
     sameLocaleFormat = EraJS::read("era.locale.dlg.sameLocale");
 }
+void InitLanguageSelectionDlg()
+{
+    LanguageSelectionDlg::Init();
+}
+
 void LanguageSelectionDlg::Init()
 {
     if (CreateAssets())
@@ -332,13 +341,4 @@ void LanguageSelectionDlg::Init()
                                 &CurrentDlg_HandleLocaleDlgStart};
         MainMenu_RegisterWidget(langInfo);
     }
-}
-
-DlgStyle::DlgStyle(const UINT width, const UINT height, const UINT maxRows, const BOOL createExportButton,
-                   const BOOL isBlueBack, LPCSTR fontName)
-    : width(width), height(height), maxRows(maxRows), createExportButton(createExportButton), isBlueBack(isBlueBack),
-      fontName(fontName)
-{
-    this->maxRows = Clamp(0, maxRows + createExportButton, (600 / height));
-    pcxName = isBlueBack ? NH3Dlg::HDassets::DLGBLUEBACK : NH3Dlg::Assets::DIBOXBACK;
 }
