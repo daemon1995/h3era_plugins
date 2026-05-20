@@ -1,10 +1,27 @@
 #pragma once
+enum CodePage : DWORD
+{
+    NO_ANSI = 0,
+    Thai = 874,
+    Korean = 949,
+    Japanese = 932,
+    ChineseSimplified = 936,
+    Vietnamese = 1258,
+    ANSI = 1252,
+    Arabic = 1256,
+    Baltic = 1257,
+    CentralEuropean = 1250,
+    Cyrillic = 1251,
+    Greek = 1253,
+    Hebrew = 1255,
+    Turkish = 1254,
+};
 class Locale
 {
   public:
     std::string name;
     std::string displayedName;
-    DWORD codePage = 1252; // default to Latin 1
+    DWORD codePage = ANSI; // default to Latin 1
     BOOL hasDescription = false;
     BOOL broken = false; // if locale is broken, it will be displayed with `??`
 

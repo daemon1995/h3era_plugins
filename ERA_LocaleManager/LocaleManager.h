@@ -11,23 +11,7 @@ constexpr LPCSTR alternative = "era.locale.name.%s";
 class LocaleManager
 {
   public:
-    enum CodePage : DWORD
-    {
-        NO_ANSI = 0,
-        Thai = 874,
-        Korean = 949,
-        Japanese = 932,
-        ChineseSimplified = 936,
-        Vietnamese = 1258,
-        ANSI = 1252,
-        Arabic = 1256,
-        Baltic = 1257,
-        CentralEuropean = 1250,
-        Cyrillic = 1251,
-        Greek = 1253,
-        Hebrew = 1255,
-        Turkish = 1254,
-    };
+
     struct format
     {
         static constexpr LPCSTR name = "era.locale.list.%s.name";

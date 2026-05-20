@@ -6,7 +6,7 @@
 bool __stdcall LoadArtTraitsTxt(HiHook *h)
 {
     bool result = CDECL_0(bool, h->GetDefaultFunc());
-   // if (result)
+    // if (result)
     {
         h->Undo();
 
@@ -19,23 +19,18 @@ bool __stdcall LoadArtTraitsTxt(HiHook *h)
         {
             auto &artInfo = P_ArtifactSetup->Get()[i];
 
-            // ArtifactHandler::ReadField(artInfo.name, ArtifactHandler::formats::name, i);
-            //   READ_FIELD(artInfo, description, i)
             READ_ART_FIELD(artInfo, name, i);
+            READ_ART_FIELD(artInfo, cost, i);
+            READ_ART_FIELD(artInfo, position, i);
+            READ_ART_FIELD(artInfo, type, i);
             READ_ART_FIELD(artInfo, description, i);
+            READ_ART_FIELD(artInfo, comboID, i);
+            READ_ART_FIELD(artInfo, combinationArtifactId, i);
+            READ_ART_FIELD(artInfo, disabled, i);
+            READ_ART_FIELD(artInfo, newSpell, i);
 
-            //READ_ART_FIELD(artInfo, cost, i);
-            //     READ_ART_FIELD(artInfo, comboID, i)
-            // READ_ART_FIELD(artInfo, event, i)
-            // READ_ART_FIELD(artInfo, cost, i)
-
-            sprintf(h3_TextBuffer, ArtifactHandler::formats::event, i);
-            readResult = EraJS::read(h3_TextBuffer, readSuccess);
-            if (readSuccess)
-            {
-                eventTable[i] = readResult;
-            }
-            else if (i > lastEventIndex)
+            if (!ArtifactHandler::ReadField<LPCSTR>(eventTable[i], ArtifactHandler::formats::event, i) &&
+                i > lastEventIndex)
             {
                 eventTable[i] = h3_NullString; // if not read, set to nullptr
             }
@@ -59,53 +54,34 @@ void ArtifactHandler::Init()
     // Warning: this hook is after all txt read
     _PI->WriteHiHook(0x04EE036, CDECL_, LoadArtTraitsTxt);
 }
+template <typename T>
+inline constexpr bool is_artifact_related_v = std::is_same_v<T, int> || std::is_same_v<T, eCombinationArtifacts> ||
+                                              std::is_same_v<T, eArtifactSlots> || std::is_same_v<T, eArtifactType>;
 
-// template <> static void ArtifactHandler::ReadField<LPCSTR>(LPCSTR &target, const char *format, int idx) noexcept
-//{
-//     bool readSuccess = false;
-//     libc::sprintf(h3_TextBuffer, format, idx);
-//     LPCSTR readResult = EraJS::read(h3_TextBuffer, readSuccess);
-//     if (readSuccess)
-//     {
-//         target = readResult;
-//     }
-// }
-//  template <>
-//  static void ArtifactHandler::ReadField<INT>(INT &target, const char *format, int idx) noexcept
-//{
-//      bool readSuccess = false;
-//      libc::sprintf(h3_TextBuffer, format, idx);
-//      INT readResult = EraJS::readInt(h3_TextBuffer, readSuccess);
-//      if (readSuccess)
-//      {
-//          target = readResult;
-//      }
-//  }
-
-template <class T> static void ArtifactHandler::ReadField(T &target, const char *format, int idx) noexcept
+template <class T> static BOOL ArtifactHandler::ReadField(T &target, LPCSTR format, const int idx) noexcept
 {
     bool readSuccess = false;
     libc::sprintf(h3_TextBuffer, format, idx);
     T readResult;
-    if constexpr (std::is_same_v<T, const char *>)
+    if constexpr (std::is_same_v<T, LPCSTR>)
     {
         readResult = EraJS::read(h3_TextBuffer, readSuccess);
     }
-    else if constexpr (std::is_same_v<T, int> || std::is_same_v<T, eCombinationArtifacts>)
+    else if constexpr (is_artifact_related_v<T>)
     {
-        readResult = EraJS::readInt(h3_TextBuffer, readSuccess);
+        readResult = static_cast<T>(EraJS::readInt(h3_TextBuffer, readSuccess));
     }
     else
     {
-
-        return; // unsupported type
+        return false; // unsupported type
     }
     if (readSuccess)
     {
         if constexpr (std::is_same_v<T, eCombinationArtifacts>)
         {
-            readResult = Clamp(-1, readResult, 123);
+            readResult = static_cast<T>(Clamp(-1, static_cast<int>(readResult), 123));
         }
         target = readResult;
     }
+    return readSuccess;
 }
