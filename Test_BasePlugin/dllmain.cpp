@@ -2,16 +2,18 @@
 #define _H3API_PLUGINS_
 #include "framework.h"
 
-using namespace h3;
-
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
+
 namespace dllText
 {
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
+static _ERH_(OnAfterWog)
+{
+}
 
-_LHF_(HooksInit)
+static _LHF_(HooksInit)
 {
     return EXEC_DEFAULT;
 }
@@ -28,7 +30,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             Era::ConnectEra(hModule, dllText::instanceName);
-            _PI->WriteLoHook(0x4EEAF2, HooksInit);
+            // _PI->WriteLoHook(0x4EEAF2, HooksInit); SoD way; used for old plugins and early hooks set
+            // _REH_(OnAfterWog); // ERA way; used for new plugins and late hooks set
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
