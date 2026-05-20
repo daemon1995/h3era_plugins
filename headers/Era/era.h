@@ -162,7 +162,14 @@ ERA_API void (__stdcall *FireEvent) (const char* EventName, void* EventData, int
 
 // ======================= INTERNATIONALIZATION ======================= //
 /** Changes current language code in memory without altering ini files or reloading already loaded data */
-ERA_API int (__stdcall *SetLanguage) (const char* NewLanguage);
+ERA_API int32_bool (__stdcall *SetLanguage)(const char *NewLanguage);
+/** Returns current language code. Must be released using MemFree when it is no longer necessary */
+ERA_API era_str (__stdcall *GetLanguage)();
+
+/** Changes current language code page */
+ERA_API int32_bool (__stdcall *SetCodePage)(uint32_t NewCodePage);
+/** Returns current language code page */
+ERA_API uint32_t (__stdcall *GetCodePage)();
 
 /** Reloads all json files from "Lang" directory and current language subdirectory */
 ERA_API void (__stdcall *ReloadLanguageData) ();
