@@ -10992,7 +10992,7 @@ namespace h3
                 LOAD_GAME        = 1000,
                 TEXT_MSG         = 1004,
                 BATTLE_INFO      = 1005,
-                PLAYER_E4        = 1009,
+                PLAYER_QUICK     = 1009,
                 DROP_GAME        = 1014,
                 UNK1015          = 1015,
                 END_TURN         = 1016,
@@ -15712,28 +15712,23 @@ namespace h3
 		CHAR player_name[21];
 	public:
 		/** @brief [E1] */
-		BOOL8 is_human;
+		BOOL8 isLocal;
 		/** @brief [E2] */
-		BOOL8 is_human2;
+		BOOL8 isHuman;
+		/** @brief [E4] */
+		BOOL quickCombatEnabled;
+		struct AIPlayer
+		{
+			H3Resources resource_expected_count;
+			H3Resources income;
+			DOUBLE _f_038;
+			DOUBLE resourceImportance[7];
+			float turnValueOfAvgArtifact;
+		};
+		AIPlayer aIPlayer;
 	protected:
-		h3unk8 _f_E3[3];
-		/** @brief [E6] */
-		BOOL8 human;
-		h3unk8 _f_E7;
-		/** @brief [E8] */
-		BOOL hasComboArtifacts;
-		h3unk8 _f_EC[28];
-	public:
-		/** @brief [108] */
-		H3Resources income;
-	protected:
-		h3unk8 _f_124[4];
-	public:
-		/** @brief [128] */
-		DOUBLE resourceImportance[7];
-	protected:
-
-		h3unk8 _f_160[8];
+		/** @brief [164] */
+		h3unk8 _f_164[4];
 	public:
 		_H3API_ H3Hero* GetActiveHero();
 	};
@@ -17373,6 +17368,7 @@ namespace h3
 		INT32 exitSubtype;
 		/** @ brief [58]*/
 		INT32 resultItemId;
+	public:
 		/** @ brief [5C]*/
 		BOOL8 networkGame;
 	public:

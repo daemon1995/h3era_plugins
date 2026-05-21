@@ -45,12 +45,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(LocalGamePath)\Mods\Commissions\EraPlugins\</OutDir>
+    <OutDir>$(LocalGamePath)\Mods\WoG\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(LocalGamePath)\Mods\Commissions\EraPlugins\</OutDir>
+    <OutDir>$(LocalGamePath)\Mods\WoG\EraPlugins\</OutDir>
     <TargetExt>.era</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
