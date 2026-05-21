@@ -231,7 +231,6 @@ class LocaleManager
     static constexpr LPCSTR INI_CODEPAGE_KEY_NAME = "CodePage";
     static constexpr LPCSTR INI_SECTION_NAME = "Era";
 
-    static H3String m_displayedName;
 
   private:
     const Locale *m_current = nullptr; // Locale;
@@ -256,7 +255,6 @@ class LocaleManager
     const Locale *GetSelected() const noexcept;
 
   public:
-    static LPCSTR GetDisplayedName();
 
     static std::string ReadLocaleFromIni();
     // const Locale* DefaultLocale() const noexcept;

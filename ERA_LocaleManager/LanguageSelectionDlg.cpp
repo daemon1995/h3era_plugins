@@ -1,8 +1,15 @@
+
 #include "LanguageSelectionDlg.h"
 
 #ifdef CREATE_JSON
 #include "ExportManager.h"
 #endif // CREATE_JSON
+
+#pragma comment(linker, "/EXPORT:CallLocaleSelectionDlg=_CallLocaleSelectionDlg@12")
+#pragma comment(linker, "/EXPORT:GetDisplayedName=_GetDisplayedName@0")
+
+DllExport void __stdcall CallLocaleSelectionDlg(const int x, const int y, const int styleIndex);
+DllExport LPCSTR __stdcall GetDisplayedName();
 
 constexpr UINT16 FRAME_WIDGET_ID = 2;
 constexpr UINT16 FIRST_SELECTION_WIDGET_ID = 3;
@@ -23,6 +30,73 @@ bool LanguageSelectionDlg::CreateAssets(const BOOL forceRecreate)
     return !styles.empty();
 }
 
+void StartDlg(const int x, const int y, const int styleIndex, const H3DlgItem *callerItem)
+{
+    if (styleIndex >= LanguageSelectionDlg::styles.size())
+    {
+        H3Messagebox("Invalid style index");
+        return;
+    }
+
+    const auto &style = LanguageSelectionDlg::styles[styleIndex];
+
+    LocaleManager localeManager;
+
+    const UINT localesCount = localeManager.GetCount() + (style.createExportButton);
+
+    const UINT16 maxLocalesToDisplay = style.maxRows;
+    const bool createSlider = localesCount > maxLocalesToDisplay;
+    // if there are locales
+    if (const INT32 itemsToDisplay = createSlider ? maxLocalesToDisplay : localesCount)
+    {
+        // calc width based on the dlg asset width + assumed scroll width
+        const UINT16 dlgWidth = style.width + 16 * createSlider;
+        const UINT16 dlgHeight = style.height * itemsToDisplay;
+
+        INT16 dlgX = x;
+        INT16 dlgY = y;
+        if (callerItem)
+        {
+            const int callerX = callerItem->GetAbsoluteX();
+            const int callerY = callerItem->GetAbsoluteY();
+            const int callerWidth = callerItem->GetWidth();
+            const int callerHeight = callerItem->GetHeight();
+            const int gameWidth = H3GameWidth::Get();
+            const int gameHeight = H3GameHeight::Get();
+            constexpr int backgroundWidth = 800;
+            constexpr int backgroundHeight = 600;
+            const int backgroundX = gameWidth - backgroundWidth >> 1;
+            const int backgroundY = gameHeight - backgroundHeight >> 1;
+
+            dlgX = callerX + callerWidth;
+
+            // calculate dialog position
+            if (dlgX + dlgWidth > backgroundX + backgroundWidth)
+            {
+                dlgX = backgroundX + backgroundWidth - dlgWidth;
+            }
+            // dlgX = callerItem->GetAbsoluteX();
+            // const INT16 dlgY = bttn->GetAbsoluteY();// +yOffset;
+            //   dlgX = callerItem->GetAbsoluteX() - style.width;
+            dlgY = backgroundY;
+        }
+
+        const std::string currentLocale = LocaleManager::ReadLocaleFromIni();
+        LanguageSelectionDlg langDlg(dlgX, dlgY, dlgWidth, dlgHeight, style, &localeManager);
+        langDlg.Start();
+
+        const std::string selectedLocale = LocaleManager::ReadLocaleFromIni();
+        if (currentLocale != selectedLocale)
+        {
+            mainmenu::MainMenu_SetDialogButtonText(LanguageSelectionDlg::UNIQUE_BUTTON_NAME,
+                                                   GetDisplayedName()); // update button text with new locale name
+        }
+    }
+    else
+    {
+        H3Messagebox("ERROR:\nNo locales");
+    }
+}
 /// function to get last locale from vector
 // This function retrieves the last locale from the available locales
 // and returns it for further processing or display.
@@ -33,65 +107,8 @@ int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
         const auto callerItem = msg->GetDlg()->GetCaptionButton(msg->itemId);
         if (callerItem && msg->IsLeftClick())
         {
-            auto &style = LanguageSelectionDlg::styles[DlgStyle::BLUE_BACK]; // use first style by default
 
-            LocaleManager localeManager;
-
-            const UINT localesCount = localeManager.GetCount() + (style.createExportButton);
-
-            const UINT16 maxLocalesToDisplay = style.maxRows;
-            const bool createSlider = localesCount > maxLocalesToDisplay;
-
-            // if there are locales
-            if (const INT32 itemsToDisplay = createSlider ? maxLocalesToDisplay : localesCount)
-            {
-                // calc width based on the dlg asset width + assumed scroll width
-                const UINT16 dlgWidth = style.width + 16 * createSlider;
-
-                const UINT16 dlgHeight = style.height * itemsToDisplay;
-
-                const int callerX = callerItem->GetAbsoluteX();
-                const int callerY = callerItem->GetAbsoluteY();
-                const int callerWidth = callerItem->GetWidth();
-                const int callerHeight = callerItem->GetHeight();
-                const int gameWidth = H3GameWidth::Get();
-                const int gameHeight = H3GameHeight::Get();
-                constexpr int backgroundWidth = 800;
-                constexpr int backgroundHeight = 600;
-                const int backgroundX = gameWidth - backgroundWidth >> 1;
-                const int backgroundY = gameHeight - backgroundHeight >> 1;
-
-                INT16 dlgX = callerX + callerWidth;
-
-                // calculate dialog position
-                if (dlgX + dlgWidth > backgroundX + backgroundWidth)
-                {
-                    dlgX = backgroundX + backgroundWidth - dlgWidth;
-                }
-
-                // dlgX = callerItem->GetAbsoluteX();
-
-                // const INT16 dlgY = bttn->GetAbsoluteY();// +yOffset;
-                //   dlgX = callerItem->GetAbsoluteX() - style.width;
-                INT16 dlgY = backgroundY;
-
-                LanguageSelectionDlg langDlg(dlgX, dlgY, dlgWidth, dlgHeight, style, &localeManager);
-
-                const std::string currentLocale = LocaleManager::ReadLocaleFromIni();
-                langDlg.Start();
-
-                const std::string selectedLocale = LocaleManager::ReadLocaleFromIni();
-                if (currentLocale != selectedLocale)
-                {
-                    mainmenu::MainMenu_SetDialogButtonText(
-                        LanguageSelectionDlg::UNIQUE_BUTTON_NAME,
-                        LocaleManager::GetDisplayedName()); // update button text with new locale name
-                }
-            }
-            else
-            {
-                H3Messagebox("ERROR:\nNo locales");
-            }
+            StartDlg(-1, -1, DlgStyle::BLUE_BACK, callerItem);
         }
     }
     return true;
@@ -337,8 +354,17 @@ void LanguageSelectionDlg::Init()
 
         const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
 
-        MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, LocaleManager::GetDisplayedName(), flags,
-                                &CurrentDlg_HandleLocaleDlgStart};
+        MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, GetDisplayedName(), flags, &CurrentDlg_HandleLocaleDlgStart};
         MainMenu_RegisterWidget(langInfo);
     }
+}
+
+DllExport void __stdcall CallLocaleSelectionDlg(const int x, const int y, const int styleIndex)
+{
+    StartDlg(x, y, styleIndex, nullptr);
+}
+DllExport LPCSTR __stdcall GetDisplayedName()
+{
+    libc::sprintf(h3_TextBuffer, EraJS::read("era.locale.dlg.buttonName"), LocaleManager::ReadLocaleFromIni().c_str());
+    return h3_TextBuffer;
 }

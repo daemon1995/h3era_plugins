@@ -2,7 +2,6 @@
 
 #include <unordered_set>
 
-H3String LocaleManager::m_displayedName{};
 static BOOL PathIsValid(const std::string &path)
 {
     // Check if the path is not empty and does not contain invalid characters
@@ -194,14 +193,6 @@ const Locale *LocaleManager::GetSelected() const noexcept
 void LocaleManager::SetSelected(const Locale *locale) noexcept
 {
     m_seleted = locale;
-}
-
-LPCSTR LocaleManager::GetDisplayedName()
-{
-    char buff[256];
-    libc::sprintf(buff, EraJS::read("era.locale.dlg.buttonName"), ReadLocaleFromIni().c_str());
-    m_displayedName = buff;
-    return m_displayedName.String();
 }
 
 UINT32 LocaleManager::GetCount() const noexcept
