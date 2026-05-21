@@ -6,4 +6,5 @@
 #include <windows.h>
 // #define ERA_MODLIST
 // #define _WOG_
+#define RESIZED_PCX
 #include "..\..\headers\header.h"
