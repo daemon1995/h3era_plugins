@@ -13,10 +13,10 @@ class ArtifactHandler
         DECLARE_JSON_FIELD(position)
         DECLARE_JSON_FIELD(type)
         DECLARE_JSON_FIELD(description)
-        DECLARE_JSON_FIELD(comboID)
-        DECLARE_JSON_FIELD(combinationArtifactId)
+        DECLARE_JSON_FIELD(comboArtifactId)
+        DECLARE_JSON_FIELD(partOfComboArtifactId)
         DECLARE_JSON_FIELD(disabled)
-        DECLARE_JSON_FIELD(newSpell)
+        DECLARE_JSON_FIELD(hasSpell)
 
         // artevent.txt fields
         DECLARE_JSON_FIELD(event)

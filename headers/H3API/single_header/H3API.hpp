@@ -8623,7 +8623,7 @@ namespace h3
         _H3API_ eArtifactSlots         GetSlot() const;
         _H3API_ eArtifactType          GetType() const;
         _H3API_ const H3ArtifactSetup& GetSetup() const;
-        _H3API_ eSpell                 GetSpell() const;
+        _H3API_ BOOL8                  HasSpell() const;
         _H3API_ H3Artifact             Remove();
         _H3API_ eSpell                 ScrollSpell() const;
         _H3API_ VOID                   Swap(H3Artifact& other);
@@ -8667,13 +8667,13 @@ namespace h3
         /** @brief [10]*/
         LPCSTR description = h3_NullString;
         /** @brief [14] index of the combo 0..11*/
-        eCombinationArtifacts comboID = eCombinationArtifacts::NONE;
+        eCombinationArtifacts comboArtifactId = eCombinationArtifacts::NONE;
         /** @brief [18] index of the artifact 0..143*/
-		eCombinationArtifacts combinationArtifactId = eCombinationArtifacts::NONE;
+		eCombinationArtifacts partOfComboArtifactId = eCombinationArtifacts::NONE;
         /** @brief [1C] artifact is not available*/
         BOOL8 disabled = TRUE;
-        /** @brief [1D] spell added to spellbook*/
-        eSpell  newSpell = eSpell::SUMMON_BOAT;
+        /** @brief [1D] adds some spells to spellbook*/
+		BOOL8 hasSpell = FALSE;
 
         _H3API_ BOOL IsPartOfCombo() const;
     };
@@ -28250,7 +28250,7 @@ namespace h3
 
     _H3API_ eCombinationArtifacts H3Artifact::GetCombinationArtifact() const
     {
-        return GetSetup().combinationArtifactId;
+        return GetSetup().partOfComboArtifactId;
     }
 
     _H3API_ eArtifact H3Artifact::GetId() const
@@ -28260,7 +28260,7 @@ namespace h3
 
     _H3API_ eCombinationArtifacts H3Artifact::GetCombinationArtifactIndex() const
     {
-        return GetSetup().comboID;
+        return GetSetup().comboArtifactId;
     }
 
     _H3API_ eArtifactSlots H3Artifact::GetSlot() const
@@ -28278,9 +28278,9 @@ namespace h3
         return H3ArtifactSetup::Get()[id];
     }
 
-    _H3API_ eSpell H3Artifact::GetSpell() const
+    _H3API_ BOOL8 H3Artifact::HasSpell() const
     {
-        return GetSetup().newSpell;
+        return GetSetup().hasSpell;
     }
 
     _H3API_ eSpell H3Artifact::ScrollSpell() const
@@ -28302,7 +28302,7 @@ namespace h3
 {
 	_H3API_ BOOL H3ArtifactSetup::IsPartOfCombo() const
 	{
-		return combinationArtifactId != eArtifact::NONE;
+		return partOfComboArtifactId != eArtifact::NONE;
 	}
 } /* namespace h3 */
 
@@ -32675,10 +32675,10 @@ namespace h3
 
 		H3ArtifactSetup* art_setups = H3ArtifactSetup::Get();
 
-		INT32 comboId = art_setups[artId].comboID;
+		INT32 comboId = art_setups[artId].comboArtifactId;
 		if (comboId != -1) // it's already a combination artifact
 			return FALSE;
-		comboId = art_setups[artId].combinationArtifactId;
+		comboId = art_setups[artId].partOfComboArtifactId;
 		if (comboId == -1) // not part of a combination
 			return FALSE;
 
@@ -32686,7 +32686,7 @@ namespace h3
 
 		for (INT32 i = 0; i < numArts; ++i)
 		{
-			if (art_setups[i].combinationArtifactId == comboId)
+			if (art_setups[i].partOfComboArtifactId == comboId)
 			{
 				if (!WearsArtifact(i))
 					return FALSE;
@@ -32701,14 +32701,14 @@ namespace h3
 		if (artId == -1)
 			return;
 		H3ArtifactSetup* art_setups = H3ArtifactSetup::Get();
-		INT32 comboId = art_setups[artId].comboID;
+		INT32 comboId = art_setups[artId].comboArtifactId;
 		if (comboId == -1) // not a combo artifact
 			return;
 		RemoveArtifact(slot);
 		INT32 numArts = H3ArtifactCount::Get();
 		for (INT32 i = 0; i < numArts; ++i)
 		{
-			if (art_setups[i].combinationArtifactId == comboId)
+			if (art_setups[i].partOfComboArtifactId == comboId)
 			{
 				H3Artifact art(i, -1);
 				GiveArtifact(art);

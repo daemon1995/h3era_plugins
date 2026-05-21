@@ -24,10 +24,10 @@ bool __stdcall LoadArtTraitsTxt(HiHook *h)
             READ_ART_FIELD(artInfo, position, i);
             READ_ART_FIELD(artInfo, type, i);
             READ_ART_FIELD(artInfo, description, i);
-            READ_ART_FIELD(artInfo, comboID, i);
-            READ_ART_FIELD(artInfo, combinationArtifactId, i);
+            READ_ART_FIELD(artInfo, comboArtifactId, i);
+            READ_ART_FIELD(artInfo, partOfComboArtifactId, i);
             READ_ART_FIELD(artInfo, disabled, i);
-            READ_ART_FIELD(artInfo, newSpell, i);
+            READ_ART_FIELD(artInfo, hasSpell, i);
 
             if (!ArtifactHandler::ReadField<LPCSTR>(eventTable[i], ArtifactHandler::formats::event, i) &&
                 i > lastEventIndex)
@@ -77,10 +77,10 @@ template <class T> static BOOL ArtifactHandler::ReadField(T &target, LPCSTR form
     }
     if (readSuccess)
     {
-        if constexpr (std::is_same_v<T, eCombinationArtifacts>)
-        {
-            readResult = static_cast<T>(Clamp(-1, static_cast<int>(readResult), 123));
-        }
+        // if constexpr (std::is_same_v<T, eCombinationArtifacts>)
+        // {
+        // readResult = static_cast<T>(Clamp(-1, static_cast<int>(readResult), 123));
+        // }
         target = readResult;
     }
     return readSuccess;

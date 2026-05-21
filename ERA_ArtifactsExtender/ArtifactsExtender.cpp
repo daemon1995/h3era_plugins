@@ -251,8 +251,8 @@ void ArtifactsExtender::ReplaceArtifactSetupsTable()
         // patch combinations
         {
 
-            DWORD combinationArtifactIdPtr = (DWORD)&artifactSetups[0].combinationArtifactId; // + 0x18
-            DWORD comboIDPtr = (DWORD)&artifactSetups[0].comboID;                             // + 0x14
+            DWORD combinationArtifactIdPtr = (DWORD)&artifactSetups[0].partOfComboArtifactId; // + 0x18
+            DWORD comboIDPtr = (DWORD)&artifactSetups[0].comboArtifactId;                             // + 0x14
 
             // 00716F50 -- WoG::CleanUpCombo
             _PI->WriteDword(0x0716F7F, newArtifactsNumber); // Патчим воговское кол-во артефактов

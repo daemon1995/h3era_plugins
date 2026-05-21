@@ -105,7 +105,7 @@ bool __stdcall WoG_OnMapReset(HiHook *h, int a1)
 
     if (result)
     {
-        LoadJsonData(true);
+        //  LoadJsonData(true);
     }
 
     return result;
@@ -129,7 +129,7 @@ void __stdcall CreatureDescriptions_Destruct(HiHook *h)
 void MonsterHandler::Init()
 {
     _PI->WriteHiHook(0x04EDE90, CDECL_, Load_CrTraits_TXT); //
-    _PI->WriteHiHook(0x07117CA, CDECL_, WoG_OnMapReset);    //
+    // _PI->WriteHiHook(0x07117CA, CDECL_, WoG_OnMapReset);    //
 
     // restore original pointers
 

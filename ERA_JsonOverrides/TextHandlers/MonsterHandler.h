@@ -3,6 +3,7 @@ struct MonsterHandler
 {
 
     static std::vector<LPCSTR> originalSingleNames, originalPluralNames, originalDescriptions;
+    H3CreatureInformation p;
 
   public:
     struct formats

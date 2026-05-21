@@ -27,11 +27,11 @@ BOOL ArtifactHints::CreateCombinePartsString(const H3Artifact *artifact, const H
                 //   if (i == artifact->id)
                 //      continue;
                 const auto &artPiece = P_ArtifactSetup[i];
-                if (artPiece.combinationArtifactId == combArt)
+                if (artPiece.partOfComboArtifactId == combArt)
                 {
                     combinedArtifactParts.push_back(i);
                 }
-                else if (!artsFound && artPiece.comboID == combArt)
+                else if (!artsFound && artPiece.comboArtifactId == combArt)
                 {
                     artsFound = true;
                     combinedArtifactId = i;
@@ -317,7 +317,7 @@ StatBytes::StatBytes(const H3Artifact &art)
             for (size_t i = 0; i < lastArtifactId; i++)
             {
                 const auto &artPiece = P_ArtifactSetup[i];
-                if (artPiece.combinationArtifactId == combArt)
+                if (artPiece.partOfComboArtifactId == combArt)
                 {
                     *this += StatBytes(H3Artifact(eArtifact(i)));
                 }
