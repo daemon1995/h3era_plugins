@@ -97,9 +97,60 @@ _LHF_(AfterAdvMapTilesDraw)
 
     return EXEC_DEFAULT;
 }
+
+H3CreatureInfoDlg *globalDlg = nullptr;
+
+_LHF_(RMCdlgProc)
+{
+    auto dlg = ValueAt<H3BaseDlg *>(c->ebp + 0x8);
+    if (globalDlg == ValueAt<H3BaseDlg *>(c->ebp + 0x8))
+    {
+        auto dlgDef = globalDlg->animation;
+        if (dlgDef)
+        {
+            DWORD waitUntil = ValueAt<DWORD>(0x6989E8);
+            DWORD currentTime = GetTime();
+
+            if (int(currentTime - waitUntil) < 0)
+            {
+                return EXEC_DEFAULT;
+            }
+
+            const BOOL8 isWarMachine = THISCALL_1(BOOL8, 0x047AAB0, globalDlg->creatureId);
+            THISCALL_1(void, isWarMachine ? 0x04EB330 : 0x04EB140, globalDlg->animation);
+            globalDlg->Redraw();
+            waitUntil = ValueAt<DWORD>(0x6989E8);
+            int currentTimeA = GetTime() - waitUntil;
+            if (currentTimeA < 100)
+                currentTimeA = 100;
+            ValueAt<DWORD>(0x6989E8) = waitUntil + currentTimeA;
+        }
+    }
+    return EXEC_DEFAULT;
+}
+void __stdcall H3CreatureInfoDlg_ShowRMC(HiHook *hook, H3BaseDlg *dlg)
+{
+    Patch *patch = nullptr;
+    if (static_cast<H3CreatureInfoDlg *>(dlg))
+    {
+        globalDlg = static_cast<H3CreatureInfoDlg *>(dlg);
+        patch = _PI->WriteLoHook(0x060306D, RMCdlgProc);
+    }
+    THISCALL_1(void, hook->GetDefaultFunc(), dlg);
+    if (patch)
+    {
+        patch->Destroy();
+        globalDlg = nullptr;
+    }
+}
+
 _LHF_(HooksInit)
 {
 
+    if (0)
+    {
+        _PI->WriteHiHook(0x05F4B90, THISCALL_, H3CreatureInfoDlg_ShowRMC);
+    }
     // draw progress bar on adventure map
     if (0)
     {
