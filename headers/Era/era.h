@@ -67,6 +67,7 @@ enum EGameMenuTarget: int
   PAGE_HIGH_SCORE = 103,
   PAGE_CREDITS    = 104,
   PAGE_QUIT       = 105,
+  PAGE_SAVE_GAME  = 106,
   PAGE_RESTART    = 107,
   PAGE_MAIN       = 108,
 };
