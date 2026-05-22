@@ -143,10 +143,26 @@ void __stdcall H3CreatureInfoDlg_ShowRMC(HiHook *hook, H3BaseDlg *dlg)
         globalDlg = nullptr;
     }
 }
-
-_LHF_(HooksInit)
+_LHF_(DefButtonOnRelease)
 {
 
+
+
+    auto snd = P_SoundManager->Get();
+    snd->ClickSound();
+
+
+    return EXEC_DEFAULT;
+}
+_LHF_(HooksInit)
+{
+    // double click on sound
+    if (1)
+    {
+        _PI->WriteLoHook(0x0456171, DefButtonOnRelease);
+    }
+
+    // animated creature dlg;
     if (0)
     {
         _PI->WriteHiHook(0x05F4B90, THISCALL_, H3CreatureInfoDlg_ShowRMC);
