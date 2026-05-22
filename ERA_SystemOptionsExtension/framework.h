@@ -5,5 +5,7 @@
 // Файлы заголовков Windows
 #include <windows.h>
 // #define ERA_MODLIST
+#define ERA_MODLIST
+#define MAIN_MENU_API
 // #define _WOG_
 #include "..\headers\header.h"

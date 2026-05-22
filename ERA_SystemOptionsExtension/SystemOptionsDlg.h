@@ -10,11 +10,26 @@ enum eDlgCallSource : INT
     HERO_SCREEN = 4,
     SWAP_MGR = 5
 };
+
 class SystemOptionsDlg : public H3Dlg
 {
 
     static constexpr float SETTINGS_VERSION = .1f;
     static DWORD userRandSeed;
+
+    static constexpr struct
+    {
+        const DWORD buttonId;
+        const DWORD defNamePtr;
+        const eVKey hotkey;
+    } gameControlButtons[]{
+        {Era::EGameMenuTarget::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L}, // load game
+        {Era::EGameMenuTarget::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S}, // save game
+        {Era::EGameMenuTarget::PAGE_RESTART, 0x0688618, eVKey::H3VK_R},   // restart the map
+        {Era::EGameMenuTarget::PAGE_MAIN, 0x068860C, eVKey::H3VK_M},      // quit to main menu
+        {Era::EGameMenuTarget::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q},      // quit to desktop
+        {30722, 0x0670130, eVKey::H3VK_ENTER},                            // back to game
+    };
 
   public:
     static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
@@ -27,7 +42,7 @@ class SystemOptionsDlg : public H3Dlg
     // std::vector<H3CreatureBankSetup> &creatureBanks;
 
   private:
-    struct Page;
+    struct ISettingsPage;
 
     struct ObjectsPanel
     {
@@ -36,7 +51,7 @@ class SystemOptionsDlg : public H3Dlg
         static UINT id;
 
         BOOL visible = false;
-        Page *parentPage = nullptr;
+        ISettingsPage *parentPage = nullptr;
 
         H3DlgPcx16 *pictureItem = nullptr;
         H3DlgPcx16 *backgroundPcx = nullptr;
@@ -61,7 +76,7 @@ class SystemOptionsDlg : public H3Dlg
         DWORD lastChangedPictureTime = 0;
 
       public:
-        ObjectsPanel(const int x, const int y, Page *parent);
+        ObjectsPanel(const int x, const int y, ISettingsPage *parent);
         virtual ~ObjectsPanel();
 
       public:
@@ -74,7 +89,7 @@ class SystemOptionsDlg : public H3Dlg
         const BOOL UnfocusEdits(const BOOL saveChanges) noexcept;
     };
 
-    struct Page
+    struct ISettingsPage
     {
         static SystemOptionsDlg *dlg;
 
@@ -86,11 +101,10 @@ class SystemOptionsDlg : public H3Dlg
         H3DlgScrollbar *verticalScrollBar = nullptr;
         H3DlgScrollbar *horizontalScrollBar = nullptr;
 
-        Page(H3DlgCaptionButton *captionbttn);
-        virtual ~Page();
+        ISettingsPage(H3DlgCaptionButton *captionbttn);
+        virtual ~ISettingsPage();
 
       public:
-        virtual void FillObjects(int firstItemId = 0) = 0;
         virtual void SetVisible(const bool state) = 0;
         virtual void SaveData() = 0;
         virtual void SetRandom(const H3Msg &msg) = 0;
@@ -98,7 +112,7 @@ class SystemOptionsDlg : public H3Dlg
         virtual BOOL Proc(H3Msg &msg) = 0;
     };
 
-    struct ObjectsPage : public Page
+    struct CombatSettingsPage : public ISettingsPage
     {
         static constexpr DWORD REFRESH_RATE_FREQUENCY = 2500;
 
@@ -128,11 +142,10 @@ class SystemOptionsDlg : public H3Dlg
 
         std::vector<ObjectsPanel *> objectsPanels;
 
-        ObjectsPage(H3DlgCaptionButton *captionbttn, const BOOL ignoreSubtypes = false);
-        virtual ~ObjectsPage();
+        CombatSettingsPage(H3DlgCaptionButton *captionbttn, const BOOL ignoreSubtypes = false);
+        virtual ~CombatSettingsPage();
 
       protected:
-        virtual void FillObjects(int firstItemId = 0) override;
         virtual void SaveData();
         virtual void SetRandom(const H3Msg &msg) override;
         virtual void SetDefault() override;
@@ -152,49 +165,36 @@ class SystemOptionsDlg : public H3Dlg
         static void __fastcall HorizontalScrollBarProc(INT32 tick, H3BaseDlg *dlg);
     };
 
-    struct BanksPage : public ObjectsPage
+    struct GeneralSettingsPage : public ISettingsPage
     {
-        BanksPage(H3DlgCaptionButton *captionbttn, const BOOL ignoreSubtypes = false);
-        virtual ~BanksPage();
-
-        virtual BOOL ShowObjectExtendedInfo(const ObjectsPanel *panel, const H3Msg &msg) const noexcept final override;
+        GeneralSettingsPage(H3DlgCaptionButton *captionbttn, const BOOL ignoreSubtypes = false);
+        virtual ~GeneralSettingsPage();
 
         // bool SaveSettings();
     };
 
-    struct MiscPage : public ObjectsPage
+    struct AdventureMapSettingsPage : public ISettingsPage
     {
         // virtual void ShowObjectExtendedInfo(const ObjectsPanel* panel) const noexcept final override;
 
-        MiscPage(H3DlgCaptionButton *captionbttn);
-        virtual ~MiscPage();
-
+        AdventureMapSettingsPage(H3DlgCaptionButton *captionbttn);
+        virtual ~AdventureMapSettingsPage();
         // static void __fastcall ObjectPage_ScrollBarProc(INT32 tick, H3BaseDlg* dlg);
-
-        // bool SaveSettings();
-    };
-
-    struct DwellingsPage : public ObjectsPage
-    {
-        // virtual void ShowObjectExtendedInfo(const ObjectsPanel* panel) const noexcept final override;
-
-        DwellingsPage(H3DlgCaptionButton *captionbttn);
-        virtual ~DwellingsPage();
-
-        // static void __fastcall ObjectPage_ScrollBarProc(INT32 tick, H3BaseDlg* dlg);
-
         // bool SaveSettings();
     };
 
   private:
+    BOOL settingsChanged = false;
+    BOOL quickCombatSettingState = IntAt(0x6987CC);
+
     // static constexpr const char* m_iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
     eDlgCallSource dlgCallSource = UNKNOWN;
     UINT m_lastPageId = 0;
     H3DlgPcx16 *headerPcx = nullptr;
     BOOL blockLettersInput = false;
-    Page *m_currentPage;
+    ISettingsPage *m_currentPage;
     BOOL m_randomIsPressed = false;
-    std::vector<Page *> m_pages;
+    std::vector<ISettingsPage *> m_pages;
     std::vector<H3DlgCaptionButton *> captionButtons;
 
   public:
@@ -215,14 +215,17 @@ class SystemOptionsDlg : public H3Dlg
   private:
     virtual BOOL OnCreate() override;
     virtual BOOL DialogProc(H3Msg &msg) override;
+    virtual BOOL OnLeftClick(INT itemId, H3Msg &msg) override;
     virtual VOID OnOK() override;
     virtual VOID OnCancel() override;
 
   private:
+    void CreateCaptionButtons() noexcept;
+    void CreateGameControlButtons() noexcept;
     BOOL ReadIniDlgSettings() noexcept;
     BOOL WriteIniDlgSettings() const noexcept;
 
-    BOOL SetActivePage(Page *page) noexcept;
+    BOOL SetActivePage(ISettingsPage *page) noexcept;
     BOOL SaveRMGObjectsInfo(const BOOL saveIni = true) const noexcept;
 
     VOID OnHelp() const noexcept;
@@ -244,6 +247,7 @@ class SystemOptionsDlg : public H3Dlg
     static _ERH_(OnAfterReloadLanguageData);
 
   public:
+    static void AfterDlgClose();
     static void SetPatches(PatcherInstance *_pi);
     static BOOL CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators);
     static void CopyOriginalObjectDefsIntoPcx16();

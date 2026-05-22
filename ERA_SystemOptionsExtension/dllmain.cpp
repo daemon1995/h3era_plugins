@@ -1,6 +1,5 @@
 #define _H3API_PLUGINS_
 #include "SystemOptionsDlg.h"
-#include "framework.h"
 
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
@@ -35,11 +34,32 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     // THISCALL_1(void, h->GetDefaultFunc(), combatManager);
 }
 
+int __fastcall CurrentDlg_HandleLocaleDlgStart(void* _msg)
+{
+    if (const auto msg = static_cast<H3Msg*>(_msg))
+    {
+        const auto callerItem = msg->GetDlg()->GetCaptionButton(msg->itemId);
+        if (callerItem && msg->IsLeftClick())
+        {
+            SystemOptionsDlg dlg;
+            dlg.Start();
+        }
+    }
+    return true;
+}
+
 _ERH_(OnAfterWog)
 {
     _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
     _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
 
+    using namespace mainmenu;
+
+    const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
+
+	auto UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
+    MenuWidgetInfo langInfo{ UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &CurrentDlg_HandleLocaleDlgStart };
+    MainMenu_RegisterWidget(langInfo);
     return;
 }
 
