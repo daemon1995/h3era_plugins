@@ -1,5 +1,5 @@
 ﻿#include "ExportManager.h"
-#ifdef CREATE_JSON
+#ifdef CREATE_TEXT_JSON_EXPORTS
 
 #include <fstream>
 
@@ -385,7 +385,6 @@ BOOL ExportManager::CreateHeroesJson(LPCSTR filePath, const BOOL originalData, c
 //     ExportManager::CreateCreatureBanksJson(originalDatas);
 //     ExportManager::CreateTownBuildingsJson(originalDatas, true);
 // }
-#endif // CREATE_JSON
 
 void ExportDlg::CreateDlgItems()
 {
@@ -526,3 +525,4 @@ VOID ExportDlg::OnOK()
         H3Messagebox::Show(message.c_str());
     }
 }
+#endif // CREATE_TEXT_JSON_EXPORTS

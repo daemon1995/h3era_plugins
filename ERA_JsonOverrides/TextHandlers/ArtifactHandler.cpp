@@ -3,7 +3,23 @@
 #define READ_ART_FIELD(obj, field, idx)                                                                                \
     ArtifactHandler::ReadField<decltype((obj).field)>((obj).field, ArtifactHandler::formats::field, idx)
 
-bool __stdcall LoadArtTraitsTxt(HiHook *h)
+// if txt file has less lines than patched lines to read we fix it
+H3TextTable *__stdcall LoadArtTraitsFile(HiHook *h, LPCSTR fileName)
+{
+    H3TextTable *artraitsTxt = THISCALL_1(H3TextTable *, h->GetDefaultFunc(), fileName);
+    if (artraitsTxt)
+    {
+        const DWORD rowCount4 = artraitsTxt->CountRows() << 2;
+        if (IntAt(0x44CCA8) > rowCount4)
+            _PI->WriteDword(0x44CCA8, rowCount4);
+
+        if (IntAt(0x44CACA) > rowCount4)
+            _PI->WriteDword(0x44CACA, rowCount4);
+    }
+    return artraitsTxt;
+}
+
+bool __stdcall AfterReadAllTxtFiles(HiHook *h)
 {
     bool result = CDECL_0(bool, h->GetDefaultFunc());
     // if (result)
@@ -52,7 +68,8 @@ inline int ArtifactHandler::GetArtifactsNumber() noexcept
 void ArtifactHandler::Init()
 {
     // Warning: this hook is after all txt read
-    _PI->WriteHiHook(0x04EE036, CDECL_, LoadArtTraitsTxt);
+    _PI->WriteHiHook(0x04EE036, CDECL_, AfterReadAllTxtFiles);
+    _PI->WriteHiHook(0x044CA43, THISCALL_, LoadArtTraitsFile);
 }
 template <typename T>
 inline constexpr bool is_artifact_related_v = std::is_same_v<T, int> || std::is_same_v<T, eCombinationArtifacts> ||

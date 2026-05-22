@@ -1,9 +1,9 @@
 
 #include "LanguageSelectionDlg.h"
 
-#ifdef CREATE_JSON
+#ifdef CREATE_TEXT_JSON_EXPORTS
 #include "ExportManager.h"
-#endif // CREATE_JSON
+#endif // CREATE_TEXT_JSON_EXPORTS
 
 #pragma comment(linker, "/EXPORT:CallLocaleSelectionDlg=_CallLocaleSelectionDlg@12")
 #pragma comment(linker, "/EXPORT:GetDisplayedName=_GetDisplayedName@0")
@@ -166,6 +166,8 @@ void LanguageSelectionDlg::CreateDlgItems()
             AddItem(textPcx);
         }
     }
+#ifdef CREATE_TEXT_JSON_EXPORTS
+
     if (createExportButton)
     {
         const UINT16 exportButtonItemId =
@@ -187,6 +189,7 @@ void LanguageSelectionDlg::CreateDlgItems()
 
         AddItem(exportDlgPcx);
     }
+#endif // CREATE_TEXT_JSON_EXPORTS
 
     H3RGB565 color(H3RGB888::Highlight());
     selectionFrame = this->CreateFrame(0, 0, widgetWidth, widgetHeight, FRAME_WIDGET_ID, color);
@@ -292,10 +295,12 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
         }
         else if (exportDlgPcx && msg.itemId == exportDlgPcx->GetID())
         {
+#ifdef CREATE_TEXT_JSON_EXPORTS
             P_SoundManager->ClickSound();
             // create export dialog
             ExportDlg exportDlg(630, 300, -1, -1);
             exportDlg.Start();
+#endif //  CREATE_TEXT_JSON_EXPORTS
         }
     }
     else if (msg.IsKeyDown())

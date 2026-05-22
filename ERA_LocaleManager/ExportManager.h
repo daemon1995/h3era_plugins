@@ -3,6 +3,8 @@
 #include <unordered_set>
 
 #include "framework.h"
+#ifdef CREATE_TEXT_JSON_EXPORTS
+
 class ExportDlg : public H3Dlg
 {
   public:
@@ -109,3 +111,4 @@ class ExportManager
 
     //  static BOOL ExportAllToJson(const BOOL originalData, const BOOL additionalData);
 };
+#endif // CREATE_TEXT_JSON_EXPORTS
