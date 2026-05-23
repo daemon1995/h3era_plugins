@@ -14,12 +14,15 @@ enum eDlgCallSource : INT
 class SystemOptionsDlg : public H3Dlg
 {
 
+  public:
+    static constexpr int DLG_WIDTH = 481;
+    static constexpr int DLG_HEIGHT = 487;
     static constexpr float SETTINGS_VERSION = .1f;
     static DWORD userRandSeed;
 
     static constexpr struct
     {
-        const DWORD buttonId;
+        const INT32 buttonId;
         const DWORD defNamePtr;
         const eVKey hotkey;
     } gameControlButtons[]{
@@ -28,8 +31,73 @@ class SystemOptionsDlg : public H3Dlg
         {Era::EGameMenuTarget::PAGE_RESTART, 0x0688618, eVKey::H3VK_R},   // restart the map
         {Era::EGameMenuTarget::PAGE_MAIN, 0x068860C, eVKey::H3VK_M},      // quit to main menu
         {Era::EGameMenuTarget::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q},      // quit to desktop
-        {30722, 0x0670130, eVKey::H3VK_ENTER},                            // back to game
+        {30722, 0x0670130, eVKey::H3VK_ESCAPE},                           // back to game
     };
+
+    struct SwitchPanelInfo
+    {
+
+        const tagPOINT position;
+        const DWORD generalStringIndex;
+        const DWORD firstItemId;
+        const DWORD valuePtr;
+    };
+
+    struct ISetting
+    {
+        static constexpr int WIDTH = 195;
+        tagPOINT position;
+
+        struct
+        {
+            const INT32 dlgStart;
+            INT32 current;
+            const INT32 byDefault;
+        } value;
+
+      public:
+        ISetting(const tagPOINT position, const INT32 defaultValue)
+            : position(position), value{1, defaultValue, defaultValue}
+        {
+        }
+        void ResetToDefault() noexcept
+        {
+            value.current = value.byDefault;
+        }
+    };
+
+    struct CheckBoxSetting : public ISetting
+    {
+        static constexpr int TEXT_WIDGET_OFFSET = 24;
+        H3DlgDef *checkBoxItem{};
+        H3DlgText *nameItem{};
+        void Toggle() noexcept
+        {
+            value.current ^= value.current;
+        }
+        CheckBoxSetting(const int x, const int y, LPCSTR displayedText) : ISetting({x, y}, 0)
+        {
+        }
+    };
+    struct SwitchPanel
+    {
+        static constexpr LPCSTR bgPcxPath = "BattleSpeed.pcx";
+        H3DlgText *switchText{};
+        H3DlgPcx *backgroundPcx{};
+        H3DlgDef *switchButtons[10]{};
+        SwitchPanelInfo &info;
+    };
+
+  public:
+    struct ISettingsPage;
+
+    static ISetting *CreateSetting(const tagPOINT position, const INT32 defaultValue, LPCSTR displayedText,
+                                   H3BaseDlg *dlg) noexcept;
+    static CheckBoxSetting *CreateCheckBoxSetting(const tagPOINT position, const INT32 defaultValue,
+                                                  LPCSTR displayedText, H3BaseDlg *dlg) noexcept;
+    static SwitchPanel *CreateSwitchPanel(const SwitchPanelInfo &info, H3BaseDlg *dlg) noexcept;
+
+    void Create10xStepsSwitchPanel(const SwitchPanelInfo &panelInfo, ISettingsPage *page) noexcept;
 
   public:
     static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
@@ -42,8 +110,6 @@ class SystemOptionsDlg : public H3Dlg
     // std::vector<H3CreatureBankSetup> &creatureBanks;
 
   private:
-    struct ISettingsPage;
-
     struct ObjectsPanel
     {
         int x;
@@ -91,51 +157,30 @@ class SystemOptionsDlg : public H3Dlg
 
     struct ISettingsPage
     {
-        static SystemOptionsDlg *dlg;
 
         const char *name;
         UINT id;
-        BOOL visible;
+        BOOL visible = false;
         UINT firstItemCount = 0;
-        H3DlgCaptionButton *captionbttn = nullptr;
+        H3DlgCaptionButton *captionBttn = nullptr;
         H3DlgScrollbar *verticalScrollBar = nullptr;
         H3DlgScrollbar *horizontalScrollBar = nullptr;
 
-        ISettingsPage(H3DlgCaptionButton *captionbttn);
+        H3Vector<H3DlgItem *> items;
+        ISettingsPage(H3DlgCaptionButton *captionBttn);
         virtual ~ISettingsPage();
 
       public:
-        virtual void SetVisible(const bool state) = 0;
+        virtual void SetVisible(const BOOL state);
         virtual void SaveData() = 0;
-        virtual void SetRandom(const H3Msg &msg) = 0;
         virtual void SetDefault() = 0;
         virtual BOOL Proc(H3Msg &msg) = 0;
     };
+    std::vector<ISettingsPage *> pages;
 
     struct CombatSettingsPage : public ISettingsPage
     {
         static constexpr DWORD REFRESH_RATE_FREQUENCY = 2500;
-
-        struct PageHeader
-        {
-
-            BOOL visible = false;
-            H3DlgPcx16 *backgroundPcx = nullptr;
-            std::vector<H3DlgDef *> arrows;
-            std::vector<H3DlgItem *> items;
-
-            PageHeader(const int x, const int y, const int width, const int height, const int objectsNum);
-
-            // PageHeader();
-            void SetVisible(bool state);
-
-        } *pageHeader = nullptr;
-
-        struct
-        {
-            int type = -1;
-            BOOL isReverse = false;
-        } lastSorting;
 
         // std::vector<H3ObjectAttributes> displayedAttributes;
         BOOL ignoreSubtypes;
@@ -147,7 +192,6 @@ class SystemOptionsDlg : public H3Dlg
 
       protected:
         virtual void SaveData();
-        virtual void SetRandom(const H3Msg &msg) override;
         virtual void SetDefault() override;
         virtual BOOL Proc(H3Msg &msg) override;
         virtual BOOL ShowObjectExtendedInfo(const ObjectsPanel *panel, const H3Msg &msg) const noexcept;
@@ -208,7 +252,7 @@ class SystemOptionsDlg : public H3Dlg
     // ctors
   public:
     SystemOptionsDlg(int width, int height, int x, int y);
-    SystemOptionsDlg() : SystemOptionsDlg(400, 300, -1, -1) {};
+    SystemOptionsDlg() : SystemOptionsDlg(DLG_WIDTH, DLG_HEIGHT, -1, -1) {};
     virtual ~SystemOptionsDlg();
 
     // virtual methods
@@ -220,7 +264,14 @@ class SystemOptionsDlg : public H3Dlg
     virtual VOID OnCancel() override;
 
   private:
+    void AddItem(H3DlgItem *item, ISettingsPage *page) noexcept
+    {
+        H3Dlg::AddItem(item);
+        if (page)
+            page->items += item;
+    }
     void CreateCaptionButtons() noexcept;
+
     void CreateGameControlButtons() noexcept;
     BOOL ReadIniDlgSettings() noexcept;
     BOOL WriteIniDlgSettings() const noexcept;
@@ -234,22 +285,9 @@ class SystemOptionsDlg : public H3Dlg
 
     // hooks
   private:
-    static _LHF_(H3SelectScenarioDialog_HideRandomMapsSettings);
-    static _LHF_(H3SelectScenarioDialog_ShowRandomMapsSettings);
-    static _LHF_(H3SelectScenarioDialog_StartButtonClick);
-
-    // static void __stdcall Dlg_SelectScenario_Proc(HiHook* hook, H3Msg* msg);
-    static _LHF_(Dlg_SelectScenario_Proc);
-
-    static void __stdcall NewScenarioDlg_Create(HiHook *hook, H3SelectScenarioDialog *dlg, const DWORD dlgCallType);
-    static H3Msg *__stdcall H3DlgEdit__TranslateInputKey(HiHook *h, H3InputManager *inpt, H3Msg *msg);
-    static int __fastcall RMGDlgOptionsButtonProc(void *msg);
     static _ERH_(OnAfterReloadLanguageData);
 
   public:
     static void AfterDlgClose();
     static void SetPatches(PatcherInstance *_pi);
-    static BOOL CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators);
-    static void CopyOriginalObjectDefsIntoPcx16();
-    static DWORD GetUserRandSeedInput() noexcept;
 };

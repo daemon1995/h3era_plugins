@@ -9966,9 +9966,10 @@ namespace h3
             {
                 SILVER      = 0x00,
                 REGULAR     = 0x01,
-                HIGHLIGHT   = 0x02,
+                HIGHLIGHT_   = 0x02,
                 GOLD        = 0x03,
                 WHITE       = 0x04,
+                HIGHLIGHT   = 0x07,
                 GREEN       = 0x0D,
                 LIGHT_GREEN = 0x0E,
                 DARK_GREEN  = 0x0F,

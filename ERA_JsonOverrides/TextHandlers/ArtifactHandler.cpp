@@ -73,7 +73,7 @@ void ArtifactHandler::Init()
 }
 template <typename T>
 inline constexpr bool is_artifact_related_v = std::is_same_v<T, int> || std::is_same_v<T, eCombinationArtifacts> ||
-                                              std::is_same_v<T, eArtifactSlots> || std::is_same_v<T, eArtifactType>;
+                                              std::is_same_v<T, eArtifactPositions> || std::is_same_v<T, eArtifactType>;
 
 template <class T> static BOOL ArtifactHandler::ReadField(T &target, LPCSTR format, const int idx) noexcept
 {
