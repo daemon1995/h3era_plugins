@@ -8,55 +8,112 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
 
     // CreateOKButton();
     // CreateCancelButton();
+
+    auto captionBttn =
+        H3DlgCaptionButton::Create(15, 16, ePageItemId::PAGE_ITEM_GENERAL, BIG_BUTTON, P_GeneralText->GetText(570),
+                                   NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
+
+    captionBttn->SetClickFrame(1);
+    ISettingsPage *page = GeneralSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    captionBttn =
+        H3DlgCaptionButton::Create(165, 16, ePageItemId::PAGE_ITEM_ADV_MAP, BIG_BUTTON, P_GeneralText->GetText(570),
+                                   NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
+
+    captionBttn->SetClickFrame(1);
+    page = AdventureMapSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    captionBttn =
+        H3DlgCaptionButton::Create(315, 16, ePageItemId::PAGE_ITEM_COMBAT, BIG_BUTTON, P_GeneralText->GetText(394),
+                                   NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
+
+    page = CombatSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    InitDlgPages();
+
     CreateGameControlButtons();
+
+    // Create10xStepsSwitchPanel(switchPanelsInfo[0], nullptr);
+    // Create10xStepsSwitchPanel(switchPanelsInfo[1], nullptr);
+    instance = this;
+}
+
+SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Create(H3DlgCaptionButton *captionbttn,
+                                                                                     H3BaseDlg *dlg)
+{
+    GeneralSettingsPage *page = new GeneralSettingsPage(captionbttn);
 
     constexpr int panelX = DLG_WIDTH - ISetting::WIDTH - 33;
     // constexpr int panelY = DLG_HEIGHT - SwitchPanel::WIDTH - 33;
 
-    constexpr SwitchPanelInfo switchPanelsInfo[] = {
-        {{panelX, 150}, 396, 202, 0x06987B0}, // music level switch panel
-        {{panelX, 220}, 397, 212, 0x06987B4}, // sound effects level switch panel
+    const DWORD musicHintPtrs[Switch10XPanel::BUTTONS_COUNT] = {
+        0x06A761C, 0x06A7624, 0x06A762C, 0x06A7634, 0x06A763C, 0x06A7644, 0x06A764C, 0x06A7654, 0x06A765C, 0x06A7664,
     };
-    Create10xStepsSwitchPanel(switchPanelsInfo[0], nullptr);
-    Create10xStepsSwitchPanel(switchPanelsInfo[1], nullptr);
-    instance = this;
-}
-void SystemOptionsDlg::Create10xStepsSwitchPanel(const SwitchPanelInfo &panelInfo, ISettingsPage *page) noexcept
-{
+    const DWORD soundEffectsHintPtrs[Switch10XPanel::BUTTONS_COUNT] = {
+        0x06A761C, 0x06A7624, 0x06A762C, 0x06A7634, 0x06A763C, 0x06A7644, 0x06A764C, 0x06A7654, 0x06A765C, 0x06A7664,
+    };
 
-    int itemX = panelInfo.position.x;
-    int itemY = panelInfo.position.y;
-
-    const DWORD currentValue = Clamp(0, IntAt(panelInfo.valuePtr), 9);
-    // create text field with name of the panel
-    constexpr int textFieldWidth = 10 * 19;
-
-    auto textField =
-        H3DlgText::Create(itemX, itemY, textFieldWidth, 24, P_GeneralText->GetText(panelInfo.generalStringIndex),
-                          NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, -1);
-    AddItem(textField, page);
-
-    itemY += 20;
-    // create background pcx
-    auto bgPcx = H3DlgPcx::Create(itemX, itemY, SwitchPanel::bgPcxPath);
-    AddItem(bgPcx, page);
-    itemY += 3;
-    itemX += 4;
-    for (size_t i = 0; i < 10; i++)
+    DWORD hintPtrs[Switch10XPanel::BUTTONS_COUNT << 1];
+    for (size_t i = 0; i < std::size(hintPtrs); i++)
     {
-
-        auto def = H3DlgDef::Create(itemX, itemY, panelInfo.firstItemId + i, NH3Dlg::Assets::SYSLB_DEF, i);
-        def->SendCommand(6, 4);
-        if (currentValue == i)
-        {
-            def->SendCommand(5, 4);
-        }
-        AddItem(def, page);
-        itemX += 19;
+        hintPtrs[i] = 0x06A761C + i * 8;
     }
+    const SwitchPanelInfo switchPanelsInfo[] = {
+        {{panelX, 150}, 396, 202, 0x06987B0, hintPtrs}, // music level switch panel
+        {{panelX, 220},
+         397,
+         212,
+         0x06987B4,
+         &hintPtrs[Switch10XPanel::BUTTONS_COUNT]}, // sound effects level switch panel
+    };
+    auto &settings = page->settings;
+
+    for (const auto &info : switchPanelsInfo)
+    {
+        settings.Add(Switch10XPanel::Create(info, page->items));
+    };
+
+    return page;
 }
+SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettingsPage::Create(
+    H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg)
+{
+    AdventureMapSettingsPage *page = new AdventureMapSettingsPage(captionbttn);
+
+    return page;
+}
+SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Create(H3DlgCaptionButton *captionbttn,
+                                                                                   H3BaseDlg *dlg)
+{
+    CombatSettingsPage *page = new CombatSettingsPage(captionbttn);
+
+    return page;
+}
+
 void SystemOptionsDlg::CreateGameControlButtons() noexcept
 {
+
+    static const struct
+    {
+        const INT32 buttonId;
+        const DWORD defNamePtr;
+        const eVKey hotkey;
+        const DWORD hintPtr;
+    } gameControlButtons[]{
+        {Era::EGameMenuTarget::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, 0x06A75F4}, // load game
+        {Era::EGameMenuTarget::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S, 0x06A75FC}, // save game
+        {Era::EGameMenuTarget::PAGE_RESTART, 0x0688618, eVKey::H3VK_R, 0x06A7604},   // restart the map
+        {Era::EGameMenuTarget::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, 0x06A75EC},      // quit to main menu
+        {Era::EGameMenuTarget::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, 0x06A760C},      // quit to desktop
+        {30722, 0x0670130, eVKey::H3VK_ESCAPE, 0x06A7614},                           // back to game
+    };
+
     constexpr size_t length = std::size(gameControlButtons);
 
     constexpr int buttonWidth = 100 + 13;
@@ -72,10 +129,13 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         {
             bttn->AddHotkey(eVKey::H3VK_ENTER);
         }
+        if (const auto hint = button.hintPtr)
+        {
+            bttn->SetHints(nullptr, ValueAt<LPCSTR>(hint), false);
+        }
         // bttn->SetFrame(0);
         // bttn->SetClickFrame(1);
         // bttn->RemoveState(eControlState::ACTIVE);
-        // H3DlgDefButton
     }
 }
 BOOL SystemOptionsDlg::OnCreate()
@@ -84,6 +144,15 @@ BOOL SystemOptionsDlg::OnCreate()
 }
 BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
 {
+    if (msg.IsRightClick() && msg.itemId)
+    {
+        auto it = GetH3DlgItem(msg.itemId);
+        if (it && it->GetRightClickHint())
+        {
+            H3Messagebox::RMB(it->GetRightClickHint());
+            return 0;
+        }
+    }
 
     return 1;
 }
@@ -93,6 +162,23 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
 
     switch (itemId)
     {
+    case ePageItemId::PAGE_ITEM_GENERAL:
+    case ePageItemId::PAGE_ITEM_ADV_MAP:
+    case ePageItemId::PAGE_ITEM_COMBAT: {
+
+        auto &page = m_pages[itemId - 1];
+        if (m_currentPage != page)
+        {
+            if (m_currentPage)
+            {
+                m_currentPage->SetVisible(FALSE);
+            }
+            page->SetVisible(TRUE);
+            m_currentPage = page;
+            Redraw();
+        }
+        return TRUE;
+    }
     case target::PAGE_LOAD_GAME:
 
     case target::PAGE_SAVE_GAME:
@@ -132,6 +218,11 @@ void SystemOptionsDlg::AfterDlgClose()
 }
 SystemOptionsDlg::~SystemOptionsDlg()
 {
+
+    for (auto &page : m_pages)
+    {
+        delete page;
+    }
     instance = nullptr;
 
     P_WindowManager->resultItemID = this->resultItemId;

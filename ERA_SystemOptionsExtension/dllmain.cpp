@@ -28,15 +28,15 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     dlg.Start();
     combatManager->doNotDrawShade = false;
     THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
-   //  THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
+    //  THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
     combatManager->Refresh(1, 0, 1);
     dlg.networkGame = -1;
     // THISCALL_1(void, h->GetDefaultFunc(), combatManager);
 }
 
-int __fastcall CurrentDlg_HandleLocaleDlgStart(void* _msg)
+int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
 {
-    if (const auto msg = static_cast<H3Msg*>(_msg))
+    if (const auto msg = static_cast<H3Msg *>(_msg))
     {
         const auto callerItem = msg->GetDlg()->GetCaptionButton(msg->itemId);
         if (callerItem && msg->IsLeftClick())
@@ -57,8 +57,8 @@ _ERH_(OnAfterWog)
 
     const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
 
-	auto UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
-    MenuWidgetInfo langInfo{ UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &CurrentDlg_HandleLocaleDlgStart };
+    auto UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
+    MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &CurrentDlg_HandleLocaleDlgStart};
     MainMenu_RegisterWidget(langInfo);
     return;
 }

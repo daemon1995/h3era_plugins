@@ -71,11 +71,13 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DlgPanels.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="SystemOptionsDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="DlgPanels.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="SystemOptionsDlg.cpp" />
   </ItemGroup>
