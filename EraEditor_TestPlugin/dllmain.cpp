@@ -107,6 +107,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     case DLL_PROCESS_ATTACH:
         if (!initialized)
         {
+            // credits: RoseKavalier
+            const IMAGE_DOS_HEADER *pDOSHeader = reinterpret_cast<IMAGE_DOS_HEADER *>(0x400000);
+            const IMAGE_NT_HEADERS *pNTHeaders =
+                reinterpret_cast<IMAGE_NT_HEADERS *>((PBYTE(pDOSHeader) + pDOSHeader->e_lfanew));
+            const DWORD entry = pNTHeaders->OptionalHeader.AddressOfEntryPoint;
+            if (entry != 0xE84D4 || IntAt(0x4E84D4 + 1) != 0x596ED4)
+            {
+                return TRUE;
+            }
             initialized = true;
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
