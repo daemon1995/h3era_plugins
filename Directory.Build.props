@@ -39,13 +39,13 @@
   <!-- DEBUG SETTINGS -->
   <!-- ===================== -->
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <PropertyGroup>
     <UseDebugLibraries>true</UseDebugLibraries>
     <WholeProgramOptimization>false</WholeProgramOptimization>
 
     <!-- Debugger -->
     <LocalDebuggerCommand>$(LocalGamePath)\h3era hd.exe</LocalDebuggerCommand>
-    <LocalDebuggerWorkingDirectory>$(LocalGamePath)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>$(LocalGamePath)\</LocalDebuggerWorkingDirectory>
     <LocalDebuggerCommandArguments></LocalDebuggerCommandArguments>
   </PropertyGroup>
 
