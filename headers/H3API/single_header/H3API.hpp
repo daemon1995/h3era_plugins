@@ -4926,6 +4926,38 @@ namespace h3
         }
         typedef NSlots::eArtifactSlots eArtifactSlots;
 
+		namespace NPositions
+        {
+            enum eArtifactPositions
+            {
+                NONE           = 0,
+                BACKPACK       = NONE,
+                HEAD           = 1,
+                SHOULDERS      = 2,
+                NECK           = 3,
+                RIGHT_HAND     = 4,
+                LEFT_HAND      = 5,
+                TORSO          = 6,
+				ANY_RING       = 7,
+                FEET           = 8,
+                ANY_MISC       = 9,
+                BALLISTA       = 10,
+                AMMO_CART      = 11,
+                FIRST_AID_TENT = 12,
+                CATAPULT       = 13,
+                SPELLBOOK      = 14,
+				LEFT_RING      = 65,
+				MISC1          = 1334,
+				RIGHT_RING     = 1339,
+				ANY_HAND       = 16771,
+				MISC2          = 21732,
+				MISC3          = 117033,
+				MISC4          = 35338,
+                MISC5          = 21748,
+            };
+        }
+        typedef NPositions::eArtifactPositions eArtifactPositions;
+
         namespace NType
         {
             enum eArtifactType
@@ -4964,6 +4996,7 @@ namespace h3
 
     typedef NH3Artifacts::eArtifacts            eArtifact;
     typedef NH3Artifacts::eArtifactSlots        eArtifactSlots;
+	typedef NH3Artifacts::eArtifactPositions	eArtifactPositions;
     typedef NH3Artifacts::eArtifactType         eArtifactType;
     typedef NH3Artifacts::eCombinationArtifacts eCombinationArtifacts;
 
@@ -8620,7 +8653,7 @@ namespace h3
         _H3API_ eCombinationArtifacts  GetCombinationArtifact() const;
         _H3API_ eArtifact              GetId() const;
         _H3API_ eCombinationArtifacts  GetCombinationArtifactIndex() const;
-        _H3API_ eArtifactSlots         GetSlot() const;
+        _H3API_ eArtifactPositions     GetPosition() const;
         _H3API_ eArtifactType          GetType() const;
         _H3API_ const H3ArtifactSetup& GetSetup() const;
         _H3API_ BOOL8                  HasSpell() const;
@@ -8661,7 +8694,7 @@ namespace h3
         /** @brief [4] gold cost*/
         INT32 cost = 0;
         /** @brief [8]*/
-        eArtifactSlots position = eArtifactSlots::NONE;
+		eArtifactPositions position = eArtifactPositions::NONE;
         /** @brief [C]*/
         eArtifactType type = eArtifactType(0);
         /** @brief [10]*/
@@ -28259,7 +28292,7 @@ namespace h3
         return GetSetup().comboArtifactId;
     }
 
-    _H3API_ eArtifactSlots H3Artifact::GetSlot() const
+    _H3API_ eArtifactPositions H3Artifact::GetPosition() const
     {
         return GetSetup().position;
     }

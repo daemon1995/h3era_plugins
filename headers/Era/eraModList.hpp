@@ -1,6 +1,8 @@
 #pragma once
-#include "era.h"
 #include <algorithm>
+#include <string>
+#include <vector>
+#include <windows.h>
 
 namespace modList
 {
