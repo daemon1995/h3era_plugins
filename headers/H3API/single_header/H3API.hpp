@@ -19322,7 +19322,7 @@ namespace h3
 
 	struct H3SoundManager : public H3Manager
 	{
-		_H3API_SIZE_(0xD4);
+		_H3API_SIZE_(0xD8);
 		_H3API_VTABLE_(0x63FE68);
 		_H3API_GET_INFO_(0x699414, H3SoundManager);
 
@@ -19330,12 +19330,21 @@ namespace h3
 		/** @brief [38]*/
 		UINT32 mssHandle;
 		/** @brief [3C]*/
-		HANDLE hSamples[16];
-		h3unk8 _f_80;
+		DWORD driver;
+		/** @brief [40]*/
+		HANDLE hSamples[15];
+		/** @brief [7C]*/
+		INT32 sampleNum;
+		/** @brief [80]*/
+		INT32 currentTerrainMusic;
+	public:
 		/** @brief [84]*/
-		INT32 clickSoundVar;
-		h3unk32 _f_88;
-		h3unk8 _f_8C;
+		BOOL32 clickSoundVar;
+	protected:
+		/** @brief [88]*/
+		BOOL32 bChangeSounds;
+		/** @brief [8C]*/
+		BOOL32 MP3Playing;
 		/** @brief [A0]*/
 		_RTL_CRITICAL_SECTION rtlSection[3];
 	public:
@@ -20327,6 +20336,7 @@ namespace h3
 		_H3API_ INT16      GetY() const;
 		_H3API_ INT32      GetAbsoluteX() const;
 		_H3API_ INT32      GetAbsoluteY() const;
+		_H3API_ BOOL       IsPressed() const;
 		_H3API_ BOOL       IsEnabled() const;
 		_H3API_ BOOL       IsActive() const;
 		_H3API_ VOID       SetX(UINT16 x);
@@ -35085,7 +35095,8 @@ namespace h3
 {
 	_H3API_ VOID H3SoundManager::ClickSound()
 	{
-		INT32 backup = clickSoundVar;
+		BOOL32 backup = clickSoundVar;
+		clickSoundVar = 1;
 		H3WavFile* button_wav = H3ButtonWav::Get();
 		button_wav->spinCount = 64;
 		button_wav->debugInfo = PRTL_CRITICAL_SECTION_DEBUG(1);
@@ -35259,6 +35270,10 @@ namespace h3
     {
         return yPos + parent->GetY();
     }
+    _H3API_ BOOL H3DlgItem::IsPressed() const
+    {
+		return state & eControlState::PRESSED;
+	}
     _H3API_ BOOL H3DlgItem::IsEnabled() const
     {
         return !(state & 0x20);
