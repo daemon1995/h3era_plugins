@@ -51,7 +51,7 @@ int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
 _ERH_(OnAfterWog)
 {
     _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
-    _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
+    // _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
 
     using namespace mainmenu;
 

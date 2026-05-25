@@ -13,6 +13,9 @@ struct ISetting
         const INT32 byDefault;
 
     } value;
+    virtual void SetVisible(const BOOL visible) noexcept
+    {
+    }
 
   public:
     ISetting(const tagPOINT position, const Value &value) : position(position), value(value)
@@ -27,7 +30,9 @@ struct ISetting
     }
 
   public:
-    virtual void ClampValue() {};
+    virtual void ClampValue() noexcept
+    {
+    }
 
     void ResetToDefault() noexcept
     {
@@ -53,7 +58,7 @@ struct CheckBoxSetting : public ISetting
     }
 
   public:
-    virtual void ClampValue()
+    virtual void ClampValue() noexcept override
     {
         value.current = Clamp(0, value.current, 1);
     }
@@ -111,6 +116,7 @@ struct Switch10XPanel : public ISetting
 {
 
     static constexpr int BUTTONS_COUNT = 10;
+    static constexpr int HEIGHT = 60;
     static constexpr LPCSTR bgPcxPath = "BattleSpeed.pcx";
     H3DlgText *switchText{};
     H3DlgPcx *backgroundPcx{};
@@ -125,9 +131,20 @@ struct Switch10XPanel : public ISetting
     {
     }
 
-    virtual void ClampValue()
+    virtual void ClampValue() noexcept override
     {
         value.current = Clamp(0, value.current, BUTTONS_COUNT - 1);
+    }
+    virtual void SetVisible(const BOOL visible) noexcept override
+    {
+        if (!visible)
+            return;
+
+        for (size_t i = 0; i < BUTTONS_COUNT; i++)
+        {
+            switchButtons[i]->SendCommand(6, 4);
+        }
+        switchButtons[value.current]->SendCommand(5, 4);
     }
 
   public:

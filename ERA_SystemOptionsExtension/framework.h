@@ -4,6 +4,7 @@
 // заголовков Windows
 // Файлы заголовков Windows
 #include <windows.h>
+#include <memory>
 // #define ERA_MODLIST
 #define MAIN_MENU_API
 // #define _WOG_

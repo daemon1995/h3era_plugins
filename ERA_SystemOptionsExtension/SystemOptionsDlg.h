@@ -34,8 +34,10 @@ class SystemOptionsDlg : public H3Dlg
   public:
     static constexpr int DLG_WIDTH = 481;
     static constexpr int DLG_HEIGHT = 487;
+    static constexpr int DLG_MARGIN = 16;
+    static constexpr int DLG_ITEM_VMARGIN = 25;
+
     static constexpr float SETTINGS_VERSION = .1f;
-    static DWORD userRandSeed;
 
   public:
   public:
@@ -56,6 +58,7 @@ class SystemOptionsDlg : public H3Dlg
 
         H3Vector<H3DlgItem *> items;
         H3Vector<ISetting *> settings;
+
         ISettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
         {
             name = captionBttn->GetText();
@@ -63,7 +66,6 @@ class SystemOptionsDlg : public H3Dlg
         }
         virtual ~ISettingsPage()
         {
-
             for (auto &setting : settings)
             {
                 delete setting;
@@ -79,6 +81,10 @@ class SystemOptionsDlg : public H3Dlg
             for (auto &it : items)
             {
                 state ? it->ShowActivate() : it->HideDeactivate();
+            }
+            for (auto &it : settings)
+            {
+                it->SetVisible(state);
             }
         }
         // virtual void SetDefault();
@@ -137,6 +143,7 @@ class SystemOptionsDlg : public H3Dlg
     };
 
   protected:
+    BOOL isInCombat = false;
     BOOL settingsChanged = false;
     BOOL quickCombatSettingState = IntAt(0x6987CC);
 
@@ -159,10 +166,26 @@ class SystemOptionsDlg : public H3Dlg
         {
             for (auto &it : page->items)
             {
+                it->HideDeactivate();
                 AddItem(it, page);
             }
         }
     }
+    void SetActivePage(const UINT pageId, const BOOL redraw)
+    {
+        auto &page = m_pages[pageId];
+        if (m_currentPage != page)
+        {
+            if (m_currentPage)
+                m_currentPage->SetVisible(FALSE);
+
+            page->SetVisible(TRUE);
+            m_currentPage = page;
+            if (redraw)
+                Redraw();
+        }
+    }
+
     // ctors
   public:
     SystemOptionsDlg(int width, int height, int x, int y);
