@@ -143,23 +143,118 @@ void __stdcall H3CreatureInfoDlg_ShowRMC(HiHook *hook, H3BaseDlg *dlg)
         globalDlg = nullptr;
     }
 }
-_LHF_(DefButtonOnRelease)
+
+H3WavFile *buttonClickSound2 = nullptr;
+
+#include <thread>
+
+void PlayButtonClickSound2()
 {
 
-
-
     auto snd = P_SoundManager->Get();
-    snd->ClickSound();
 
+    {
+        //     return;
+    }
+    auto originalSound = DwordAt(0x694DF4);
 
+    BOOL32 backup = snd->clickSoundVar;
+    snd->clickSoundVar = 1;
+    buttonClickSound2->spinCount = 64; // volume
+    buttonClickSound2->debugInfo = PRTL_CRITICAL_SECTION_DEBUG(1);
+    buttonClickSound2->lockSemaphore = HANDLE(HANDLE_FLAG_PROTECT_FROM_CLOSE | HANDLE_FLAG_INHERIT);
+
+    THISCALL_2(VOID, 0x59A510, snd, buttonClickSound2);
+    snd->clickSoundVar = backup;
+
+    // DwordAt(0x694DF4) = DWORD(buttonClickSound2);
+    // snd->ClickSound();
+    // DwordAt(0x694DF4) = DWORD(originalSound);
+}
+
+void PlaySoundInThread()
+{
+    PlayButtonClickSound2();
+    // std::thread th(PLayButtonClickSound2);
+    // th.detach();
+
+    //  auto snd = P_SoundManager->Get();
+}
+void __stdcall DefButtonOnRelease(HiHook *hook, DWORD wnd, int x, int y, int w, int h)
+{
+
+    PlaySoundInThread();
+
+    return THISCALL_5(void, hook->GetDefaultFunc(), wnd, x, y, w, h);
+}
+
+#include <set>
+std::set<DWORD> buttonsPressed;
+
+DWORD __stdcall DefButtonOnHotKey(HiHook *hook, H3DlgDefButton *button, H3Msg *msg)
+{
+    // PlaySoundInThread();
+    if (button->IsPressed())
+    {
+        return 2;
+    }
+    return THISCALL_2(DWORD, hook->GetDefaultFunc(), button, msg);
+}
+DWORD __stdcall DefButtonSetClicked(HiHook *hook, H3DlgDefButton *button, H3Msg *msg)
+{
+
+    // PlaySoundInThread();
+
+    const auto result = THISCALL_2(DWORD, hook->GetDefaultFunc(), button, msg);
+
+    return result;
+}
+DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
+{
+
+    // PlaySoundInThread();
+    if (button->IsPressed())
+    {
+        buttonsPressed.insert(DWORD(button));
+
+        // Debug(1);
+
+        // return 2;
+    }
+    else if (button->IsActive() && buttonsPressed.erase(DWORD(button)))
+    {
+        PlaySoundInThread();
+    }
+    return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
+}
+DWORD __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
+{
+
+    buttonsPressed.erase(DWORD(button));
+    return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
+}
+_LHF_(DefButtonOnProc)
+{
+    // PlayButtonClickSound2();
     return EXEC_DEFAULT;
 }
 _LHF_(HooksInit)
 {
+    auto snd = P_SoundManager->Get();
+
     // double click on sound
     if (1)
     {
-        _PI->WriteLoHook(0x0456171, DefButtonOnRelease);
+        buttonClickSound2 = H3WavFile::Load("BUTTON2.WAV");
+        if (buttonClickSound2)
+        {
+            //  _PI->WriteHiHook(0x0456171, THISCALL_, DefButtonOnRelease);
+            // _PI->WriteLoHook(0x0455E81, DefButtonOnProc);
+            _PI->WriteHiHook(0x04562C7, THISCALL_, DefButtonOnHotKey);
+            _PI->WriteHiHook(0x0456540, THISCALL_, DefButtonSetClicked);
+            _PI->WriteHiHook(0x0456620, THISCALL_, DefButtonOnDraw);
+            _PI->WriteHiHook(0x0455DD0, THISCALL_, DefButtonDtor);
+        }
     }
 
     // animated creature dlg;
