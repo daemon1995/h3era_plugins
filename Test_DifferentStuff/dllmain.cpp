@@ -128,21 +128,8 @@ _LHF_(RMCdlgProc)
     }
     return EXEC_DEFAULT;
 }
-void __stdcall H3CreatureInfoDlg_ShowRMC(HiHook *hook, H3BaseDlg *dlg)
-{
-    Patch *patch = nullptr;
-    if (static_cast<H3CreatureInfoDlg *>(dlg))
-    {
-        globalDlg = static_cast<H3CreatureInfoDlg *>(dlg);
-        patch = _PI->WriteLoHook(0x060306D, RMCdlgProc);
-    }
-    THISCALL_1(void, hook->GetDefaultFunc(), dlg);
-    if (patch)
-    {
-        patch->Destroy();
-        globalDlg = nullptr;
-    }
-}
+
+
 
 H3WavFile *buttonClickSound2 = nullptr;
 
@@ -180,13 +167,6 @@ void PlaySoundInThread()
 
     //  auto snd = P_SoundManager->Get();
 }
-void __stdcall DefButtonOnRelease(HiHook *hook, DWORD wnd, int x, int y, int w, int h)
-{
-
-    PlaySoundInThread();
-
-    return THISCALL_5(void, hook->GetDefaultFunc(), wnd, x, y, w, h);
-}
 
 #include <set>
 std::set<DWORD> buttonsPressed;
@@ -200,15 +180,21 @@ DWORD __stdcall DefButtonOnHotKey(HiHook *hook, H3DlgDefButton *button, H3Msg *m
     }
     return THISCALL_2(DWORD, hook->GetDefaultFunc(), button, msg);
 }
+int counterS = 0;
+
 DWORD __stdcall DefButtonSetClicked(HiHook *hook, H3DlgDefButton *button, H3Msg *msg)
 {
 
-    // PlaySoundInThread();
-
     const auto result = THISCALL_2(DWORD, hook->GetDefaultFunc(), button, msg);
+    if (counterS == 2)
+    {
+        counterS = 0;
 
+        PlaySoundInThread();
+    }
     return result;
 }
+
 DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
 {
 
@@ -216,16 +202,18 @@ DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
     if (button->IsPressed())
     {
         buttonsPressed.insert(DWORD(button));
-
-        // Debug(1);
-
-        // return 2;
     }
     else if (button->IsActive() && buttonsPressed.erase(DWORD(button)))
     {
+
         PlaySoundInThread();
     }
     return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
+}
+void __stdcall DefButtonOnRelease(HiHook *hook, DWORD wnd, int x, int y, int w, int h)
+{
+
+    return THISCALL_5(void, hook->GetDefaultFunc(), wnd, x, y, w, h);
 }
 DWORD __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
 {
@@ -233,9 +221,61 @@ DWORD __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
     buttonsPressed.erase(DWORD(button));
     return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
 }
+DWORD __stdcall Dlg_BattleResults_Proc(HiHook *hook, H3Msg *msg)
+{
+
+    auto result = THISCALL_1(DWORD, hook->GetDefaultFunc(), msg);
+
+    if (result == 2)
+    {
+        PlaySoundInThread();
+        // counterS = 2;
+
+        //        result = 3;
+    }
+    // else if (result == 3)
+    //{
+    //     return 2;
+    // }
+    return result;
+}
+DWORD __stdcall Dlg_BattleResults_Dtor(HiHook *hook, H3Msg *msg)
+{
+
+
+    auto result = THISCALL_1(DWORD, hook->GetDefaultFunc(), msg);
+    PlaySoundInThread();
+
+    // counterS = 2;
+
+    // else if (result == 3)
+    //{
+    //     return 2;
+    // }
+    return result;
+}
 _LHF_(DefButtonOnProc)
 {
     // PlayButtonClickSound2();
+    return EXEC_DEFAULT;
+}
+_LHF_(H3ScenarioDlg_UpdateMapInfo)
+{
+
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
+
+    if (dlg->randomMapGeneration)
+    {
+    }
+
+    const auto &mapInfo = dlg->CurrentMap();
+
+    const int size = mapInfo.mapDimension;
+    sprintf_s(h3_TextBuffer, 0x300u, "%dx%d", size, size);
+    H3TinyFont *font = H3TinyFont::Get();
+    font->TextDraw(P_WindowManager->screenPcx16, h3_TextBuffer, dlg->GetX() + 712, dlg->GetY() + 55, 35, 16,
+                   eTextColor(4), eTextAlignment(5));
+    Debug(1);
     return EXEC_DEFAULT;
 }
 _LHF_(HooksInit)
@@ -248,20 +288,23 @@ _LHF_(HooksInit)
         buttonClickSound2 = H3WavFile::Load("BUTTON2.WAV");
         if (buttonClickSound2)
         {
-            //  _PI->WriteHiHook(0x0456171, THISCALL_, DefButtonOnRelease);
+            // _PI->WriteHiHook(0x0456171, THISCALL_, DefButtonOnRelease);
             // _PI->WriteLoHook(0x0455E81, DefButtonOnProc);
-            _PI->WriteHiHook(0x04562C7, THISCALL_, DefButtonOnHotKey);
-            _PI->WriteHiHook(0x0456540, THISCALL_, DefButtonSetClicked);
+            // PI->WriteHiHook(0x04562C7, THISCALL_, DefButtonOnHotKey);
+            // _PI->WriteHiHook(0x0456540, THISCALL_, DefButtonSetClicked);
             _PI->WriteHiHook(0x0456620, THISCALL_, DefButtonOnDraw);
             _PI->WriteHiHook(0x0455DD0, THISCALL_, DefButtonDtor);
+            // _PI->WriteHiHook(0x04716E0, THISCALL_, Dlg_BattleResults_Proc);
+            // _PI->WriteHiHook(0x047724F, THISCALL_, Dlg_BattleResults_Dtor);
+            _PI->WriteHiHook(0x04772FE, THISCALL_, Dlg_BattleResults_Dtor);
+            _PI->WriteHiHook(0x047724F, THISCALL_, Dlg_BattleResults_Dtor);
+
+            // _PI->WriteByte(0x04A69A2, 0xEB);
         }
     }
 
-    // animated creature dlg;
-    if (0)
-    {
-        _PI->WriteHiHook(0x05F4B90, THISCALL_, H3CreatureInfoDlg_ShowRMC);
-    }
+  
+
     // draw progress bar on adventure map
     if (0)
     {

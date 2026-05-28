@@ -136,13 +136,12 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         {target::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, 0x06A75F4, isInCombat && networkGame},                          // load game
         {target::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S, 0x06A75FC, isInCombat},                          // save game
         {target::PAGE_RESTART, 0x0688618, eVKey::H3VK_R, 0x06A7604, isInCombat && networkGame}, // restart the map
-        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, 0x06A75EC, 1},                               // quit to main menu
+        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, 0x06A75EC},                               // quit to main menu
         {target::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, 0x06A760C},                               // quit to desktop
         {30722, 0x0670130, eVKey::H3VK_ESCAPE, isInCombat ? 0x06A5614 : 0x06A7614}, // back to adv map / combat
     };
 
     constexpr size_t length = std::size(gameControlButtons);
-
     constexpr int buttonWidth = 100 + 13;
     constexpr int buttonHeight = 48 + 10;
 

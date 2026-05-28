@@ -18195,21 +18195,21 @@ namespace h3
 		/** @brief [037E]*/
 		BOOL8                      rmgSettingsShown;
 		/** @brief [037F]*/
-		h3unk8                     _f_37F;
+		BOOL8                      randomMapGeneration;
 		/** @brief [0380]*/
-		H3DlgEdit*                 edit380;
+		H3DlgEdit*				   saveGameEdit;
 		/** @brief [0384]*/
 		h3unk32                    _f_384;
 		/** @brief [0388]*/
-		h3unk32                    _f_388;
+		DWORD*                     pNewPlayerUpdateMan;
 		/** @brief [038C]*/
 		H3ScenarioMapInformation   mapInfo;
 		/** @brief [1030]*/
-		H3Vector<H3ScenarioMapInformation> vector1030;
+		H3Vector<H3ScenarioMapInformation> mapsList;
 		/** @brief [1040]*/
-		H3Vector<H3ScenarioMapInformation> vector1040;
+		H3Vector<H3ScenarioMapInformation> randomMapsList;
 		/** @brief [1050]*/
-		H3Vector<H3ScenarioMapInformation> mapsInformation;
+		H3Vector<H3ScenarioMapInformation> currentMapsList;
 		/** @brief [1060]*/
 		H3ScenarioMapInformation*  mapsInfoPtr;
 		/** @brief [1064]*/
@@ -34584,7 +34584,7 @@ namespace h3
 {
 	_H3API_ H3ScenarioMapInformation& H3SelectScenarioDialog::CurrentMap()
 	{
-		return mapsInformation[selectedMapIndex];
+		return currentMapsList[selectedMapIndex];
 	}
 	_H3API_ VOID H3SelectScenarioDialog::UpdateForSelectedScenario(INT32 index, BOOL8 redraw)
 	{

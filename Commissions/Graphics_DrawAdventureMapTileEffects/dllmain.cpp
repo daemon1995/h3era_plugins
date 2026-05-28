@@ -12,13 +12,52 @@ LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 
 struct
 {
+    static constexpr LPCSTR varName = PROJECT_NAME "_lastPlayedDay";
     RECT m_mapView;
     INT currentFrameToDraw = 0;
     INT framesAmount = 0;
+    INT lastPlayedDay = -1;
     H3LoadedDef *rainDef = nullptr;
+    Patch *beforeObjectDrawHook = nullptr;
+    Patch *objectTileDrawHook = nullptr;
 
 } settings;
 
+BOOL IsRainyWeather(const int gameDay, const int lastPlayedDay)
+{
+    if (lastPlayedDay == gameDay)
+    {
+        return TRUE;
+    }
+
+    return rand() % 7 == 0; // rand() % gameDay; // 30% chance of rain, you can adjust this as needed
+}
+
+_ERH_(OnEveryDay)
+{
+
+    const int currentDay = P_Game->date.CurrentDay() + 1;
+    const int lastPlayedDay = Era::GetAssocVarIntValue(settings.varName);
+
+    const BOOL isRainy = IsRainyWeather(currentDay, lastPlayedDay);
+
+    if (isRainy)
+    {
+        settings.beforeObjectDrawHook->Apply();
+        settings.objectTileDrawHook->Apply();
+        if (currentDay != lastPlayedDay)
+        {
+            settings.currentFrameToDraw = 0;
+            Era::SetAssocVarIntValue(settings.varName, currentDay);
+        }
+    }
+    else
+    {
+        settings.currentFrameToDraw = 0;
+        settings.beforeObjectDrawHook->Undo();
+        settings.objectTileDrawHook->Undo();
+    }
+}
 _LHF_(AdvMgr_BeforeObjectsDraw)
 {
 
@@ -39,7 +78,7 @@ void __stdcall AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *adv, int map
     if (mapX >= 0 && mapY >= 0 && mapX < mapSize && mapY < mapSize && settings.framesAmount)
     {
         auto mapItem = P_Game->GetMapItem(H3Position(mapX, mapY, mapZ));
-        if (mapItem && mapItem->land == eTerrain::ROCK)
+        if (!mapItem || mapItem->land == eTerrain::ROCK)
         {
             return;
         }
@@ -102,8 +141,10 @@ static _LHF_(HooksInit)
     settings.rainDef = H3LoadedDef::Load("zrain00.def");
     settings.framesAmount = settings.rainDef->groups[0]->count;
 
-    _PI->WriteLoHook(0x040F5AB, AdvMgr_BeforeObjectsDraw);
-    _PI->WriteHiHook(0x040F5D7, THISCALL_, AdvMgr_TileObjectDraw);
+    settings.beforeObjectDrawHook = _PI->CreateLoHook(0x040F5AB, AdvMgr_BeforeObjectsDraw);
+    settings.objectTileDrawHook = _PI->WriteHiHook(0x040F5D7, THISCALL_, AdvMgr_TileObjectDraw);
+    settings.objectTileDrawHook->Undo();
+    _REH_(OnEveryDay);
 
     return EXEC_DEFAULT;
 }
