@@ -129,8 +129,6 @@ _LHF_(RMCdlgProc)
     return EXEC_DEFAULT;
 }
 
-
-
 H3WavFile *buttonClickSound2 = nullptr;
 
 #include <thread>
@@ -242,7 +240,6 @@ DWORD __stdcall Dlg_BattleResults_Proc(HiHook *hook, H3Msg *msg)
 DWORD __stdcall Dlg_BattleResults_Dtor(HiHook *hook, H3Msg *msg)
 {
 
-
     auto result = THISCALL_1(DWORD, hook->GetDefaultFunc(), msg);
     PlaySoundInThread();
 
@@ -302,8 +299,6 @@ _LHF_(HooksInit)
             // _PI->WriteByte(0x04A69A2, 0xEB);
         }
     }
-
-  
 
     // draw progress bar on adventure map
     if (0)
@@ -376,7 +371,18 @@ _LHF_(HooksInit)
 //         bttn->AddHotkey(h3::eVKey::H3VK_E);
 //     }
 // }
+void ChangeCreatureTable(int target, const char *buf);
+void EraJSTest()
+{
+    std::string str = EraJS::read("era.wog.notification.0.name");
+    MessageBoxA(NULL, str.c_str(), "Info", MB_OK);
+}
 
+_ERH_(OnAfterWog)
+{
+
+    return;
+}
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
