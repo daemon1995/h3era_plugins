@@ -256,11 +256,10 @@ _LHF_(DefButtonOnProc)
     // PlayButtonClickSound2();
     return EXEC_DEFAULT;
 }
-_LHF_(H3ScenarioDlg_UpdateMapInfo)
+int __stdcall H3ScenarioDlg_UpdateMapInfo(HiHook *h, H3SelectScenarioDialog *dlg)
 {
 
-    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
-
+    int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
     if (dlg->randomMapGeneration)
     {
     }
@@ -273,12 +272,15 @@ _LHF_(H3ScenarioDlg_UpdateMapInfo)
     font->TextDraw(P_WindowManager->screenPcx16, h3_TextBuffer, dlg->GetX() + 712, dlg->GetY() + 55, 35, 16,
                    eTextColor(4), eTextAlignment(5));
     Debug(1);
-    return EXEC_DEFAULT;
+    return result;
 }
 _LHF_(HooksInit)
 {
     auto snd = P_SoundManager->Get();
-
+    if (0)
+    {
+        _PI->WriteHiHook(0x0584820, THISCALL_, H3ScenarioDlg_UpdateMapInfo);
+    }
     // double click on sound
     if (1)
     {

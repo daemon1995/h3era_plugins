@@ -6,7 +6,7 @@ struct SettingsInfo
     LPCSTR uuid;
     tagPOINT position;
     int firstItemId;
-    LPCSTR displayedName;
+    LPCSTR displayedName = nullptr;
     DWORD valuePtr;
     INT32 defaultValue;
     const DWORD *hintsPointer = nullptr;
@@ -27,6 +27,8 @@ struct ISetting
 
     } value;
     LPCSTR displayedName = nullptr;
+    H3DlgText *titleItem = nullptr;
+
     virtual void SetVisible(const BOOL visible) noexcept
     {
     }
@@ -41,8 +43,6 @@ struct ISetting
             this->value.dlgStart = currentValue;
             this->value.current = currentValue;
         }
-
-        ClampValue();
     }
     virtual ~ISetting()
     {
@@ -57,8 +57,15 @@ struct ISetting
     {
         value.current = value.byDefault;
     }
-    static ISetting *Create(const tagPOINT position, const Value &value, LPCSTR displayedText,
-                            H3Vector<H3DlgItem *> &itemsVec) noexcept;
+    static H3DlgText *CreateTitle(int x, int &y, LPCSTR displayedText, H3Vector<H3DlgItem *> &itemsVec) noexcept
+    {
+        constexpr int textFieldWidth = WIDTH;
+        auto titleItem = H3DlgText::Create(x, y, textFieldWidth, 24, displayedText, NH3Dlg::Text::MEDIUM,
+                                           eTextColor::HIGHLIGHT, -1);
+        itemsVec += titleItem;
+        y += 30;
+		return titleItem;
+    }
 };
 
 struct CaptionButtonSetting : public ISetting
@@ -96,6 +103,7 @@ struct CheckBoxSetting : public ISetting
     }
     CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.defaultValue})
     {
+        ClampValue();
     }
     virtual ~CheckBoxSetting()
     {
@@ -110,17 +118,29 @@ struct CheckBoxSetting : public ISetting
   public:
     static CheckBoxSetting *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };
-
+struct RadioButtonInfo
+{
+    tagPOINT position;
+    const int firstItemId;
+    LPCSTR displayedName = nullptr;
+    const DWORD valuePtr;
+    //     const int valuesOffset = 0;
+    const int size;
+    const LPCSTR *textPtrs = nullptr;
+    const DWORD *hintsPointer = nullptr;
+    const BOOL canBeDisabled = FALSE;
+};
 struct RadioButtonSetting : public ISetting
 {
     static constexpr int TEXT_WIDGET_OFFSET = 24;
-    H3DlgDef *radioButtonItem{};
-    H3DlgText *nameItem{};
+
+    H3Vector<H3DlgDefButton*> checkBoxes;
+
     void SetValue(const INT32 newValue) noexcept
     {
         value.current = newValue;
     }
-    RadioButtonSetting(const int x, const int y, const Value &value, LPCSTR displayedText) : ISetting({x, y}, value)
+    RadioButtonSetting(const RadioButtonInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0})
     {
     }
     virtual ~RadioButtonSetting()
@@ -128,8 +148,7 @@ struct RadioButtonSetting : public ISetting
     }
 
   public:
-    static RadioButtonSetting *Create(const tagPOINT position, const Value &value, LPCSTR displayedText,
-                                      H3BaseDlg *dlg) noexcept;
+    static RadioButtonSetting *Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };
 
 struct SwitchPanelInfo
@@ -148,7 +167,6 @@ struct SwitchPanel : public ISetting
 {
     static constexpr int HEIGHT = 50;
 
-    H3DlgText *headerText{};
     H3Vector<H3DlgDefButton *> switchButtons;
     int valueOffset = 0;
     // const SwitchPanelInfo info;
@@ -189,13 +207,11 @@ struct Switch10XPanel : public ISetting
     static constexpr int BUTTONS_COUNT = 10;
     static constexpr int HEIGHT = 60;
     static constexpr LPCSTR bgPcxPath = "BattleSpeed.pcx";
-    H3DlgText *headerText{};
     H3DlgPcx *backgroundPcx{};
     H3DlgDef *switchButtons[BUTTONS_COUNT]{};
-    const SettingsInfo &info;
 
   public:
-    Switch10XPanel(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0}), info(info)
+    Switch10XPanel(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0})
     {
     }
     virtual ~Switch10XPanel()

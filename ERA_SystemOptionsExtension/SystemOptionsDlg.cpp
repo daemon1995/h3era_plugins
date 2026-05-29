@@ -1,6 +1,8 @@
 #include "SystemOptionsDlg.h"
 
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
+void __stdcall ShowHealthBarDlg();
+BOOL *__stdcall HealthBarIsEnabledAddress();
 
 enum eSettingsOriginalItemIds : int
 {
@@ -16,20 +18,17 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
 
 {
 
-    // CreateOKButton();
-    // CreateCancelButton();
-
-    auto captionBttn = H3DlgCaptionButton::Create(15, DLG_MARGIN, ePageItemId::PAGE_ITEM_GENERAL, BIG_BUTTON,
-                                                  P_GeneralText->GetText(570), NH3Dlg::Text::BIG, 0, 0, false,
-                                                  eVKey::H3VK_1, eTextColor::HIGHLIGHT);
+    auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
+                                                  BIG_BUTTON, P_GeneralText->GetText(570), NH3Dlg::Text::BIG, 0, 0,
+                                                  false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
 
     captionBttn->SetClickFrame(1);
     ISettingsPage *page = GeneralSettingsPage::Create(captionBttn, this);
     AddItem(captionBttn, page);
     m_pages.Add(page);
 
-    captionBttn = H3DlgCaptionButton::Create(165, DLG_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP, BIG_BUTTON,
-                                             ValueAt<LPCSTR>(0x06A6598), NH3Dlg::Text::BIG, 0, false, false,
+    captionBttn = H3DlgCaptionButton::Create(165, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP,
+                                             BIG_BUTTON, ValueAt<LPCSTR>(0x06A6598), NH3Dlg::Text::BIG, 0, false, false,
                                              eVKey::H3VK_2, eTextColor::HIGHLIGHT);
 
     captionBttn->SetClickFrame(1);
@@ -37,9 +36,9 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
     AddItem(captionBttn, page);
     m_pages.Add(page);
 
-    captionBttn = H3DlgCaptionButton::Create(315, DLG_MARGIN, ePageItemId::PAGE_ITEM_COMBAT, BIG_BUTTON,
-                                             P_GeneralText->GetText(394), NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_3,
-                                             eTextColor::HIGHLIGHT);
+    captionBttn = H3DlgCaptionButton::Create(315, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT,
+                                             BIG_BUTTON, P_GeneralText->GetText(394), NH3Dlg::Text::BIG, 0, 0, false,
+                                             eVKey::H3VK_3, eTextColor::HIGHLIGHT);
 
     page = CombatSettingsPage::Create(captionBttn, this);
     AddItem(captionBttn, page);
@@ -49,8 +48,6 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
 
     CreateGameControlButtons();
 
-    // Create10xStepsSwitchPanel(switchPanelsInfo[0], nullptr);
-    // Create10xStepsSwitchPanel(switchPanelsInfo[1], nullptr);
     instance = this;
 }
 #include <array>
@@ -76,21 +73,23 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
     LPCSTR videoDefNames[] = {LPCSTR(DwordAt(0x05B2300 + 1)), LPCSTR(DwordAt(0x05B22A9 + 1))};
     DWORD switchPanelHints[] = {0x06A774C, 0x06A7754};
     constexpr size_t videoDefNum = std::size(videoDefNames);
-    constexpr int switchPanelX = DLG_ITEM_VMARGIN;
+    constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
+
+    const int startY = captionBttn->GetY() + captionBttn->GetHeight() + DLG_CAPTION_BUTTON_TOP_MARGIN;
 
     SwitchPanelInfo switchPanelsInfo = {
-        {switchPanelX, 60},   itemId, P_GeneralText->GetText(22), 0x06987F8, 0, videoDefNum, &videoDefNames[0],
+        {switchPanelX, startY}, itemId, P_GeneralText->GetText(22), 0x06987F8, 0, videoDefNum, &videoDefNames[0],
         &switchPanelHints[0],
 
     };
     page->settings.Add(SwitchPanel::Create(switchPanelsInfo, page->items));
     itemId += videoDefNum;
-    constexpr int checkboxX = DLG_ITEM_VMARGIN;
+    constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
     constexpr DWORD checkboxesHintPtrs[] = {0x06A7744, 0x06A775C, 0x06A7764};
 
     const SettingsInfo checkboxesInfo[] = {
         {"system_video_subtitles",
-         {checkboxX, 150},
+         {checkboxX, startY + 90},
          itemId++,
          P_GeneralText->GetText(577),
          0x06987D0,
@@ -98,7 +97,7 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
 
          &checkboxesHintPtrs[0]}, // show tips
         {"system_building_outlines",
-         {checkboxX, 220},
+         {checkboxX, startY + 120},
          itemId++,
          P_GeneralText->GetText(578),
          0x06987D4,
@@ -106,7 +105,7 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
 
          &checkboxesHintPtrs[1]}, // show tips in battle
         {"system_spell_book_animation",
-         {checkboxX, 250},
+         {checkboxX, startY + 150},
          itemId++,
          P_GeneralText->GetText(579),
          0x06987D8,
@@ -124,9 +123,9 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
     // wog option buttons:
     const SettingsInfo wogOptionCaption = {"system_wog_option", {checkboxX, 300},          itemId++,
                                            "wog options",       (DWORD)&CallWogOptionsDlg, 0};
-
     page->settings.Add(
         CaptionButtonSetting::Create(wogOptionCaption, *reinterpret_cast<char **>(0x57A93B + 1), page->items));
+
     auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
     if (plugin)
     {
@@ -161,7 +160,7 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
         return arr;
     }();
 
-    constexpr int panelX = DLG_WIDTH - ISetting::WIDTH - 33;
+    constexpr int panelX = DLG_RIGHT_PART_X_MARGIN;
     const SettingsInfo switch10PanelsInfo[] = {
 
         {"system_music_level",
@@ -190,12 +189,13 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
     return page;
 }
 SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettingsPage::Create(
-    H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg)
+    H3DlgCaptionButton *captionBttn, H3BaseDlg *dlg)
 {
-    AdventureMapSettingsPage *page = new AdventureMapSettingsPage(captionbttn);
+    AdventureMapSettingsPage *page = new AdventureMapSettingsPage(captionBttn);
     int itemId = page->firstItemId;
 
-    constexpr int switchPanelX = DLG_ITEM_VMARGIN;
+    constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
+    const int startY = captionBttn->GetY() + captionBttn->GetHeight() + DLG_CAPTION_BUTTON_TOP_MARGIN;
 
     LPCSTR playerSpeedDefNames[] = {LPCSTR(DwordAt(0x005B1EEF + 1)), LPCSTR(DwordAt(0x005B1F43 + 1)),
                                     LPCSTR(DwordAt(0x005B1F97 + 1)), LPCSTR(DwordAt(0x005B1FEB + 1))};
@@ -209,7 +209,7 @@ SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettin
     constexpr size_t enemyDefNum = std::size(enemySpeedDefNames);
     constexpr size_t mapScrollDefNum = std::size(mapScrollDefNames);
     SwitchPanelInfo switchPanelsInfo[] = {
-        {{switchPanelX, 60},
+        {{switchPanelX, startY},
          itemId,
          P_GeneralText->GetText(571),
          0x06987AC,
@@ -217,7 +217,7 @@ SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettin
          playerDefNum,
          &playerSpeedDefNames[0],
          &switchPanelHints[0]},
-        {{switchPanelX, 130},
+        {{switchPanelX, startY + 70},
          itemId + playerDefNum,
          P_GeneralText->GetText(572),
          0x06987A8,
@@ -225,7 +225,7 @@ SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettin
          enemyDefNum,
          &enemySpeedDefNames[0],
          &switchPanelHints[playerDefNum]},
-        {{switchPanelX, 200},
+        {{switchPanelX, startY + 140},
          itemId + playerDefNum + enemyDefNum,
          P_GeneralText->GetText(573),
          0x06987DC,
@@ -242,7 +242,7 @@ SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettin
     itemId += playerDefNum + enemyDefNum + mapScrollDefNum;
 
     // create checkboxes
-    constexpr int checkboxX = DLG_ITEM_VMARGIN;
+    constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
     int checkboxY = 280;
     constexpr DWORD checkboxesHintPtrs[] = {0x06A772C, 0x06A7734, 0x69FC88};
 
@@ -283,10 +283,12 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
                                                                                    H3BaseDlg *dlg)
 {
     CombatSettingsPage *page = new CombatSettingsPage(captionBttn);
-    constexpr int x = DLG_ITEM_VMARGIN;
+    constexpr int x = DLG_LEFT_PART_X_MARGIN;
     const int startY = captionBttn->GetY() + captionBttn->GetHeight() + 12;
     // standard checkboxes
     int itemId = page->firstItemId;
+
+    // LEFT DLG PART
     DWORD hintsArray[] = {
         0x06A572C, // show combat show_grid
         0x06A5734, // show movements_shadow
@@ -298,16 +300,13 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
         0x06A56FC, // show battle interface
     };
     const SettingsInfo checkboxesInfo[] = {
-        {"show_grid", {x, startY}, itemId++, P_GeneralText->GetText(406), 0x069880C, TRUE, &hintsArray[0]}, // show
-                                                                                                            // combat
-                                                                                                            // show_grid
+        {"show_grid", {x, startY}, itemId++, P_GeneralText->GetText(406), 0x069880C, TRUE, &hintsArray[0]},
         {"movements_shadow",
          {x, startY + 30},
          itemId++,
          P_GeneralText->GetText(407),
          0x0698814,
          TRUE,
-
          &hintsArray[1]}, // show movements_shadow
         {"cursor_shadow", {x, startY + 60}, itemId++, P_GeneralText->GetText(408), 0x0698810, TRUE, &hintsArray[2]},
         {"auto_combat_creatures",
@@ -371,7 +370,7 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
     }();
     constexpr int ySwitch = DLG_HEIGHT - Switch10XPanel::HEIGHT - 25;
 
-    const SettingsInfo switchPanelsInfo{
+    const SettingsInfo switch10xPanelsInfo{
         "combat_animation_speed",
         {x, ySwitch},
         itemId,
@@ -381,7 +380,26 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
         &hintPtrs[0] // music level switch panel
     };
     itemId += Switch10XPanel::BUTTONS_COUNT;
-    page->settings.Add(Switch10XPanel::Create(switchPanelsInfo, page->items));
+    page->settings.Add(Switch10XPanel::Create(switch10xPanelsInfo, page->items));
+
+    constexpr int rightX = DLG_RIGHT_PART_X_MARGIN;
+
+    const SettingsInfo healthBarcheckBoxInfo = {"system_health_bar_checkbox",
+                                                {rightX, startY + 60},
+                                                itemId++,
+                                                "health bar checkbox",
+                                                (DWORD)HealthBarIsEnabledAddress(),
+                                                TRUE,
+                                                0};
+
+    auto it = CheckBoxSetting::Create(healthBarcheckBoxInfo, page->items);
+    page->settings.Add(it);
+
+    const SettingsInfo healtBarCaptionInfo = {"system_health_bar", {rightX, startY + 90},    itemId++,
+                                              "health bar",        (DWORD)&ShowHealthBarDlg, 0};
+
+    page->settings.Add(
+        CaptionButtonSetting::Create(healtBarCaptionInfo, *reinterpret_cast<char **>(0x57A93B + 1), page->items));
 
     return page;
 }

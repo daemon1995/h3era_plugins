@@ -47,7 +47,8 @@ CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3Dl
 
     // setting->checkBoxItem = H3DlgDef::Create(x, y, info.displayedName);
     const int frameId = setting->value.current;
-    setting->checkBoxItem = H3DlgDef::Create(x + WIDTH - TEXT_WIDGET_OFFSET, y, info.firstItemId, NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
+    setting->checkBoxItem = H3DlgDef::Create(x + WIDTH - TEXT_WIDGET_OFFSET, y, info.firstItemId,
+                                             NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
     if (info.hintsPointer && *info.hintsPointer)
     {
         setting->checkBoxItem->SetHint(ValueAt<LPCSTR>(*info.hintsPointer));
@@ -59,6 +60,46 @@ CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3Dl
         H3DlgText::Create(x, y, WIDTH - TEXT_WIDGET_OFFSET, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
                           eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
     itemsVec.Add(setting->checkBoxText);
+    return setting;
+}
+
+RadioButtonSetting *RadioButtonSetting::Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
+{
+    RadioButtonSetting *setting = new RadioButtonSetting(info);
+    if (!setting)
+        return setting;
+
+    int itemX = info.position.x;
+    int itemY = info.position.y;
+
+    if (auto &text = info.displayedName)
+    {
+        setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
+    }
+
+    const int frameId = setting->value.current;
+
+    for (size_t i = 0; i < info.size; i++)
+    {
+
+		//auto& checkBox = setting->radioButtons[i];
+        // setting->checkBoxItem = H3DlgDef::Create(x, y, info.displayedName);
+        //auto& checkBox = H3DlgDef::Create(itemX + WIDTH - TEXT_WIDGET_OFFSET, y, info.firstItemId,
+        //    NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
+        //if (info.hintsPointer && *info.hintsPointer)
+        //{
+        //    setting->checkBoxItem->SetHint(ValueAt<LPCSTR>(*info.hintsPointer));
+        //}
+
+        //itemsVec.Add(setting->checkBoxItem);
+        //// x += TEXT_WIDGET_OFFSET;
+        //setting->checkBoxText =
+        //    H3DlgText::Create(x, y, WIDTH - TEXT_WIDGET_OFFSET, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
+        //        eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
+        //itemsVec.Add(setting->checkBoxText);
+    }
+
+
     return setting;
 }
 
@@ -74,15 +115,11 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     int itemX = info.position.x;
     int itemY = info.position.y;
 
+    if (auto &text = info.displayedName)
+    {
+        setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
+    }
     // create text field with name of the setting
-    constexpr int textFieldWidth = WIDTH;
-
-    setting->headerText = H3DlgText::Create(itemX, itemY, textFieldWidth, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
-                                            eTextColor::HIGHLIGHT, -1);
-
-    itemsVec += setting->headerText;
-
-    itemY += 30;
     const auto size = info.size;
 
     for (size_t i = 0; i < size; i++)
@@ -123,10 +160,10 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
     // create text field with name of the setting
     constexpr int textFieldWidth = BUTTONS_COUNT * 19;
 
-    setting->headerText = H3DlgText::Create(itemX, itemY, textFieldWidth, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
+    setting->titleItem = H3DlgText::Create(itemX, itemY, textFieldWidth, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
                                             eTextColor::HIGHLIGHT, -1);
 
-    itemsVec += setting->headerText;
+    itemsVec += setting->titleItem;
 
     itemY += 20;
     // create background pcx

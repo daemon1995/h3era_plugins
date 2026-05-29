@@ -328,7 +328,7 @@ void __stdcall H3AdventureMgrDlg__RedrawHeroSlots(HiHook *h, H3AdventureMgrDlg *
 {
     THISCALL_4(void, h->GetDefaultFunc(), dlg, playrId, updateDlg, redrawScreen);
 
-    if (P_Game->GetPlayer()->is_human2)
+    if (P_Game->GetPlayer()->isHuman)
         GraphicsEnhancements::Get().DrawAdventureMapTownBuiltStatus(dlg, updateDlg, redrawScreen);
 }
 

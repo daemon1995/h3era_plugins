@@ -209,8 +209,8 @@ _LHF_(LoHook_HeroRoute_InitMaxMP)
 
     const int curDayOfWeek = P_Game->date.day;
 
-    const char is_human2 = player->is_human;
-    const char v7 = P_ActivePlayer->Get()->is_human;
+    const char is_human2 = player->isLocal;
+    const char v7 = P_ActivePlayer->Get()->isLocal;
     const INT8 curPlayerId = P_CurrentPlayerID;
 
     if (playerIsHere || (is_human2 && v7 && v7 > is_human2) || v7 == is_human2 && curPlayerId > hero->owner)

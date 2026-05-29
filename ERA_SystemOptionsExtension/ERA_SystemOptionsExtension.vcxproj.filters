@@ -20,6 +20,9 @@
     <ClInclude Include="DlgPanels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CombatHints.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -32,6 +35,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DlgPanels.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatHints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

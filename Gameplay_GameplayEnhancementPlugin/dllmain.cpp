@@ -79,7 +79,7 @@ _LHF_(HooksInit)
 
     PATCH_GETTER(scroll, MapScroller);
     PATCH_GETTER(graphics, GraphicsEnhancements);
-    PATCH_GETTER(cmbhints, CombatHints);
+    // PATCH_GETTER(cmbhints, CombatHints);
     PATCH_GETTER(features, GameplayFeature);
     PATCH_GETTER(ERI, ExtendedResourcesInfo);
     PATCH_GETTER(artifacts, ArtifactHints);

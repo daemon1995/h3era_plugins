@@ -48,6 +48,17 @@ int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
     return true;
 }
 
+#define PATCH_DECLATOR(nameSpaceName, className)                                                                       \
+    namespace nameSpaceName                                                                                            \
+    {                                                                                                                  \
+    class className : public IGamePatch                                                                                \
+    {                                                                                                                  \
+      public:                                                                                                          \
+        static className &className::Get();                                                                            \
+    };                                                                                                                 \
+    }
+PATCH_DECLATOR(cmbhints, CombatHints)
+
 _ERH_(OnAfterWog)
 {
     _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
@@ -65,6 +76,8 @@ _ERH_(OnAfterWog)
 
 _LHF_(HooksInit)
 {
+    cmbhints::CombatHints::Get();
+
     return EXEC_DEFAULT;
 }
 
@@ -85,7 +98,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
             _REH_(OnAfterWog);
             // _REH_(OnAfterCreateWindow);
-            // _PI->WriteLoHook(0x4EEAF2, HooksInit);
+            _PI->WriteLoHook(0x4EEAF2, HooksInit);
         }
 
     case DLL_THREAD_ATTACH:
