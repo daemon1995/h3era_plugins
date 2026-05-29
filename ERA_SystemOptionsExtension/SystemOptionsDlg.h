@@ -53,7 +53,7 @@ class SystemOptionsDlg : public H3Dlg
         const char *name;
         UINT id;
         BOOL isVisible = false;
-        UINT firstItemCount = 0;
+        UINT firstItemId = 0;
         H3DlgCaptionButton *captionBttn = nullptr;
 
         H3Vector<H3DlgItem *> items;
@@ -63,6 +63,7 @@ class SystemOptionsDlg : public H3Dlg
         {
             name = captionBttn->GetText();
             captionBttn->SetClickFrame(1);
+            firstItemId = captionBttn->GetID() * 100 + 100;
         }
         virtual ~ISettingsPage()
         {

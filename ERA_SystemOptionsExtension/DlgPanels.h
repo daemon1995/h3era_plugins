@@ -1,28 +1,47 @@
 #pragma once
 #include "framework.h"
 
+struct SettingsInfo
+{
+    LPCSTR uuid;
+    tagPOINT position;
+    int firstItemId;
+    LPCSTR displayedName;
+    DWORD valuePtr;
+    INT32 defaultValue;
+    const DWORD *hintsPointer = nullptr;
+};
+
 struct ISetting
 {
     static constexpr int WIDTH = 195;
+    std::string uuid;
+
     tagPOINT position;
     struct Value
     {
-        const DWORD valuePtr;
-        INT32 dlgStart;
-        INT32 current;
-        const INT32 byDefault;
+        DWORD valuePtr = 0;
+        INT32 dlgStart = 0;
+        INT32 current = 0;
+        const INT32 byDefault = 0;
 
     } value;
+    LPCSTR displayedName = nullptr;
     virtual void SetVisible(const BOOL visible) noexcept
     {
     }
 
   public:
-    ISetting(const tagPOINT position, const Value &value) : position(position), value(value)
+    ISetting(const tagPOINT &position, const Value &value) : position(position), value(value)
     {
-        const DWORD currentValue = IntAt(value.valuePtr);
-        this->value.dlgStart = currentValue;
-        this->value.current = currentValue;
+
+        if (value.valuePtr)
+        {
+            const DWORD currentValue = IntAt(value.valuePtr);
+            this->value.dlgStart = currentValue;
+            this->value.current = currentValue;
+        }
+
         ClampValue();
     }
     virtual ~ISetting()
@@ -38,19 +57,44 @@ struct ISetting
     {
         value.current = value.byDefault;
     }
-    static ISetting *Create(const tagPOINT position, const Value &value, LPCSTR displayedText, H3BaseDlg *dlg) noexcept;
+    static ISetting *Create(const tagPOINT position, const Value &value, LPCSTR displayedText,
+                            H3Vector<H3DlgItem *> &itemsVec) noexcept;
+};
+
+struct CaptionButtonSetting : public ISetting
+{
+    H3DlgCaptionButton *captionButton{};
+    H3DlgText *checkBoxText{};
+    void(__stdcall *callback)(void) = nullptr;
+    void Toggle() noexcept
+    {
+        if (callback)
+            callback();
+    }
+    CaptionButtonSetting(const SettingsInfo &info)
+        : ISetting(info.position, {0, 0, 0, 0}), callback(reinterpret_cast<void(__stdcall *)(void)>(info.valuePtr))
+    {
+    }
+    virtual ~CaptionButtonSetting()
+    {
+    }
+
+  public:
+    static CaptionButtonSetting *Create(const SettingsInfo &info, LPCSTR defName,
+                                        H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };
 
 struct CheckBoxSetting : public ISetting
 {
-    static constexpr int TEXT_WIDGET_OFFSET = 24;
+    static constexpr int TEXT_WIDGET_OFFSET = 36;
     H3DlgDef *checkBoxItem{};
-    H3DlgText *nameItem{};
+    H3DlgText *checkBoxText{};
     void Toggle() noexcept
     {
         value.current ^= value.current;
+        ClampValue();
     }
-    CheckBoxSetting(const int x, const int y, LPCSTR displayedText) : ISetting({x, y}, {0, 0, 0, 0})
+    CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.defaultValue})
     {
     }
     virtual ~CheckBoxSetting()
@@ -64,8 +108,7 @@ struct CheckBoxSetting : public ISetting
     }
 
   public:
-    static CheckBoxSetting *Create(const tagPOINT position, const INT32 defaultValue, LPCSTR displayedText,
-                                   H3BaseDlg *dlg) noexcept;
+    static CheckBoxSetting *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };
 
 struct RadioButtonSetting : public ISetting
@@ -91,26 +134,54 @@ struct RadioButtonSetting : public ISetting
 
 struct SwitchPanelInfo
 {
-    const tagPOINT position;
-    const DWORD generalStringIndex;
-    const DWORD firstItemId;
+    tagPOINT position;
+    const int firstItemId;
+    LPCSTR displayedName;
     const DWORD valuePtr;
+    const int valuesOffset = 0;
+    const int size;
+    const LPCSTR *defNamesPtr = nullptr;
     const DWORD *hintsPointer = nullptr;
 };
 
 struct SwitchPanel : public ISetting
 {
-    static constexpr LPCSTR bgPcxPath = "BattleSpeed.pcx";
-    H3DlgText *switchText{};
-    H3DlgPcx *backgroundPcx{};
-    H3DlgDef *switchButtons[10]{};
-    SwitchPanelInfo &info;
+    static constexpr int HEIGHT = 50;
+
+    H3DlgText *headerText{};
+    H3Vector<H3DlgDefButton *> switchButtons;
+    int valueOffset = 0;
+    // const SwitchPanelInfo info;
+    SwitchPanel(const SwitchPanelInfo &info)
+        : ISetting(info.position, {info.valuePtr, 0, 0, 0}), valueOffset(info.valuesOffset)
+    {
+    }
     virtual ~SwitchPanel()
     {
     }
 
+    virtual void ClampValue() noexcept override
+    {
+
+        if (const auto size = switchButtons.Size())
+        {
+            value.current = Clamp(0, value.current, size - 1);
+        }
+    }
+    virtual void SetVisible(const BOOL visible) noexcept override
+    {
+        if (!visible)
+            return;
+        const auto size = switchButtons.Size();
+        for (size_t i = 0; i < size; i++)
+        {
+            switchButtons[i]->SendCommand(6, 4096);
+        }
+        switchButtons[value.current + valueOffset]->SendCommand(5, 4096);
+    }
+
   public:
-    static SwitchPanel *Create(const SwitchPanelInfo &info, H3BaseDlg *dlg) noexcept;
+    static SwitchPanel *Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };
 struct Switch10XPanel : public ISetting
 {
@@ -118,13 +189,13 @@ struct Switch10XPanel : public ISetting
     static constexpr int BUTTONS_COUNT = 10;
     static constexpr int HEIGHT = 60;
     static constexpr LPCSTR bgPcxPath = "BattleSpeed.pcx";
-    H3DlgText *switchText{};
+    H3DlgText *headerText{};
     H3DlgPcx *backgroundPcx{};
     H3DlgDef *switchButtons[BUTTONS_COUNT]{};
-    const SwitchPanelInfo &info;
+    const SettingsInfo &info;
 
   public:
-    Switch10XPanel(const SwitchPanelInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0}), info(info)
+    Switch10XPanel(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0}), info(info)
     {
     }
     virtual ~Switch10XPanel()
@@ -148,5 +219,5 @@ struct Switch10XPanel : public ISetting
     }
 
   public:
-    static Switch10XPanel *Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
+    static Switch10XPanel *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };

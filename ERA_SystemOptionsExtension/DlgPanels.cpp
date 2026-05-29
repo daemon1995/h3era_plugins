@@ -1,60 +1,160 @@
 #include "DlgPanels.h"
 
-CheckBoxSetting *CheckBoxSetting::Create(const tagPOINT position, const INT32 defaultValue, LPCSTR displayedText,
-                                         H3BaseDlg *dlg) noexcept
+CaptionButtonSetting *CaptionButtonSetting::Create(const SettingsInfo &info, LPCSTR defName,
+                                                   H3Vector<H3DlgItem *> &itemsVec) noexcept
+
 {
-    return nullptr;
+
+    CaptionButtonSetting *setting = new CaptionButtonSetting(info);
+    if (!setting)
+        return setting;
+
+    int x = info.position.x;
+    int y = info.position.y;
+
+    H3LoadedDef *def = H3LoadedDef::Load(defName);
+
+    x = x + ((WIDTH - def->widthDEF) >> 1);
+
+    auto bttn = H3DlgCaptionButton::Create(x, y, info.firstItemId, def->GetName(), info.displayedName,
+                                           NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR);
+
+    bttn->SetClickFrame(1);
+    H3RGB565 color(H3RGB888::Highlight());
+
+    H3DlgFrame *frame = H3DlgFrame::Create(bttn, color, -1, 1);
+
+    if (info.hintsPointer && *info.hintsPointer)
+    {
+        bttn->SetHint(ValueAt<LPCSTR>(*info.hintsPointer));
+    }
+    itemsVec.Add(frame);
+    itemsVec.Add(bttn);
+    setting->captionButton = bttn;
+    def->Dereference();
+    return setting;
 }
 
-Switch10XPanel *Switch10XPanel::Create(const SwitchPanelInfo &panelInfo, H3Vector<H3DlgItem *> &itemsVec) noexcept
+CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
 {
 
-    Switch10XPanel *panel = new Switch10XPanel(panelInfo);
+    CheckBoxSetting *setting = new CheckBoxSetting(info);
+    if (!setting)
+        return setting;
 
-    if (!panel)
-        return panel;
+    int x = info.position.x;
+    int y = info.position.y;
 
-    panel->position = panelInfo.position;
+    // setting->checkBoxItem = H3DlgDef::Create(x, y, info.displayedName);
+    const int frameId = setting->value.current;
+    setting->checkBoxItem = H3DlgDef::Create(x + WIDTH - TEXT_WIDGET_OFFSET, y, info.firstItemId, NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
+    if (info.hintsPointer && *info.hintsPointer)
+    {
+        setting->checkBoxItem->SetHint(ValueAt<LPCSTR>(*info.hintsPointer));
+    }
 
-    int itemX = panelInfo.position.x;
-    int itemY = panelInfo.position.y;
+    itemsVec.Add(setting->checkBoxItem);
+    // x += TEXT_WIDGET_OFFSET;
+    setting->checkBoxText =
+        H3DlgText::Create(x, y, WIDTH - TEXT_WIDGET_OFFSET, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
+                          eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
+    itemsVec.Add(setting->checkBoxText);
+    return setting;
+}
 
-    // create text field with name of the panel
+SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
+{
+    SwitchPanel *setting = new SwitchPanel(info);
+
+    if (!setting)
+        return setting;
+
+    setting->position = info.position;
+
+    int itemX = info.position.x;
+    int itemY = info.position.y;
+
+    // create text field with name of the setting
+    constexpr int textFieldWidth = WIDTH;
+
+    setting->headerText = H3DlgText::Create(itemX, itemY, textFieldWidth, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
+                                            eTextColor::HIGHLIGHT, -1);
+
+    itemsVec += setting->headerText;
+
+    itemY += 30;
+    const auto size = info.size;
+
+    for (size_t i = 0; i < size; i++)
+    {
+        auto def = H3DlgDefButton::Create(itemX, itemY, info.firstItemId + i, info.defNamesPtr[i], 0, 1, FALSE, NULL);
+        def->SendCommand(6, 4096);
+        setting->switchButtons += def;
+        itemsVec += def;
+        itemX += def->GetWidth();
+    }
+    setting->switchButtons[setting->value.current + setting->valueOffset]->SendCommand(5, 4096);
+
+    if (!info.hintsPointer)
+        return setting;
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (auto hint = info.hintsPointer[i])
+            setting->switchButtons[i]->SetHint(ValueAt<LPCSTR>(hint));
+    }
+
+    return setting;
+}
+
+Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
+{
+
+    Switch10XPanel *setting = new Switch10XPanel(info);
+
+    if (!setting)
+        return setting;
+
+    setting->position = info.position;
+
+    int itemX = info.position.x;
+    int itemY = info.position.y;
+
+    // create text field with name of the setting
     constexpr int textFieldWidth = BUTTONS_COUNT * 19;
 
-    panel->switchText =
-        H3DlgText::Create(itemX, itemY, textFieldWidth, 24, P_GeneralText->GetText(panelInfo.generalStringIndex),
-                          NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, -1);
+    setting->headerText = H3DlgText::Create(itemX, itemY, textFieldWidth, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
+                                            eTextColor::HIGHLIGHT, -1);
 
-    itemsVec += panel->switchText;
+    itemsVec += setting->headerText;
 
     itemY += 20;
     // create background pcx
-    panel->backgroundPcx = H3DlgPcx::Create(itemX, itemY, Switch10XPanel::bgPcxPath);
-    itemsVec += panel->backgroundPcx;
+    setting->backgroundPcx = H3DlgPcx::Create(itemX, itemY, Switch10XPanel::bgPcxPath);
+    itemsVec += setting->backgroundPcx;
     itemY += 3;
     itemX += 4;
 
     for (size_t i = 0; i < BUTTONS_COUNT; i++)
     {
-        auto &def = panel->switchButtons[i];
-        def = H3DlgDef::Create(itemX, itemY, panelInfo.firstItemId + i, NH3Dlg::Assets::SYSLB_DEF, i);
+        auto &def = setting->switchButtons[i];
+        def = H3DlgDef::Create(itemX, itemY, info.firstItemId + i, NH3Dlg::Assets::SYSLB_DEF, i);
 
         def->SendCommand(6, 4);
         itemsVec += def;
         itemX += 19;
     }
     // display current selection
-    panel->switchButtons[panel->value.current]->SendCommand(5, 4);
+    setting->switchButtons[setting->value.current]->SendCommand(5, 4);
 
-    if (!panelInfo.hintsPointer)
-        return panel;
+    if (!info.hintsPointer)
+        return setting;
 
     for (size_t i = 0; i < BUTTONS_COUNT; i++)
     {
-        if (auto hint = panelInfo.hintsPointer[i])
-            panel->switchButtons[i]->SetHint(ValueAt<LPCSTR>(hint));
+        if (auto hint = info.hintsPointer[i])
+            setting->switchButtons[i]->SetHint(ValueAt<LPCSTR>(hint));
     }
 
-    return panel;
+    return setting;
 }
