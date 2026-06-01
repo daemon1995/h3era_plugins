@@ -31719,7 +31719,7 @@ namespace h3
         int _h = std::min(h, height - _y);
 
         LightenArea(_x, _y, _w, 1, 50);
-        LightenArea(_x, _y + 1, 1, _y + _h - 2, 50);
+        LightenArea(_x, _y + 1, 1, _h - 2, 50);
         DarkenArea(_x + 1, _y + _h - 1, _w - 1, 1, 50);
         DarkenArea(_x + _w, _y + 1, 1, _h - 2, 50);
     }
