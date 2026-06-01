@@ -58,6 +58,7 @@ int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
     };                                                                                                                 \
     }
 PATCH_DECLATOR(cmbhints, CombatHints)
+PATCH_DECLATOR(cmbspd, CombatSpeed)
 
 _ERH_(OnAfterWog)
 {
@@ -77,6 +78,10 @@ _ERH_(OnAfterWog)
 _LHF_(HooksInit)
 {
     cmbhints::CombatHints::Get();
+
+    // if original combat speed patch is not present, apply it
+    if (globalPatcher->GetInstance("BattleSpeed") == nullptr)
+        cmbspd::CombatSpeed::Get();
 
     return EXEC_DEFAULT;
 }

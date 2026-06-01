@@ -15,12 +15,13 @@ enum eDlgCallSource : INT
     HERO_SCREEN = 4,
     SWAP_MGR = 5
 };
+
 struct CallBackInfo
 {
-
     H3DlgCaptionButton *bttn = nullptr;
     void *callbackFuncion;
 };
+
 enum ePageItemId : INT
 {
     PAGE_ITEM_GENERAL = 1,
@@ -28,6 +29,7 @@ enum ePageItemId : INT
     PAGE_ITEM_COMBAT,
     PAGE_ITEM_ERA_MODS,
 };
+
 enum ePageIndex : INT
 {
     PAGE_INDEX_GENERAL,
@@ -35,10 +37,10 @@ enum ePageIndex : INT
     PAGE_INDEX_COMBAT,
     PAGE_INDEX_ERA_MODS,
 };
-
+typedef void(__stdcall *CallLocaleSelectionDlg_t)(const int x, const int y, const int style);
+typedef const char *(__stdcall *GetDisplayedName_t)();
 class SystemOptionsDlg : public H3Dlg
 {
-
   public:
     static constexpr int DLG_WIDTH = 481;
     static constexpr int DLG_HEIGHT = 487;
@@ -50,7 +52,6 @@ class SystemOptionsDlg : public H3Dlg
 
     static constexpr float SETTINGS_VERSION = .1f;
 
-  public:
   public:
     static constexpr LPCSTR BIG_BUTTON = "GSPsys1.def";
     static constexpr LPCSTR SINGLE_BUTTON = "GSPsys0.def";
@@ -74,18 +75,24 @@ class SystemOptionsDlg : public H3Dlg
         ISettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
         {
             name = captionBttn->GetText();
+            id = captionBttn->GetID();
             captionBttn->SetClickFrame(1);
-            firstItemId = captionBttn->GetID() * 100 + 100;
+            firstItemId = id * 100 + 100;
         }
         virtual ~ISettingsPage()
         {
             for (auto &setting : settings)
-            {
                 delete setting;
-            }
         }
 
       public:
+        void AddSetting(ISetting *setting)
+        {
+            settings += setting;
+            if (setting->firstClickableItemId > 0)
+                for (int i = setting->firstClickableItemId; i <= setting->lastClickableItemId; ++i)
+                    settingsByItemId[i] = setting;
+        }
         virtual void SetVisible(const BOOL state)
         {
             if (state == isVisible)
@@ -93,19 +100,9 @@ class SystemOptionsDlg : public H3Dlg
 
             isVisible = state;
 
-            if (state)
+            for (auto &it : items)
             {
-                for (auto &it : items)
-                {
-                    it->ShowActivate();
-                }
-            }
-            else
-            {
-                for (auto &it : items)
-                {
-                    it->HideDeactivate();
-                }
+                state ? it->ShowActivate() : it->HideDeactivate();
             }
             // deactivate bttn click
             // captionBttn->SendCommand(6 - (state), 4096);
@@ -115,19 +112,8 @@ class SystemOptionsDlg : public H3Dlg
                 it->SetVisible(state);
             }
         }
-        void AddSetting(ISetting *setting)
-        {
-            settings += setting;
-            if (setting->firstClickableItemId > -1)
-            {
-                for (int i = setting->firstClickableItemId; i <= setting->lastClickableItemId; ++i)
-                {
-                    settingsByItemId[i] = setting;
-                }
-            }
-        }
-        // virtual void SetDefault();
-        BOOL Proc(H3Msg &msg)
+
+        BOOL ProcessMessage(H3Msg &msg)
         {
             auto settingIt = settingsByItemId.find(msg.itemId);
             if (settingIt != settingsByItemId.end())
@@ -141,47 +127,24 @@ class SystemOptionsDlg : public H3Dlg
 
     struct GeneralSettingsPage : public ISettingsPage
     {
-        GeneralSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn)
-        {
-        }
-        virtual ~GeneralSettingsPage()
-        {
-        }
-
-      public:
-        // virtual BOOL Proc(H3Msg &msg) override;
+        GeneralSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn) {};
+        virtual ~GeneralSettingsPage() {};
 
       public:
         static GeneralSettingsPage *Create(H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg);
     };
     struct AdventureMapSettingsPage : public ISettingsPage
     {
-        AdventureMapSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn)
-        {
-        }
-        virtual ~AdventureMapSettingsPage()
-        {
-        }
-
-      public:
-        //  virtual BOOL Proc(H3Msg &msg) override;
+        AdventureMapSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn) {};
+        virtual ~AdventureMapSettingsPage() {};
 
       public:
         static AdventureMapSettingsPage *Create(H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg);
     };
     struct CombatSettingsPage : public ISettingsPage
     {
-        CombatSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn)
-        {
-        }
-        virtual ~CombatSettingsPage()
-        {
-        }
-
-      public:
-        // virtual void SaveData();
-        // virtual void SetDefault() override;
-        // virtual BOOL Proc(H3Msg &msg) override;
+        CombatSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn) {};
+        virtual ~CombatSettingsPage() {};
 
       public:
         static CombatSettingsPage *Create(H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg);
@@ -194,17 +157,48 @@ class SystemOptionsDlg : public H3Dlg
 
     // static constexpr const char* m_iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
     eDlgCallSource dlgCallSource = UNKNOWN;
-    UINT m_lastPageId = 0;
-
     ISettingsPage *m_currentPage = nullptr;
-
     H3Vector<ISettingsPage *> m_pages;
     H3Vector<H3DlgCaptionButton *> captionButtons;
 
   public:
+    static struct LanguageDlgCallInfo
+    {
+        HMODULE hModule = nullptr;
+        CallLocaleSelectionDlg_t callLocaleSelectionDlg = nullptr;
+        GetDisplayedName_t getDisplayedName = nullptr;
+        H3DlgCaptionButton *currentLanguageText = nullptr;
+    } languageDlgInfo;
+    static struct HealthBarDlgCallInfo
+    {
+        void(__stdcall *callHealthBarDlg)() = nullptr;
+        H3DlgDef *affectedCheckbox = nullptr;
+        DWORD healthBarValuePtr = 0;
+        INT *dlgValuePtr = nullptr;
+        H3DlgCaptionButton *captionBttn = nullptr;
+
+    } healthBarDlgInfo;
+
     static SystemOptionsDlg *instance;
 
   protected:
+    // ctors
+  public:
+    SystemOptionsDlg(int width, int height, int x, int y);
+    SystemOptionsDlg() : SystemOptionsDlg(DLG_WIDTH, DLG_HEIGHT, -1, -1) {};
+    virtual ~SystemOptionsDlg();
+
+    // virtual methods
+  private:
+    virtual BOOL OnCreate() override;
+    virtual BOOL DialogProc(H3Msg &msg) override;
+    virtual BOOL OnLeftClick(INT itemId, H3Msg &msg) override;
+    virtual VOID OnOK() override;
+    virtual VOID OnCancel() override;
+
+  private:
+    void CreateGameControlButtons() noexcept;
+    void CreateDlgPages() noexcept;
     void InitDlgPages()
     {
         for (auto &page : m_pages)
@@ -215,6 +209,12 @@ class SystemOptionsDlg : public H3Dlg
                 AddItem(it, page);
             }
         }
+    }
+    void AddItem(H3DlgItem *item, ISettingsPage *page) noexcept
+    {
+        H3Dlg::AddItem(item);
+        // if (page)
+        //    page->items += item;
     }
     void SetActivePage(const UINT pageId, const BOOL redraw)
     {
@@ -231,45 +231,14 @@ class SystemOptionsDlg : public H3Dlg
         }
     }
 
-    // ctors
-  public:
-    SystemOptionsDlg(int width, int height, int x, int y);
-    SystemOptionsDlg() : SystemOptionsDlg(DLG_WIDTH, DLG_HEIGHT, -1, -1) {};
-    virtual ~SystemOptionsDlg();
-
-    // virtual methods
-  private:
-    virtual BOOL OnCreate() override;
-    virtual BOOL DialogProc(H3Msg &msg) override;
-    virtual BOOL OnLeftClick(INT itemId, H3Msg &msg) override;
-    virtual VOID OnOK() override;
-    virtual VOID OnCancel() override;
-
-  private:
-    void AddItem(H3DlgItem *item, ISettingsPage *page) noexcept
-    {
-        H3Dlg::AddItem(item);
-        // if (page)
-        //    page->items += item;
-    }
-    void CreateDlgPages() noexcept;
-
-    void CreateGameControlButtons() noexcept;
     BOOL ReadIniDlgSettings() noexcept;
     BOOL WriteIniDlgSettings() const noexcept;
 
-    BOOL SetActivePage(ISettingsPage *page) noexcept;
-    BOOL SaveRMGObjectsInfo(const BOOL saveIni = true) const noexcept;
-
-    VOID OnHelp() const noexcept;
-
-    BOOL RemoveEditsFocus(const BOOL save) const noexcept;
-
     // hooks
-  private:
-    static _ERH_(OnAfterReloadLanguageData);
-
   public:
+    static void __stdcall CallWogOptionsDlg();
+    static void __stdcall CallSelectLanguageDlg();
+    static void __stdcall CallHealthBarDlg();
     static void AfterDlgClose();
     static void SetPatches(PatcherInstance *_pi);
 };

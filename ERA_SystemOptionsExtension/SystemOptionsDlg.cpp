@@ -1,6 +1,13 @@
+#include <array>
+
 #include "SystemOptionsDlg.h"
 
+#define FRAME_COLOR H3RGB888(0x7A, 0x65, 0x48)
+
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
+SystemOptionsDlg::LanguageDlgCallInfo SystemOptionsDlg::languageDlgInfo;
+SystemOptionsDlg::HealthBarDlgCallInfo SystemOptionsDlg::healthBarDlgInfo;
+
 void __stdcall ShowHealthBarDlg();
 BOOL *__stdcall HealthBarIsEnabledAddress();
 
@@ -9,12 +16,16 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
       isInCombat(P_CombatManager->Get() && P_CombatManager->dlg)
 
 {
-
-    CreateDlgPages();
+    if (isInCombat)
+        dlgCallSource = COMBAT;
+    else if (P_AdventureManager && P_AdventureMgr->dlg)
+        dlgCallSource = ADV_MAP;
+    else
+        dlgCallSource = MAIN_MENU;
     CreateGameControlButtons();
+    CreateDlgPages();
 
-    H3RGB888 color = H3RGB888::Bisque();
-    color = H3RGB888(0x7A, 0x65, 0x48);
+    const auto color = FRAME_COLOR;
     // RGB565 color565(0x7A, 0x65, 0x48);
     // CreateFrame(DLG_WIDTH >> 1, 40, 2, DLG_HEIGHT - 50, color);
     this->background->DrawThickFrame(DLG_WIDTH >> 1, DLG_TOPSETTINGS_MARGIN, 1,
@@ -22,35 +33,82 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
 
     instance = this;
 }
-#include <array>
 
-void __stdcall CallWogOptionsDlg()
-{
-    const int storeValue = IntAt(0x291A430);
-
-    const BOOL allowChanges = !(P_AdventureManager && P_AdventureMgr->dlg || IntAt(0x69959C));
-
-    IntAt(0x291A430) = allowChanges;
-    auto jumpOverMouseCheck = _PI->WriteJmp(0x07790FB, 0x0779157);
-    STDCALL_0(VOID, 0x597AA0); // stop video animation
-    THISCALL_0(int, 0x07790E1);
-    STDCALL_0(VOID, 0x597B50); // resume video animation
-
-    jumpOverMouseCheck->Destroy();
-    IntAt(0x291A430) = storeValue;
-}
-void __stdcall CallSelectLanguageDlg()
+void SystemOptionsDlg::CreateGameControlButtons() noexcept
 {
 
-    auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
-    if (!plugin)
-        return;
+    // const BOOL isNetworkGame = P_
+    using target = Era::EGameMenuTarget;
+    static const struct
+    {
+        const INT32 buttonId;
+        const DWORD defNamePtr;
+        const eVKey hotkey;
+        const DWORD hintPtr;
+        const INT32 disableOnCombat = FALSE;
+    } gameControlButtons[]{
+        {target::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, 0x06A75F4, isInCombat && networkGame}, // load game
+        {target::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S, 0x06A75FC, isInCombat},                // save game
+        {target::PAGE_RESTART, 0x0688618, eVKey::H3VK_R, 0x06A7604, isInCombat && networkGame},   // restart the map
+        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, 0x06A75EC},                                 // quit to main menu
+        {target::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, 0x06A760C},                                 // quit to desktop
+        {30722, 0x0670130, eVKey::H3VK_ESCAPE, DWORD(isInCombat ? 0x06A5614 : 0x06A7614)}, // back to adv map / combat
+    };
 
-    typedef void(__stdcall * CallLocaleSelectionDlg_t)(const int x, const int y, const int style);
-    auto callDlg = reinterpret_cast<CallLocaleSelectionDlg_t>(GetProcAddress(plugin, "CallLocaleSelectionDlg"));
-    if (callDlg)
-        callDlg(-1, -1, 0);
+    constexpr size_t length = std::size(gameControlButtons);
+    constexpr int buttonWidth = 100 + 13;
+    constexpr int buttonHeight = 48 + 10;
+
+    for (size_t i = 0; i < length; i++)
+    {
+        auto &button = gameControlButtons[i];
+        const int x = widthDlg - buttonWidth * 2 + ((i & 1) * buttonWidth) - 10;
+        const int y = heightDlg - buttonHeight * 3 + ((i / 2) * buttonHeight) - 12;
+        auto bttn = CreateButton(x, y, button.buttonId, LPCSTR(button.defNamePtr), 1, 0, false, button.hotkey);
+        if (button.hotkey == eVKey::H3VK_ESCAPE)
+        {
+            bttn->AddHotkey(eVKey::H3VK_ENTER);
+        }
+        if (const auto hint = button.hintPtr)
+        {
+            bttn->SetHints(nullptr, ValueAt<LPCSTR>(hint), false);
+        }
+        if (button.disableOnCombat)
+        {
+            bttn->Disable();
+            //            bttn->SendCommand(5, 4096);
+        }
+    }
 }
+void SystemOptionsDlg::CreateDlgPages() noexcept
+{
+    auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
+                                                  BIG_BUTTON, P_GeneralText->GetText(570), NH3Dlg::Text::BIG, 0, 0,
+                                                  false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
+
+    ISettingsPage *page = GeneralSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    captionBttn = H3DlgCaptionButton::Create(165, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP,
+                                             BIG_BUTTON, ValueAt<LPCSTR>(0x06A6598), NH3Dlg::Text::BIG, 0, false, false,
+                                             eVKey::H3VK_2, eTextColor::HIGHLIGHT);
+
+    page = AdventureMapSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    captionBttn = H3DlgCaptionButton::Create(315, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT,
+                                             BIG_BUTTON, P_GeneralText->GetText(394), NH3Dlg::Text::BIG, 0, 0, false,
+                                             eVKey::H3VK_3, eTextColor::HIGHLIGHT);
+
+    page = CombatSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    InitDlgPages();
+}
+
 SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Create(H3DlgCaptionButton *captionBttn,
                                                                                      H3BaseDlg *dlg)
 {
@@ -111,23 +169,26 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
     // wog option buttons:
     const SettingsInfo wogOptionCaption = {"system_wog_option", {checkboxX, 300},          itemId++,
                                            "wog options",       (DWORD)&CallWogOptionsDlg, 0};
+
     page->AddSetting(CaptionButtonSetting::Create(wogOptionCaption, SINGLE_BUTTON, page->items));
 
     auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
     if (plugin)
     {
-
-        typedef void(__stdcall * CallLocaleSelectionDlg_t)(const int x, const int y, const int style);
-        typedef const char *(__stdcall * GetDisplayedName_t)();
+        auto &languageDlgInfo = instance->languageDlgInfo;
+        languageDlgInfo.hModule = plugin;
         auto callDlg = reinterpret_cast<CallLocaleSelectionDlg_t>(GetProcAddress(plugin, "CallLocaleSelectionDlg"));
         auto getTextName = reinterpret_cast<GetDisplayedName_t>(GetProcAddress(plugin, "GetDisplayedName"));
 
         if (callDlg && getTextName)
         {
+            languageDlgInfo.callLocaleSelectionDlg = callDlg;
+            languageDlgInfo.getDisplayedName = getTextName;
             const SettingsInfo selectLang = {
                 "system_select_language", {checkboxX, 330}, itemId++, getTextName(), (DWORD)&CallSelectLanguageDlg, 0};
-
-            page->AddSetting(CaptionButtonSetting::Create(selectLang, SINGLE_BUTTON, page->items));
+            auto setting = CaptionButtonSetting::Create(selectLang, SINGLE_BUTTON, page->items);
+            languageDlgInfo.currentLanguageText = setting->captionButton;
+            page->AddSetting(setting);
         }
     }
 
@@ -369,106 +430,51 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
 
     constexpr int rightX = DLG_RIGHT_PART_X_MARGIN;
 
+    const DWORD healthBarValuePtr = (DWORD)HealthBarIsEnabledAddress();
     const SettingsInfo healthBarcheckBoxInfo = {"system_health_bar_checkbox",
                                                 {rightX, startY + 60},
                                                 itemId++,
                                                 "health bar checkbox",
-                                                (DWORD)HealthBarIsEnabledAddress(),
+                                                healthBarValuePtr,
                                                 TRUE,
                                                 0};
-
+    auto &info = instance->healthBarDlgInfo;
+    info.healthBarValuePtr = healthBarValuePtr;
     auto it = CheckBoxSetting::Create(healthBarcheckBoxInfo, page->items);
+    info.affectedCheckbox = it->checkBoxItem;
+    info.callHealthBarDlg = &ShowHealthBarDlg;
+    info.dlgValuePtr = &it->value.current;
     page->AddSetting(it);
 
-    const SettingsInfo healtBarCaptionInfo = {"system_health_bar", {rightX, startY + 90},    itemId++,
-                                              "health bar",        (DWORD)&ShowHealthBarDlg, 0};
+    const SettingsInfo healtBarCaptionInfo = {"system_health_bar",
+                                              {rightX, startY + 90},
+                                              itemId++,
+                                              "health bar",
+                                              (DWORD)&SystemOptionsDlg::CallHealthBarDlg,
+                                              0};
 
     page->AddSetting(CaptionButtonSetting::Create(healtBarCaptionInfo, SINGLE_BUTTON, page->items));
 
     return page;
 }
 
-void SystemOptionsDlg::CreateDlgPages() noexcept
-{
-    auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
-                                                  BIG_BUTTON, P_GeneralText->GetText(570), NH3Dlg::Text::BIG, 0, 0,
-                                                  false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
-
-    captionBttn->SetClickFrame(1);
-    ISettingsPage *page = GeneralSettingsPage::Create(captionBttn, this);
-    AddItem(captionBttn, page);
-    m_pages.Add(page);
-
-    captionBttn = H3DlgCaptionButton::Create(165, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP,
-                                             BIG_BUTTON, ValueAt<LPCSTR>(0x06A6598), NH3Dlg::Text::BIG, 0, false, false,
-                                             eVKey::H3VK_2, eTextColor::HIGHLIGHT);
-
-    captionBttn->SetClickFrame(1);
-    page = AdventureMapSettingsPage::Create(captionBttn, this);
-    AddItem(captionBttn, page);
-    m_pages.Add(page);
-
-    captionBttn = H3DlgCaptionButton::Create(315, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT,
-                                             BIG_BUTTON, P_GeneralText->GetText(394), NH3Dlg::Text::BIG, 0, 0, false,
-                                             eVKey::H3VK_3, eTextColor::HIGHLIGHT);
-
-    page = CombatSettingsPage::Create(captionBttn, this);
-    AddItem(captionBttn, page);
-    m_pages.Add(page);
-
-    InitDlgPages();
-}
-
-void SystemOptionsDlg::CreateGameControlButtons() noexcept
-{
-
-    // const BOOL isNetworkGame = P_
-    using target = Era::EGameMenuTarget;
-    static const struct
-    {
-        const INT32 buttonId;
-        const DWORD defNamePtr;
-        const eVKey hotkey;
-        const DWORD hintPtr;
-        const INT32 disableOnCombat = FALSE;
-    } gameControlButtons[]{
-        {target::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, 0x06A75F4, isInCombat && networkGame}, // load game
-        {target::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S, 0x06A75FC, isInCombat},                // save game
-        {target::PAGE_RESTART, 0x0688618, eVKey::H3VK_R, 0x06A7604, isInCombat && networkGame},   // restart the map
-        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, 0x06A75EC},                                 // quit to main menu
-        {target::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, 0x06A760C},                                 // quit to desktop
-        {30722, 0x0670130, eVKey::H3VK_ESCAPE, DWORD(isInCombat ? 0x06A5614 : 0x06A7614)}, // back to adv map / combat
-    };
-
-    constexpr size_t length = std::size(gameControlButtons);
-    constexpr int buttonWidth = 100 + 13;
-    constexpr int buttonHeight = 48 + 10;
-
-    for (size_t i = 0; i < length; i++)
-    {
-        auto &button = gameControlButtons[i];
-        const int x = widthDlg - buttonWidth * 2 + ((i & 1) * buttonWidth) - 10;
-        const int y = heightDlg - buttonHeight * 3 + ((i / 2) * buttonHeight) - 12;
-        auto bttn = CreateButton(x, y, button.buttonId, LPCSTR(button.defNamePtr), 1, 0, false, button.hotkey);
-        if (button.hotkey == eVKey::H3VK_ESCAPE)
-        {
-            bttn->AddHotkey(eVKey::H3VK_ENTER);
-        }
-        if (const auto hint = button.hintPtr)
-        {
-            bttn->SetHints(nullptr, ValueAt<LPCSTR>(hint), false);
-        }
-        if (button.disableOnCombat)
-        {
-            bttn->Disable();
-            //            bttn->SendCommand(5, 4096);
-        }
-    }
-}
 BOOL SystemOptionsDlg::OnCreate()
 {
-    SetActivePage(PAGE_INDEX_GENERAL, FALSE);
+    ePageIndex pageIndex = PAGE_INDEX_GENERAL;
+    switch (dlgCallSource)
+    {
+    case ADV_MAP:
+        pageIndex = PAGE_INDEX_ADV_MAP;
+        break;
+    case COMBAT:
+        pageIndex = PAGE_INDEX_COMBAT;
+        break;
+    default:
+        pageIndex = PAGE_INDEX_GENERAL;
+        break;
+    }
 
+    SetActivePage(pageIndex, FALSE);
     return 1;
 }
 BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
@@ -484,7 +490,8 @@ BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
             return 0;
         }
     }
-    if (m_currentPage && itemId && m_currentPage->Proc(msg))
+
+    if (itemId && m_currentPage && m_currentPage->ProcessMessage(msg))
     {
         // end processing if message was processed by page
         return 0;
@@ -522,32 +529,77 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
 }
 VOID SystemOptionsDlg::OnOK()
 {
-
     return VOID();
 }
 VOID SystemOptionsDlg::OnCancel()
 {
-
-    // auto module = LoadLibraryA("ERA_LocaleManager.era");
-    // if (!module)
-    //     return VOID();
-    // auto func = reinterpret_cast<void(__stdcall *)(int, int, int)>(GetProcAddress(module, "CallLocaleSelectionDlg"));
-    // if (func)
-    //{
-    //     func(-1, -1, 1);
-    // }
-
     return VOID();
+}
+void __stdcall SystemOptionsDlg::CallWogOptionsDlg()
+{
+    const BOOL allowWogOptionsChanges = instance->dlgCallSource == MAIN_MENU && !instance->networkGame;
+    const int storeValue = IntAt(0x291A430);
+    IntAt(0x291A430) = allowWogOptionsChanges;
+    auto jumpOverMouseCheck = _PI->WriteJmp(0x07790FB, 0x0779157);
+    STDCALL_0(VOID, 0x597AA0); // stop video animation
+    THISCALL_0(int, 0x07790E1);
+    STDCALL_0(VOID, 0x597B50); // resume video animation
+    jumpOverMouseCheck->Destroy();
+    IntAt(0x291A430) = storeValue;
+}
+void __stdcall SystemOptionsDlg::CallSelectLanguageDlg()
+{
+    auto &info = instance->languageDlgInfo;
+    auto it = info.currentLanguageText;
+    info.callLocaleSelectionDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
+    LPCSTR newLangDisplayedName = info.getDisplayedName();
+    if (libc::strcmpi(it->GetText(), newLangDisplayedName) != 0)
+    {
+        it->SetText(newLangDisplayedName);
+        it->Draw();
+        it->Refresh();
+    }
+}
+void __stdcall SystemOptionsDlg::CallHealthBarDlg()
+{
+    auto &info = instance->healthBarDlgInfo;
+    const int checkboxStateBefore = (IntAt(info.healthBarValuePtr));
+    info.callHealthBarDlg();
+    const int checkboxStateAfter = (IntAt(info.healthBarValuePtr));
+    if (checkboxStateBefore != checkboxStateAfter)
+    {
+        *(info.dlgValuePtr) = checkboxStateAfter;
+        auto it = info.affectedCheckbox;
+        it->SetFrame(checkboxStateAfter);
+        it->Draw();
+        it->Refresh();
+    }
 }
 void SystemOptionsDlg::AfterDlgClose()
 {
 }
 SystemOptionsDlg::~SystemOptionsDlg()
 {
+    for (auto &page : m_pages)
+    {
+        for (auto &setting : page->settings)
+        {
+            auto &value = setting->value;
+            if (value.current != value.dlgStart)
+            {
+                IntAt(value.valuePtr) = value.current;
+                settingsChanged = TRUE;
+            }
+        }
+        delete page;
+    }
+    if (settingsChanged)
+    {
+        CDECL_0(LONG, 0x0050C370); // j_WriteRegistry
+    }
 
     for (auto &page : m_pages)
     {
-        delete page;
     }
     instance = nullptr;
 

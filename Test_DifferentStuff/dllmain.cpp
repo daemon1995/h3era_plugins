@@ -196,8 +196,9 @@ DWORD __stdcall DefButtonSetClicked(HiHook *hook, H3DlgDefButton *button, H3Msg 
 DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
 {
 
+   
     // PlaySoundInThread();
-    if (button->IsPressed())
+    if (button->IsPressed() && button->GetParent() == P_WindowManager->lastDlg)
     {
         buttonsPressed.insert(DWORD(button));
     }

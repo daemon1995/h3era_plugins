@@ -124,6 +124,5 @@ class CombatHints : public IGamePatch
 
     static CombatHints &Get(); // (PatcherInstance* _PI);
 
-  private:
 };
 } // namespace cmbhints

@@ -16,7 +16,6 @@ struct ISetting
 {
     static constexpr int WIDTH = 195;
     std::string uuid;
-
     tagPOINT position;
     struct Value
     {
@@ -30,14 +29,10 @@ struct ISetting
     H3DlgText *titleItem = nullptr;
     int firstClickableItemId = -1;
     int lastClickableItemId = -1;
-    virtual void SetVisible(const BOOL visible) noexcept
-    {
-    }
 
   public:
     ISetting(const tagPOINT &position, const Value &value) : position(position), value(value)
     {
-
         if (value.valuePtr)
         {
             const DWORD currentValue = IntAt(value.valuePtr);
@@ -45,14 +40,11 @@ struct ISetting
             this->value.current = currentValue;
         }
     }
-    virtual ~ISetting()
-    {
-    }
+    virtual ~ISetting() {};
 
   public:
-    virtual void ClampValue() noexcept
-    {
-    }
+    virtual void SetVisible(const BOOL visible) noexcept {};
+    virtual void ClampValue() noexcept {};
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept
     {
         return 0;
@@ -75,7 +67,6 @@ struct ISetting
 struct CaptionButtonSetting : public ISetting
 {
     H3DlgCaptionButton *captionButton{};
-    H3DlgText *checkBoxText{};
     void(__stdcall *callback)(void) = nullptr;
 
     CaptionButtonSetting(const SettingsInfo &info)
@@ -84,23 +75,23 @@ struct CaptionButtonSetting : public ISetting
         this->firstClickableItemId = info.firstItemId;
         this->lastClickableItemId = info.firstItemId;
     }
-    virtual ~CaptionButtonSetting()
-    {
-    }
+    virtual ~CaptionButtonSetting() {};
 
+  public:
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept
     {
         if (msg.IsLeftClick() && msg.itemId == firstClickableItemId)
         {
             Toggle();
+            return TRUE;
         }
-        return 0;
+        return FALSE;
     }
     void Toggle() noexcept
     {
         if (callback)
             callback();
-    }
+    };
 
   public:
     static CaptionButtonSetting *Create(const SettingsInfo &info, LPCSTR defName,
@@ -112,24 +103,15 @@ struct CheckBoxSetting : public ISetting
     static constexpr int TEXT_WIDGET_OFFSET = 36;
     H3DlgDef *checkBoxItem{};
     H3DlgText *checkBoxText{};
-    void Toggle() noexcept
-    {
-        value.current ^= 1; // value.current;
-        ClampValue();
-        checkBoxItem->SetFrame(value.current);
-        P_SoundManager->ClickSound();
-        checkBoxItem->Draw();
-        checkBoxItem->Refresh();
-    }
+
+  public:
     CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.defaultValue})
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId;
         ClampValue();
     }
-    virtual ~CheckBoxSetting()
-    {
-    }
+    virtual ~CheckBoxSetting() {};
 
   public:
     virtual void ClampValue() noexcept override
@@ -147,6 +129,16 @@ struct CheckBoxSetting : public ISetting
     }
 
   public:
+    void Toggle() noexcept
+    {
+        value.current ^= 1; // value.current;
+        ClampValue();
+        checkBoxItem->SetFrame(value.current);
+		IntAt(value.valuePtr) = value.current;
+        P_SoundManager->ClickSound();
+        checkBoxItem->Draw();
+        checkBoxItem->Refresh();
+    }
     static CheckBoxSetting *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };
 struct RadioButtonInfo
@@ -164,23 +156,21 @@ struct RadioButtonInfo
 struct RadioButtonSetting : public ISetting
 {
     static constexpr int TEXT_WIDGET_OFFSET = 24;
-
     H3Vector<H3DlgDefButton *> checkBoxes;
 
-    void SetValue(const INT32 newValue) noexcept
-    {
-        value.current = newValue;
-    }
+  public:
     RadioButtonSetting(const RadioButtonInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0})
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + info.size - 1;
     }
-    virtual ~RadioButtonSetting()
-    {
-    }
+    virtual ~RadioButtonSetting() {};
 
   public:
+    BOOL ProcessMessage(H3Msg &msg) noexcept override
+    {
+        return 0;
+    }
     static RadioButtonSetting *Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
 };
 
@@ -202,6 +192,8 @@ struct SwitchPanel : public ISetting
 
     H3Vector<H3DlgDefButton *> switchButtons;
     int valueOffset = 0;
+
+  public:
     // const SwitchPanelInfo info;
     SwitchPanel(const SwitchPanelInfo &info)
         : ISetting(info.position, {info.valuePtr, 0, 0, 0}), valueOffset(info.valuesOffset)
@@ -209,13 +201,11 @@ struct SwitchPanel : public ISetting
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + info.size - 1;
     }
-    virtual ~SwitchPanel()
-    {
-    }
+    virtual ~SwitchPanel() {};
 
+  public:
     virtual void ClampValue() noexcept override
     {
-
         if (const auto size = switchButtons.Size())
         {
             value.current = Clamp(0, value.current, size - 1);
@@ -238,7 +228,6 @@ struct SwitchPanel : public ISetting
 };
 struct Switch10XPanel : public ISetting
 {
-
     static constexpr int BUTTONS_COUNT = 10;
     static constexpr int HEIGHT = 60;
     static constexpr LPCSTR bgPcxPath = "BattleSpeed.pcx";
@@ -250,11 +239,10 @@ struct Switch10XPanel : public ISetting
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + BUTTONS_COUNT - 1;
-    }
-    virtual ~Switch10XPanel()
-    {
-    }
+    };
+    virtual ~Switch10XPanel() {};
 
+  public:
     virtual void ClampValue() noexcept override
     {
         value.current = Clamp(0, value.current, BUTTONS_COUNT - 1);
