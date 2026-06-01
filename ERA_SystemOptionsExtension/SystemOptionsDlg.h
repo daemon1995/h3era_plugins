@@ -1,4 +1,7 @@
 #pragma once
+
+#include <unordered_map>
+
 #include "framework.h"
 
 #include "DlgPanels.h"
@@ -12,7 +15,12 @@ enum eDlgCallSource : INT
     HERO_SCREEN = 4,
     SWAP_MGR = 5
 };
+struct CallBackInfo
+{
 
+    H3DlgCaptionButton *bttn = nullptr;
+    void *callbackFuncion;
+};
 enum ePageItemId : INT
 {
     PAGE_ITEM_GENERAL = 1,
@@ -44,7 +52,8 @@ class SystemOptionsDlg : public H3Dlg
 
   public:
   public:
-    static constexpr LPCSTR BIG_BUTTON = "emenubig.def";
+    static constexpr LPCSTR BIG_BUTTON = "GSPsys1.def";
+    static constexpr LPCSTR SINGLE_BUTTON = "GSPsys0.def";
 
     static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
 
@@ -52,7 +61,6 @@ class SystemOptionsDlg : public H3Dlg
 
     struct ISettingsPage
     {
-
         const char *name;
         UINT id;
         BOOL isVisible = false;
@@ -61,6 +69,7 @@ class SystemOptionsDlg : public H3Dlg
 
         H3Vector<H3DlgItem *> items;
         H3Vector<ISetting *> settings;
+        std::unordered_map<int, ISetting *> settingsByItemId;
 
         ISettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
         {
@@ -81,20 +90,52 @@ class SystemOptionsDlg : public H3Dlg
         {
             if (state == isVisible)
                 return;
+
             isVisible = state;
-            for (auto &it : items)
+
+            if (state)
             {
-                state ? it->ShowActivate() : it->HideDeactivate();
+                for (auto &it : items)
+                {
+                    it->ShowActivate();
+                }
             }
+            else
+            {
+                for (auto &it : items)
+                {
+                    it->HideDeactivate();
+                }
+            }
+            // deactivate bttn click
+            // captionBttn->SendCommand(6 - (state), 4096);
+
             for (auto &it : settings)
             {
                 it->SetVisible(state);
             }
         }
-        // virtual void SetDefault();
-        virtual BOOL Proc(H3Msg &msg)
+        void AddSetting(ISetting *setting)
         {
-            return TRUE;
+            settings += setting;
+            if (setting->firstClickableItemId > -1)
+            {
+                for (int i = setting->firstClickableItemId; i <= setting->lastClickableItemId; ++i)
+                {
+                    settingsByItemId[i] = setting;
+                }
+            }
+        }
+        // virtual void SetDefault();
+        BOOL Proc(H3Msg &msg)
+        {
+            auto settingIt = settingsByItemId.find(msg.itemId);
+            if (settingIt != settingsByItemId.end())
+            {
+                return settingIt->second->ProcessMessage(msg);
+            }
+
+            return FALSE;
         }
     };
 
@@ -211,7 +252,7 @@ class SystemOptionsDlg : public H3Dlg
         // if (page)
         //    page->items += item;
     }
-    void CreateCaptionButtons() noexcept;
+    void CreateDlgPages() noexcept;
 
     void CreateGameControlButtons() noexcept;
     BOOL ReadIniDlgSettings() noexcept;

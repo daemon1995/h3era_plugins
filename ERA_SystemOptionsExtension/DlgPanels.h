@@ -28,7 +28,8 @@ struct ISetting
     } value;
     LPCSTR displayedName = nullptr;
     H3DlgText *titleItem = nullptr;
-
+    int firstClickableItemId = -1;
+    int lastClickableItemId = -1;
     virtual void SetVisible(const BOOL visible) noexcept
     {
     }
@@ -52,7 +53,10 @@ struct ISetting
     virtual void ClampValue() noexcept
     {
     }
-
+    virtual BOOL ProcessMessage(H3Msg &msg) noexcept
+    {
+        return 0;
+    }
     void ResetToDefault() noexcept
     {
         value.current = value.byDefault;
@@ -60,11 +64,11 @@ struct ISetting
     static H3DlgText *CreateTitle(int x, int &y, LPCSTR displayedText, H3Vector<H3DlgItem *> &itemsVec) noexcept
     {
         constexpr int textFieldWidth = WIDTH;
-        auto titleItem = H3DlgText::Create(x, y, textFieldWidth, 24, displayedText, NH3Dlg::Text::MEDIUM,
-                                           eTextColor::HIGHLIGHT, -1);
+        auto titleItem =
+            H3DlgText::Create(x, y, textFieldWidth, 24, displayedText, NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, -1);
         itemsVec += titleItem;
         y += 30;
-		return titleItem;
+        return titleItem;
     }
 };
 
@@ -73,17 +77,29 @@ struct CaptionButtonSetting : public ISetting
     H3DlgCaptionButton *captionButton{};
     H3DlgText *checkBoxText{};
     void(__stdcall *callback)(void) = nullptr;
+
+    CaptionButtonSetting(const SettingsInfo &info)
+        : ISetting(info.position, {0, 0, 0, 0}), callback(reinterpret_cast<void(__stdcall *)(void)>(info.valuePtr))
+    {
+        this->firstClickableItemId = info.firstItemId;
+        this->lastClickableItemId = info.firstItemId;
+    }
+    virtual ~CaptionButtonSetting()
+    {
+    }
+
+    virtual BOOL ProcessMessage(H3Msg &msg) noexcept
+    {
+        if (msg.IsLeftClick() && msg.itemId == firstClickableItemId)
+        {
+            Toggle();
+        }
+        return 0;
+    }
     void Toggle() noexcept
     {
         if (callback)
             callback();
-    }
-    CaptionButtonSetting(const SettingsInfo &info)
-        : ISetting(info.position, {0, 0, 0, 0}), callback(reinterpret_cast<void(__stdcall *)(void)>(info.valuePtr))
-    {
-    }
-    virtual ~CaptionButtonSetting()
-    {
     }
 
   public:
@@ -98,11 +114,17 @@ struct CheckBoxSetting : public ISetting
     H3DlgText *checkBoxText{};
     void Toggle() noexcept
     {
-        value.current ^= value.current;
+        value.current ^= 1; // value.current;
         ClampValue();
+        checkBoxItem->SetFrame(value.current);
+        P_SoundManager->ClickSound();
+        checkBoxItem->Draw();
+        checkBoxItem->Refresh();
     }
     CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.defaultValue})
     {
+        firstClickableItemId = info.firstItemId;
+        lastClickableItemId = info.firstItemId;
         ClampValue();
     }
     virtual ~CheckBoxSetting()
@@ -113,6 +135,15 @@ struct CheckBoxSetting : public ISetting
     virtual void ClampValue() noexcept override
     {
         value.current = Clamp(0, value.current, 1);
+    }
+    virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
+    {
+        if (msg.IsLeftDown() && msg.itemId == checkBoxItem->GetID())
+        {
+            Toggle();
+            return TRUE;
+        }
+        return FALSE;
     }
 
   public:
@@ -134,7 +165,7 @@ struct RadioButtonSetting : public ISetting
 {
     static constexpr int TEXT_WIDGET_OFFSET = 24;
 
-    H3Vector<H3DlgDefButton*> checkBoxes;
+    H3Vector<H3DlgDefButton *> checkBoxes;
 
     void SetValue(const INT32 newValue) noexcept
     {
@@ -142,6 +173,8 @@ struct RadioButtonSetting : public ISetting
     }
     RadioButtonSetting(const RadioButtonInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0})
     {
+        firstClickableItemId = info.firstItemId;
+        lastClickableItemId = info.firstItemId + info.size - 1;
     }
     virtual ~RadioButtonSetting()
     {
@@ -173,6 +206,8 @@ struct SwitchPanel : public ISetting
     SwitchPanel(const SwitchPanelInfo &info)
         : ISetting(info.position, {info.valuePtr, 0, 0, 0}), valueOffset(info.valuesOffset)
     {
+        firstClickableItemId = info.firstItemId;
+        lastClickableItemId = info.firstItemId + info.size - 1;
     }
     virtual ~SwitchPanel()
     {
@@ -213,6 +248,8 @@ struct Switch10XPanel : public ISetting
   public:
     Switch10XPanel(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0})
     {
+        firstClickableItemId = info.firstItemId;
+        lastClickableItemId = info.firstItemId + BUTTONS_COUNT - 1;
     }
     virtual ~Switch10XPanel()
     {
@@ -232,6 +269,28 @@ struct Switch10XPanel : public ISetting
             switchButtons[i]->SendCommand(6, 4);
         }
         switchButtons[value.current]->SendCommand(5, 4);
+    }
+    virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
+    {
+        if (msg.IsLeftDown() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        {
+            const int buttonIndex = msg.itemId - firstClickableItemId;
+            if (value.current == buttonIndex)
+            {
+                return TRUE;
+            }
+            ClampValue();
+            value.current = buttonIndex;
+
+            backgroundPcx->Draw();
+            backgroundPcx->Refresh();
+            switchButtons[value.current]->Draw();
+            switchButtons[value.current]->Refresh();
+
+            P_SoundManager->ClickSound();
+            return TRUE;
+        }
+        return FALSE;
     }
 
   public:

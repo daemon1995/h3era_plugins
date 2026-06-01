@@ -4,49 +4,21 @@ SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
 void __stdcall ShowHealthBarDlg();
 BOOL *__stdcall HealthBarIsEnabledAddress();
 
-enum eSettingsOriginalItemIds : int
-{
-    SHOW_HERO_ROUTE_CHECKBOX = 235,
-    QUICK_BATTLE_CHECKBOX = 237,
-    VIDEO_SUBTITLES_CHECKBOX = 238,
-    TOWN_BUILDING_OUTLINES_CHECKBOX = 241,
-    SPELL_BOOK_ANIMATION_CHECKBOX = 242,
-};
 SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
     : H3Dlg(width, height, x, y, false, 1, P_Game->GetPlayerID()),
       isInCombat(P_CombatManager->Get() && P_CombatManager->dlg)
 
 {
 
-    auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
-                                                  BIG_BUTTON, P_GeneralText->GetText(570), NH3Dlg::Text::BIG, 0, 0,
-                                                  false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
-
-    captionBttn->SetClickFrame(1);
-    ISettingsPage *page = GeneralSettingsPage::Create(captionBttn, this);
-    AddItem(captionBttn, page);
-    m_pages.Add(page);
-
-    captionBttn = H3DlgCaptionButton::Create(165, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP,
-                                             BIG_BUTTON, ValueAt<LPCSTR>(0x06A6598), NH3Dlg::Text::BIG, 0, false, false,
-                                             eVKey::H3VK_2, eTextColor::HIGHLIGHT);
-
-    captionBttn->SetClickFrame(1);
-    page = AdventureMapSettingsPage::Create(captionBttn, this);
-    AddItem(captionBttn, page);
-    m_pages.Add(page);
-
-    captionBttn = H3DlgCaptionButton::Create(315, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT,
-                                             BIG_BUTTON, P_GeneralText->GetText(394), NH3Dlg::Text::BIG, 0, 0, false,
-                                             eVKey::H3VK_3, eTextColor::HIGHLIGHT);
-
-    page = CombatSettingsPage::Create(captionBttn, this);
-    AddItem(captionBttn, page);
-    m_pages.Add(page);
-
-    InitDlgPages();
-
+    CreateDlgPages();
     CreateGameControlButtons();
+
+    H3RGB888 color = H3RGB888::Bisque();
+    color = H3RGB888(0x7A, 0x65, 0x48);
+    // RGB565 color565(0x7A, 0x65, 0x48);
+    // CreateFrame(DLG_WIDTH >> 1, 40, 2, DLG_HEIGHT - 50, color);
+    this->background->DrawThickFrame(DLG_WIDTH >> 1, DLG_TOPSETTINGS_MARGIN, 1,
+                                     DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1, color);
 
     instance = this;
 }
@@ -55,7 +27,10 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
 void __stdcall CallWogOptionsDlg()
 {
     const int storeValue = IntAt(0x291A430);
-    IntAt(0x291A430) = 1;
+
+    const BOOL allowChanges = !(P_AdventureManager && P_AdventureMgr->dlg || IntAt(0x69959C));
+
+    IntAt(0x291A430) = allowChanges;
     auto jumpOverMouseCheck = _PI->WriteJmp(0x07790FB, 0x0779157);
     STDCALL_0(VOID, 0x597AA0); // stop video animation
     THISCALL_0(int, 0x07790E1);
@@ -63,6 +38,18 @@ void __stdcall CallWogOptionsDlg()
 
     jumpOverMouseCheck->Destroy();
     IntAt(0x291A430) = storeValue;
+}
+void __stdcall CallSelectLanguageDlg()
+{
+
+    auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
+    if (!plugin)
+        return;
+
+    typedef void(__stdcall * CallLocaleSelectionDlg_t)(const int x, const int y, const int style);
+    auto callDlg = reinterpret_cast<CallLocaleSelectionDlg_t>(GetProcAddress(plugin, "CallLocaleSelectionDlg"));
+    if (callDlg)
+        callDlg(-1, -1, 0);
 }
 SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Create(H3DlgCaptionButton *captionBttn,
                                                                                      H3BaseDlg *dlg)
@@ -82,7 +69,7 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
         &switchPanelHints[0],
 
     };
-    page->settings.Add(SwitchPanel::Create(switchPanelsInfo, page->items));
+    page->AddSetting(SwitchPanel::Create(switchPanelsInfo, page->items));
     itemId += videoDefNum;
     constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
     constexpr DWORD checkboxesHintPtrs[] = {0x06A7744, 0x06A775C, 0x06A7764};
@@ -116,15 +103,15 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
     };
     for (auto &i : checkboxesInfo)
     {
-        page->settings.Add(CheckBoxSetting::Create(i, page->items));
+        auto checkbox = CheckBoxSetting::Create(i, page->items);
+        page->AddSetting(checkbox);
     }
 
     // CREATE CALLBACK BUTTONS
     // wog option buttons:
     const SettingsInfo wogOptionCaption = {"system_wog_option", {checkboxX, 300},          itemId++,
                                            "wog options",       (DWORD)&CallWogOptionsDlg, 0};
-    page->settings.Add(
-        CaptionButtonSetting::Create(wogOptionCaption, *reinterpret_cast<char **>(0x57A93B + 1), page->items));
+    page->AddSetting(CaptionButtonSetting::Create(wogOptionCaption, SINGLE_BUTTON, page->items));
 
     auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
     if (plugin)
@@ -138,10 +125,9 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
         if (callDlg && getTextName)
         {
             const SettingsInfo selectLang = {
-                "system_select_language", {checkboxX, 330}, itemId++, getTextName(), (DWORD)&callDlg, 0};
+                "system_select_language", {checkboxX, 330}, itemId++, getTextName(), (DWORD)&CallSelectLanguageDlg, 0};
 
-            page->settings.Add(
-                CaptionButtonSetting::Create(selectLang, *reinterpret_cast<char **>(0x57A93B + 1), page->items));
+            page->AddSetting(CaptionButtonSetting::Create(selectLang, SINGLE_BUTTON, page->items));
         }
     }
 
@@ -178,11 +164,10 @@ SystemOptionsDlg::GeneralSettingsPage *SystemOptionsDlg::GeneralSettingsPage::Cr
          1,
          &hintPtrs[10]} // sound effects level switch panel
     };
-    auto &settings = page->settings;
 
     for (const auto &info : switch10PanelsInfo)
     {
-        settings.Add(Switch10XPanel::Create(info, page->items));
+        page->AddSetting(Switch10XPanel::Create(info, page->items));
     };
     itemId += Switch10XPanel::BUTTONS_COUNT << 1;
 
@@ -236,7 +221,7 @@ SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettin
     };
     for (auto &i : switchPanelsInfo)
     {
-        page->settings.Add(SwitchPanel::Create(i, page->items));
+        page->AddSetting(SwitchPanel::Create(i, page->items));
     }
 
     itemId += playerDefNum + enemyDefNum + mapScrollDefNum;
@@ -274,7 +259,7 @@ SystemOptionsDlg::AdventureMapSettingsPage *SystemOptionsDlg::AdventureMapSettin
     };
     for (auto &i : checkboxesInfo)
     {
-        page->settings.Add(CheckBoxSetting::Create(i, page->items));
+        page->AddSetting(CheckBoxSetting::Create(i, page->items));
     }
 
     return page;
@@ -353,7 +338,7 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
 
     for (auto &i : checkboxesInfo)
     {
-        page->settings.Add(CheckBoxSetting::Create(i, page->items));
+        page->AddSetting(CheckBoxSetting::Create(i, page->items));
     }
 
     // combat speed switch panel
@@ -380,7 +365,7 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
         &hintPtrs[0] // music level switch panel
     };
     itemId += Switch10XPanel::BUTTONS_COUNT;
-    page->settings.Add(Switch10XPanel::Create(switch10xPanelsInfo, page->items));
+    page->AddSetting(Switch10XPanel::Create(switch10xPanelsInfo, page->items));
 
     constexpr int rightX = DLG_RIGHT_PART_X_MARGIN;
 
@@ -393,15 +378,45 @@ SystemOptionsDlg::CombatSettingsPage *SystemOptionsDlg::CombatSettingsPage::Crea
                                                 0};
 
     auto it = CheckBoxSetting::Create(healthBarcheckBoxInfo, page->items);
-    page->settings.Add(it);
+    page->AddSetting(it);
 
     const SettingsInfo healtBarCaptionInfo = {"system_health_bar", {rightX, startY + 90},    itemId++,
                                               "health bar",        (DWORD)&ShowHealthBarDlg, 0};
 
-    page->settings.Add(
-        CaptionButtonSetting::Create(healtBarCaptionInfo, *reinterpret_cast<char **>(0x57A93B + 1), page->items));
+    page->AddSetting(CaptionButtonSetting::Create(healtBarCaptionInfo, SINGLE_BUTTON, page->items));
 
     return page;
+}
+
+void SystemOptionsDlg::CreateDlgPages() noexcept
+{
+    auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
+                                                  BIG_BUTTON, P_GeneralText->GetText(570), NH3Dlg::Text::BIG, 0, 0,
+                                                  false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
+
+    captionBttn->SetClickFrame(1);
+    ISettingsPage *page = GeneralSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    captionBttn = H3DlgCaptionButton::Create(165, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP,
+                                             BIG_BUTTON, ValueAt<LPCSTR>(0x06A6598), NH3Dlg::Text::BIG, 0, false, false,
+                                             eVKey::H3VK_2, eTextColor::HIGHLIGHT);
+
+    captionBttn->SetClickFrame(1);
+    page = AdventureMapSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    captionBttn = H3DlgCaptionButton::Create(315, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT,
+                                             BIG_BUTTON, P_GeneralText->GetText(394), NH3Dlg::Text::BIG, 0, 0, false,
+                                             eVKey::H3VK_3, eTextColor::HIGHLIGHT);
+
+    page = CombatSettingsPage::Create(captionBttn, this);
+    AddItem(captionBttn, page);
+    m_pages.Add(page);
+
+    InitDlgPages();
 }
 
 void SystemOptionsDlg::CreateGameControlButtons() noexcept
@@ -458,20 +473,28 @@ BOOL SystemOptionsDlg::OnCreate()
 }
 BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
 {
-    if (msg.IsRightClick() && msg.itemId)
+
+    const int itemId = msg.itemId;
+    if (msg.IsRightClick() && itemId)
     {
-        auto it = GetH3DlgItem(msg.itemId);
+        auto it = GetH3DlgItem(itemId);
         if (it && it->GetRightClickHint())
         {
             H3Messagebox::RMB(it->GetRightClickHint());
             return 0;
         }
     }
+    if (m_currentPage && itemId && m_currentPage->Proc(msg))
+    {
+        // end processing if message was processed by page
+        return 0;
+    }
 
     return 1;
 }
 BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
 {
+
     using target = Era::EGameMenuTarget;
 
     switch (itemId)

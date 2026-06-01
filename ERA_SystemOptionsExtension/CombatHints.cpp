@@ -545,8 +545,8 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
     okBttn->AddHotkey(eVKey::H3VK_ESCAPE);
     okBttn->AddHotkey(eVKey::H3VK_H);
 
-    auto cmb = H3CombatManager::Get();
-    LPCSTR barPcxName = cmb->cmNumWinPcxLoaded->GetName();
+  //  auto cmb = H3CombatManager::Get();
+    LPCSTR barPcxName = ValueAt<LPCSTR>(0x0462F75 + 1);// cmb->cmNumWinPcxLoaded->GetName();
 
     // H3DlgDef* creatureDef = H3DlgDef::Create(1, 25, 100, 130, 12, P_CreatureInformation[12].defName, 0, 2);
 
@@ -560,7 +560,6 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
     background->SinkArea(creatureDef->GetX() - 5, creatureDef->GetY() + 11, creatureDef->GetWidth() + 25,
                          creatureDef->GetHeight() - 10);
     eTextColor textColor = eTextColor::WHITE;
-
     originalLabel = H3DlgPcx::Create(creatureDef->GetX() + creatureDef->GetWidth() - 25,
                                      creatureDef->GetY() + creatureDef->GetHeight() - 30, 5, barPcxName);
     if (originalLabel)
