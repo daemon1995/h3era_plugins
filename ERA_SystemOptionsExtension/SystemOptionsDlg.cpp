@@ -598,9 +598,6 @@ SystemOptionsDlg::~SystemOptionsDlg()
         CDECL_0(LONG, 0x0050C370); // j_WriteRegistry
     }
 
-    for (auto &page : m_pages)
-    {
-    }
     instance = nullptr;
 
     P_WindowManager->resultItemID = this->resultItemId;

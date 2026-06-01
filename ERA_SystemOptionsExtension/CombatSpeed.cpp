@@ -8,16 +8,6 @@ CombatSpeed::CombatSpeed() : IGamePatch(globalPatcher->CreateInstance("EraPlugin
     CreatePatches();
 }
 
-// * new battle speed coefficients from SOD_SP
-float CombatSpeed::battleSpeedCoef[10] = {
-    1.000f, 0.630f, 0.400f, // original speed coefficients
-    0.300f,                 // new speed coefficient
-    0.200f, 0.100f,         // old SoD_SP turbo speed coefficients
-    0.075f,                 // new speed coefficient
-    0.050f,                 // old SoD_SP turbo speed coefficient
-    0.025f, 0.010f          // new speed coefficients
-};
-
 void CombatSpeed::CreatePatches() noexcept
 {
     if (m_isInited)
@@ -46,7 +36,9 @@ void CombatSpeed::CreatePatches() noexcept
     _pi->WriteDword(0x5A7FE2 + 3, pBSpeed); // BattleStack_CastSpellEarthquake
     _pi->WriteDword(0x5A8148 + 3, pBSpeed); // BattleStack_CastSpellEarthquake
 
-    _pi->WriteByte(0x50B556 + 2, 9); // NormalizeRegistry ( if ( BattleSpeed < 0 || BattleSpeed > 2->9 ))
+    _pi->WriteDword(0x4023D3 + 6, speedsCount - 1); // set gosolo speed as 9
+
+    _pi->WriteByte(0x50B556 + 2, speedsCount - 1); // NormalizeRegistry ( if ( BattleSpeed < 0 || BattleSpeed > 2->9 ))
 }
 
 CombatSpeed &CombatSpeed::Get()
