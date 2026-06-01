@@ -64,19 +64,28 @@ bool __stdcall LoadAllArtifactFiles(HiHook *h)
         const DWORD artsCount = artifactsHandler.objectsCount;
         const DWORD expectedObjectsCount = artifactsHandler.expectedObjectsCount;
 
-        if (artsCount >= expectedObjectsCount)
-            return result;
+        // if (artsCount >= expectedObjectsCount)
+        //   return result;
 
         H3ArtifactSetup *artSetupTable = *reinterpret_cast<H3ArtifactSetup **>(0x04036EC + 1);
         char buffer[0x512]{};
+        Eramap::era_str langPtr = Eramap::GetLanguage();
+        std::string lang = langPtr;
+
+        Eramap::MemFree(langPtr);
 
         artNames.resize(expectedObjectsCount);
-        for (size_t i = artsCount; i < expectedObjectsCount; i++)
+        for (size_t i = 0; i < expectedObjectsCount; i++)
         {
             auto &artInfo = artSetupTable[i];
             //           artInfo = {};
             sprintf(buffer, "tum art %d name", i);
-            artNames[i] = buffer;
+            sprintf(buffer, "era.artifacts.%d.name", i);
+
+            char *nameA = EraJS::read(buffer);
+
+            artNames[i] = nameA;
+
             artInfo.name = artNames[i].c_str();
             artInfo.description = artNames[i].c_str();
             artInfo.position = eArtifactPositions(rand() % 9 + 1);
@@ -118,6 +127,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             }
             initialized = true;
             globalPatcher = GetPatcher();
+            Eramap::ConnectEra(hModule, dllText::instanceName);
+
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             _PI->WriteHiHook(0x045C72C, CDECL_, LoadAllArtifactFiles);
             _PI->WriteHiHook(0x040362E, CDECL_, LoadArtTraitsFile);
