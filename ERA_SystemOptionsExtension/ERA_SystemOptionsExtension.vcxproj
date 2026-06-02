@@ -79,6 +79,7 @@
     <ClInclude Include="CombatSpeed.h" />
     <ClInclude Include="DlgPanels.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="structures.h" />
     <ClInclude Include="SystemOptionsDlg.h" />
   </ItemGroup>
   <ItemGroup>

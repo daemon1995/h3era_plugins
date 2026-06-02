@@ -5,6 +5,7 @@
 #include "framework.h"
 
 #include "DlgPanels.h"
+#include "structures.h"
 enum eDlgCallSource : INT
 {
     UNKNOWN = -1,
@@ -60,29 +61,40 @@ class SystemOptionsDlg : public H3Dlg
 
     // std::vector<H3CreatureBankSetup> &creatureBanks;
 
-    struct ISettingsPage
+    struct SettingsPage
     {
+        H3DlgCaptionButton *captionBttn = nullptr;
         const char *name;
         UINT id;
         BOOL isVisible = false;
         UINT firstItemId = 0;
-        H3DlgCaptionButton *captionBttn = nullptr;
 
         H3Vector<H3DlgItem *> items;
         H3Vector<ISetting *> settings;
+        H3LoadedPcx16 *background = nullptr;
         std::unordered_map<int, ISetting *> settingsByItemId;
 
-        ISettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
+        SettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
         {
+            if (!captionBttn)
+                return;
             name = captionBttn->GetText();
             id = captionBttn->GetID();
             captionBttn->SetClickFrame(1);
             firstItemId = id * 100 + 100;
+            if (background = H3LoadedPcx16::Create(DLG_WIDTH, DLG_HEIGHT))
+            {
+                const int playerColor = P_Game->GetPlayerID();
+                background->BackgroundRegion(0, 0, DLG_WIDTH, DLG_HEIGHT, false);
+                background->FrameRegion(0, 0, DLG_WIDTH, DLG_HEIGHT, false, playerColor, false);
+            }
         }
-        virtual ~ISettingsPage()
+        virtual ~SettingsPage()
         {
             for (auto &setting : settings)
                 delete setting;
+            if (background)
+                background->Destroy();
         }
 
       public:
@@ -113,41 +125,15 @@ class SystemOptionsDlg : public H3Dlg
             }
         }
 
-        BOOL ProcessMessage(H3Msg &msg)
+        BOOL ProcessMessage(H3Msg &msg) noexcept
         {
             auto settingIt = settingsByItemId.find(msg.itemId);
             if (settingIt != settingsByItemId.end())
             {
                 return settingIt->second->ProcessMessage(msg);
             }
-
             return FALSE;
         }
-    };
-
-    struct GeneralSettingsPage : public ISettingsPage
-    {
-        GeneralSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn) {};
-        virtual ~GeneralSettingsPage() {};
-
-      public:
-        static GeneralSettingsPage *Create(H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg);
-    };
-    struct AdventureMapSettingsPage : public ISettingsPage
-    {
-        AdventureMapSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn) {};
-        virtual ~AdventureMapSettingsPage() {};
-
-      public:
-        static AdventureMapSettingsPage *Create(H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg);
-    };
-    struct CombatSettingsPage : public ISettingsPage
-    {
-        CombatSettingsPage(H3DlgCaptionButton *captionbttn) : ISettingsPage(captionbttn) {};
-        virtual ~CombatSettingsPage() {};
-
-      public:
-        static CombatSettingsPage *Create(H3DlgCaptionButton *captionbttn, H3BaseDlg *dlg);
     };
 
   protected:
@@ -157,8 +143,8 @@ class SystemOptionsDlg : public H3Dlg
 
     // static constexpr const char* m_iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
     eDlgCallSource dlgCallSource = UNKNOWN;
-    ISettingsPage *m_currentPage = nullptr;
-    H3Vector<ISettingsPage *> m_pages;
+    SettingsPage *m_currentPage = nullptr;
+    H3Vector<SettingsPage *> m_pages;
     H3Vector<H3DlgCaptionButton *> captionButtons;
 
   public:
@@ -173,7 +159,7 @@ class SystemOptionsDlg : public H3Dlg
     {
         void(__stdcall *callHealthBarDlg)() = nullptr;
         H3DlgDef *affectedCheckbox = nullptr;
-        DWORD healthBarValuePtr = 0;
+        BOOL *healthBarValuePtr = nullptr;
         INT *dlgValuePtr = nullptr;
         H3DlgCaptionButton *captionBttn = nullptr;
 
@@ -206,15 +192,9 @@ class SystemOptionsDlg : public H3Dlg
             for (auto &it : page->items)
             {
                 it->HideDeactivate();
-                AddItem(it, page);
+                AddItem(it);
             }
         }
-    }
-    void AddItem(H3DlgItem *item, ISettingsPage *page) noexcept
-    {
-        H3Dlg::AddItem(item);
-        // if (page)
-        //    page->items += item;
     }
     void SetActivePage(const UINT pageId, const BOOL redraw)
     {
@@ -225,6 +205,8 @@ class SystemOptionsDlg : public H3Dlg
                 m_currentPage->SetVisible(FALSE);
 
             page->SetVisible(TRUE);
+			int yOffset = DLG_TOPSETTINGS_MARGIN;
+            page->background->DrawToPcx16(0, yOffset, FALSE, background,0, yOffset);
             m_currentPage = page;
             if (redraw)
                 Redraw();
@@ -238,7 +220,30 @@ class SystemOptionsDlg : public H3Dlg
   public:
     static void __stdcall CallWogOptionsDlg();
     static void __stdcall CallSelectLanguageDlg();
-    static void __stdcall CallHealthBarDlg();
+
+  private:
+    static inline void AdjustSoundVolume(ISetting *sender, const DWORD addres) noexcept
+    {
+        auto &value = sender->value;
+        *value.valuePtr = value.current;
+
+        auto snd = P_SoundManager->Get();
+        BOOL32 backup = snd->clickSoundVar;
+        snd->clickSoundVar = 1;
+        THISCALL_1(VOID, 0x059A4B0, snd);
+        snd->clickSoundVar = backup;
+    }
+    static void OnMusicVolumeChanged(ISetting *sender)
+    {
+        AdjustSoundVolume(sender, 0x059A4B0);
+    }
+    static void OnSoundVolumeChanged(ISetting *sender)
+    {
+        AdjustSoundVolume(sender, 0x059A3C0);
+    }
+    static void __stdcall CallHealthBarDlg(ISetting *sender);
+
+    static void OnLanguageButtonClicked(ISetting *sender);
     static void AfterDlgClose();
     static void SetPatches(PatcherInstance *_pi);
 };

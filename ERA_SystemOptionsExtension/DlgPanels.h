@@ -1,4 +1,6 @@
 #pragma once
+#include <functional>
+
 #include "framework.h"
 
 struct SettingsInfo
@@ -7,7 +9,7 @@ struct SettingsInfo
     tagPOINT position;
     int firstItemId;
     LPCSTR displayedName = nullptr;
-    DWORD valuePtr;
+    int *const valuePtr;
     INT32 defaultValue;
     const DWORD *hintsPointer = nullptr;
 };
@@ -19,7 +21,7 @@ struct ISetting
     tagPOINT position;
     struct Value
     {
-        DWORD valuePtr = 0;
+        int *const valuePtr = nullptr;
         INT32 dlgStart = 0;
         INT32 current = 0;
         const INT32 byDefault = 0;
@@ -30,12 +32,16 @@ struct ISetting
     int firstClickableItemId = -1;
     int lastClickableItemId = -1;
 
+  protected:
+    using OnChangeCallback = std::function<void(ISetting *sender)>;
+    OnChangeCallback m_onChange = nullptr;
+
   public:
     ISetting(const tagPOINT &position, const Value &value) : position(position), value(value)
     {
         if (value.valuePtr)
         {
-            const DWORD currentValue = IntAt(value.valuePtr);
+            const int currentValue = *value.valuePtr;
             this->value.dlgStart = currentValue;
             this->value.current = currentValue;
         }
@@ -43,16 +49,26 @@ struct ISetting
     virtual ~ISetting() {};
 
   public:
-    virtual void SetVisible(const BOOL visible) noexcept {};
-    virtual void ClampValue() noexcept {};
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept
     {
         return 0;
     }
-    void ResetToDefault() noexcept
+    virtual void SetVisible(const BOOL visible) noexcept {};
+    virtual void ClampValue() noexcept {};
+
+  public:
+    void SetOnChange(OnChangeCallback cb) noexcept
     {
-        value.current = value.byDefault;
+        m_onChange = cb;
     }
+
+    void TriggerChange() noexcept
+    {
+        if (m_onChange)
+            m_onChange(this);
+    }
+
+  public:
     static H3DlgText *CreateTitle(int x, int &y, LPCSTR displayedText, H3Vector<H3DlgItem *> &itemsVec) noexcept
     {
         constexpr int textFieldWidth = WIDTH;
@@ -67,10 +83,8 @@ struct ISetting
 struct CaptionButtonSetting : public ISetting
 {
     H3DlgCaptionButton *captionButton{};
-    void(__stdcall *callback)(void) = nullptr;
 
-    CaptionButtonSetting(const SettingsInfo &info)
-        : ISetting(info.position, {0, 0, 0, 0}), callback(reinterpret_cast<void(__stdcall *)(void)>(info.valuePtr))
+    CaptionButtonSetting(const SettingsInfo &info) : ISetting(info.position, {})
     {
         this->firstClickableItemId = info.firstItemId;
         this->lastClickableItemId = info.firstItemId;
@@ -82,16 +96,11 @@ struct CaptionButtonSetting : public ISetting
     {
         if (msg.IsLeftClick() && msg.itemId == firstClickableItemId)
         {
-            Toggle();
+            TriggerChange();
             return TRUE;
         }
         return FALSE;
     }
-    void Toggle() noexcept
-    {
-        if (callback)
-            callback();
-    };
 
   public:
     static CaptionButtonSetting *Create(const SettingsInfo &info, LPCSTR defName,
@@ -134,7 +143,7 @@ struct CheckBoxSetting : public ISetting
         value.current ^= 1; // value.current;
         ClampValue();
         checkBoxItem->SetFrame(value.current);
-		IntAt(value.valuePtr) = value.current;
+        *value.valuePtr = value.current;
         P_SoundManager->ClickSound();
         checkBoxItem->Draw();
         checkBoxItem->Refresh();
@@ -146,9 +155,8 @@ struct RadioButtonInfo
     tagPOINT position;
     const int firstItemId;
     LPCSTR displayedName = nullptr;
-    const DWORD valuePtr;
-    //     const int valuesOffset = 0;
-    const int size;
+    int *const valuePtr;
+    const UINT size;
     const LPCSTR *textPtrs = nullptr;
     const DWORD *hintsPointer = nullptr;
     const BOOL canBeDisabled = FALSE;
@@ -167,7 +175,7 @@ struct RadioButtonSetting : public ISetting
     virtual ~RadioButtonSetting() {};
 
   public:
-    BOOL ProcessMessage(H3Msg &msg) noexcept override
+    virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
         return 0;
     }
@@ -179,9 +187,9 @@ struct SwitchPanelInfo
     tagPOINT position;
     const int firstItemId;
     LPCSTR displayedName;
-    const DWORD valuePtr;
+    int *const valuePtr;
     const int valuesOffset = 0;
-    const int size;
+    const UINT size;
     const LPCSTR *defNamesPtr = nullptr;
     const DWORD *hintsPointer = nullptr;
 };
@@ -198,17 +206,45 @@ struct SwitchPanel : public ISetting
     SwitchPanel(const SwitchPanelInfo &info)
         : ISetting(info.position, {info.valuePtr, 0, 0, 0}), valueOffset(info.valuesOffset)
     {
+        value.dlgStart += valueOffset;
+        value.current += valueOffset;
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + info.size - 1;
     }
     virtual ~SwitchPanel() {};
 
   public:
+    virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
+    {
+        if (msg.IsLeftClick() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        {
+            const int buttonIndex = msg.itemId - firstClickableItemId;
+            if (value.current + valueOffset == buttonIndex)
+            {
+                return TRUE;
+            }
+
+            auto &oldButton = switchButtons[value.current];
+            oldButton->SendCommand(6, 4096);
+            oldButton->Draw();
+            oldButton->Refresh();
+            //  ClampValue();
+            value.current = buttonIndex - valueOffset;
+
+            auto &newButton = switchButtons[value.current];
+            newButton->SendCommand(5, 4096);
+            newButton->Draw();
+            newButton->Refresh();
+
+            return TRUE;
+        }
+        return 0;
+    }
     virtual void ClampValue() noexcept override
     {
         if (const auto size = switchButtons.Size())
         {
-            value.current = Clamp(0, value.current, size - 1);
+            value.current = Clamp(0 - valueOffset, value.current, size - 1 - valueOffset);
         }
     }
     virtual void SetVisible(const BOOL visible) noexcept override
@@ -220,7 +256,7 @@ struct SwitchPanel : public ISetting
         {
             switchButtons[i]->SendCommand(6, 4096);
         }
-        switchButtons[value.current + valueOffset]->SendCommand(5, 4096);
+        switchButtons[value.current]->SendCommand(5, 4096);
     }
 
   public:
@@ -274,7 +310,7 @@ struct Switch10XPanel : public ISetting
             backgroundPcx->Refresh();
             switchButtons[value.current]->Draw();
             switchButtons[value.current]->Refresh();
-
+            TriggerChange();
             P_SoundManager->ClickSound();
             return TRUE;
         }
