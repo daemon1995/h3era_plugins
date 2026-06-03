@@ -2,6 +2,8 @@
 
 #include "SystemOptionsDlg.h"
 
+#define ERA_OPT(page, id, field) "era.opt." #page "." #id "." #field
+
 #define FRAME_COLOR H3RGB888(0x7A, 0x65, 0x48)
 
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
@@ -11,8 +13,9 @@ SystemOptionsDlg::HealthBarDlgCallInfo SystemOptionsDlg::healthBarDlgInfo;
 void __stdcall ShowHealthBarDlg();
 BOOL *__stdcall HealthBarIsEnabledAddress();
 
-void DrawThickFrameOverItem(H3LoadedPcx16 *back, H3DlgItem *item, const H3RGB888 &color)
+void DrawThickFrameOverItem(H3LoadedPcx16 *back, H3DlgItem *item)
 {
+    static auto color = FRAME_COLOR;
     back->DrawThickFrame(item->GetX() - 1, item->GetY() - 1, item->GetWidth() + 2, item->GetHeight() + 2, 1, color);
 }
 
@@ -27,18 +30,29 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
         dlgCallSource = ADV_MAP;
     else
         dlgCallSource = MAIN_MENU;
-    CreateGameControlButtons();
-    CreateDlgPages();
 
+    // split dlg by half with thick frame
     const auto color = FRAME_COLOR;
-    // RGB565 color565(0x7A, 0x65, 0x48);
-    // CreateFrame(DLG_WIDTH >> 1, 40, 2, DLG_HEIGHT - 50, color);
     background->DrawThickFrame(DLG_WIDTH >> 1, DLG_TOPSETTINGS_MARGIN, 1,
                                DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1, color);
 
+    // create buttons for loading/saving/restarting/quitting the game
+    CreateGameControlButtons();
+
+    // create and init page buttons and its actual pages with settings
+    CreateDlgPages();
+
+    // RGB565 color565(0x7A, 0x65, 0x48);
+    // CreateFrame(DLG_WIDTH >> 1, 40, 2, DLG_HEIGHT - 50, color);
+
+    // draw frames over page caption buttons and copy background to pages' backgrounds
     for (const auto &page : m_pages)
     {
-        DrawThickFrameOverItem(background, page->captionBttn, color);
+        DrawThickFrameOverItem(background, page->captionBttn);
+    }
+    for (const auto &page : m_pages)
+    {
+        //  libc::memcpy(page->background->buffer, background->buffer, page->background->buffSize);
     }
     instance = this;
 }
@@ -48,13 +62,13 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
     // const BOOL isNetworkGame = P_
     using target = Era::EGameMenuTarget;
     const BOOL isMainMenu = dlgCallSource == MAIN_MENU;
-    static const struct
+    const struct
     {
         const INT32 buttonId;
         const DWORD defNamePtr;
         const eVKey hotkey;
         const DWORD hintPtr;
-        const INT32 disableOnCombat = FALSE;
+        const INT32 disableOnCreation = FALSE;
     } gameControlButtons[]{
         {target::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, 0x06A75F4,
          isInCombat && networkGame || isMainMenu},                                               // load game
@@ -69,12 +83,16 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
     constexpr size_t length = std::size(gameControlButtons);
     constexpr int buttonWidth = 100 + 13;
     constexpr int buttonHeight = 48 + 10;
+    const size_t startIndex = isMainMenu ? 5 : 0;
+    constexpr int frameY = DLG_HEIGHT - buttonHeight * 3 - 20;
+    // draw a horizontal thick frame over genera buttons
+    background->DrawThickFrame(DLG_WIDTH >> 1, frameY, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_COLOR);
 
-    for (size_t i = 0; i < length; i++)
+    for (size_t i = startIndex; i < length; i++)
     {
         auto &button = gameControlButtons[i];
-        const int x = widthDlg - buttonWidth * 2 + ((i & 1) * buttonWidth) - 10;
-        const int y = heightDlg - buttonHeight * 3 + ((i / 2) * buttonHeight) - 12;
+        const int x = DLG_WIDTH - buttonWidth * 2 + ((i & 1) * buttonWidth) - 10;
+        const int y = DLG_HEIGHT - buttonHeight * 3 + ((i / 2) * buttonHeight) - 12;
         auto bttn = CreateButton(x, y, button.buttonId, LPCSTR(button.defNamePtr), 1, 0, false, button.hotkey);
         if (button.hotkey == eVKey::H3VK_ESCAPE)
         {
@@ -82,18 +100,18 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         }
         if (const auto hint = button.hintPtr)
         {
-            bttn->SetHints(nullptr, ValueAt<LPCSTR>(hint), false);
+            bttn->SetRightClickHint(EraJS::read(ValueAt<LPCSTR>(hint)));
         }
-        if (button.disableOnCombat)
+        if (button.disableOnCreation)
         {
             bttn->Disable();
-            //            bttn->SendCommand(5, 4096);
         }
     }
 }
 void SystemOptionsDlg::CreateDlgPages() noexcept
 {
-    ConfigStruct &config = ConfigStruct::Get();
+    OriginalConfig &config = OriginalConfig::Get();
+    AdditionalConfig &additionalConfig = AdditionalConfig::Get();
 
     {
         auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
@@ -122,7 +140,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             &switchPanelHints[0],
         };
 
-        page->AddSetting(SwitchPanel::Create(switchPanelsInfo, pageItems));
+        page->CreateSwitchPanel(switchPanelsInfo);
         itemId += videoDefNum;
         constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
         constexpr DWORD checkboxesHintPtrs[] = {0x06A7744, 0x06A775C, 0x06A7764};
@@ -133,10 +151,10 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "system_video_subtitles",
                 {checkboxX, startY + 90},
                 itemId++,
-                P_GeneralText->GetText(577),
                 &config.videoSubtitles, //  0x06987D0,
-                TRUE,
-                &checkboxesHintPtrs[0]
+                P_GeneralText->GetText(577),
+                &checkboxesHintPtrs[0],
+                TRUE
 
             }, // show tips
             {
@@ -144,10 +162,11 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "system_building_outlines",
                 {checkboxX, startY + 120},
                 itemId++,
-                P_GeneralText->GetText(578),
                 &config.townOutlines, // 0x06987D4,
-                TRUE,
-                &checkboxesHintPtrs[1]
+                P_GeneralText->GetText(578),
+
+                &checkboxesHintPtrs[1],
+                TRUE
 
             }, // show tips in battle
             {
@@ -155,51 +174,46 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "system_spell_book_animation",
                 {checkboxX, startY + 150},
                 itemId++,
-                P_GeneralText->GetText(579),
                 &config.animateSpellBook, // 0x06987D8,
+                P_GeneralText->GetText(579),
+                &checkboxesHintPtrs[2],
                 TRUE,
-                &checkboxesHintPtrs[2]
 
             } // show tips in battle
         };
-        for (auto &i : checkboxesInfo)
+        for (auto &info : checkboxesInfo)
         {
-            auto checkbox = CheckBoxSetting::Create(i, pageItems);
-            page->AddSetting(checkbox);
+            page->CreateCheckBox(info);
         }
 
         // CREATE CALLBACK BUTTONS
         // wog option buttons:
-        const SettingsInfo wogOptionCaption = {"system_wog_option", {checkboxX, 300},          itemId++,
-                                               "wog options",       (int *)&CallWogOptionsDlg, 0};
+        const SettingsInfo wogOptionCaption = {"system_wog_option", {checkboxX, 300}, itemId++, 0, "wog options", 0};
 
-        auto captionSetting = CaptionButtonSetting::Create(wogOptionCaption, SINGLE_BUTTON, pageItems);
+        auto captionSetting = page->CreateCaption(wogOptionCaption);
         captionSetting->SetOnChange([](ISetting *) { CallWogOptionsDlg(); });
-        page->AddSetting(captionSetting);
 
         auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
         if (plugin)
         {
             auto &languageDlgInfo = instance->languageDlgInfo;
             languageDlgInfo.hModule = plugin;
-            auto callDlg = reinterpret_cast<CallLocaleSelectionDlg_t>(GetProcAddress(plugin, "CallLocaleSelectionDlg"));
-            auto getTextName = reinterpret_cast<GetDisplayedName_t>(GetProcAddress(plugin, "GetDisplayedName"));
+            auto callDlg = reinterpret_cast<LanguageDlgCallInfo::CallLocaleSelectionDlg_t>(
+                GetProcAddress(plugin, "CallLocaleSelectionDlg"));
+            auto getTextName =
+                reinterpret_cast<LanguageDlgCallInfo::GetDisplayedName_t>(GetProcAddress(plugin, "GetDisplayedName"));
 
             if (callDlg && getTextName)
             {
                 languageDlgInfo.callLocaleSelectionDlg = callDlg;
                 languageDlgInfo.getDisplayedName = getTextName;
                 const SettingsInfo selectLang = {
-                    "system_select_language",
-                    {checkboxX, 330},
-                    itemId++,
-                    getTextName(),
+                    "system_select_language", {checkboxX, 330}, itemId++, nullptr, getTextName(),
                 };
 
-                captionSetting = CaptionButtonSetting::Create(selectLang, SINGLE_BUTTON, pageItems);
+                captionSetting = page->CreateCaption(selectLang);
                 languageDlgInfo.currentLanguageText = captionSetting->captionButton;
                 captionSetting->SetOnChange([](ISetting *) { CallSelectLanguageDlg(); });
-                page->AddSetting(captionSetting);
             }
         }
 
@@ -223,22 +237,20 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             {
 
                 "system_music_level",
-                {panelX, 150},
+                {panelX, 120},
                 itemId,
-                P_GeneralText->GetText(396),
                 &config.musicVolume,
-                1,
+                ERA_OPT(system, musicLevel, name),
                 &hintPtrs[0]
 
             }, // music level switch panel
             {
 
                 "system_sound_effects_level",
-                {panelX, 220},
+                {panelX, 190},
                 itemId + Switch10XPanel::BUTTONS_COUNT,
-                P_GeneralText->GetText(397),
                 &config.soundVolume, // 0x06987B4,
-                1,
+                ERA_OPT(system, soundEffectsLevel, name),
                 &hintPtrs[10]
 
             } // sound effects level switch panel
@@ -247,11 +259,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         for (size_t i = 0; i < std::size(switch10PanelsInfo); i++)
         {
-            auto &info = switch10PanelsInfo[i];
-
-            auto panel = Switch10XPanel::Create(info, pageItems);
+            auto panel = page->Create10XPanel(switch10PanelsInfo[i]);
             panel->SetOnChange(funcs[i]);
-            page->AddSetting(panel);
         }
 
         itemId += Switch10XPanel::BUTTONS_COUNT << 1;
@@ -324,16 +333,18 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
             },
         };
-        for (auto &i : switchPanelsInfo)
+        for (auto &info : switchPanelsInfo)
         {
-            page->AddSetting(SwitchPanel::Create(i, pageItems));
+            page->CreateSwitchPanel(info);
         }
 
         itemId += playerDefNum + enemyDefNum + mapScrollDefNum;
         // create checkboxes
         constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
         int checkboxY = 280;
-        constexpr DWORD checkboxesHintPtrs[] = {0x06A772C, 0x06A7734, 0x69FC88};
+        const DWORD checkboxesHintPtrs[] = {DWORD(ERA_OPT(map, showRoute, hint)),
+                                            DWORD(ERA_OPT(map, moveReminder, hint)),
+                                            DWORD(ERA_OPT(map, autoSave, hint))};
 
         const SettingsInfo checkboxesInfo[] = {
             {
@@ -341,9 +352,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "adventure_show_route",
                 {checkboxX, checkboxY + 30},
                 itemId++,
-                P_GeneralText->GetText(574),
                 &config.showRoute, // 0x06987C4,
-                TRUE,
+                ERA_OPT(map, showRoute, name),
                 &checkboxesHintPtrs[0]
 
             }, // show tips
@@ -352,10 +362,10 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "adventure_hero_reminder",
                 {checkboxX, checkboxY + 60},
                 itemId++,
-                P_GeneralText->GetText(575),
                 &config.moveReminder, //  0x06987C8,
-                TRUE,
-                &checkboxesHintPtrs[1]
+                ERA_OPT(map, moveReminder, name),
+                &checkboxesHintPtrs[1],
+                P_Game->inTutorial
 
             }, // show tips in battle
             {
@@ -363,16 +373,15 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "adventure_game_autosave",
                 {checkboxX, checkboxY + 90},
                 itemId++,
-                P_GeneralText->GetText(576),
                 &config.autoSave, //   0x06987C0,
-                TRUE,
+                ERA_OPT(map, autoSave, name),
                 &checkboxesHintPtrs[2]
 
             }, // show tips in battle
         };
-        for (auto &i : checkboxesInfo)
+        for (auto &info : checkboxesInfo)
         {
-            page->AddSetting(CheckBoxSetting::Create(i, pageItems));
+            page->CreateCheckBox(info);
         }
 
         m_pages.Add(page);
@@ -402,15 +411,17 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             0x06A56F4, // show ballista range
             0x06A56FC, // show battle interface
         };
+
+
+        
+
         const SettingsInfo checkboxesInfo[] = {
             {
-
                 "show_grid",
                 {x, startY},
                 itemId++,
-                P_GeneralText->GetText(406),
                 &config.showEntireGrid, // 0x069880C,
-                TRUE,
+                P_GeneralText->GetText(406),
                 &hintsArray[0]
 
             },
@@ -419,9 +430,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "movements_shadow",
                 {x, startY + 30},
                 itemId++,
-                P_GeneralText->GetText(407),
                 &config.combatShowMovementShadow, //  0x0698814,
-                TRUE,
+                P_GeneralText->GetText(407),
                 &hintsArray[1]
 
             }, // show movements_shadow
@@ -430,9 +440,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "cursor_shadow",
                 {x, startY + 60},
                 itemId++,
-                P_GeneralText->GetText(408),
                 &config.combatShowCursorShadow, //  0x0698810,
-                TRUE,
+                P_GeneralText->GetText(408),
                 &hintsArray[2]
 
             },
@@ -441,9 +450,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "auto_combat_creatures",
                 {x, startY + 120},
                 itemId++,
-                P_GeneralText->GetText(400),
                 &config.autoCreatures, //  0x06987E4,
-                TRUE,
+                P_GeneralText->GetText(400),
                 &hintsArray[3]
 
             }, // show combat messages
@@ -452,9 +460,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "auto_combat_spells",
                 {x, startY + 150},
                 itemId++,
-                P_GeneralText->GetText(401),
                 &config.autoSpells, //   0x06987E8,
-                TRUE,
+                P_GeneralText->GetText(401),
                 &hintsArray[4]
 
             }, // show combat animations
@@ -463,9 +470,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "auto_combat_catapult",
                 {x, startY + 180},
                 itemId++,
-                P_GeneralText->GetText(402),
                 &config.autoCatapult, //  0x06987EC,
-                TRUE,
+                P_GeneralText->GetText(402),
                 &hintsArray[5]
 
             }, // show floating combat text
@@ -474,9 +480,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "auto_combat_ballista",
                 {x, startY + 210},
                 itemId++,
-                P_GeneralText->GetText(153),
                 &config.autoBallista, //  0x06987F0,
-                TRUE,
+                P_GeneralText->GetText(153),
                 &hintsArray[6]
 
             },
@@ -485,30 +490,30 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "auto_combat_tent",
                 {x, startY + 240},
                 itemId++,
-                P_GeneralText->GetText(403),
                 &config.autoFirstAidTent, // 0x06987F4,
-                TRUE,
+                P_GeneralText->GetText(403),
                 &hintsArray[7]
 
             }, // show battle interface
 
         };
 
-        for (auto &i : checkboxesInfo)
+        for (auto &info : checkboxesInfo)
         {
-            page->AddSetting(CheckBoxSetting::Create(i, pageItems));
+            page->CreateCheckBox(info);
         }
-
+        constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
         // combat speed switch panel
-        constexpr auto hintPtrs = [] {
-            std::array<DWORD, Switch10XPanel::BUTTONS_COUNT << 1> arr{};
+        std::string strHints[count];
+        const auto hintPtrs = [&strHints] {
+            std::array<DWORD, count> arr{};
 
-            for (size_t i = 0; i < 3; ++i)
-                arr[i] = 0x06A5704;
-            for (size_t i = 3; i < 7; ++i)
-                arr[i] = 0x06A570C;
-            for (size_t i = 7; i < arr.size(); ++i)
-                arr[i] = 0x06A5714;
+            for (size_t i = 0; i < count; i++)
+            {
+                libc::sprintf(h3_TextBuffer, ERA_OPT(combat, animationSpeed, hints) ".%d", i);
+                strHints[i] = h3_TextBuffer;
+                arr[i] = DWORD(strHints[i].c_str());
+            }
             return arr;
         }();
         constexpr int ySwitch = DLG_HEIGHT - Switch10XPanel::HEIGHT - 25;
@@ -517,32 +522,30 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             "combat_animation_speed",
             {x, ySwitch},
             itemId,
-            P_GeneralText->GetText(395),
-            &config.combatSpeed, //  H3CurrentAnimationSpeed::ADDRESS,
-            1,
+            &config.animationSpeed, //  H3CurrentAnimationSpeed::ADDRESS,
+            ERA_OPT(combat, animationSpeed, name),
             &hintPtrs[0] // music level switch panel
         };
-        itemId += Switch10XPanel::BUTTONS_COUNT;
-        page->AddSetting(Switch10XPanel::Create(switch10xPanelsInfo, pageItems));
+        itemId += count;
+        page->Create10XPanel(switch10xPanelsInfo);
 
         constexpr int rightX = DLG_RIGHT_PART_X_MARGIN;
 
         const auto healthBarValuePtr = HealthBarIsEnabledAddress();
-        const SettingsInfo healthBarcheckBoxInfo = {"system_health_bar_checkbox", {rightX, startY + 60}, itemId++,
-                                                    "health bar checkbox",        healthBarValuePtr,     TRUE};
+        const SettingsInfo healthBarcheckBoxInfo = {
+            "system_health_bar_checkbox", {rightX, startY + 60}, itemId++, healthBarValuePtr, "health bar checkbox",
+        };
         auto &info = instance->healthBarDlgInfo;
         info.healthBarValuePtr = healthBarValuePtr;
-        auto it = CheckBoxSetting::Create(healthBarcheckBoxInfo, pageItems);
+        auto it = page->CreateCheckBox(healthBarcheckBoxInfo);
         info.affectedCheckbox = it->checkBoxItem;
         info.callHealthBarDlg = &ShowHealthBarDlg;
         info.dlgValuePtr = &it->value.current;
-        page->AddSetting(it);
 
-        const SettingsInfo healtBarCaptionInfo = {"system_health_bar", {rightX, startY + 90}, itemId++, "health bar"};
-        auto button = CaptionButtonSetting::Create(healtBarCaptionInfo, SINGLE_BUTTON, pageItems);
+        const SettingsInfo healthBarCaptionInfo = {
+            "system_health_bar", {rightX, startY + 90}, itemId++, nullptr, "health bar"};
+        auto button = page->CreateCaption(healthBarCaptionInfo);
         button->SetOnChange(CallHealthBarDlg);
-        page->AddSetting(button);
-
         m_pages.Add(page);
     }
     InitDlgPages();
@@ -569,9 +572,12 @@ BOOL SystemOptionsDlg::OnCreate()
 }
 BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
 {
-
     const int itemId = msg.itemId;
-    if (msg.IsRightClick() && itemId)
+    if (itemId < 1)
+    {
+        return 1;
+    }
+    if (msg.IsRightClick())
     {
         auto it = GetH3DlgItem(itemId);
         if (it && it->GetRightClickHint())
@@ -580,8 +586,7 @@ BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
             return 0;
         }
     }
-
-    if (itemId && m_currentPage && m_currentPage->ProcessMessage(msg))
+    else if (m_currentPage && m_currentPage->ProcessMessage(msg))
     {
         // end processing if message was processed by page
         return 0;
@@ -598,23 +603,24 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
     {
     case ePageItemId::PAGE_ITEM_GENERAL:
     case ePageItemId::PAGE_ITEM_ADV_MAP:
-    case ePageItemId::PAGE_ITEM_COMBAT: {
-
+    case ePageItemId::PAGE_ITEM_COMBAT:
         SetActivePage(itemId - 1, TRUE);
-        return TRUE;
-    }
-    case target::PAGE_LOAD_GAME:
+        break;
+    case target::PAGE_LOAD_GAME: // these 3 reqquires user agreement
+    case target::PAGE_QUIT:      // since they can cause loss of unsaved progress
+    case target::PAGE_MAIN:
+        if (!H3Messagebox::Choice(P_GeneralText->GetText(580)))
+            break;
     case target::PAGE_SAVE_GAME:
     case target::PAGE_RESTART:
-    case target::PAGE_MAIN:
-    case target::PAGE_QUIT:
     case 30722:
+        this->resultItemId = itemId;
+        this->Stop();
         break;
     default:
-        return TRUE;
+        break;
     }
-    this->resultItemId = itemId;
-    this->Stop();
+
     return TRUE;
 }
 VOID SystemOptionsDlg::OnOK()
@@ -685,7 +691,16 @@ SystemOptionsDlg::~SystemOptionsDlg()
     }
     if (settingsChanged)
     {
-        CDECL_0(LONG, 0x0050C370); // j_WriteRegistry
+        const int newQuickCombatState = OriginalConfig::Get().quickCombat;
+        // if quick combat settings were changed
+        if (dlgCallSource == ADV_MAP && networkGame && quickCombatSettingState != newQuickCombatState)
+        {
+            P_Main->GetPlayer()->quickCombatEnabled = newQuickCombatState;
+            H3NetworkData<int> netMsg(-1, eNetwork::PLAYER_QUICK, newQuickCombatState);
+            netMsg.SendData(false);
+        }
+        AdditionalConfig::Save();
+        CDECL_0(LONG, 0x0050C370); // j_WriteRegistry -> save settings to heroes3.ini
     }
 
     instance = nullptr;

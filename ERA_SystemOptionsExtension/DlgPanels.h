@@ -8,15 +8,16 @@ struct SettingsInfo
     LPCSTR uuid;
     tagPOINT position;
     int firstItemId;
-    LPCSTR displayedName = nullptr;
     int *const valuePtr;
-    INT32 defaultValue;
+    LPCSTR displayedName = nullptr;
     const DWORD *hintsPointer = nullptr;
+    BOOL isBlocked = FALSE;
 };
 
 struct ISetting
 {
     static constexpr int WIDTH = 195;
+    static constexpr int TITLE_HEIGHT = 24;
     std::string uuid;
     tagPOINT position;
     struct Value
@@ -24,7 +25,7 @@ struct ISetting
         int *const valuePtr = nullptr;
         INT32 dlgStart = 0;
         INT32 current = 0;
-        const INT32 byDefault = 0;
+        const INT32 isBlocked = 0;
 
     } value;
     LPCSTR displayedName = nullptr;
@@ -49,12 +50,12 @@ struct ISetting
     virtual ~ISetting() {};
 
   public:
+    virtual void ClampValue() noexcept {};
+    virtual void SetVisible(const BOOL visible) noexcept {};
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept
     {
         return 0;
     }
-    virtual void SetVisible(const BOOL visible) noexcept {};
-    virtual void ClampValue() noexcept {};
 
   public:
     void SetOnChange(OnChangeCallback cb) noexcept
@@ -71,17 +72,17 @@ struct ISetting
   public:
     static H3DlgText *CreateTitle(int x, int &y, LPCSTR displayedText, H3Vector<H3DlgItem *> &itemsVec) noexcept
     {
-        constexpr int textFieldWidth = WIDTH;
-        auto titleItem =
-            H3DlgText::Create(x, y, textFieldWidth, 24, displayedText, NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, -1);
+        auto titleItem = H3DlgText::Create(x, y, WIDTH, TITLE_HEIGHT, EraJS::read(displayedText), NH3Dlg::Text::MEDIUM,
+                                           eTextColor::HIGHLIGHT, -1);
         itemsVec += titleItem;
-        y += 30;
+        y += TITLE_HEIGHT;
         return titleItem;
     }
 };
 
 struct CaptionButtonSetting : public ISetting
 {
+    static constexpr LPCSTR SINGLE_BUTTON = "GSPsys0.def";
     H3DlgCaptionButton *captionButton{};
 
     CaptionButtonSetting(const SettingsInfo &info) : ISetting(info.position, {})
@@ -103,18 +104,19 @@ struct CaptionButtonSetting : public ISetting
     }
 
   public:
-    static CaptionButtonSetting *Create(const SettingsInfo &info, LPCSTR defName,
-                                        H3Vector<H3DlgItem *> &itemsVec) noexcept;
+    static CaptionButtonSetting *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec,
+                                        H3LoadedPcx16 *background) noexcept;
 };
 
 struct CheckBoxSetting : public ISetting
 {
-    static constexpr int TEXT_WIDGET_OFFSET = 36;
+    static constexpr int CHECKBOX_WIDTH = 32;
+    static constexpr int CHECKBOX_HEIGHT = 24;
     H3DlgDef *checkBoxItem{};
     H3DlgText *checkBoxText{};
 
   public:
-    CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.defaultValue})
+    CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.isBlocked})
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId;
@@ -127,9 +129,18 @@ struct CheckBoxSetting : public ISetting
     {
         value.current = Clamp(0, value.current, 1);
     }
+    virtual void SetVisible(const BOOL visible) noexcept override
+    {
+        if (visible && value.isBlocked)
+        {
+            auto &it = checkBoxItem;
+            it->SendCommand(5, 4096);
+            it->SendCommand(6, 2);
+        }
+    }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
-        if (msg.IsLeftDown() && msg.itemId == checkBoxItem->GetID())
+        if (msg.IsLeftDown() && msg.itemId == checkBoxItem->GetID() && !value.isBlocked)
         {
             Toggle();
             return TRUE;
@@ -148,7 +159,8 @@ struct CheckBoxSetting : public ISetting
         checkBoxItem->Draw();
         checkBoxItem->Refresh();
     }
-    static CheckBoxSetting *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
+    static CheckBoxSetting *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec,
+                                   H3LoadedPcx16 *background) noexcept;
 };
 struct RadioButtonInfo
 {
@@ -163,8 +175,11 @@ struct RadioButtonInfo
 };
 struct RadioButtonSetting : public ISetting
 {
-    static constexpr int TEXT_WIDGET_OFFSET = 24;
-    H3Vector<H3DlgDefButton *> checkBoxes;
+    static constexpr int CHECKBOX_WIDTH = 32;
+    static constexpr int CHECKBOX_HEIGHT = 24;
+
+    H3Vector<H3DlgDef *> checkBoxes;
+    H3DlgText *checkBoxText{};
 
   public:
     RadioButtonSetting(const RadioButtonInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0})
@@ -179,7 +194,8 @@ struct RadioButtonSetting : public ISetting
     {
         return 0;
     }
-    static RadioButtonSetting *Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
+    static RadioButtonSetting *Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec,
+                                      H3LoadedPcx16 *background) noexcept;
 };
 
 struct SwitchPanelInfo
@@ -214,6 +230,24 @@ struct SwitchPanel : public ISetting
     virtual ~SwitchPanel() {};
 
   public:
+    virtual void ClampValue() noexcept override
+    {
+        if (const auto size = switchButtons.Size())
+        {
+            value.current = Clamp(0 - valueOffset, value.current, size - 1 - valueOffset);
+        }
+    }
+    virtual void SetVisible(const BOOL visible) noexcept override
+    {
+        if (!visible)
+            return;
+        const auto size = switchButtons.Size();
+        for (size_t i = 0; i < size; i++)
+        {
+            switchButtons[i]->SendCommand(6, 4096);
+        }
+        switchButtons[value.current]->SendCommand(5, 4096);
+    }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
         if (msg.IsLeftClick() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
@@ -240,27 +274,10 @@ struct SwitchPanel : public ISetting
         }
         return 0;
     }
-    virtual void ClampValue() noexcept override
-    {
-        if (const auto size = switchButtons.Size())
-        {
-            value.current = Clamp(0 - valueOffset, value.current, size - 1 - valueOffset);
-        }
-    }
-    virtual void SetVisible(const BOOL visible) noexcept override
-    {
-        if (!visible)
-            return;
-        const auto size = switchButtons.Size();
-        for (size_t i = 0; i < size; i++)
-        {
-            switchButtons[i]->SendCommand(6, 4096);
-        }
-        switchButtons[value.current]->SendCommand(5, 4096);
-    }
 
   public:
-    static SwitchPanel *Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
+    static SwitchPanel *Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem *> &itemsVec,
+                               H3LoadedPcx16 *background) noexcept;
 };
 struct Switch10XPanel : public ISetting
 {
@@ -271,7 +288,7 @@ struct Switch10XPanel : public ISetting
     H3DlgDef *switchButtons[BUTTONS_COUNT]{};
 
   public:
-    Switch10XPanel(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, 0})
+    Switch10XPanel(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.isBlocked})
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + BUTTONS_COUNT - 1;
@@ -318,5 +335,6 @@ struct Switch10XPanel : public ISetting
     }
 
   public:
-    static Switch10XPanel *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept;
+    static Switch10XPanel *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec,
+                                  H3LoadedPcx16 *background) noexcept;
 };

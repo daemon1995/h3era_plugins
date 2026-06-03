@@ -13,10 +13,11 @@ constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 
 _LHF_(AdvMapSettingsDlg)
 {
+    // return EXEC_DEFAULT;
+
     SystemOptionsDlg dlg;
     dlg.Start();
 
-    // H3Dlg dlg(200, 200);
     c->return_address = 0x041ABDD;
     return NO_EXEC_DEFAULT;
 }
@@ -31,6 +32,21 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     //  THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
     combatManager->Refresh(1, 0, 1);
     dlg.networkGame = -1;
+    using target = Era::EGameMenuTarget;
+    target menuTarget = target(dlg.ResultItemId());
+    switch (menuTarget)
+    {
+    case target::PAGE_RESTART:
+        if (!H3Messagebox::Choice(P_GeneralText->GetText(69)))
+            break;
+    case target::PAGE_LOAD_GAME:
+    case target::PAGE_MAIN:
+    case target::PAGE_QUIT:
+        Era::FastQuitToGameMenu(menuTarget);
+        break;
+    default:
+        break;
+    }
     // THISCALL_1(void, h->GetDefaultFunc(), combatManager);
 }
 
@@ -63,8 +79,8 @@ PATCH_DECLATOR(cmbspd, CombatSpeed)
 _ERH_(OnAfterWog)
 {
     _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
-    // _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
-
+    _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
+    AdditionalConfig::Load();
     using namespace mainmenu;
 
     const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);

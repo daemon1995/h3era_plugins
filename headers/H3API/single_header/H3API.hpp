@@ -16119,7 +16119,7 @@ namespace h3
 		 * @param compress_data Whether the data should be compressed before sending it over
 		 * @param size You can specify whether you want to send fewer bytes than the full size, -1 sends full size
 		 */
-		_H3API_ VOID SendData(BOOL compress_data, INT32 size = -1);
+		_H3API_ INT32 SendData(BOOL compress_data, INT32 size = -1);
 	};
 
 #pragma pack(pop) /* align-4 */
@@ -16131,7 +16131,7 @@ namespace h3
 	}
 
 	template<typename T>
-	_H3API_ VOID h3::H3NetworkData<T>::SendData(BOOL compress_data, INT32 size /*= -1*/)
+	_H3API_ INT32 h3::H3NetworkData<T>::SendData(BOOL compress_data, INT32 size /*= -1*/)
 	{
 		if (size != -1)
 			bufferSize = size;
@@ -19329,8 +19329,10 @@ namespace h3
 	protected:
 		/** @brief [38]*/
 		UINT32 mssHandle;
+	public:
 		/** @brief [3C]*/
 		DWORD driver;
+	protected:
 		/** @brief [40]*/
 		HANDLE hSamples[15];
 		/** @brief [7C]*/
@@ -20362,11 +20364,12 @@ namespace h3
 		_H3API_ LPCSTR     GetHint() const;
 		_H3API_ LPCSTR     GetRightClickHint() const;
 		_H3API_ VOID       SetHint(LPCSTR msg);
+		_H3API_ VOID       SetRightClickHint(LPCSTR msg);
+		_H3API_ VOID       SetHints(LPCSTR shortTipText, LPCSTR rightClickHint, BOOL allocateMemory);
 		_H3API_ UINT16     GetID() const;
 		_H3API_ VOID       ParentRedraw(); // redraw through parent
 		_H3API_ VOID       ColorToPlayer(INT8 player);
 		_H3API_ VOID       SendCommand(INT32 command, INT32 parameter);
-		_H3API_ VOID       SetHints(LPCSTR shortTipText, LPCSTR rightClickHint, BOOL allocateMemory);
 		_H3API_ VOID       DrawTempFrame(INT thickness, BYTE r, BYTE g, BYTE b) const;
 		_H3API_ VOID       DrawTempFrame(INT thickness, const H3RGB888& color) const;
 
@@ -35377,6 +35380,10 @@ namespace h3
     _H3API_ VOID H3DlgItem::SetHint(LPCSTR msg)
     {
         hint = msg;
+    }
+    _H3API_ VOID H3DlgItem::SetRightClickHint(LPCSTR msg)
+    {
+        rightClickHint = msg;
     }
     _H3API_ UINT16 H3DlgItem::GetID() const
     {

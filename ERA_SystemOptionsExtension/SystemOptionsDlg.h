@@ -17,12 +17,6 @@ enum eDlgCallSource : INT
     SWAP_MGR = 5
 };
 
-struct CallBackInfo
-{
-    H3DlgCaptionButton *bttn = nullptr;
-    void *callbackFuncion;
-};
-
 enum ePageItemId : INT
 {
     PAGE_ITEM_GENERAL = 1,
@@ -38,8 +32,7 @@ enum ePageIndex : INT
     PAGE_INDEX_COMBAT,
     PAGE_INDEX_ERA_MODS,
 };
-typedef void(__stdcall *CallLocaleSelectionDlg_t)(const int x, const int y, const int style);
-typedef const char *(__stdcall *GetDisplayedName_t)();
+
 class SystemOptionsDlg : public H3Dlg
 {
   public:
@@ -82,6 +75,8 @@ class SystemOptionsDlg : public H3Dlg
             id = captionBttn->GetID();
             captionBttn->SetClickFrame(1);
             firstItemId = id * 100 + 100;
+            return;
+
             if (background = H3LoadedPcx16::Create(DLG_WIDTH, DLG_HEIGHT))
             {
                 const int playerColor = P_Game->GetPlayerID();
@@ -105,7 +100,44 @@ class SystemOptionsDlg : public H3Dlg
                 for (int i = setting->firstClickableItemId; i <= setting->lastClickableItemId; ++i)
                     settingsByItemId[i] = setting;
         }
-        virtual void SetVisible(const BOOL state)
+
+        Switch10XPanel *Create10XPanel(const SettingsInfo &info)
+        {
+            auto panel = Switch10XPanel::Create(info, items, background);
+            if (panel)
+            {
+                AddSetting(panel);
+            }
+            return panel;
+        }
+        SwitchPanel *CreateSwitchPanel(const SwitchPanelInfo &info)
+        {
+            auto panel = SwitchPanel::Create(info, items, background);
+            if (panel)
+            {
+                AddSetting(panel);
+            }
+            return panel;
+        }
+        CheckBoxSetting *CreateCheckBox(const SettingsInfo &info)
+        {
+            auto checkBox = CheckBoxSetting::Create(info, items, background);
+            if (checkBox)
+            {
+                AddSetting(checkBox);
+            }
+            return checkBox;
+        }
+        CaptionButtonSetting *CreateCaption(const SettingsInfo &info)
+        {
+            auto checkBox = CaptionButtonSetting::Create(info, items, background);
+            if (checkBox)
+            {
+                AddSetting(checkBox);
+            }
+            return checkBox;
+        }
+        void SetVisible(const BOOL state)
         {
             if (state == isVisible)
                 return;
@@ -139,7 +171,7 @@ class SystemOptionsDlg : public H3Dlg
   protected:
     BOOL isInCombat = false;
     BOOL settingsChanged = false;
-    BOOL quickCombatSettingState = IntAt(0x6987CC);
+    BOOL quickCombatSettingState = OriginalConfig::Get().quickCombat;
 
     // static constexpr const char* m_iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
     eDlgCallSource dlgCallSource = UNKNOWN;
@@ -150,6 +182,8 @@ class SystemOptionsDlg : public H3Dlg
   public:
     static struct LanguageDlgCallInfo
     {
+        typedef void(__stdcall *CallLocaleSelectionDlg_t)(int, int, int);
+        typedef const char *(__stdcall *GetDisplayedName_t)();
         HMODULE hModule = nullptr;
         CallLocaleSelectionDlg_t callLocaleSelectionDlg = nullptr;
         GetDisplayedName_t getDisplayedName = nullptr;
@@ -205,8 +239,13 @@ class SystemOptionsDlg : public H3Dlg
                 m_currentPage->SetVisible(FALSE);
 
             page->SetVisible(TRUE);
-			int yOffset = DLG_TOPSETTINGS_MARGIN;
-            page->background->DrawToPcx16(0, yOffset, FALSE, background,0, yOffset);
+            int yOffset = DLG_TOPSETTINGS_MARGIN;
+            if (page->background)
+            {
+                page->background->DrawToPcx16(0, yOffset, FALSE, background, 0, yOffset);
+                libc::memcpy(background->buffer, page->background->buffer, background->buffSize);
+            }
+
             m_currentPage = page;
             if (redraw)
                 Redraw();
@@ -216,6 +255,11 @@ class SystemOptionsDlg : public H3Dlg
     BOOL ReadIniDlgSettings() noexcept;
     BOOL WriteIniDlgSettings() const noexcept;
 
+  public:
+    INT32 ResultItemId() const noexcept
+    {
+        return resultItemId;
+    }
     // hooks
   public:
     static void __stdcall CallWogOptionsDlg();
@@ -225,13 +269,20 @@ class SystemOptionsDlg : public H3Dlg
     static inline void AdjustSoundVolume(ISetting *sender, const DWORD addres) noexcept
     {
         auto &value = sender->value;
-        *value.valuePtr = value.current;
-
         auto snd = P_SoundManager->Get();
-        BOOL32 backup = snd->clickSoundVar;
-        snd->clickSoundVar = 1;
-        THISCALL_1(VOID, 0x059A4B0, snd);
-        snd->clickSoundVar = backup;
+
+        if (*value.valuePtr || snd->driver)
+        {
+            *value.valuePtr = value.current;
+            BOOL32 backup = snd->clickSoundVar;
+            snd->clickSoundVar = 1;
+            THISCALL_1(VOID, 0x059A4B0, snd);
+            snd->clickSoundVar = backup;
+        }
+        else
+        {
+            H3Messagebox(P_GeneralText->GetText(152));
+        }
     }
     static void OnMusicVolumeChanged(ISetting *sender)
     {
