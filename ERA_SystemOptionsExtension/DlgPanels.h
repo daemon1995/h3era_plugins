@@ -10,31 +10,32 @@ struct SettingsInfo
     int firstItemId;
     int *const valuePtr;
     LPCSTR displayedName = nullptr;
-    const DWORD *hintsPointer = nullptr;
+    LPCSTR rmcHint = nullptr;
     BOOL isBlocked = FALSE;
 };
 
 struct ISetting
 {
-    static constexpr int WIDTH = 195;
-    static constexpr int TITLE_HEIGHT = 24;
-    std::string uuid;
-    tagPOINT position;
     struct Value
     {
         int *const valuePtr = nullptr;
         INT32 dlgStart = 0;
         INT32 current = 0;
-        const INT32 isBlocked = 0;
+        const BOOL isBlocked = FALSE;
+    };
+    using OnChangeCallback = std::function<void(ISetting *sender)>;
+    static constexpr int WIDTH = 195;
+    static constexpr int TITLE_HEIGHT = 24;
+    std::string uuid;
+    tagPOINT position;
 
-    } value;
+    struct Value value;
     LPCSTR displayedName = nullptr;
     H3DlgText *titleItem = nullptr;
     int firstClickableItemId = -1;
     int lastClickableItemId = -1;
 
   protected:
-    using OnChangeCallback = std::function<void(ISetting *sender)>;
     OnChangeCallback m_onChange = nullptr;
 
   public:
@@ -113,7 +114,6 @@ struct CheckBoxSetting : public ISetting
     static constexpr int CHECKBOX_WIDTH = 32;
     static constexpr int CHECKBOX_HEIGHT = 24;
     H3DlgDef *checkBoxItem{};
-    H3DlgText *checkBoxText{};
 
   public:
     CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.isBlocked})
@@ -170,7 +170,7 @@ struct RadioButtonInfo
     int *const valuePtr;
     const UINT size;
     const LPCSTR *textPtrs = nullptr;
-    const DWORD *hintsPointer = nullptr;
+    const DWORD *rmcHint = nullptr;
     const BOOL canBeDisabled = FALSE;
 };
 struct RadioButtonSetting : public ISetting
@@ -207,7 +207,7 @@ struct SwitchPanelInfo
     const int valuesOffset = 0;
     const UINT size;
     const LPCSTR *defNamesPtr = nullptr;
-    const DWORD *hintsPointer = nullptr;
+    const DWORD *rmcHint = nullptr;
 };
 
 struct SwitchPanel : public ISetting

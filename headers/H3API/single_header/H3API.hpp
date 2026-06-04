@@ -19348,7 +19348,9 @@ namespace h3
 		/** @brief [8C]*/
 		BOOL32 MP3Playing;
 		/** @brief [A0]*/
-		_RTL_CRITICAL_SECTION rtlSection[3];
+		_RTL_CRITICAL_SECTION section_sound_call;
+		_RTL_CRITICAL_SECTION section_MP3_change;
+		_RTL_CRITICAL_SECTION section_MP3_name_change;
 	public:
 		_H3API_ VOID ClickSound(); // modeled after sub_00456540
 		_H3API_ VOID Play(H3WavFile* wav);

@@ -34,8 +34,13 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
     // split dlg by half with thick frame
     const auto color = FRAME_COLOR;
     background->DrawThickFrame(DLG_WIDTH >> 1, DLG_TOPSETTINGS_MARGIN, 1,
-                               DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1, color);
+                               DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN + 15, 1, color);
 
+    for (size_t i = 0; i < 255; i += 10)
+    {
+        // background->DarkenArea(16, 16 +i, DLG_WIDTH - 32, 10, i);
+    }
+    //    background->DrawShadow(16,16 +35, DLG_WIDTH - 32, DLG_HEIGHT>>1);
     // create buttons for loading/saving/restarting/quitting the game
     CreateGameControlButtons();
 
@@ -48,7 +53,7 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
     // draw frames over page caption buttons and copy background to pages' backgrounds
     for (const auto &page : m_pages)
     {
-        DrawThickFrameOverItem(background, page->captionBttn);
+        // DrawThickFrameOverItem(background, page->captionBttn);
     }
     for (const auto &page : m_pages)
     {
@@ -85,7 +90,7 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
     constexpr int buttonHeight = 48 + 10;
     const size_t startIndex = isMainMenu ? 5 : 0;
     constexpr int frameY = DLG_HEIGHT - buttonHeight * 3 - 20;
-    // draw a horizontal thick frame over genera buttons
+    // draw a horizontal thick frame over general buttons
     background->DrawThickFrame(DLG_WIDTH >> 1, frameY, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_COLOR);
 
     for (size_t i = startIndex; i < length; i++)
@@ -105,6 +110,8 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         if (button.disableOnCreation)
         {
             bttn->Disable();
+            //  reinterpret_cast<H3DlgDef*>(bttn)->SendCommand(5, 4096);
+            // bttn->Cast<H3DlgDef>()->SendCommand(6, 2);
         }
     }
 }
@@ -143,7 +150,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         page->CreateSwitchPanel(switchPanelsInfo);
         itemId += videoDefNum;
         constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
-        constexpr DWORD checkboxesHintPtrs[] = {0x06A7744, 0x06A775C, 0x06A7764};
+        LPCSTR checkboxesHintPtrs[] = {ERA_OPT(system, videoSubtitles, hint), ERA_OPT(system, buildingOutlines, hint),
+                                       ERA_OPT(system, spellBookAnimation, hint)};
 
         const SettingsInfo checkboxesInfo[] = {
             {
@@ -152,9 +160,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 {checkboxX, startY + 90},
                 itemId++,
                 &config.videoSubtitles, //  0x06987D0,
-                P_GeneralText->GetText(577),
-                &checkboxesHintPtrs[0],
-                TRUE
+                ERA_OPT(system, videoSubtitles, name),
+                ERA_OPT(system, videoSubtitles, hint),
 
             }, // show tips
             {
@@ -162,11 +169,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "system_building_outlines",
                 {checkboxX, startY + 120},
                 itemId++,
-                &config.townOutlines, // 0x06987D4,
-                P_GeneralText->GetText(578),
-
-                &checkboxesHintPtrs[1],
-                TRUE
+                &config.buildingOutlines, // 0x06987D4,
+                ERA_OPT(system, buildingOutlines, name),
+                ERA_OPT(system, buildingOutlines, hint),
 
             }, // show tips in battle
             {
@@ -174,10 +179,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "system_spell_book_animation",
                 {checkboxX, startY + 150},
                 itemId++,
-                &config.animateSpellBook, // 0x06987D8,
-                P_GeneralText->GetText(579),
-                &checkboxesHintPtrs[2],
-                TRUE,
+                &config.spellBookAnimation, // 0x06987D8,
+                ERA_OPT(system, spellBookAnimation, name),
+                ERA_OPT(system, spellBookAnimation, hint),
 
             } // show tips in battle
         };
@@ -188,7 +192,12 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         // CREATE CALLBACK BUTTONS
         // wog option buttons:
-        const SettingsInfo wogOptionCaption = {"system_wog_option", {checkboxX, 300}, itemId++, 0, "wog options", 0};
+        const SettingsInfo wogOptionCaption = {"system_wog_option",
+                                               {checkboxX, 300},
+                                               itemId++,
+                                               0,
+                                               ERA_OPT(system, wogOptions, name),
+                                               ERA_OPT(system, wogOptions, hint)};
 
         auto captionSetting = page->CreateCaption(wogOptionCaption);
         captionSetting->SetOnChange([](ISetting *) { CallWogOptionsDlg(); });
@@ -240,8 +249,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 {panelX, 120},
                 itemId,
                 &config.musicVolume,
-                ERA_OPT(system, musicLevel, name),
-                &hintPtrs[0]
+                ERA_OPT(system, musicVolume, name),
+                ERA_OPT(system, musicVolume, hint),
 
             }, // music level switch panel
             {
@@ -249,9 +258,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "system_sound_effects_level",
                 {panelX, 190},
                 itemId + Switch10XPanel::BUTTONS_COUNT,
-                &config.soundVolume, // 0x06987B4,
-                ERA_OPT(system, soundEffectsLevel, name),
-                &hintPtrs[10]
+                &config.effectsVolume, // 0x06987B4,
+                ERA_OPT(system, effectsVolume, name),
+                ERA_OPT(system, effectsVolume, hint),
 
             } // sound effects level switch panel
         };
@@ -354,7 +363,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 itemId++,
                 &config.showRoute, // 0x06987C4,
                 ERA_OPT(map, showRoute, name),
-                &checkboxesHintPtrs[0]
+                ERA_OPT(map, showRoute, hint),
 
             }, // show tips
             {
@@ -364,7 +373,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 itemId++,
                 &config.moveReminder, //  0x06987C8,
                 ERA_OPT(map, moveReminder, name),
-                &checkboxesHintPtrs[1],
+                ERA_OPT(map, moveReminder, hint),
                 P_Game->inTutorial
 
             }, // show tips in battle
@@ -375,7 +384,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 itemId++,
                 &config.autoSave, //   0x06987C0,
                 ERA_OPT(map, autoSave, name),
-                &checkboxesHintPtrs[2]
+                ERA_OPT(map, autoSave, hint),
 
             }, // show tips in battle
         };
@@ -400,29 +409,14 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         int itemId = page->firstItemId;
         auto &pageItems = page->items;
 
-        // LEFT DLG PART
-        DWORD hintsArray[] = {
-            0x06A572C, // show combat show_grid
-            0x06A5734, // show movements_shadow
-            0x06A573C, // cursor_shadow
-            0x06A56DC, // show combat messages
-            0x06A56E4, // show combat animations
-            0x06A56EC, // show floating combat text
-            0x06A56F4, // show ballista range
-            0x06A56FC, // show battle interface
-        };
-
-
-        
-
         const SettingsInfo checkboxesInfo[] = {
             {
                 "show_grid",
                 {x, startY},
                 itemId++,
-                &config.showEntireGrid, // 0x069880C,
-                P_GeneralText->GetText(406),
-                &hintsArray[0]
+                &config.showHexGrid, // 0x069880C,
+                ERA_OPT(combat, showHexGrid, name),
+                ERA_OPT(combat, showHexGrid, hint),
 
             },
             {
@@ -430,9 +424,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "movements_shadow",
                 {x, startY + 30},
                 itemId++,
-                &config.combatShowMovementShadow, //  0x0698814,
-                P_GeneralText->GetText(407),
-                &hintsArray[1]
+                &config.movementShadow, //  0x0698814,
+                ERA_OPT(combat, movementShadow, name),
+                ERA_OPT(combat, movementShadow, hint)
 
             }, // show movements_shadow
             {
@@ -440,9 +434,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 "cursor_shadow",
                 {x, startY + 60},
                 itemId++,
-                &config.combatShowCursorShadow, //  0x0698810,
-                P_GeneralText->GetText(408),
-                &hintsArray[2]
+                &config.cursorShadow, //  0x0698810,
+                ERA_OPT(combat, cursorShadow, name),
+                ERA_OPT(combat, cursorShadow, hint)
 
             },
             {
@@ -451,8 +445,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 {x, startY + 120},
                 itemId++,
                 &config.autoCreatures, //  0x06987E4,
-                P_GeneralText->GetText(400),
-                &hintsArray[3]
+                ERA_OPT(combat, autoCreatures, name),
+                ERA_OPT(combat, autoCreatures, hint)
 
             }, // show combat messages
             {
@@ -461,8 +455,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 {x, startY + 150},
                 itemId++,
                 &config.autoSpells, //   0x06987E8,
-                P_GeneralText->GetText(401),
-                &hintsArray[4]
+                ERA_OPT(combat, autoSpells, name),
+                ERA_OPT(combat, autoSpells, hint)
 
             }, // show combat animations
             {
@@ -471,8 +465,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 {x, startY + 180},
                 itemId++,
                 &config.autoCatapult, //  0x06987EC,
-                P_GeneralText->GetText(402),
-                &hintsArray[5]
+                ERA_OPT(combat, autoCatapult, name),
+                ERA_OPT(combat, autoCatapult, hint)
+                //
 
             }, // show floating combat text
             {
@@ -481,8 +476,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 {x, startY + 210},
                 itemId++,
                 &config.autoBallista, //  0x06987F0,
-                P_GeneralText->GetText(153),
-                &hintsArray[6]
+                ERA_OPT(combat, autoBallista, name),
+                ERA_OPT(combat, autoBallista, hint)
 
             },
             {
@@ -491,8 +486,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 {x, startY + 240},
                 itemId++,
                 &config.autoFirstAidTent, // 0x06987F4,
-                P_GeneralText->GetText(403),
-                &hintsArray[7]
+                ERA_OPT(combat, autoFirstAidTent, name),
+                ERA_OPT(combat, autoFirstAidTent, hint)
 
             }, // show battle interface
 
@@ -506,9 +501,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         // combat speed switch panel
         std::string strHints[count];
         const auto hintPtrs = [&strHints] {
-            std::array<DWORD, count> arr{};
+            std::array<DWORD, Switch10XPanel::BUTTONS_COUNT> arr{};
 
-            for (size_t i = 0; i < count; i++)
+            for (size_t i = 0; i < Switch10XPanel::BUTTONS_COUNT; i++)
             {
                 libc::sprintf(h3_TextBuffer, ERA_OPT(combat, animationSpeed, hints) ".%d", i);
                 strHints[i] = h3_TextBuffer;
@@ -524,7 +519,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             itemId,
             &config.animationSpeed, //  H3CurrentAnimationSpeed::ADDRESS,
             ERA_OPT(combat, animationSpeed, name),
-            &hintPtrs[0] // music level switch panel
+            0,
         };
         itemId += count;
         page->Create10XPanel(switch10xPanelsInfo);

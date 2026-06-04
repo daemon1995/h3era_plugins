@@ -149,7 +149,7 @@ class SystemOptionsDlg : public H3Dlg
                 state ? it->ShowActivate() : it->HideDeactivate();
             }
             // deactivate bttn click
-            // captionBttn->SendCommand(6 - (state), 4096);
+            captionBttn->SendCommand(6 - (state), 4096);
 
             for (auto &it : settings)
             {
@@ -177,7 +177,6 @@ class SystemOptionsDlg : public H3Dlg
     eDlgCallSource dlgCallSource = UNKNOWN;
     SettingsPage *m_currentPage = nullptr;
     H3Vector<SettingsPage *> m_pages;
-    H3Vector<H3DlgCaptionButton *> captionButtons;
 
   public:
     static struct LanguageDlgCallInfo
@@ -232,6 +231,8 @@ class SystemOptionsDlg : public H3Dlg
     }
     void SetActivePage(const UINT pageId, const BOOL redraw)
     {
+        if (m_pages.Size() <= pageId)
+            return;
         auto &page = m_pages[pageId];
         if (m_currentPage != page)
         {
@@ -245,7 +246,6 @@ class SystemOptionsDlg : public H3Dlg
                 page->background->DrawToPcx16(0, yOffset, FALSE, background, 0, yOffset);
                 libc::memcpy(background->buffer, page->background->buffer, background->buffSize);
             }
-
             m_currentPage = page;
             if (redraw)
                 Redraw();

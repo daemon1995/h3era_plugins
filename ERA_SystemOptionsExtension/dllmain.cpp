@@ -28,9 +28,10 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     dlg.networkGame = 0;
     dlg.Start();
     combatManager->doNotDrawShade = false;
+
     THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
-    //  THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
     combatManager->Refresh(1, 0, 1);
+
     dlg.networkGame = -1;
     using target = Era::EGameMenuTarget;
     target menuTarget = target(dlg.ResultItemId());
@@ -50,7 +51,7 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     // THISCALL_1(void, h->GetDefaultFunc(), combatManager);
 }
 
-int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
+int __fastcall HandleSystemDlgStart(void *_msg)
 {
     if (const auto msg = static_cast<H3Msg *>(_msg))
     {
@@ -79,14 +80,14 @@ PATCH_DECLATOR(cmbspd, CombatSpeed)
 _ERH_(OnAfterWog)
 {
     _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
-    _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
+    // _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
     AdditionalConfig::Load();
     using namespace mainmenu;
 
     const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
 
     auto UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
-    MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &CurrentDlg_HandleLocaleDlgStart};
+    MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &HandleSystemDlgStart};
     MainMenu_RegisterWidget(langInfo);
     return;
 }

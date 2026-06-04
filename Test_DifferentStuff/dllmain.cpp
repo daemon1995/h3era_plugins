@@ -46,7 +46,6 @@ template <typename... Ints> void Debug(Ints... values) noexcept
 
 _ERH_(OnGameEnter)
 {
-    // ShowCreatureTableDialog();
 
     return;
     TestDlg dlg(500, 500);
@@ -196,7 +195,6 @@ DWORD __stdcall DefButtonSetClicked(HiHook *hook, H3DlgDefButton *button, H3Msg 
 DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
 {
 
-   
     // PlaySoundInThread();
     if (button->IsPressed() && button->GetParent() == P_WindowManager->lastDlg)
     {
@@ -275,15 +273,68 @@ int __stdcall H3ScenarioDlg_UpdateMapInfo(HiHook *h, H3SelectScenarioDialog *dlg
     Debug(1);
     return result;
 }
+
+_LHF_(HdWog_hooh)
+{
+
+    return EXEC_DEFAULT;
+}
+
 _LHF_(HooksInit)
 {
+
+    // read hd mod ini
+    if (0)
+    {
+        std::string iniSettings = globalPatcher->VarGetValue<LPCSTR>("HD.Dir.Settings", "Default value");
+
+        iniSettings.append("\\era1.ini");
+
+        // Era::ReadStrFromIni("<UI.Ext.ScenarioMgr.Settings>", "", iniSettings.c_str(), h3_TextBuffer);
+        //  MessageBoxA(nullptr, h3_TextBuffer, "Value from hota", MB_OK);
+
+        HDIni *hdIni = globalPatcher->VarGetValue<HDIni *>("HD.Ini.Main", nullptr);
+
+
+        if (hdIni)
+        {
+            auto entry = hdIni->FindEntry("UI.Ext.ScenarioMgr.Settings");
+            MessageBoxA(nullptr, std::to_string((*entry)[1]->data.value).c_str(), "Value from ini", MB_OK);
+
+
+            //   hdIni->entries[]
+            for (size_t i = 0; i < hdIni->lineEntries; i++)
+            {
+                auto entries = hdIni->entries[i];
+                if (entries)
+                {
+                    //  Era::WriteStrToIni(entries->data.text, "1", "MAIN", iniSettings.c_str());
+                }
+            }
+            //  Era::SaveIni(iniSettings.c_str());
+            return EXEC_DEFAULT;
+            for (auto i = hdIni->begin(); i != hdIni->end(); i++)
+            {
+                MessageBoxA(nullptr, std::to_string(i->data.value).c_str(), "Value from ini", MB_OK);
+            }
+        }
+        iniSettings = globalPatcher->VarGetValue<LPCSTR>("HD.Dir.Settings", "Default value");
+        iniSettings.append("\\era.ini");
+        // iniSettings = "_HD3_Data/Settings/era.ini";
+
+        //  iniSettings = "_HD3_Data/Settings/era.ini";
+
+        Era::ReadStrFromIni("test", "", iniSettings.c_str(), h3_TextBuffer);
+
+        MessageBoxA(nullptr, h3_TextBuffer, "Value from ini", MB_OK);
+    }
     auto snd = P_SoundManager->Get();
     if (0)
     {
         _PI->WriteHiHook(0x0584820, THISCALL_, H3ScenarioDlg_UpdateMapInfo);
     }
     // double click on sound
-    if (1)
+    if (0)
     {
         buttonClickSound2 = H3WavFile::Load("BUTTON2.WAV");
         if (buttonClickSound2)
@@ -316,7 +367,6 @@ _LHF_(HooksInit)
     }
 
     // _PI->WriteLoHook(0x049CDF6, MapTeamOpen);
-    Era::RegisterHandler(OnGameEnter, "OnGameEnter");
 
     /* _PI->WriteDword(0x0541013 + 2, 808);
      _PI->WriteDword(0x0541159 + 1, 196);*/
@@ -355,26 +405,6 @@ _LHF_(HooksInit)
     // return EXEC_DEFAULT;
 }
 
-// static _LHF_(NewScenarioDlg_Create);
-//
-// void __stdcall NewScenarioDlg_Create(HiHook *hook, H3SelectScenarioDialog *dlg, H3Msg *msg)
-//{
-//     THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
-//
-//     H3DlgCaptionButton *bttn = dlg->GetCaptionButton(4444);
-//     if (bttn)
-//     {
-//         bttn->AddHotkey(h3::eVKey::H3VK_W);
-//     }
-//     bttn = dlg->CreateCaptionButton(bttn->GetX(), bttn->GetY() + 45, bttn->GetWidth(), bttn->GetHeight(), 4500,
-//                                     bttn->GetDef()->GetName(), "ERA options", h3::NH3Dlg::Text::SMALL, 0);
-//     if (bttn)
-//     {
-//         bttn->SetClickFrame(1);
-//         bttn->AddHotkey(h3::eVKey::H3VK_E);
-//     }
-// }
-void ChangeCreatureTable(int target, const char *buf);
 void EraJSTest()
 {
     std::string str = EraJS::read("era.wog.notification.0.name");
@@ -395,7 +425,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         globalPatcher = GetPatcher();
         _PI = globalPatcher->CreateInstance(dllText::instanceName);
         Era::ConnectEra(hModule, dllText::instanceName);
-
+        _REH_(OnAfterWog);
+        _REH_(OnGameEnter);
         _PI->WriteLoHook(0x4EEAF2, HooksInit);
 
     case DLL_THREAD_ATTACH:
