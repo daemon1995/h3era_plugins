@@ -79,6 +79,8 @@
     <ClInclude Include="CombatSpeed.h" />
     <ClInclude Include="DlgPanels.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="MapScroller.h" />
+    <ClInclude Include="SoundSettings.h" />
     <ClInclude Include="structures.h" />
     <ClInclude Include="SystemOptionsDlg.h" />
   </ItemGroup>
@@ -88,6 +90,7 @@
     <ClCompile Include="CombatSpeed.cpp" />
     <ClCompile Include="DlgPanels.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="MapScroller.cpp" />
     <ClCompile Include="SystemOptionsDlg.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

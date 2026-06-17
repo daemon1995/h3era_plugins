@@ -29,6 +29,12 @@
     <ClInclude Include="structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MapScroller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -47,6 +53,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CombatSpeed.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MapScroller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

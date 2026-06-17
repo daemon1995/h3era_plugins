@@ -329,6 +329,12 @@ _LHF_(HooksInit)
         MessageBoxA(nullptr, h3_TextBuffer, "Value from ini", MB_OK);
     }
     auto snd = P_SoundManager->Get();
+    snd->ClickSound();
+    //"HD.Version.CStr"
+    LPCSTR hdVersionStr = globalPatcher->VarGetValue<LPCSTR>("HD.Version.CStr", nullptr);
+    //"HD.Version.Dword"
+    DWORD hdVersionDword = globalPatcher->VarGetValue<DWORD>("HD.Version.Dword", 0);
+
     if (0)
     {
         _PI->WriteHiHook(0x0584820, THISCALL_, H3ScenarioDlg_UpdateMapInfo);

@@ -1,4 +1,5 @@
 #pragma once
+
 #pragma pack(push, 4)
 struct OriginalConfig
 {
@@ -24,7 +25,7 @@ struct OriginalConfig
     int autoCatapult;
     int autoBallista;
     int autoFirstAidTent;
-    int preferBink;
+    int videoQuality;
     int mainGameShowMenu;
     int screenX;
     int screenY;
@@ -73,9 +74,10 @@ struct AdditionalConfig
     };
 
     SettingsEntry backgroundSound{"Sound.BackgroundLooping", 1, 1};
-    SettingsEntry doubleClickSplit{"Sound.ButtonDoubleClick", 0, 0};
+    SettingsEntry buttonSoundSplit{"Sound.ButtonSoundSplit", 0, 0};
     SettingsEntry quickAutoResolve{"Combat.QuickAutoResolve", 0, 0};
-    SettingsEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 0, 0};
+    SettingsEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 1, 1};
+    SettingsEntry smoothMapScroll{"Map.SmoothScroll", 1, 1};
 
   private:
     inline SettingsEntry *begin() noexcept

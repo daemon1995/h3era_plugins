@@ -21738,7 +21738,7 @@ namespace h3
         INT32                          gameVersion;            /**< @brief [08]*/
         H3RmgMap                        map;                    /**< @brief [0C]*/
         H3Vector<H3RmgObjectProperties>      objectsTxt;             /**< @brief [24] all of the the object properties*/
-        H3Vector<H3RmgObjectProperties**>    objectPrototypes[232];  /**< @brief [34] object properties classified by type*/
+        H3Vector<H3RmgObjectPropsRef*>    objectPrototypes[232];  /**< @brief [34] object properties classified by type*/
         H3Vector<h3unk*>               _f_0EB4;                /**< @brief [EB4]*/
         H3Vector<H3RmgObject*>          positions;              /**< @brief [EC4]*/
         h3unk32                        progress;               /**< @brief [ED4]*/

@@ -74,31 +74,32 @@ int __fastcall HandleSystemDlgStart(void *_msg)
         static className &className::Get();                                                                            \
     };                                                                                                                 \
     }
+PATCH_DECLATOR(scroll, MapScroller)
 PATCH_DECLATOR(cmbhints, CombatHints)
 PATCH_DECLATOR(cmbspd, CombatSpeed)
 
 _ERH_(OnAfterWog)
 {
-    _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
-    // _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
-    AdditionalConfig::Load();
     using namespace mainmenu;
-
     const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
-
-    auto UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
-    MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &HandleSystemDlgStart};
+    constexpr auto UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
+    MenuWidgetInfo langInfo{ UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &HandleSystemDlgStart };
     MainMenu_RegisterWidget(langInfo);
+
     return;
 }
 
 _LHF_(HooksInit)
 {
     cmbhints::CombatHints::Get();
-
+    scroll::MapScroller::Get();
     // if original combat speed patch is not present, apply it
     if (globalPatcher->GetInstance("BattleSpeed") == nullptr)
         cmbspd::CombatSpeed::Get();
+    _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
+    // _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
+    AdditionalConfig::Load();
+
 
     return EXEC_DEFAULT;
 }

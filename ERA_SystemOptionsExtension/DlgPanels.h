@@ -5,13 +5,28 @@
 
 struct SettingsInfo
 {
-    LPCSTR uuid;
-    tagPOINT position;
-    int firstItemId;
-    int *const valuePtr;
+    LPCSTR uuid = nullptr;
+    tagPOINT position = {};
+    int firstItemId = 0;
+    int *const valuePtr = 0;
     LPCSTR displayedName = nullptr;
-    LPCSTR rmcHint = nullptr;
+    union {
+        LPCSTR rmcHint;
+        const LPCSTR *rmcHints = nullptr;
+    };
     BOOL isBlocked = FALSE;
+};
+
+struct SwitchPanelInfo
+{
+    tagPOINT position = {};
+    const int firstItemId = 0;
+    LPCSTR displayedName = nullptr;
+    int *const valuePtr = 0;
+    const UINT defsNum = 0;
+    const LPCSTR *defNamesPtrs = nullptr;
+    const LPCSTR *rmcHints = nullptr;
+    const int valuesOffset = 0;
 };
 
 struct ISetting
@@ -122,7 +137,13 @@ struct CheckBoxSetting : public ISetting
         lastClickableItemId = info.firstItemId;
         ClampValue();
     }
-    virtual ~CheckBoxSetting() {};
+    virtual ~CheckBoxSetting()
+    {
+        if (!value.isBlocked && value.valuePtr && *value.valuePtr != value.dlgStart)
+        {
+            TriggerChange();
+        }
+    }
 
   public:
     virtual void ClampValue() noexcept override
@@ -158,6 +179,7 @@ struct CheckBoxSetting : public ISetting
         P_SoundManager->ClickSound();
         checkBoxItem->Draw();
         checkBoxItem->Refresh();
+        // TriggerChange();
     }
     static CheckBoxSetting *Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec,
                                    H3LoadedPcx16 *background) noexcept;
@@ -198,18 +220,6 @@ struct RadioButtonSetting : public ISetting
                                       H3LoadedPcx16 *background) noexcept;
 };
 
-struct SwitchPanelInfo
-{
-    tagPOINT position;
-    const int firstItemId;
-    LPCSTR displayedName;
-    int *const valuePtr;
-    const int valuesOffset = 0;
-    const UINT size;
-    const LPCSTR *defNamesPtr = nullptr;
-    const DWORD *rmcHint = nullptr;
-};
-
 struct SwitchPanel : public ISetting
 {
     static constexpr int HEIGHT = 50;
@@ -218,14 +228,13 @@ struct SwitchPanel : public ISetting
     int valueOffset = 0;
 
   public:
-    // const SwitchPanelInfo info;
     SwitchPanel(const SwitchPanelInfo &info)
         : ISetting(info.position, {info.valuePtr, 0, 0, 0}), valueOffset(info.valuesOffset)
     {
         value.dlgStart += valueOffset;
         value.current += valueOffset;
         firstClickableItemId = info.firstItemId;
-        lastClickableItemId = info.firstItemId + info.size - 1;
+        lastClickableItemId = info.firstItemId + info.defsNum - 1;
     }
     virtual ~SwitchPanel() {};
 
@@ -234,7 +243,7 @@ struct SwitchPanel : public ISetting
     {
         if (const auto size = switchButtons.Size())
         {
-            value.current = Clamp(0 - valueOffset, value.current, size - 1 - valueOffset);
+            // value.current = Clamp(0 - valueOffset, value.current, size - 1 - valueOffset);
         }
     }
     virtual void SetVisible(const BOOL visible) noexcept override
@@ -246,7 +255,7 @@ struct SwitchPanel : public ISetting
         {
             switchButtons[i]->SendCommand(6, 4096);
         }
-        switchButtons[value.current]->SendCommand(5, 4096);
+        switchButtons[value.current - valueOffset]->SendCommand(5, 4096);
     }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
@@ -263,9 +272,9 @@ struct SwitchPanel : public ISetting
             oldButton->Draw();
             oldButton->Refresh();
             //  ClampValue();
-            value.current = buttonIndex - valueOffset;
+            value.current = buttonIndex + valueOffset;
 
-            auto &newButton = switchButtons[value.current];
+            auto &newButton = switchButtons[buttonIndex];
             newButton->SendCommand(5, 4096);
             newButton->Draw();
             newButton->Refresh();
@@ -283,7 +292,7 @@ struct Switch10XPanel : public ISetting
 {
     static constexpr int BUTTONS_COUNT = 10;
     static constexpr int HEIGHT = 60;
-    static constexpr LPCSTR bgPcxPath = "BattleSpeed.pcx";
+    static constexpr LPCSTR bgPcxPath = "GSP10pnl.pcx";
     H3DlgPcx *backgroundPcx{};
     H3DlgDef *switchButtons[BUTTONS_COUNT]{};
 

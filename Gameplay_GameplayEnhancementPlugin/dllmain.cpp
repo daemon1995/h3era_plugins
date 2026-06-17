@@ -77,7 +77,7 @@ PATCH_DECLATOR(advMapHints, AdventureMapHints)
 _LHF_(HooksInit)
 {
 
-    PATCH_GETTER(scroll, MapScroller);
+    // PATCH_GETTER(scroll, MapScroller);
     PATCH_GETTER(graphics, GraphicsEnhancements);
     // PATCH_GETTER(cmbhints, CombatHints);
     PATCH_GETTER(features, GameplayFeature);

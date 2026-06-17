@@ -9,12 +9,12 @@
 enum eDlgCallSource : INT
 {
     UNKNOWN = -1,
-    ADV_MAP = 0,
-    MAIN_MENU = 1,
-    COMBAT = 2,
-    TOWN_SCREEN = 3,
-    HERO_SCREEN = 4,
-    SWAP_MGR = 5
+    MAIN_MENU,
+    ADV_MAP,
+    COMBAT,
+    TOWN_SCREEN,
+    HERO_SCREEN,
+    SWAP_MGR
 };
 
 enum ePageItemId : INT
@@ -179,18 +179,8 @@ class SystemOptionsDlg : public H3Dlg
     H3Vector<SettingsPage *> m_pages;
 
   public:
-    static struct LanguageDlgCallInfo
-    {
-        typedef void(__stdcall *CallLocaleSelectionDlg_t)(int, int, int);
-        typedef const char *(__stdcall *GetDisplayedName_t)();
-        HMODULE hModule = nullptr;
-        CallLocaleSelectionDlg_t callLocaleSelectionDlg = nullptr;
-        GetDisplayedName_t getDisplayedName = nullptr;
-        H3DlgCaptionButton *currentLanguageText = nullptr;
-    } languageDlgInfo;
     static struct HealthBarDlgCallInfo
     {
-        void(__stdcall *callHealthBarDlg)() = nullptr;
         H3DlgDef *affectedCheckbox = nullptr;
         BOOL *healthBarValuePtr = nullptr;
         INT *dlgValuePtr = nullptr;
@@ -212,8 +202,6 @@ class SystemOptionsDlg : public H3Dlg
     virtual BOOL OnCreate() override;
     virtual BOOL DialogProc(H3Msg &msg) override;
     virtual BOOL OnLeftClick(INT itemId, H3Msg &msg) override;
-    virtual VOID OnOK() override;
-    virtual VOID OnCancel() override;
 
   private:
     void CreateGameControlButtons() noexcept;
@@ -261,11 +249,12 @@ class SystemOptionsDlg : public H3Dlg
         return resultItemId;
     }
     // hooks
-  public:
+  private:
     static void __stdcall CallWogOptionsDlg();
     static void __stdcall CallSelectLanguageDlg();
+    static void __stdcall CallHealthBarDlg(ISetting *sender);
 
-  private:
+    static void SetPatches(PatcherInstance *_pi);
     static inline void AdjustSoundVolume(ISetting *sender, const DWORD addres) noexcept
     {
         auto &value = sender->value;
@@ -292,9 +281,7 @@ class SystemOptionsDlg : public H3Dlg
     {
         AdjustSoundVolume(sender, 0x059A3C0);
     }
-    static void __stdcall CallHealthBarDlg(ISetting *sender);
-
-    static void OnLanguageButtonClicked(ISetting *sender);
+    static void OnPlayerSpeedButtonClicked(ISetting *sender) {};
+    static void OnEnemySpeedButtonClicked(ISetting *sender);
     static void AfterDlgClose();
-    static void SetPatches(PatcherInstance *_pi);
 };

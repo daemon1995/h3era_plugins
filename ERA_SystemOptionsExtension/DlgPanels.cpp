@@ -171,18 +171,18 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     }
 
     // create text field with name of the setting
-    const auto size = info.size;
+    const auto size = info.defsNum;
     if (!size)
         return setting;
     itemY += 1;
-    auto def = H3LoadedDef::Load(info.defNamesPtr[0]);
+    auto def = H3LoadedDef::Load(info.defNamesPtrs[0]);
     itemsVec += CreateThickFrameAtPosition(itemX - 1, itemY - 1, WIDTH + 2, def->heightDEF + 2);
 
     const int padding = (WIDTH - size * def->widthDEF) / (size + 1);
     itemX += padding;
     for (size_t i = 0; i < size; i++)
     {
-        auto def = H3DlgDefButton::Create(itemX, itemY, info.firstItemId + i, info.defNamesPtr[i], 0, 1, FALSE, NULL);
+        auto def = H3DlgDefButton::Create(itemX, itemY, info.firstItemId + i, info.defNamesPtrs[i], 0, 1, FALSE, NULL);
         setting->switchButtons += def;
         itemsVec += def;
         itemX += def->GetWidth() + padding;
@@ -191,15 +191,14 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
 
     //  setting->switchButtons[setting->value.current + setting->valueOffset]->SendCommand(5, 4096);
 
-    if (!info.rmcHint)
+    if (!info.rmcHints)
         return setting;
-    return setting;
 
     for (size_t i = 0; i < size; i++)
     {
-        if (auto hint = info.rmcHint[i])
+        if (auto hint = info.rmcHints[i])
         {
-            setting->switchButtons[i]->SetRightClickHint(EraJS::read(ValueAt<LPCSTR>(hint)));
+            setting->switchButtons[i]->SetRightClickHint(EraJS::read(hint));
         }
     }
 
@@ -258,14 +257,13 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
     // display current selection
     setting->switchButtons[setting->value.current]->SendCommand(5, 4);
 
-    if (!info.rmcHint)
+    if (!info.rmcHints)
         return setting;
-    return setting;
 
     for (size_t i = 0; i < BUTTONS_COUNT; i++)
     {
-        if (auto hint = info.rmcHint[i])
-            setting->switchButtons[i]->SetRightClickHint(EraJS::read(LPCSTR(hint)));
+        if (auto hint = info.rmcHints[i])
+            setting->switchButtons[i]->SetRightClickHint(EraJS::read(hint));
     }
 
     return setting;

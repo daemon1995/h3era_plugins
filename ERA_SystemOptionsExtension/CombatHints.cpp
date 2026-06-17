@@ -25,34 +25,6 @@ CombatHints::CombatHints() : IGamePatch(globalPatcher->CreateInstance("EraPlugin
     settings.load();
 }
 
-DllExport BOOL SetState(int isEnabled, int isHeld) noexcept
-{
-    auto &settings = CombatHints::Get().settings;
-    bool settingsChanged = false;
-
-    if (settings.isEnabled != isEnabled)
-    {
-        settings.isEnabled = isEnabled;
-        settingsChanged = true;
-    }
-    if (settings.isHeld != isHeld)
-    {
-        settings.isHeld = isHeld;
-        settingsChanged = true;
-    }
-    return settingsChanged;
-}
-
-DllExport void GetState(int *isEnabled, int *isHeld) noexcept
-{
-    Era::RESIZE_ALG_DOWNSCALE;
-    auto &settings = CombatHints::Get().settings;
-    if (isEnabled)
-        *isEnabled = settings.isEnabled;
-    if (isHeld)
-        *isHeld = settings.isHeld;
-}
-
 CombatHints &CombatHints::Get()
 {
     if (instance == nullptr)
@@ -543,7 +515,7 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
     settings = incomingSettings;
     auto okBttn = CreateOK32Button(widthDlg - 100, heightDlg - 80);
     okBttn->AddHotkey(eVKey::H3VK_ESCAPE);
-    okBttn->AddHotkey(eVKey::H3VK_H);
+    // okBttn->AddHotkey(eVKey::H3VK_H);
 
     //  auto cmb = H3CombatManager::Get();
     LPCSTR barPcxName = ValueAt<LPCSTR>(0x0462F75 + 1); // cmb->cmNumWinPcxLoaded->GetName();
@@ -620,7 +592,8 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
                              eTextColor::WHITE, 17);
 
         // create default bttn
-        bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12, 13, false, -1);
+        bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12, 13, false,
+                                      eVKey::H3VK_D);
         if (bttn)
         {
             bttn->SetHint(text->dfltName);

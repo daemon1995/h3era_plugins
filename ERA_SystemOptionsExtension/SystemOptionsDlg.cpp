@@ -2,12 +2,23 @@
 
 #include "SystemOptionsDlg.h"
 
+namespace scroll
+{
+class MapScroller : public IGamePatch
+{
+  public:
+    static MapScroller &Get() noexcept;
+};
+
+} // namespace scroll
+
+#define ERA_CAPTION(page, field) EraJS::read("era.opt." #page "." #field)
 #define ERA_OPT(page, id, field) "era.opt." #page "." #id "." #field
+#define ERA_ARRAY_OPT(page, id, field, i) "era.opt." #page "." #id "." #field "." #i
 
 #define FRAME_COLOR H3RGB888(0x7A, 0x65, 0x48)
 
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
-SystemOptionsDlg::LanguageDlgCallInfo SystemOptionsDlg::languageDlgInfo;
 SystemOptionsDlg::HealthBarDlgCallInfo SystemOptionsDlg::healthBarDlgInfo;
 
 void __stdcall ShowHealthBarDlg();
@@ -122,28 +133,25 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
     {
         auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
-                                                      BIG_BUTTON, P_GeneralText->GetText(570), NH3Dlg::Text::BIG, 0, 0,
+                                                      BIG_BUTTON, ERA_CAPTION(system, name), NH3Dlg::Text::BIG, 0, 0,
                                                       false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
 
+        captionBttn->SetRightClickHint(ERA_CAPTION(system, hint));
         auto *page = new SettingsPage(captionBttn);
         int itemId = page->firstItemId;
         auto &pageItems = page->items;
 
         LPCSTR videoDefNames[] = {LPCSTR(DwordAt(0x05B2300 + 1)), LPCSTR(DwordAt(0x05B22A9 + 1))};
-        DWORD switchPanelHints[] = {0x06A774C, 0x06A7754};
+        LPCSTR switchPanelHints[] = {ERA_ARRAY_OPT(system, videoQuality, hints, 0),
+                                     ERA_ARRAY_OPT(system, videoQuality, hints, 1)};
         constexpr size_t videoDefNum = std::size(videoDefNames);
         constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
 
         const int startY = captionBttn->GetY() + captionBttn->GetHeight() + DLG_CAPTION_BUTTON_TOP_MARGIN;
 
         SwitchPanelInfo switchPanelsInfo = {
-            {switchPanelX, startY},
-            itemId,
-            P_GeneralText->GetText(22),
-            &config.preferBink,
-            0,
-            videoDefNum,
-            &videoDefNames[0],
+            {switchPanelX, startY}, itemId,      ERA_OPT(system, videoQuality, name),
+            &config.videoQuality,   videoDefNum, &videoDefNames[0],
             &switchPanelHints[0],
         };
 
@@ -156,7 +164,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         const SettingsInfo checkboxesInfo[] = {
             {
 
-                "system_video_subtitles",
+                "videoSubtitles",
                 {checkboxX, startY + 90},
                 itemId++,
                 &config.videoSubtitles, //  0x06987D0,
@@ -166,7 +174,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             }, // show tips
             {
 
-                "system_building_outlines",
+                "buildingOutlines",
                 {checkboxX, startY + 120},
                 itemId++,
                 &config.buildingOutlines, // 0x06987D4,
@@ -176,7 +184,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             }, // show tips in battle
             {
 
-                "system_spell_book_animation",
+                "spellBookAnimation",
                 {checkboxX, startY + 150},
                 itemId++,
                 &config.spellBookAnimation, // 0x06987D8,
@@ -202,65 +210,94 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         auto captionSetting = page->CreateCaption(wogOptionCaption);
         captionSetting->SetOnChange([](ISetting *) { CallWogOptionsDlg(); });
 
+        // language selection dlg
         auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
         if (plugin)
         {
-            auto &languageDlgInfo = instance->languageDlgInfo;
-            languageDlgInfo.hModule = plugin;
-            auto callDlg = reinterpret_cast<LanguageDlgCallInfo::CallLocaleSelectionDlg_t>(
-                GetProcAddress(plugin, "CallLocaleSelectionDlg"));
-            auto getTextName =
-                reinterpret_cast<LanguageDlgCallInfo::GetDisplayedName_t>(GetProcAddress(plugin, "GetDisplayedName"));
+            typedef void(__stdcall * CallLocaleSelectionDlg_t)(int, int, int);
+            typedef const char *(__stdcall * GetDisplayedName_t)();
 
-            if (callDlg && getTextName)
+            auto callDlg = reinterpret_cast<CallLocaleSelectionDlg_t>(GetProcAddress(plugin, "CallLocaleSelectionDlg"));
+            auto getDisplayedName = reinterpret_cast<GetDisplayedName_t>(GetProcAddress(plugin, "GetDisplayedName"));
+
+            if (callDlg && getDisplayedName)
             {
-                languageDlgInfo.callLocaleSelectionDlg = callDlg;
-                languageDlgInfo.getDisplayedName = getTextName;
                 const SettingsInfo selectLang = {
-                    "system_select_language", {checkboxX, 330}, itemId++, nullptr, getTextName(),
+                    "system_select_language", {checkboxX, 330}, itemId++, nullptr, getDisplayedName(),
                 };
 
                 captionSetting = page->CreateCaption(selectLang);
-                languageDlgInfo.currentLanguageText = captionSetting->captionButton;
-                captionSetting->SetOnChange([](ISetting *) { CallSelectLanguageDlg(); });
+                captionSetting->SetOnChange([callDlg, getDisplayedName](ISetting *setting) {
+                    auto it = dynamic_cast<CaptionButtonSetting *>(setting)->captionButton;
+                    callDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
+                    LPCSTR newLangDisplayedName = getDisplayedName();
+                    if (libc::strcmpi(it->GetText(), newLangDisplayedName) != 0)
+                    {
+                        it->SetText(newLangDisplayedName);
+                        it->Draw();
+                        it->Refresh();
+                    }
+                });
             }
         }
 
-        // language selection dlg:
-
         // RIGHT PAGE PART
+        constexpr int panelX = DLG_RIGHT_PART_X_MARGIN;
 
-        constexpr auto hintPtrs = [] {
-            std::array<DWORD, Switch10XPanel::BUTTONS_COUNT << 1> arr{};
+        const SettingsInfo rightCheckboxesInfo[] = {{
+                                                        additionalConfig.backgroundSound.keyName,
+                                                        {panelX, startY},
+                                                        itemId++,
+                                                        &additionalConfig.backgroundSound.value,
+                                                        ERA_OPT(system, backgroundSound, name),
+                                                        ERA_OPT(system, backgroundSound, hint),
+                                                    }, // show tips
+                                                    {
+                                                        additionalConfig.buttonSoundSplit.keyName,
+                                                        {panelX, startY + 30},
+                                                        itemId++,
+                                                        &additionalConfig.buttonSoundSplit.value,
+                                                        ERA_OPT(system, buttonSoundSplit, name),
+                                                        ERA_OPT(system, buttonSoundSplit, hint),
+                                                    }};
+        for (auto &info : rightCheckboxesInfo)
+        {
+            page->CreateCheckBox(info);
+        }
 
-            for (size_t i = 0; i < arr.size(); ++i)
+        constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
+        // combat speed switch panel
+        std::string strHints[count << 1];
+        auto hintPtrs = [&strHints, count] {
+            std::array<LPCSTR, 20> arr{};
+
+            for (size_t i = 0; i < count; i++)
             {
-                arr[i] = 0x06A761C + i * 8;
-            }
+                libc::sprintf(h3_TextBuffer, ERA_OPT(system, musicVolume, hints) ".%d", i);
+                strHints[i] = h3_TextBuffer;
+                arr[i] = strHints[i].c_str();
 
+                libc::sprintf(h3_TextBuffer, ERA_OPT(system, effectsVolume, hints) ".%d", i);
+                strHints[i + count] = h3_TextBuffer;
+                arr[i + count] = strHints[i + count].c_str();
+            }
             return arr;
         }();
 
-        constexpr int panelX = DLG_RIGHT_PART_X_MARGIN;
-        const SettingsInfo switch10PanelsInfo[] = {
+        SettingsInfo switch10PanelsInfo[] = {
             {
-
                 "system_music_level",
-                {panelX, 120},
+                {panelX, startY + 70},
                 itemId,
                 &config.musicVolume,
                 ERA_OPT(system, musicVolume, name),
-                ERA_OPT(system, musicVolume, hint),
-
             }, // music level switch panel
             {
-
                 "system_sound_effects_level",
-                {panelX, 190},
-                itemId + Switch10XPanel::BUTTONS_COUNT,
+                {panelX, startY + 140},
+                itemId + count,
                 &config.effectsVolume, // 0x06987B4,
                 ERA_OPT(system, effectsVolume, name),
-                ERA_OPT(system, effectsVolume, hint),
 
             } // sound effects level switch panel
         };
@@ -268,6 +305,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         for (size_t i = 0; i < std::size(switch10PanelsInfo); i++)
         {
+            auto &info = switch10PanelsInfo[i];
+            info.rmcHints = &hintPtrs[i * count];
             auto panel = page->Create10XPanel(switch10PanelsInfo[i]);
             panel->SetOnChange(funcs[i]);
         }
@@ -282,7 +321,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         auto captionBttn = H3DlgCaptionButton::Create(
             146 + 6 + 15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP, BIG_BUTTON,
-            ValueAt<LPCSTR>(0x06A6598), NH3Dlg::Text::BIG, 0, false, false, eVKey::H3VK_2, eTextColor::HIGHLIGHT);
+            ERA_CAPTION(map, name), NH3Dlg::Text::BIG, 0, false, false, eVKey::H3VK_2, eTextColor::HIGHLIGHT);
+        captionBttn->SetRightClickHint(ERA_CAPTION(map, hint));
+
         auto *page = new SettingsPage(captionBttn);
         AddItem(captionBttn);
 
@@ -292,59 +333,61 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
         const int startY = captionBttn->GetY() + captionBttn->GetHeight() + DLG_CAPTION_BUTTON_TOP_MARGIN;
 
-        LPCSTR playerSpeedDefNames[] = {LPCSTR(DwordAt(0x005B1EEF + 1)), LPCSTR(DwordAt(0x005B1F43 + 1)),
-                                        LPCSTR(DwordAt(0x005B1F97 + 1)), LPCSTR(DwordAt(0x005B1FEB + 1))};
-        LPCSTR enemySpeedDefNames[] = {LPCSTR(DwordAt(0x05B2042 + 1)), LPCSTR(DwordAt(0x05B2099 + 1)),
-                                       LPCSTR(DwordAt(0x05B20F0 + 1)), LPCSTR(DwordAt(0x05B2147 + 1))};
-        LPCSTR mapScrollDefNames[] = {LPCSTR(DwordAt(0x05B21A1 + 1)), LPCSTR(DwordAt(0x05B21F8 + 1)),
-                                      LPCSTR(DwordAt(0x05B224F + 1))};
-        DWORD switchPanelHints[] = {0x06A76D4, 0x06A76DC, 0x06A76E4, 0x06A76EC, 0x06A76F4, 0x06A76FC,
-                                    0x06A7704, 0x06A770C, 0x06A7714, 0x06A771C, 0x06A7724};
+        LPCSTR playerSpeedDefNames[] = {ValueAt<LPCSTR>(0x005B1EEF + 1), ValueAt<LPCSTR>(0x005B1F43 + 1),
+                                        ValueAt<LPCSTR>(0x005B1F97 + 1), ValueAt<LPCSTR>(0x005B1FEB + 1)};
+        LPCSTR enemySpeedDefNames[] = {ValueAt<LPCSTR>(0x05B2042 + 1), ValueAt<LPCSTR>(0x05B2099 + 1),
+                                       ValueAt<LPCSTR>(0x05B20F0 + 1), ValueAt<LPCSTR>(0x05B2147 + 1)};
+        LPCSTR mapScrollDefNames[] = {ValueAt<LPCSTR>(0x05B21A1 + 1), ValueAt<LPCSTR>(0x05B21F8 + 1),
+                                      ValueAt<LPCSTR>(0x05B224F + 1)};
+        LPCSTR switchPanelHints[] = {
+            ERA_ARRAY_OPT(map, playerSpeed, hints, 0), ERA_ARRAY_OPT(map, playerSpeed, hints, 1),
+            ERA_ARRAY_OPT(map, playerSpeed, hints, 2), ERA_ARRAY_OPT(map, playerSpeed, hints, 3),
+
+            ERA_ARRAY_OPT(map, enemySpeed, hints, 0),  ERA_ARRAY_OPT(map, enemySpeed, hints, 1),
+            ERA_ARRAY_OPT(map, enemySpeed, hints, 2),  ERA_ARRAY_OPT(map, enemySpeed, hints, 3),
+
+            ERA_ARRAY_OPT(map, scrollSpeed, hints, 0), ERA_ARRAY_OPT(map, scrollSpeed, hints, 1),
+            ERA_ARRAY_OPT(map, scrollSpeed, hints, 2)};
 
         constexpr size_t playerDefNum = std::size(playerSpeedDefNames);
         constexpr size_t enemyDefNum = std::size(enemySpeedDefNames);
         constexpr size_t mapScrollDefNum = std::size(mapScrollDefNames);
         SwitchPanelInfo switchPanelsInfo[] = {
-            {
-
-                {switchPanelX, startY},
-                itemId,
-                P_GeneralText->GetText(571),
-                &config.playerSpeed, //(int*)0x06987AC,
-                0,
-                playerDefNum,
-                &playerSpeedDefNames[0],
-                &switchPanelHints[0]
-
-            },
-            {
-
-                {switchPanelX, startY + 70},
-                itemId + playerDefNum,
-                P_GeneralText->GetText(572),
-                &config.enemySpeed, // 0x06987A8,
-                0,
-                enemyDefNum,
-                &enemySpeedDefNames[0],
-                &switchPanelHints[playerDefNum]
-
-            },
-            {
-
-                {switchPanelX, startY + 140},
-                itemId + playerDefNum + enemyDefNum,
-                P_GeneralText->GetText(573),
-                &config.mapScrollSpeed, // 0x06987DC,
-                0,
-                mapScrollDefNum,
-                &mapScrollDefNames[0],
-                &switchPanelHints[playerDefNum + enemyDefNum]
-
-            },
+            {{switchPanelX, startY},
+             itemId,
+             ERA_OPT(map, playerSpeed, name), //  P_GeneralText->GetText(571),
+             &config.playerSpeed,             //(int*)0x06987AC,
+             playerDefNum,
+             &playerSpeedDefNames[0],
+             &switchPanelHints[0],
+             0},
+            {{switchPanelX, startY + 70},
+             itemId + playerDefNum,
+             ERA_OPT(map, enemySpeed, name), //    P_GeneralText->GetText(572),
+             &config.enemySpeed,             // 0x06987A8,
+             enemyDefNum,
+             &enemySpeedDefNames[0],
+             &switchPanelHints[playerDefNum],
+             0},
+            {{switchPanelX, startY + 140},
+             itemId + playerDefNum + enemyDefNum,
+             ERA_OPT(map, scrollSpeed, name), //     P_GeneralText->GetText(573),
+             &config.mapScrollSpeed,          // 0x06987DC,
+             mapScrollDefNum,
+             &mapScrollDefNames[0],
+             &switchPanelHints[playerDefNum + enemyDefNum]},
         };
+        constexpr size_t switchPanelNum = std::size(switchPanelsInfo);
+        void (*funcs[switchPanelNum])(ISetting *) = {OnPlayerSpeedButtonClicked, OnEnemySpeedButtonClicked, nullptr};
+        for (size_t i = 0; i < switchPanelNum; i++)
+        {
+            auto &info = switchPanelsInfo[i];
+            auto panel = page->CreateSwitchPanel(info);
+            panel->SetOnChange(funcs[i]);
+        }
+
         for (auto &info : switchPanelsInfo)
         {
-            page->CreateSwitchPanel(info);
         }
 
         itemId += playerDefNum + enemyDefNum + mapScrollDefNum;
@@ -355,7 +398,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                             DWORD(ERA_OPT(map, moveReminder, hint)),
                                             DWORD(ERA_OPT(map, autoSave, hint))};
 
-        const SettingsInfo checkboxesInfo[] = {
+        SettingsInfo checkboxesInfo[] = {
             {
 
                 "adventure_show_route",
@@ -387,19 +430,36 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 ERA_OPT(map, autoSave, hint),
 
             }, // show tips in battle
+            {
+
+                "SmoothScroll",
+                {checkboxX, checkboxY + 120},
+                itemId++,
+                &additionalConfig.smoothMapScroll.value, //   0x06987C0,
+                ERA_OPT(map, smoothScroll, name),
+                ERA_OPT(map, smoothScroll, hint),
+
+            }, // show tips in battle
         };
+
         for (auto &info : checkboxesInfo)
         {
             page->CreateCheckBox(info);
         }
-
+        auto &smoothScroll = *page->settings.Last();
+        smoothScroll->SetOnChange(
+            [](ISetting *setting) { scroll::MapScroller::Get().SetEnabled(setting->value.current); });
         m_pages.Add(page);
     }
+
+    // COMBAT PAGE
 
     {
         auto captionBttn = H3DlgCaptionButton::Create(
             (146 + 6 << 1) + 15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT, BIG_BUTTON,
-            P_GeneralText->GetText(394), NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_3, eTextColor::HIGHLIGHT);
+            ERA_CAPTION(combat, name), NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_3, eTextColor::HIGHLIGHT);
+        captionBttn->SetRightClickHint(ERA_CAPTION(combat, hint));
+
         auto page = new SettingsPage(captionBttn);
         AddItem(captionBttn);
 
@@ -500,45 +560,53 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
         // combat speed switch panel
         std::string strHints[count];
-        const auto hintPtrs = [&strHints] {
-            std::array<DWORD, Switch10XPanel::BUTTONS_COUNT> arr{};
+        auto hintPtrs = [&strHints] {
+            std::array<LPCSTR, Switch10XPanel::BUTTONS_COUNT> arr{};
 
             for (size_t i = 0; i < Switch10XPanel::BUTTONS_COUNT; i++)
             {
                 libc::sprintf(h3_TextBuffer, ERA_OPT(combat, animationSpeed, hints) ".%d", i);
                 strHints[i] = h3_TextBuffer;
-                arr[i] = DWORD(strHints[i].c_str());
+                arr[i] = strHints[i].c_str();
             }
             return arr;
         }();
         constexpr int ySwitch = DLG_HEIGHT - Switch10XPanel::HEIGHT - 25;
 
-        const SettingsInfo switch10xPanelsInfo{
+        SettingsInfo switch10xPanelsInfo{
             "combat_animation_speed",
             {x, ySwitch},
             itemId,
             &config.animationSpeed, //  H3CurrentAnimationSpeed::ADDRESS,
             ERA_OPT(combat, animationSpeed, name),
-            0,
         };
+        switch10xPanelsInfo.rmcHints = &hintPtrs[0];
+
         itemId += count;
         page->Create10XPanel(switch10xPanelsInfo);
 
         constexpr int rightX = DLG_RIGHT_PART_X_MARGIN;
 
         const auto healthBarValuePtr = HealthBarIsEnabledAddress();
-        const SettingsInfo healthBarcheckBoxInfo = {
-            "system_health_bar_checkbox", {rightX, startY + 60}, itemId++, healthBarValuePtr, "health bar checkbox",
-        };
+        const SettingsInfo healthBarcheckBoxInfo = {"system_health_bar_checkbox",
+                                                    {rightX, startY + 60},
+                                                    itemId++,
+                                                    healthBarValuePtr,
+                                                    ERA_OPT(combat, healthBar, name),
+                                                    ERA_OPT(combat, healthBar, hint),
+                                                    P_Game->inTutorial};
         auto &info = instance->healthBarDlgInfo;
         info.healthBarValuePtr = healthBarValuePtr;
-        auto it = page->CreateCheckBox(healthBarcheckBoxInfo);
-        info.affectedCheckbox = it->checkBoxItem;
-        info.callHealthBarDlg = &ShowHealthBarDlg;
-        info.dlgValuePtr = &it->value.current;
+        auto healthBarcheckBox = page->CreateCheckBox(healthBarcheckBoxInfo);
+        info.affectedCheckbox = healthBarcheckBox->checkBoxItem;
+        info.dlgValuePtr = &healthBarcheckBox->value.current;
 
-        const SettingsInfo healthBarCaptionInfo = {
-            "system_health_bar", {rightX, startY + 90}, itemId++, nullptr, "health bar"};
+        const SettingsInfo healthBarCaptionInfo = {"system_health_bar",
+                                                   {rightX, startY + 90},
+                                                   itemId++,
+                                                   nullptr,
+                                                   ERA_OPT(combat, healthBar, button),
+                                                   ERA_OPT(combat, healthBar, hint)};
         auto button = page->CreateCaption(healthBarCaptionInfo);
         button->SetOnChange(CallHealthBarDlg);
         m_pages.Add(page);
@@ -565,6 +633,7 @@ BOOL SystemOptionsDlg::OnCreate()
     SetActivePage(pageIndex, FALSE);
     return 1;
 }
+
 BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
 {
     const int itemId = msg.itemId;
@@ -618,14 +687,7 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
 
     return TRUE;
 }
-VOID SystemOptionsDlg::OnOK()
-{
-    return VOID();
-}
-VOID SystemOptionsDlg::OnCancel()
-{
-    return VOID();
-}
+
 void __stdcall SystemOptionsDlg::CallWogOptionsDlg()
 {
     const BOOL allowWogOptionsChanges = instance->dlgCallSource == MAIN_MENU && !instance->networkGame;
@@ -638,19 +700,7 @@ void __stdcall SystemOptionsDlg::CallWogOptionsDlg()
     jumpOverMouseCheck->Destroy();
     IntAt(0x291A430) = storeValue;
 }
-void __stdcall SystemOptionsDlg::CallSelectLanguageDlg()
-{
-    auto &info = instance->languageDlgInfo;
-    auto it = info.currentLanguageText;
-    info.callLocaleSelectionDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
-    LPCSTR newLangDisplayedName = info.getDisplayedName();
-    if (libc::strcmpi(it->GetText(), newLangDisplayedName) != 0)
-    {
-        it->SetText(newLangDisplayedName);
-        it->Draw();
-        it->Refresh();
-    }
-}
+
 void __stdcall SystemOptionsDlg::CallHealthBarDlg(ISetting *sender)
 {
     auto &info = instance->healthBarDlgInfo;
@@ -666,6 +716,10 @@ void __stdcall SystemOptionsDlg::CallHealthBarDlg(ISetting *sender)
         it->Refresh();
     }
 }
+void SystemOptionsDlg::OnEnemySpeedButtonClicked(ISetting *sender)
+{
+    OriginalConfig::Get().blackoutComputer = sender->value.current == 5;
+}
 void SystemOptionsDlg::AfterDlgClose()
 {
 }
@@ -680,6 +734,10 @@ SystemOptionsDlg::~SystemOptionsDlg()
             {
                 *(value.valuePtr) = value.current;
                 settingsChanged = TRUE;
+                // if (dynamic_cast<CheckBoxSetting *>(setting))
+                //{
+                //     setting->TriggerChange();
+                // }
             }
         }
         delete page;
