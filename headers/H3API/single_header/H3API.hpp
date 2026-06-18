@@ -10008,8 +10008,8 @@ namespace h3
             LPCSTR const ARTIFACT_DEF     = (LPCSTR(0x660214));  // "artifact.def" 44x44
             LPCSTR const ARTS_ICON        = (LPCSTR(0x683178));  // AltArt.def 64x32
             LPCSTR const CREATURE_SMALL   = (LPCSTR(0x660180));  // "CPRSMALL.def" 32x32
-            LPCSTR const DIBOXBACK        = (LPCSTR(0x66025C));  // "diboxback.pcx" 256x256
-            LPCSTR const DLGBOX           = (LPCSTR(0x66024C));  // "dialogbox.def" 64x64
+            LPCSTR const DIBOXBACK        = (LPCSTR(0x66025C));  // "diboxbck.pcx" 256x256
+            LPCSTR const DLGBOX           = (LPCSTR(0x66024C));  // "dialgbox.def" 64x64
             LPCSTR const HERO_CADRE       = (LPCSTR(0x65F3DC));  // hpsyyy.pcx 48x32
             LPCSTR const PSKILL_42        = (LPCSTR(0x679D9C));  // "PSKIL42.def" 42x42
             LPCSTR const RESOURCE_DEF     = (LPCSTR(0x660224));  // "resource.def" 32x32

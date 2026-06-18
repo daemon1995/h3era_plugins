@@ -182,7 +182,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         std::swap(createdWidgets[hideWidgetInd], createdWidgets[0]);
     }
 
-    LPCSTR assetName = isBigAsset ? assets::BIG_BUTTON : assets::SMALL_BUTTON;
+    LPCSTR assetName = isBigAsset ? assets::PAGE_CAPTION_DEF_NAME : assets::SMALL_BUTTON;
 
     const int gameWidth = H3GameWidth::Get();
     const int gameHeight = H3GameHeight::Get();

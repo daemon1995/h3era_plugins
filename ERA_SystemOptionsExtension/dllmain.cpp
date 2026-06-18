@@ -97,7 +97,7 @@ _LHF_(HooksInit)
     if (globalPatcher->GetInstance("BattleSpeed") == nullptr)
         cmbspd::CombatSpeed::Get();
     _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
-    // _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
+     _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
     AdditionalConfig::Load();
 
 

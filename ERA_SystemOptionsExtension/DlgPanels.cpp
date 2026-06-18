@@ -1,6 +1,5 @@
 #include "DlgPanels.h"
 
-void DrawThickFrameOverItem(H3LoadedPcx16 *back, H3DlgItem *item);
 const H3RGB565 frameColor(0x7A, 0x65, 0x48);
 
 H3DlgFrame *CreateThickFrameOverItem(H3DlgItem *item)
@@ -36,14 +35,10 @@ CaptionButtonSetting *CaptionButtonSetting::Create(const SettingsInfo &info, H3V
     auto bttn = H3DlgCaptionButton::Create(x, y, info.firstItemId, def->GetName(), EraJS::read(info.displayedName),
                                            NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR);
     bttn->SetClickFrame(1);
-    if (background)
-    {
-        // DrawThickFrameOverItem(background, bttn);
-    }
+
     if (info.rmcHint)
-    {
         bttn->SetRightClickHint(EraJS::read(info.rmcHint));
-    }
+
     itemsVec += CreateThickFrameOverItem(bttn);
     itemsVec += bttn;
     setting->captionButton = bttn;
@@ -68,27 +63,23 @@ CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3Dl
     auto checkBox = H3DlgDef::Create(itemX + WIDTH - CHECKBOX_WIDTH, itemY, info.firstItemId,
                                      NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
     if (info.rmcHint)
-    {
         checkBox->SetRightClickHint(EraJS::read(info.rmcHint));
+
+    if (info.isBlocked)
+    {
+        checkBox->SendCommand(5, 4096);
+        checkBox->SendCommand(6, 2);
     }
+
     itemsVec += checkBox;
     setting->checkBoxItem = checkBox;
-
     setting->titleItem =
         H3DlgText::Create(itemX, itemY, WIDTH - CHECKBOX_WIDTH, CHECKBOX_HEIGHT, EraJS::read(info.displayedName),
                           NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
     itemsVec += setting->titleItem;
     return setting;
 }
-/**
- * Creates a RadioButtonSetting object based on the provided RadioButtonInfo.
- *
- * @param info The RadioButtonInfo object containing information about the radio button setting.
- * @param itemsVec A reference to a vector of H3DlgItem objects to store the created items.
- * @param background A pointer to a H3LoadedPcx16 object representing the background.
- *
- * @return A pointer to the created RadioButtonSetting object, or nullptr if memory allocation failed.
- */
+
 RadioButtonSetting *RadioButtonSetting::Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec,
                                                H3LoadedPcx16 *background) noexcept
 {
@@ -100,48 +91,38 @@ RadioButtonSetting *RadioButtonSetting::Create(const RadioButtonInfo &info, H3Ve
     int itemY = info.position.y;
 
     if (auto &text = info.displayedName)
-    {
         setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
-    }
-    // create code for checkboxes
 
+    // create code for checkboxes
     const int frameId = setting->value.current;
 
-    for (size_t i = 0; i < info.size; i++)
+    int itemId = info.firstItemId;
+    const UINT size = info.size;
+    const int selectedBoxId = setting->value.current - (info.requiresSelection ? 1 : 0);
+    for (size_t i = 0; i < size; i++)
     {
 
-        const int frameId = setting->value.current;
+        const BOOL8 frameId = i == selectedBoxId;
 
-        auto checkBox = H3DlgDef::Create(itemX + WIDTH - CHECKBOX_WIDTH, itemY, info.firstItemId,
+        auto checkBox = H3DlgDef::Create(itemX + WIDTH - CHECKBOX_WIDTH, itemY, itemId++,
                                          NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
-        if (info.rmcHint && *info.rmcHint)
-        {
-            checkBox->SetHint(EraJS::read(ValueAt<LPCSTR>(*info.rmcHint)));
-        }
-        itemsVec += checkBox;
         setting->checkBoxes += checkBox;
-
-        setting->checkBoxText =
-            H3DlgText::Create(itemX, itemY, WIDTH - CHECKBOX_WIDTH, CHECKBOX_HEIGHT, EraJS::read(info.displayedName),
+        auto text =
+            H3DlgText::Create(itemX, itemY, WIDTH - CHECKBOX_WIDTH, CHECKBOX_HEIGHT, EraJS::read(info.textPtrs[i]),
                               NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
-        itemsVec += (setting->checkBoxText);
+        setting->checkBoxTexts += text;
 
-        // auto& checkBox = setting->radioButtons[i];
-        //  setting->checkBoxItem = H3DlgDef::Create(x, y, info.displayedName);
-        // auto& checkBox = H3DlgDef::Create(itemX + WIDTH - TEXT_WIDGET_OFFSET, y, info.firstItemId,
-        //     NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
-        // if (info.rmcHint && *info.rmcHint)
-        //{
-        //     setting->checkBoxItem->SetHint(ValueAt<LPCSTR>(*info.rmcHint));
-        // }
-
-        // itemsVec.Add(setting->checkBoxItem);
-        //// x += TEXT_WIDGET_OFFSET;
-        // setting->checkBoxText =
-        //     H3DlgText::Create(x, y, WIDTH - TEXT_WIDGET_OFFSET, 24, info.displayedName, NH3Dlg::Text::MEDIUM,
-        //         eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
-        // itemsVec.Add(setting->checkBoxText);
+        itemsVec += text;
+        itemsVec += checkBox;
+        itemY += BASE_SETTINGS_Y_OFFSET;
     }
+
+    if (!info.rmcHints)
+        return setting;
+
+    for (size_t i = 0; i < size; i++)
+        if (auto hint = info.rmcHints[i])
+            setting->checkBoxes[i]->SetRightClickHint(EraJS::read(hint));
 
     return setting;
 }
@@ -162,7 +143,7 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     if (auto &text = info.displayedName)
     {
         setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
-        itemsVec += CreateThickFrameOverItem(setting->titleItem);
+        // itemsVec += CreateThickFrameOverItem(setting->titleItem);
 
         if (background)
         {
@@ -189,18 +170,14 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     }
     def->Dereference();
 
-    //  setting->switchButtons[setting->value.current + setting->valueOffset]->SendCommand(5, 4096);
+    setting->switchButtons[setting->value.current - setting->valueOffset]->SendCommand(5, 4096);
 
     if (!info.rmcHints)
         return setting;
 
     for (size_t i = 0; i < size; i++)
-    {
         if (auto hint = info.rmcHints[i])
-        {
             setting->switchButtons[i]->SetRightClickHint(EraJS::read(hint));
-        }
-    }
 
     return setting;
 }
@@ -214,25 +191,25 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
     if (!setting)
         return setting;
 
-    setting->position = info.position;
-
     int itemX = info.position.x;
     int itemY = info.position.y;
 
     // create text field with name of the setting
-    setting->titleItem = H3DlgText::Create(itemX, itemY, WIDTH, TITLE_HEIGHT, EraJS::read(info.displayedName),
-                                           NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, -1);
+    // setting->titleItem = H3DlgText::Create(itemX, itemY, WIDTH, TITLE_HEIGHT, EraJS::read(info.displayedName),
+    //                                       NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, -1);
 
-    auto frame = CreateThickFrameOverItem(setting->titleItem);
-    itemsVec.Add(frame);
+    // auto frame = CreateThickFrameOverItem(setting->titleItem);
+    // itemsVec.Add(frame);
+
+    setting->titleItem = CreateTitle(itemX, itemY, info.displayedName, itemsVec);
 
     if (background)
     {
         // DrawThickFrameOverItem(background, setting->titleItem);
     }
-    itemsVec += setting->titleItem;
+    // itemsVec += setting->titleItem;
 
-    itemY += 21;
+    //  itemY -= 4;
     // create background pcx
     setting->backgroundPcx = H3DlgPcx::Create(itemX, itemY, Switch10XPanel::bgPcxPath);
     if (background)
@@ -261,10 +238,8 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
         return setting;
 
     for (size_t i = 0; i < BUTTONS_COUNT; i++)
-    {
         if (auto hint = info.rmcHints[i])
             setting->switchButtons[i]->SetRightClickHint(EraJS::read(hint));
-    }
 
     return setting;
 }

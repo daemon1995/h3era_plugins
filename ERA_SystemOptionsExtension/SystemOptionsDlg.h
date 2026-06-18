@@ -47,7 +47,7 @@ class SystemOptionsDlg : public H3Dlg
     static constexpr float SETTINGS_VERSION = .1f;
 
   public:
-    static constexpr LPCSTR BIG_BUTTON = "GSPsys1.def";
+    static constexpr LPCSTR PAGE_CAPTION_DEF_NAME = "GSPsys1.def";
     static constexpr LPCSTR SINGLE_BUTTON = "GSPsys0.def";
 
     static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
@@ -128,6 +128,15 @@ class SystemOptionsDlg : public H3Dlg
             }
             return checkBox;
         }
+        RadioButtonSetting *CreateRadioBox(const RadioButtonInfo &info)
+        {
+            auto checkBox = RadioButtonSetting::Create(info, items, background);
+            if (checkBox)
+            {
+                AddSetting(checkBox);
+            }
+            return checkBox;
+        }
         CaptionButtonSetting *CreateCaption(const SettingsInfo &info)
         {
             auto checkBox = CaptionButtonSetting::Create(info, items, background);
@@ -136,6 +145,11 @@ class SystemOptionsDlg : public H3Dlg
                 AddSetting(checkBox);
             }
             return checkBox;
+        }
+        H3DlgItem *CreateTitle(int x, int &y, LPCSTR displayedText)
+        {
+            auto titleItem = ISetting::CreateTitle(x, y, displayedText, items);
+            return titleItem;
         }
         void SetVisible(const BOOL state)
         {
@@ -162,9 +176,9 @@ class SystemOptionsDlg : public H3Dlg
             auto settingIt = settingsByItemId.find(msg.itemId);
             if (settingIt != settingsByItemId.end())
             {
-                return settingIt->second->ProcessMessage(msg);
+                 settingIt->second->ProcessMessage(msg);
             }
-            return FALSE;
+            return 1;
         }
     };
 

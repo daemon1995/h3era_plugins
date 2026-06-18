@@ -65,17 +65,19 @@ struct AdditionalConfig
       public:
         explicit operator int &() noexcept
         {
-            return value;
+            return *reinterpret_cast<int *>(&value);
         }
         explicit operator const int &() const noexcept
         {
-            return value;
+            return *reinterpret_cast<const int *>(&value);
         }
     };
 
     SettingsEntry backgroundSound{"Sound.BackgroundLooping", 1, 1};
     SettingsEntry buttonSoundSplit{"Sound.ButtonSoundSplit", 0, 0};
     SettingsEntry quickAutoResolve{"Combat.QuickAutoResolve", 0, 0};
+    SettingsEntry battleQueue{"Combat.BattleQueue", 0, 0};
+    SettingsEntry quickCombatType{"Combat.QuickCombatType", 0, 0};
     SettingsEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 1, 1};
     SettingsEntry smoothMapScroll{"Map.SmoothScroll", 1, 1};
 

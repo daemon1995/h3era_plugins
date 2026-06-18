@@ -16,7 +16,8 @@ class MapScroller : public IGamePatch
 #define ERA_OPT(page, id, field) "era.opt." #page "." #id "." #field
 #define ERA_ARRAY_OPT(page, id, field, i) "era.opt." #page "." #id "." #field "." #i
 
-#define FRAME_COLOR H3RGB888(0x7A, 0x65, 0x48)
+#define FRAME_LIGHT_COLOR H3RGB888(0x7A, 0x65, 0x48)
+#define FRAME_DARK_COLOR H3RGB888(0x31, 0x21, 0x10)
 
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
 SystemOptionsDlg::HealthBarDlgCallInfo SystemOptionsDlg::healthBarDlgInfo;
@@ -26,7 +27,7 @@ BOOL *__stdcall HealthBarIsEnabledAddress();
 
 void DrawThickFrameOverItem(H3LoadedPcx16 *back, H3DlgItem *item)
 {
-    static auto color = FRAME_COLOR;
+    static auto color = FRAME_LIGHT_COLOR;
     back->DrawThickFrame(item->GetX() - 1, item->GetY() - 1, item->GetWidth() + 2, item->GetHeight() + 2, 1, color);
 }
 
@@ -43,9 +44,12 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
         dlgCallSource = MAIN_MENU;
 
     // split dlg by half with thick frame
-    const auto color = FRAME_COLOR;
     background->DrawThickFrame(DLG_WIDTH >> 1, DLG_TOPSETTINGS_MARGIN, 1,
-                               DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN + 15, 1, color);
+                               DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
+                               FRAME_LIGHT_COLOR);
+    background->DrawThickFrame((DLG_WIDTH >> 1) + 1, DLG_TOPSETTINGS_MARGIN, 1,
+                               DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
+                               FRAME_DARK_COLOR);
 
     for (size_t i = 0; i < 255; i += 10)
     {
@@ -102,7 +106,8 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
     const size_t startIndex = isMainMenu ? 5 : 0;
     constexpr int frameY = DLG_HEIGHT - buttonHeight * 3 - 20;
     // draw a horizontal thick frame over general buttons
-    background->DrawThickFrame(DLG_WIDTH >> 1, frameY, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_COLOR);
+    background->DrawThickFrame((DLG_WIDTH >> 1) + 1, frameY, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_LIGHT_COLOR);
+    background->DrawThickFrame((DLG_WIDTH >> 1) + 1, frameY + 1, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_DARK_COLOR);
 
     for (size_t i = startIndex; i < length; i++)
     {
@@ -131,10 +136,16 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
     OriginalConfig &config = OriginalConfig::Get();
     AdditionalConfig &additionalConfig = AdditionalConfig::Get();
 
+    H3DefLoader captionDef(PAGE_CAPTION_DEF_NAME);
+
+    constexpr int yOffset = ISetting::BASE_SETTINGS_Y_OFFSET;
+    const int settingsStartY = DLG_CAPTION_BUTTON_TOP_MARGIN + captionDef->heightDEF + DLG_CAPTION_BUTTON_TOP_MARGIN;
+    const BOOL isTutorial = P_Game->inTutorial;
+
     {
-        auto captionBttn = H3DlgCaptionButton::Create(15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL,
-                                                      BIG_BUTTON, ERA_CAPTION(system, name), NH3Dlg::Text::BIG, 0, 0,
-                                                      false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
+        auto captionBttn = H3DlgCaptionButton::Create(
+            15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_GENERAL, PAGE_CAPTION_DEF_NAME,
+            ERA_CAPTION(system, name), NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_1, eTextColor::HIGHLIGHT);
 
         captionBttn->SetRightClickHint(ERA_CAPTION(system, hint));
         auto *page = new SettingsPage(captionBttn);
@@ -147,11 +158,13 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         constexpr size_t videoDefNum = std::size(videoDefNames);
         constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
 
-        const int startY = captionBttn->GetY() + captionBttn->GetHeight() + DLG_CAPTION_BUTTON_TOP_MARGIN;
-
         SwitchPanelInfo switchPanelsInfo = {
-            {switchPanelX, startY}, itemId,      ERA_OPT(system, videoQuality, name),
-            &config.videoQuality,   videoDefNum, &videoDefNames[0],
+            {switchPanelX, settingsStartY},
+            itemId,
+            &config.videoQuality,
+            ERA_OPT(system, videoQuality, name),
+            videoDefNum,
+            &videoDefNames[0],
             &switchPanelHints[0],
         };
 
@@ -162,36 +175,24 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                        ERA_OPT(system, spellBookAnimation, hint)};
 
         const SettingsInfo checkboxesInfo[] = {
-            {
-
-                "videoSubtitles",
-                {checkboxX, startY + 90},
-                itemId++,
-                &config.videoSubtitles, //  0x06987D0,
-                ERA_OPT(system, videoSubtitles, name),
-                ERA_OPT(system, videoSubtitles, hint),
-
-            }, // show tips
-            {
-
-                "buildingOutlines",
-                {checkboxX, startY + 120},
-                itemId++,
-                &config.buildingOutlines, // 0x06987D4,
-                ERA_OPT(system, buildingOutlines, name),
-                ERA_OPT(system, buildingOutlines, hint),
-
-            }, // show tips in battle
-            {
-
-                "spellBookAnimation",
-                {checkboxX, startY + 150},
-                itemId++,
-                &config.spellBookAnimation, // 0x06987D8,
-                ERA_OPT(system, spellBookAnimation, name),
-                ERA_OPT(system, spellBookAnimation, hint),
-
-            } // show tips in battle
+            {"videoSubtitles",
+             {checkboxX, settingsStartY + yOffset * 3},
+             itemId++,
+             &config.videoSubtitles, //  0x06987D0,
+             ERA_OPT(system, videoSubtitles, name),
+             ERA_OPT(system, videoSubtitles, hint)}, // show tips
+            {"buildingOutlines",
+             {checkboxX, settingsStartY + yOffset * 4},
+             itemId++,
+             &config.buildingOutlines, // 0x06987D4,
+             ERA_OPT(system, buildingOutlines, name),
+             ERA_OPT(system, buildingOutlines, hint)}, // show tips in battle
+            {"spellBookAnimation",
+             {checkboxX, settingsStartY + yOffset * 5},
+             itemId++,
+             &config.spellBookAnimation, // 0x06987D8,
+             ERA_OPT(system, spellBookAnimation, name),
+             ERA_OPT(system, spellBookAnimation, hint)} // show tips in battle
         };
         for (auto &info : checkboxesInfo)
         {
@@ -199,17 +200,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         }
 
         // CREATE CALLBACK BUTTONS
-        // wog option buttons:
-        const SettingsInfo wogOptionCaption = {"system_wog_option",
-                                               {checkboxX, 300},
-                                               itemId++,
-                                               0,
-                                               ERA_OPT(system, wogOptions, name),
-                                               ERA_OPT(system, wogOptions, hint)};
-
-        auto captionSetting = page->CreateCaption(wogOptionCaption);
-        captionSetting->SetOnChange([](ISetting *) { CallWogOptionsDlg(); });
-
+        int callbackY = 300;
         // language selection dlg
         auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
         if (plugin)
@@ -223,10 +214,10 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             if (callDlg && getDisplayedName)
             {
                 const SettingsInfo selectLang = {
-                    "system_select_language", {checkboxX, 330}, itemId++, nullptr, getDisplayedName(),
+                    "system_select_language", {checkboxX, callbackY}, itemId++, nullptr, getDisplayedName(),
                 };
-
-                captionSetting = page->CreateCaption(selectLang);
+                callbackY += 30;
+                auto captionSetting = page->CreateCaption(selectLang);
                 captionSetting->SetOnChange([callDlg, getDisplayedName](ISetting *setting) {
                     auto it = dynamic_cast<CaptionButtonSetting *>(setting)->captionButton;
                     callDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
@@ -240,26 +231,36 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 });
             }
         }
+        // wog option buttons:
+        const SettingsInfo wogOptionCaption = {"system_wog_option",
+                                               {checkboxX, callbackY},
+                                               itemId++,
+                                               0,
+                                               ERA_OPT(system, wogOptions, name),
+                                               ERA_OPT(system, wogOptions, hint)};
+
+        auto captionSetting = page->CreateCaption(wogOptionCaption);
+        captionSetting->SetOnChange([](ISetting *) { CallWogOptionsDlg(); });
+        callbackY += 30;
 
         // RIGHT PAGE PART
         constexpr int panelX = DLG_RIGHT_PART_X_MARGIN;
 
-        const SettingsInfo rightCheckboxesInfo[] = {{
-                                                        additionalConfig.backgroundSound.keyName,
-                                                        {panelX, startY},
-                                                        itemId++,
-                                                        &additionalConfig.backgroundSound.value,
-                                                        ERA_OPT(system, backgroundSound, name),
-                                                        ERA_OPT(system, backgroundSound, hint),
-                                                    }, // show tips
-                                                    {
-                                                        additionalConfig.buttonSoundSplit.keyName,
-                                                        {panelX, startY + 30},
-                                                        itemId++,
-                                                        &additionalConfig.buttonSoundSplit.value,
-                                                        ERA_OPT(system, buttonSoundSplit, name),
-                                                        ERA_OPT(system, buttonSoundSplit, hint),
-                                                    }};
+        int rightPartY = settingsStartY;
+        page->CreateTitle(panelX, rightPartY, ERA_OPT(system, soundSettings, name));
+
+        const SettingsInfo rightCheckboxesInfo[] = {{additionalConfig.backgroundSound.keyName,
+                                                     {panelX, rightPartY},
+                                                     itemId++,
+                                                     &additionalConfig.backgroundSound.value,
+                                                     ERA_OPT(system, backgroundSound, name),
+                                                     ERA_OPT(system, backgroundSound, hint)}, // show tips
+                                                    {additionalConfig.buttonSoundSplit.keyName,
+                                                     {panelX, rightPartY + yOffset},
+                                                     itemId++,
+                                                     &additionalConfig.buttonSoundSplit.value,
+                                                     ERA_OPT(system, buttonSoundSplit, name),
+                                                     ERA_OPT(system, buttonSoundSplit, hint)}};
         for (auto &info : rightCheckboxesInfo)
         {
             page->CreateCheckBox(info);
@@ -285,21 +286,16 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         }();
 
         SettingsInfo switch10PanelsInfo[] = {
-            {
-                "system_music_level",
-                {panelX, startY + 70},
-                itemId,
-                &config.musicVolume,
-                ERA_OPT(system, musicVolume, name),
-            }, // music level switch panel
-            {
-                "system_sound_effects_level",
-                {panelX, startY + 140},
-                itemId + count,
-                &config.effectsVolume, // 0x06987B4,
-                ERA_OPT(system, effectsVolume, name),
-
-            } // sound effects level switch panel
+            {"system_music_level",
+             {panelX, rightPartY + yOffset * 2},
+             itemId,
+             &config.musicVolume,
+             ERA_OPT(system, musicVolume, name)}, // music level switch panel
+            {"system_sound_effects_level",
+             {panelX, rightPartY + yOffset * 2 + 70},
+             itemId + count,
+             &config.effectsVolume,                // 0x06987B4,
+             ERA_OPT(system, effectsVolume, name)} // sound effects level switch panel
         };
         void (*funcs[2])(ISetting *) = {OnMusicVolumeChanged, OnSoundVolumeChanged};
 
@@ -320,7 +316,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
     {
 
         auto captionBttn = H3DlgCaptionButton::Create(
-            146 + 6 + 15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP, BIG_BUTTON,
+            146 + 6 + 15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_ADV_MAP, PAGE_CAPTION_DEF_NAME,
             ERA_CAPTION(map, name), NH3Dlg::Text::BIG, 0, false, false, eVKey::H3VK_2, eTextColor::HIGHLIGHT);
         captionBttn->SetRightClickHint(ERA_CAPTION(map, hint));
 
@@ -331,7 +327,6 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         auto &pageItems = page->items;
 
         constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
-        const int startY = captionBttn->GetY() + captionBttn->GetHeight() + DLG_CAPTION_BUTTON_TOP_MARGIN;
 
         LPCSTR playerSpeedDefNames[] = {ValueAt<LPCSTR>(0x005B1EEF + 1), ValueAt<LPCSTR>(0x005B1F43 + 1),
                                         ValueAt<LPCSTR>(0x005B1F97 + 1), ValueAt<LPCSTR>(0x005B1FEB + 1)};
@@ -353,26 +348,26 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         constexpr size_t enemyDefNum = std::size(enemySpeedDefNames);
         constexpr size_t mapScrollDefNum = std::size(mapScrollDefNames);
         SwitchPanelInfo switchPanelsInfo[] = {
-            {{switchPanelX, startY},
+            {{switchPanelX, settingsStartY},
              itemId,
-             ERA_OPT(map, playerSpeed, name), //  P_GeneralText->GetText(571),
              &config.playerSpeed,             //(int*)0x06987AC,
+             ERA_OPT(map, playerSpeed, name), //  P_GeneralText->GetText(571),
              playerDefNum,
              &playerSpeedDefNames[0],
              &switchPanelHints[0],
-             0},
-            {{switchPanelX, startY + 70},
+             1},
+            {{switchPanelX, settingsStartY + 70},
              itemId + playerDefNum,
-             ERA_OPT(map, enemySpeed, name), //    P_GeneralText->GetText(572),
              &config.enemySpeed,             // 0x06987A8,
+             ERA_OPT(map, enemySpeed, name), //    P_GeneralText->GetText(572),
              enemyDefNum,
              &enemySpeedDefNames[0],
              &switchPanelHints[playerDefNum],
-             0},
-            {{switchPanelX, startY + 140},
+             2},
+            {{switchPanelX, settingsStartY + 140},
              itemId + playerDefNum + enemyDefNum,
-             ERA_OPT(map, scrollSpeed, name), //     P_GeneralText->GetText(573),
              &config.mapScrollSpeed,          // 0x06987DC,
+             ERA_OPT(map, scrollSpeed, name), //     P_GeneralText->GetText(573),
              mapScrollDefNum,
              &mapScrollDefNames[0],
              &switchPanelHints[playerDefNum + enemyDefNum]},
@@ -393,53 +388,40 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         itemId += playerDefNum + enemyDefNum + mapScrollDefNum;
         // create checkboxes
         constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
-        int checkboxY = 280;
+
+        //	page->CreateTitle(checkboxX, settingsStartY + yOffset * 5, ERA_OPT(map, miscSettings, name));
+
+        const int checkboxY = settingsStartY + yOffset * 6;
         const DWORD checkboxesHintPtrs[] = {DWORD(ERA_OPT(map, showRoute, hint)),
                                             DWORD(ERA_OPT(map, moveReminder, hint)),
                                             DWORD(ERA_OPT(map, autoSave, hint))};
 
         SettingsInfo checkboxesInfo[] = {
-            {
-
-                "adventure_show_route",
-                {checkboxX, checkboxY + 30},
-                itemId++,
-                &config.showRoute, // 0x06987C4,
-                ERA_OPT(map, showRoute, name),
-                ERA_OPT(map, showRoute, hint),
-
-            }, // show tips
-            {
-
-                "adventure_hero_reminder",
-                {checkboxX, checkboxY + 60},
-                itemId++,
-                &config.moveReminder, //  0x06987C8,
-                ERA_OPT(map, moveReminder, name),
-                ERA_OPT(map, moveReminder, hint),
-                P_Game->inTutorial
-
-            }, // show tips in battle
-            {
-
-                "adventure_game_autosave",
-                {checkboxX, checkboxY + 90},
-                itemId++,
-                &config.autoSave, //   0x06987C0,
-                ERA_OPT(map, autoSave, name),
-                ERA_OPT(map, autoSave, hint),
-
-            }, // show tips in battle
-            {
-
-                "SmoothScroll",
-                {checkboxX, checkboxY + 120},
-                itemId++,
-                &additionalConfig.smoothMapScroll.value, //   0x06987C0,
-                ERA_OPT(map, smoothScroll, name),
-                ERA_OPT(map, smoothScroll, hint),
-
-            }, // show tips in battle
+            {"adventure_show_route",
+             {checkboxX, checkboxY + yOffset},
+             itemId++,
+             &config.showRoute, // 0x06987C4,
+             ERA_OPT(map, showRoute, name),
+             ERA_OPT(map, showRoute, hint)}, // show tips
+            {"adventure_hero_reminder",
+             {checkboxX, checkboxY + yOffset * 2},
+             itemId++,
+             &config.moveReminder, //  0x06987C8,
+             ERA_OPT(map, moveReminder, name),
+             ERA_OPT(map, moveReminder, hint),
+             isTutorial}, // show tips in battle
+            {"adventure_game_autosave",
+             {checkboxX, checkboxY + yOffset * 3},
+             itemId++,
+             &config.autoSave, //   0x06987C0,
+             ERA_OPT(map, autoSave, name),
+             ERA_OPT(map, autoSave, hint)}, // show tips in battle
+            {"SmoothScroll",
+             {checkboxX, checkboxY + yOffset * 4},
+             itemId++,
+             &additionalConfig.smoothMapScroll.value, //   0x06987C0,
+             ERA_OPT(map, smoothScroll, name),
+             ERA_OPT(map, smoothScroll, hint)}, // show tips in battle
         };
 
         for (auto &info : checkboxesInfo)
@@ -449,6 +431,64 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         auto &smoothScroll = *page->settings.Last();
         smoothScroll->SetOnChange(
             [](ISetting *setting) { scroll::MapScroller::Get().SetEnabled(setting->value.current); });
+
+        // RIGHT PAGE PART
+        constexpr int rCheckboxX = DLG_RIGHT_PART_X_MARGIN;
+        int rCheckboxY = settingsStartY;
+
+        // page->CreateTitle(rCheckboxX, rCheckboxY, ERA_OPT(map, quickCombat, name));
+        // rCheckboxY -= 30;
+        LPCSTR radioTexts[] = {ERA_OPT(map, quickCombatManual, name), ERA_OPT(map, quickCombatMana, name),
+                               ERA_OPT(map, quickCombatManaFree, name), ERA_OPT(map, quickCombatAsk, name)};
+        LPCSTR radioHints[] = {ERA_OPT(map, quickCombatManual, hint), ERA_OPT(map, quickCombatMana, hint),
+                               ERA_OPT(map, quickCombatManaFree, hint), ERA_OPT(map, quickCombatAsk, hint)};
+        constexpr int radioNums = std::size(radioTexts);
+        RadioButtonInfo radioInfo = {"quick_combat_type",
+                                     {rCheckboxX, rCheckboxY},
+                                     itemId,
+                                     &additionalConfig.quickCombatType.value,
+                                     ERA_OPT(map, quickCombat, name),
+                                     radioNums,
+                                     radioTexts,
+                                     radioHints,
+                                     isTutorial};
+        itemId += radioNums;
+        page->CreateRadioBox(radioInfo);
+        //SettingsInfo quickCombatCheckboxesInfo[] = {
+        //    {"quick_combat_off",
+        //     {rCheckboxX, rCheckboxY + yOffset},
+        //     itemId++,
+        //     &additionalConfig.quickCombatType.value,
+        //     ERA_OPT(map, quickCombatManual, name),
+        //     ERA_OPT(map, quickCombatManual, hint),
+        //     isTutorial}, // show tips
+        //    {"quick_combat_on_mana",
+        //     {rCheckboxX, rCheckboxY + yOffset * 2},
+        //     itemId++,
+        //     &additionalConfig.quickCombatType.value,
+        //     ERA_OPT(map, quickCombatMana, name),
+        //     ERA_OPT(map, quickCombatMana, hint),
+        //     isTutorial}, // show tips in battle
+        //    {"quick_combat_on_mana_free",
+        //     {rCheckboxX, rCheckboxY + yOffset * 3},
+        //     itemId++,
+        //     &additionalConfig.quickCombatType.value,
+        //     ERA_OPT(map, quickCombatManaFree, name),
+        //     ERA_OPT(map, quickCombatManaFree, hint),
+        //     isTutorial}, // show tips in battle
+        //    {"quick_combat_always_ask",
+        //     {rCheckboxX, rCheckboxY + yOffset * 4},
+        //     itemId++,
+        //     &additionalConfig.quickCombatType.value,
+        //     ERA_OPT(map, quickCombatAsk, name),
+        //     ERA_OPT(map, quickCombatAsk, hint),
+        //     isTutorial} // show tips in battle
+        //};
+        //for (auto &info : quickCombatCheckboxesInfo)
+        //{
+        //    page->CreateCheckBox(info);
+        //}
+
         m_pages.Add(page);
     }
 
@@ -456,7 +496,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
     {
         auto captionBttn = H3DlgCaptionButton::Create(
-            (146 + 6 << 1) + 15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT, BIG_BUTTON,
+            (146 + 6 << 1) + 15, DLG_CAPTION_BUTTON_TOP_MARGIN, ePageItemId::PAGE_ITEM_COMBAT, PAGE_CAPTION_DEF_NAME,
             ERA_CAPTION(combat, name), NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_3, eTextColor::HIGHLIGHT);
         captionBttn->SetRightClickHint(ERA_CAPTION(combat, hint));
 
@@ -464,96 +504,77 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         AddItem(captionBttn);
 
         constexpr int x = DLG_LEFT_PART_X_MARGIN;
-        const int startY = captionBttn->GetY() + captionBttn->GetHeight() + 12;
+
         // standard checkboxes
         int itemId = page->firstItemId;
-        auto &pageItems = page->items;
+        int leftPartY = settingsStartY;
+        page->CreateTitle(x, leftPartY, ERA_OPT(combat, gridSettings, name));
 
-        const SettingsInfo checkboxesInfo[] = {
-            {
-                "show_grid",
-                {x, startY},
-                itemId++,
-                &config.showHexGrid, // 0x069880C,
-                ERA_OPT(combat, showHexGrid, name),
-                ERA_OPT(combat, showHexGrid, hint),
+        const SettingsInfo gridSettingsInfo[] = {{"show_grid",
+                                                  {x, leftPartY},
+                                                  itemId++,
+                                                  &config.showHexGrid, // 0x069880C,
+                                                  ERA_OPT(combat, showHexGrid, name),
+                                                  ERA_OPT(combat, showHexGrid, hint)},
+                                                 {"movements_shadow",
+                                                  {x, leftPartY + yOffset},
+                                                  itemId++,
+                                                  &config.movementShadow, //  0x0698814,
+                                                  ERA_OPT(combat, movementShadow, name),
+                                                  ERA_OPT(combat, movementShadow, hint)},
+                                                 {"cursor_shadow",
+                                                  {x, leftPartY + yOffset * 2},
+                                                  itemId++,
+                                                  &config.cursorShadow, //  0x0698810,
+                                                  ERA_OPT(combat, cursorShadow, name),
+                                                  ERA_OPT(combat, cursorShadow, hint)}};
 
-            },
-            {
+        for (auto &info : gridSettingsInfo)
+        {
+            page->CreateCheckBox(info);
+        }
 
-                "movements_shadow",
-                {x, startY + 30},
-                itemId++,
-                &config.movementShadow, //  0x0698814,
-                ERA_OPT(combat, movementShadow, name),
-                ERA_OPT(combat, movementShadow, hint)
+        leftPartY += yOffset * 3;
+        page->CreateTitle(x, leftPartY, ERA_OPT(combat, autoCombat, name));
+        leftPartY += 6;
+        const SettingsInfo autoCombatInfo[] = {{"auto_combat_creatures",
+                                                {x, leftPartY},
+                                                itemId++,
+                                                &config.autoCreatures, //  0x06987E4,
+                                                ERA_OPT(combat, autoCreatures, name),
+                                                ERA_OPT(combat, autoCreatures, hint)}, // show combat messages
+                                               {"auto_combat_spells",
+                                                {x, leftPartY + yOffset},
+                                                itemId++,
+                                                &config.autoSpells, //   0x06987E8,
+                                                ERA_OPT(combat, autoSpells, name),
+                                                ERA_OPT(combat, autoSpells, hint)}, // show combat animations
+                                               {"auto_combat_catapult",
+                                                {x, leftPartY + yOffset * 2},
+                                                itemId++,
+                                                &config.autoCatapult, //  0x06987EC,
+                                                ERA_OPT(combat, autoCatapult, name),
+                                                ERA_OPT(combat, autoCatapult, hint)}, // show floating combat text
+                                               {"auto_combat_ballista",
+                                                {x, leftPartY + yOffset * 3},
+                                                itemId++,
+                                                &config.autoBallista, //  0x06987F0,
+                                                ERA_OPT(combat, autoBallista, name),
+                                                ERA_OPT(combat, autoBallista, hint)},
+                                               {"auto_combat_tent",
+                                                {x, leftPartY + yOffset * 4},
+                                                itemId++,
+                                                &config.autoFirstAidTent, // 0x06987F4,
+                                                ERA_OPT(combat, autoFirstAidTent, name),
+                                                ERA_OPT(combat, autoFirstAidTent, hint)},
+                                               {"auto_combat_quick",
+                                                {x, leftPartY + yOffset * 5},
+                                                itemId++,
+                                                &additionalConfig.quickAutoResolve.value, // 0x06987F8,
+                                                ERA_OPT(combat, autoQuick, name),
+                                                ERA_OPT(combat, autoQuick, hint)}};
 
-            }, // show movements_shadow
-            {
-
-                "cursor_shadow",
-                {x, startY + 60},
-                itemId++,
-                &config.cursorShadow, //  0x0698810,
-                ERA_OPT(combat, cursorShadow, name),
-                ERA_OPT(combat, cursorShadow, hint)
-
-            },
-            {
-
-                "auto_combat_creatures",
-                {x, startY + 120},
-                itemId++,
-                &config.autoCreatures, //  0x06987E4,
-                ERA_OPT(combat, autoCreatures, name),
-                ERA_OPT(combat, autoCreatures, hint)
-
-            }, // show combat messages
-            {
-
-                "auto_combat_spells",
-                {x, startY + 150},
-                itemId++,
-                &config.autoSpells, //   0x06987E8,
-                ERA_OPT(combat, autoSpells, name),
-                ERA_OPT(combat, autoSpells, hint)
-
-            }, // show combat animations
-            {
-
-                "auto_combat_catapult",
-                {x, startY + 180},
-                itemId++,
-                &config.autoCatapult, //  0x06987EC,
-                ERA_OPT(combat, autoCatapult, name),
-                ERA_OPT(combat, autoCatapult, hint)
-                //
-
-            }, // show floating combat text
-            {
-
-                "auto_combat_ballista",
-                {x, startY + 210},
-                itemId++,
-                &config.autoBallista, //  0x06987F0,
-                ERA_OPT(combat, autoBallista, name),
-                ERA_OPT(combat, autoBallista, hint)
-
-            },
-            {
-
-                "auto_combat_tent",
-                {x, startY + 240},
-                itemId++,
-                &config.autoFirstAidTent, // 0x06987F4,
-                ERA_OPT(combat, autoFirstAidTent, name),
-                ERA_OPT(combat, autoFirstAidTent, hint)
-
-            }, // show battle interface
-
-        };
-
-        for (auto &info : checkboxesInfo)
+        for (auto &info : autoCombatInfo)
         {
             page->CreateCheckBox(info);
         }
@@ -585,16 +606,34 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         itemId += count;
         page->Create10XPanel(switch10xPanelsInfo);
 
-        constexpr int rightX = DLG_RIGHT_PART_X_MARGIN;
+        // RIGHT PAGE PART
 
+        constexpr int rightX = DLG_RIGHT_PART_X_MARGIN;
+        int rightPartY = settingsStartY;
+        //     page->CreateTitle(rightX, rightPartY, ERA_OPT(combat, creatureInfo, name));
+
+        LPCSTR infoTexts[] = {ERA_OPT(combat, allStatistics, name), ERA_OPT(combat, onlySpells, name)};
+        LPCSTR infoHints[] = {ERA_OPT(combat, allStatistics, hint), ERA_OPT(combat, onlySpells, hint)};
+        constexpr size_t radioButtonsCount = std::size(infoTexts);
+        RadioButtonInfo radioInfo = {"combat_creature_info",
+                                     {rightX, rightPartY},
+                                     itemId,
+                                     &config.combatViewArmy[0],
+                                     ERA_OPT(combat, creatureInfo, name),
+                                     radioButtonsCount,
+                                     infoTexts,
+                                     infoHints};
+        itemId += radioButtonsCount;
+        page->CreateRadioBox(radioInfo);
+
+        rightPartY += yOffset * 2 + ISetting::TITLE_HEIGHT;
         const auto healthBarValuePtr = HealthBarIsEnabledAddress();
-        const SettingsInfo healthBarcheckBoxInfo = {"system_health_bar_checkbox",
-                                                    {rightX, startY + 60},
+        const SettingsInfo healthBarcheckBoxInfo = {"combat_health_bar_checkbox",
+                                                    {rightX, rightPartY},
                                                     itemId++,
                                                     healthBarValuePtr,
                                                     ERA_OPT(combat, healthBar, name),
-                                                    ERA_OPT(combat, healthBar, hint),
-                                                    P_Game->inTutorial};
+                                                    ERA_OPT(combat, healthBar, hint)};
         auto &info = instance->healthBarDlgInfo;
         info.healthBarValuePtr = healthBarValuePtr;
         auto healthBarcheckBox = page->CreateCheckBox(healthBarcheckBoxInfo);
@@ -602,13 +641,34 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         info.dlgValuePtr = &healthBarcheckBox->value.current;
 
         const SettingsInfo healthBarCaptionInfo = {"system_health_bar",
-                                                   {rightX, startY + 90},
+                                                   {rightX, rightPartY + yOffset},
                                                    itemId++,
                                                    nullptr,
                                                    ERA_OPT(combat, healthBar, button),
                                                    ERA_OPT(combat, healthBar, hint)};
         auto button = page->CreateCaption(healthBarCaptionInfo);
         button->SetOnChange(CallHealthBarDlg);
+
+        auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue");
+        if (queuePI)
+        {
+            const SettingsInfo combatQueueCheckBoxInfo = {
+                "combat_creatures_queue",
+                {rightX, rightPartY + yOffset * 4},
+                itemId++,
+                &additionalConfig.battleQueue.value,
+                ERA_OPT(combat, battleQueue, name),
+                ERA_OPT(combat, battleQueue, hint),
+                isInCombat // disable in combat since it requres dlg reconstruction
+            };
+
+            auto combatQueueCheckbox = page->CreateCheckBox(combatQueueCheckBoxInfo);
+            combatQueueCheckbox->SetOnChange([queuePI](ISetting *setting) {
+                const BOOL enabled = setting->value.current;
+                enabled ? queuePI->ApplyAll() : queuePI->UndoAll();
+            });
+        }
+
         m_pages.Add(page);
     }
     InitDlgPages();
@@ -647,8 +707,8 @@ BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
         if (it && it->GetRightClickHint())
         {
             H3Messagebox::RMB(it->GetRightClickHint());
-            return 0;
         }
+        return 0;
     }
     else if (m_currentPage && m_currentPage->ProcessMessage(msg))
     {
@@ -670,7 +730,7 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
     case ePageItemId::PAGE_ITEM_COMBAT:
         SetActivePage(itemId - 1, TRUE);
         break;
-    case target::PAGE_LOAD_GAME: // these 3 reqquires user agreement
+    case target::PAGE_LOAD_GAME: // these 3 requries user agreement
     case target::PAGE_QUIT:      // since they can cause loss of unsaved progress
     case target::PAGE_MAIN:
         if (!H3Messagebox::Choice(P_GeneralText->GetText(580)))
@@ -682,10 +742,10 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
         this->Stop();
         break;
     default:
-        break;
+        return TRUE;
     }
 
-    return TRUE;
+    return FALSE;
 }
 
 void __stdcall SystemOptionsDlg::CallWogOptionsDlg()
@@ -718,7 +778,7 @@ void __stdcall SystemOptionsDlg::CallHealthBarDlg(ISetting *sender)
 }
 void SystemOptionsDlg::OnEnemySpeedButtonClicked(ISetting *sender)
 {
-    OriginalConfig::Get().blackoutComputer = sender->value.current == 5;
+    // OriginalConfig::Get().blackoutComputer = sender->value.current == 5;
 }
 void SystemOptionsDlg::AfterDlgClose()
 {
@@ -744,7 +804,10 @@ SystemOptionsDlg::~SystemOptionsDlg()
     }
     if (settingsChanged)
     {
-        const int newQuickCombatState = OriginalConfig::Get().quickCombat;
+        OriginalConfig &config = OriginalConfig::Get();
+        config.blackoutComputer = config.enemySpeed == 5;
+
+        const int newQuickCombatState = config.quickCombat;
         // if quick combat settings were changed
         if (dlgCallSource == ADV_MAP && networkGame && quickCombatSettingState != newQuickCombatState)
         {
