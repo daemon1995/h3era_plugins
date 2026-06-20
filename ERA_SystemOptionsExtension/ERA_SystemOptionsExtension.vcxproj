@@ -81,13 +81,14 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="MapScroller.h" />
     <ClInclude Include="SoundSettings.h" />
-    <ClInclude Include="structures.h" />
+    <ClInclude Include="ConfigManager.h" />
     <ClInclude Include="SystemOptionsDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="CombatHints.cpp" />
     <ClCompile Include="CombatSpeed.cpp" />
+    <ClCompile Include="ConfigManager.cpp" />
     <ClCompile Include="DlgPanels.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MapScroller.cpp" />

@@ -61,6 +61,7 @@ struct AdditionalConfig
         LPCSTR keyName = nullptr;
         int value = 0;
         int defaultValue = 0;
+        int maxValue = 1;
 
       public:
         explicit operator int &() noexcept
@@ -77,23 +78,18 @@ struct AdditionalConfig
     SettingsEntry buttonSoundSplit{"Sound.ButtonSoundSplit", 0, 0};
     SettingsEntry quickAutoResolve{"Combat.QuickAutoResolve", 0, 0};
     SettingsEntry battleQueue{"Combat.BattleQueue", 0, 0};
-    SettingsEntry quickCombatType{"Combat.QuickCombatType", 0, 0};
+    SettingsEntry quickCombatType{"Combat.QuickCombatType", 0, 0, 3};
     SettingsEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 1, 1};
-    SettingsEntry smoothMapScroll{"Map.SmoothScroll", 1, 1};
+    SettingsEntry smoothMapScroll{"AdvMap.SmoothScroll", 1, 1};
 
   private:
-    inline SettingsEntry *begin() noexcept
-    {
-        return &backgroundSound;
-    }
-    // SettingsEntry* end() noexcept
-    //{
-    //     return begin() + Count;
-    // }
     inline SettingsEntry *data() noexcept
     {
         return &backgroundSound;
     }
+
+  protected:
+    void InitialApply();
 
   public:
     inline static AdditionalConfig &Get()
@@ -101,33 +97,7 @@ struct AdditionalConfig
         static AdditionalConfig instance;
         return instance;
     }
-    inline static BOOL Load()
-    {
-        AdditionalConfig &instance = Get();
-        constexpr size_t length = sizeof(AdditionalConfig) / sizeof(SettingsEntry);
-        auto array = instance.data();
-        for (size_t i = 0; i < length; i++)
-        {
-            auto &entry = array[i];
-            if (Era::ReadStrFromIni(entry.keyName, sectionName, fileName, h3_TextBuffer))
-            {
-                entry.value = atoi(h3_TextBuffer);
-            }
-        }
-        return 1;
-    }
-    static BOOL Save()
-    {
-        AdditionalConfig &instance = Get();
-        constexpr size_t length = sizeof(AdditionalConfig) / sizeof(SettingsEntry);
-        auto array = instance.data();
-        for (size_t i = 0; i < length; i++)
-        {
-            auto &entry = array[i];
-            libc::sprintf(h3_TextBuffer, "%d", entry.value);
-            Era::WriteStrToIni(entry.keyName, h3_TextBuffer, sectionName, fileName);
-        }
-        return 1;
-    }
+    static BOOL Load();
+    static BOOL Save();
 };
 #pragma pack(pop)

@@ -9,45 +9,8 @@ H3DlgFrame *CreateThickFrameOverItem(H3DlgItem *item)
     frame->DeActivate();
     return frame;
 }
-H3DlgFrame *CreateThickFrameAtPosition(const int x, const int y, const int w, const int h)
-{
-    //    const H3RGB565 frameColor(0x7A, 0x65, 0x48);
 
-    H3DlgFrame *frame = H3DlgFrame::Create(x, y, w, h, -1, frameColor);
-    frame->DeActivate();
-    return frame;
-}
-CaptionButtonSetting *CaptionButtonSetting::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec,
-                                                   H3LoadedPcx16 *background) noexcept
-{
-
-    CaptionButtonSetting *setting = new CaptionButtonSetting(info);
-    if (!setting)
-        return setting;
-
-    int x = info.position.x;
-    int y = info.position.y;
-
-    H3LoadedDef *def = H3LoadedDef::Load(SINGLE_BUTTON);
-
-    x = x + ((WIDTH - def->widthDEF) >> 1);
-
-    auto bttn = H3DlgCaptionButton::Create(x, y, info.firstItemId, def->GetName(), EraJS::read(info.displayedName),
-                                           NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR);
-    bttn->SetClickFrame(1);
-
-    if (info.rmcHint)
-        bttn->SetRightClickHint(EraJS::read(info.rmcHint));
-
-    itemsVec += CreateThickFrameOverItem(bttn);
-    itemsVec += bttn;
-    setting->captionButton = bttn;
-    def->Dereference();
-    return setting;
-}
-
-CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec,
-                                         H3LoadedPcx16 *background) noexcept
+CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
 {
 
     CheckBoxSetting *setting = new CheckBoxSetting(info);
@@ -57,7 +20,6 @@ CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3Dl
     const int itemX = info.position.x;
     const int itemY = info.position.y;
 
-    // setting->checkBoxItem = H3DlgDef::Create(x, y, info.displayedName);
     const int frameId = setting->value.current;
 
     auto checkBox = H3DlgDef::Create(itemX + WIDTH - CHECKBOX_WIDTH, itemY, info.firstItemId,
@@ -71,19 +33,21 @@ CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3Dl
         checkBox->SendCommand(6, 2);
     }
 
+
+    itemsVec += CreateThickFrameOverItem(checkBox);
     itemsVec += checkBox;
+
     setting->checkBoxItem = checkBox;
-    setting->titleItem =
+    auto text =
         H3DlgText::Create(itemX, itemY, WIDTH - CHECKBOX_WIDTH, CHECKBOX_HEIGHT, EraJS::read(info.displayedName),
                           NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
-    itemsVec += setting->titleItem;
+    itemsVec += text;
     return setting;
 }
 
-RadioButtonSetting *RadioButtonSetting::Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec,
-                                               H3LoadedPcx16 *background) noexcept
+RadioBoxSetting *RadioBoxSetting::Create(const RadioButtonInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
 {
-    RadioButtonSetting *setting = new RadioButtonSetting(info);
+    RadioBoxSetting *setting = new RadioBoxSetting(info);
     if (!setting)
         return setting;
 
@@ -98,7 +62,7 @@ RadioButtonSetting *RadioButtonSetting::Create(const RadioButtonInfo &info, H3Ve
 
     int itemId = info.firstItemId;
     const UINT size = info.size;
-    const int selectedBoxId = setting->value.current - (info.requiresSelection ? 1 : 0);
+    const int selectedBoxId = setting->value.current - (info.requiresSelection ? 0 : 1);
     for (size_t i = 0; i < size; i++)
     {
 
@@ -127,8 +91,35 @@ RadioButtonSetting *RadioButtonSetting::Create(const RadioButtonInfo &info, H3Ve
     return setting;
 }
 
-SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem *> &itemsVec,
-                                 H3LoadedPcx16 *background) noexcept
+CaptionButtonSetting *CaptionButtonSetting::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
+{
+
+    CaptionButtonSetting *setting = new CaptionButtonSetting(info);
+    if (!setting)
+        return setting;
+
+    int x = info.position.x;
+    int y = info.position.y;
+
+    H3LoadedDef *def = H3LoadedDef::Load(SINGLE_BUTTON);
+
+    x = x + ((WIDTH - def->widthDEF) >> 1);
+
+    auto bttn = H3DlgCaptionButton::Create(x, y - 1, info.firstItemId, def->GetName(), EraJS::read(info.displayedName),
+                                           NH3Dlg::Text::MEDIUM, 0, 0, false, 0, eTextColor::REGULAR);
+    bttn->SetClickFrame(1);
+
+    if (info.rmcHint)
+        bttn->SetRightClickHint(EraJS::read(info.rmcHint));
+
+    itemsVec += CreateThickFrameOverItem(bttn);
+    itemsVec += bttn;
+    setting->captionButton = bttn;
+    def->Dereference();
+    return setting;
+}
+
+SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
 {
     SwitchPanel *setting = new SwitchPanel(info);
 
@@ -141,23 +132,17 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     int itemY = info.position.y;
 
     if (auto &text = info.displayedName)
-    {
         setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
-        // itemsVec += CreateThickFrameOverItem(setting->titleItem);
-
-        if (background)
-        {
-            //  DrawThickFrameOverItem(background, setting->titleItem);
-        }
-    }
 
     // create text field with name of the setting
     const auto size = info.defsNum;
     if (!size)
         return setting;
-    itemY += 1;
+    itemY -= BASE_SETTINGS_Y_OFFSET - TITLE_HEIGHT;// -6;
     auto def = H3LoadedDef::Load(info.defNamesPtrs[0]);
-    itemsVec += CreateThickFrameAtPosition(itemX - 1, itemY - 1, WIDTH + 2, def->heightDEF + 2);
+
+    itemsVec += H3DlgFrame::Create(itemX - 1, itemY - 1, WIDTH + 2, def->heightDEF + 3, -1, frameColor);
+    itemY += 1;
 
     const int padding = (WIDTH - size * def->widthDEF) / (size + 1);
     itemX += padding;
@@ -182,10 +167,8 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     return setting;
 }
 
-Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec,
-                                       H3LoadedPcx16 *background) noexcept
+Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgItem *> &itemsVec) noexcept
 {
-
     Switch10XPanel *setting = new Switch10XPanel(info);
 
     if (!setting)
@@ -194,30 +177,13 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
     int itemX = info.position.x;
     int itemY = info.position.y;
 
-    // create text field with name of the setting
-    // setting->titleItem = H3DlgText::Create(itemX, itemY, WIDTH, TITLE_HEIGHT, EraJS::read(info.displayedName),
-    //                                       NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, -1);
-
-    // auto frame = CreateThickFrameOverItem(setting->titleItem);
-    // itemsVec.Add(frame);
-
     setting->titleItem = CreateTitle(itemX, itemY, info.displayedName, itemsVec);
+    itemY -= BASE_SETTINGS_Y_OFFSET - TITLE_HEIGHT;// -6;
 
-    if (background)
-    {
-        // DrawThickFrameOverItem(background, setting->titleItem);
-    }
-    // itemsVec += setting->titleItem;
-
-    //  itemY -= 4;
     // create background pcx
     setting->backgroundPcx = H3DlgPcx::Create(itemX, itemY, Switch10XPanel::bgPcxPath);
-    if (background)
-    {
-        // DrawThickFrameOverItem(background, setting->backgroundPcx);
-    }
+
     itemsVec += CreateThickFrameOverItem(setting->backgroundPcx);
-    //    CreateThickFrameAtPosition(itemX - 1, itemY - 1, textFieldWidth + 2, setting->backgroundPcx->GetHeight() + 2);
     itemsVec += setting->backgroundPcx;
     itemY += 3;
     itemX += 4;

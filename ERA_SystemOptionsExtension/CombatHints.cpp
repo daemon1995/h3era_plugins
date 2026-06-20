@@ -39,7 +39,8 @@ void CombatHints::CreatePatches() noexcept
 
         this->_pi->WriteLoHook(0x43E38B, BeforeBattleStackHintDraw);
         //_PI->WriteLoHook(0x4682C0, BattleOptionsDlg);
-        this->_pi->WriteHiHook(0x4682C0, THISCALL_, BattleOptionsDlg_Show);
+        // blocked for new options dlg
+        // this->_pi->WriteHiHook(0x4682C0, THISCALL_, BattleOptionsDlg_Show);
 
         // Maybe isn't needed
         //	_PI->WriteLoHook(0x4746BD, BattleMgr_ProcessActionL);

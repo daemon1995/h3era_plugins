@@ -5,7 +5,6 @@
 #include "framework.h"
 
 #include "DlgPanels.h"
-#include "structures.h"
 enum eDlgCallSource : INT
 {
     UNKNOWN = -1,
@@ -38,8 +37,9 @@ class SystemOptionsDlg : public H3Dlg
   public:
     static constexpr int DLG_WIDTH = 481;
     static constexpr int DLG_HEIGHT = 487;
-    static constexpr int DLG_CAPTION_BUTTON_TOP_MARGIN = 16;
-    static constexpr int DLG_TOPSETTINGS_MARGIN = DLG_CAPTION_BUTTON_TOP_MARGIN + 44;
+    static constexpr int DLG_CAPTION_BUTTON_TOP_MARGIN = 18;
+    static constexpr int DLG_CAPTION_BUTTON_HEIGHT = 40;
+    static constexpr int DLG_TOPSETTINGS_MARGIN = DLG_CAPTION_BUTTON_TOP_MARGIN + DLG_CAPTION_BUTTON_HEIGHT + 4;
 
     static constexpr int DLG_RIGHT_PART_X_MARGIN = DLG_WIDTH - ISetting::WIDTH - 33;
     static constexpr int DLG_LEFT_PART_X_MARGIN = 25;
@@ -51,9 +51,13 @@ class SystemOptionsDlg : public H3Dlg
     static constexpr LPCSTR SINGLE_BUTTON = "GSPsys0.def";
 
     static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
-
-    // std::vector<H3CreatureBankSetup> &creatureBanks;
-
+    struct RegistredERMButtonInfo
+    {
+        std::string nameKey;
+        std::string descriptionKey;
+        int ermFunctionId;
+    };
+    static std::unordered_map<std::string, RegistredERMButtonInfo> registredButtons;
     struct SettingsPage
     {
         H3DlgCaptionButton *captionBttn = nullptr;
@@ -64,7 +68,8 @@ class SystemOptionsDlg : public H3Dlg
 
         H3Vector<H3DlgItem *> items;
         H3Vector<ISetting *> settings;
-        H3LoadedPcx16 *background = nullptr;
+        H3Vector<H3DlgPcx16 *> createdDlgTitles;
+        //  H3LoadedPcx16 *background = nullptr;
         std::unordered_map<int, ISetting *> settingsByItemId;
 
         SettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
@@ -77,80 +82,59 @@ class SystemOptionsDlg : public H3Dlg
             firstItemId = id * 100 + 100;
             return;
 
-            if (background = H3LoadedPcx16::Create(DLG_WIDTH, DLG_HEIGHT))
-            {
-                const int playerColor = P_Game->GetPlayerID();
-                background->BackgroundRegion(0, 0, DLG_WIDTH, DLG_HEIGHT, false);
-                background->FrameRegion(0, 0, DLG_WIDTH, DLG_HEIGHT, false, playerColor, false);
-            }
+            // if (background = H3LoadedPcx16::Create(DLG_WIDTH, DLG_HEIGHT))
+            //{
+            //     const int playerColor = P_Game->GetPlayerID();
+            //     background->BackgroundRegion(0, 0, DLG_WIDTH, DLG_HEIGHT, false);
+            //     background->FrameRegion(0, 0, DLG_WIDTH, DLG_HEIGHT, false, playerColor, false);
+            // }
         }
         virtual ~SettingsPage()
         {
+            for (auto &dlgPcx16 : createdDlgTitles)
+            {
+                if (auto pcx16 = dlgPcx16->GetPcx())
+                {
+                    pcx16->Destroy();
+                    dlgPcx16->SetPcx(nullptr);
+                }
+            }
             for (auto &setting : settings)
                 delete setting;
-            if (background)
-                background->Destroy();
+            // if (background)
+            //     background->Destroy();
         }
 
       public:
         void AddSetting(ISetting *setting)
         {
             settings += setting;
+            if (auto dlgPcx16 = setting->titleItem)
+                createdDlgTitles += dlgPcx16;
+
             if (setting->firstClickableItemId > 0)
                 for (int i = setting->firstClickableItemId; i <= setting->lastClickableItemId; ++i)
                     settingsByItemId[i] = setting;
         }
 
-        Switch10XPanel *Create10XPanel(const SettingsInfo &info)
+        H3DlgPcx16 *CreateTitle(int x, int &y, LPCSTR displayedText)
         {
-            auto panel = Switch10XPanel::Create(info, items, background);
-            if (panel)
+            auto dlgPcx16 = ISetting::CreateTitle(x, y, displayedText, items);
+            if (dlgPcx16)
+                createdDlgTitles += dlgPcx16;
+            return dlgPcx16;
+        }
+
+        template <class T, class Info> T *CreateSetting(const Info &info)
+        {
+            T *setting = T::Create(info, items);
+            if (setting)
             {
-                AddSetting(panel);
+                AddSetting(setting);
             }
-            return panel;
+            return setting;
         }
-        SwitchPanel *CreateSwitchPanel(const SwitchPanelInfo &info)
-        {
-            auto panel = SwitchPanel::Create(info, items, background);
-            if (panel)
-            {
-                AddSetting(panel);
-            }
-            return panel;
-        }
-        CheckBoxSetting *CreateCheckBox(const SettingsInfo &info)
-        {
-            auto checkBox = CheckBoxSetting::Create(info, items, background);
-            if (checkBox)
-            {
-                AddSetting(checkBox);
-            }
-            return checkBox;
-        }
-        RadioButtonSetting *CreateRadioBox(const RadioButtonInfo &info)
-        {
-            auto checkBox = RadioButtonSetting::Create(info, items, background);
-            if (checkBox)
-            {
-                AddSetting(checkBox);
-            }
-            return checkBox;
-        }
-        CaptionButtonSetting *CreateCaption(const SettingsInfo &info)
-        {
-            auto checkBox = CaptionButtonSetting::Create(info, items, background);
-            if (checkBox)
-            {
-                AddSetting(checkBox);
-            }
-            return checkBox;
-        }
-        H3DlgItem *CreateTitle(int x, int &y, LPCSTR displayedText)
-        {
-            auto titleItem = ISetting::CreateTitle(x, y, displayedText, items);
-            return titleItem;
-        }
+
         void SetVisible(const BOOL state)
         {
             if (state == isVisible)
@@ -176,7 +160,7 @@ class SystemOptionsDlg : public H3Dlg
             auto settingIt = settingsByItemId.find(msg.itemId);
             if (settingIt != settingsByItemId.end())
             {
-                 settingIt->second->ProcessMessage(msg);
+                settingIt->second->ProcessMessage(msg);
             }
             return 1;
         }
@@ -193,15 +177,6 @@ class SystemOptionsDlg : public H3Dlg
     H3Vector<SettingsPage *> m_pages;
 
   public:
-    static struct HealthBarDlgCallInfo
-    {
-        H3DlgDef *affectedCheckbox = nullptr;
-        BOOL *healthBarValuePtr = nullptr;
-        INT *dlgValuePtr = nullptr;
-        H3DlgCaptionButton *captionBttn = nullptr;
-
-    } healthBarDlgInfo;
-
     static SystemOptionsDlg *instance;
 
   protected:
@@ -220,6 +195,8 @@ class SystemOptionsDlg : public H3Dlg
   private:
     void CreateGameControlButtons() noexcept;
     void CreateDlgPages() noexcept;
+    void CreateOtherSettingsPanel(SettingsPage *page, const int x, const int y, int &itemId) noexcept;
+
     void InitDlgPages()
     {
         for (auto &page : m_pages)
@@ -243,11 +220,11 @@ class SystemOptionsDlg : public H3Dlg
 
             page->SetVisible(TRUE);
             int yOffset = DLG_TOPSETTINGS_MARGIN;
-            if (page->background)
-            {
-                page->background->DrawToPcx16(0, yOffset, FALSE, background, 0, yOffset);
-                libc::memcpy(background->buffer, page->background->buffer, background->buffSize);
-            }
+            // if (page->background)
+            //{
+            //     page->background->DrawToPcx16(0, yOffset, FALSE, background, 0, yOffset);
+            //     libc::memcpy(background->buffer, page->background->buffer, background->buffSize);
+            // }
             m_currentPage = page;
             if (redraw)
                 Redraw();
@@ -258,44 +235,23 @@ class SystemOptionsDlg : public H3Dlg
     BOOL WriteIniDlgSettings() const noexcept;
 
   public:
-    INT32 ResultItemId() const noexcept
+    inline INT32 ResultItemId() const noexcept
     {
         return resultItemId;
     }
+    static _ERH_(OnGameLeave)
+    {
+        registredButtons.clear();
+    }
+    static void SetPatches(PatcherInstance *_pi)
+    {
+        _REH_(OnGameLeave);
+    }
+
     // hooks
   private:
     static void __stdcall CallWogOptionsDlg();
     static void __stdcall CallSelectLanguageDlg();
-    static void __stdcall CallHealthBarDlg(ISetting *sender);
 
-    static void SetPatches(PatcherInstance *_pi);
-    static inline void AdjustSoundVolume(ISetting *sender, const DWORD addres) noexcept
-    {
-        auto &value = sender->value;
-        auto snd = P_SoundManager->Get();
-
-        if (*value.valuePtr || snd->driver)
-        {
-            *value.valuePtr = value.current;
-            BOOL32 backup = snd->clickSoundVar;
-            snd->clickSoundVar = 1;
-            THISCALL_1(VOID, 0x059A4B0, snd);
-            snd->clickSoundVar = backup;
-        }
-        else
-        {
-            H3Messagebox(P_GeneralText->GetText(152));
-        }
-    }
-    static void OnMusicVolumeChanged(ISetting *sender)
-    {
-        AdjustSoundVolume(sender, 0x059A4B0);
-    }
-    static void OnSoundVolumeChanged(ISetting *sender)
-    {
-        AdjustSoundVolume(sender, 0x059A3C0);
-    }
-    static void OnPlayerSpeedButtonClicked(ISetting *sender) {};
-    static void OnEnemySpeedButtonClicked(ISetting *sender);
     static void AfterDlgClose();
 };

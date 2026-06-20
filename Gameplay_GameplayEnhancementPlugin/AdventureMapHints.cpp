@@ -467,7 +467,7 @@ bool CreateKeyAltHint(H3AdventureManager *advMgr, H3MapItem *cell)
     // Клетка водная и либо что-то с флагом клетки, либо тип объекта на клетке не лодка, не герой, не
     // кораблекрушение
     else if (cell->land == eTerrain::WATER &&
-             ((*(WORD *)&cell->mirror & 0x1000) == 0 ||
+             ((cell->mirror & 0x1000) == 0 ||
               objectType != eObject::BOAT && objectType != eObject::HERO && objectType != eObject::SHIPWRECK))
     {
         libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);

@@ -9,3 +9,5 @@
 #define MAIN_MENU_API
 // #define _WOG_
 #include "..\headers\header.h"
+#include "ConfigManager.h"
+
