@@ -20,10 +20,10 @@
     <ClInclude Include="DlgPanels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CombatHints.h">
+    <ClInclude Include="CombatCreatureHealthBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CombatSpeed.h">
+    <ClInclude Include="CombatSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConfigManager.h">
@@ -49,10 +49,10 @@
     <ClCompile Include="DlgPanels.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CombatHints.cpp">
+    <ClCompile Include="CombatCreatureHealthBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CombatSpeed.cpp">
+    <ClCompile Include="CombatSettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MapScroller.cpp">

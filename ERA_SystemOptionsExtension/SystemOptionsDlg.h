@@ -51,13 +51,13 @@ class SystemOptionsDlg : public H3Dlg
     static constexpr LPCSTR SINGLE_BUTTON = "GSPsys0.def";
 
     static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
-    struct RegistredERMButtonInfo
+    struct RegisteredErmButtonInfo
     {
         std::string nameKey;
         std::string descriptionKey;
         int ermFunctionId;
     };
-    static std::unordered_map<std::string, RegistredERMButtonInfo> registredButtons;
+    static std::unordered_map<std::string, RegisteredErmButtonInfo> registeredErmButtons;
     struct SettingsPage
     {
         H3DlgCaptionButton *captionBttn = nullptr;
@@ -169,7 +169,7 @@ class SystemOptionsDlg : public H3Dlg
   protected:
     BOOL isInCombat = false;
     BOOL settingsChanged = false;
-    BOOL quickCombatSettingState = OriginalConfig::Get().quickCombat;
+    const BOOL quickCombatSettingState = OriginalConfig::Get().quickCombat;
 
     // static constexpr const char* m_iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
     eDlgCallSource dlgCallSource = UNKNOWN;
@@ -241,7 +241,7 @@ class SystemOptionsDlg : public H3Dlg
     }
     static _ERH_(OnGameLeave)
     {
-        registredButtons.clear();
+        registeredErmButtons.clear();
     }
     static void SetPatches(PatcherInstance *_pi)
     {

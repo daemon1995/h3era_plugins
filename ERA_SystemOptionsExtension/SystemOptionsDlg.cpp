@@ -1,11 +1,8 @@
-
-#include <array>
-
 #include "SystemOptionsDlg.h"
-
 #include "SoundSettings.h"
-#pragma comment(linker, "/EXPORT:RegisterERMCallbackButton=_RegisterERMCallbackButton@16")
-#pragma comment(linker, "/EXPORT:UnregisterERMCallbackButton=_UnregisterERMCallbackButton@4")
+
+#pragma comment(linker, "/EXPORT:RegisterErmCallbackButton=_RegisterErmCallbackButton@16")
+#pragma comment(linker, "/EXPORT:UnregisterErmCallbackButton=_UnregisterErmCallbackButton@4")
 
 namespace scroll
 {
@@ -25,21 +22,21 @@ class MapScroller : public IGamePatch
 #define FRAME_DARK_COLOR H3RGB888(0x31, 0x21, 0x10)
 
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
-std::unordered_map<std::string, SystemOptionsDlg::RegistredERMButtonInfo> SystemOptionsDlg::registredButtons;
+std::unordered_map<std::string, SystemOptionsDlg::RegisteredErmButtonInfo> SystemOptionsDlg::registeredErmButtons;
 
-DllExport BOOL __stdcall RegisterERMCallbackButton(const char *tag, const char *name, const char *description,
+DllExport BOOL __stdcall RegisterErmCallbackButton(const char *tag, const char *name, const char *description,
                                                    int ermFunctionId)
 {
-    const BOOL isNew = SystemOptionsDlg::registredButtons.find(tag) == SystemOptionsDlg::registredButtons.end();
-    SystemOptionsDlg::registredButtons[tag] = {name, description, ermFunctionId};
+    const BOOL isNew = SystemOptionsDlg::registeredErmButtons.find(tag) == SystemOptionsDlg::registeredErmButtons.end();
+    SystemOptionsDlg::registeredErmButtons[tag] = {name, description, ermFunctionId};
     return isNew;
 }
-DllExport BOOL __stdcall UnregisterERMCallbackButton(const char *tag)
+DllExport BOOL __stdcall UnregisterErmCallbackButton(const char *tag)
 {
-    const BOOL isNew = SystemOptionsDlg::registredButtons.find(tag) == SystemOptionsDlg::registredButtons.end();
+    const BOOL isNew = SystemOptionsDlg::registeredErmButtons.find(tag) == SystemOptionsDlg::registeredErmButtons.end();
     if (!isNew)
     {
-        SystemOptionsDlg::registredButtons.erase(tag);
+        SystemOptionsDlg::registeredErmButtons.erase(tag);
     }
     return !isNew;
 }
@@ -155,8 +152,20 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
 }
 void SystemOptionsDlg::CreateDlgPages() noexcept
 {
+
     OriginalConfig &config = OriginalConfig::Get();
     AdditionalConfig &extraConfig = AdditionalConfig::Get();
+    const int callType = dlgCallSource;
+
+    if (callType != eDlgCallSource::COMBAT)
+    {
+        if (quickCombatSettingState == FALSE && extraConfig.quickCombatType.value != FALSE ||
+            quickCombatSettingState != FALSE && extraConfig.quickCombatType.value == FALSE)
+        {
+            extraConfig.quickCombatType.value = quickCombatSettingState;
+            settingsChanged = TRUE;
+        }
+    }
 
     constexpr int baseSettingHeight = ISetting::BASE_SETTINGS_Y_OFFSET;
     constexpr int leftStartX = DLG_LEFT_PART_X_MARGIN;
@@ -226,10 +235,6 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         }
 
         // CREATE CALLBACK BUTTONS
-
-        // RECT otherSettingsPanelRect = {checkboxX, settingsStartY + baseSettingHeight * 7, checkboxX +
-        // ISetting::WIDTH,
-        //                                settingsStartY + baseSettingHeight * 7 + ISetting::TITLE_HEIGHT};
         CreateOtherSettingsPanel(page, checkboxX, settingsStartY + baseSettingHeight * 7, itemId);
 
         // RIGHT PAGE PART
@@ -238,50 +243,48 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         int rightPartY = settingsStartY;
         page->CreateTitle(panelX, rightPartY, ERA_OPT(system, soundSettings, name));
 
-        const SettingsInfo rightCheckboxesInfo[] = {{extraConfig.backgroundSound.keyName,
-                                                     {panelX, rightPartY},
-                                                     itemId++,
-                                                     &extraConfig.backgroundSound.value,
-                                                     ERA_OPT(system, backgroundSound, name),
-                                                     ERA_OPT(system, backgroundSound, hint)}, // show tips
-                                                    {extraConfig.buttonSoundSplit.keyName,
-                                                     {panelX, rightPartY + baseSettingHeight},
-                                                     itemId++,
-                                                     &extraConfig.buttonSoundSplit.value,
-                                                     ERA_OPT(system, buttonSoundSplit, name),
-                                                     ERA_OPT(system, buttonSoundSplit, hint),
-                                                     1}};
+        const SettingsInfo backgroundSoundInfo = {extraConfig.backgroundSound.keyName,
+                                                  {panelX, rightPartY},
+                                                  itemId++,
+                                                  &extraConfig.backgroundSound.value,
+                                                  ERA_OPT(system, backgroundSound, name),
+                                                  ERA_OPT(system, backgroundSound, hint)};
 
-        for (auto &info : rightCheckboxesInfo)
-            page->CreateSetting<CheckBoxSetting>(info);
-
-        auto bgSoundSetting = page->settings[page->settings.Size() - 2];
-
-        bgSoundSetting->SetOnDlgClose([=](ISetting *setting) {
-            if (dlgCallSource == ADV_MAP)
+        auto bgSoundSetting = page->CreateSetting<CheckBoxSetting>(backgroundSoundInfo);
+        bgSoundSetting->SetOnDlgClose([callType](ISetting *setting) {
+            if (callType == ADV_MAP)
                 sound::SoundSettings::StopBackgroundSounds(setting);
             else
                 sound::SoundSettings::SetBackgroundSoundsState(setting->value.current);
         });
 
+        const SettingsInfo splitButtonSoundInfo{extraConfig.alternativeButtonClick.keyName,
+                                                {panelX, rightPartY + baseSettingHeight},
+                                                itemId++,
+                                                &extraConfig.alternativeButtonClick.value,
+                                                ERA_OPT(system, alternativeButtonClick, name),
+                                                ERA_OPT(system, alternativeButtonClick, hint)};
+
+        auto splitButtonSoundSetting = page->CreateSetting<CheckBoxSetting>(splitButtonSoundInfo);
+        ;
+        splitButtonSoundSetting->SetOnChange(
+            [](ISetting *setting) { sound::SoundSettings::SetAlternativButtonClickState(setting->value.current); });
+
         constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
         // combat speed switch panel
         std::string strHints[count << 1];
-        auto hintPtrs = [&strHints, count] {
-            std::array<LPCSTR, 20> arr{};
 
-            for (size_t i = 0; i < count; i++)
-            {
-                libc::sprintf(h3_TextBuffer, ERA_OPT(system, musicVolume, hints) ".%d", i);
-                strHints[i] = h3_TextBuffer;
-                arr[i] = strHints[i].c_str();
+        LPCSTR hintPtrs[count << 1]{};
+        for (size_t i = 0; i < count; i++)
+        {
+            libc::sprintf(h3_TextBuffer, ERA_OPT(system, musicVolume, hints) ".%d", i);
+            strHints[i] = h3_TextBuffer;
+            hintPtrs[i] = strHints[i].c_str();
 
-                libc::sprintf(h3_TextBuffer, ERA_OPT(system, effectsVolume, hints) ".%d", i);
-                strHints[i + count] = h3_TextBuffer;
-                arr[i + count] = strHints[i + count].c_str();
-            }
-            return arr;
-        }();
+            libc::sprintf(h3_TextBuffer, ERA_OPT(system, effectsVolume, hints) ".%d", i);
+            strHints[i + count] = h3_TextBuffer;
+            hintPtrs[i + count] = strHints[i + count].c_str();
+        }
 
         SettingsInfo switch10PanelsInfo[] = {
             {"system_music_level",
@@ -407,12 +410,12 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
              &config.autoSave, //   0x06987C0,
              ERA_OPT(map, autoSave, name),
              ERA_OPT(map, autoSave, hint)}, // show tips in battle
-            {"SmoothScroll",
+            {extraConfig.smoothMapScroll.keyName,
              {checkboxX, checkboxY + baseSettingHeight * 4},
              itemId++,
              &extraConfig.smoothMapScroll.value, //   0x06987C0,
-             ERA_OPT(map, smoothScroll, name),
-             ERA_OPT(map, smoothScroll, hint)}, // show tips in battle
+             ERA_OPT(map, smoothMapScroll, name),
+             ERA_OPT(map, smoothMapScroll, hint)}, // show tips in battle
         };
 
         for (auto &info : checkboxesInfo)
@@ -443,8 +446,14 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                      TRUE};
         itemId += radioNums;
         auto radioBox = page->CreateSetting<RadioBoxSetting>(radioInfo);
-        radioBox->value.isBlocked = isTutorial;
-        // radioBox->SetOnChange();
+        radioBox->value.isBlocked = isTutorial || callType == eDlgCallSource::COMBAT;
+        // radioBox->SetOnDlgClose([callType](ISetting *sender) {
+        //     if (callType == eDlgCallSource::COMBAT)
+        //     {
+        //         // sender->value.current = sender->value.dlgStart;
+        //         *(sender->value.valuePtr) = sender->value.dlgStart;
+        //     }
+        // });
         m_pages.Add(page);
     }
 
@@ -529,7 +538,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                 itemId++,
                                                 &extraConfig.quickAutoResolve.value, // 0x06987F8,
                                                 ERA_OPT(combat, autoQuick, name),
-                                                ERA_OPT(combat, autoQuick, hint)}};
+                                                ERA_OPT(combat, autoQuick, hint),
+                                                1}};
 
         for (auto &info : autoCombatInfo)
         {
@@ -541,17 +551,13 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
         // combat speed switch panel
         std::string strHints[count];
-        auto hintPtrs = [&strHints] {
-            std::array<LPCSTR, Switch10XPanel::BUTTONS_COUNT> arr{};
-
-            for (size_t i = 0; i < Switch10XPanel::BUTTONS_COUNT; i++)
-            {
-                libc::sprintf(h3_TextBuffer, ERA_OPT(combat, animationSpeed, hints) ".%d", i);
-                strHints[i] = h3_TextBuffer;
-                arr[i] = strHints[i].c_str();
-            }
-            return arr;
-        }();
+        LPCSTR hintPtrs[count]{};
+        for (size_t i = 0; i < count; i++)
+        {
+            libc::sprintf(h3_TextBuffer, ERA_OPT(combat, animationSpeed, hints) ".%d", i);
+            strHints[i] = h3_TextBuffer;
+            hintPtrs[i] = strHints[i].c_str();
+        }
 
         SettingsInfo switch10xPanelsInfo{
             "combat_animation_speed",
@@ -625,7 +631,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                    ERA_OPT(combat, healthBar, button),
                                                    ERA_OPT(combat, healthBar, hint)};
         auto button = page->CreateSetting<CaptionButtonSetting>(healthBarCaptionInfo);
-        button->SetOnChange([=](ISetting *setting) {
+        button->SetOnChange([healthBarValuePtr, healthBarcheckBox](ISetting *setting) {
             const int checkboxStateBefore = *healthBarValuePtr;
             ShowHealthBarDlg();
             const int checkboxStateAfter = *healthBarValuePtr;
@@ -696,9 +702,9 @@ void SystemOptionsDlg::CreateOtherSettingsPanel(SettingsPage *page, const int x,
     callbackY += baseSettingHeight;
 
     // only for game on map
-    maxButtonsToShow = Clamp(0, maxButtonsToShow, registredButtons.size());
+    maxButtonsToShow = Clamp(0, maxButtonsToShow, registeredErmButtons.size());
 
-    for (auto &bttn : registredButtons)
+    for (auto &bttn : registeredErmButtons)
     {
         const auto &info = bttn.second;
         const int ermFunctionId = info.ermFunctionId;
@@ -710,9 +716,7 @@ void SystemOptionsDlg::CreateOtherSettingsPanel(SettingsPage *page, const int x,
         captionSetting->SetOnChange([ermFunctionId](ISetting *) { Era::FireErmEvent(ermFunctionId); });
         callbackY += baseSettingHeight;
         if (--maxButtonsToShow == 0)
-        {
             return;
-        }
     }
 
     // wog option buttons:
@@ -824,20 +828,26 @@ SystemOptionsDlg::~SystemOptionsDlg()
         }
         delete page;
     }
-    if (settingsChanged)
+    OriginalConfig &config = OriginalConfig::Get();
+    AdditionalConfig &extraConfig = AdditionalConfig::Get();
+
+    if (dlgCallSource != eDlgCallSource::COMBAT)
     {
-        OriginalConfig &config = OriginalConfig::Get();
+        config.quickCombat = extraConfig.quickCombatType.value ? true : false;
+    }
+    const int newQuickCombatState = config.quickCombat;
+    if (settingsChanged || quickCombatSettingState != newQuickCombatState)
+    {
         config.blackoutComputer = config.enemySpeed == 5;
 
-        const int newQuickCombatState = config.quickCombat;
         // if quick combat settings were changed
-        if (dlgCallSource == ADV_MAP && networkGame && quickCombatSettingState != newQuickCombatState)
+        if (dlgCallSource == eDlgCallSource::ADV_MAP && networkGame && quickCombatSettingState != newQuickCombatState)
         {
             P_Main->GetPlayer()->quickCombatEnabled = newQuickCombatState;
             H3NetworkData<int> netMsg(-1, eNetwork::PLAYER_QUICK, newQuickCombatState);
             netMsg.SendData(false);
         }
-        AdditionalConfig::Save();
+        extraConfig.Save();
         CDECL_0(LONG, 0x0050C370); // j_WriteRegistry -> save settings to heroes3.ini
     }
 

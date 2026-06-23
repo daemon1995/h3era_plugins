@@ -57,6 +57,7 @@ struct SettingsDlg : public H3Dlg
   private:
     H3DlgPcx *labelForHp = nullptr;
     H3DlgPcx *originalLabel = nullptr;
+    H3DlgDef *creatureDef = nullptr;
     BOOL needRedraw;
     const DlgText *text = nullptr;
 
@@ -123,6 +124,5 @@ class CombatHints : public IGamePatch
                                         const Settings *settings, const BOOL lost = false) noexcept;
 
     static CombatHints &Get(); // (PatcherInstance* _PI);
-
 };
 } // namespace cmbhints

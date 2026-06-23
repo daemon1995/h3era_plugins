@@ -1,4 +1,4 @@
-#include "CombatHints.h"
+#include "CombatCreatureHealthBar.h"
 
 void __stdcall ShowHealthBarDlg()
 {
@@ -330,7 +330,7 @@ void SettingsDlg::HitPointsBarDraw() noexcept
             CombatHints::WindMgr_DrawColoredRect(drawX + filledHp, drawY, labelForHp->GetWidth() - filledHp - 2,
                                                  drawHeight, settings, true);
             labelForHp->Refresh();
-            labelForHp->ParentRedraw();
+            //  labelForHp->ParentRedraw();
             // show changes
         }
     }
@@ -396,6 +396,44 @@ void __fastcall SettingsDlg::HeightScrollBarProc(INT32 value, H3BaseDlg *dlg)
 
 BOOL SettingsDlg::DialogProc(H3Msg &msg)
 {
+
+    // v30 = WaitUntil;
+    // if ((timeGetTime() - v30) < 0)
+    //     return 1;
+    // v32 = IsWarMachine(DLG->creatureId);
+    // staticDef = DLG->animation;
+    // if (v32)
+    //     DlgDef::AnimateWarMachine(staticDef);
+    // else
+    //     DlgDef::AnimateMonstre(staticDef);
+    // DLG->VTable->redrawDlg(DLG, 1, -65535, 0xFFFF);
+    // v42 = WaitUntil;
+    // v41 = timeGetTime() - v42;
+    // if (v41 < 100)
+    //     v41 = 100;
+    // WaitUntil = v42 + v41;
+
+    if (creatureDef)
+    {
+        DWORD waitUntil = DwordAt(0x6989E8);
+        DWORD currentTime = GetTime();
+
+        if (int(currentTime - waitUntil) >= 0)
+        {
+            // рисуем следующий кадр анимации
+            THISCALL_1(void, 0x04EB140, creatureDef);
+
+            waitUntil = DwordAt(0x6989E8);
+            int currentTimeA = GetTime() - waitUntil;
+            if (currentTimeA < 100)
+                currentTimeA = 100;
+            Redraw();
+            // creatureDef->Draw();
+            // creatureDef->Refresh();
+            DwordAt(0x6989E8) = waitUntil + currentTimeA;
+            needRedraw = true;
+        }
+    }
 
     if (needRedraw)
     {
@@ -524,8 +562,8 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
     // H3DlgDef* creatureDef = H3DlgDef::Create(1, 25, 100, 130, 12, P_CreatureInformation[12].defName, 0, 2);
 
     H3DlgDef *d = H3ObjectAllocator<H3DlgDef>().allocate(1);
-    H3DlgDef *creatureDef = THISCALL_12(H3DlgDef *, 0x4EA800, d, 30, 12, 100, 130, 225,
-                                        P_CreatureInformation[eCreature::HORNED_DEMON].defName, 0, 2, 0, 0, 0x12);
+    creatureDef = THISCALL_12(H3DlgDef *, 0x4EA800, d, 30, 12, 100, 130, 225,
+                              P_CreatureInformation[eCreature::HORNED_DEMON].defName, 0, 2, 0, 0, 0x12);
 
     // THISCALL_16(H3DlgDef *,0x4EA800, d,)
     AddItem(creatureDef);
@@ -576,9 +614,9 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
 
         hk.bttn = CreateCustomButton(onlyHeldCheckBox->GetX(), onlyHeldCheckBox->GetY() + enabledText->GetHeight() - 3,
                                      15, "iam009.DEF", SettingsHotkeyCallback, 0, 1);
+        hk.bttn->ColorDefToPlayer(IntAt(0x69CCF4));
         int textY = 85;
 
-        H3DlgDefButton *bttn = hk.bttn;
         hk.text =
             CreateText(onlyHeldText->GetX(), onlyHeldText->GetY() + onlyHeldText->GetHeight(), enabledText->GetWidth(),
                        40, text->setHk, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
@@ -593,8 +631,8 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
                              eTextColor::WHITE, 17);
 
         // create default bttn
-        bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12, 13, false,
-                                      eVKey::H3VK_D);
+        H3DlgDefButton *bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12,
+                                                      13, false, eVKey::H3VK_D);
         if (bttn)
         {
             bttn->SetHint(text->dfltName);

@@ -156,7 +156,7 @@ void PlayButtonClickSound2()
     // DwordAt(0x694DF4) = DWORD(originalSound);
 }
 
-void PlaySoundInThread()
+void PlaySecondClickSound()
 {
     PlayButtonClickSound2();
     // std::thread th(PLayButtonClickSound2);
@@ -170,7 +170,7 @@ std::set<DWORD> buttonsPressed;
 
 DWORD __stdcall DefButtonOnHotKey(HiHook *hook, H3DlgDefButton *button, H3Msg *msg)
 {
-    // PlaySoundInThread();
+    // PlaySecondClickSound();
     if (button->IsPressed())
     {
         return 2;
@@ -187,7 +187,7 @@ DWORD __stdcall DefButtonSetClicked(HiHook *hook, H3DlgDefButton *button, H3Msg 
     {
         counterS = 0;
 
-        PlaySoundInThread();
+        PlaySecondClickSound();
     }
     return result;
 }
@@ -195,7 +195,7 @@ DWORD __stdcall DefButtonSetClicked(HiHook *hook, H3DlgDefButton *button, H3Msg 
 DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
 {
 
-    // PlaySoundInThread();
+    // PlaySecondClickSound();
     if (button->IsPressed() && button->GetParent() == P_WindowManager->lastDlg)
     {
         buttonsPressed.insert(DWORD(button));
@@ -203,7 +203,7 @@ DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
     else if (button->IsActive() && buttonsPressed.erase(DWORD(button)))
     {
 
-        PlaySoundInThread();
+        PlaySecondClickSound();
     }
     return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
 }
@@ -218,29 +218,12 @@ DWORD __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
     buttonsPressed.erase(DWORD(button));
     return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
 }
-DWORD __stdcall Dlg_BattleResults_Proc(HiHook *hook, H3Msg *msg)
-{
 
-    auto result = THISCALL_1(DWORD, hook->GetDefaultFunc(), msg);
-
-    if (result == 2)
-    {
-        PlaySoundInThread();
-        // counterS = 2;
-
-        //        result = 3;
-    }
-    // else if (result == 3)
-    //{
-    //     return 2;
-    // }
-    return result;
-}
 DWORD __stdcall Dlg_BattleResults_Dtor(HiHook *hook, H3Msg *msg)
 {
 
     auto result = THISCALL_1(DWORD, hook->GetDefaultFunc(), msg);
-    PlaySoundInThread();
+    PlaySecondClickSound();
 
     // counterS = 2;
 
@@ -351,8 +334,7 @@ _LHF_(HooksInit)
             // _PI->WriteHiHook(0x0456540, THISCALL_, DefButtonSetClicked);
             _PI->WriteHiHook(0x0456620, THISCALL_, DefButtonOnDraw);
             _PI->WriteHiHook(0x0455DD0, THISCALL_, DefButtonDtor);
-            // _PI->WriteHiHook(0x04716E0, THISCALL_, Dlg_BattleResults_Proc);
-            // _PI->WriteHiHook(0x047724F, THISCALL_, Dlg_BattleResults_Dtor);
+
             _PI->WriteHiHook(0x04772FE, THISCALL_, Dlg_BattleResults_Dtor);
             _PI->WriteHiHook(0x047724F, THISCALL_, Dlg_BattleResults_Dtor);
 

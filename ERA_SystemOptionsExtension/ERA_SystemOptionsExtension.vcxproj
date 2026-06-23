@@ -75,8 +75,8 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CombatHints.h" />
-    <ClInclude Include="CombatSpeed.h" />
+    <ClInclude Include="CombatCreatureHealthBar.h" />
+    <ClInclude Include="CombatSettings.h" />
     <ClInclude Include="DlgPanels.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MapScroller.h" />
@@ -86,8 +86,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
-    <ClCompile Include="CombatHints.cpp" />
-    <ClCompile Include="CombatSpeed.cpp" />
+    <ClCompile Include="CombatCreatureHealthBar.cpp" />
+    <ClCompile Include="CombatSettings.cpp" />
     <ClCompile Include="ConfigManager.cpp" />
     <ClCompile Include="DlgPanels.cpp" />
     <ClCompile Include="dllmain.cpp" />

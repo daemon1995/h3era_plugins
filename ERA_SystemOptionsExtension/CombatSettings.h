@@ -1,11 +1,11 @@
 #pragma once
 #include "framework.h"
 
-namespace cmbspd
+namespace cmbsttngs
 {
-class CombatSpeed : public IGamePatch
+class CombatSettings : public IGamePatch
 {
-    static CombatSpeed *instance;
+    static CombatSettings *instance;
     static constexpr DWORD speedsCount = 10;
     // * new battle speed coefficients from SOD_SP
     static constexpr float battleSpeedCoef[speedsCount] = {
@@ -17,11 +17,23 @@ class CombatSpeed : public IGamePatch
         0.025f, 0.010f          // new speed coefficients
     };
 
+    static struct QuickCombatInfo
+    {
+        int quickCombat = 0;
+        int autoSpells = 0;
+        int isNeedRestore = 0;
+        int lastSelection = 0;
+    } quickCombatInfo;
+
   private:
-    CombatSpeed();
+    CombatSettings();
     virtual void CreatePatches() noexcept override;
 
+  protected:
+    static _ERH_(OnBeforeBattleUniversal_Quit);
+    static _ERH_(OnAfterBattle);
+
   public:
-    static CombatSpeed &Get();
+    static CombatSettings &Get();
 };
-} // namespace cmbspd
+} // namespace cmbsttngs

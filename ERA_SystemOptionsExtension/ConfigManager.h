@@ -1,5 +1,5 @@
 #pragma once
-
+#include <unordered_map>
 #pragma pack(push, 4)
 struct OriginalConfig
 {
@@ -53,10 +53,13 @@ struct OriginalConfig
 
 struct AdditionalConfig
 {
+    struct ConfigEntry;
 
     static constexpr LPCSTR sectionName = "Settings.Extra";
     static constexpr LPCSTR fileName = "heroes3.ini";
-    struct SettingsEntry
+    static std::unordered_map<std::string, ConfigEntry *> optionsMap;
+
+    struct ConfigEntry
     {
         LPCSTR keyName = nullptr;
         int value = 0;
@@ -73,19 +76,18 @@ struct AdditionalConfig
             return *reinterpret_cast<const int *>(&value);
         }
     };
-
-    SettingsEntry backgroundSound{"Sound.BackgroundLooping", 1, 1};
-    SettingsEntry buttonSoundSplit{"Sound.ButtonSoundSplit", 0, 0};
-    SettingsEntry quickAutoResolve{"Combat.QuickAutoResolve", 0, 0};
-    SettingsEntry battleQueue{"Combat.BattleQueue", 0, 0};
-    SettingsEntry quickCombatType{"Combat.QuickCombatType", 0, 0, 3};
-    SettingsEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 1, 1};
-    SettingsEntry smoothMapScroll{"AdvMap.SmoothScroll", 1, 1};
+    ConfigEntry alternativeButtonClick{"Sound.AlternativeButtonClick", 0, 0};
+    ConfigEntry backgroundSound{"Sound.BackgroundLooping", 1, 1};
+    ConfigEntry quickAutoResolve{"Combat.QuickAutoResolve", 0, 0};
+    ConfigEntry battleQueue{"Combat.BattleQueue", 0, 0};
+    ConfigEntry quickCombatType{"Combat.QuickCombatType", 0, 0, 3};
+    ConfigEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 1, 1};
+    ConfigEntry smoothMapScroll{"AdvMap.SmoothMapScroll", 1, 1};
 
   private:
-    inline SettingsEntry *data() noexcept
+    inline ConfigEntry *data() noexcept
     {
-        return &backgroundSound;
+        return &alternativeButtonClick;
     }
 
   protected:
