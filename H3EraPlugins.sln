@@ -21,7 +21,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_OptionsMenu", "ERA_Opti
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_SystemOptionsExtension", "ERA_SystemOptionsExtension\ERA_SystemOptionsExtension.vcxproj", "{F6A7B8C9-D0E1-42F3-A4B5-C6D7E8F90123}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EraEditor_TestPlugin", "EraEditor_TestPlugin\EraEditor_TestPlugin.vcxproj", "{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EraEditor_JsonOverrides", "EraEditor_JsonOverrides\EraEditor_JsonOverrides.vcxproj", "{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_GameplayEnhancementPlugin", "Gameplay_GameplayEnhancementPlugin\Gameplay_GameplayEnhancementPlugin.vcxproj", "{C28B0929-25FA-4EC5-9650-0EA912BF2449}"
 EndProject
