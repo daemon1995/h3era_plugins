@@ -128,116 +128,6 @@ _LHF_(RMCdlgProc)
     return EXEC_DEFAULT;
 }
 
-H3WavFile *buttonClickSound2 = nullptr;
-
-#include <thread>
-
-void PlayButtonClickSound2()
-{
-
-    auto snd = P_SoundManager->Get();
-
-    {
-        //     return;
-    }
-    auto originalSound = DwordAt(0x694DF4);
-
-    BOOL32 backup = snd->clickSoundVar;
-    snd->clickSoundVar = 1;
-    buttonClickSound2->spinCount = 64; // volume
-    buttonClickSound2->debugInfo = PRTL_CRITICAL_SECTION_DEBUG(1);
-    buttonClickSound2->lockSemaphore = HANDLE(HANDLE_FLAG_PROTECT_FROM_CLOSE | HANDLE_FLAG_INHERIT);
-
-    THISCALL_2(VOID, 0x59A510, snd, buttonClickSound2);
-    snd->clickSoundVar = backup;
-
-    // DwordAt(0x694DF4) = DWORD(buttonClickSound2);
-    // snd->ClickSound();
-    // DwordAt(0x694DF4) = DWORD(originalSound);
-}
-
-void PlaySecondClickSound()
-{
-    PlayButtonClickSound2();
-    // std::thread th(PLayButtonClickSound2);
-    // th.detach();
-
-    //  auto snd = P_SoundManager->Get();
-}
-
-#include <set>
-std::set<DWORD> buttonsPressed;
-
-DWORD __stdcall DefButtonOnHotKey(HiHook *hook, H3DlgDefButton *button, H3Msg *msg)
-{
-    // PlaySecondClickSound();
-    if (button->IsPressed())
-    {
-        return 2;
-    }
-    return THISCALL_2(DWORD, hook->GetDefaultFunc(), button, msg);
-}
-int counterS = 0;
-
-DWORD __stdcall DefButtonSetClicked(HiHook *hook, H3DlgDefButton *button, H3Msg *msg)
-{
-
-    const auto result = THISCALL_2(DWORD, hook->GetDefaultFunc(), button, msg);
-    if (counterS == 2)
-    {
-        counterS = 0;
-
-        PlaySecondClickSound();
-    }
-    return result;
-}
-
-DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
-{
-
-    // PlaySecondClickSound();
-    if (button->IsPressed() && button->GetParent() == P_WindowManager->lastDlg)
-    {
-        buttonsPressed.insert(DWORD(button));
-    }
-    else if (button->IsActive() && buttonsPressed.erase(DWORD(button)))
-    {
-
-        PlaySecondClickSound();
-    }
-    return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
-}
-void __stdcall DefButtonOnRelease(HiHook *hook, DWORD wnd, int x, int y, int w, int h)
-{
-
-    return THISCALL_5(void, hook->GetDefaultFunc(), wnd, x, y, w, h);
-}
-DWORD __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
-{
-
-    buttonsPressed.erase(DWORD(button));
-    return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
-}
-
-DWORD __stdcall Dlg_BattleResults_Dtor(HiHook *hook, H3Msg *msg)
-{
-
-    auto result = THISCALL_1(DWORD, hook->GetDefaultFunc(), msg);
-    PlaySecondClickSound();
-
-    // counterS = 2;
-
-    // else if (result == 3)
-    //{
-    //     return 2;
-    // }
-    return result;
-}
-_LHF_(DefButtonOnProc)
-{
-    // PlayButtonClickSound2();
-    return EXEC_DEFAULT;
-}
 int __stdcall H3ScenarioDlg_UpdateMapInfo(HiHook *h, H3SelectScenarioDialog *dlg)
 {
 
@@ -256,13 +146,6 @@ int __stdcall H3ScenarioDlg_UpdateMapInfo(HiHook *h, H3SelectScenarioDialog *dlg
     Debug(1);
     return result;
 }
-
-_LHF_(HdWog_hooh)
-{
-
-    return EXEC_DEFAULT;
-}
-
 _LHF_(HooksInit)
 {
 
@@ -278,12 +161,10 @@ _LHF_(HooksInit)
 
         HDIni *hdIni = globalPatcher->VarGetValue<HDIni *>("HD.Ini.Main", nullptr);
 
-
         if (hdIni)
         {
             auto entry = hdIni->FindEntry("UI.Ext.ScenarioMgr.Settings");
             MessageBoxA(nullptr, std::to_string((*entry)[1]->data.value).c_str(), "Value from ini", MB_OK);
-
 
             //   hdIni->entries[]
             for (size_t i = 0; i < hdIni->lineEntries; i++)
@@ -311,8 +192,6 @@ _LHF_(HooksInit)
 
         MessageBoxA(nullptr, h3_TextBuffer, "Value from ini", MB_OK);
     }
-    auto snd = P_SoundManager->Get();
-    snd->ClickSound();
     //"HD.Version.CStr"
     LPCSTR hdVersionStr = globalPatcher->VarGetValue<LPCSTR>("HD.Version.CStr", nullptr);
     //"HD.Version.Dword"
@@ -321,25 +200,6 @@ _LHF_(HooksInit)
     if (0)
     {
         _PI->WriteHiHook(0x0584820, THISCALL_, H3ScenarioDlg_UpdateMapInfo);
-    }
-    // double click on sound
-    if (0)
-    {
-        buttonClickSound2 = H3WavFile::Load("BUTTON2.WAV");
-        if (buttonClickSound2)
-        {
-            // _PI->WriteHiHook(0x0456171, THISCALL_, DefButtonOnRelease);
-            // _PI->WriteLoHook(0x0455E81, DefButtonOnProc);
-            // PI->WriteHiHook(0x04562C7, THISCALL_, DefButtonOnHotKey);
-            // _PI->WriteHiHook(0x0456540, THISCALL_, DefButtonSetClicked);
-            _PI->WriteHiHook(0x0456620, THISCALL_, DefButtonOnDraw);
-            _PI->WriteHiHook(0x0455DD0, THISCALL_, DefButtonDtor);
-
-            _PI->WriteHiHook(0x04772FE, THISCALL_, Dlg_BattleResults_Dtor);
-            _PI->WriteHiHook(0x047724F, THISCALL_, Dlg_BattleResults_Dtor);
-
-            // _PI->WriteByte(0x04A69A2, 0xEB);
-        }
     }
 
     // draw progress bar on adventure map
@@ -363,8 +223,6 @@ _LHF_(HooksInit)
     {
         _PI->WriteHiHook(0x055C9C0, THISCALL_, LoadDEF);
     }
-
-    return EXEC_DEFAULT;
 
     return EXEC_DEFAULT;
     ////_PI->WriteLoHook(0x4FBD71, gem_Dlg_MainMenu_Create);

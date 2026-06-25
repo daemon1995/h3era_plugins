@@ -250,7 +250,6 @@ struct RadioBoxSetting : public ISetting
                     CheckBoxSetting::SetCheckBoxValue(checkBoxes[valueIndex], FALSE);
                     value.current = 0;
                     P_SoundManager->ClickSound();
-
                 }
                 return TRUE;
             }
