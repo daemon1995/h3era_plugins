@@ -485,12 +485,24 @@ BOOL ExportDlg::DialogProc(H3Msg &msg)
 
     return 0;
 }
+// Creating json here
 VOID ExportDlg::OnOK()
 {
     // bool exportSuccess = false;
     std::string message, list;
 
     std::string exportPath = Era::z[1] + std::string(SUBFOLDER_NAME);
+
+    if (Era::era_str eraLocale = Era::GetLanguage())
+    {
+        std::string currentLanguage = eraLocale;
+        Era::MemFree(eraLocale);
+        if (!currentLanguage.empty())
+        {
+            exportPath += currentLanguage + "\\";
+        }
+    }
+
     for (auto &i : selectionPanels)
     {
         if (i->exportFunction)
