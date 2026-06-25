@@ -202,7 +202,7 @@ void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
         const INT16 yBase = firstDef->GetY();
         auto &advMapDlg = builtDefButtons.advMapDlg;
 
-        for (INT16 i = 0; i < hdModMax; i++)
+        for (INT16 i = 0; i < maxTownsDisplayableBuiltIcons; i++)
         {
             H3String buttonName = H3String::Format(GraphicsEnhancements::BUILD_BUTTON_NAME_FORMAT_MAP, i);
             const int buttonId = Era::GetButtonID(buttonName.String());

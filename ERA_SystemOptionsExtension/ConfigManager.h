@@ -79,7 +79,7 @@ struct AdditionalConfig
     ConfigEntry alternativeButtonClick{"Sound.AlternativeButtonClick", 0, 0};
     ConfigEntry backgroundSound{"Sound.BackgroundLooping", 1, 1};
     ConfigEntry quickAutoResolve{"Combat.QuickAutoResolve", 0, 0};
-    ConfigEntry battleQueue{"Combat.BattleQueue", 0, 0};
+    ConfigEntry battleQueue{"Combat.BattleQueue", 1, 1};
     ConfigEntry quickCombatType{"Combat.QuickCombatType", 0, 0, 3};
     ConfigEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 1, 1};
     ConfigEntry smoothMapScroll{"AdvMap.SmoothMapScroll", 1, 1};

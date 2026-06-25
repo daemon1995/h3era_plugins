@@ -55,6 +55,12 @@ void AdditionalConfig::InitialApply()
 
     auto &combatHints = cmbhints::CombatHints::Get();
     combatHints.settings.isEnabled = showCreatureHealthBar.value;
+    auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue");
+    if (queuePI)
+    {
+        const BOOL enabled = battleQueue.value;
+        enabled ? queuePI->ApplyAll() : queuePI->UndoAll();
+    }
 }
 
 BOOL AdditionalConfig::Save()

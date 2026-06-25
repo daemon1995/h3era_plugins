@@ -70,29 +70,12 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
                                DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
                                FRAME_DARK_COLOR);
 
-    for (size_t i = 0; i < 255; i += 10)
-    {
-        // background->DarkenArea(16, 16 +i, DLG_WIDTH - 32, 10, i);
-    }
-    //    background->DrawShadow(16,16 +35, DLG_WIDTH - 32, DLG_HEIGHT>>1);
     // create buttons for loading/saving/restarting/quitting the game
     CreateGameControlButtons();
 
     // create and init page buttons and its actual pages with settings
     CreateDlgPages();
 
-    // RGB565 color565(0x7A, 0x65, 0x48);
-    // CreateFrame(DLG_WIDTH >> 1, 40, 2, DLG_HEIGHT - 50, color);
-
-    // draw frames over page caption buttons and copy background to pages' backgrounds
-    for (const auto &page : m_pages)
-    {
-        // DrawThickFrameOverItem(background, page->captionBttn);
-    }
-    for (const auto &page : m_pages)
-    {
-        //  libc::memcpy(page->background->buffer, background->buffer, page->background->buffSize);
-    }
     instance = this;
 }
 
@@ -106,23 +89,25 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         const INT32 buttonId;
         const DWORD defNamePtr;
         const eVKey hotkey;
-        const DWORD hintPtr;
+        const LPCSTR hintPtr;
         const INT32 disableOnCreation = FALSE;
     } gameControlButtons[]{
-        {target::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, 0x06A75F4,
-         isInCombat && networkGame || isMainMenu},                                               // load game
-        {target::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S, 0x06A75FC, dlgCallSource != ADV_MAP}, // save game
-        {target::PAGE_RESTART, 0x0688618, eVKey::H3VK_R, 0x06A7604,
-         isInCombat && networkGame || isMainMenu},                                         // restart the map
-        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, 0x06A75EC, isMainMenu},              // quit to main menu
-        {target::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, 0x06A760C, isMainMenu},              // quit to desktop
-        {30722, 0x0670130, eVKey::H3VK_ESCAPE, DWORD(isInCombat ? 0x06A5614 : 0x06A7614)}, // back to adv map / combat
+        {target::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, ERA_OPT(common, load, hint),
+         isInCombat && networkGame || isMainMenu}, // load game
+        {target::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S, ERA_OPT(common, save, hint),
+         dlgCallSource != ADV_MAP}, // save game
+        {target::PAGE_RESTART, 0x0688618, eVKey::H3VK_R, ERA_OPT(common, restart, hint),
+         isInCombat && networkGame || isMainMenu},                                              // restart the map
+        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, ERA_OPT(common, menu, hint), isMainMenu}, // quit to main menu
+        {target::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, ERA_OPT(common, quit, hint), isMainMenu}, // quit to desktop
+        {30722, 0x0670130, eVKey::H3VK_ESCAPE,
+         isInCombat ? ERA_OPT(common, return, hint) : ERA_OPT(common, return, hint)}, // back to adv map / combat
     };
 
     constexpr size_t length = std::size(gameControlButtons);
     constexpr int buttonWidth = 100 + 13;
     constexpr int buttonHeight = 48 + 10;
-    const size_t startIndex = isMainMenu ? 5 : 0;
+    const size_t startIndex = isMainMenu ? 5 : 0; // don't create
     constexpr int frameY = DLG_HEIGHT - buttonHeight * 3 - 20;
     // draw a horizontal thick frame over general buttons
     background->DrawThickFrame((DLG_WIDTH >> 1) + 1, frameY, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_LIGHT_COLOR);
@@ -140,13 +125,11 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         }
         if (const auto hint = button.hintPtr)
         {
-            bttn->SetRightClickHint(EraJS::read(ValueAt<LPCSTR>(hint)));
+            bttn->SetRightClickHint(EraJS::read(hint));
         }
         if (button.disableOnCreation)
         {
             bttn->Disable();
-            //  reinterpret_cast<H3DlgDef*>(bttn)->SendCommand(5, 4096);
-            // bttn->Cast<H3DlgDef>()->SendCommand(6, 2);
         }
     }
 }
@@ -423,8 +406,14 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             page->CreateSetting<CheckBoxSetting>(info);
         }
         auto &smoothScroll = *page->settings.Last();
-        smoothScroll->SetOnChange(
-            [](ISetting *setting) { scroll::MapScroller::Get().SetEnabled(setting->value.current); });
+        smoothScroll->SetOnDlgClose([callType](ISetting *setting) {
+            const BOOL value = setting->value.current;
+            scroll::MapScroller::Get().SetEnabled(value);
+            if (!value && callType == eDlgCallSource::ADV_MAP)
+            {
+                P_AdventureManager->screenDrawOffset = {};
+            }
+        });
 
         // RIGHT PAGE PART
         constexpr int rCheckboxX = DLG_RIGHT_PART_X_MARGIN;

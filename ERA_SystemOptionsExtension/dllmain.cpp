@@ -6,7 +6,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.0";
+constexpr LPCSTR PLUGIN_VERSION = "1.0.1";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
@@ -24,6 +24,9 @@ _LHF_(AdvMapSettingsDlg)
 
 void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *combatManager)
 {
+
+    // return THISCALL_1(void, h->GetDefaultFunc(), combatManager);
+
     SystemOptionsDlg dlg;
     dlg.networkGame = 0;
     dlg.Start();
@@ -48,7 +51,6 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     default:
         break;
     }
-    // THISCALL_1(void, h->GetDefaultFunc(), combatManager);
 }
 
 int __fastcall HandleSystemDlgStart(void *_msg)
@@ -56,10 +58,18 @@ int __fastcall HandleSystemDlgStart(void *_msg)
     if (const auto msg = static_cast<H3Msg *>(_msg))
     {
         const auto callerItem = msg->GetDlg()->GetCaptionButton(msg->itemId);
-        if (callerItem && msg->IsLeftClick())
+        if (!callerItem)
+        {
+            return true;
+        }
+        if (msg->IsLeftClick())
         {
             SystemOptionsDlg dlg;
             dlg.Start();
+        }
+        else if (msg->IsRightClick())
+        {
+            H3Messagebox::RMB(EraJS::read("era.opt.mainMenuButton.hint"));
         }
     }
     return true;
@@ -70,7 +80,8 @@ _ERH_(OnAfterWog)
     using namespace mainmenu;
     const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
     constexpr auto UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
-    MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, UNIQUE_BUTTON_NAME, flags, &HandleSystemDlgStart};
+    const char *name = EraJS::read("era.opt.mainMenuButton.name");
+    MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, name, flags, &HandleSystemDlgStart};
     MainMenu_RegisterWidget(langInfo);
 
     return;

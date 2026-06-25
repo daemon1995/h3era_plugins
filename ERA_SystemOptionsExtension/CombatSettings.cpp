@@ -55,7 +55,7 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     }
     if (quickCombatType == 3)
     {
-        LPCSTR keys[] = {"era.opt.map.quickCombat.name", "era.opt.map.quickCombatManual.menu",
+        LPCSTR keys[] = {"era.opt.map.quickCombat.menu", "era.opt.map.quickCombatManual.menu",
                          "era.opt.map.quickCombatMana.menu", "era.opt.map.quickCombatManaFree.menu"};
         for (size_t i = 1; i <= 4; i++)
         {
@@ -143,7 +143,6 @@ void CombatSettings::CreatePatches() noexcept
     // combat setype selection
     _REH_(OnBeforeBattleUniversal_Quit);
     _REH_(OnAfterBattle);
-
 }
 
 CombatSettings &CombatSettings::Get()

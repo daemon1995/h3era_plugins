@@ -33,7 +33,6 @@ CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3Dl
         checkBox->SendCommand(6, 2);
     }
 
-
     itemsVec += CreateThickFrameOverItem(checkBox);
     itemsVec += checkBox;
 
@@ -70,7 +69,7 @@ RadioBoxSetting *RadioBoxSetting::Create(const RadioButtonInfo &info, H3Vector<H
 
         auto checkBox = H3DlgDef::Create(itemX + WIDTH - CHECKBOX_WIDTH, itemY, itemId++,
                                          NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
-        
+
         itemsVec += CreateThickFrameOverItem(checkBox);
         setting->checkBoxes += checkBox;
         auto text =
@@ -140,14 +139,14 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     const auto size = info.defsNum;
     if (!size)
         return setting;
-    itemY -= BASE_SETTINGS_Y_OFFSET - TITLE_HEIGHT;// -6;
+    itemY -= BASE_SETTINGS_Y_OFFSET - TITLE_HEIGHT; // -6;
     auto def = H3LoadedDef::Load(info.defNamesPtrs[0]);
 
     itemsVec += H3DlgFrame::Create(itemX - 1, itemY - 1, WIDTH + 2, def->heightDEF + 3, -1, frameColor);
     itemY += 1;
 
     const int padding = (WIDTH - size * def->widthDEF) / (size + 1);
-    itemX += padding;
+    itemX += padding + 1;
     for (size_t i = 0; i < size; i++)
     {
         auto def = H3DlgDefButton::Create(itemX, itemY, info.firstItemId + i, info.defNamesPtrs[i], 0, 1, FALSE, NULL);
@@ -180,7 +179,7 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
     int itemY = info.position.y;
 
     setting->titleItem = CreateTitle(itemX, itemY, info.displayedName, itemsVec);
-    itemY -= BASE_SETTINGS_Y_OFFSET - TITLE_HEIGHT;// -6;
+    itemY -= BASE_SETTINGS_Y_OFFSET - TITLE_HEIGHT; // -6;
 
     // create background pcx
     setting->backgroundPcx = H3DlgPcx::Create(itemX, itemY, Switch10XPanel::bgPcxPath);

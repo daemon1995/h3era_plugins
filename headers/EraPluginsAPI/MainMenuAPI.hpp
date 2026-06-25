@@ -31,7 +31,7 @@ enum eMenuFlags : INT
 struct MenuWidgetInfo
 {
     const char *name = nullptr;             ///< Unique identifier for the widget
-    const char *text = nullptr;             ///< Display text of the widget
+    const char *text = nullptr;             ///< Display text of the widget :: supports ERA localization keys
     eMenuFlags menuList = eMenuFlags::MAIN; ///< Menu context(s) where the widget should appear
     int(__fastcall *customProc)(void *msg); ///< Callback function triggered when widget is clicked
 };

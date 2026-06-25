@@ -97,14 +97,7 @@ struct ISetting
   public:
     virtual void ClampValue() noexcept {};
     virtual void SetVisible(const BOOL visible) noexcept {};
-    virtual BOOL ProcessMessage(H3Msg &msg) noexcept
-    {
-        if (value.isBlocked)
-        {
-            return 1;
-        }
-        return 0;
-    }
+    virtual BOOL ProcessMessage(H3Msg &msg) noexcept = 0;
 
   public:
     void SetOnChange(OnChangeCallback cb) noexcept
@@ -189,9 +182,10 @@ struct CheckBoxSetting : public ISetting
             const int newValue = value.current ^= 1; // value.current;
             ClampValue();
             // *value.valuePtr = newValue;
-            P_SoundManager->ClickSound();
             SetCheckBoxValue(checkBoxItem, newValue);
             TriggerChange();
+            P_SoundManager->ClickSound();
+
             return TRUE;
         }
         return FALSE;
@@ -253,9 +247,10 @@ struct RadioBoxSetting : public ISetting
             {
                 if (!requiresSelection)
                 {
-                    P_SoundManager->ClickSound();
                     CheckBoxSetting::SetCheckBoxValue(checkBoxes[valueIndex], FALSE);
                     value.current = 0;
+                    P_SoundManager->ClickSound();
+
                 }
                 return TRUE;
             }
@@ -265,13 +260,14 @@ struct RadioBoxSetting : public ISetting
 
             ClampValue();
             const auto size = checkBoxes.Size();
-            P_SoundManager->ClickSound();
 
             for (size_t i = 0; i < size; i++)
             {
                 CheckBoxSetting::SetCheckBoxValue(checkBoxes[i], i == valueIndex);
             }
             TriggerChange();
+            P_SoundManager->ClickSound();
+
             return TRUE;
         }
         return FALSE;

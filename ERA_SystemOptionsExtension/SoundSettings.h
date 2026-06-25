@@ -13,15 +13,11 @@ class SoundSettings : public IGamePatch
     Patch *buttonClickSoundPatches[2] = {nullptr, nullptr};
     std::unordered_set<DWORD> buttonsPressed;
 
-    SoundSettings() noexcept : IGamePatch(_PI)
-    {
-    }
+    SoundSettings() noexcept : IGamePatch(_PI) {};
 
   protected:
     static void __stdcall AdvMgr__StartLoopSound(HiHook *h, H3AdventureManager *_this, int x, int y, int z,
-                                                 INT32 volume, int a5)
-    {
-    }
+                                                 INT32 volume, int a5) {};
     static void PlaySecondClickSound()
     {
         auto snd = P_SoundManager->Get();
@@ -169,10 +165,19 @@ class SoundSettings : public IGamePatch
     }
     static void OnMusicVolumeChanged(ISetting *sender)
     {
+        OriginalConfig::Get().lastMusicVolume = sender->value.current;
         AdjustSoundVolume(sender, 0x059A4B0);
     }
     static void OnSoundVolumeChanged(ISetting *sender)
     {
+        const int currentVolume = sender->value.current;
+        OriginalConfig::Get().lastEffectsVolume = currentVolume;
+        auto advMan = P_AdventureManager->Get();
+        if (!currentVolume && advMan && advMan->dlg)
+        {
+            H3Position pos(1023, 0, 0);                     // position that blocks sound play
+            THISCALL_3(void, 0x0418330, advMan, pos, TRUE); // stop current sound and dont play new;
+        }
         AdjustSoundVolume(sender, 0x059A3C0);
     }
 };
