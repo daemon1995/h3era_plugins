@@ -41,8 +41,9 @@ class SystemOptionsDlg : public H3Dlg
     static constexpr int DLG_CAPTION_BUTTON_HEIGHT = 40;
     static constexpr int DLG_TOPSETTINGS_MARGIN = DLG_CAPTION_BUTTON_TOP_MARGIN + DLG_CAPTION_BUTTON_HEIGHT + 4;
 
-    static constexpr int DLG_RIGHT_PART_X_MARGIN = DLG_WIDTH - ISetting::WIDTH - 33;
-    static constexpr int DLG_LEFT_PART_X_MARGIN = 25;
+    static constexpr int DLG_X_MARGIN = 28;
+    static constexpr int DLG_LEFT_PART_X_MARGIN = DLG_X_MARGIN;
+    static constexpr int DLG_RIGHT_PART_X_MARGIN = DLG_WIDTH - ISetting::WIDTH - DLG_X_MARGIN;
 
     static constexpr float SETTINGS_VERSION = .1f;
 

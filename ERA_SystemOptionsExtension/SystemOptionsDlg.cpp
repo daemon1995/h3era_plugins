@@ -63,10 +63,11 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
         dlgCallSource = MAIN_MENU;
 
     // split dlg by half with thick frame
-    background->DrawThickFrame(DLG_WIDTH >> 1, DLG_TOPSETTINGS_MARGIN, 1,
+    constexpr int dlgCenterX = DLG_WIDTH >> 1;
+    background->DrawThickFrame(dlgCenterX, DLG_TOPSETTINGS_MARGIN, 1,
                                DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
                                FRAME_LIGHT_COLOR);
-    background->DrawThickFrame((DLG_WIDTH >> 1) + 1, DLG_TOPSETTINGS_MARGIN, 1,
+    background->DrawThickFrame(dlgCenterX + 1, DLG_TOPSETTINGS_MARGIN, 1,
                                DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
                                FRAME_DARK_COLOR);
 
@@ -110,8 +111,11 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
     const size_t startIndex = isMainMenu ? 5 : 0; // don't create
     constexpr int frameY = DLG_HEIGHT - buttonHeight * 3 - 20;
     // draw a horizontal thick frame over general buttons
-    background->DrawThickFrame((DLG_WIDTH >> 1) + 1, frameY, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_LIGHT_COLOR);
-    background->DrawThickFrame((DLG_WIDTH >> 1) + 1, frameY + 1, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_DARK_COLOR);
+
+    constexpr int dlgCenterX = DLG_WIDTH >> 1;
+
+    background->DrawThickFrame(dlgCenterX + 1, frameY, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_LIGHT_COLOR);
+    background->DrawThickFrame(dlgCenterX + 2, frameY + 1, (DLG_WIDTH >> 1) - 20, 1, 1, FRAME_DARK_COLOR);
 
     for (size_t i = startIndex; i < length; i++)
     {
@@ -173,7 +177,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         LPCSTR switchPanelHints[] = {ERA_ARRAY_OPT(system, videoQuality, hints, 0),
                                      ERA_ARRAY_OPT(system, videoQuality, hints, 1)};
         constexpr size_t videoDefNum = std::size(videoDefNames);
-        constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
+        constexpr int switchPanelX = leftStartX;
 
         SwitchPanelInfo switchPanelsInfo = {
             {switchPanelX, settingsStartY},
@@ -187,7 +191,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         page->CreateSetting<SwitchPanel>(switchPanelsInfo);
         itemId += videoDefNum;
-        constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
+        constexpr int checkboxX = leftStartX;
         LPCSTR checkboxesHintPtrs[] = {ERA_OPT(system, videoSubtitles, hint), ERA_OPT(system, buildingOutlines, hint),
                                        ERA_OPT(system, spellBookAnimation, hint)};
 
@@ -313,7 +317,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         int itemId = page->firstItemId;
         auto &pageItems = page->items;
 
-        constexpr int switchPanelX = DLG_LEFT_PART_X_MARGIN;
+        constexpr int switchPanelX = leftStartX;
 
         LPCSTR playerSpeedDefNames[] = {ValueAt<LPCSTR>(0x005B1EEF + 1), ValueAt<LPCSTR>(0x005B1F43 + 1),
                                         ValueAt<LPCSTR>(0x005B1F97 + 1), ValueAt<LPCSTR>(0x005B1FEB + 1)};
@@ -364,7 +368,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         itemId += playerDefNum + enemyDefNum + mapScrollDefNum;
         // create checkboxes
-        constexpr int checkboxX = DLG_LEFT_PART_X_MARGIN;
+        constexpr int checkboxX = leftStartX;
 
         //	page->CreateTitle(checkboxX, settingsStartY + baseSettingHeight * 5, ERA_OPT(map, miscSettings, name));
 
@@ -459,7 +463,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         auto page = new SettingsPage(captionBttn);
         AddItem(captionBttn);
 
-        constexpr int x = DLG_LEFT_PART_X_MARGIN;
+        constexpr int x = leftStartX;
 
         // standard checkboxes
         int itemId = page->firstItemId;
