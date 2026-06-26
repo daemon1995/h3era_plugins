@@ -8,72 +8,72 @@ SoundManager SoundManager::soundManager;
 
 void SoundManager::CreateNewLoopSoundsTable(const std::vector<ObjectSound> &additionalLoopSounds)
 {
-    if (additionalLoopSounds.size())
+
+    const size_t addedSound = additionalLoopSounds.size();
+    if (addedSound < 1)
+        return;
+
+    std::unordered_map<std::string, UINT> loopWavNamesMap;
+
+    LPSTR *originalWavTable = reinterpret_cast<LPSTR *>(0x065F794);
+    loopSoundNamePointers.resize(LOOP_SOUNDS_AMOUNT);
+    volatile size_t wavFileIndex = 0;
+    for (; wavFileIndex < LOOP_SOUNDS_AMOUNT; wavFileIndex++)
+    {
+        loopSoundNamePointers[wavFileIndex] = originalWavTable[wavFileIndex];
+        std::string wavName = originalWavTable[wavFileIndex];
+        std::transform(wavName.begin(), wavName.end(), wavName.begin(), ::tolower);
+
+        loopWavNamesMap.insert(std::make_pair(wavName, wavFileIndex));
+    }
+
+    for (const auto &loopSound : additionalLoopSounds)
+    {
+        std::string addedLoopSoundName = loopSound.wavName;
+
+        // empty string means no loop sound (is need to block original loop sound)
+        int objectLoopSoundIndex = -1;
+
+        if (!addedLoopSoundName.empty())
+        {
+            std::transform(addedLoopSoundName.begin(), addedLoopSoundName.end(), addedLoopSoundName.begin(), ::tolower);
+
+            auto findResult = loopWavNamesMap.find(addedLoopSoundName);
+            // if name isn't in the table add it and allocate memory
+            if (findResult == loopWavNamesMap.end())
+            {
+                // add new wav entry into cehck map and into the table
+                loopWavNamesMap.insert(std::make_pair(addedLoopSoundName.c_str(), wavFileIndex));
+                objectLoopSoundIndex = wavFileIndex++;
+                LPSTR namePointer = new char[addedLoopSoundName.length() + 1];
+                strcpy(namePointer, addedLoopSoundName.c_str());
+                loopSoundNamePointers.emplace_back(namePointer);
+            }
+            else
+            {
+                objectLoopSoundIndex = findResult->second;
+            }
+        }
+        // store in the map to use in hook
+        loopSoundObjectIndexes.insert(std::make_pair(loopSound.objectType, objectLoopSoundIndex));
+    }
+
+    // if we added new wav files into the table we should replace the original wav table
+    // and patch Adventure manager to use extended wav table
+    const size_t wavTableSize = loopWavNamesMap.size();
+    // return;
+    if (wavTableSize > LOOP_SOUNDS_AMOUNT)
     {
 
-        std::unordered_map<std::string, UINT> loopWavNamesMap;
+        loopSoundNamePointers.shrink_to_fit();
+        loopSoundsWavTable.resize(wavTableSize, nullptr);
+        soundsStates.resize(wavTableSize, 0);
 
-        LPSTR *originalWavTable = reinterpret_cast<LPSTR *>(0x065F794);
-        loopSoundNamePointers.resize(LOOP_SOUNDS_AMOUNT);
-        volatile size_t wavFileIndex = 0;
-        for (; wavFileIndex < LOOP_SOUNDS_AMOUNT; wavFileIndex++)
-        {
-            loopSoundNamePointers[wavFileIndex] = originalWavTable[wavFileIndex];
-            std::string wavName = originalWavTable[wavFileIndex];
-            std::transform(wavName.begin(), wavName.end(), wavName.begin(), ::tolower);
-
-            loopWavNamesMap.insert(std::make_pair(wavName, wavFileIndex));
-        }
-
-        for (const auto &loopSound : additionalLoopSounds)
-        {
-            std::string addedLoopSoundName = loopSound.wavName;
-
-            // empty string means no loop sound (is need to block original loop sound)
-            int objectLoopSoundIndex = -1;
-
-            if (!addedLoopSoundName.empty())
-            {
-                std::transform(addedLoopSoundName.begin(), addedLoopSoundName.end(), addedLoopSoundName.begin(),
-                               ::tolower);
-
-                auto findResult = loopWavNamesMap.find(addedLoopSoundName);
-                // if name isn't in the table add it and allocate memory
-                if (findResult == loopWavNamesMap.end())
-                {
-                    // add new wav entry into cehck map and into the table
-                    loopWavNamesMap.insert(std::make_pair(addedLoopSoundName.c_str(), wavFileIndex));
-                    objectLoopSoundIndex = wavFileIndex++;
-                    LPSTR namePointer = new char[addedLoopSoundName.length() + 1];
-                    strcpy(namePointer, addedLoopSoundName.c_str());
-                    loopSoundNamePointers.emplace_back(namePointer);
-                }
-                else
-                {
-                    objectLoopSoundIndex = findResult->second;
-                }
-            }
-            // store in the map to use in hook
-            loopSoundObjectIndexes.insert(std::make_pair(loopSound.objectType, objectLoopSoundIndex));
-        }
-
-        // if we added new wav files into the table we should replace the original wav table
-        // and patch Adventure manager to use extended wav table
-        const size_t wavTableSize = loopWavNamesMap.size();
-        // return;
-        if (wavTableSize > LOOP_SOUNDS_AMOUNT)
-        {
-
-            loopSoundNamePointers.shrink_to_fit();
-            loopSoundsWavTable.resize(wavTableSize, nullptr);
-            soundsStates.resize(wavTableSize, 0);
-
-            ReplaceAdventureManagerLoadedWavsArray();
-        }
-
-        _PI->WriteLoHook(0x4AA757, H3AdventureManager__ObjectVisit_SoundPlay);
-        _PI->WriteLoHook(0x04185DD, H3AdventureManager_AtGettingLoopSoundId);
+        ReplaceAdventureManagerLoadedWavsArray();
     }
+
+    _PI->WriteLoHook(0x4AA757, H3AdventureManager__ObjectVisit_SoundPlay);
+    _PI->WriteLoHook(0x4185D1, H3AdventureManager_AtGettingLoopSoundId);
 }
 void SoundManager::ReplaceAdventureManagerLoadedWavsArray()
 {
@@ -181,7 +181,7 @@ _LHF_(SoundManager::H3AdventureManager__AtTrimSound)
         {
             volatile int usedSoundsConuter = 0;
             auto &soundStates = soundManager.soundsStates;
-            memset(soundStates.data(), 0, std::size(soundStates));
+            libc::memset(soundStates.data(), 0, std::size(soundStates));
             for (const auto &currentSound : advManager->currentSounds)
             {
                 const int soundId = currentSound.loopSound;
@@ -242,10 +242,6 @@ SoundManager::eLoopSooundId SoundManager::GetLoopSoundId(const H3MapItem *mapIte
     return eLoopSooundId::UNDEFINED;
 }
 
-void __stdcall SoundManager::H3AdventureManager__TrimSound(HiHook *h, const H3AdventureManager *advManager,
-                                                           const int type)
-{
-}
 
 void SoundManager::Init(const std::vector<ObjectSound> &additionalLoopSounds)
 {

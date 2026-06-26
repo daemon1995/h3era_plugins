@@ -150,7 +150,7 @@ BOOL WarehousesExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, co
             const INT16 resNum = resType == eResource::GOLD ? objSetup->resourceAmount * 500 : objSetup->resourceAmount;
 
             aiMapItemWeight =
-                static_cast<int>(activePlayer->resourceImportance[resType] * resNum); // static_cast<double*>()
+                static_cast<int>(activePlayer->aIPlayer.resourceImportance[resType] * resNum); // static_cast<double*>()
         }
         return true;
     }

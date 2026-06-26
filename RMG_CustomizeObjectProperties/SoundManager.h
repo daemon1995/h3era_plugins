@@ -44,8 +44,6 @@ struct SoundManager
     static _LHF_(H3AdventureManager__AtHide);
     static _LHF_(H3AdventureManager__AtLoadingWav);
     static _LHF_(H3AdventureManager__AtTrimSound);
-    static void __stdcall H3AdventureManager__TrimSound(HiHook *h, const H3AdventureManager *advManager,
-                                                        const int type);
 
   public:
     static void Init(const std::vector<ObjectSound> &additionalLoopSounds);

@@ -32,7 +32,7 @@ BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const 
 
                 // return (__int64)((double)v6 - HeroOwner->ai.resource_value[6] * 2000.0);
                 aiMapItemWeight =
-                    static_cast<int>(aiExperience - player->resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
+                    static_cast<int>(aiExperience - player->aIPlayer.resourceImportance[eResource::GOLD] * GOLD_REQUIRED);
             }
         }
 

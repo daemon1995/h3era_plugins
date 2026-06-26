@@ -3,6 +3,8 @@
 namespace extender
 {
 constexpr int WOG_OBJECT_TYPE = eObject::PYRAMID;
+constexpr int DECORATIVE_OBJECT_TYPE = eObject::BLANK1;        // obstackle that is hidden on puzzle_map
+constexpr int DECORATIVE_PUZZLE_OBJECT_TYPE = eObject::BLANK2; // obstackle that isn't hidden on puzzle_map
 constexpr int ERA_OBJECT_TYPE = eObject::BLANK3;
 constexpr int WAREHOUSE_OBJECT_TYPE = eObject::BLANK4;
 constexpr int HOTA_OBJECT_TYPE = eObject::BLANK5;
