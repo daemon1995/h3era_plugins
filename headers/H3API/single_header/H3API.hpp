@@ -15751,19 +15751,20 @@ namespace h3
 		BOOL8 isHuman;
 		/** @brief [E4] */
 		BOOL quickCombatEnabled;
-		struct AIPlayer
-		{
-			H3Resources resource_expected_count;
-			H3Resources income;
-			DOUBLE _f_038;
-			DOUBLE resourceImportance[7];
-			float turnValueOfAvgArtifact;
-		};
-		AIPlayer aIPlayer;
-	protected:
-		/** @brief [164] */
-		h3unk8 _f_164[4];
-	public:
+		/** @brief [E8] */
+		DWORD comboArtifacts;
+		/** @brief [EC] */
+        struct AIPlayer
+        {
+            H3Resources resourceExpectedCount;
+            H3Resources income;
+			char gap38[4];
+            DOUBLE resourceImportance[7];
+            INT32 averageResourceValue;
+            float turnValueOfAvgArtifact;
+        } aIPlayer;
+
+    public:
 		_H3API_ H3Hero* GetActiveHero();
 	};
 	_H3API_ASSERT_SIZE_(H3Player);
