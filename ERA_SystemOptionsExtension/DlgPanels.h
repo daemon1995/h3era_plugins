@@ -409,11 +409,14 @@ struct Switch10XPanel : public ISetting
             {
                 return TRUE;
             }
+            switchButtons[value.current]->SendCommand(6, 4);
+
             ClampValue();
             value.current = buttonIndex;
 
             backgroundPcx->Draw();
             backgroundPcx->Refresh();
+            switchButtons[value.current]->SendCommand(5, 4);
             switchButtons[value.current]->Draw();
             switchButtons[value.current]->Refresh();
             TriggerChange();

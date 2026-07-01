@@ -21,7 +21,8 @@ enum ePageItemId : INT
     PAGE_ITEM_GENERAL = 1,
     PAGE_ITEM_ADV_MAP,
     PAGE_ITEM_COMBAT,
-    PAGE_ITEM_ERA_MODS,
+    // PAGE_ITEM_ERA_MODS,
+    PAGE_ITEM_TOTAL_COUNT,
 };
 
 enum ePageIndex : INT
@@ -73,6 +74,7 @@ class SystemOptionsDlg : public H3Dlg
         //  H3LoadedPcx16 *background = nullptr;
         std::unordered_map<int, ISetting *> settingsByItemId;
 
+      public:
         SettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
         {
             if (!captionBttn)
@@ -175,7 +177,11 @@ class SystemOptionsDlg : public H3Dlg
     // static constexpr const char* m_iniPath = "Runtime/RMG_CustomizeObjectsProperties.ini";
     eDlgCallSource dlgCallSource = UNKNOWN;
     SettingsPage *m_currentPage = nullptr;
-    H3Vector<SettingsPage *> m_pages;
+    std::vector<SettingsPage *> m_pages;
+    std::vector<std::pair<LPCSTR, RegisteredErmButtonInfo *>> storedErmButtonsInfo;
+    std::vector<CaptionButtonSetting *> callbackErmButtons;
+    H3DlgScrollbar *scrollBar = nullptr;
+    UINT currentTopErmButtonIdx = 0;
 
   public:
     static SystemOptionsDlg *instance;
@@ -196,7 +202,7 @@ class SystemOptionsDlg : public H3Dlg
   private:
     void CreateGameControlButtons() noexcept;
     void CreateDlgPages() noexcept;
-    void CreateOtherSettingsPanel(SettingsPage *page, const int x, const int y, int &itemId) noexcept;
+    void CreateImportedSettingsPanel(SettingsPage *page, const int x, const int y, int &itemId) noexcept;
 
     void InitDlgPages()
     {
@@ -211,7 +217,7 @@ class SystemOptionsDlg : public H3Dlg
     }
     void SetActivePage(const UINT pageId, const BOOL redraw)
     {
-        if (m_pages.Size() <= pageId)
+        if (m_pages.size() <= pageId)
             return;
         auto &page = m_pages[pageId];
         if (m_currentPage != page)
@@ -232,14 +238,50 @@ class SystemOptionsDlg : public H3Dlg
         }
     }
 
-    BOOL ReadIniDlgSettings() noexcept;
-    BOOL WriteIniDlgSettings() const noexcept;
+    VOID AssignErmButtons(const int firstItemId, const BOOL redraw) noexcept
+    {
+        currentTopErmButtonIdx = firstItemId;
+        const size_t length = callbackErmButtons.size();
+        for (size_t i = 0; i < length; i++)
+        {
+            const size_t id = firstItemId + i;
+            const auto &info = storedErmButtonsInfo[id].second;
+            LPCSTR namePtr = info->nameKey.empty() ? nullptr : EraJS::read(info->nameKey);
+            LPCSTR descriptionPtr = info->descriptionKey.empty() ? nullptr : EraJS::read(info->descriptionKey);
+
+            auto button = callbackErmButtons[i]->captionButton;
+            button->SetText(namePtr);
+            button->SetRightClickHint(descriptionPtr);
+            const int ermFunctionId = info->ermFunctionId;
+            callbackErmButtons[i]->SetOnChange([ermFunctionId](ISetting *) { Era::FireErmEvent(ermFunctionId); });
+            if (redraw)
+            {
+                button->Draw();
+                button->Refresh();
+            }
+        }
+    }
+
+  private:
+    static void __stdcall CallWogOptionsDlg();
+    static VOID __fastcall ScrollBarProc(INT32 itemId, H3BaseDlg *_dlg)
+    {
+        auto dlg = dynamic_cast<SystemOptionsDlg *>(_dlg);
+        if (itemId != dlg->currentTopErmButtonIdx)
+        {
+            dlg->AssignErmButtons(itemId, TRUE);
+            auto scrollBar = dlg->scrollBar;
+            scrollBar->Draw();
+            scrollBar->Refresh();
+        }
+    }
 
   public:
     inline INT32 ResultItemId() const noexcept
     {
         return resultItemId;
     }
+    // hooks
     static _ERH_(OnGameLeave)
     {
         registeredErmButtons.clear();
@@ -248,11 +290,4 @@ class SystemOptionsDlg : public H3Dlg
     {
         _REH_(OnGameLeave);
     }
-
-    // hooks
-  private:
-    static void __stdcall CallWogOptionsDlg();
-    static void __stdcall CallSelectLanguageDlg();
-
-    static void AfterDlgClose();
 };

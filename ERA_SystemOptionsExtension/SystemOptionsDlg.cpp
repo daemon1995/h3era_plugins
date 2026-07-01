@@ -139,7 +139,7 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
 }
 void SystemOptionsDlg::CreateDlgPages() noexcept
 {
-
+    m_pages.reserve(PAGE_ITEM_TOTAL_COUNT);
     OriginalConfig &config = OriginalConfig::Get();
     AdditionalConfig &extraConfig = AdditionalConfig::Get();
     const int callType = dlgCallSource;
@@ -222,7 +222,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         }
 
         // CREATE CALLBACK BUTTONS
-        CreateOtherSettingsPanel(page, checkboxX, settingsStartY + baseSettingHeight * 7, itemId);
+        CreateImportedSettingsPanel(page, checkboxX, settingsStartY + baseSettingHeight * 7, itemId);
 
         // RIGHT PAGE PART
         constexpr int panelX = DLG_RIGHT_PART_X_MARGIN;
@@ -253,7 +253,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                 ERA_OPT(system, alternativeButtonClick, hint)};
 
         auto splitButtonSoundSetting = page->CreateSetting<CheckBoxSetting>(splitButtonSoundInfo);
-        ;
+
         splitButtonSoundSetting->SetOnChange(
             [](ISetting *setting) { sound::SoundSettings::SetAlternativButtonClickState(setting->value.current); });
 
@@ -299,7 +299,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         itemId += Switch10XPanel::BUTTONS_COUNT << 1;
 
         AddItem(captionBttn);
-        m_pages.Add(page);
+        m_pages.emplace_back(page);
     }
 
     // ADV MAP PAGE
@@ -447,7 +447,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         //         *(sender->value.valuePtr) = sender->value.dlgStart;
         //     }
         // });
-        m_pages.Add(page);
+        m_pages.emplace_back(page);
     }
 
     // COMBAT PAGE
@@ -636,12 +636,13 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             }
         });
 
-        m_pages.Add(page);
+        m_pages.emplace_back(page);
     }
+    m_pages.shrink_to_fit();
     InitDlgPages();
 }
 
-void SystemOptionsDlg::CreateOtherSettingsPanel(SettingsPage *page, const int x, const int y, int &itemId) noexcept
+void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int x, const int y, int &itemId) noexcept
 {
     constexpr int baseSettingHeight = ISetting::BASE_SETTINGS_Y_OFFSET;
     int callbackY = y; // settingsStartY + baseSettingHeight * 7;
@@ -657,10 +658,11 @@ void SystemOptionsDlg::CreateOtherSettingsPanel(SettingsPage *page, const int x,
         typedef void(__stdcall * CallLocaleSelectionDlg_t)(int, int, int);
         typedef const char *(__stdcall * GetDisplayedName_t)();
 
-        auto callDlg = reinterpret_cast<CallLocaleSelectionDlg_t>(GetProcAddress(plugin, "CallLocaleSelectionDlg"));
+        auto callLocaleSelectionDlg =
+            reinterpret_cast<CallLocaleSelectionDlg_t>(GetProcAddress(plugin, "CallLocaleSelectionDlg"));
         auto getDisplayedName = reinterpret_cast<GetDisplayedName_t>(GetProcAddress(plugin, "GetDisplayedName"));
 
-        if (callDlg && getDisplayedName)
+        if (callLocaleSelectionDlg && getDisplayedName)
         {
             maxButtonsToShow--;
             const SettingsInfo selectLang = {
@@ -668,9 +670,9 @@ void SystemOptionsDlg::CreateOtherSettingsPanel(SettingsPage *page, const int x,
             };
             callbackY += baseSettingHeight;
             auto captionSetting = page->CreateSetting<CaptionButtonSetting>(selectLang);
-            captionSetting->SetOnChange([callDlg, getDisplayedName](ISetting *setting) {
+            captionSetting->SetOnChange([callLocaleSelectionDlg, getDisplayedName](ISetting *setting) {
                 auto it = dynamic_cast<CaptionButtonSetting *>(setting)->captionButton;
-                callDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
+                callLocaleSelectionDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
                 LPCSTR newLangDisplayedName = getDisplayedName();
                 if (libc::strcmpi(it->GetText(), newLangDisplayedName) != 0)
                 {
@@ -694,25 +696,35 @@ void SystemOptionsDlg::CreateOtherSettingsPanel(SettingsPage *page, const int x,
     maxButtonsToShow--;
     callbackY += baseSettingHeight;
 
-    // only for game on map
-    maxButtonsToShow = Clamp(0, maxButtonsToShow, registeredErmButtons.size());
+    const size_t registeredNum = registeredErmButtons.size();
+    if (!registeredNum)
+        return;
+
+    storedErmButtonsInfo.reserve(registeredNum);
 
     for (auto &bttn : registeredErmButtons)
     {
-        const auto &info = bttn.second;
-        const int ermFunctionId = info.ermFunctionId;
-        LPCSTR namePtr = info.nameKey.empty() ? nullptr : info.nameKey.c_str();
-        LPCSTR descriptionPtr = info.descriptionKey.empty() ? nullptr : info.descriptionKey.c_str();
-        SettingsInfo bttnInfo = {bttn.first.c_str(), {x, callbackY}, itemId++, nullptr, namePtr, descriptionPtr};
+        storedErmButtonsInfo.emplace_back(std::make_pair(bttn.first.c_str(), &bttn.second));
+    }
+    // only for game on map
+    maxButtonsToShow = Clamp(0, maxButtonsToShow, registeredNum);
 
-        auto captionSetting = page->CreateSetting<CaptionButtonSetting>(bttnInfo);
-        captionSetting->SetOnChange([ermFunctionId](ISetting *) { Era::FireErmEvent(ermFunctionId); });
-        callbackY += baseSettingHeight;
-        if (--maxButtonsToShow == 0)
-            return;
+    const size_t ticksCount = registeredNum - maxButtonsToShow + 1;
+    if (ticksCount > 1)
+    {
+        scrollBar = H3DlgScrollbar::Create(x + ISetting::WIDTH, callbackY, 16, baseSettingHeight * maxButtonsToShow - 6,
+                                           -1, ticksCount, ScrollBarProc, FALSE, 1, TRUE);
+        page->items += scrollBar;
     }
 
-    // wog option buttons:
+    for (size_t i = 0; i < maxButtonsToShow; i++)
+    {
+        SettingsInfo bttnInfo = {h3_NullString, {x, callbackY}, itemId++, nullptr, nullptr, nullptr};
+        auto ermButton = page->CreateSetting<CaptionButtonSetting>(bttnInfo);
+        callbackErmButtons.emplace_back(ermButton);
+        callbackY += baseSettingHeight;
+    }
+    AssignErmButtons(0, FALSE);
 }
 
 BOOL SystemOptionsDlg::OnCreate()
@@ -802,9 +814,6 @@ void __stdcall SystemOptionsDlg::CallWogOptionsDlg()
     IntAt(0x291A430) = storeValue;
 }
 
-void SystemOptionsDlg::AfterDlgClose()
-{
-}
 SystemOptionsDlg::~SystemOptionsDlg()
 {
     for (auto &page : m_pages)
