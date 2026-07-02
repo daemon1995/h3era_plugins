@@ -1,4 +1,17 @@
 #pragma once
+#include "../framework.h"
+struct TownBuildingTextData
+{
+    const char *name;
+    const char *description;
+    DWORD bits;
+
+  public:
+    inline static TownBuildingTextData **Get()
+    {
+        return *reinterpret_cast<TownBuildingTextData ***>(0x04CB946 + 3);
+    }
+};
 
 class TownHandler
 {

@@ -17,6 +17,12 @@
     <ClInclude Include="TextHandlers\ArtifactHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TextHandlers\MapObjectHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextHandlers\TownHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -26,6 +32,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TextHandlers\ArtifactHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TextHandlers\MapObjectHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TextHandlers\TownHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

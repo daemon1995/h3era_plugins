@@ -4,7 +4,6 @@
 
 class ArtifactHandler
 {
-    static char textBuffer[0x200];
     static struct TxtHandler
     {
         DWORD expectedRowCount;

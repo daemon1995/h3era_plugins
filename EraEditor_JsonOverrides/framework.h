@@ -4,3 +4,4 @@
 #include <windows.h>
 
 #include "..\headers\header.h"
+static char textBuffer[0x200];

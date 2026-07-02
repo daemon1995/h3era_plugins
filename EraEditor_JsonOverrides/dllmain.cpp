@@ -5,7 +5,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.0";
+constexpr LPCSTR PLUGIN_VERSION = "1.1";
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
 #define TEXT_HANDLER_DECLATOR(className)                                                                               \
@@ -45,6 +45,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             Eramap::ConnectEra(hModule, dllText::INSTANCE_NAME);
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
             ArtifactHandler::Init();
+            MapObjectHandler::Init();
+            // TownHandler::Init();
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:

@@ -3,7 +3,6 @@
 #define READ_ART_FIELD(obj, field, idx)                                                                                \
     ArtifactHandler::ReadField<decltype((obj).field)>((obj).field, ArtifactHandler::formats::field, idx)
 
-char ArtifactHandler::textBuffer[0x200]{};
 ArtifactHandler::TxtHandler ArtifactHandler::artifactsHandler{};
 
 // if txt file has less lines than patched lines to read we fix it

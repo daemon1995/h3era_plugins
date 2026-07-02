@@ -78,11 +78,15 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="TextHandlers\ArtifactHandler.h" />
+    <ClInclude Include="TextHandlers\MapObjectHandler.h" />
+    <ClInclude Include="TextHandlers\TownHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\eramap.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="TextHandlers\ArtifactHandler.cpp" />
+    <ClCompile Include="TextHandlers\MapObjectHandler.cpp" />
+    <ClCompile Include="TextHandlers\TownHandler.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
