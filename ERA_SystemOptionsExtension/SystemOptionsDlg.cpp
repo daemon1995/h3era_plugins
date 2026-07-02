@@ -491,7 +491,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         for (auto &info : gridSettingsInfo)
         {
-            page->CreateSetting<CheckBoxSetting>(info);
+            auto button = page->CreateSetting<CheckBoxSetting>(info);
+            button->SetOnChange([](ISetting *setting) { *setting->value.valuePtr = setting->value.current; });
         }
 
         leftPartY += baseSettingHeight * 3;
@@ -837,6 +838,13 @@ SystemOptionsDlg::~SystemOptionsDlg()
     {
         config.quickCombat = extraConfig.quickCombatType.value ? true : false;
     }
+    //else if (settingsChanged)
+    //{
+    //    H3CombatManager *combatManager = P_CombatManager->Get();
+    //    combatManager->doNotDrawShade = false;
+    //    THISCALL_3(void, 0x04934B0, combatManager, 1, TRUE); // BattleMgr::DrawGrid
+    //    combatManager->Refresh();
+    //}
     const int newQuickCombatState = config.quickCombat;
     if (settingsChanged || quickCombatSettingState != newQuickCombatState)
     {

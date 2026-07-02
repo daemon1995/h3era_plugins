@@ -6,7 +6,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.0.3";
+constexpr LPCSTR PLUGIN_VERSION = "1.0.4";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
@@ -30,10 +30,10 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     SystemOptionsDlg dlg;
     dlg.networkGame = 0;
     dlg.Start();
-    combatManager->doNotDrawShade = false;
 
+    combatManager->doNotDrawShade = 0;
     THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
-    combatManager->Refresh(1, 0, 1);
+    combatManager->Refresh();
 
     dlg.networkGame = -1;
     using target = Era::EGameMenuTarget;

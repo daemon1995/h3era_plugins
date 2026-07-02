@@ -37,22 +37,18 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
         return;
     }
 
-    auto &extraConfig = AdditionalConfig::Get();
-    int quickCombatType = extraConfig.quickCombatType.value;
+    auto &extraConfig = AdditionalConfig::Get().quickCombatType;
+    int quickCombatType = Clamp(0, extraConfig.value, extraConfig.maxValue);
 
-    BOOL hdModConflict = false;
-    if (auto hdWog = globalPatcher->GetInstance("HD.WoG"))
+    if (config.quickCombat && !quickCombatType)
     {
-        BOOL hdModQuick = globalPatcher->VarGetValue<int>("HD.QuickCombat", 0);
-        if (!hdModQuick && quickCombatType)
-        {
-            quickCombatType = 0;
-        }
-        else if (hdModQuick && !quickCombatType)
-        {
-            quickCombatType = 3;
-        }
+        quickCombatType = 2 - bool(config.autoSpells);
     }
+    else if (!config.quickCombat && quickCombatType)
+    {
+        quickCombatType = 0;
+    }
+
     if (quickCombatType == 3)
     {
         LPCSTR keys[] = {"era.opt.map.quickCombat.menu", "era.opt.map.quickCombatManual.menu",
@@ -62,15 +58,11 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
             libc::sprintf(Era::z[i], "%s", EraJS::read(keys[i - 1]));
         }
         const int storedY1 = Era::y[1];
-        Era::y[1] = quickCombatInfo.lastSelection + 1;
+        Era::y[1] = 1 << quickCombatInfo.lastSelection;
         Era::ExecErmCmd("IF:G1/1/y1/1/2/3/4");
         Era::y[1] = storedY1;
         quickCombatType = Clamp(0, Era::v[1] - 1, 2); // get quick combat type from registry (0..2)
         quickCombatInfo.lastSelection = quickCombatType;
-    }
-    else if (quickCombatType == 0 && globalPatcher->VarValue<int>("HD.QuickCombat"))
-    {
-        quickCombatType = 2 - (config.autoSpells);
     }
 
     switch (quickCombatType)
