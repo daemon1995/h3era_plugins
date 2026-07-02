@@ -206,6 +206,7 @@ struct RadioBoxSetting : public ISetting
 {
     static constexpr int CHECKBOX_WIDTH = 32;
     static constexpr int CHECKBOX_HEIGHT = 24;
+    static constexpr LPCSTR RADIOBOX_DEF = "SYSOPRAD.def";
     BOOL requiresSelection = FALSE;
 
     H3Vector<H3DlgDef *> checkBoxes;

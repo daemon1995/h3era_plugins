@@ -67,8 +67,8 @@ RadioBoxSetting *RadioBoxSetting::Create(const RadioButtonInfo &info, H3Vector<H
 
         const BOOL8 frameId = i == selectedBoxId;
 
-        auto checkBox = H3DlgDef::Create(itemX + WIDTH - CHECKBOX_WIDTH, itemY, itemId++,
-                                         NH3Dlg::Assets::ON_OFF_CHECKBOX, frameId, frameId);
+        auto checkBox =
+            H3DlgDef::Create(itemX + WIDTH - CHECKBOX_WIDTH, itemY, itemId++, RADIOBOX_DEF, frameId, frameId);
 
         itemsVec += CreateThickFrameOverItem(checkBox);
         setting->checkBoxes += checkBox;
