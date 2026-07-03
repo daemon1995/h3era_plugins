@@ -1,5 +1,5 @@
 #pragma once
-#include "unordered_set"
+#include <unordered_set>
 
 #include "DlgPanels.h"
 namespace sound
@@ -11,13 +11,36 @@ class SoundSettings : public IGamePatch
     H3WavFile *originalButtonClickSound = nullptr;
     H3WavFile *newButtonClickSounds[2] = {nullptr, nullptr};
     Patch *buttonClickSoundPatches[2] = {nullptr, nullptr};
-    std::unordered_set<DWORD> buttonsPressed;
+    std::unordered_set<H3DlgDefButton *> buttonsPressed;
 
     SoundSettings() noexcept : IGamePatch(_PI) {};
 
   protected:
+    void CreatePatches() noexcept override
+    {
+        if (m_isInited)
+            return;
+
+        m_isInited = true;
+        // block background sounds
+        blockLoopSounds = _pi->CreateHiHook(0x0418B70, SPLICE_, EXTENDED_, THISCALL_, AdvMgr__StartLoopSound);
+
+        // enable second click sound
+        buttonClickSoundPatches[0] = _pi->CreateHiHook(0x0456620, SPLICE_, EXTENDED_, THISCALL_, DefButtonOnDraw);
+        buttonClickSoundPatches[1] = _pi->CreateHiHook(0x0455DD0, SPLICE_, EXTENDED_, THISCALL_, DefButtonDtor);
+        newButtonClickSounds[0] = H3WavFile::Load("BUTTON0.WAV");
+        newButtonClickSounds[1] = H3WavFile::Load("BUTTON1.WAV");
+        originalButtonClickSound = ValueAt<H3WavFile *>(0x694DF4);
+        // _pi->WriteHiHook(0x04772FE, THISCALL_, Dlg_BattleResults_Dtor);
+        // _pi->WriteHiHook(0x047724F, THISCALL_, Dlg_BattleResults_Dtor);
+    }
+
+  protected:
+    // is used to block looping sound at all
     static void __stdcall AdvMgr__StartLoopSound(HiHook *h, H3AdventureManager *_this, int x, int y, int z,
                                                  INT32 volume, int a5) {};
+
+    // different click sound
     static void PlaySecondClickSound()
     {
         auto snd = P_SoundManager->Get();
@@ -46,9 +69,9 @@ class SoundSettings : public IGamePatch
         // PlaySecondClickSound();
         if (button->IsPressed() && button->GetParent() == P_WindowManager->lastDlg)
         {
-            Get().buttonsPressed.insert(DWORD(button));
+            Get().buttonsPressed.insert(button);
         }
-        else if (button->IsActive() && Get().buttonsPressed.erase(DWORD(button)))
+        else if (button->IsActive() && Get().buttonsPressed.erase(button))
         {
             PlaySecondClickSound();
         }
@@ -57,26 +80,8 @@ class SoundSettings : public IGamePatch
     static DWORD __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
     {
 
-        Get().buttonsPressed.erase(DWORD(button));
+        Get().buttonsPressed.erase(button);
         return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
-    }
-    void CreatePatches() noexcept
-    {
-        if (m_isInited)
-            return;
-
-        m_isInited = true;
-        // block background sounds
-        blockLoopSounds = _pi->CreateHiHook(0x0418B70, SPLICE_, EXTENDED_, THISCALL_, AdvMgr__StartLoopSound);
-
-        // enable second click sound
-        buttonClickSoundPatches[0] = _pi->CreateHiHook(0x0456620, SPLICE_, EXTENDED_, THISCALL_, DefButtonOnDraw);
-        buttonClickSoundPatches[1] = _pi->CreateHiHook(0x0455DD0, SPLICE_, EXTENDED_, THISCALL_, DefButtonDtor);
-        newButtonClickSounds[0] = H3WavFile::Load("BUTTON0.WAV");
-        newButtonClickSounds[1] = H3WavFile::Load("BUTTON1.WAV");
-        originalButtonClickSound = (H3WavFile *)DwordAt(0x694DF4);
-        // _pi->WriteHiHook(0x04772FE, THISCALL_, Dlg_BattleResults_Dtor);
-        // _pi->WriteHiHook(0x047724F, THISCALL_, Dlg_BattleResults_Dtor);
     }
 
   public:
