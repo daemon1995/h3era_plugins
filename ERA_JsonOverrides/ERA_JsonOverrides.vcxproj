@@ -86,16 +86,12 @@
     <ClInclude Include="TextHandlers\HeroHandler.h" />
     <ClInclude Include="TextHandlers\MapObjectHandler.h" />
     <ClInclude Include="TextHandlers\MonsterHandler.h" />
+    <ClInclude Include="TextHandlers\SpellHandler.h" />
     <ClInclude Include="TextHandlers\TownHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="TextHandlers\ArtifactHandler.cpp" />
-    <ClCompile Include="TextHandlers\HeroHandler.cpp" />
-    <ClCompile Include="TextHandlers\MapObjectHandler.cpp" />
-    <ClCompile Include="TextHandlers\MonsterHandler.cpp" />
-    <ClCompile Include="TextHandlers\TownHandler.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

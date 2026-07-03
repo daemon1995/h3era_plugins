@@ -2,42 +2,36 @@
 #define _H3API_PLUGINS_
 #include "framework.h"
 
+#include "TextHandlers/ArtifactHandler.h"
+#include "TextHandlers/HeroHandler.h"
+#include "TextHandlers/MapObjectHandler.h"
+#include "TextHandlers/MonsterHandler.h"
+#include "TextHandlers/SpellHandler.h"
+#include "TextHandlers/TownHandler.h"
+
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
-
-#define TEXT_HANDLER_DECLATOR(className)                                                                               \
-    class className                                                                                                    \
-    {                                                                                                                  \
-      public:                                                                                                          \
-        static void Init();                                                                                            \
-    };
 
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.0";
+constexpr LPCSTR PLUGIN_VERSION = "1.1.0";
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
 
 _ERH_(OnReportVersion)
 {
-
     // show plugin name, version and compilation time
     sprintf(h3_TextBuffer, "{%s} v%s (%s)", PROJECT_NAME, dllText::PLUGIN_VERSION, __DATE__);
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
 }
-TEXT_HANDLER_DECLATOR(ArtifactHandler)
-TEXT_HANDLER_DECLATOR(HeroHandler)
-TEXT_HANDLER_DECLATOR(MapObjectHandler)
-TEXT_HANDLER_DECLATOR(MonsterHandler)
-TEXT_HANDLER_DECLATOR(TownHandler)
-TEXT_HANDLER_DECLATOR(SpellHandler)
 
 static _ERH_(OnAfterWog)
 {
     MonsterHandler::Init();
     ArtifactHandler::Init();
+    SpellHandler::Init();
 }
 
 static _ERH_(OnAfterCreateWindow)
@@ -48,7 +42,6 @@ static _LHF_(HooksInit)
 {
     MapObjectHandler::Init();
     TownHandler::Init();
-
     return EXEC_DEFAULT;
 }
 

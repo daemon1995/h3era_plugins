@@ -4928,7 +4928,7 @@ namespace h3
 
 		namespace NPositions
         {
-            enum eArtifactPositions
+            enum eArtifactPositions : INT32
             {
                 NONE           = 0,
                 BACKPACK       = NONE,
@@ -4960,7 +4960,7 @@ namespace h3
 
         namespace NType
         {
-            enum eArtifactType
+            enum eArtifactType : INT32
             {
                 SPECIAL  = 1,
                 TREASURE = 2,
@@ -4974,7 +4974,7 @@ namespace h3
 
         namespace NCombination
         {
-            enum eCombinationArtifacts
+            enum eCombinationArtifacts : INT32
             {
                 NONE                       = -1,
                 ANGELIC_ALLIANCE           = 0,
