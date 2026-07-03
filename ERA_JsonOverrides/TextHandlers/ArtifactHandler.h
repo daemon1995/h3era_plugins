@@ -53,7 +53,7 @@ class ArtifactHandler
             bool readSuccess = false;
             LPCSTR readResult = nullptr;
             LPCSTR *eventTable = ArtifactHandler::GetEventTable();
-            const int lastEventIndex = H3AdveventText::Get()->end() - H3AdveventText::Get()->begin() >> 2;
+            const int lastEventIndex = H3AdveventText::Get()->Size();
             for (size_t i = 0; i < artsNum; i++)
             {
                 auto &setup = H3ArtifactSetup::Get()[i];

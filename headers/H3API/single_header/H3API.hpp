@@ -13551,6 +13551,7 @@ namespace h3
 		 */
 		_H3API_ LPCSTR  GetText(UINT32 row) const;
 		_H3API_ LPCSTR  GetText(UINT32 row);
+		_H3API_ UINT32  Size();
 		_H3API_ VOID    UnLoad();
 		_H3API_ LPCSTR& operator[](UINT row);
 		_H3API_ LPCSTR* begin();
@@ -32018,7 +32019,11 @@ namespace h3
 	{
 		return text[row - 1];
 	}
-	_H3API_ H3TextFile* H3TextFile::Load(LPCSTR name)
+    _H3API_ UINT32 H3TextFile::Size()
+    {
+        return end() - begin() >> 2;
+    }
+    _H3API_ H3TextFile* H3TextFile::Load(LPCSTR name)
 	{
 		return THISCALL_1(H3TextFile*, 0x55BDA0, name);
 	}
