@@ -16309,7 +16309,7 @@ namespace h3
 		INT32 spEffect;
 		/** @brief [34] base value of spell for calculations*/
 		INT32 baseValue[4];
-		/** @brief [44] change for each class?*/
+		/** @brief [44] chance for each town*/
 		INT32 chanceToGet[9];
 		/** @brief [68] */
 		UINT32 aiValue[4];

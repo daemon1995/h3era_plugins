@@ -70,7 +70,7 @@ class CreatureDlgHandler
     BOOL AlignItems();
     BOOL AddExperienceButton();
     BOOL AddSpellEfects();
-//    ~CreatureDlgHandler();
+    //    ~CreatureDlgHandler();
 
     BOOL AddCommanderSkills();
 

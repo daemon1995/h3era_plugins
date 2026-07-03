@@ -77,7 +77,6 @@ class AdventureMapHints : public IGamePatch
                                                 int screenX, int screenY);
     static void __stdcall AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *advMan);
 
-
     static int __stdcall H3AdventureManager_ProcMapScreen(HiHook *h, H3AdventureManager *advMgr, H3Msg *msg);
     static void __stdcall H3AdventureManager_SetHint(HiHook *h, H3AdventureManager *advMgr, H3MapItem *cell, int x,
                                                      int y);

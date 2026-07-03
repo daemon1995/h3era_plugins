@@ -838,13 +838,13 @@ SystemOptionsDlg::~SystemOptionsDlg()
     {
         config.quickCombat = extraConfig.quickCombatType.value ? true : false;
     }
-    //else if (settingsChanged)
+    // else if (settingsChanged)
     //{
-    //    H3CombatManager *combatManager = P_CombatManager->Get();
-    //    combatManager->doNotDrawShade = false;
-    //    THISCALL_3(void, 0x04934B0, combatManager, 1, TRUE); // BattleMgr::DrawGrid
-    //    combatManager->Refresh();
-    //}
+    //     H3CombatManager *combatManager = P_CombatManager->Get();
+    //     combatManager->doNotDrawShade = false;
+    //     THISCALL_3(void, 0x04934B0, combatManager, 1, TRUE); // BattleMgr::DrawGrid
+    //     combatManager->Refresh();
+    // }
     const int newQuickCombatState = config.quickCombat;
     if (settingsChanged || quickCombatSettingState != newQuickCombatState)
     {

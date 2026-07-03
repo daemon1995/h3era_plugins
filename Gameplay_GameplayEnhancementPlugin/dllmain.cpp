@@ -133,8 +133,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             // move and resize iam00.def (next hero buttn)
             constexpr BYTE defWidth = 32;
 
-          //  _PI->WriteByte(0x401A85 + 1, defWidth);        // set width
-         //   _PI->WriteDword(0x401A8C + 1, 679 + defWidth); // set y
+            //  _PI->WriteByte(0x401A85 + 1, defWidth);        // set width
+            //   _PI->WriteDword(0x401A8C + 1, 679 + defWidth); // set y
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
