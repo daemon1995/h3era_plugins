@@ -22,23 +22,15 @@ class MapScroller : public IGamePatch
 #define FRAME_DARK_COLOR H3RGB888(0x31, 0x21, 0x10)
 
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
-std::unordered_map<std::string, SystemOptionsDlg::RegisteredErmButtonInfo> SystemOptionsDlg::registeredErmButtons;
+RegisteredButtonsInfo RegisteredButtonsInfo::instance{};
 
-DllExport BOOL __stdcall RegisterErmCallbackButton(const char *tag, const char *name, const char *description,
-                                                   int ermFunctionId)
+DllExport BOOL __stdcall RegisterErmCallbackButton(LPCSTR tag, LPCSTR name, LPCSTR description, int ermFunctionId)
 {
-    const BOOL isNew = SystemOptionsDlg::registeredErmButtons.find(tag) == SystemOptionsDlg::registeredErmButtons.end();
-    SystemOptionsDlg::registeredErmButtons[tag] = {name, description, ermFunctionId};
-    return isNew;
+    return RegisteredButtonsInfo::Get().RegisterButton(tag, {name, description, ermFunctionId});
 }
-DllExport BOOL __stdcall UnregisterErmCallbackButton(const char *tag)
+DllExport BOOL __stdcall UnregisterErmCallbackButton(LPCSTR tag)
 {
-    const BOOL isNew = SystemOptionsDlg::registeredErmButtons.find(tag) == SystemOptionsDlg::registeredErmButtons.end();
-    if (!isNew)
-    {
-        SystemOptionsDlg::registeredErmButtons.erase(tag);
-    }
-    return !isNew;
+    return RegisteredButtonsInfo::Get().UnregisterButton(tag);
 }
 
 void __stdcall ShowHealthBarDlg();
@@ -64,11 +56,11 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
 
     // split dlg by half with thick frame
     constexpr int dlgCenterX = DLG_WIDTH >> 1;
-    background->DrawThickFrame(dlgCenterX, DLG_TOPSETTINGS_MARGIN, 1,
-                               DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
+    background->DrawThickFrame(dlgCenterX, DLG_TOP_SETTINGS_MARGIN, 1,
+                               DLG_HEIGHT - DLG_TOP_SETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
                                FRAME_LIGHT_COLOR);
-    background->DrawThickFrame(dlgCenterX + 1, DLG_TOPSETTINGS_MARGIN, 1,
-                               DLG_HEIGHT - DLG_TOPSETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
+    background->DrawThickFrame(dlgCenterX + 1, DLG_TOP_SETTINGS_MARGIN, 1,
+                               DLG_HEIGHT - DLG_TOP_SETTINGS_MARGIN - DLG_CAPTION_BUTTON_TOP_MARGIN, 1,
                                FRAME_DARK_COLOR);
 
     // create buttons for loading/saving/restarting/quitting the game
@@ -157,7 +149,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
     constexpr int baseSettingHeight = ISetting::BASE_SETTINGS_Y_OFFSET;
     constexpr int leftStartX = DLG_LEFT_PART_X_MARGIN;
     constexpr int rightStartX = DLG_RIGHT_PART_X_MARGIN;
-    constexpr int settingsStartY = DLG_TOPSETTINGS_MARGIN;
+    constexpr int settingsStartY = DLG_TOP_SETTINGS_MARGIN;
     const BOOL isTutorial = P_Game->inTutorial;
 
     // GENERAL PAGE
@@ -491,8 +483,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         for (auto &info : gridSettingsInfo)
         {
-            auto button = page->CreateSetting<CheckBoxSetting>(info);
-            button->SetOnChange([](ISetting *setting) { *setting->value.valuePtr = setting->value.current; });
+            page->CreateSetting<CheckBoxSetting>(info);
         }
 
         leftPartY += baseSettingHeight * 3;
@@ -697,16 +688,21 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
     maxButtonsToShow--;
     callbackY += baseSettingHeight;
 
-    const size_t registeredNum = registeredErmButtons.size();
+    auto &buttonsInfo = RegisteredButtonsInfo::Get();
+    const size_t registeredNum = buttonsInfo.Size();
     if (!registeredNum)
         return;
 
-    storedErmButtonsInfo.reserve(registeredNum);
+    sortedErmButtonsInfo.reserve(registeredNum);
 
-    for (auto &bttn : registeredErmButtons)
+    for (auto &i : buttonsInfo.Data())
     {
-        storedErmButtonsInfo.emplace_back(std::make_pair(bttn.first.c_str(), &bttn.second));
+        if (!i.nameKey.empty())
+        {
+            sortedErmButtonsInfo.emplace_back(&i);
+        }
     }
+
     // only for game on map
     maxButtonsToShow = Clamp(0, maxButtonsToShow, registeredNum);
 
@@ -777,6 +773,14 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
 
     using target = Era::EGameMenuTarget;
 
+    // if (itemId == target::PAGE_RESTART && dlgCallSource == eDlgCallSource::COMBAT &&
+    //    H3Messagebox::Choice(P_GeneralText->GetText(69)))
+    //{
+    //    this->resultItemId = itemId;
+    //    this->Stop();
+    //    return FALSE;
+    //}
+
     switch (itemId)
     {
     case ePageItemId::PAGE_ITEM_GENERAL:
@@ -789,8 +793,14 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
     case target::PAGE_MAIN:
         if (!H3Messagebox::Choice(P_GeneralText->GetText(580)))
             break;
-    case target::PAGE_SAVE_GAME:
     case target::PAGE_RESTART:
+        // in combat do not close dlg when asking for a game restart
+        if (itemId == target::PAGE_RESTART && dlgCallSource == eDlgCallSource::COMBAT &&
+            !H3Messagebox::Choice(P_GeneralText->GetText(69)))
+        {
+            break;
+        }
+    case target::PAGE_SAVE_GAME:
     case 30722:
         this->resultItemId = itemId;
         this->Stop();
@@ -861,7 +871,55 @@ SystemOptionsDlg::~SystemOptionsDlg()
         CDECL_0(LONG, 0x0050C370); // j_WriteRegistry -> save settings to heroes3.ini
     }
 
-    instance = nullptr;
-
     P_WindowManager->resultItemID = this->resultItemId;
+
+    instance = nullptr;
+}
+
+VOID RegisteredButtonsInfo::Clear()
+{
+    instance.registeredErmButtonsVec.clear();
+    instance.nameToIndexMap.clear();
+    const size_t size = instance.freedIndices.size();
+    for (size_t i = 0; i < size; i++)
+        instance.freedIndices.pop();
+}
+BOOL RegisteredButtonsInfo::RegisterButton(LPCSTR tag, const RegisteredErmButtonInfo &info)
+{
+
+    auto it = nameToIndexMap.find(tag);
+    if (it != nameToIndexMap.cend())
+    {
+        registeredErmButtonsVec[it->second] = info;
+        return FALSE;
+    }
+    size_t targetIndex = 0;
+    if (freedIndices.empty())
+    {
+        targetIndex = registeredErmButtonsVec.size();
+        registeredErmButtonsVec.emplace_back(info);
+    }
+    else
+    {
+        targetIndex = freedIndices.top();
+        freedIndices.pop();
+        registeredErmButtonsVec[targetIndex] = info;
+    }
+    nameToIndexMap[tag] = targetIndex;
+
+    return TRUE;
+}
+
+BOOL RegisteredButtonsInfo::UnregisterButton(LPCSTR tag)
+{
+    auto it = nameToIndexMap.find(tag);
+    if (it == nameToIndexMap.cend())
+    {
+        return FALSE;
+    }
+    const size_t targetIndex = it->second;
+    registeredErmButtonsVec[targetIndex] = {};
+    freedIndices.push(targetIndex);
+    nameToIndexMap.erase(tag);
+    return TRUE;
 }
