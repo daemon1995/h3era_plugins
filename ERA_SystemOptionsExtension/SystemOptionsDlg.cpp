@@ -118,6 +118,7 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         if (button.hotkey == eVKey::H3VK_ESCAPE)
         {
             bttn->AddHotkey(eVKey::H3VK_ENTER);
+            bttn->AddHotkey(eVKey::H3VK_O);
         }
         if (const auto hint = button.hintPtr)
         {

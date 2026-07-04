@@ -16,9 +16,8 @@ constexpr LPCSTR BUTTON_HINT_KEY = "era.opt.mainMenuButton.hint";
 
 _LHF_(AdvMapSettingsDlg)
 {
-    SystemOptionsDlg *dlg = SystemOptionsDlg::Create();
-    dlg->Start();
-    dlg->Delete(dlg);
+    SystemOptionsDlg dlg;
+    dlg.Start();
 
     c->return_address = 0x041ABDD;
     return NO_EXEC_DEFAULT;
@@ -27,15 +26,16 @@ _LHF_(AdvMapSettingsDlg)
 void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *combatManager)
 {
 
-    // return THISCALL_1(void, h->GetDefaultFunc(), combatManager);
-
-    SystemOptionsDlg *dlg = SystemOptionsDlg::Create();
-    dlg->networkGame = 0;
-    dlg->Start();
-    dlg->networkGame = -1;
     using target = Era::EGameMenuTarget;
-    target menuTarget = target(dlg->ResultItemId());
-    dlg->Delete(dlg);
+    target menuTarget = target::PAGE_DEFAULT;
+    {
+        SystemOptionsDlg dlg;
+        dlg.networkGame = 0;
+        dlg.Start();
+        dlg.networkGame = -1;
+        menuTarget = dlg.ResultItemId();
+    }
+    // return THISCALL_1(void, h->GetDefaultFunc(), combatManager);
 
     combatManager->doNotDrawShade = 0;
     THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
@@ -67,9 +67,8 @@ int __fastcall HandleSystemDlgStart(void *_msg)
         }
         if (msg->IsLeftClick())
         {
-            SystemOptionsDlg *dlg = SystemOptionsDlg::Create();
-            dlg->Start();
-            dlg->Delete(dlg);
+            SystemOptionsDlg dlg;
+            dlg.Start();
         }
         else if (msg->IsRightClick())
         {

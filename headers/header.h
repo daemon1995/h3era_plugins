@@ -47,8 +47,8 @@
 #endif // MAIN_MENU_API
 
 #elif defined(ERA_MAPED)
-#include "Era/eramap.h"
 #include "Era/eraJson.hpp"
+#include "Era/eramap.h"
 #endif // !ERA_MAPED
 
 #ifdef ERA_MODLIST

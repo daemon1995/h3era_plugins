@@ -199,7 +199,7 @@ class SystemOptionsDlg : public H3Dlg
   protected:
     static SystemOptionsDlg *instance;
 
-  protected:
+  public:
     // ctors
     SystemOptionsDlg(int width, int height, int x, int y);
     SystemOptionsDlg() : SystemOptionsDlg(DLG_WIDTH, DLG_HEIGHT, -1, -1) {};
@@ -284,19 +284,11 @@ class SystemOptionsDlg : public H3Dlg
     }
 
   public:
-    inline INT32 ResultItemId() const noexcept
+    inline Era::EGameMenuTarget ResultItemId() const noexcept
     {
-        return resultItemId;
+        return Era::EGameMenuTarget(resultItemId);
     }
-    static SystemOptionsDlg *Create()
-    {
-        return new SystemOptionsDlg();
-    }
-    static VOID Delete(SystemOptionsDlg *_this)
-    {
-        return delete _this;
-    }
-    // hooks
+    //  hooks
     static _ERH_(OnGameLeave)
     {
         RegisteredButtonsInfo::Clear();
