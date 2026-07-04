@@ -16,8 +16,6 @@ constexpr LPCSTR BUTTON_HINT_KEY = "era.opt.mainMenuButton.hint";
 
 _LHF_(AdvMapSettingsDlg)
 {
-    // return EXEC_DEFAULT;
-
     SystemOptionsDlg *dlg = SystemOptionsDlg::Create();
     dlg->Start();
     dlg->Delete(dlg);
