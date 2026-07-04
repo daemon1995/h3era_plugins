@@ -6,7 +6,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.2.0";
+constexpr LPCSTR PLUGIN_VERSION = "1.2.1";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr LPCSTR UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
