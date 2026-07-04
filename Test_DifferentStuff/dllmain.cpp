@@ -259,7 +259,7 @@ void EraJSTest()
 
 _ERH_(OnAfterWog)
 {
-
+    // EraJSTest();
     return;
 }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
@@ -273,6 +273,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         Era::ConnectEra(hModule, dllText::instanceName);
         _REH_(OnAfterWog);
         _REH_(OnGameEnter);
+        //  EraJSTest();
+
         _PI->WriteLoHook(0x4EEAF2, HooksInit);
 
     case DLL_THREAD_ATTACH:
