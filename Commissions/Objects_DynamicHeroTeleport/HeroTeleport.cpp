@@ -83,6 +83,14 @@ void TeleportDlg::CreateDestinationPanels()
     }
 }
 
+void TeleportDlg::CreateMiniMap(const int index)
+{
+
+
+
+
+}
+
 BOOL TeleportDlg::DialogProc(H3Msg &msg)
 {
 

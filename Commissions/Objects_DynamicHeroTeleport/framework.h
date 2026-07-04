@@ -8,3 +8,6 @@
 // #define _WOG_
 #define RESIZED_PCX
 #include "..\..\headers\header.h"
+
+static constexpr size_t COMMON_DLG_WIDTH = 477;
+static constexpr size_t COMMON_DLG_HEIGHT = 600;

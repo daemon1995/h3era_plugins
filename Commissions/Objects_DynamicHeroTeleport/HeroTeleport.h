@@ -26,7 +26,7 @@ struct HeroTeleport
     BOOL CreatePcx16()
     {
         picture = H3LoadedPcx16::Create(48, 32);
-       // libc::memset(picture->buffer, 0, picture->buffSize);
+        // libc::memset(picture->buffer, 0, picture->buffSize);
         defaultPicture->DrawToPcx16(0, 0, 1, picture, 0, 0);
 
         auto mapItem = P_Game->GetMapItem(position);
@@ -47,9 +47,34 @@ class TeleportDlg : public H3Dlg
 {
     static constexpr size_t MAX_DESTINATIONS = 9;
     static constexpr size_t DESTINATION_PANEL_HEIGHT = 32;
+    static constexpr LPCSTR minimaNameFormat = "artminm%d.pcx";
+    static constexpr LPCSTR locationGreenFormat = "locgrn%2d.pcx";
+    static constexpr LPCSTR locationPurpleFormat = "locprp%2d.pcx";
+
+    struct Minimap
+    {
+
+        int width;
+        int height;
+        char *pcxName = 0;
+        int terrainId = 0;
+        eObject type;
+        eObject subtype;
+        struct Tile
+        {
+            tagPOINT pos;
+            char *name;
+        };
+        std::vector<Tile> tiles;
+    };
+
+    int type = -1;
     H3Hero *hero = nullptr;
+
     H3DlgScrollbar *scrollBar = nullptr;
     H3DlgFrame *selectionFrame = nullptr;
+    H3DlgPcx16 *minimap = nullptr;
+
     struct DestinationPanel
     {
         H3DlgPcx16 *icon = nullptr;
@@ -87,12 +112,22 @@ class TeleportDlg : public H3Dlg
     };
 
     std::vector<DestinationPanel> destinationPanels;
-    std::vector<HeroTeleport> &heroTeleports;
+    std::vector<HeroTeleport> heroTeleports;
 
   public:
     int selectedIndex = -1;
 
   public:
+    TeleportDlg() : TeleportDlg(COMMON_DLG_WIDTH, COMMON_DLG_HEIGHT, -1, -1) {};
+    TeleportDlg(int width, int height, int x, int y) : H3Dlg(width, height, x, y, false, false)
+    {
+        type = 0;
+        this->AddBackground(0, 0, 1);
+        background->SimpleFrameRegion(0, 0, width, height);
+        CreateOKButton();
+        CreateCancelButton();
+    }
+
     TeleportDlg(H3Hero *hero, std::vector<HeroTeleport> &heroTeleports)
         : H3Dlg(322, 565, -1, -1, TRUE, TRUE), hero(hero), heroTeleports(heroTeleports)
     {
@@ -131,4 +166,5 @@ class TeleportDlg : public H3Dlg
 
     void RedrawDestinationPanels(const int index, const BOOL redrawDlg);
     void CreateDestinationPanels();
+    void CreateMiniMap(const int index);
 };

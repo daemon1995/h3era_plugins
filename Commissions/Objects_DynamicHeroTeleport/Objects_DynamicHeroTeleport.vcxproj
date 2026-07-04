@@ -82,11 +82,13 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="HeroTeleport.h" />
+    <ClInclude Include="TeleportSelector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="HeroTeleport.cpp" />
+    <ClCompile Include="TeleportSelector.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
