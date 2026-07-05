@@ -279,11 +279,11 @@ class SystemOptionsDlg : public H3Dlg
             button->SetRightClickHint(descriptionPtr);
             if (const int ermFunctionId = info->ermFunctionId)
             {
-                callbackButtons[i]->SetOnChange([ermFunctionId](ISetting *) { Era::FireErmEvent(ermFunctionId); });
+                callbackButtons[i]->SetOnChange([ermFunctionId](ISetting *) { CallErmFunction(ermFunctionId); });
             }
             else if (const auto &function = info->callback)
             {
-                callbackButtons[i]->SetOnChange([function](ISetting *) { function(); });
+                callbackButtons[i]->SetOnChange([function](ISetting *) { CallPluginFunction(function); });
             }
             if (redraw)
             {
@@ -295,6 +295,18 @@ class SystemOptionsDlg : public H3Dlg
 
   private:
     static void CallWogOptionsDlg();
+    static void CallPluginFunction(void *function)
+    {
+        unsigned long old_esp = 0;
+        void *local_cb = function;
+        __asm {
+            mov old_esp, esp
+            pushad;
+            call local_cb
+                popad;
+            mov esp, old_esp
+        }
+    }
     static void __stdcall CallErmFunction(const int ermFunctionId)
     {
         Era::FireErmEvent(ermFunctionId);
