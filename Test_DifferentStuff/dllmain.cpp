@@ -100,37 +100,6 @@ _LHF_(AfterAdvMapTilesDraw)
     return EXEC_DEFAULT;
 }
 
-H3CreatureInfoDlg *globalDlg = nullptr;
-
-_LHF_(RMCdlgProc)
-{
-    auto dlg = ValueAt<H3BaseDlg *>(c->ebp + 0x8);
-    if (globalDlg == ValueAt<H3BaseDlg *>(c->ebp + 0x8))
-    {
-        auto dlgDef = globalDlg->animation;
-        if (dlgDef)
-        {
-            DWORD waitUntil = ValueAt<DWORD>(0x6989E8);
-            DWORD currentTime = GetTime();
-
-            if (int(currentTime - waitUntil) < 0)
-            {
-                return EXEC_DEFAULT;
-            }
-
-            const BOOL8 isWarMachine = THISCALL_1(BOOL8, 0x047AAB0, globalDlg->creatureId);
-            THISCALL_1(void, isWarMachine ? 0x04EB330 : 0x04EB140, globalDlg->animation);
-            globalDlg->Redraw();
-            waitUntil = ValueAt<DWORD>(0x6989E8);
-            int currentTimeA = GetTime() - waitUntil;
-            if (currentTimeA < 100)
-                currentTimeA = 100;
-            ValueAt<DWORD>(0x6989E8) = waitUntil + currentTimeA;
-        }
-    }
-    return EXEC_DEFAULT;
-}
-
 int __stdcall H3ScenarioDlg_UpdateMapInfo(HiHook *h, H3SelectScenarioDialog *dlg)
 {
 
