@@ -3,6 +3,8 @@
 
 #pragma comment(linker, "/EXPORT:RegisterErmCallbackButton=_RegisterErmCallbackButton@16")
 #pragma comment(linker, "/EXPORT:UnregisterErmCallbackButton=_UnregisterErmCallbackButton@4")
+#pragma comment(linker, "/EXPORT:RegisterPluginCallbackButton=_RegisterPluginCallbackButton@16")
+#pragma comment(linker, "/EXPORT:UnregisterPluginCallbackButton=_UnregisterPluginCallbackButton@4")
 
 namespace scroll
 {
@@ -22,15 +24,24 @@ class MapScroller : public IGamePatch
 #define FRAME_DARK_COLOR H3RGB888(0x31, 0x21, 0x10)
 
 SystemOptionsDlg *SystemOptionsDlg::instance = nullptr;
-RegisteredButtonsInfo RegisteredButtonsInfo::instance{};
+ExternalButtonsManager ExternalButtonsManager::ermInfo{};
+ExternalButtonsManager ExternalButtonsManager::pluginsInfo{};
 
 DllExport BOOL __stdcall RegisterErmCallbackButton(LPCSTR tag, LPCSTR name, LPCSTR description, int ermFunctionId)
 {
-    return RegisteredButtonsInfo::Get().RegisterButton(tag, {name, description, ermFunctionId});
+    return ExternalButtonsManager::GetErmInfo().RegisterButton(tag, {name, description, ermFunctionId, nullptr});
 }
 DllExport BOOL __stdcall UnregisterErmCallbackButton(LPCSTR tag)
 {
-    return RegisteredButtonsInfo::Get().UnregisterButton(tag);
+    return ExternalButtonsManager::GetErmInfo().UnregisterButton(tag);
+}
+DllExport BOOL __stdcall RegisterPluginCallbackButton(LPCSTR tag, LPCSTR name, LPCSTR description, void (*callback)())
+{
+    return ExternalButtonsManager::GetPluginsInfo().RegisterButton(tag, {name, description, 0, callback});
+}
+DllExport BOOL __stdcall UnregisterPluginCallbackButton(LPCSTR tag)
+{
+    return ExternalButtonsManager::GetPluginsInfo().UnregisterButton(tag);
 }
 
 void __stdcall ShowHealthBarDlg();
@@ -677,37 +688,41 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
         }
     }
 
-    const SettingsInfo wogOptionCaption = {"system_wog_option",
-                                           {x, callbackY},
-                                           itemId++,
-                                           nullptr,
-                                           ERA_OPT(system, wogOptions, name),
-                                           ERA_OPT(system, wogOptions, hint)};
+    RegisteredButtonInfo wogOptionsInfo = {ERA_OPT(system, wogOptions, name), ERA_OPT(system, wogOptions, hint), 0,
+                                           CallWogOptionsDlg};
 
-    auto captionSetting = page->CreateSetting<CaptionButtonSetting>(wogOptionCaption);
-    captionSetting->SetOnChange([](ISetting *) { CallWogOptionsDlg(); });
-    maxButtonsToShow--;
-    callbackY += baseSettingHeight;
+    ExternalButtonsManager::GetPluginsInfo().RegisterButton("system_wog_option", wogOptionsInfo);
 
-    auto &buttonsInfo = RegisteredButtonsInfo::Get();
-    const size_t registeredNum = buttonsInfo.Size();
-    if (!registeredNum)
-        return;
+    ExternalButtonsManager *buttonsInfos[] = {&ExternalButtonsManager::GetPluginsInfo(),
+                                              &ExternalButtonsManager::GetErmInfo()};
 
-    sortedErmButtonsInfo.reserve(registeredNum);
-
-    for (auto &i : buttonsInfo.Data())
+    size_t totalButtonsToAdd = 0;
+    for (auto &buttonsInfo : buttonsInfos)
     {
-        if (!i.nameKey.empty())
+        const size_t registeredNum = buttonsInfo->Size();
+        if (!registeredNum)
+            continue;
+
+        for (auto &obj : buttonsInfo->Data())
         {
-            sortedErmButtonsInfo.emplace_back(&i);
+            if (!obj.nameKey.empty())
+            {
+                sortedButtonsInfo.emplace_back(&obj);
+            }
         }
+
+        totalButtonsToAdd += registeredNum;
     }
 
-    // only for game on map
-    maxButtonsToShow = Clamp(0, maxButtonsToShow, registeredNum);
+    if (!totalButtonsToAdd)
+        return;
 
-    const size_t ticksCount = registeredNum - maxButtonsToShow + 1;
+    sortedButtonsInfo.reserve(totalButtonsToAdd);
+
+    // only for game on map
+    maxButtonsToShow = Clamp(0, maxButtonsToShow, totalButtonsToAdd);
+
+    const size_t ticksCount = totalButtonsToAdd - maxButtonsToShow + 1;
     if (ticksCount > 1)
     {
         scrollBar = H3DlgScrollbar::Create(x + ISetting::WIDTH, callbackY, 16, baseSettingHeight * maxButtonsToShow - 6,
@@ -719,7 +734,7 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
     {
         SettingsInfo bttnInfo = {h3_NullString, {x, callbackY}, itemId++, nullptr, nullptr, nullptr};
         auto ermButton = page->CreateSetting<CaptionButtonSetting>(bttnInfo);
-        callbackErmButtons.emplace_back(ermButton);
+        callbackButtons.emplace_back(ermButton);
         callbackY += baseSettingHeight;
     }
     AssignErmButtons(0, FALSE);
@@ -813,7 +828,7 @@ BOOL SystemOptionsDlg::OnLeftClick(INT itemId, H3Msg &msg)
     return FALSE;
 }
 
-void __stdcall SystemOptionsDlg::CallWogOptionsDlg()
+void SystemOptionsDlg::CallWogOptionsDlg()
 {
     const BOOL allowWogOptionsChanges = instance->dlgCallSource == MAIN_MENU && !instance->networkGame;
     const int storeValue = IntAt(0x291A430);
@@ -849,13 +864,6 @@ SystemOptionsDlg::~SystemOptionsDlg()
     {
         config.quickCombat = extraConfig.quickCombatType.value ? true : false;
     }
-    // else if (settingsChanged)
-    //{
-    //     H3CombatManager *combatManager = P_CombatManager->Get();
-    //     combatManager->doNotDrawShade = false;
-    //     THISCALL_3(void, 0x04934B0, combatManager, 1, TRUE); // BattleMgr::DrawGrid
-    //     combatManager->Refresh();
-    // }
     const int newQuickCombatState = config.quickCombat;
     if (settingsChanged || quickCombatSettingState != newQuickCombatState)
     {
@@ -877,15 +885,21 @@ SystemOptionsDlg::~SystemOptionsDlg()
     instance = nullptr;
 }
 
-VOID RegisteredButtonsInfo::Clear()
+static _ERH_(OnGameLeave)
 {
-    instance.registeredErmButtonsVec.clear();
-    instance.nameToIndexMap.clear();
-    const size_t size = instance.freedIndices.size();
-    for (size_t i = 0; i < size; i++)
-        instance.freedIndices.pop();
+    ExternalButtonsManager::GetErmInfo().Clear();
 }
-BOOL RegisteredButtonsInfo::RegisterButton(LPCSTR tag, const RegisteredErmButtonInfo &info)
+void SystemOptionsDlg::SetPatches(PatcherInstance *_pi)
+{
+
+    RegisteredButtonInfo wogOptionsInfo = {ERA_OPT(system, wogOptions, name), ERA_OPT(system, wogOptions, hint), 0,
+                                           CallWogOptionsDlg};
+    ExternalButtonsManager::GetPluginsInfo().RegisterButton("system_wog_option", wogOptionsInfo);
+
+    _REH_(OnGameLeave);
+}
+
+BOOL ExternalButtonsManager::RegisterButton(LPCSTR tag, const RegisteredButtonInfo &info)
 {
 
     auto it = nameToIndexMap.find(tag);
@@ -911,7 +925,7 @@ BOOL RegisteredButtonsInfo::RegisterButton(LPCSTR tag, const RegisteredErmButton
     return TRUE;
 }
 
-BOOL RegisteredButtonsInfo::UnregisterButton(LPCSTR tag)
+BOOL ExternalButtonsManager::UnregisterButton(LPCSTR tag)
 {
     auto it = nameToIndexMap.find(tag);
     if (it == nameToIndexMap.cend())
