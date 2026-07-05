@@ -118,8 +118,66 @@ int __stdcall H3ScenarioDlg_UpdateMapInfo(HiHook *h, H3SelectScenarioDialog *dlg
     Debug(1);
     return result;
 }
+#include <thread>
+#include <atomic>
+std::atomic<BOOL> test;
+static void __stdcall PlayCombatResultMP3(HiHook *h, DWORD snd, char *name, BOOL play_on_start, BOOL loop)
+{
+
+  //  THISCALL_1(void, 0x59B310, snd);
+   // THISCALL_1(void, 0x059B380, snd);
+    //test = 1;
+
+   // if (!test)
+    {
+
+        Era::ExecErmCmd("MP:P0/0;");
+        THISCALL_4(void, h->GetDefaultFunc(), snd, name, play_on_start, loop);
+
+    }
+    test = 1;
+
+}
+_LHF_(Dlg_BattleResults_StopVictoryMusic)
+{
+    //Era::ExecErmCmd("MP:P0/0;");
+
+
+    /* o_SoundMgr->f0[0x8C] = 0;
+     o_SoundMgr->f0[0x8D] = 0;
+     o_SoundMgr->f0[0x8E] = 0;
+     o_SoundMgr->f0[0x8F] = 0;*/
+     //  CALL_1(void, __thiscall, 0x059AF00, o_SoundMgr);
+     //  CALL_4(void, __thiscall, 0x059AFB0, o_SoundMgr, "", 0, 0);
+
+     // CALL_2(void, __thiscall, 0x059A090, o_SoundMgr, 1);
+     //  CALL_2(void, __thiscall, 0x059A090, o_SoundMgr,0);
+     //  //CALL_1(void, __thiscall, 0x059B310, o_SoundMgr);
+     //  o_SoundMgr->f0[0x8C] = 0;
+     //// Era::ExecErmCmd("MP:P0/0");
+     // storedValue = IntAt(0x06987A8 +8);
+     // if (true)
+     //{
+     // IntAt(0x06987A8 + 8) = 0;
+     //}
+    return EXEC_DEFAULT;
+}
 _LHF_(HooksInit)
 {
+    // disable battleresult mp3
+    globalPatcher->UndoAllAt(0x0462C65);
+    if (1)
+    {
+       // _PI->WriteHiHook(0x04772E4, THISCALL_, PlayCombatResultMP3);
+        //_PI->WriteHiHook(0x0477235, THISCALL_, PlayCombatResultMP3);
+        _PI->WriteHiHook(0x0462C65, THISCALL_, PlayCombatResultMP3);
+
+        _PI->WriteLoHook(0x0047724F, Dlg_BattleResults_StopVictoryMusic);
+        _PI->WriteLoHook(0x004772FE, Dlg_BattleResults_StopVictoryMusic);
+        //_PI->WriteHiHook(0x0462C65, THISCALL_, PlayCombatResultMP3);
+
+
+    }
 
     // read hd mod ini
     if (0)
