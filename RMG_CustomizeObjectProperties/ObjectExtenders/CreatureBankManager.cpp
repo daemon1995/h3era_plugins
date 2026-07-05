@@ -541,6 +541,8 @@ void CreatureBankManager::CopyDefaultData(const size_t defaultBanksNumber, const
             customPositions[i] = defaultPositions;
             setups[i] = originalBanks[i];
             isBankSettings[i] = true;
+            // clear original data
+            originalBanks[i].name.Dereference();
         }
     }
 }

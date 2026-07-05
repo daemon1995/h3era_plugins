@@ -5,6 +5,9 @@
 #define _WOG_
 #include "TestDlg.h"
 #include "framework.h"
+
+#include "..\headers\Era\era.cpp"
+
 // #include "..\..\headers\H3API_RK\single_header\H3API.hpp"
 
 using namespace h3;

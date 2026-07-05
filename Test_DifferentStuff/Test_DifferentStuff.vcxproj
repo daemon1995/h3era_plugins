@@ -80,7 +80,6 @@
     <ClInclude Include="TTFontToFont.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="TestDlg.cpp" />
     <ClCompile Include="TTFontToFont.cpp" />
