@@ -203,6 +203,7 @@ class ObjectExtenderManager : public IGamePatch
                                        H3String &resultString) noexcept;
 
     static ObjectExtenderManager *Get();
+    static void DebugObjectList();
 };
 DllExport BOOL __stdcall RegisterObjectExtenderOld(ObjectExtender *extender) noexcept;
 DllExport ObjectExtender *__stdcall CreateObjectExtender(ObjectExtender *_this) noexcept;

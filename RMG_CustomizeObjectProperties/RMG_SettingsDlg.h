@@ -46,7 +46,10 @@ class RMG_SettingsDlg : public H3Dlg
 {
 
     static constexpr float SETTINGS_VERSION = .1f;
+
+  public:
     static DWORD userRandSeed;
+    static BOOL completelyRandomIsPressed;
 
   public:
     static constexpr LPCSTR MAIN_MENU_WIDGET_UUID = "rmg_main_menu_widget";
@@ -125,7 +128,7 @@ class RMG_SettingsDlg : public H3Dlg
 
       public:
         virtual void FillObjects(int firstItemId = 0) = 0;
-        virtual void SetVisible(const bool state) = 0;
+        virtual void SetVisible(const BOOL state) = 0;
         virtual void SaveData() = 0;
         virtual void SetRandom(const H3Msg &msg) = 0;
         virtual void SetDefault() = 0;
@@ -147,7 +150,7 @@ class RMG_SettingsDlg : public H3Dlg
             PageHeader(const int x, const int y, const int width, const int height, const int objectsNum);
 
             // PageHeader();
-            void SetVisible(bool state);
+            void SetVisible(const BOOL state);
 
         } *pageHeader = nullptr;
 
@@ -178,7 +181,7 @@ class RMG_SettingsDlg : public H3Dlg
         virtual BOOL ShowObjectExtendedInfo(const ObjectsPanel *panel, const H3Msg &msg) const noexcept;
 
       protected:
-        void SetVisible(const bool state);
+        void SetVisible(const BOOL  state);
         void CreateVerticalScrollBar();
         void CreateHorizontalScrollBar();
 
@@ -232,9 +235,7 @@ class RMG_SettingsDlg : public H3Dlg
     H3DlgPcx16 *headerPcx = nullptr;
     BOOL blockLettersInput = false;
     Page *m_currentPage;
-    BOOL m_randomIsPressed = false;
     std::vector<Page *> m_pages;
-    std::vector<H3DlgCaptionButton *> captionButtons;
 
   private:
     static RMG_SettingsDlg *instance;
@@ -263,7 +264,7 @@ class RMG_SettingsDlg : public H3Dlg
     BOOL ReadIniDlgSettings() noexcept;
     BOOL WriteIniDlgSettings() const noexcept;
 
-    BOOL SetActivePage(Page *page) noexcept;
+    BOOL SetActivePage(const size_t pageId) noexcept;
     BOOL SaveRMGObjectsInfo(const BOOL saveIni = true) const noexcept;
 
     VOID OnHelp() const noexcept;
@@ -286,8 +287,11 @@ class RMG_SettingsDlg : public H3Dlg
 
   public:
     static void SetPatches(PatcherInstance *_pi);
-    static const std::vector<std::vector<GraphicalAttributes> *> &GetObjectAttributes() noexcept;
-    static std::vector<GraphicalAttributes> *GetObjectAttributesVector(const int type) noexcept;
+    static const std::vector<std::vector<GraphicalAttributes> *> &GetObjectAttributes() noexcept
+    {
+        return m_objectAttributes;
+    }
+    static std::vector<GraphicalAttributes> *GetObjectAttributesVectorByObjectType(const int type) noexcept;
     static BOOL CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators);
     static void CopyOriginalObjectDefsIntoPcx16();
     static void AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen,
@@ -295,7 +299,10 @@ class RMG_SettingsDlg : public H3Dlg
                                             std::unordered_map<DWORD, size_t> &uniqueObjectsIndex,
                                             const int objectTypeAlias) noexcept;
 
-    static DWORD GetUserRandSeedInput() noexcept;
+    inline static DWORD GetUserRandSeedInput() noexcept
+    {
+        return userRandSeed;
+    }
 };
 
 } // namespace rmgdlg

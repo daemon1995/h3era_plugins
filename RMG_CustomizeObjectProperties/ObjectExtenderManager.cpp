@@ -343,11 +343,13 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
     additionalProperties.LoadCommonProperties();
     // load additional unique objects properties from each loaded mod json key
     additionalProperties.LoadAdditionalPropertiesFromMods();
+    // additionalProperties.DebugAddedProperties();
 
     // call native fucntion to load objects.txt (0x515038)
     // and increase eax by number of added objects
     THISCALL_1(void, h->GetDefaultFunc(), setup);
 
+    // DebugObjectList();
     // create max subtype value for all object gens
     auto &maximumObjectSubtypes = instance->maximumObjectSubtypes;
 
@@ -567,6 +569,33 @@ BOOL ObjectExtenderManager::AddExtender(ObjectExtender *ext)
     // add extender to the list
     instance->objectExtenders.push_back(ext);
     return TRUE;
+}
+
+void ObjectExtenderManager::DebugObjectList()
+{
+    const char *fileName = "Runtime/Debug/ObjectsList.ini";
+    auto *objLists = P_Game->mainSetup.objectLists;
+
+    char buffer[512];
+    for (size_t i = 0; i < 232; i++)
+    {
+        int id = 0;
+        for (auto &obj : objLists[i])
+        {
+            libc::sprintf(h3_TextBuffer, "%d_%d", obj.subtype, id++);
+
+            std::string bits;
+            for (int b = 15; b >= 0; b--)
+            {
+                bits.append(obj.maskTerrain.bits & (1 << b) ? "1" : "0");
+            }
+
+            libc::sprintf(buffer, "%s\t%s", obj.defName.String(), bits.c_str());
+
+            Era::WriteStrToIni(h3_TextBuffer, buffer, std::to_string(i).c_str(), fileName);
+        }
+    }
+    Era::SaveIni(fileName);
 }
 
 ObjectExtenderManager *ObjectExtenderManager::Get()

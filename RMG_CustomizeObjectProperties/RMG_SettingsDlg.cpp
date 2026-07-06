@@ -142,6 +142,7 @@ enum eZoneType : INT
 };
 
 DWORD RMG_SettingsDlg::userRandSeed = 0;
+BOOL RMG_SettingsDlg::completelyRandomIsPressed = 0;
 
 std::vector<GraphicalAttributes> RMG_SettingsDlg::m_creatureBanks, RMG_SettingsDlg::m_commonObjects,
     RMG_SettingsDlg::m_creatureGenerators, RMG_SettingsDlg::m_wogObjects;
@@ -154,7 +155,7 @@ DllExport BOOL RMGObjectSupportsGeneration(const int objType, const int objSubty
     BOOL result = false;
     if (objType > eObject::NO_OBJ && objType < H3_MAX_OBJECTS)
     {
-        const auto vec = RMG_SettingsDlg::GetObjectAttributesVector(eObject(objType));
+        const auto vec = RMG_SettingsDlg::GetObjectAttributesVectorByObjectType(eObject(objType));
         for (auto &prop : *vec)
         {
             if (prop.attributes->type == objType)
@@ -172,17 +173,6 @@ RMG_SettingsDlg *RMG_SettingsDlg::instance = nullptr;
 H3MainSetup *RMG_SettingsDlg::mainSetup = nullptr;
 BOOL RMG_SettingsDlg::isDlgTextEditInput = false;
 BOOL RMG_SettingsDlg::userHasAccessToDlg = false;
-
-const std::vector<std::vector<GraphicalAttributes> *> &RMG_SettingsDlg::GetObjectAttributes() noexcept
-{
-    return m_objectAttributes;
-}
-
-DWORD RMG_SettingsDlg::GetUserRandSeedInput() noexcept
-{
-
-    return userRandSeed;
-}
 
 RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     : H3Dlg(width, height, x, y, false, false), m_currentPage(nullptr)
@@ -271,7 +261,8 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     // create page selectors
 
     constexpr size_t pagesNum = 4;
-    captionButtons.resize(pagesNum);
+
+    H3DlgCaptionButton *captionButtons[pagesNum] = {}; // .resize(pagesNum);
     for (size_t i = 0; i < pagesNum; i++)
     {
         libc::sprintf(h3_TextBuffer, "RMG.text.dlg.pages.%d.name", i);
@@ -288,7 +279,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
 
         captionbttn->SetClickFrame(1);
         AddItem(captionbttn);
-        captionButtons[i] = (captionbttn);
+        captionButtons[i] = captionbttn;
     }
 
     if (bttns[1] && bttns[2])
@@ -422,7 +413,6 @@ BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
     {
         auto *mapObjectsPage = dynamic_cast<ObjectsPage *>(m_currentPage);
 
-        const UINT pageId = msg.itemId - NItemIDs::PAGE_0;
         switch (msg.itemId)
         {
 
@@ -431,16 +421,9 @@ BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
         case NItemIDs::PAGE_1:
         case NItemIDs::PAGE_2:
         case NItemIDs::PAGE_3:
-
-            if (pageId < m_pages.size())
-            {
-                if (SetActivePage(m_pages[pageId]))
-                {
-                    Redraw();
-                }
-            }
+            if (SetActivePage(msg.itemId - NItemIDs::PAGE_0))
+                Redraw();
             break;
-
         case NItemIDs::CANCEL:
             this->OnCancel();
             break;
@@ -797,8 +780,7 @@ const BOOL RMG_SettingsDlg::ObjectsPanel::UnfocusEdits(const BOOL saveChanges) n
     {
         if (edit->IsFocused())
         {
-            // edit->SetFocus(false);
-            *reinterpret_cast<char *>(reinterpret_cast<char *>(edit) + 0x6D) = false;
+            edit->SetFocus(false);
 
             if (saveChanges)
             {
@@ -938,7 +920,7 @@ RMG_SettingsDlg::~RMG_SettingsDlg()
     instance = nullptr;
 }
 
-void RMG_SettingsDlg::ObjectsPage::SetVisible(bool state)
+void RMG_SettingsDlg::ObjectsPage::SetVisible(const BOOL state)
 {
     // hide items step by step
     pageHeader->SetVisible(state);
@@ -951,7 +933,7 @@ void RMG_SettingsDlg::ObjectsPage::SetVisible(bool state)
     {
         state ? horizontalScrollBar->ShowActivate() : horizontalScrollBar->HideDeactivate();
     }
-
+    captionbttn->SendCommand(6 - (state), 4096);
     auto time = GetTime();
     for (auto &p : objectsPanels)
     {
@@ -1401,15 +1383,13 @@ BOOL RMG_SettingsDlg::OnCreate()
 
     if (size)
     {
-
         for (Page *page : m_pages)
         {
             page->FillObjects();
             page->SetVisible(false);
         }
-
-        Page *page = m_lastPageId < size ? m_pages[m_lastPageId] : *m_pages.begin();
-        SetActivePage(page);
+        size_t pageId = m_lastPageId < size ? m_lastPageId : 0;
+        SetActivePage(pageId);
     }
 
     // remove local settings for the objects that have same data as in default
@@ -1426,39 +1406,39 @@ BOOL RMG_SettingsDlg::OnCreate()
 
     return true;
 }
-BOOL RMG_SettingsDlg::SetActivePage(Page *page) noexcept
+BOOL RMG_SettingsDlg::SetActivePage(const size_t pageId) noexcept
 {
-    bool result = page != m_currentPage;
-    if (result)
+
+    const size_t size = m_pages.size();
+    if (m_pages[pageId] == m_currentPage)
+        return FALSE;
+    // for (auto &caption : captionButtons)
+    //{
+    //     caption->SetFrame(0);
+    //     caption->SetClickFrame(1);
+    //     caption->SendCommand(6, 4096);
+    // }
+
+    if (m_currentPage)
     {
+        RemoveEditsFocus(true);
+        m_currentPage->SetVisible(false);
+    }
+    auto page = m_pages[pageId];
 
-        for (auto &caption : captionButtons)
-        {
-            caption->SetFrame(0);
-            caption->SetClickFrame(1);
-        }
-
-        if (m_currentPage)
-        {
-            RemoveEditsFocus(true);
-            m_currentPage->SetVisible(false);
-        }
-
-        m_currentPage = page;
-        if (page)
-        {
-            page->SetVisible(true);
-            page->captionbttn->SetFrame(2);
-            page->captionbttn->SetClickFrame(3);
-            m_lastPageId = page->id;
-        }
-        else
-        {
-            m_lastPageId = 0;
-        }
+    m_currentPage = page;
+    if (page)
+    {
+        page->SetVisible(true);
+        page->captionbttn->SendCommand(5, 4096);
+        m_lastPageId = page->id;
+    }
+    else
+    {
+        m_lastPageId = 0;
     }
 
-    return result;
+    return TRUE;
 }
 
 RMGDlgObject::RMGDlgObject(GraphicalAttributes *graphicalAttributes) : graphicalAttributes(graphicalAttributes)
@@ -1532,7 +1512,7 @@ RMG_SettingsDlg::ObjectsPage::PageHeader::PageHeader(const int x, const int y, c
     }
 }
 
-void RMG_SettingsDlg::ObjectsPage::PageHeader::SetVisible(bool state)
+void RMG_SettingsDlg::ObjectsPage::PageHeader::SetVisible(const BOOL state)
 {
     for (auto &p : items)
         state ? p->ShowActivate() : p->HideDeactivate();
@@ -1559,7 +1539,7 @@ RMG_SettingsDlg::DwellingsPage::~DwellingsPage()
 {
 }
 
-std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(const int objectType) noexcept
+std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVectorByObjectType(const int objectType) noexcept
 {
 
     // spacing is added to show not adjusted object types
@@ -1571,6 +1551,8 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
     case eObject::CRYPT:
     case eObject::SHIPWRECK:
         return &m_creatureBanks;
+    case eObject::ALTAR_OF_SACRIFICE:
+
     case eObject::ARENA:
 
     case eObject::BLACK_MARKET:
@@ -1587,6 +1569,7 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
     case eObject::MARLETTO_TOWER:
 
     case eObject::FAERIE_RING:
+    case eObject::FLOTSAM:
 
     case eObject::GARDEN_OF_REVELATION:
     case eObject::IDOL_OF_FORTUNE:
@@ -1621,11 +1604,11 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVector(con
 
     case eObject::SANCTUARY:
     case eObject::SCHOLAR:
-        // case eObject::SEA_CHEST:
+    case eObject::SEA_CHEST:
 
     case eObject::SEER_HUT:
 
-        // case eObject::SHIPWRECK_SURVIVOR:
+    case eObject::SHIPWRECK_SURVIVOR:
 
     case eObject::SHRINE_OF_MAGIC_INCANTATION:
     case eObject::SHRINE_OF_MAGIC_GESTURE:
@@ -1804,7 +1787,7 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
     {
         const int objectType = objGen->type;
 
-        if (workingVector = GetObjectAttributesVector(objectType))
+        if (workingVector = GetObjectAttributesVectorByObjectType(objectType))
         {
 
             AssignPrototypeToObjectGens(objGen, workingVector, uniqueObjectsIndex, objectType);
@@ -1945,6 +1928,7 @@ int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
             randomGameButton->Draw();
             randomGameButton->ParentRedraw();
 
+            RMG_SettingsDlg::completelyRandomIsPressed = currentFrame;
             if (currentFrame == 0)
             {
                 H3Messagebox::Show(EraJS::read("RMG.text.buttons.random.help"));
@@ -1999,6 +1983,7 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
             BOOL result = Era::ReadStrFromIni(INI_ALWAYS_RANDOM, SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
             if (result && atoi(h3_TextBuffer))
             {
+                completelyRandomIsPressed = TRUE;
                 randomGameButton->SetFrame(2);
             }
             randomGameButton->HideDeactivate();

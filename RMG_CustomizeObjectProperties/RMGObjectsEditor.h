@@ -2,6 +2,14 @@
 struct ObjectLimitsInfo;
 #include <array>
 
+struct RMGTemplateLimits
+{
+    struct
+    {
+        int minValue;
+        int maxValue;
+    } zoneTypes[4];
+};
 struct _RMGObjGenScroll_ : public H3RmgObjectGenerator
 {
     static constexpr UINT MAP_CONTROL_SPELL_LEVEL = 6;
@@ -81,6 +89,7 @@ struct RMGObjectInfo
     BOOL Clamp() noexcept;
     void RestoreDefault() noexcept;
     void SetRandom() noexcept;
+    void SetRandom(const RMGTemplateLimits&templateInfo) noexcept;
     void MakeReal() const noexcept;
     inline LPCSTR GetRmgTypeDescription() const noexcept;
     inline LPCSTR GetRmgSubtypeDescription() const noexcept;
@@ -93,7 +102,7 @@ struct RMGObjectInfo
   public:
     static const RMGObjectInfo &DefaultObjectInfo(const int objType, const int subtype) noexcept;
     static const RMGObjectInfo &CurrentObjectInfo(const int objType, const int subtype) noexcept;
-    static const std::vector<RMGObjectInfo> (&CurrentObjectInfo())[limits::OBJECTS];
+    static std::vector<RMGObjectInfo> (&CurrentObjectInfos())[limits::OBJECTS];
 
     static void InitFromRmgObjectGenerator(const H3RmgObjectGenerator &);
     static void InitDefaultProperties(const ObjectLimitsInfo &limitInfo, const INT16 *maxSubtypes);
@@ -109,7 +118,7 @@ struct GeneratedInfo
   private:
     BOOL isInited = false;
     int maxObjectSubtype = NULL;
-
+    // allocated fields
     union {
         struct
         {
@@ -120,16 +129,16 @@ struct GeneratedInfo
         };
         int *arrays[4];
     };
+    RMGObjectInfo **storedCurrentObjects = nullptr;
 
   public:
     const _RMGObjGenScroll_ *lastGeneratedSpellScroll = nullptr;
 
   public:
     void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId);
-    void Assign(const H3RmgRandomMapGenerator *rmg,
-                const std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS]);
+    void Assign(const H3RmgRandomMapGenerator *rmg, std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS]);
     void Clear(const H3RmgRandomMapGenerator *rmgStruct);
-    BOOL Inited() const noexcept;
+    BOOL IsInited() const noexcept;
 
   public:
     BOOL ObjectCantBeGenerated(const H3RmgObjectGenerator *rmgObjGen, const int zoneId) const;

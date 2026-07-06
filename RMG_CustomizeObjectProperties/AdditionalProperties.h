@@ -29,6 +29,7 @@ struct AdditionalProperties
   public:
     void LoadCommonProperties() noexcept;
     void LoadAdditionalPropertiesFromMods() noexcept;
+    void DebugAddedProperties() const noexcept;
 
   public:
     size_t InsertPropertiesIntoObjectsList(H3TextFile *objectsTxt) noexcept;

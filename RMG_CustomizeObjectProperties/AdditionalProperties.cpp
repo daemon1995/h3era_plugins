@@ -87,7 +87,7 @@ void AdditionalProperties::LoadAdditionalPropertiesFromMods() noexcept
 
     std::vector<std::string> modList;
     modList::GetEraModList(modList, modList::CASE_TO_LOWER);
-
+    std::reverse(modList.begin(), modList.end());
     for (auto &modName : modList)
     {
         //    std::string modName = "wog";
@@ -143,6 +143,16 @@ void AdditionalProperties::LoadAdditionalPropertiesFromMods() noexcept
     }
 }
 
+void AdditionalProperties::DebugAddedProperties() const noexcept
+{
+    const char *fileName = "Runtime/Debug/ObjectsListMap.ini";
+    for (auto &key : propertiesMap)
+    {
+        Era::WriteStrToIni(key.first.c_str(), key.second.c_str(), "MAP", fileName);
+    }
+    Era::SaveIni(fileName);
+}
+
 size_t AdditionalProperties::InsertPropertiesIntoObjectsList(H3TextFile *_objectsTxt) noexcept
 {
     size_t addedProperties = 0;
@@ -160,8 +170,6 @@ size_t AdditionalProperties::InsertPropertiesIntoObjectsList(H3TextFile *_object
 
             if (const std::string *propertyReplace = FindPropertyReplace(txtPropertyString.c_str()))
             {
-                // Era::WriteStrToIni((*objectTxt)[i], propertyReplace->data(), "tryingToReplace",
-                //                    "runtime/tum/properties.ini");
                 (*objectTxt)[i] = propertyReplace->data();
             }
         }

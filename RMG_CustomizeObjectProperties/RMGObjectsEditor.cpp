@@ -215,28 +215,6 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             // create vector with assumed to create objects ;
             editor.editedRMGObjectGenerators.RemoveAll();
 
-            // check if we have full random
-            const BOOL result = Era::ReadStrFromIni(rmgdlg::RMG_SettingsDlg::INI_ALWAYS_RANDOM,
-                                                    rmgdlg::RMG_SettingsDlg::SETTINGS_INI_SECTION,
-                                                    rmgdlg::RMG_SettingsDlg::INI_FILE_PATH, h3_TextBuffer);
-            const BOOL randomizeProperties = result && atoi(h3_TextBuffer);
-
-            // affects only data from SettingsDlg
-            if (randomizeProperties)
-            {
-                // and start to make dirt
-                auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
-                for (auto vec : allDlgObjects)
-                {
-                    for (auto &attr : *vec)
-                    {
-                        RMGObjectInfo info(attr.attributes->type, attr.attributes->subtype);
-                        info.SetRandom();
-                        info.MakeReal();
-                    }
-                }
-            }
-
             // init variables;
             for (auto &rmgObjGen : *rmgObjectsList)
             {
@@ -274,7 +252,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
                     if (rmgObjInfo.density > 0)
                         rmgObjGen->density = rmgObjInfo.density;
-                    if (rmgObjInfo.value != -1)
+                    if (rmgObjInfo.value != RMGObjectInfo::UNDEFINED)
                         rmgObjGen->value = rmgObjInfo.value;
 
                     // add into list generated list
@@ -366,7 +344,7 @@ _LHF_(RMGObjectsEditor::RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck)
 // Placed objects counter
 _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
 {
-    if (generatedInfo.Inited())
+    if (generatedInfo.IsInited())
     {
         // Get generated and placed RMG object from stack
         const H3RmgObject *rmgObject = *reinterpret_cast<H3RmgObject **>(c->ebp + 0x8);
@@ -415,7 +393,7 @@ int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObject
     {
         const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
 
-        const int creatureValue = RMGObjectInfo::CurrentObjectInfo(objGen->type, objGen->subtype).value;
+        // const int creatureValue = RMGObjectInfo::CurrentObjectInfo(objGen->type, objGen->subtype).value;
         int resultValue = -1;
         const int totalTownsCount = rmg->townsCount;
         for (size_t i = 0; i < 4; i++)
@@ -495,7 +473,7 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct)
 {
     // create limits counters
-    generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfo());
+    generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
 
     // _PI->WriteDword(0x0541013,)
     // static BOOL firstRun = true;
@@ -522,6 +500,7 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
         }
     }
 }
+
 void __stdcall RMGObjectsEditor::RMG__AfterMapGenerated(HiHook *h, H3RmgRandomMapGenerator *rmgStruct)
 {
 
@@ -533,7 +512,7 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
 {
 
     // swap generators list back
-    if (generatedInfo.Inited())
+    if (generatedInfo.IsInited())
     {
         generatedInfo.Clear(rmgStruct);
     }
@@ -790,8 +769,7 @@ void RMGObjectInfo::RestoreDefault() noexcept
 
 void RMGObjectInfo::SetRandom() noexcept
 {
-    RMGObjectInfo tempObjInfo = *this;
-    tempObjInfo.RestoreDefault();
+    RMGObjectInfo tempObjInfo = defaultRMGObjectsInfoByType[type][subtype];
 
     for (size_t i = 0; i < 5; i++)
     {
@@ -801,7 +779,7 @@ void RMGObjectInfo::SetRandom() noexcept
         }
         //	temp.data[i] = rand() % temp.data[i];
     }
-    tempObjInfo.enabled = rand() % 2;
+    tempObjInfo.enabled = rand() & 1;
 
     for (size_t i = 1; i < 3; i++)
     {
@@ -811,7 +789,7 @@ void RMGObjectInfo::SetRandom() noexcept
         }
         else
         {
-            tempObjInfo.data[i] = rand() % 2;
+            tempObjInfo.data[i] = rand() & 1;
         }
         // tempObjInfo.data[i] <<= i;
     }
@@ -836,6 +814,10 @@ void RMGObjectInfo::SetRandom() noexcept
     tempObjInfo.Clamp();
 
     *this = tempObjInfo;
+}
+void RMGObjectInfo::SetRandom(const RMGTemplateLimits &templateInfo) noexcept
+{
+    SetRandom();
 }
 void RMGObjectInfo::MakeReal() const noexcept
 {
@@ -873,7 +855,8 @@ BOOL RMGObjectInfo::WriteToINI() const noexcept
     // save changed settings only
     for (size_t i = 0; i < DATA_SIZE; i++)
     {
-        if (defaultRMGObjectsInfoByType[type][subtype].data[i] != data[i])
+        // if current data isn't same as default
+        if (data[i] != defaultRMGObjectsInfoByType[type][subtype].data[i])
         {
             if (!Era::WriteStrToIni(PROPERTY_NAMES[i], std::to_string(data[i]).c_str(), sectionName.String(),
                                     INI_FILE_PATH))
@@ -914,7 +897,7 @@ inline const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const int objType, 
     return currentRMGObjectsInfoByType[objType][subtype];
 }
 
-inline const std::vector<RMGObjectInfo> (&RMGObjectInfo::CurrentObjectInfo())
+inline std::vector<RMGObjectInfo> (&RMGObjectInfo::CurrentObjectInfos())
     [limits::OBJECTS] { return RMGObjectInfo::currentRMGObjectsInfoByType; }
 
 void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator &generator)
@@ -1155,7 +1138,7 @@ static inline int *create2DArray(int X, int Y)
 }
 
 void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
-                           const std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS])
+                           std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS])
 {
 
     const UINT templateBaseZoneAmount = rmg->zoneGenerators.Size();
@@ -1215,6 +1198,41 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         libc::memset(mapGeneratedBySubtype, 0, arraylength);
         libc::memset(zoneLimitsBySubtype, 0, arraylength);
         libc::memset(mapLimitsBySubtype, 0, arraylength);
+
+        // check if we have full random
+        const BOOL randomizeProperties = rmgdlg::RMG_SettingsDlg::completelyRandomIsPressed;
+
+        // affects only data from SettingsDlg
+        if (randomizeProperties)
+        {
+            // and start to make dirt
+            auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
+
+            const size_t vecsNum = allDlgObjects.size();
+            storedCurrentObjects = new RMGObjectInfo *[vecsNum]();
+
+            for (size_t i = 0; i < vecsNum; i++)
+            {
+                const size_t objNum = allDlgObjects[i]->size();
+                storedCurrentObjects[i] = new RMGObjectInfo[objNum]();
+                for (size_t objId = 0; objId < objNum; objId++)
+                {
+                    const auto &obj = (*allDlgObjects[i])[objId];
+                    const int type = obj.attributes->type;
+                    const int subtype = obj.attributes->subtype;
+                    auto &currentObject = userRmgInfoSet[type][subtype];
+                    storedCurrentObjects[i][objId] = currentObject;
+                    currentObject.SetRandom();
+                    currentObject.MakeReal();
+                    ;
+                    if (1)
+                    {
+                        int a = 1;
+                        currentObject.Clamp();
+                    }
+                }
+            }
+        }
 
         const int maxSubtype = maxObjectSubtype;
         LPCSTR iniFile = "Runtime/Rmg/Debug.ini";
@@ -1288,6 +1306,24 @@ void GeneratedInfo::Clear(const H3RmgRandomMapGenerator *rmgStruct)
     // delete all the allocated arrays
     if (isInited)
     {
+        if (storedCurrentObjects)
+        {
+            auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
+            const size_t vecsNum = allDlgObjects.size();
+            for (size_t i = 0; i < vecsNum; i++)
+            {
+                const size_t objNum = allDlgObjects[i]->size();
+                for (size_t objId = 0; objId < objNum; objId++)
+                {
+                    storedCurrentObjects[i][objId].MakeReal();
+                }
+
+                delete[] storedCurrentObjects[i];
+            }
+            delete[] storedCurrentObjects;
+            storedCurrentObjects = nullptr;
+        }
+
         for (auto arr : arrays)
         {
             if (arr)
@@ -1301,7 +1337,7 @@ void GeneratedInfo::Clear(const H3RmgRandomMapGenerator *rmgStruct)
     }
 }
 
-BOOL GeneratedInfo::Inited() const noexcept
+BOOL GeneratedInfo::IsInited() const noexcept
 {
     return isInited;
 }
