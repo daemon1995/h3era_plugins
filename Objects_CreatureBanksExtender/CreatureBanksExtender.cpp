@@ -203,7 +203,7 @@ _LHF_(CreatureBanksExtender::AIHero_GetCreatureBankItemWeight)
     if (const UINT mithrilAmount = customReward->mithrilAmount)
     {
         const H3Player *player = THISCALL_1(H3Player *, 0x04E5920, hero);
-        bonusValue += static_cast<int>(player->resourceImportance[eResource::GOLD] * mithrilAmount * 1000);
+        bonusValue += static_cast<int>(player->aIPlayer.resourceImportance[eResource::GOLD] * mithrilAmount * 1000);
     }
     if (const auto experience = customReward->experience)
     {
