@@ -267,6 +267,10 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
     {
         hero->primarySkill[i] += customBank->primarySkills[i];
     }
+    if (customBank->revealRadius > 0)
+    {
+        THISCALL_7(void, 0x049CDD0, P_Game->Get(), hero->x, hero->y, hero->z, hero->owner, customBank->revealRadius, 0);
+    }
 
     return EXEC_DEFAULT;
 }

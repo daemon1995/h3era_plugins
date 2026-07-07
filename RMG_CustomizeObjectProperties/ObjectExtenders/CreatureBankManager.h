@@ -19,6 +19,7 @@ struct CustomRewardSetupState
     UINT spellPoints = 0;
     INT luck = 0;
     INT morale = 0;
+    UINT revealRadius = 0;
     eArtifact artifactIds[ARTIFACTS_AMOUNT] = {eArtifact::NONE, eArtifact::NONE, eArtifact::NONE, eArtifact::NONE};
 
     UINT8 primarySkills[SKILLS_AMOUNT] = {0, 0, 0, 0};
@@ -57,6 +58,7 @@ struct CustomCreatureBank
     DECLARE_FIELD(UINT, spellPoints, 0)
     DECLARE_FIELD(INT, luck, 0)
     DECLARE_FIELD(INT, morale, 0)
+    DECLARE_FIELD(UINT, revealRadius, 0)
 
     DECLARE_INDEXED_FIELD(UINT8, primarySkills, SKILLS_AMOUNT, 0)
     DECLARE_INDEXED_FIELD(eSpell, spells, SPELLS_AMOUNT, eSpell::NONE)

@@ -85,6 +85,7 @@ CustomRewardSetupState::CustomRewardSetupState(const INT creatureBankType, const
     {
         morale = Clamp(-3, _morale, 3);
     }
+    revealRadius = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.revealRadius", creatureBankType, stateId);
 
     for (size_t i = 0; i < SPELLS_AMOUNT; i++)
     {
@@ -218,6 +219,7 @@ void CustomCreatureBank::WriteSaveData() const noexcept
     SAVE_SIMPLE_FIELD(spellPoints)
     SAVE_SIMPLE_FIELD(luck);
     SAVE_SIMPLE_FIELD(morale);
+    SAVE_SIMPLE_FIELD(revealRadius);
 
     SAVE_INDEXED_FIELD(primarySkills, SKILLS_AMOUNT);
     SAVE_INDEXED_FIELD(spells, SPELLS_AMOUNT);
@@ -231,6 +233,7 @@ void CustomCreatureBank::ClearAssocVariables() const noexcept
     CLEAR_SIMPLE_FIELD(spellPoints)
     CLEAR_SIMPLE_FIELD(luck);
     CLEAR_SIMPLE_FIELD(morale);
+    CLEAR_SIMPLE_FIELD(revealRadius);
 
     CLEAR_INDEXED_FIELD(primarySkills, SKILLS_AMOUNT);
     CLEAR_INDEXED_FIELD(spells, SPELLS_AMOUNT);
@@ -246,6 +249,7 @@ CustomCreatureBank::CustomCreatureBank(const int creatureBankId)
     LOAD_SIMPLE_FIELD(spellPoints)
     LOAD_SIMPLE_FIELD(luck)
     LOAD_SIMPLE_FIELD(morale)
+    LOAD_SIMPLE_FIELD(revealRadius)
 
     LOAD_INDEXED_FIELD(primarySkills, SKILLS_AMOUNT)
     LOAD_INDEXED_FIELD(spells, SPELLS_AMOUNT)
