@@ -267,9 +267,11 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
     {
         hero->primarySkill[i] += customBank->primarySkills[i];
     }
-    if (customBank->revealRadius > 0)
+    if (const int radius = customBank->revealRadius)
     {
-        THISCALL_7(void, 0x049CDD0, P_Game->Get(), hero->x, hero->y, hero->z, hero->owner, customBank->revealRadius, 0);
+        const H3Position &pos = ValueAt<H3Position>(c->ebp + 0x14);
+        THISCALL_7(void, 0x049CDD0, P_Game->Get(), pos.GetX(), pos.GetY(), pos.GetZ(), hero->owner,
+                   customBank->revealRadius, 0);
     }
 
     return EXEC_DEFAULT;
@@ -625,7 +627,8 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPlunderedMessage)
     if (const int radius = customBank->revealRadius)
     {
         auto hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
-        THISCALL_7(void, 0x049CDD0, P_Game->Get(), hero->x, hero->y, hero->z, hero->owner, radius, 0);
+        const H3Position &pos = ValueAt<H3Position>(c->ebp + 0x10);
+        THISCALL_7(void, 0x049CDD0, P_Game->Get(), pos.GetX(), pos.GetY(), pos.GetZ(), hero->owner, radius, 0);
     }
     return EXEC_DEFAULT;
 }
