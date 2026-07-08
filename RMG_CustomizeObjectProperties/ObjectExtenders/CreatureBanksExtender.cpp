@@ -267,7 +267,7 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
     {
         hero->primarySkill[i] += customBank->primarySkills[i];
     }
-    if (const int radius = customBank->revealRadius)
+    if (const UINT radius = customBank->revealRadius)
     {
         const H3Position &pos = ValueAt<H3Position>(c->ebp + 0x14);
         THISCALL_7(void, 0x049CDD0, P_Game->Get(), pos.GetX(), pos.GetY(), pos.GetZ(), hero->owner,
@@ -625,7 +625,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforePlunderedMessage)
     msgMapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
     auto customBank = instance->manager.GetCustomCreatureBank(msgMapItem);
 
-    if (const int radius = customBank->revealRadius)
+    if (const UINT radius = customBank->revealRadius)
     {
         auto hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
         const H3Position &pos = ValueAt<H3Position>(c->ebp + 0x10);

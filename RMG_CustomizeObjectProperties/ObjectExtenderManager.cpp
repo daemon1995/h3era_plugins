@@ -515,7 +515,8 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
 
     H3String terrainStr;
     bool hasTerrain = false;
-    for (size_t i = 0; i < 10; i++)
+    const UINT8 terrainsNum = ValueAt<UINT8>(0x5168B8 + 2);
+    for (size_t i = 0; i < terrainsNum; i++)
     {
         if (attributes->maskTerrain.bitfield.GetState(i))
         {

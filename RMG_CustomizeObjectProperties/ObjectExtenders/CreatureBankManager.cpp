@@ -159,6 +159,7 @@ CustomCreatureBank::CustomCreatureBank(const CustomRewardSetupState &setupState,
         spellPoints = setupState.spellPoints;
         luck = setupState.luck;
         morale = setupState.morale;
+        revealRadius = setupState.revealRadius;
     }
 }
 
