@@ -612,6 +612,23 @@ _LHF_(CreatureBanksExtender::Game_SetMapItemDef)
     return EXEC_DEFAULT;
 }
 
+_LHF_(CreatureBanksExtender::CrBank_DisplayPlunderedMessage)
+{
+    if (c->flags.ZF)
+    {
+        return EXEC_DEFAULT;
+    }
+
+    auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
+    auto customBank = instance->manager.GetCustomCreatureBank(mapItem);
+
+    if (const int radius = customBank->revealRadius)
+    {
+        auto hero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
+        THISCALL_7(void, 0x049CDD0, P_Game->Get(), hero->x, hero->y, hero->z, hero->owner, radius, 0);
+    }
+    return EXEC_DEFAULT;
+}
 _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 {
     auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
@@ -891,6 +908,7 @@ void CreatureBanksExtender::CreatePatches()
         {
             // Pre-combat message
             {
+                _pi->WriteLoHook(0x04A129D, CrBank_DisplayPlunderedMessage);        // 16 object type
                 _pi->WriteLoHook(0x04A1394, CrBank_DisplayPreCombatMessage);        // 16 object type
                 _pi->WriteLoHook(0x04A1E29, CrBank_DisplayPreCombatMessage);        // 25 object type
                 _pi->WriteLoHook(0x04AC19D, SpecialCrBank_DisplayPreCombatMessage); // 24 / 84 / 85 object types
