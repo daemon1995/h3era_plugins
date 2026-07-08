@@ -60,7 +60,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
     static _LHF_(Game_SetMapItemDef);
 
     static _LHF_(AIHero_GetCreatureBankItemWeight);
-    static _LHF_(CrBank_DisplayPlunderedMessage);
+    static _LHF_(CrBank_BeforePlunderedMessage);
     static _LHF_(CrBank_DisplayPreCombatMessage);
     static _LHF_(SpecialCrBank_DisplayPreCombatMessage);
     static void __stdcall CrBank_AskForVisitMessage(HiHook *h, char *mes, const int messageType, const int x,

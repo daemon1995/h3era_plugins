@@ -613,16 +613,17 @@ _LHF_(CreatureBanksExtender::Game_SetMapItemDef)
 
     return EXEC_DEFAULT;
 }
-
-_LHF_(CreatureBanksExtender::CrBank_DisplayPlunderedMessage)
+H3MapItem *msgMapItem = nullptr;
+_LHF_(CreatureBanksExtender::CrBank_BeforePlunderedMessage)
 {
     if (c->flags.ZF)
     {
+        msgMapItem = nullptr;
         return EXEC_DEFAULT;
     }
 
-    auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
-    auto customBank = instance->manager.GetCustomCreatureBank(mapItem);
+    msgMapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
+    auto customBank = instance->manager.GetCustomCreatureBank(msgMapItem);
 
     if (const int radius = customBank->revealRadius)
     {
@@ -630,8 +631,42 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPlunderedMessage)
         const H3Position &pos = ValueAt<H3Position>(c->ebp + 0x10);
         THISCALL_7(void, 0x049CDD0, P_Game->Get(), pos.GetX(), pos.GetY(), pos.GetZ(), hero->owner, radius, 0);
     }
+
     return EXEC_DEFAULT;
 }
+
+H3String *__stdcall CrBank_DisplayPlunderedMessage(HiHook *h, H3String *text, H3String *other, DWORD flags, DWORD end)
+{
+
+    bool readSuccess = false;
+
+    auto mapItem = msgMapItem;
+    char *customText = EraJS::read(
+        H3String::Format("RMG.objectGeneration.%d.%d.text.plundered", mapItem->objectType, mapItem->objectSubtype)
+            .String(),
+        readSuccess);
+    if (readSuccess)
+    {
+        H3String finalMessage;
+        if (EraJS::readInt("RMG.settings.creatureBanks.displayName") &&
+            mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
+        {
+            finalMessage = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
+            finalMessage.Append("\n\n");
+        }
+        finalMessage.Append(customText);
+
+        text->Assign(finalMessage);
+    }
+    else
+    {
+
+        text = THISCALL_4(H3String *, h->GetDefaultFunc(), text, other, flags, end);
+    }
+
+    return text;
+}
+
 _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 {
     auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
@@ -911,7 +946,9 @@ void CreatureBanksExtender::CreatePatches()
         {
             // Pre-combat message
             {
-                _pi->WriteLoHook(0x04A129D, CrBank_DisplayPlunderedMessage);        // 16 object type
+                _pi->WriteLoHook(0x04A129D, CrBank_BeforePlunderedMessage);             // 16 object type
+                _pi->WriteHiHook(0x04A12E1, THISCALL_, CrBank_DisplayPlunderedMessage); // 16 object type
+
                 _pi->WriteLoHook(0x04A1394, CrBank_DisplayPreCombatMessage);        // 16 object type
                 _pi->WriteLoHook(0x04A1E29, CrBank_DisplayPreCombatMessage);        // 25 object type
                 _pi->WriteLoHook(0x04AC19D, SpecialCrBank_DisplayPreCombatMessage); // 24 / 84 / 85 object types
