@@ -41,6 +41,11 @@ struct RMGObjectSetable
 
 class ObjectExtenderManager : public IGamePatch
 {
+
+  public:
+    static constexpr LPCSTR DLG_HORIZONTAL_GAP = "\n\n\n";
+
+  protected:
     struct ErrorText
     {
         static constexpr LPCSTR TITLE_ERROR = "Error";

@@ -8732,6 +8732,7 @@ namespace h3
 		constexpr INT32 OBJECTS                = 232;
 		constexpr INT32 PLAYERS                = 8;
 		constexpr INT32 RESOURCES              = 7;
+		constexpr INT32 ARMY_SLOTS             = 7;
 		constexpr INT32 SECONDARY_SKILLS       = 28;
 		constexpr INT32 SPELLS                 = 70;
 		constexpr INT32 TERRAIN                = 10;

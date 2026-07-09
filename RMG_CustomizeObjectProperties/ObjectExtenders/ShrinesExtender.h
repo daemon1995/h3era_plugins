@@ -30,7 +30,7 @@ class ShrinesExtender : public extender::ObjectExtender
                                     int &aiMapItemWeight, int *moveDistance,
                                     const H3Position pos) const noexcept override final;
     virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                             const H3String &defaltText) noexcept override final;
+                                             H3String &defaltText) noexcept override final;
 
     //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;

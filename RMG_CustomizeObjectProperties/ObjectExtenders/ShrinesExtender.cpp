@@ -14,7 +14,7 @@ ShrinesExtender::~ShrinesExtender()
 }
 
 BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                                  const H3String &defaultHint) noexcept
+                                                  H3String &defaultHint) noexcept
 {
     if (info.type >= eObject::SHRINE_OF_MAGIC_INCANTATION && info.type <= eObject::SHRINE_OF_MAGIC_THOUGHT)
     {
@@ -27,11 +27,11 @@ BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, con
 
             libc::sprintf(h3_TextBuffer, "{~>SpellScr.def:0:%d block}", info.subtype - 1);
             additionalHint.Append(h3_TextBuffer);
-            H3Messagebox::RMB(additionalHint.String());
+            //  H3Messagebox::RMB(additionalHint.String());
         }
-        else
+        // else
         {
-            H3Messagebox::RMB(defaultHint.String());
+            //      H3Messagebox::RMB(defaultHint.String());
         }
         return true;
     }

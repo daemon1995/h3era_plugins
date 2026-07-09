@@ -113,13 +113,12 @@ BOOL UniversityExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero 
 }
 
 BOOL UniversityExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                                     const H3String &defaultHint) noexcept
+                                                     H3String &defaultHint) noexcept
 {
     if (info.type == eObject::UNIVERSITY)
     {
 
-        H3String additionalHint = defaultHint + "\n";
-        additionalHint += EraJS::read(H3String::Format("RMG.objectGeneration.%d.text.rmg", info.type).String());
+        H3String additionalHint = EraJS::read(H3String::Format("RMG.objectGeneration.%d.text.rmg", info.type).String());
 
         volatile int drawnSkills = 0;
         if (info.subtype < universitiesData.size())
@@ -137,19 +136,22 @@ BOOL UniversityExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, 
                 }
             }
         }
+        if (additionalHint.Empty())
+            return true;
 
-        // increase message box size
-        if (drawnSkills > 7)
-        {
-            IntAt(0x04F65D4 + 2) += 100;
-            IntAt(0x04F662F + 1) += 100;
-        }
-        H3Messagebox::RMB(additionalHint.String());
-        if (drawnSkills > 7)
-        {
-            IntAt(0x04F65D4 + 2) -= 100;
-            IntAt(0x04F662F + 1) -= 100;
-        }
+        defaultHint += "\n" + additionalHint;
+        //// increase message box size
+        // if (drawnSkills > 7)
+        //{
+        //     IntAt(0x04F65D4 + 2) += 100;
+        //     IntAt(0x04F662F + 1) += 100;
+        // }
+        // H3Messagebox::RMB(additionalHint.String());
+        // if (drawnSkills > 7)
+        //{
+        //     IntAt(0x04F65D4 + 2) -= 100;
+        //     IntAt(0x04F662F + 1) -= 100;
+        // }
 
         return true;
     }

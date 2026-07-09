@@ -84,7 +84,7 @@ class ObjectExtender
     }
 
     virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                             const H3String &defaultText) noexcept
+                                             H3String &defaultText) noexcept
     {
         return false;
     }

@@ -10,7 +10,7 @@ namespace cbanks
 class CreatureBanksExtender : public extender::ObjectExtender
 {
   public:
-    static int GetCreatureBankType(const int type, const int subtype);
+    static int GetCreatureBankIndex(const int type, const int subtype);
 };
 } // namespace cbanks
 namespace wog
@@ -1007,7 +1007,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         dwellingObjInfo.value = 0; // creatureAIValue;
         for (size_t i = 0; i < 4; i++)
         {
-            const int dwellingCreatureType = DwordAt(dwellings4Ptr + (i << 2));
+            const int dwellingCreatureType = DwordAt(dwellings4Ptr + (i << 2) + dwellingObjInfo.subtype * 16);
             if (dwellingCreatureType != eCreature::UNDEFINED)
             {
                 dwellingObjInfo.value += P_CreatureInformation[dwellingCreatureType].aiValue;
@@ -1047,7 +1047,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 {
     LPCSTR result = h3_NullString;
 
-    const int creatureBankId = cbanks::CreatureBanksExtender::GetCreatureBankType(type, subtype);
+    const int creatureBankId = cbanks::CreatureBanksExtender::GetCreatureBankIndex(type, subtype);
     if (creatureBankId >= 0)
     {
         return H3CreatureBankSetup::Get()[creatureBankId].name.String();

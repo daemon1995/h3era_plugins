@@ -514,7 +514,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
                                 {
                                     if (const auto mapItem = adventure->GetMapItem(x, y, z))
                                     {
-                                        if (CreatureBanksExtender::GetCreatureBankType(mapItem) == type &&
+                                        if (CreatureBanksExtender::GetCreatureBankIndex(mapItem) == type &&
                                             mapItem->creatureBank.id == i)
                                         {
                                             h3functions::SetMapItemDef(mapItem);
@@ -671,7 +671,7 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 {
     auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
     currentCreatureBank.mapItem = mapItem;
-    currentCreatureBank.type = GetCreatureBankType(mapItem);
+    currentCreatureBank.type = GetCreatureBankIndex(mapItem);
     if (currentCreatureBank.type != eObject::NO_OBJ)
     {
         currentCreatureBank.bank = &P_Game->creatureBanks[mapItem->creatureBank.id];
@@ -709,7 +709,7 @@ signed int __stdcall CreatureBanksExtender::CrBank_CombatAndRewardProc(HiHook *h
                                                                        const BOOL isPlayer)
 {
     currentCreatureBank.mapItem = mapItem;
-    currentCreatureBank.type = GetCreatureBankType(mapItem);
+    currentCreatureBank.type = GetCreatureBankIndex(mapItem);
     currentCreatureBank.hero = const_cast<H3Hero *>(attHero);
     const int result = THISCALL_6(int, h->GetDefaultFunc(), advMan, attHero, mapItem, text, PisMixed, isPlayer);
     currentCreatureBank = {};
@@ -804,11 +804,11 @@ void __stdcall CreatureBanksExtender::CrBank_AskForVisitMessage(HiHook *h, char 
     }
 }
 
-int CreatureBanksExtender::GetCreatureBankType(const H3MapItem *mapItem) noexcept
+int CreatureBanksExtender::GetCreatureBankIndex(const H3MapItem *mapItem) noexcept
 {
-    return mapItem ? GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype) : eObject::NO_OBJ;
+    return mapItem ? GetCreatureBankIndex(mapItem->objectType, mapItem->objectSubtype) : eObject::NO_OBJ;
 }
-int CreatureBanksExtender::GetCreatureBankType(const int objType, const int objSubtype) noexcept
+int CreatureBanksExtender::GetCreatureBankIndex(const int objType, const int objSubtype) noexcept
 {
     int cbId = -1;
     switch (objType)
@@ -871,6 +871,52 @@ H3RmgObjectGenerator *CreatureBanksExtender::CreateRMGObjectGen(const RMGObjectI
         return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
     }
     return nullptr;
+}
+
+BOOL CreatureBanksExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                                        H3String &defaultText) noexcept
+{
+    const auto index = GetCreatureBankIndex(info.type, info.subtype);
+    if (index != eObject::NO_OBJ)
+    {
+        const auto &bank = manager.setups[index];
+
+        H3String tempStr;
+        for (size_t i = 0; i < STATES_AMOUNT; i++)
+        {
+            const auto &state = bank.states[i];
+
+            if (state.chance <= 0)
+                continue;
+
+            H3String armyStr;
+            for (size_t j = 0; j < h3::limits::ARMY_SLOTS; j++)
+            {
+                const int creatureType = state.guardians.type[j];
+                const int creatureNum = state.guardians.count[j];
+                if (creatureType != eCreature::UNDEFINED && creatureNum > 0)
+                {
+                    libc::sprintf(h3_TextBuffer, "%2d {~>%s:0:%d valign=bottom}", creatureNum,
+                                  NH3Dlg::Assets::CREATURE_SMALL, creatureType + 2);
+                    armyStr += h3_TextBuffer;
+                }
+            }
+            if (armyStr.Empty())
+                continue;
+
+            tempStr += armyStr + "\n\n";
+        }
+
+        if (!tempStr.Empty())
+        {
+            tempStr.SetLength(tempStr.Length() - 2);
+            defaultText += extender::ObjectExtenderManager::DLG_HORIZONTAL_GAP;
+            defaultText += tempStr;
+        }
+        // return TRUE;
+    }
+
+    return 0;
 }
 
 UINT CreatureBanksExtender::Size() const noexcept

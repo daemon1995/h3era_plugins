@@ -260,7 +260,7 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
     if (const auto mapItem = ValueAt<H3MapItem *>(c->ebp + 0xC))
     {
 
-        const int creatureBankType = GetCreatureBankType(mapItem);
+        const int creatureBankType = GetCreatureBankIndex(mapItem);
 
         if (creatureBankType != eObject::NO_OBJ && !mapItem->creatureBank.taken &&
             mapItem->creatureBank.id < Get().manager.customCreatureBanksVector.size())
@@ -362,7 +362,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeShowingRewardMessage)
 
     if (const auto mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
     {
-        const int creatureBankType = GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype);
+        const int creatureBankType = GetCreatureBankIndex(mapItem->objectType, mapItem->objectSubtype);
         const auto customCreatureBank = Get().GetCustomCreatureBank(mapItem);
         if (creatureBankType == eObject::NO_OBJ || customCreatureBank == nullptr)
         {
@@ -597,7 +597,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
                                 {
                                     if (const auto mapItem = adventure->GetMapItem(x, y, z))
                                     {
-                                        if (CreatureBanksExtender::GetCreatureBankType(mapItem) == type &&
+                                        if (CreatureBanksExtender::GetCreatureBankIndex(mapItem) == type &&
                                             mapItem->creatureBank.id == i)
                                         {
                                             h3functions::SetMapItemDef(mapItem);
@@ -704,7 +704,7 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 
     if (mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
     {
-        if (GetCreatureBankType(mapItem) != eObject::NO_OBJ)
+        if (GetCreatureBankIndex(mapItem) != eObject::NO_OBJ)
         {
             auto &creatureBanks = P_Game->Get()->creatureBanks;
             bank = &creatureBanks[mapItem->creatureBank.id];
@@ -720,7 +720,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeCombatStart)
 {
     if (H3MapItem *mapItem = reinterpret_cast<H3MapItem *>(c->ecx))
     {
-        currentCreatureBank.type = GetCreatureBankType(mapItem);
+        currentCreatureBank.type = GetCreatureBankIndex(mapItem);
     }
 
     return EXEC_DEFAULT;
@@ -841,11 +841,11 @@ void __stdcall CreatureBanksExtender::CrBank_AskForVisitMessage(HiHook *h, char 
     }
 }
 
-int CreatureBanksExtender::GetCreatureBankType(const H3MapItem *mapItem) noexcept
+int CreatureBanksExtender::GetCreatureBankIndex(const H3MapItem *mapItem) noexcept
 {
-    return mapItem ? GetCreatureBankType(mapItem->objectType, mapItem->objectSubtype) : eObject::NO_OBJ;
+    return mapItem ? GetCreatureBankIndex(mapItem->objectType, mapItem->objectSubtype) : eObject::NO_OBJ;
 }
-int CreatureBanksExtender::GetCreatureBankType(const int objType, const int objSubtype) noexcept
+int CreatureBanksExtender::GetCreatureBankIndex(const int objType, const int objSubtype) noexcept
 {
     int cbId = -1;
     switch (objType)

@@ -44,7 +44,8 @@ class CreatureBanksExtender : public extender::ObjectExtender
     virtual void CreatePatches() override;
     virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) override final;
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &info) const noexcept override;
-
+    virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+                                             H3String &defaultText) noexcept override;
     // virtual void GetObjectPreperties() noexcept override  final;
   private:
   private:
@@ -94,8 +95,8 @@ class CreatureBanksExtender : public extender::ObjectExtender
     UINT Size() const noexcept;
 
   public:
-    static int GetCreatureBankType(const int objType, const int objSubtype) noexcept;
-    static int GetCreatureBankType(const H3MapItem *mapItem) noexcept;
+    static int GetCreatureBankIndex(const int objType, const int objSubtype) noexcept;
+    static int GetCreatureBankIndex(const H3MapItem *mapItem) noexcept;
 
     static CreatureBanksExtender &Get();
 };

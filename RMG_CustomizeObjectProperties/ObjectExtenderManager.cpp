@@ -511,8 +511,7 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
 
     // display terrain types that object can be placed on
 
-    H3String terrainStr;
-    bool hasTerrain = false;
+    H3String tempStr;
     const UINT8 terrainsNum = ValueAt<UINT8>(0x5168B8 + 2) & 0xFF;
     for (size_t i = 0; i < terrainsNum; i++)
     {
@@ -523,16 +522,70 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
             if (defTerrain)
             {
                 const int frameIndex = defTerrain->groups[0]->count < 60 ? 15 : 60;
-                terrainStr += H3String::Format("{~>%s:0:%d valign=bottom}", terrainDefName, frameIndex);
-                hasTerrain = true;
+                tempStr += H3String::Format("{~>%s:0:%d valign=bottom}", terrainDefName, frameIndex);
                 defTerrain->Dereference();
             }
         }
     }
-    if (hasTerrain)
+    if (!tempStr.Empty())
     {
-        stringResult.Append("\n\n\n");
-        stringResult += terrainStr += '\n';
+        stringResult += DLG_HORIZONTAL_GAP + tempStr;
+    }
+    if (info.type == eObject::CREATURE_GENERATOR1)
+    {
+
+        const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
+        const int MAX_MON_ID = IntAt(0x4A1657);
+
+        const int dwellingCreatureType = DwordAt(dwellings1Ptr + (info.subtype << 2));
+
+        if (dwellingCreatureType >= 0 && dwellingCreatureType < MAX_MON_ID)
+        {
+            const auto &info = P_CreatureInformation[dwellingCreatureType];
+            tempStr = H3String::Format("%d {~>%s:0:%d valign=bottom}", info.grow, NH3Dlg::Assets::CREATURE_SMALL,
+                                       dwellingCreatureType + 2);
+
+            const int townId = info.town;
+            if (townId != eTown::NEUTRAL)
+            {
+                tempStr = H3String::Format("{~>%s:0:%d valign=bottom}", NH3Dlg::Assets::TOWN_SMALL, townId * 2 + 2) +
+                          " " + tempStr;
+            }
+
+            stringResult += DLG_HORIZONTAL_GAP + tempStr;
+        }
+    }
+    else if (info.type == eObject::CREATURE_GENERATOR4)
+
+    {
+        const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
+
+        tempStr = h3_NullString;
+        for (size_t i = 0; i < 4; i++)
+        {
+            const int dwellingCreatureType = DwordAt(dwellings4Ptr + (i << 2) + info.subtype * 16);
+
+            if (dwellingCreatureType != eCreature::UNDEFINED)
+            {
+                const auto &info = P_CreatureInformation[dwellingCreatureType];
+
+                tempStr += H3String::Format("%d {~>%s:0:%d valign=bottom}", info.grow, NH3Dlg::Assets::CREATURE_SMALL,
+                                            dwellingCreatureType + 2);
+            }
+        }
+        if (!tempStr.Empty())
+        {
+            const int dwellingCreatureType = DwordAt(dwellings4Ptr + info.subtype * 16);
+
+            const int townId = P_CreatureInformation[dwellingCreatureType].town;
+            if (townId != eTown::NEUTRAL)
+            {
+                tempStr = H3String::Format("{~>%s:0:%d valign=bottom}", NH3Dlg::Assets::TOWN_SMALL, townId * 2 + 2) +
+                          " " + tempStr;
+            }
+
+            stringResult += DLG_HORIZONTAL_GAP + tempStr;
+        }
     }
 
     auto &extenders = instance->objectExtenders;

@@ -10,7 +10,7 @@ namespace cbanks
 class CreatureBanksExtender : public extender::ObjectExtender
 {
   public:
-    static int GetCreatureBankType(const int type, const int subtype);
+    static int GetCreatureBankIndex(const int type, const int subtype);
 };
 } // namespace cbanks
 /**
@@ -55,9 +55,9 @@ void SortRmgObjects(std::vector<RMGDlgObject> &objVector, const eSorting sorting
 
     std::sort(objVector.begin(), objVector.end(), [&](const RMGDlgObject &first, const RMGDlgObject &second) -> bool {
         const int cbIdFirst =
-            cbanks::CreatureBanksExtender::GetCreatureBankType(first.objectInfo.type, first.objectInfo.subtype);
+            cbanks::CreatureBanksExtender::GetCreatureBankIndex(first.objectInfo.type, first.objectInfo.subtype);
         const int cbIdSecond =
-            cbanks::CreatureBanksExtender::GetCreatureBankType(second.objectInfo.type, second.objectInfo.subtype);
+            cbanks::CreatureBanksExtender::GetCreatureBankIndex(second.objectInfo.type, second.objectInfo.subtype);
 
         H3String str, str2;
         switch (sortingType)
@@ -1073,7 +1073,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *pa
         const bool result = extender::ObjectExtenderManager::ShowObjectExtendedInfo(
             rmgObject->objectInfo, rmgObject->graphicalAttributes->attributes, str);
 
-        if (!result)
+     //   if (!result)
         {
             constexpr int additionalHeight = 100;
             IntAt(0x04F65D4 + 2) += additionalHeight;
@@ -1098,7 +1098,7 @@ BOOL RMG_SettingsDlg::BanksPage::ShowObjectExtendedInfo(const ObjectsPanel *pane
     BOOL resultA = true;
     const auto rmgObject = panel->rmgObject;
     const int cbID =
-        cbanks::CreatureBanksExtender::GetCreatureBankType(rmgObject->objectInfo.type, rmgObject->objectInfo.subtype);
+        cbanks::CreatureBanksExtender::GetCreatureBankIndex(rmgObject->objectInfo.type, rmgObject->objectInfo.subtype);
 
     if (cbID != eObject::NO_OBJ)
     {

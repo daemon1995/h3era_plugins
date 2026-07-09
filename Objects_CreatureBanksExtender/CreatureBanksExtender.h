@@ -205,8 +205,8 @@ class CreatureBanksExtender : public IGamePatch
     UINT Size() const noexcept;
 
   public:
-    static int GetCreatureBankType(const int objType, const int objSubtype) noexcept;
-    static int GetCreatureBankType(const H3MapItem *mapItem) noexcept;
+    static int GetCreatureBankIndex(const int objType, const int objSubtype) noexcept;
+    static int GetCreatureBankIndex(const H3MapItem *mapItem) noexcept;
     static eObject GetCreatureBankObjectType(const int cbId) noexcept;
 
     static CreatureBanksExtender &Get();
