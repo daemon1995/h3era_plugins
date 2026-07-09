@@ -140,15 +140,6 @@ void ObjectExtenderManager::CreatePatches()
 
         skipMapMessageByHdMod = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
 
-        // patch hota object types unable to be entered
-        auto *settingsTable = H3GlobalObjectSettings::Get();
-        for (size_t i = HOTA_PICKUPABLE_OBJECT_TYPE; i <= HOTA_UNREACHABLE_OBJECT_TYPE; i++)
-        {
-            settingsTable[i].cannotEnter = true;
-            settingsTable[i].exitTop = true;
-            settingsTable[i].canBeRemoved = true;
-        }
-
         //	Era::RegisterHandler(OnWogObjectHint, "OnWogObjectHint");
     }
 }
@@ -356,6 +347,13 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
     std::vector<sound::SoundManager::ObjectSound> addedWavNames;
     maximumObjectSubtypes[eObject::SPELL_SCROLL] = 7;
 
+    // patch hota object types unable to be entered
+    auto *settingsTable = H3GlobalObjectSettings::Get();
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].cannotEnter = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].exitTop = true;
+    settingsTable[HOTA_PICKUPABLE_OBJECT_TYPE].canBeRemoved = true;
+    settingsTable[HOTA_UNREACHABLE_OBJECT_TYPE].cannotEnter = true;
+
     auto *objList = setup->objectLists;
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     { // iterate all the objects types entries
@@ -515,7 +513,7 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
 
     H3String terrainStr;
     bool hasTerrain = false;
-    const UINT8 terrainsNum = ValueAt<UINT8>(0x5168B8 + 2);
+    const UINT8 terrainsNum = ValueAt<UINT8>(0x5168B8 + 2) & 0xFF;
     for (size_t i = 0; i < terrainsNum; i++)
     {
         if (attributes->maskTerrain.bitfield.GetState(i))
