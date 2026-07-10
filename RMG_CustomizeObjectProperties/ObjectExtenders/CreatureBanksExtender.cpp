@@ -22,7 +22,7 @@ static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageTy
 
     if (army->HasCreatures())
     {
-        H3String hexPach;
+        LPCSTR hexPach = nullptr;
         switch (messageType)
         {
         case 2: // yes/no
@@ -34,10 +34,8 @@ static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageTy
         default:
             break;
         }
-        if (hexPach.Empty())
-        {
+        if (!hexPach)
             return false;
-        }
 
         H3Army armyCopy;
         libc::memcpy(&armyCopy, army, sizeof(armyCopy));
@@ -49,15 +47,15 @@ static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageTy
             int creature = eCreature::UNDEFINED;
             LPCSTR oldNamePtr = 0;
             H3String nameWithNumber;
-        } creatureNames[7];
+        } creatureNames[limits::ARMY_SLOTS];
 
-        for (size_t i = 0; i < 7; ++i)
+        for (size_t i = 0; i < limits::ARMY_SLOTS; ++i)
         {
             const int monType = armyCopy.type[i];
             if (monType != eCreature::UNDEFINED)
             {
                 int creatureCount = armyCopy.count[i];
-                for (size_t j = i + 1; j < 7; ++j)
+                for (size_t j = i + 1; j < limits::ARMY_SLOTS; ++j)
                 {
                     if (armyCopy.type[j] == monType)
                     {
@@ -83,13 +81,13 @@ static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageTy
         }
 
         // set proper multiple pic dlg type
-        auto patch = _PI->WriteHexPatch(0x04F731D, hexPach.String());
+        auto patch = _PI->WriteHexPatch(0x04F731D, hexPach);
         // display actual dialog with correct creature names and multiple pics
         FASTCALL_5(void, 0x004F7D20, message, &armyPictures, x, y, 0);
         patch->Destroy();
 
         // restore creature names
-        for (size_t i = 0; i < 7; ++i)
+        for (size_t i = 0; i < limits::ARMY_SLOTS; ++i)
         {
             const int monType = creatureNames[i].creature;
             if (monType != eCreature::UNDEFINED)
@@ -425,8 +423,7 @@ H3String *__cdecl CreatureBanksExtender::CrBank_AwardMessageFormatReadingFromTxt
     }
 
     H3String finalMessage;
-    if (EraJS::readInt("RMG.settings.creatureBanks.displayName") &&
-        mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
+    if (mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
     {
         finalMessage = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
     }
@@ -648,8 +645,7 @@ H3String *__stdcall CrBank_DisplayPlunderedMessage(HiHook *h, H3String *text, H3
     if (readSuccess)
     {
         H3String finalMessage;
-        if (EraJS::readInt("RMG.settings.creatureBanks.displayName") &&
-            mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
+        if (mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
         {
             finalMessage = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
             finalMessage.Append("\n\n");
@@ -681,26 +677,24 @@ _LHF_(CreatureBanksExtender::CrBank_DisplayPreCombatMessage)
 
 _LHF_(CreatureBanksExtender::SpecialCrBank_DisplayPreCombatMessage)
 {
-    if (H3MapItem *mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC))
+    H3MapItem *mapItem = *reinterpret_cast<H3MapItem **>(c->ebp + 0xC);
+
+    if (mapItem->creatureBank.taken)
     {
-        if (mapItem->creatureBank.taken)
-        {
-            c->return_address = 0x04AC1E5;
-        }
-        else
-        {
-            currentCreatureBank.mapItem = mapItem;
-
-            auto creatureBank = &P_Game->creatureBanks[mapItem->creatureBank.id];
-            LPCSTR originalText = *reinterpret_cast<LPCSTR *>(c->ebp + 0x10);
-            ShowMultiplePicsArmyMessage(originalText, 2, -1, -1, &creatureBank->guardians);
-
-            c->return_address = 0x04AC1BE;
-        }
-
-        return NO_EXEC_DEFAULT;
+        c->return_address = 0x04AC1E5;
     }
-    return EXEC_DEFAULT;
+    else
+    {
+        currentCreatureBank.mapItem = mapItem;
+
+        auto creatureBank = &P_Game->creatureBanks[mapItem->creatureBank.id];
+        LPCSTR originalText = *reinterpret_cast<LPCSTR *>(c->ebp + 0x10);
+        ShowMultiplePicsArmyMessage(originalText, 2, -1, -1, &creatureBank->guardians);
+
+        c->return_address = 0x04AC1BE;
+    }
+
+    return NO_EXEC_DEFAULT;
 }
 
 signed int __stdcall CreatureBanksExtender::CrBank_CombatAndRewardProc(HiHook *h, H3AdventureManager *advMan,
@@ -772,8 +766,7 @@ void __stdcall CreatureBanksExtender::CrBank_AskForVisitMessage(HiHook *h, char 
     }
 
     H3String finalMessage;
-    if (EraJS::readInt("RMG.settings.creatureBanks.displayName") &&
-        mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
+    if (mapItem->objectType == eObject::CREATURE_BANK) // other CB has name by default
     {
         finalMessage = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
     }
@@ -1004,8 +997,9 @@ void CreatureBanksExtender::CreatePatches()
             }
             // Creature bank description for getting text
             {
-                _pi->WriteDword(0x0413E23 + 1, 0x06603B0);     // ["\n\0" -> "\n\n\0" for getCrBank text]
-                _pi->WriteHexPatch(0x040ABDE, "EB0C90909090"); // remove extra space in the guard description start
+                _pi->WriteDword(0x0413E23 + 1, 0x06603B0); // ["\n\0" -> "\n\n\0" for getCrBank text RMC]
+                // remove extra space in the guard description start -- fixed by txt editing
+                // _pi->WriteHexPatch(0x040ABDE, "EB0C90909090");
             }
         }
 
