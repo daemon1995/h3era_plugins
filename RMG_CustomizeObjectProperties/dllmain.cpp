@@ -1,36 +1,14 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
-#include "pch.h"
-
+// #include "pch.h"
+#include "ExtendersInitializer.hpp"
 // declare dlg class here to avoid circular dependencies, also because it's only used in this file
-namespace rmgdlg
-{
-class RMG_SettingsDlg : public H3Dlg
-{
-  public:
-    static void SetPatches(PatcherInstance *_pi);
-};
-} // namespace rmgdlg
-
-#define OBJECT_EXTENDER_DECLATOR(className, nameSpaceName)                                                             \
-    namespace nameSpaceName                                                                                            \
-    {                                                                                                                  \
-    class className : public extender::ObjectExtender                                                                  \
-    {                                                                                                                  \
-      public:                                                                                                          \
-        static className &className::Get();                                                                            \
-    };                                                                                                                 \
-    }
-#define OBJECT_EXTENDER_GETTER(className, nameSpaceName) &nameSpaceName::className::Get()
-
-// #include "framework.h"
-using namespace h3;
+#include "RMG_SettingsDlg.h"
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "1.5.5";
+constexpr const char *PLUGIN_VERSION = "1.6.0";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
-// const char* PROJECT_NAME = "$(ProjectName)";
 constexpr const char *PLUGIN_DATA = __DATE__;
 } // namespace dllText
 void __stdcall OnReportVersion(Era::TEvent *e)
@@ -85,41 +63,10 @@ PatcherInstance *_PI = nullptr;
 16. fix Dlg Memory leaks with new ERA memory check tools - Done
 */
 
-OBJECT_EXTENDER_DECLATOR(ColosseumOfTheMagiExtender, colosseumOfTheMagi)
-OBJECT_EXTENDER_DECLATOR(CreatureBanksExtender, cbanks)
-OBJECT_EXTENDER_DECLATOR(GazeboExtender, gazebo)
-OBJECT_EXTENDER_DECLATOR(ShrinesExtender, shrines)
-OBJECT_EXTENDER_DECLATOR(SpellMarketExtender, spellMarket)
-OBJECT_EXTENDER_DECLATOR(UniversityExtender, university)
-OBJECT_EXTENDER_DECLATOR(WarehousesExtender, warehouses)
-OBJECT_EXTENDER_DECLATOR(WateringPlaceExtender, wateringPlace)
-OBJECT_EXTENDER_DECLATOR(WoGObjectsExtender, wog)
-
 _LHF_(CrBanksTxt_BeforeLoad)
 {
     editor::RMGObjectsEditor::Get();
-    if (auto mgr = extender::ObjectExtenderManager::Get())
-    {
-        extender::ObjectExtender *extendersList[] = {
-            OBJECT_EXTENDER_GETTER(ColosseumOfTheMagiExtender, colosseumOfTheMagi),
-            OBJECT_EXTENDER_GETTER(CreatureBanksExtender, cbanks), OBJECT_EXTENDER_GETTER(GazeboExtender, gazebo),
-            OBJECT_EXTENDER_GETTER(ShrinesExtender, shrines), OBJECT_EXTENDER_GETTER(SpellMarketExtender, spellMarket),
-            OBJECT_EXTENDER_GETTER(UniversityExtender, university),
-            OBJECT_EXTENDER_GETTER(WarehousesExtender, warehouses),
-            // OBJECT_EXTENDER_GETTER(WateringPlaceExtender, wateringPlace),
-            OBJECT_EXTENDER_GETTER(WoGObjectsExtender, wog)};
-
-        constexpr size_t extendersCount =
-            std::size(extendersList); // sizeof(extendersList) / sizeof(extender::ObjectExtender*);
-
-        static_assert(extendersCount == 8, "Unexpected number of extenders");
-        //! Get the extenders and initialize
-        for (size_t i = 0; i < extendersCount; i++)
-        {
-            mgr->AddExtender(extendersList[i]);
-        }
-    }
-
+    ExtendersInitializer::InitObjectExtenders();
     //! Set patches for the RMG_SettingsDlg
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
 
