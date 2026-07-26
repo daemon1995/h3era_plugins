@@ -7,23 +7,24 @@ INT8 UniversityExtender::bannedSkillsCopy[limits::SECONDARY_SKILLS];
 UniversityExtender::UniversityExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.UniversityExtender.daemon_n"))
 {
-}
-
-UniversityExtender::~UniversityExtender()
-{
-}
-H3RmgObjectGenerator *UniversityExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
-{
-    if (objectInfo.type == eObject::UNIVERSITY && objectInfo.subtype) // ignore existing university with subtype 0
-    {
-        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
-    }
-    return nullptr;
+    objectType = eObject::UNIVERSITY;
 }
 
 void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 {
-    const int length = maxSubtypes[eObject::UNIVERSITY] + 1;
+    // don't do anything if there are no added subtypes for this object type
+    const int addedSubtypes = maxSubtypes[eObject::UNIVERSITY];
+    if (addedSubtypes == 0)
+    {
+        objectType = eObject::NO_OBJ;
+        return;
+    }
+
+    const int length = addedSubtypes + 1;
+
+    objectSubtypes.Resize(addedSubtypes);
+    for (size_t i = 0; i < addedSubtypes; i++)
+        objectSubtypes[i] = i + 1;
 
     universitiesData.resize(length);
 
@@ -94,7 +95,7 @@ BOOL UniversityExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero 
     if (mapItem->objectType == eObject::UNIVERSITY && mapItem->objectSubtype > 0)
     {
 
-        H3String objName = RMGObjectInfo::GetObjectName(mapItem);
+        H3String objName = extender::GetObjectName(mapItem);
 
         if (const H3Hero *hero = P_ActivePlayer->GetActiveHero())
         {
@@ -112,50 +113,34 @@ BOOL UniversityExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero 
     return 0;
 }
 
-BOOL UniversityExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
+BOOL UniversityExtender::RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes &attributes,
                                                      H3String &defaultHint) noexcept
 {
-    if (info.type == eObject::UNIVERSITY)
+
+    H3String additionalHint =
+        EraJS::read(H3String::Format("RMG.objectGeneration.%d.text.rmg", attributes.type).String());
+
+    volatile int drawnSkills = 0;
+    if (attributes.subtype < universitiesData.size())
     {
-
-        H3String additionalHint = EraJS::read(H3String::Format("RMG.objectGeneration.%d.text.rmg", info.type).String());
-
-        volatile int drawnSkills = 0;
-        if (info.subtype < universitiesData.size())
+        for (size_t i = 0; i < limits::SECONDARY_SKILLS; i++)
         {
-            for (size_t i = 0; i < limits::SECONDARY_SKILLS; i++)
+            if (universitiesData[attributes.subtype].allowedSkills & (1 << i))
             {
-                if (universitiesData[info.subtype].allowedSkills & (1 << i))
+                if (drawnSkills++ % 7 == 0)
                 {
-                    if (drawnSkills++ % 7 == 0)
-                    {
-                        additionalHint.Append("\n\n");
-                    }
-                    libc::sprintf(h3_TextBuffer, "{~>SECSK32.def:0:%d}", i * 3 + 3);
-                    additionalHint.Append(h3_TextBuffer);
+                    additionalHint.Append("\n\n");
                 }
+                libc::sprintf(h3_TextBuffer, "{~>SECSK32.def:0:%d}", i * 3 + 3);
+                additionalHint.Append(h3_TextBuffer);
             }
         }
-        if (additionalHint.Empty())
-            return true;
-
-        defaultHint += "\n" + additionalHint;
-        //// increase message box size
-        // if (drawnSkills > 7)
-        //{
-        //     IntAt(0x04F65D4 + 2) += 100;
-        //     IntAt(0x04F662F + 1) += 100;
-        // }
-        // H3Messagebox::RMB(additionalHint.String());
-        // if (drawnSkills > 7)
-        //{
-        //     IntAt(0x04F65D4 + 2) -= 100;
-        //     IntAt(0x04F662F + 1) -= 100;
-        // }
-
-        return true;
     }
-    return 0;
+    if (additionalHint.Empty())
+        return true;
+
+    defaultHint += "\n" + additionalHint;
+    return true;
 }
 
 void __stdcall UniversityExtender::Game_SetupUniversity(HiHook *h, H3Main *game, const H3MapItem *university)
@@ -210,7 +195,7 @@ _LHF_(UniversityDlg_SetWidgetText)
     if (objectSubtype != -1)
     {
 
-        c->edx = int(RMGObjectInfo::GetObjectName(eObject::UNIVERSITY, objectSubtype));
+        c->edx = int(extender::GetObjectName(eObject::UNIVERSITY, objectSubtype));
         objectSubtype = -1;
     }
 
@@ -223,7 +208,7 @@ _LHF_(University_AtGetName)
     {
         if (mapItem->objectType == eObject::UNIVERSITY)
         {
-            LPCSTR name = RMGObjectInfo::GetObjectName(mapItem);
+            LPCSTR name = extender::GetObjectName(mapItem);
             libc::sprintf(h3_TextBuffer, name);
         }
     }

@@ -1,55 +1,50 @@
 #pragma once
-#include "../pch.h"
+#include "framework.h"
 
-namespace warehouses
+namespace colosseumOfTheMagi
 {
-constexpr int WAREHOUSE_OBJECT_TYPE = eObject::BLANK4;
+constexpr int COLOSSEUM_OF_THE_MAGI_OBJECT_SUBTYPE = 2;
 
-struct H3MapItemWarehouse
+struct H3MapItemColosseumOfTheMagi
 {
+    static int colosseumOfTheMagiCounter;
 
-    unsigned resourceType : 5;
-    /** @brief [05] which players have come by*/
-    unsigned visited : 8;
-    /** @brief [13]*/
-    unsigned resourceAmount : 10;
-    unsigned _u1 : 9;
+    static constexpr LPCSTR ErmVariableFormat = "colosseumOfTheMagi_%d_%d";
 
   public:
-    void Reset();
-    static inline H3MapItemWarehouse *GetWarehouse(H3MapItem *mapItem) noexcept;
+    INT32 id;
+
+  public:
+    static inline BOOL IsVisitedByHero(const H3MapItemColosseumOfTheMagi *colosseumOfTheMagi,
+                                       const H3Hero *hero) noexcept;
 };
 
-class WarehousesExtender : public extender::ObjectExtender
+class ColosseumOfTheMagiExtender : public extender::ObjectExtender
 {
-    static WarehousesExtender *instance;
-
-    WarehousesExtender();
-
-    virtual ~WarehousesExtender();
+    static ColosseumOfTheMagiExtender *instance;
+    ColosseumOfTheMagiExtender();
+    virtual ~ColosseumOfTheMagiExtender() {};
 
   private:
     virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
+
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
-    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept override final;
-    virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept override final;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount, int subtypeCount) const noexcept override final;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiMapItemWeight, int *moveDistance,
                                     const H3Position pos) const noexcept override final;
 
-    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
-
   private:
     //	static _LHF_(Game__AtShrineOfMagicIncantationSettingSpell);
     //	static _LHF_(Shrine__AtGetName);
 
   public:
-    static WarehousesExtender &Get();
+    static ColosseumOfTheMagiExtender &Get();
 };
 
-} // namespace warehouses
+} // namespace colosseumOfTheMagi

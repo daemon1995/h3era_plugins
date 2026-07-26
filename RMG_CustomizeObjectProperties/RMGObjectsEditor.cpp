@@ -5,14 +5,6 @@
 
 #include "RMG_SettingsDlg.h"
 
-namespace cbanks
-{
-class CreatureBanksExtender : public extender::ObjectExtender
-{
-  public:
-    static int GetCreatureBankIndex(const int type, const int subtype);
-};
-} // namespace cbanks
 namespace wog
 {
 class WoGObjectsExtender : public extender::ObjectExtender
@@ -27,22 +19,6 @@ class WoGObjectsExtender : public extender::ObjectExtender
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
 char RMGObjectInfo::localBuffer[512];
-
-namespace exports
-{
-// DllExport LPCSTR GetObjectName(const H3MapItem *mapItem)
-//{
-//     if (mapItem)
-//     {
-//         return RMGObjectInfo::GetObjectName(mapItem->objectType, mapItem->objectSubtype);
-//     }
-//     return h3_NullString;
-// }
-DllExport LPCSTR GetObjectName(const INT32 type, const INT32 subtype)
-{
-    return RMGObjectInfo::GetObjectName(type, subtype);
-}
-} // namespace exports
 
 namespace editor
 {
@@ -65,10 +41,6 @@ void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
     th.detach();
 }
 
-int RMGObjectsEditor::MaxMapTypeLimit(const UINT objType) const noexcept
-{
-    return objType < H3_MAX_OBJECTS ? limitsInfo.mapTypesLimit[objType] : 0;
-}
 inline BOOL ObjectMayBeGenerated(H3RmgObjectGenerator *p_ObjGen)
 {
     return wog::WoGObjectsExtender::IsWoGObject(p_ObjGen) ? wog::WoGObjectsExtender::WoGObjectHasOptionEnabled(p_ObjGen)
@@ -179,7 +151,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
     {
         // and add objects by properly allocated memory m_size and types (this case is CB)
 
-        extender::ObjectExtenderManager::Get()->AddObjectsToObjectGenList(rmgObjectsList);
+        extendersManager::ObjectExtenderManager::Get()->AddObjectsToObjectGenList(rmgObjectsList);
 
         // add scrolls level 6
         if (H3RmgObjectGenerator *objScrollGen = H3ObjectAllocator<_RMGObjGenScroll_>().allocate(1))
@@ -210,9 +182,9 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
         }
         else
         {
-            // if map generation we affect the reall array with new data
+            // if map generation we affect the real array with new data
 
-            // create vector with assumed to create objects ;
+            // create vector with assumed to create objects;
             editor.editedRMGObjectGenerators.RemoveAll();
 
             // init variables;
@@ -704,6 +676,8 @@ BOOL RMGObjectInfo::Clamp() noexcept
 {
     BOOL dataChanged = false;
     // return dataChanged;
+    if (type < 0 || subtype < 0)
+        return false;
 
     const int globalMapLimit = editor::RMGObjectsEditor::Get().MaxMapTypeLimit(type);
 
@@ -835,7 +809,7 @@ LPCSTR RMGObjectInfo::GetRmgSubtypeDescription() const noexcept
 {
     return EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.rmg", type, subtype).String());
 }
-RMGObjectInfo::RMGObjectInfo(const INT32 type, const INT32 subtype) : type(type), subtype(subtype)
+RMGObjectInfo::RMGObjectInfo(const INT32 type, const INT32 subtype) : RMGObjectProperties(type, subtype)
 {
     enabled = true;
 }
@@ -1047,7 +1021,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
 {
     LPCSTR result = h3_NullString;
 
-    const int creatureBankId = cbanks::CreatureBanksExtender::GetCreatureBankIndex(type, subtype);
+    const int creatureBankId = GetCreatureBankIndex(type, subtype);
     if (creatureBankId >= 0)
     {
         return H3CreatureBankSetup::Get()[creatureBankId].name.String();

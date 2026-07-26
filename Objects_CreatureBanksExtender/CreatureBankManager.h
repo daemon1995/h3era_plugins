@@ -1,6 +1,8 @@
 #pragma once
-#include "..\pch.h"
+#include "framework.h"
 
+#include <array>
+#include <unordered_set>
 constexpr UINT STATES_AMOUNT = 4;
 constexpr UINT GUARDES_AMOUNT = 5;
 constexpr UINT MITHRIL_ID = 7;

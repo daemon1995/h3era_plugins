@@ -2,48 +2,32 @@
 
 namespace wog
 {
-std::array<int, extender::limits::COMMON> WoGObjectsExtender::WoGObjectOptionsIds;
+std::array<int, extendersManager::limits::COMMON> WoGObjectsExtender::WoGObjectOptionsIds;
+WoGObjectsExtender *WoGObjectsExtender::instance = nullptr;
 
 WoGObjectsExtender::WoGObjectsExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.WoGObjectsExternder.daemon_n"))
 {
-
     CreatePatches();
-}
-
-WoGObjectsExtender::~WoGObjectsExtender()
-{
+    objectType = extender::WOG_OBJECT_TYPE;
 }
 
 void WoGObjectsExtender::CreatePatches()
 {
     if (!m_isInited)
     {
-
-        //_pi->WriteLoHook(0x4C1974, Game__AtShrineOfMagicIncantationSettingSpell);
-        //_pi->WriteLoHook(0x40D858, Shrine__AtGetName);
-        //_pi->WriteLoHook(0x40DA24, Shrine__AtGetHint);
-
         m_isInited = true;
     }
-}
-
-H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
-{
-
-    if (objectInfo.type == eObject::PYRAMID && objectInfo.subtype > 0)
-    {
-        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
-    }
-    return nullptr;
 }
 
 void WoGObjectsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) noexcept
 {
     const int maxSubtype = maxSubtypes[WOG_OBJECT_TYPE];
+    objectSubtypes.Resize(maxSubtype);
     for (size_t i = 1; i <= maxSubtype; i++)
     {
         WoGObjectOptionsIds[i] = EraJS::readInt(H3String::Format(jsonKeyFormat, WOG_OBJECT_TYPE, i).String());
+        objectSubtypes[i - 1] = i;
     }
 }
 
@@ -61,8 +45,6 @@ BOOL WoGObjectsExtender::WoGObjectHasOptionEnabled(const H3RmgObjectGenerator *p
 {
     return DwordAt(WOG_OPTIONS_ARRAY + WoGObjectOptionsIds[p_ObjGen->subtype] * 4);
 }
-
-WoGObjectsExtender *WoGObjectsExtender::instance = nullptr;
 
 WoGObjectsExtender &WoGObjectsExtender::Get()
 {

@@ -1,6 +1,6 @@
 // dllmain.cpp : Определяет точку входа для приложения DLL.
 #define _H3API_PLUGINS_
-#include "framework.h"
+#include "CreatureBanksExtender.h"
 
 using namespace h3;
 
@@ -8,9 +8,9 @@ Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 namespace dllText
 {
-    #define PLUGIN_AUTHOR "daemon_n"
-    constexpr LPCSTR instanceName = "EraPlugin." PROJECT_NAME "." PLUGIN_AUTHOR;
-}
+#define PLUGIN_AUTHOR "daemon_n"
+constexpr LPCSTR instanceName = "EraPlugin." PROJECT_NAME "." PLUGIN_AUTHOR;
+} // namespace dllText
 
 _LHF_(HooksInit)
 {
@@ -30,6 +30,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             Era::ConnectEra(hModule, dllText::instanceName);
             _PI->WriteLoHook(0x4EEAF2, HooksInit);
+            cbanks::CreatureBanksExtender::Get();
         }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:

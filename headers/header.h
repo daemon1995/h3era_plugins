@@ -56,8 +56,11 @@
 #endif // ERA_MOD_LIST
 
 #ifdef OBJECTS_EXTENDER_API
-#include "EraPluginsAPI/ObjectExtenderDispatchAPI.h"
+#include "EraPluginsAPI/ObjectExtenderAPI.hpp"
 #endif // OBJECTS_EXTENDER_API
+#ifdef OBJECTS_EXTENDER_DISPATCH_API
+#include "EraPluginsAPI/ObjectExtenderDispatchAPI.hpp"
+#endif // OBJECTS_EXTENDER_DISPATCH_API
 
 #ifdef NLOHMAN_JSON
 #include "json.hpp"

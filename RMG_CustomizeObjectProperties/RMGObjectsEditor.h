@@ -41,30 +41,23 @@ struct _RMGObjGenPandoraExp_ : public H3RmgObjectGenerator
 {
     int exp;
 };
-struct RMGObjectInfo
+struct RMGObjectInfo : public extender::RMGObjectProperties
 {
     // used for thread safety in when read from ini/json
     static char localBuffer[512];
 
-    constexpr static int DATA_SIZE = 5;
-    constexpr static int UNDEFINED = -1;
-
-    //	zoneType 0..3 human-computer-treasure-junction*/
-
-    INT type = eObject::NO_OBJ;
-    INT subtype = eObject::NO_OBJ;
-    union {
-        struct
-        {
-            BOOL enabled;
-            INT32 mapLimit;
-            INT32 zoneLimit;
-            INT32 value;
-            INT32 density;
-        };
-        INT32 data[DATA_SIZE] = {};
-    };
-    // BOOL fromTxt = false;
+    // union {
+    //     struct
+    //     {
+    //         BOOL enabled;
+    //         INT32 mapLimit;
+    //         INT32 zoneLimit;
+    //         INT32 value;
+    //         INT32 density;
+    //     };
+    //     INT32 data[DATA_SIZE] = {};
+    // };
+    //  BOOL fromTxt = false;
 
   public:
     static constexpr LPCSTR PROPERTY_NAMES[] = {"enabled", "map", "zone", "value", "density"};
@@ -89,7 +82,7 @@ struct RMGObjectInfo
     BOOL Clamp() noexcept;
     void RestoreDefault() noexcept;
     void SetRandom() noexcept;
-    void SetRandom(const RMGTemplateLimits&templateInfo) noexcept;
+    void SetRandom(const RMGTemplateLimits &templateInfo) noexcept;
     void MakeReal() const noexcept;
     inline LPCSTR GetRmgTypeDescription() const noexcept;
     inline LPCSTR GetRmgSubtypeDescription() const noexcept;
@@ -254,11 +247,12 @@ class RMGObjectsEditor : public IGamePatch
     static void __stdcall RMG__CreateObjectGenerators(HiHook *h, H3RmgRandomMapGenerator *rmgStruct);
 
   public:
-    const H3Vector<H3RmgObjectGenerator *> *GetObjectGeneratorsList() const noexcept;
-
     // Get vector of the information for all subtypes of that type
-
-    int MaxMapTypeLimit(const UINT objType) const noexcept;
+    const H3Vector<H3RmgObjectGenerator *> *GetObjectGeneratorsList() const noexcept;
+    inline int MaxMapTypeLimit(const UINT objType) const noexcept
+    {
+        return limitsInfo.mapTypesLimit[objType];
+    }
 
   public:
     static void Init(const INT16 *maxSubtypes);

@@ -60,8 +60,8 @@ void AdditionalProperties::LoadCommonProperties() noexcept
         }
         */
 
-        const size_t maxSubtype =
-            objType == eObject::CREATURE_GENERATOR1 ? extender::limits::EXTENDED : extender::limits::COMMON;
+        const size_t maxSubtype = objType == eObject::CREATURE_GENERATOR1 ? extendersManager ::limits::EXTENDED
+                                                                          : extendersManager ::limits::COMMON;
         for (size_t objSubtype = 0; objSubtype < maxSubtype; objSubtype++)
         {
             size_t propertyIdCounter = 0;
@@ -145,10 +145,11 @@ void AdditionalProperties::LoadAdditionalPropertiesFromMods() noexcept
 
 void AdditionalProperties::DebugAddedProperties() const noexcept
 {
-    const char *fileName = "Runtime/Debug/ObjectsListMap.ini";
+    const char *fileName = "Runtime/Debug/AdditionalProperties.ini";
+    Era::EmptyIniCache(fileName);
     for (auto &key : propertiesMap)
     {
-        Era::WriteStrToIni(key.first.c_str(), key.second.c_str(), "MAP", fileName);
+        Era::WriteStrToIni(key.first.c_str(), key.second.c_str(), "AdditionalPropertiesMap", fileName);
     }
     Era::SaveIni(fileName);
 }
@@ -180,8 +181,6 @@ size_t AdditionalProperties::InsertPropertiesIntoObjectsList(H3TextFile *_object
         // iterate each added property
         for (auto &prop : propertiesMap)
         {
-            // Era::WriteStrToIni(prop.first.c_str(), prop.second.c_str(), "objectsExtender",
-            //                    "runtime/tum/properties.ini");
 
             // if possible to insert
             if (objectsSet.insert(prop.second.c_str()).second)
@@ -193,8 +192,29 @@ size_t AdditionalProperties::InsertPropertiesIntoObjectsList(H3TextFile *_object
                 addedProperties++;
             }
         }
-        // Era::SaveIni("runtime/tum/properties.ini");
-        // Era::SaveIni("runtime/tum/properties.ini");
+        // static int counter = 0;
+        // char *fileName = "runtime/Debug/list1.ini";
+        // if (!counter)
+        //{
+
+        //    counter++;
+        //}
+        // else
+        //{
+        //    fileName = "runtime/Debug/list2.ini";
+        //}
+        //{
+        //    libc::sprintf(h3_TextBuffer, "Added %d new properties into objects.txt", _objectsTxt->Size());
+        //    MessageBoxA(NULL, h3_TextBuffer, "Debug", MB_OK);
+        //}
+
+        // Era::WriteStrToIni("0", _objectsTxt->GetName(), "objectsExtender", fileName);
+        // for (size_t i = 1; i < _objectsTxt->Size(); i++)
+        //{
+        //     Era::WriteStrToIni(Era::IntToStr(i).c_str(), _objectsTxt->GetText(i), "objectsExtender", fileName);
+        // }
+
+        // Era::SaveIni(fileName);
     }
     return addedProperties;
 }

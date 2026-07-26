@@ -5,9 +5,10 @@
 #include <vector>
 
 #include "AdditionalProperties.h"
-#include "ObjectExtender.h"
+#include "RMGObjectsEditor.h"
 
-namespace extender
+using namespace extender;
+namespace extendersManager
 {
 namespace limits
 {
@@ -38,14 +39,13 @@ struct RMGObjectSetable
 //     RMG_DLG_SHOW_CUSTOM_OBJECT_HINT,
 //     METHODS_COUNT
 // };
+// template <class T> inline static T &GetFromMapItem(H3MapItem *mapItem)
+//{
+//    return static_cast<T>(mapItem->setup);
+//}
 
-class ObjectExtenderManager : public IGamePatch
+struct ObjectExtenderRegistrator
 {
-
-  public:
-    static constexpr LPCSTR DLG_HORIZONTAL_GAP = "\n\n\n";
-
-  protected:
     struct ErrorText
     {
         static constexpr LPCSTR TITLE_ERROR = "Error";
@@ -57,29 +57,95 @@ class ObjectExtenderManager : public IGamePatch
             PROJECT_NAME ": Attempt to register an already registered extender.";
     };
 
-    BOOL skipMapMessageByHdMod = false;
     BOOL allowRegistration = true;
+    std::unordered_set<ObjectExtender *> registeredExtenders;
+
+  public:
+    BOOL AddExtender(ObjectExtender *ext);
+
+    static ObjectExtenderRegistrator &Get()
+    {
+        static ObjectExtenderRegistrator instance;
+        return instance;
+    }
+};
+
+struct ObjectCounter
+{
+    int types[h3::limits::OBJECTS] = {};
+    int *subtypes[h3::limits::OBJECTS] = {};
+    INT16 *maxSubtypes = nullptr;
+
+  public:
+    ObjectCounter(INT16 *maxSubtypes) : maxSubtypes(maxSubtypes)
+    {
+        for (int i = 0; i < h3::limits::OBJECTS; ++i)
+        {
+            types[i] = 0;
+            if (maxSubtypes[i] > 0)
+            {
+                subtypes[i] = new int[maxSubtypes[i] + 1]();
+            }
+            else
+            {
+                subtypes[i] = nullptr;
+            }
+        }
+    }
+    ~ObjectCounter()
+    {
+        for (int i = 0; i < h3::limits::OBJECTS; ++i)
+        {
+            delete[] subtypes[i];
+        }
+    }
+
+  public:
+    inline size_t Type(const H3MapItem *mapItem) const
+    {
+        return types[mapItem->objectType];
+    }
+    inline size_t Subtype(const H3MapItem *mapItem) const
+    {
+        return subtypes[mapItem->objectType][mapItem->objectSubtype];
+    }
+    void Increment(const H3MapItem *mapItem)
+    {
+        int type = mapItem->objectType;
+        int subtype = mapItem->objectSubtype;
+        if (type >= 0 && type < h3::limits::OBJECTS)
+        {
+            ++types[type];
+            if (subtype >= 0 && subtype <= maxSubtypes[type] && subtypes[type])
+            {
+                ++subtypes[type][subtype];
+            }
+        }
+    }
+};
+
+class ObjectExtenderManager : public IGamePatch
+{
+  public:
+    static constexpr LPCSTR DLG_HORIZONTAL_GAP = "\n\n\n";
+
+  protected:
+    BOOL skipMapMessageByHdMod = false;
     // contains all the extenders for objects addded by this and other plugins
     std::vector<ObjectExtender *> objectExtenders;
     // std::map<DWORD, ObjectExtender *> extendersMap;
-    std::vector<RMGObjectInfo> additionalRmgObjects;
-    INT16 maximumObjectSubtypes[h3::limits::OBJECTS] = {};
+    std::vector<RMGObjectProperties> additionalRmgObjects;
+    INT16 lastObjectSubtypes[h3::limits::OBJECTS] = {};
 
-    ObjectExtender *objectExtendersTypeRelated[h3::limits::OBJECTS]{};
-    ObjectExtender **objectExtendersSubTypeRelated[h3::limits::OBJECTS]{{}};
+    ObjectExtender *typeRelatedExtenders[h3::limits::OBJECTS]{};
+    ObjectExtender **subTypeRelatedExtenders[h3::limits::OBJECTS]{{}};
 
-    std::array<std::vector<ObjectExtender *>, ObjectExtenderMethods::METHODS_COUNT> overridenMethods[232];
+    // std::array<std::vector<ObjectExtender *>, ObjectExtenderMethods::METHODS_COUNT> overridenMethods[232];
 
-    // std::vector< ObjectExtender*> objectExtendersSubTypeRelated[232];
+    // std::vector< ObjectExtender*> subTypeRelatedExtenders[232];
     //  contains all the additional properties to add/replace in objects.txt
     AdditionalProperties additionalProperties;
-    struct ExtenderLookup
-    {
-        ObjectExtender *forAllSubtypes = nullptr;            // если экстендер для всех подтипов
-        std::unordered_map<int, ObjectExtender *> bySubtype; // если экстендеры для отдельных подтипов
-    };
-    std::unordered_map<int, ExtenderLookup> extendersByType;
-    std::unordered_set<ObjectExtender *> registeredExtenders;
+    ObjectCounter *objectCounter = nullptr;
 
   private:
     static ObjectExtenderManager *instance;
@@ -89,85 +155,16 @@ class ObjectExtenderManager : public IGamePatch
     void CreatePatches() override;
 
   private:
-    void InitializeExtendersTypes(const BOOL asArray = false)
+    void InitializeObjectExtenders(const std::unordered_set<ObjectExtender *> &registeredExtenders);
+    void AssignExtendersToObjectSubtypes();
+
+    ObjectExtender *findExtender(const int type, const UINT subtype)
     {
 
-        if (asArray || 1)
-        {
-
-            // for each extender assign it to the type/subtype array
-            for (auto &ext : objectExtenders)
-            {
-
-                const int type = ext->GetObjectType();
-
-                if (type >= 0 && type < h3::limits::OBJECTS)
-                {
-                    const int subtype = ext->GetObjectSubtype();
-
-                    // allocate subtype array if not yet
-                    if (!objectExtendersSubTypeRelated[type])
-                    {
-                        const int maxSubtype = maximumObjectSubtypes[type] + 1;
-                        objectExtendersSubTypeRelated[type] = new ObjectExtender *[maxSubtype]();
-                    }
-
-                    // if subtype is specified, assign to subtype array
-                    if (subtype != eObject::NO_OBJ)
-                    {
-                        objectExtendersSubTypeRelated[type][subtype] = ext;
-                    }
-                    // else assign to type array
-                    else
-                    {
-                        objectExtendersTypeRelated[type] = ext;
-                    }
-                }
-            }
-            // after assigning all extenders, we can fill in the gaps in the subtype arrays
-            for (int type = 0; type < h3::limits::OBJECTS; type++)
-            {
-                // allocate empty extender pointers for subtype related objects w/o extender
-                if (objectExtendersSubTypeRelated[type] == nullptr)
-                {
-                    const int maxSubtype = maximumObjectSubtypes[type] + 1;
-                    objectExtendersSubTypeRelated[type] = new ObjectExtender *[maxSubtype]();
-                }
-
-                // if assigned type extender exists and subtype array allocated
-                else if (objectExtendersTypeRelated[type])
-                {
-                    const int maxSubtype = maximumObjectSubtypes[type] + 1;
-                    // iterate through subtype array and fill in gaps
-                    for (int subtype = 0; subtype < maxSubtype; subtype++)
-                    {
-                        if (!objectExtendersSubTypeRelated[type][subtype])
-                        {
-                            objectExtendersSubTypeRelated[type][subtype] = objectExtendersTypeRelated[type];
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-        }
-    }
-
-    ObjectExtender *findExtender(const int type, const int subtype)
-    {
-        if (auto result = objectExtendersSubTypeRelated[type][subtype])
+        return subtype <= lastObjectSubtypes[type] ? subTypeRelatedExtenders[type][subtype] : nullptr;
+        if (auto result = subTypeRelatedExtenders[type][subtype])
             return result;
-        return objectExtendersTypeRelated[type];
-
-        auto it = extendersByType.find(type);
-        if (it == extendersByType.end())
-            return nullptr;
-        auto &lookup = it->second;
-        auto jt = lookup.bySubtype.find(subtype);
-        if (jt != lookup.bySubtype.end())
-            return jt->second;
-        return lookup.forAllSubtypes;
+        return typeRelatedExtenders[type];
     }
     static ObjectExtender *FindExtender(const int type, const int subtype) noexcept
     {
@@ -191,6 +188,7 @@ class ObjectExtenderManager : public IGamePatch
 
   private:
     // hooks used during the game
+    static void __stdcall Game__SetObjectsInitialParams(HiHook *h, H3Game *game);
     static _LHF_(Game__NewGameObjectIteration);
     static _LHF_(Game__NewWeekObjectIteration);
     static _LHF_(H3AdventureManager__ObjectVisit);
@@ -203,17 +201,16 @@ class ObjectExtenderManager : public IGamePatch
     BOOL AddExtender(ObjectExtender *ext);
 
   public:
-    static H3RmgObjectGenerator *CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &info) noexcept;
     static BOOL ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                        H3String &resultString) noexcept;
 
     static ObjectExtenderManager *Get();
     static void DebugObjectList();
+    static void DebugObjectExtenderList();
 };
 DllExport BOOL __stdcall RegisterObjectExtenderOld(ObjectExtender *extender) noexcept;
-DllExport ObjectExtender *__stdcall CreateObjectExtender(ObjectExtender *_this) noexcept;
-DllExport ObjectExtender *__stdcall CreateObjectExtenderByType(const int objectType, const int objectSubtype) noexcept;
+DllExport LPCSTR __stdcall GetObjectName(const int objectType, const int objectSubtype) noexcept;
 
 // Get the singleton instance
 
-} // namespace extender
+} // namespace extendersManager

@@ -18,10 +18,13 @@
     <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CreatureBanksExtender.h">
+    <ClInclude Include="ColosseumOfTheMagiExtender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CreatureBankManager.h">
+    <ClInclude Include="GazeboExtender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WarehousesExtender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,10 +35,13 @@
     <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CreatureBanksExtender.cpp">
+    <ClCompile Include="ColosseumOfTheMagiExtender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CreatureBankManager.cpp">
+    <ClCompile Include="GazeboExtender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WarehousesExtender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

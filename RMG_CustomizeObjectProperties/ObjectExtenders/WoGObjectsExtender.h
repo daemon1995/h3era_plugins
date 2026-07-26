@@ -14,16 +14,15 @@ class WoGObjectsExtender : public extender::ObjectExtender
     static constexpr LPCSTR jsonKeyFormat = "RMG.objectGeneration.%d.%d.optionId";
 
   private:
-    static std::array<int, extender::limits::COMMON> WoGObjectOptionsIds;
+    static std::array<int, extendersManager::limits::COMMON> WoGObjectOptionsIds;
 
   private:
     WoGObjectsExtender();
-    virtual ~WoGObjectsExtender();
+    virtual ~WoGObjectsExtender() {};
 
   protected:
     virtual void CreatePatches();
 
-    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
     virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) noexcept override final;
     //	virtual void GetObjectPreperties() noexcept override final;
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;

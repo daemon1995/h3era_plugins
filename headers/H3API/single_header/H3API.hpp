@@ -4640,12 +4640,12 @@ namespace h3
 		_H3API_ H3Army(const H3Army& other);
 		_H3API_ BOOL AddStack(INT32 type, INT32 resourceAmount, INT32 slot);
 		_H3API_ VOID SplitFromStackToStack(INT32 fromStack, INT32 toStack, INT32 fraction);
-		_H3API_ INT32 FirstFreeSlot();
-		_H3API_ INT32 FindExistingByIndex(INT32 index);
-		_H3API_ INT32 GetStackCount();
-		_H3API_ INT32 GetCreaturesCount();
-		_H3API_ BOOL8 HasCreatureType(INT32 cre);
-		_H3API_ BOOL HasCreatures();
+		_H3API_ INT32 FirstFreeSlot() const;
+		_H3API_ INT32 FindExistingByIndex(INT32 index) const;
+		_H3API_ INT32 GetStackCount() const;
+		_H3API_ INT32 GetCreaturesCount() const;
+		_H3API_ BOOL8 HasCreatureType(INT32 cre) const;
+		_H3API_ BOOL HasCreatures() const;
 		_H3API_ VOID Clear();
 		_H3API_ VOID Clear(INT stack);
 		_H3API_ VOID ClearAndGive(INT type, INT count);
@@ -15507,31 +15507,32 @@ namespace h3
 		UINT   aiExtraSpellPointsEffectiveness;
 
 	public:
-		_H3API_ INT32 MaxLandMovement();
-		_H3API_ INT32 MaxWaterMovement();
-		_H3API_ INT32 CalcMaxMovement();
+		_H3API_ INT32 MaxLandMovement() const;
+		_H3API_ INT32 MaxWaterMovement() const;
+		_H3API_ INT32 CalcMaxMovement() const;
 		_H3API_ VOID GiveArtifact(const H3Artifact& art, INT32 slot);
 		_H3API_ VOID GiveArtifact(const H3Artifact& art);
 		_H3API_ VOID GiveBackpackArtifact(const H3Artifact& art, INT32 index = -1);
 		_H3API_ VOID LearnSecondarySkill(INT32 id, INT32 increase);
-		_H3API_ INT32 GetSpellExpertise(INT32 spell_id, INT32 special_terrain);
-		_H3API_ BOOL8 HasCreatureType(INT32 type);
-		_H3API_ INT32 GetSpellSpecialtyEffect(INT32 spellID, INT32 creatureLevel, INT32 baseDamage);
-		_H3API_ INT32 GetSorceryEffect(INT32 spell_id, INT32 base_damage, H3CombatCreature* mon);
-		_H3API_ INT32 GetRealSpellDamage(INT32 baseDamage, H3CombatCreature* mon, INT32 spellID, H3Hero* enemy);
-		_H3API_ INT32 GetSpecialTerrain();
-		_H3API_ INT32 GetSpecialSpellTerrain();
-		_H3API_ BOOL HasSpell(INT32 spell);
+		_H3API_ INT32 GetSpellExpertise(INT32 spell_id, INT32 special_terrain) const;
+		_H3API_ BOOL8 HasCreatureType(INT32 type) const;
+		_H3API_ INT32 GetSpellSpecialtyEffect(INT32 spellID, INT32 creatureLevel, INT32 baseDamage) const;
+		_H3API_ INT32 GetSorceryEffect(INT32 spell_id, INT32 base_damage, H3CombatCreature* mon) const;
+		_H3API_ INT32 GetRealSpellDamage(INT32 baseDamage, H3CombatCreature* mon, INT32 spellID, H3Hero* enemy) const;
+		_H3API_ INT32 GetSpecialTerrain() const;
+		_H3API_ INT32 GetSpecialSpellTerrain() const;
+		_H3API_ BOOL HasSpell(INT32 spell) const;
 		_H3API_ VOID BuildCombinationArtifact(INT32 combo_id);
 		_H3API_ BOOL UnlearnSkill(INT32 id);
 		_H3API_ VOID RecalculateMovement();
-		_H3API_ BOOL8 CanFlyOnTile();
-		_H3API_ INT32 GetMovementCost(INT32 orientation, UINT32 mixedPos);
-		_H3API_ INT32 SSkillsLeftToLearn();
-		_H3API_ BOOL WearsArtifact(INT id);
-		_H3API_ INT32 GetHeroPrimary(INT primary);
-		_H3API_ INT32 HasSimilarCreature(INT id);
-		_H3API_ LPCSTR GetHeroClassName();
+		_H3API_ BOOL8 CanFlyOnTile() const;
+		_H3API_ INT32 GetMovementCost(INT32 orientation, UINT32 mixedPos) const;
+		_H3API_ INT32 SSkillsLeftToLearn() const;
+		_H3API_ BOOL WearsArtifact(INT id) const;
+		_H3API_ INT32 GetHeroPrimary(INT primary) const;
+		_H3API_ INT32 HasSimilarCreature(INT id) const;
+		_H3API_ LPCSTR GetHeroClassName() const;
+		_H3API_ VOID AddResource(INT32 resource, INT32 amount) const;
 		_H3API_ VOID ShowDialog() const;
 		/**
 		 * @brief Shows the hero information dialog
@@ -26929,7 +26930,7 @@ namespace h3
 		count[fromStack] -= num;
 		AddStack(type[fromStack], num, toStack);
 	}
-	_H3API_ INT32 H3Army::FirstFreeSlot()
+	_H3API_ INT32 H3Army::FirstFreeSlot() const
 	{
 		INT32 r = 0;
 		for (INT32 i = 0; i < 7; i++)
@@ -26941,7 +26942,7 @@ namespace h3
 		}
 		return -1;
 	}
-	_H3API_ INT32 H3Army::FindExistingByIndex(INT32 index)
+	_H3API_ INT32 H3Army::FindExistingByIndex(INT32 index) const
 	{
 		if (index >= 0 && index < 7)
 		{
@@ -26956,19 +26957,19 @@ namespace h3
 		}
 		return -1;
 	}
-	_H3API_ INT32 H3Army::GetStackCount()
+	_H3API_ INT32 H3Army::GetStackCount() const
 	{
 		return THISCALL_1(INT32, 0x44A990, this);
 	}
-	_H3API_ INT32 H3Army::GetCreaturesCount()
+	_H3API_ INT32 H3Army::GetCreaturesCount() const
 	{
 		return THISCALL_1(INT32, 0x44AA70, this);
 	}
-	_H3API_ BOOL8 H3Army::HasCreatureType(INT32 cre)
+	_H3API_ BOOL8 H3Army::HasCreatureType(INT32 cre) const
 	{
 		return THISCALL_2(BOOL8, 0x44A850, this, cre);
 	}
-	_H3API_ BOOL H3Army::HasCreatures()
+	_H3API_ BOOL H3Army::HasCreatures() const
 	{
 		return THISCALL_1(BOOL, 0x449370, this);
 	}
@@ -32507,15 +32508,15 @@ namespace h3
 
 namespace h3
 {
-	_H3API_ INT32 H3Hero::MaxLandMovement()
+	_H3API_ INT32 H3Hero::MaxLandMovement() const
 	{
 		return THISCALL_2(INT32, 0x4E4C00, this, 0);
 	}
-	_H3API_ INT32 H3Hero::MaxWaterMovement()
+	_H3API_ INT32 H3Hero::MaxWaterMovement() const
 	{
 		return THISCALL_2(INT32, 0x4E4C00, this, 1);
 	}
-	_H3API_ INT32 H3Hero::CalcMaxMovement()
+	_H3API_ INT32 H3Hero::CalcMaxMovement() const
 	{
 		return THISCALL_1(INT32, 0x4E5000, this);
 	}
@@ -32535,37 +32536,37 @@ namespace h3
 	{
 		return THISCALL_3(VOID, 0x4E2540, this, id, increase);
 	}
-	_H3API_ INT32 H3Hero::GetSpellExpertise(INT32 spell_id, INT32 special_terrain)
+	_H3API_ INT32 H3Hero::GetSpellExpertise(INT32 spell_id, INT32 special_terrain) const
 	{
 		return THISCALL_3(INT32, 0x4E52F0, this, spell_id, special_terrain);
 	}
-	_H3API_ BOOL8 H3Hero::HasCreatureType(INT32 type)
+	_H3API_ BOOL8 H3Hero::HasCreatureType(INT32 type) const
 	{
 		return army.HasCreatureType(type);
 	}
-	_H3API_ INT32 H3Hero::GetSpellSpecialtyEffect(INT32 spell_id, INT32 creature_level, INT32 base_damage)
+	_H3API_ INT32 H3Hero::GetSpellSpecialtyEffect(INT32 spell_id, INT32 creature_level, INT32 base_damage) const
 	{
 		return THISCALL_4(INT32, 0x4E6260, this, spell_id, creature_level, base_damage);
 	}
-	_H3API_ INT32 H3Hero::GetSorceryEffect(INT32 spell_id, INT32 base_damage, H3CombatCreature* mon)
+	_H3API_ INT32 H3Hero::GetSorceryEffect(INT32 spell_id, INT32 base_damage, H3CombatCreature* mon) const
 	{
 		return THISCALL_4(INT32, 0x4E59D0, this, spell_id, base_damage, mon);
 	}
-	_H3API_ INT32 H3Hero::GetRealSpellDamage(INT32 base_damage, H3CombatCreature* mon, INT32 spell_id, H3Hero* enemy)
+	_H3API_ INT32 H3Hero::GetRealSpellDamage(INT32 base_damage, H3CombatCreature* mon, INT32 spell_id, H3Hero* enemy) const
 	{
 		INT32 dmg = GetSorceryEffect(spell_id, base_damage, mon);
 		dmg = FASTCALL_3(INT32, 0x44B180, dmg, spell_id, mon->type); // golem-style resistance
 		return mon->GetProtectiveSpellEffect(dmg, spell_id);
 	}
-	_H3API_ INT32 H3Hero::GetSpecialTerrain()
+	_H3API_ INT32 H3Hero::GetSpecialTerrain() const
 	{
 		return THISCALL_1(INT32, 0x4E5130, this);
 	}
-	_H3API_ INT32 H3Hero::GetSpecialSpellTerrain()
+	_H3API_ INT32 H3Hero::GetSpecialSpellTerrain() const
 	{
 		return THISCALL_1(INT32, 0x4E5210, this);
 	}
-	_H3API_ BOOL H3Hero::HasSpell(INT32 spell)
+	_H3API_ BOOL H3Hero::HasSpell(INT32 spell) const
 	{
 		return learnedSpells[spell] | availableSpell[spell];
 	}
@@ -32601,15 +32602,15 @@ namespace h3
 			adv->MakeHeroPath();
 		}
 	}
-	_H3API_ BOOL8 H3Hero::CanFlyOnTile()
+	_H3API_ BOOL8 H3Hero::CanFlyOnTile() const
 	{
 		return THISCALL_1(BOOL8, 0x4E5F50, this);
 	}
-	_H3API_ INT32 H3Hero::GetMovementCost(INT32 orientation, UINT32 mixedPos)
+	_H3API_ INT32 H3Hero::GetMovementCost(INT32 orientation, UINT32 mixedPos) const
 	{
 		return FASTCALL_4(INT32, 0x4B1620, this, orientation, mixedPos, movement);
 	}
-	_H3API_ INT32 H3Hero::SSkillsLeftToLearn()
+	_H3API_ INT32 H3Hero::SSkillsLeftToLearn() const
 	{
 		INT32 known_skills = 0;
 		for (INT32 i = 0; i < 28; i++)
@@ -32644,23 +32645,27 @@ namespace h3
 		skills_can_be_learned = std::max(skills_can_be_learned, 1);
 		return skills_can_be_learned - 1; // -1 because it's already included in formula for level to go to
 	}
-	_H3API_ BOOL H3Hero::WearsArtifact(INT id)
+	_H3API_ BOOL H3Hero::WearsArtifact(INT id) const
 	{
 		return THISCALL_2(BOOL, 0x4D9460, this, id);
 	}
-	_H3API_ INT32 H3Hero::GetHeroPrimary(INT primary)
+	_H3API_ INT32 H3Hero::GetHeroPrimary(INT primary) const
 	{
 		return THISCALL_2(INT32, 0x5BE240, this, primary);
 	}
-	_H3API_ INT32 H3Hero::HasSimilarCreature(INT id)
+	_H3API_ INT32 H3Hero::HasSimilarCreature(INT id) const
 	{
 		return FASTCALL_2(INT32, 0x4A7230, this, id);
 	}
-	_H3API_ LPCSTR H3Hero::GetHeroClassName()
+	_H3API_ LPCSTR H3Hero::GetHeroClassName() const
 	{
 		return THISCALL_1(LPCSTR, 0x4D91E0, this);
 	}
-	_H3API_ VOID H3Hero::ShowDialog() const
+    _H3API_ VOID H3Hero::AddResource(INT32 resource, INT32 amount) const
+    {
+        return THISCALL_3(VOID, 0x4E3870, this, resource, amount);
+    }
+    _H3API_ VOID H3Hero::ShowDialog() const
 	{
 		return FASTCALL_4(VOID, 0x4E1A70, id, 0, 1, 1);
 	}

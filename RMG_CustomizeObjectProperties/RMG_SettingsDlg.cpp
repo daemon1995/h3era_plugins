@@ -5,14 +5,33 @@
 
 #include "RMG_SettingsDlg.h"
 
-namespace cbanks
+int GetCreatureBankIndex(const int objType, const int subtype)
 {
-class CreatureBanksExtender : public extender::ObjectExtender
-{
-  public:
-    static int GetCreatureBankIndex(const int type, const int subtype);
-};
-} // namespace cbanks
+    int cbId = -1;
+    switch (objType)
+    {
+    case eObject::CREATURE_BANK:
+        if (subtype >= 0)
+            cbId = subtype;
+        break;
+    case eObject::DERELICT_SHIP:
+        cbId = eCrBank::DERELICT_SHIP;
+        break;
+    case eObject::DRAGON_UTOPIA:
+        cbId = eCrBank::DRAGON_UTOPIA;
+        break;
+    case eObject::CRYPT:
+        cbId = eCrBank::CRYPT;
+        break;
+    case eObject::SHIPWRECK:
+        cbId = eCrBank::SHIPWRECK;
+        break;
+    default:
+        break;
+    }
+    return cbId;
+}
+
 /**
 @TODO:
     -- Add categories for the all pages as dropdown list
@@ -54,10 +73,8 @@ void SortRmgObjects(std::vector<RMGDlgObject> &objVector, const eSorting sorting
     // sort map rmgDlgObjects by dfferent types
 
     std::sort(objVector.begin(), objVector.end(), [&](const RMGDlgObject &first, const RMGDlgObject &second) -> bool {
-        const int cbIdFirst =
-            cbanks::CreatureBanksExtender::GetCreatureBankIndex(first.objectInfo.type, first.objectInfo.subtype);
-        const int cbIdSecond =
-            cbanks::CreatureBanksExtender::GetCreatureBankIndex(second.objectInfo.type, second.objectInfo.subtype);
+        const int cbIdFirst = GetCreatureBankIndex(first.objectInfo.type, first.objectInfo.subtype);
+        const int cbIdSecond = GetCreatureBankIndex(second.objectInfo.type, second.objectInfo.subtype);
 
         H3String str, str2;
         switch (sortingType)
@@ -1070,10 +1087,10 @@ BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *pa
 
         H3String str;
 
-        const bool result = extender::ObjectExtenderManager::ShowObjectExtendedInfo(
+        const bool result = extendersManager::ObjectExtenderManager::ShowObjectExtendedInfo(
             rmgObject->objectInfo, rmgObject->graphicalAttributes->attributes, str);
 
-     //   if (!result)
+        //   if (!result)
         {
             constexpr int additionalHeight = 100;
             IntAt(0x04F65D4 + 2) += additionalHeight;

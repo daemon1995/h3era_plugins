@@ -316,7 +316,7 @@ int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumbe
     CopyDefaultData(defaultBanksNumber, defaultPositions);
 
     bool trSuccess = false;
-    int tempArr[GUARDES_AMOUNT] = {-1, -1, -1, -1, -1};
+    int guardianTypes[GUARDES_AMOUNT] = {-1, -1, -1, -1, -1};
 
     //  allocate space for new creature banks
     for (INT16 cbId = 0; cbId < banksAmount; cbId++)
@@ -499,8 +499,7 @@ int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumbe
 
         if (cbId >= defaultBanksNumber)
         {
-            libc::memcpy(tempArr, &setup.states[0].guardians.type[0], sizeof(tempArr));
-
+            libc::memcpy(monsterGuards[cbId].data(), &setup.states[0].guardians.type[0], sizeof(guardianTypes));
             // increase number of added banks
             addedBanksNumber++;
         }

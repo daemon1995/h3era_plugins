@@ -20,17 +20,18 @@ class ShrinesExtender : public extender::ObjectExtender
 
   private:
     ShrinesExtender();
-    virtual ~ShrinesExtender();
+    virtual ~ShrinesExtender() {};
 
   protected:
     virtual void CreatePatches() override;
 
-    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(
+        const extender::RMGObjectProperties &objectInfo) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiMapItemWeight, int *moveDistance,
                                     const H3Position pos) const noexcept override final;
-    virtual BOOL RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                             H3String &defaltText) noexcept override final;
+    virtual BOOL RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes &attributes,
+                                             H3String &defaultText) noexcept override final;
 
     //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;

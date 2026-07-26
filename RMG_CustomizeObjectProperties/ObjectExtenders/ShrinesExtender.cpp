@@ -5,27 +5,24 @@ namespace shrines
 const H3MapItem *ShrinesExtender::currentShrineHint = nullptr;
 ShrinesExtender::ShrinesExtender() : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
 {
-
+    objectType = eObject::SHRINE_OF_MAGIC_INCANTATION;
+    objectSubtypes += 3;
+    objectSubtypes += 4;
     CreatePatches();
 }
 
-ShrinesExtender::~ShrinesExtender()
+BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes &attributes, H3String &defaultHint) noexcept
 {
-}
-
-BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
-                                                  H3String &defaultHint) noexcept
-{
-    if (info.type >= eObject::SHRINE_OF_MAGIC_INCANTATION && info.type <= eObject::SHRINE_OF_MAGIC_THOUGHT)
+    if (attributes.type >= eObject::SHRINE_OF_MAGIC_INCANTATION && attributes.type <= eObject::SHRINE_OF_MAGIC_THOUGHT)
     {
 
-        if (info.type == eObject::SHRINE_OF_MAGIC_GESTURE && info.subtype > 0)
+        if (attributes.type == eObject::SHRINE_OF_MAGIC_GESTURE && attributes.subtype > 0)
         {
             H3String additionalHint = defaultHint + "\n";
             // additionalHint += info.GetRmgTypeDescription();
             // additionalHint.Append("\n\n");
 
-            libc::sprintf(h3_TextBuffer, "{~>SpellScr.def:0:%d block}", info.subtype - 1);
+            libc::sprintf(h3_TextBuffer, "{~>SpellScr.def:0:%d block}", attributes.subtype - 1);
             additionalHint.Append(h3_TextBuffer);
             //  H3Messagebox::RMB(additionalHint.String());
         }
@@ -37,13 +34,12 @@ BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const RMGObjectInfo &info, con
     }
     return 0;
 }
-H3RmgObjectGenerator *ShrinesExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
+H3RmgObjectGenerator *ShrinesExtender::CreateRMGObjectGen(
+    const extender::RMGObjectProperties &objectInfo) const noexcept
 {
-
     if (objectInfo.type == eObject::SHRINE_OF_MAGIC_INCANTATION ||
         objectInfo.type == eObject::SHRINE_OF_MAGIC_GESTURE || objectInfo.type == eObject::SHRINE_OF_MAGIC_THOUGHT)
     {
-
         H3RmgObjectGenerator *objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1);
         objGen = THISCALL_3(H3RmgObjectGenerator *, 0x534EC0, objGen, objectInfo.type, objectInfo.value);
         objGen->subtype = objectInfo.subtype;
@@ -69,10 +65,7 @@ _LHF_(ShrinesExtender::Game__AtShrineOfMagicIncantationSettingSpell)
 {
 
     // set spell level generated coresponding to map item subtype (allows any level spells);
-    if (const H3MapItem *shrines = reinterpret_cast<H3MapItem *>(c->esi))
-    {
-        ByteAt(0x4C1995 + 1) = Clamp(0, shrines->objectSubtype, 4); // restrict spell levels 1-5 (0_4)
-    }
+    ByteAt(0x4C1995 + 1) = Clamp(0, c->Esi<H3MapItem *>()->objectSubtype, 4); // restrict spell levels 1-5 (0_4)
     return EXEC_DEFAULT;
 }
 
@@ -80,12 +73,10 @@ _LHF_(ShrinesExtender::Game__AtShrineOfMagicGestureSettingSpell)
 {
 
     // object subtype is spell id
-    if (H3MapItem *shrines = reinterpret_cast<H3MapItem *>(c->esi))
+    H3MapItem *shrines = c->Esi<H3MapItem *>();
+    if (const int objectSubtype = shrines->objectSubtype)
     {
-        if (const int objectSubtype = shrines->objectSubtype)
-        {
-            shrines->magicShrine.spell = Clamp(0, objectSubtype - 1, limits::SPELLS - 1);
-        }
+        shrines->magicShrine.spell = Clamp(0, objectSubtype - 1, limits::SPELLS - 1);
     }
     return EXEC_DEFAULT;
 }
@@ -147,7 +138,7 @@ LPCSTR ShrinesExtender::GetCustomName(const H3MapItem *shrine)
     if (shrine->objectSubtype != 0)
     {
         currentShrineHint = shrine;
-        result = RMGObjectInfo::GetObjectName(shrine);
+        result = extender::GetObjectName(shrine);
     }
     return result;
 }

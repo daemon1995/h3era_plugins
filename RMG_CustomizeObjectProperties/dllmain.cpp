@@ -6,7 +6,7 @@
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "1.6.0";
+constexpr const char *PLUGIN_VERSION = "2.0.0-alfa";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr const char *PLUGIN_DATA = __DATE__;
@@ -66,6 +66,7 @@ PatcherInstance *_PI = nullptr;
 _LHF_(CrBanksTxt_BeforeLoad)
 {
     editor::RMGObjectsEditor::Get();
+    extendersManager::ObjectExtenderManager::Get();
     ExtendersInitializer::InitObjectExtenders();
     //! Set patches for the RMG_SettingsDlg
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);

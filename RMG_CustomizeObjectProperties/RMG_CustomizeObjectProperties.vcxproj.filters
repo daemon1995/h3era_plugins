@@ -10,28 +10,13 @@
     <ClCompile Include="RMG_SettingsDlg.cpp">
       <Filter>SettingsDlg</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectExtenders\WarehousesExtender.cpp">
-      <Filter>Extenders</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectExtenders\CreatureBanksExtender.cpp">
-      <Filter>Extenders</Filter>
-    </ClCompile>
     <ClCompile Include="ObjectExtenders\ShrinesExtender.cpp">
       <Filter>Extenders</Filter>
     </ClCompile>
     <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp">
       <Filter>source files</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectExtenders\GazeboExtender.cpp">
-      <Filter>Extenders</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectExtenders\WateringPlaceExtender.cpp">
-      <Filter>Extenders</Filter>
-    </ClCompile>
     <ClCompile Include="ObjectExtenders\WoGObjectsExtender.cpp">
-      <Filter>Extenders</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectExtenders\ColosseumOfTheMagiExtender.cpp">
       <Filter>Extenders</Filter>
     </ClCompile>
     <ClCompile Include="SoundManager.cpp">
@@ -43,23 +28,17 @@
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp">
       <Filter>Extenders</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectExtenderManager.cpp">
-      <Filter>Manager</Filter>
-    </ClCompile>
     <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>source files</Filter>
     </ClCompile>
     <ClCompile Include="AdditionalProperties.cpp">
       <Filter>source files</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectExtenders\CreatureBankManager.cpp">
-      <Filter>Extenders</Filter>
+    <ClCompile Include="ObjectExtenderManager.cpp">
+      <Filter>source files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ObjectExtender.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="RMGObjectsEditor.h">
       <Filter>headers</Filter>
     </ClInclude>
@@ -69,25 +48,10 @@
     <ClInclude Include="RMG_SettingsDlg.h">
       <Filter>SettingsDlg</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectExtenders\CreatureBanksExtender.h">
-      <Filter>Extenders</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectExtenders\WarehousesExtender.h">
-      <Filter>Extenders</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectExtenders\ShrinesExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectExtenders\GazeboExtender.h">
-      <Filter>Extenders</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectExtenders\WateringPlaceExtender.h">
-      <Filter>Extenders</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectExtenders\WoGObjectsExtender.h">
-      <Filter>Extenders</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectExtenders\ColosseumOfTheMagiExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
     <ClInclude Include="SoundManager.h">
@@ -99,14 +63,11 @@
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectExtenderManager.h">
-      <Filter>Manager</Filter>
-    </ClInclude>
     <ClInclude Include="AdditionalProperties.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectExtenders\CreatureBankManager.h">
-      <Filter>Extenders</Filter>
+    <ClInclude Include="ObjectExtenderManager.h">
+      <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -121,9 +82,6 @@
     </Filter>
     <Filter Include="Extenders">
       <UniqueIdentifier>{572dc5ac-3f4d-41de-b560-1a6862f4dfd0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Manager">
-      <UniqueIdentifier>{dcf95c20-2b30-424b-928e-4a99fe6afe19}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

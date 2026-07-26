@@ -7,49 +7,32 @@ SpellMarketExtender::SpellMarketExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.SpellMarketExtender.daemon_n"))
 {
     CreatePatches();
+    objectType = extender::HOTA_OBJECT_TYPE;
+    objectSubtypes += SPELL_MARKET_OBJECT_SUBTYPE;
 }
 
-SpellMarketExtender::~SpellMarketExtender()
-{
-}
-
-void SpellMarketExtender::CreatePatches()
-{
-    if (!m_isInited)
-    {
-
-        //_pi->WriteLoHook(0x4C1974, Game__AtShrineOfMagicIncantationSettingSpell);
-        //_pi->WriteLoHook(0x40D858, Shrine__AtGetName);
-        //_pi->WriteLoHook(0x40DA24, Shrine__AtGetHint);
-
-        m_isInited = true;
-    }
-}
 BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
                                              int &aiMapItemWeight, int *moveDistance,
                                              const H3Position pos) const noexcept
 {
 
-    if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))
+    auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem);
+    if (spellMarket->TryToVisit(const_cast<H3Hero *>(hero)) == eVisitError::NONE)
     {
-        if (spellMarket->TryToVisit(const_cast<H3Hero *>(hero)) == eVisitError::NONE)
+        for (size_t i = 0; i < 2; i++)
         {
-            for (size_t i = 0; i < 2; i++)
+            const eSpell spellId = spellMarket->GetSpell(i);
+            if (spellId != eSpell::NONE)
             {
-                const eSpell spellId = spellMarket->GetSpell(i);
-                if (spellId != eSpell::NONE)
-                {
-                    aiMapItemWeight += h3functions::GetAIHeroSpellValue(hero, spellId);
-                }
-            }
-            if (aiMapItemWeight > 0)
-            {
-                aiMapItemWeight -= activePlayer->aIPlayer.resourceImportance[eResource::GOLD] * GOLD_REQUIRED;
+                aiMapItemWeight += h3functions::GetAIHeroSpellValue(hero, spellId);
             }
         }
-        return true;
+        if (aiMapItemWeight > 0)
+        {
+            aiMapItemWeight -= activePlayer->aIPlayer.resourceImportance[eResource::GOLD] * GOLD_REQUIRED;
+        }
     }
-    return false;
+    return true;
 }
 
 void ShowMessage(const H3Hero *hero, const H3MapItem *mapItem, const BOOL skipMapMessage, const eVisitError visitError)
@@ -81,7 +64,7 @@ void ShowMessage(const H3Hero *hero, const H3MapItem *mapItem, const BOOL skipMa
     }
     if (jsonStr)
     {
-        H3String objName = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
+        H3String objName = H3String::Format("{%s}", extender::GetObjectName(mapItem));
         libc::sprintf(h3_TextBuffer, "RMG.objectGeneration.%d.%d.text.%s", mapItem->objectType, mapItem->objectSubtype,
                       jsonStr);
         objName.Append("\n\n").Append(EraJS::read(h3_TextBuffer));
@@ -99,55 +82,45 @@ void ShowMessage(const H3Hero *hero, const H3MapItem *mapItem, const BOOL skipMa
 BOOL SpellMarketExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero,
                                                 const int interactPlayerId, const BOOL isRightClick) const noexcept
 {
-    if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))
+    auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem);
+
+    H3String objHint = extender::GetObjectName(mapItem);
+
+    if (!Era::GetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint"))
     {
-
-        H3String objHint = RMGObjectInfo::GetObjectName(mapItem);
-
-        if (!Era::GetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint"))
-        {
-            objHint.Append(isRightClick ? "\n" : " ");
-            libc::sprintf(h3_TextBuffer, "RMG.objectGeneration.%d.%d.text.hint", mapItem->objectType,
-                          mapItem->objectSubtype);
-            objHint.Append(EraJS::read(h3_TextBuffer));
-        }
-
-        if (const H3Hero *hero = P_ActivePlayer->GetActiveHero())
-        {
-            const bool isVistedByHero = spellMarket->IsVisitedByHero(hero);
-            sprintf(h3_TextBuffer, "%s%s", isRightClick ? "\n\n" : " ",
-                    P_GeneralText->GetText(isVistedByHero ? 354 : 355));
-            objHint.Append(h3_TextBuffer);
-        }
-
-        sprintf(h3_TextBuffer, "%s", objHint.String());
-        return 1;
+        objHint.Append(isRightClick ? "\n" : " ");
+        libc::sprintf(h3_TextBuffer, "RMG.objectGeneration.%d.%d.text.hint", mapItem->objectType,
+                      mapItem->objectSubtype);
+        objHint.Append(EraJS::read(h3_TextBuffer));
     }
-    return 0;
+
+    if (const H3Hero *hero = P_ActivePlayer->GetActiveHero())
+    {
+        const bool isVistedByHero = spellMarket->IsVisitedByHero(hero);
+        sprintf(h3_TextBuffer, "%s%s", isRightClick ? "\n\n" : " ", P_GeneralText->GetText(isVistedByHero ? 354 : 355));
+        objHint.Append(h3_TextBuffer);
+    }
+
+    sprintf(h3_TextBuffer, "%s", objHint.String());
+    return 1;
 }
 
-BOOL SpellMarketExtender::InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept
+BOOL SpellMarketExtender::InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount, int subtypeCount) const noexcept
 {
-    if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))
-    {
-        const int objectId = Era::GetAssocVarIntValue(H3MapItemSpellMarket::indexFormat);
-        spellMarket->id = objectId;
-        spellMarket->GenerateSpells();
-        Era::SetAssocVarIntValue(H3MapItemSpellMarket::indexFormat, objectId + 1);
-        return 1;
-    }
-    return 0;
+    auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem);
+    const int objectId = Era::GetAssocVarIntValue(H3MapItemSpellMarket::indexFormat);
+    spellMarket->id = objectId;
+    spellMarket->GenerateSpells();
+    Era::SetAssocVarIntValue(H3MapItemSpellMarket::indexFormat, objectId + 1);
+    return 1;
 }
 
 BOOL SpellMarketExtender::InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept
 {
-    if (auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem))
-    {
-        spellMarket->Reset();
-        spellMarket->GenerateSpells();
-        return 1;
-    }
-    return 0;
+    auto spellMarket = H3MapItemSpellMarket::GetFromMapItem(mapItem);
+    spellMarket->Reset();
+    spellMarket->GenerateSpells();
+    return 1;
 }
 
 BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Position pos,
@@ -189,7 +162,7 @@ BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H
             else
             {
 
-                H3String objName = H3String::Format("{%s}", RMGObjectInfo::GetObjectName(mapItem));
+                H3String objName = H3String::Format("{%s}", extender::GetObjectName(mapItem));
                 objName.Append("\n\n").Append(EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.visit",
                                                                            mapItem->objectType, mapItem->objectSubtype)
                                                               .String()));
@@ -250,15 +223,6 @@ BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H
         return true;
     }
     return false;
-}
-H3RmgObjectGenerator *SpellMarketExtender::CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept
-{
-
-    if (objectInfo.type == extender::HOTA_OBJECT_TYPE && objectInfo.subtype == SPELL_MARKET_OBJECT_SUBTYPE)
-    {
-        return extender::ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(objectInfo);
-    }
-    return nullptr;
 }
 
 SpellMarketExtender *SpellMarketExtender::instance = nullptr;

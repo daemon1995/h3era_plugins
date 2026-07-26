@@ -1,4 +1,5 @@
 #pragma once
+int GetCreatureBankIndex(const int objType, const int subtype);
 namespace rmgdlg
 {
 

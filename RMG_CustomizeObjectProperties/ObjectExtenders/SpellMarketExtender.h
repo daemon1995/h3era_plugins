@@ -58,20 +58,18 @@ class SpellMarketExtender : public extender::ObjectExtender
 
   private:
     SpellMarketExtender();
-    virtual ~SpellMarketExtender();
+    virtual ~SpellMarketExtender() {};
 
   protected:
-    virtual void CreatePatches() override;
-
     //	virtual void GetObjectPreperties() noexcept override final;
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
-    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem) const noexcept override;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount, int subtypeCount) const noexcept override;
+    
     virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept override;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;
-    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectInfo &objectInfo) const noexcept override final;
     //   static BOOL IsWoGObject(const H3MapItem *mapItem) noexcept;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiMapItemWeight, int *moveDistance,
