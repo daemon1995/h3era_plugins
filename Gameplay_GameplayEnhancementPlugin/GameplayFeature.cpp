@@ -29,7 +29,7 @@ H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, 
 signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButton, int isKingdomOverView,
                                     const int isRightClick) noexcept
 {
-    const H3Hero *hero = &P_Game->heroes[heroId];
+    const H3Hero *hero = P_Game->GetHero(heroId);
 
     const int prevOwner = hero->owner;
     const INT8 curPlayer = P_CurrentPlayerID;

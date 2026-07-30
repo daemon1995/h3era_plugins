@@ -259,8 +259,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     // Era::ExecErmCmd("IF:L^%y1^");
                     //  return;
 
-                    const H3Hero *hero = &P_Game->heroes[currentItem->hero.index];
-                    // Era::y[1];//P_Game->heroes[currentItem->hero.index];
+                    const H3Hero *hero = P_Game->GetHero(currentItem->hero.index);
 
                     const int owner = hero->owner;
 

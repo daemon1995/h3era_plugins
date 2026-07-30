@@ -16,7 +16,7 @@ PatcherInstance *_PI = nullptr;
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.9.0";
+const char *PLUGIN_VERSION = "1.9.1";
 const char *INSTANCE_NAME = "EraPlugin.GameplayFeatures.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -66,9 +66,9 @@ void __stdcall H3AdventureMgrDlg__SetButtonsPlayerColor(HiHook *h, H3AdventureMg
     }
 }
 
-PATCH_DECLATOR(scroll, MapScroller)
+// PATCH_DECLATOR(scroll, MapScroller)
 PATCH_DECLATOR(graphics, GraphicsEnhancements)
-PATCH_DECLATOR(cmbhints, CombatHints)
+// PATCH_DECLATOR(cmbhints, CombatHints)
 PATCH_DECLATOR(features, GameplayFeature)
 PATCH_DECLATOR(ERI, ExtendedResourcesInfo)
 PATCH_DECLATOR(artifacts, ArtifactHints)
@@ -99,7 +99,6 @@ const char *demoBttn = "iDEMO.def";
 Patch *demolishButtonPatch = nullptr;
 _LHF_(WoG_BeforeTownbuildingDemolishQuestion)
 {
-
     demolishButtonPatch->Apply();
     return EXEC_DEFAULT;
 }
