@@ -102,7 +102,14 @@ static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageTy
 }
 CreatureBanksExtender::CreatureBanksExtender() : ObjectExtender(_PI)
 {
-    this->objectType = eObject::CREATURE_BANK;
+
+    using namespace extender;
+    AddUniqueObjectInfo(eObject::CREATURE_BANK);
+    AddUniqueObjectInfo(eObject::DERELICT_SHIP);
+    AddUniqueObjectInfo(eObject::DRAGON_UTOPIA);
+    AddUniqueObjectInfo(eObject::CRYPT);
+    AddUniqueObjectInfo(eObject::SHIPWRECK);
+
     if (Register())
     {
         CreatePatches();
@@ -968,7 +975,7 @@ void CreatureBanksExtender::CreatePatches()
 
         // new Rewards AI weight
         // _pi->WriteHiHook(0x0528520, FASTCALL_, AIHero_GetMapItemWeight); // any item
-        _pi->WriteLoHook(0x0528B8D, AIHero_GetCreatureBankItemWeight); // bank/utopia/derelict ship
+      //  _pi->WriteLoHook(0x0528B8D, AIHero_GetCreatureBankItemWeight); // bank/utopia/derelict ship
         // chaging creature bank text patches
         {
             // Pre-combat message

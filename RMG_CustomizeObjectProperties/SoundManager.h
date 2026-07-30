@@ -16,7 +16,14 @@ struct SoundManager
     struct ObjectSound
     {
         LPCSTR wavName;
-        DWORD objectType;
+        union {
+            struct
+            {
+                WORD type;
+                WORD subtype;
+            };
+            DWORD objectType;
+        };
     };
 
     BOOL enterSoundChanged = false;

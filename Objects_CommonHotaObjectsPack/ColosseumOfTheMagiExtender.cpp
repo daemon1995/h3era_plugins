@@ -11,12 +11,11 @@ ColosseumOfTheMagiExtender &ColosseumOfTheMagiExtender::Get()
     return *instance;
 }
 
-int H3MapItemColosseumOfTheMagi::colosseumOfTheMagiCounter = 0;
-
 ColosseumOfTheMagiExtender::ColosseumOfTheMagiExtender() : ObjectExtender(_PI)
 {
-    objectType = extender::HOTA_OBJECT_TYPE;
-    objectSubtypes += 2;
+    using namespace extender;
+
+    AddUniqueObjectInfo(UniqueObjectInfo{HOTA_OBJECT_TYPE, 2, 100});
     CreatePatches();
 }
 
@@ -149,13 +148,6 @@ BOOL ColosseumOfTheMagiExtender::InitNewGameMapItemSetup(H3MapItem *mapItem, int
     return true;
 }
 
-_LHF_(Game__NewGameBeforeSetObjectsInitialParameters)
-{
-    H3MapItemColosseumOfTheMagi::colosseumOfTheMagiCounter = 0;
-
-    return EXEC_DEFAULT;
-}
-
 BOOL ColosseumOfTheMagiExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero,
                                                        const int interactPlayerId,
                                                        const BOOL isRightClick) const noexcept
@@ -175,18 +167,6 @@ BOOL ColosseumOfTheMagiExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const
     sprintf(h3_TextBuffer, "%s", objName.String());
 
     return true;
-}
-
-void ColosseumOfTheMagiExtender::CreatePatches()
-{
-    if (!m_isInited)
-    {
-        // Era::RegisterHandler
-        // 004BFCBE
-        _pi->WriteLoHook(0x04BFCBE, Game__NewGameBeforeSetObjectsInitialParameters);
-
-        m_isInited = true;
-    }
 }
 
 } // namespace colosseumOfTheMagi

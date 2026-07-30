@@ -7,7 +7,6 @@ constexpr int WAREHOUSE_OBJECT_TYPE = eObject::BLANK4;
 
 struct H3MapItemWarehouse
 {
-
     unsigned resourceType : 5;
     /** @brief [05] which players have come by*/
     unsigned visited : 8;
@@ -31,7 +30,8 @@ class WarehousesExtender : public extender::ObjectExtender
     //	virtual void GetObjectPreperties() noexcept override final;
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
-    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount, int subtypeCount) const noexcept override final;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount,
+                                         int subtypeCount) const noexcept override final;
     virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept override final;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;

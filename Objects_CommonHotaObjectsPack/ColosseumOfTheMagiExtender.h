@@ -7,7 +7,6 @@ constexpr int COLOSSEUM_OF_THE_MAGI_OBJECT_SUBTYPE = 2;
 
 struct H3MapItemColosseumOfTheMagi
 {
-    static int colosseumOfTheMagiCounter;
 
     static constexpr LPCSTR ErmVariableFormat = "colosseumOfTheMagi_%d_%d";
 
@@ -26,7 +25,6 @@ class ColosseumOfTheMagiExtender : public extender::ObjectExtender
     virtual ~ColosseumOfTheMagiExtender() {};
 
   private:
-    virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 

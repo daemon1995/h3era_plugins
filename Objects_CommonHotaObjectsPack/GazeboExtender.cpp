@@ -2,14 +2,12 @@
 
 namespace gazebo
 {
-int H3MapItemGazebo::gazeboCounter = 0;
-
 GazeboExtender::GazeboExtender() : ObjectExtender(_PI)
 {
-
+    using namespace extender;
+    AddUniqueObjectInfo(UniqueObjectInfo{ HOTA_OBJECT_TYPE, GAZEBO_OBJECT_SUBTYPE, 50 });
     CreatePatches();
-    objectType = extender::HOTA_OBJECT_TYPE;
-    objectSubtypes += GAZEBO_OBJECT_SUBTYPE;
+
 }
 
 BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *player, int &aiMapItemWeight,
@@ -127,12 +125,6 @@ BOOL GazeboExtender::InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount, 
     return true;
 }
 
-_LHF_(Game__NewGameBeforeSetObjectsInitialParameters)
-{
-    H3MapItemGazebo::gazeboCounter = 0;
-    return EXEC_DEFAULT;
-}
-
 BOOL GazeboExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero, const int interactPlayerId,
                                            const BOOL isRightClick) const noexcept
 {
@@ -151,18 +143,6 @@ BOOL GazeboExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *her
     sprintf(h3_TextBuffer, "%s", objName.String());
 
     return true;
-}
-
-void GazeboExtender::CreatePatches()
-{
-    if (!m_isInited)
-    {
-        // Era::RegisterHandler
-        // 004BFCBE
-        _pi->WriteLoHook(0x04BFCBE, Game__NewGameBeforeSetObjectsInitialParameters);
-
-        m_isInited = true;
-    }
 }
 
 GazeboExtender *GazeboExtender::instance = nullptr;

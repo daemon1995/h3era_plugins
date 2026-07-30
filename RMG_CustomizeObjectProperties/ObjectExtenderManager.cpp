@@ -17,89 +17,17 @@ DllExport BOOL __stdcall RegisterObjectExtender(ObjectExtender *extender)
 {
     return extendersManager::ObjectExtenderRegistrator::Get().AddExtender(extender);
 }
-
 DllExport LPCSTR __stdcall GetObjectName(const int objectType, const int objectSubtype)
 {
     return RMGObjectInfo::GetObjectName(objectType, objectSubtype);
 }
 
-// Реальная dispatch-table
-// DispatchCell dispatchTable[MAX_TYPES][MAX_SUBTYPES]{};
-//
-//// helper: создаём массив HookFn из дескриптора
-// static void BuildMethodsArray(const ObjectExtenderDesc *desc, HookFn outMethods[METHODS_COUNT])
-//{
-//     outMethods[AFTER_LOADING_OBJECTS_TXT] = nullptr; // пока нет реализации
-//     outMethods[CREATE_RMG_OBJECT_GEN] = nullptr;
-//     outMethods[NEW_GAME_OBJECT_ITERATION] = nullptr;
-//     outMethods[NEW_WEEK_OBJECT_ITERATION] = nullptr;
-//     outMethods[HERO_MAP_ITEM_VISIT] = static_cast<HookFn>(desc->visit);
-//     outMethods[SET_HINT_IN_H3_TEXT_BUFFER] = static_cast<HookFn>(desc->set_hint);
-//     outMethods[AI_MAP_ITEM_WEIGHT] = static_cast<HookFn>(desc->set_ai_weight);
-//     outMethods[RMG_DLG_SHOW_CUSTOM_OBJECT_HINT] = nullptr; // можно добавить позже
-// }
-
-// Реализация регистрации
-// DllExport bool __stdcall RegisterObjectExtenderNew(const ObjectExtenderDesc *desc)
-//{
-//    if (!desc || !desc->rules || desc->ruleCount == 0)
-//        return false;
-//
-//    HookFn methods[METHODS_COUNT];
-//    BuildMethodsArray(desc, methods);
-//
-//    for (int r = 0; r < desc->ruleCount; ++r)
-//    {
-//        const ObjectMatchRule &rule = desc->rules[r];
-//        int type = rule.objectType;
-//
-//        if (!rule.subtypes) // все подтипы
-//        {
-//            for (int st = 0; st < MAX_SUBTYPES; ++st)
-//            {
-//                DispatchCell &cell = dispatchTable[type][st];
-//                for (int m = 0; m < METHODS_COUNT; ++m)
-//                {
-//                    if (desc->methods_mask & (1 << m))
-//                        cell.methods[m] = methods[m];
-//                }
-//            }
-//        }
-//        else // только указанные подтипы
-//        {
-//            for (int st = 0; st < rule.subtypeCount; ++st)
-//            {
-//                int subtype = rule.subtypes[st];
-//                DispatchCell &cell = dispatchTable[type][subtype];
-//                for (int m = 0; m < METHODS_COUNT; ++m)
-//                {
-//                    if (desc->methods_mask & (1 << m))
-//                        cell.methods[m] = methods[m];
-//                }
-//            }
-//        }
-//    }
-//
-//    return true;
-//}
-
 namespace extendersManager
 {
-#define READ_RMG_JSON_FIELD_1(field, objType)                                                                          \
+#define READ_RMG_INT_JSON_FIELD_1(field, objType)                                                                      \
     EraJS::readInt(H3String::Format("RMG.objectGeneration.%d." #field, objType).String())
-#define READ_RMG_JSON_FIELD_2(field, objType, objSubtype)                                                              \
+#define READ_RMG_INT_JSON_FIELD_2(field, objType, objSubtype)                                                          \
     EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d." #field, objType, objSubtype).String())
-bool RMGObjectSetable::operator==(const RMGObjectSetable &other) const noexcept
-{
-    return type == other.type && subtype == other.subtype; // ? type < other.type : subtype < other.subtype;
-}
-
-size_t RMGObjectSetable::HashFunction::operator()(const RMGObjectSetable &obj) const noexcept
-{
-    size_t typeHash = std::hash<int>()(obj.type);
-    size_t subtypeHash = std::hash<int>()(obj.subtype) << 1;
-    return typeHash ^ subtypeHash;
-}
 
 /// <summary>
 /// function to load additional properties into objects.txt
@@ -176,6 +104,7 @@ void ObjectExtenderManager::InitializeObjectExtenders(const std::unordered_set<O
     _PI->WriteLoHook(0x415999, H3AdventureManager__GetDefaultObjectClickHint); // rmc hint
 
     _PI->WriteLoHook(0x528559, AIHero_GetObjectPosWeight); // AI object visit stuff
+    _PI->WriteLoHook(0x4323DB, AIHero_GetScoutingWeight);  // AI object scouting stuff
 
     skipMapMessageByHdMod = globalPatcher->VarValue<int>("HD.UI.AdvMgr.SkipMapMsgs");
 }
@@ -192,28 +121,29 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
     {
         const size_t subtypesAmount = lastObjectSubtypes[type] + 1;
         subTypeRelatedExtenders[type] = new ObjectExtender *[subtypesAmount]();
+        subTypeRelatedAiScoutingValues[type] = new INT[subtypesAmount]();
+        libc::memset(subTypeRelatedAiScoutingValues[type], -1, sizeof(INT) * subtypesAmount);
     }
 
     for (auto &ext : objectExtenders)
     {
-        const int type = ext->GetObjectType();
-        if (type >= 0 && type < h3::limits::OBJECTS)
+        const auto &objects = ext->GetObjectSubtypesInfo();
+        if (objects.IsEmpty())
+            continue;
+        for (auto &object : objects)
         {
-            const size_t subtypesAmount = lastObjectSubtypes[type] + 1;
-
-            const auto &subtypes = ext->GetObjectSubtypes();
-
-            if (subtypes.Size())
+            const int type = object.uniqueObjectType.type;
+            if (type >= 0 && type < h3::limits::OBJECTS)
             {
-                for (const auto subtype : subtypes)
-                    // if subtype is specified, assign to subtype array
-                    if (subtype < subtypesAmount)
-                        subTypeRelatedExtenders[type][subtype] = ext;
-            }
-            else
-            // else assign to type array
-            {
-                typeRelatedExtenders[type] = ext;
+                const size_t subtypesAmount = lastObjectSubtypes[type] + 1;
+                const int subtype = object.uniqueObjectType.subtype;
+                if (subtype < 0)
+                    typeRelatedExtenders[type] = ext;
+                else if (subtype < subtypesAmount)
+                {
+                    subTypeRelatedExtenders[type][subtype] = ext;
+                    subTypeRelatedAiScoutingValues[type][subtype] = object.aiScoutingWeight;
+                }
             }
         }
     }
@@ -249,15 +179,6 @@ int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL 
         hintIsSet = extender->SetHintInH3TextBuffer(mapItem, currentHero, interactPlayerId, isRighClick);
     }
 
-    // for (auto &extender : objectExtenders)
-    //{
-    //     hintIsSet = extender->SetHintInH3TextBuffer(mapItem, currentHero, interactPlayerId, isRighClick);
-    //     if (hintIsSet)
-    //     {
-    //         break;
-    //     }
-    // }
-
     if (!hintIsSet)
     {
         H3String objName = RMGObjectInfo::GetObjectName(mapItem);
@@ -269,28 +190,6 @@ int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL 
 
     return NO_EXEC_DEFAULT;
 }
-
-// ObjectExtender *ObjectExtenderManager::GetExtender(const INT16 mapItemType, const INT16 mapItemSubtype)
-//{
-//
-//     // if (true)
-//     {
-//         return extendersMap[mapItemType << 16 | mapItemSubtype];
-//     }
-//
-//     return nullptr;
-// }
-// H3RmgObjectGenerator *ObjectExtenderManager::CreateDefaultH3RmgObjectGenerator(const RMGObjectInfo &objectInfo)
-// noexcept
-//{
-//    H3RmgObjectGenerator *objGen = nullptr;
-//    if (objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1))
-//    {
-//        THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, objectInfo.type, objectInfo.subtype, objectInfo.value,
-//                   objectInfo.density);
-//    }
-//    return objGen;
-//}
 
 _LHF_(ObjectExtenderManager::H3AdventureManager__GetDefaultObjectClickHint)
 {
@@ -305,15 +204,14 @@ _LHF_(ObjectExtenderManager::AIHero_GetObjectPosWeight)
 {
     auto mapItem = c->Esi<H3MapItem *>();
 
-    if (auto *extenders = FindExtender(mapItem))
+    if (auto *extender = FindExtender(mapItem))
     {
-        H3Hero *currentHero = reinterpret_cast<H3Hero *>(c->ebx);
-        int *moveDistance = reinterpret_cast<int *>(c->edi);
+        H3Hero *currentHero = c->Ebx<H3Hero *>();
+        int *moveDistance = c->Edi<int *>();
         const H3Player *player = *reinterpret_cast<H3Player **>(c->ebp - 0x4);
         const H3Position pos = *reinterpret_cast<H3Position *>(c->ebp + 0x8);
-
         INT aiResWeight = 0;
-        if (extenders->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight, moveDistance, pos))
+        if (extender->SetAiMapItemWeight(mapItem, currentHero, player, aiResWeight, moveDistance, pos))
         {
             c->eax = aiResWeight;
             c->return_address = 0x05285A1;
@@ -321,6 +219,17 @@ _LHF_(ObjectExtenderManager::AIHero_GetObjectPosWeight)
         }
     }
 
+    return EXEC_DEFAULT;
+}
+_LHF_(ObjectExtenderManager::AIHero_GetScoutingWeight)
+{
+    auto mapItem = c->Eax<H3MapItem *>();
+    const int scoutingWeight = instance->GetAIScoutingValue(mapItem);
+    if (scoutingWeight > -1)
+    {
+        c->eax = scoutingWeight;
+        return NO_EXEC_DEFAULT;
+    }
     return EXEC_DEFAULT;
 }
 
@@ -336,36 +245,30 @@ _LHF_(ObjectExtenderManager::Game__NewGameObjectIteration)
     auto mapItem = c->Esi<H3MapItem *>();
     auto objectCounter = instance->objectCounter;
     if (auto *objectExtender = FindExtender(mapItem))
-    {
         objectExtender->InitNewGameMapItemSetup(mapItem, objectCounter->Type(mapItem), objectCounter->Subtype(mapItem));
-    }
     objectCounter->Increment(mapItem);
     return EXEC_DEFAULT;
 }
+
 _LHF_(ObjectExtenderManager::Game__NewWeekObjectIteration)
 {
     auto mapItem = c->Esi<H3MapItem *>();
-
     if (auto *objectExtender = FindExtender(mapItem))
-    {
         objectExtender->InitNewWeekMapItemSetup(mapItem);
-    }
+
     return EXEC_DEFAULT;
 }
 
 _LHF_(ObjectExtenderManager::H3AdventureManager__ObjectVisit)
 {
     auto mapItem = c->Edi<H3MapItem *>();
-
     H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
-
     const H3Position position = DwordAt(c->ebp + 0x10);
     const bool isHuman = DwordAt(c->ebp + 0x14);
 
     if (auto *objectExtender = FindExtender(mapItem))
     {
         H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
-
         const H3Position position = DwordAt(c->ebp + 0x10);
         const bool isHuman = DwordAt(c->ebp + 0x14);
         objectExtender->VisitMapItem(currentHero, mapItem, position, isHuman);
@@ -418,8 +321,8 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
 
         // first check only object type value/density
 
-        const int objectTypeValue = READ_RMG_JSON_FIELD_1(value, objType);
-        const int objectTypeDensity = READ_RMG_JSON_FIELD_1(density, objType);
+        const int objectTypeValue = READ_RMG_INT_JSON_FIELD_1(value, objType);
+        const int objectTypeDensity = READ_RMG_INT_JSON_FIELD_1(density, objType);
 
         bool objectTypeHasLoopSound = false;
         LPCSTR objectTypeWavName = EraJS::read(H3String::Format("RMG.objectGeneration.%d.sound.loop", objType).String(),
@@ -429,18 +332,14 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
         // next check each object subtype value/density
         for (size_t objSubtype = 0; objSubtype <= lastObjectSubtypes[objType]; objSubtype++)
         {
-            const int objectSubtypeValue = READ_RMG_JSON_FIELD_2(value, objType, objSubtype);
-            // EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.value", objType, objSubtype).String());
-            const int objectSubtypeDensity = READ_RMG_JSON_FIELD_2(density, objType, objSubtype);
-            // EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.density", objType, objSubtype).String());
+            const int objectSubtypeValue = READ_RMG_INT_JSON_FIELD_2(value, objType, objSubtype);
+            const int objectSubtypeDensity = READ_RMG_INT_JSON_FIELD_2(density, objType, objSubtype);
 
             // if we have any value/density
             // create rmgObjectInfo object
             if (objectSubtypeValue || objectSubtypeDensity || objectTypeValue || objectTypeDensity)
             {
                 RMGObjectProperties rmgObjectInfo(objType, objSubtype);
-                // rmgObjectInfo.type = objType;
-                // rmgObjectInfo.subtype = objSubtype;
                 rmgObjectInfo.value = objectSubtypeValue;
                 rmgObjectInfo.density = objectSubtypeDensity;
                 additionalRmgObjects.emplace_back(rmgObjectInfo);
@@ -454,12 +353,12 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
             if (objectSubtypeHasLoopSound)
             {
                 addedWavNames.emplace_back(
-                    sound::SoundManager::ObjectSound{objectSubtypeWavName, (objType << 16) | objSubtype});
+                    sound::SoundManager::ObjectSound{objectSubtypeWavName, {WORD(objType), WORD(objSubtype)}});
             }
             else if (objectTypeHasLoopSound)
             {
                 addedWavNames.emplace_back(
-                    sound::SoundManager::ObjectSound{objectTypeWavName, (objType << 16) | 0xFFFF});
+                    sound::SoundManager::ObjectSound{objectTypeWavName, {WORD(objType), 0xFFFF}});
             }
         }
     }
@@ -479,20 +378,22 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
     editor::RMGObjectsEditor::Init(lastObjectSubtypes);
 }
 
-void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjectsList)
+void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjectsList,
+                                                      const BOOL isPseudoGeneration)
 {
     // check if there are any object properties extenders
-    if (objectExtenders.empty())
+    if (additionalRmgObjects.empty())
         return;
 
     std::unordered_set<RMGObjectSetable, RMGObjectSetable::HashFunction> objectsSet;
     // create set of the objects to add only unique objects
     for (auto rmgObj : *rmgObjectsList)
     {
-        objectsSet.insert(RMGObjectSetable{rmgObj->type, rmgObj->subtype});
+        objectsSet.insert(RMGObjectSetable{INT16(rmgObj->type), INT16(rmgObj->subtype)});
     }
 
-    ObjectExtender *typeRelatedObjectExtender = nullptr;
+    ObjectExtender *objectExtender = nullptr;
+    const BOOL extendersExist = !objectExtenders.empty();
     // iterate each added RMG INFO
     for (auto &info : additionalRmgObjects)
     {
@@ -501,31 +402,22 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
         // check if it is possible to add object into the list
         if (objectsSet.insert(RMGObjectSetable{info.type, info.subtype}).second)
         {
-
             switch (info.type)
             {
             case eObject::CREATURE_GENERATOR4:
                 objGen = ObjectExtender::CreateDefaultH3RmgObjectGenerator(info);
                 objGen->vTable = reinterpret_cast<H3RmgObjectGenerator::VTable *>(0x0640BC8);
-
                 break;
             case eObject::FREELANCERS_GUILD:
                 objGen = ObjectExtender::CreateDefaultH3RmgObjectGenerator(info);
                 break;
             default:
-                if (typeRelatedObjectExtender = FindExtender(info.type, info.subtype))
-                    objGen = typeRelatedObjectExtender->CreateRMGObjectGen(info);
-                //
-                //
-                //  iterate all extenders container
-                // for (auto &extender : objectExtenders)
-                //{
-                //    // if yes then create obj gen
+                if (extendersExist)
+                {
+                    if (objectExtender = FindExtender(info.type, info.subtype))
+                        objGen = objectExtender->CreateRMGObjectGen(info, isPseudoGeneration);
+                }
 
-                //    if (objGen = extender->CreateRMGObjectGen(info))
-                //        break;
-                //    // and return to add into the list
-                //}
                 break;
             }
             if (objGen)
@@ -725,12 +617,12 @@ void ObjectExtenderManager::DebugObjectExtenderList()
     Era::SaveIni(fileName);
 }
 
-ObjectExtenderManager *ObjectExtenderManager::Get()
+ObjectExtenderManager &ObjectExtenderManager::Get()
 {
 
     if (!instance)
         instance = new ObjectExtenderManager();
-    return instance;
+    return *instance;
 }
 
 } // namespace extendersManager

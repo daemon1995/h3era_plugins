@@ -18,31 +18,21 @@ constexpr int COMMON = 255;
 
 struct RMGObjectSetable
 {
-    int type;
-    int subtype;
+    UniqueObjectType objectType;
     struct HashFunction
     {
-        size_t operator()(const RMGObjectSetable &obj) const noexcept;
+        size_t operator()(const RMGObjectSetable &obj) const noexcept
+        {
+            size_t typeHash = std::hash<int>()(obj.objectType.type);
+            size_t subtypeHash = std::hash<int>()(obj.objectType.subtype) << 1;
+            return typeHash ^ subtypeHash;
+        }
     };
-    bool operator==(const RMGObjectSetable &other) const noexcept;
+    bool operator==(const RMGObjectSetable &other) const noexcept
+    {
+        return objectType.type == other.objectType.type && objectType.subtype == other.objectType.subtype;
+    }
 };
-// enum ObjectExtenderMethods
-//{
-//
-//     AFTER_LOADING_OBJECTS_TXT = 0,
-//     CREATE_RMG_OBJECT_GEN,
-//     NEW_GAME_OBJECT_ITERATION,
-//     NEW_WEEK_OBJECT_ITERATION,
-//     HERO_MAP_ITEM_VISIT,
-//     SET_HINT_IN_H3_TEXT_BUFFER,
-//     AI_MAP_ITEM_WEIGHT,
-//     RMG_DLG_SHOW_CUSTOM_OBJECT_HINT,
-//     METHODS_COUNT
-// };
-// template <class T> inline static T &GetFromMapItem(H3MapItem *mapItem)
-//{
-//    return static_cast<T>(mapItem->setup);
-//}
 
 struct ObjectExtenderRegistrator
 {
@@ -82,7 +72,7 @@ struct ObjectCounter
         for (int i = 0; i < h3::limits::OBJECTS; ++i)
         {
             types[i] = 0;
-            if (maxSubtypes[i] > 0)
+            if (maxSubtypes[i] >= 0)
             {
                 subtypes[i] = new int[maxSubtypes[i] + 1]();
             }
@@ -126,6 +116,7 @@ struct ObjectCounter
 
 class ObjectExtenderManager : public IGamePatch
 {
+
   public:
     static constexpr LPCSTR DLG_HORIZONTAL_GAP = "\n\n\n";
 
@@ -139,10 +130,7 @@ class ObjectExtenderManager : public IGamePatch
 
     ObjectExtender *typeRelatedExtenders[h3::limits::OBJECTS]{};
     ObjectExtender **subTypeRelatedExtenders[h3::limits::OBJECTS]{{}};
-
-    // std::array<std::vector<ObjectExtender *>, ObjectExtenderMethods::METHODS_COUNT> overridenMethods[232];
-
-    // std::vector< ObjectExtender*> subTypeRelatedExtenders[232];
+    INT *subTypeRelatedAiScoutingValues[h3::limits::OBJECTS]{{}};
     //  contains all the additional properties to add/replace in objects.txt
     AdditionalProperties additionalProperties;
     ObjectCounter *objectCounter = nullptr;
@@ -158,21 +146,27 @@ class ObjectExtenderManager : public IGamePatch
     void InitializeObjectExtenders(const std::unordered_set<ObjectExtender *> &registeredExtenders);
     void AssignExtendersToObjectSubtypes();
 
-    ObjectExtender *findExtender(const int type, const UINT subtype)
+    inline ObjectExtender *findExtender(const int type, const UINT subtype)
     {
-
         return subtype <= lastObjectSubtypes[type] ? subTypeRelatedExtenders[type][subtype] : nullptr;
-        if (auto result = subTypeRelatedExtenders[type][subtype])
-            return result;
-        return typeRelatedExtenders[type];
     }
-    static ObjectExtender *FindExtender(const int type, const int subtype) noexcept
+    inline static ObjectExtender *FindExtender(const int type, const int subtype) noexcept
     {
         return instance->findExtender(type, subtype);
     }
-    static ObjectExtender *FindExtender(const H3MapItem *mapItem) noexcept
+    inline static ObjectExtender *FindExtender(const H3MapItem *mapItem) noexcept
     {
         return instance->findExtender(mapItem->objectType, mapItem->objectSubtype);
+    }
+    inline int GetAIScoutingValue(const H3MapItem *mapItem) const noexcept
+    {
+        int type = mapItem->objectType;
+        int subtype = mapItem->objectSubtype;
+        if (subtype <= lastObjectSubtypes[type])
+        {
+            return subTypeRelatedAiScoutingValues[type][subtype];
+        }
+        return -1;
     }
 
   private:
@@ -195,16 +189,24 @@ class ObjectExtenderManager : public IGamePatch
     static _LHF_(H3AdventureManager__GetDefaultObjectHoverHint);
     static _LHF_(H3AdventureManager__GetDefaultObjectClickHint);
     static _LHF_(AIHero_GetObjectPosWeight);
+    static _LHF_(AIHero_GetScoutingWeight);
 
   public:
-    void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList);
+    void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList, const BOOL isPseudoGeneration);
     BOOL AddExtender(ObjectExtender *ext);
+    BOOL IsObjectAllowedToBeGenerated(const H3RmgObjectGenerator *objGen) const noexcept
+    {
+        if (auto extender = FindExtender(objGen->type, objGen->subtype))
+        {
+        }
+        return true;
+    }
 
   public:
     static BOOL ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,
                                        H3String &resultString) noexcept;
 
-    static ObjectExtenderManager *Get();
+    static ObjectExtenderManager &Get();
     static void DebugObjectList();
     static void DebugObjectExtenderList();
 };

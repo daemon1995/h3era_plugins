@@ -5,17 +5,6 @@
 
 #include "RMG_SettingsDlg.h"
 
-namespace wog
-{
-class WoGObjectsExtender : public extender::ObjectExtender
-{
-  public:
-    static BOOL IsWoGObject(const H3RmgObjectGenerator *p_ObjGen) noexcept;
-    static BOOL WoGObjectHasOptionEnabled(const H3RmgObjectGenerator *p_ObjGen) noexcept;
-};
-
-} // namespace wog
-
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
 char RMGObjectInfo::localBuffer[512];
@@ -41,11 +30,6 @@ void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
     th.detach();
 }
 
-inline BOOL ObjectMayBeGenerated(H3RmgObjectGenerator *p_ObjGen)
-{
-    return wog::WoGObjectsExtender::IsWoGObject(p_ObjGen) ? wog::WoGObjectsExtender::WoGObjectHasOptionEnabled(p_ObjGen)
-                                                          : true;
-}
 void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 {
 
@@ -150,8 +134,12 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
     if (H3Vector<H3RmgObjectGenerator *> *rmgObjectsList = &rmgStruct->objectGenerators)
     {
         // and add objects by properly allocated memory m_size and types (this case is CB)
+        auto &editor = RMGObjectsEditor::Get();
+        auto &manager = extendersManager::ObjectExtenderManager::Get();
 
-        extendersManager::ObjectExtenderManager::Get()->AddObjectsToObjectGenList(rmgObjectsList);
+        const BOOL isPseudoGeneration = editor.isPseudoGeneration;
+
+        manager.AddObjectsToObjectGenList(rmgObjectsList, isPseudoGeneration);
 
         // add scrolls level 6
         if (H3RmgObjectGenerator *objScrollGen = H3ObjectAllocator<_RMGObjGenScroll_>().allocate(1))
@@ -161,14 +149,13 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             rmgObjectsList->Push(objScrollGen);
         }
 
-        auto &editor = RMGObjectsEditor::Get();
         editor.SetMapControlSpellLevels(true);
 
         // edit current objects by type/subtype
-        if (editor.isPseudoGeneration)
+        if (isPseudoGeneration)
         {
 
-            for (auto &rmgObjGen : *rmgObjectsList)
+            for (auto rmgObjGen : *rmgObjectsList)
             {
                 if (rmgObjGen->type == eObject::SPELL_SCROLL)
                 {
@@ -177,7 +164,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                         rmgObjGen->subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
                 }
 
-                RMGObjectInfo::InitFromRmgObjectGenerator(*rmgObjGen);
+                RMGObjectInfo::InitFromRmgObjectGenerator(rmgObjGen);
             }
         }
         else
@@ -188,7 +175,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             editor.editedRMGObjectGenerators.RemoveAll();
 
             // init variables;
-            for (auto &rmgObjGen : *rmgObjectsList)
+            for (auto rmgObjGen : *rmgObjectsList)
             {
                 // skip changes for some objects to not break native map generation
                 switch (rmgObjGen->type)
@@ -204,8 +191,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                     continue;
 
                 case eObject::SPELL_SCROLL:
-
-                    rmgObjGen->subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
+                    rmgObjGen->subtype = reinterpret_cast<_RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
                     break;
 
                 default:
@@ -213,15 +199,9 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 }
 
                 const RMGObjectInfo &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
-
-                // const auto &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
-                // if this is first fucntion call with pseudo generator
-                // we collect data
-
                 // if object is enabled
-                if (rmgObjInfo.enabled && ObjectMayBeGenerated(rmgObjGen))
+                if (rmgObjInfo.enabled)
                 {
-
                     if (rmgObjInfo.density > 0)
                         rmgObjGen->density = rmgObjInfo.density;
                     if (rmgObjInfo.value != RMGObjectInfo::UNDEFINED)
@@ -233,24 +213,23 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
             }
 
             // after list is created
-
             // swap vectors between each other to use edited values
             std::swap(rmgStruct->objectGenerators, editor.editedRMGObjectGenerators);
         }
         editor.SetMapControlSpellLevels(false);
     }
 }
-void RMGObjectsEditor::SetMapControlSpellLevels(const BOOL state, const BOOL blockWaterSpells) noexcept
+void RMGObjectsEditor::SetMapControlSpellLevels(const BOOL setNewLevels, const BOOL blockWaterSpells) noexcept
 {
-    if (state)
+    if (setNewLevels)
     {
-        spellLvls[eSpell::SUMMON_BOAT] = P_Spell[eSpell::SUMMON_BOAT].level;
-        spellLvls[eSpell::SCUTTLE_BOAT] = P_Spell[eSpell::SCUTTLE_BOAT].level;
+        savedSpellLevels[eSpell::SUMMON_BOAT] = P_Spell[eSpell::SUMMON_BOAT].level;
+        savedSpellLevels[eSpell::SCUTTLE_BOAT] = P_Spell[eSpell::SCUTTLE_BOAT].level;
 
-        spellLvls[eSpell::FLY] = P_Spell[eSpell::FLY].level;
-        spellLvls[eSpell::WATER_WALK] = P_Spell[eSpell::WATER_WALK].level;
-        spellLvls[eSpell::DIMENSION_DOOR] = P_Spell[eSpell::DIMENSION_DOOR].level;
-        spellLvls[eSpell::TOWN_PORTAL] = P_Spell[eSpell::TOWN_PORTAL].level;
+        savedSpellLevels[eSpell::FLY] = P_Spell[eSpell::FLY].level;
+        savedSpellLevels[eSpell::WATER_WALK] = P_Spell[eSpell::WATER_WALK].level;
+        savedSpellLevels[eSpell::DIMENSION_DOOR] = P_Spell[eSpell::DIMENSION_DOOR].level;
+        savedSpellLevels[eSpell::TOWN_PORTAL] = P_Spell[eSpell::TOWN_PORTAL].level;
 
         P_Spell[eSpell::FLY].level = _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL;
         P_Spell[eSpell::WATER_WALK].level = _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL;
@@ -265,13 +244,13 @@ void RMGObjectsEditor::SetMapControlSpellLevels(const BOOL state, const BOOL blo
     }
     else
     {
-        P_Spell[eSpell::SUMMON_BOAT].level = spellLvls[eSpell::SUMMON_BOAT];
-        P_Spell[eSpell::SCUTTLE_BOAT].level = spellLvls[eSpell::SCUTTLE_BOAT];
+        P_Spell[eSpell::SUMMON_BOAT].level = savedSpellLevels[eSpell::SUMMON_BOAT];
+        P_Spell[eSpell::SCUTTLE_BOAT].level = savedSpellLevels[eSpell::SCUTTLE_BOAT];
 
-        P_Spell[eSpell::FLY].level = spellLvls[eSpell::FLY];
-        P_Spell[eSpell::WATER_WALK].level = spellLvls[eSpell::WATER_WALK];
-        P_Spell[eSpell::DIMENSION_DOOR].level = spellLvls[eSpell::DIMENSION_DOOR];
-        P_Spell[eSpell::TOWN_PORTAL].level = spellLvls[eSpell::TOWN_PORTAL];
+        P_Spell[eSpell::FLY].level = savedSpellLevels[eSpell::FLY];
+        P_Spell[eSpell::WATER_WALK].level = savedSpellLevels[eSpell::WATER_WALK];
+        P_Spell[eSpell::DIMENSION_DOOR].level = savedSpellLevels[eSpell::DIMENSION_DOOR];
+        P_Spell[eSpell::TOWN_PORTAL].level = savedSpellLevels[eSpell::TOWN_PORTAL];
     }
 }
 
@@ -447,21 +426,9 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
 
-    // _PI->WriteDword(0x0541013,)
-    // static BOOL firstRun = true;
-    // if (firstRun)
-    //{
-    //    constexpr int ADDED_MONSTERS_NUM = 29;
-    //    DwordAt(0x0541013 + 2) += ADDED_MONSTERS_NUM * 4;
-    //    DwordAt(0x0541063 + 1) += ADDED_MONSTERS_NUM;
-    //    DwordAt(0x05410B3 + 1) += ADDED_MONSTERS_NUM;
-    //    DwordAt(0x0541159 + 1) += ADDED_MONSTERS_NUM;
-
-    //    firstRun = false;
-    //}
+    // store spell levels
     SetMapControlSpellLevels(true, !(rmgStruct->waterAmount));
 
-    // store spell levels
     // change guard ai values
     auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
     for (auto &info : monstersInfo)
@@ -475,19 +442,16 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
 
 void __stdcall RMGObjectsEditor::RMG__AfterMapGenerated(HiHook *h, H3RmgRandomMapGenerator *rmgStruct)
 {
-
-    Get().AfterMapGeneration(rmgStruct);
     //  clear filled data;
+    Get().AfterMapGeneration(rmgStruct);
+
     THISCALL_1(void, h->GetDefaultFunc(), rmgStruct);
 }
 void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept
 {
 
-    // swap generators list back
-    if (generatedInfo.IsInited())
-    {
-        generatedInfo.Clear(rmgStruct);
-    }
+    // clear generated objects counters
+    generatedInfo.Clear(rmgStruct);
 
     // swap rmgGenerators list back
     std::swap(rmgStruct->objectGenerators, editedRMGObjectGenerators);
@@ -874,11 +838,11 @@ inline const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const int objType, 
 inline std::vector<RMGObjectInfo> (&RMGObjectInfo::CurrentObjectInfos())
     [limits::OBJECTS] { return RMGObjectInfo::currentRMGObjectsInfoByType; }
 
-void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator &generator)
+void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator *generator)
 {
 
-    const int objType = generator.type;
-    const int objSubtype = generator.subtype;
+    const int objType = generator->type;
+    const int objSubtype = generator->subtype;
     if (objSubtype >= defaultRMGObjectsInfoByType[objType].size())
     {
         defaultRMGObjectsInfoByType[objType].resize(objSubtype + 1);
@@ -891,12 +855,12 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator &gener
     // only if data isn't taken from json before
     if (rmgObjInfo.density == UNDEFINED)
     {
-        rmgObjInfo.density = generator.density;
+        rmgObjInfo.density = generator->density;
     }
 
     if (rmgObjInfo.value == UNDEFINED)
     {
-        rmgObjInfo.value = generator.value;
+        rmgObjInfo.value = generator->value;
     }
 
     rmgObjInfo.Clamp();

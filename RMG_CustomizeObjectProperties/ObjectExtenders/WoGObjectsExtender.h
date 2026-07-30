@@ -21,9 +21,10 @@ class WoGObjectsExtender : public extender::ObjectExtender
     virtual ~WoGObjectsExtender() {};
 
   protected:
-    virtual void CreatePatches();
 
     virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) noexcept override final;
+    virtual H3RmgObjectGenerator* CreateRMGObjectGen(const RMGObjectProperties& info, const BOOL isPseudoGeneration) const noexcept override;
+
     //	virtual void GetObjectPreperties() noexcept override final;
     //	void SetRmgObjectGenData(const int objectSubtype)  noexcept;
 
@@ -33,7 +34,7 @@ class WoGObjectsExtender : public extender::ObjectExtender
   public:
     static BOOL IsWoGObject(const H3RmgObjectGenerator *p_ObjGen) noexcept;
 
-    static BOOL WoGObjectHasOptionEnabled(const H3RmgObjectGenerator *p_ObjGen) noexcept;
+    static BOOL WoGObjectHasOptionEnabled(const RMGObjectProperties& info) noexcept;
     static WoGObjectsExtender &Get();
 };
 

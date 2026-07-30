@@ -9,7 +9,6 @@ constexpr int GOLD_REQUIRED = 1000;
 
 struct H3MapItemGazebo
 {
-    static int gazeboCounter;
 
     static constexpr LPCSTR ErmVariableFormat = "gazebo_%d_%d";
 
@@ -29,7 +28,6 @@ class GazeboExtender : public extender::ObjectExtender
     virtual ~GazeboExtender() { };
 
   private:
-    virtual void CreatePatches() override;
     //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
 

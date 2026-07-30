@@ -7,7 +7,6 @@ INT8 UniversityExtender::bannedSkillsCopy[limits::SECONDARY_SKILLS];
 UniversityExtender::UniversityExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.UniversityExtender.daemon_n"))
 {
-    objectType = eObject::UNIVERSITY;
 }
 
 void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
@@ -16,15 +15,16 @@ void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
     const int addedSubtypes = maxSubtypes[eObject::UNIVERSITY];
     if (addedSubtypes == 0)
     {
-        objectType = eObject::NO_OBJ;
         return;
     }
 
     const int length = addedSubtypes + 1;
 
-    objectSubtypes.Resize(addedSubtypes);
+    objectSubtypesInfo.Reserve(addedSubtypes);
     for (size_t i = 0; i < addedSubtypes; i++)
-        objectSubtypes[i] = i + 1;
+    {
+        AddUniqueObjectInfo(eObject::UNIVERSITY, i + 1);
+    }
 
     universitiesData.resize(length);
 

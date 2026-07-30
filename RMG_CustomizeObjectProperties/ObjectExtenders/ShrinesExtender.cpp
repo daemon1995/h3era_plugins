@@ -5,9 +5,9 @@ namespace shrines
 const H3MapItem *ShrinesExtender::currentShrineHint = nullptr;
 ShrinesExtender::ShrinesExtender() : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.ShrinesExtender.daemon_n"))
 {
-    objectType = eObject::SHRINE_OF_MAGIC_INCANTATION;
-    objectSubtypes += 3;
-    objectSubtypes += 4;
+    using namespace extender;
+    AddUniqueObjectInfo(eObject::SHRINE_OF_MAGIC_INCANTATION, 3);
+    AddUniqueObjectInfo(eObject::SHRINE_OF_MAGIC_INCANTATION, 4);
     CreatePatches();
 }
 
@@ -34,8 +34,8 @@ BOOL ShrinesExtender::RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes &attr
     }
     return 0;
 }
-H3RmgObjectGenerator *ShrinesExtender::CreateRMGObjectGen(
-    const extender::RMGObjectProperties &objectInfo) const noexcept
+H3RmgObjectGenerator *ShrinesExtender::CreateRMGObjectGen(const extender::RMGObjectProperties &objectInfo,
+                                                          const BOOL isPseudoGeneration) const noexcept
 {
     if (objectInfo.type == eObject::SHRINE_OF_MAGIC_INCANTATION ||
         objectInfo.type == eObject::SHRINE_OF_MAGIC_GESTURE || objectInfo.type == eObject::SHRINE_OF_MAGIC_THOUGHT)

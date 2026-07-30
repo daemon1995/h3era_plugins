@@ -26,7 +26,7 @@ class ShrinesExtender : public extender::ObjectExtender
     virtual void CreatePatches() override;
 
     virtual H3RmgObjectGenerator *CreateRMGObjectGen(
-        const extender::RMGObjectProperties &objectInfo) const noexcept override final;
+        const extender::RMGObjectProperties &objectInfo, const BOOL isPseudoGeneration) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiMapItemWeight, int *moveDistance,
                                     const H3Position pos) const noexcept override final;

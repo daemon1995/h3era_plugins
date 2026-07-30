@@ -97,7 +97,7 @@ struct RMGObjectInfo : public extender::RMGObjectProperties
     static const RMGObjectInfo &CurrentObjectInfo(const int objType, const int subtype) noexcept;
     static std::vector<RMGObjectInfo> (&CurrentObjectInfos())[limits::OBJECTS];
 
-    static void InitFromRmgObjectGenerator(const H3RmgObjectGenerator &);
+    static void InitFromRmgObjectGenerator(const H3RmgObjectGenerator *generator);
     static void InitDefaultProperties(const ObjectLimitsInfo &limitInfo, const INT16 *maxSubtypes);
     static void LoadUserProperties();
     static LPCSTR GetObjectName(const INT32 type, const INT32 subtype);
@@ -211,7 +211,7 @@ class RMGObjectsEditor : public IGamePatch
     BOOL isPseudoGeneration = false;
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
-    std::array<INT, limits::SPELLS> spellLvls = {};
+    std::array<INT, limits::SPELLS> savedSpellLevels = {};
 
     H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
     H3Vector<H3RmgObjectGenerator *> originalRMGObjectGenerators;

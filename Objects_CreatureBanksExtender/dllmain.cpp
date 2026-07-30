@@ -29,7 +29,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             Era::ConnectEra(hModule, dllText::instanceName);
-            _PI->WriteLoHook(0x4EEAF2, HooksInit);
+            // _PI->WriteLoHook(0x4EEAF2, HooksInit);
             cbanks::CreatureBanksExtender::Get();
         }
     case DLL_THREAD_ATTACH:

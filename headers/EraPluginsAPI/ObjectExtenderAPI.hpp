@@ -18,15 +18,62 @@ constexpr int HOTA_PICKUPABLE_OBJECT_TYPE = eObject::BLANK6;
 constexpr int HOTA_UNREACHABLE_OBJECT_TYPE = eObject::BLANK7;
 
 // namespace limits
+struct UniqueObjectType
+{
+    INT16 type = eObject::NO_OBJ;
+    INT16 subtype = eObject::NO_OBJ;
+};
+struct UniqueObjectInfo
+{
+    struct FormatKey
+    {
+        static constexpr LPCSTR info = "RMG.objectGeneration.%d.%d.text.info";
+        static constexpr LPCSTR hint = "RMG.objectGeneration.%d.%d.text.hint";
+        static constexpr LPCSTR visit = "RMG.objectGeneration.%d.%d.text.visit";
+        static constexpr LPCSTR visited = "RMG.objectGeneration.%d.%d.text.visited";
+        static constexpr LPCSTR cannotVisit = "RMG.objectGeneration.%d.%d.text.cannotVisit";
+    };
+
+    UniqueObjectType uniqueObjectType;
+    INT aiScoutingWeight = -1;
+
+  public:
+    H3String GetStringMessage(LPCSTR key) const
+    {
+        H3String message = H3String::Format("{%s}", GetObjectName(uniqueObjectType.type, uniqueObjectType.subtype));
+        message.Append(EraJS::read(H3String::Format(key, uniqueObjectType.type, uniqueObjectType.subtype).String()));
+        return message;
+    }
+
+    H3String GetVisitingMessage() const
+    {
+        return GetStringMessage(FormatKey::visit);
+    }
+
+    H3String GetVisitedMessage() const
+    {
+        return GetStringMessage(FormatKey::visited);
+    }
+
+    H3String GetCannotVisitMessage() const
+    {
+        return GetStringMessage(FormatKey::cannotVisit);
+    }
+};
 struct RMGObjectProperties
 {
-    ;
     constexpr static int DATA_SIZE = 5;
     constexpr static int UNDEFINED = -1;
 
     //	zoneType 0..3 human-computer-treasure-junction*/
-    INT type = eObject::NO_OBJ;
-    INT subtype = eObject::NO_OBJ;
+    union {
+        UniqueObjectType objectType;
+        struct
+        {
+            INT16 type;
+            INT16 subtype;
+        };
+    };
     union {
         struct
         {
@@ -40,10 +87,10 @@ struct RMGObjectProperties
     };
 
   public:
-    inline RMGObjectProperties(INT type = eObject::NO_OBJ, INT subtype = eObject::NO_OBJ, BOOL enabled = FALSE,
+    inline RMGObjectProperties(INT16 type = eObject::NO_OBJ, INT16 subtype = eObject::NO_OBJ, BOOL enabled = FALSE,
                                INT32 mapLimit = UNDEFINED, INT32 zoneLimit = UNDEFINED, INT32 value = UNDEFINED,
                                INT32 density = UNDEFINED) noexcept
-        : type(type), subtype(subtype), enabled(enabled), mapLimit(mapLimit), zoneLimit(zoneLimit), value(value),
+        : objectType{type, subtype}, enabled(enabled), mapLimit(mapLimit), zoneLimit(zoneLimit), value(value),
           density(density)
     {
     }
@@ -80,17 +127,26 @@ inline const char *GetObjectName(const H3MapItem *mapItem)
 {
     return GetObjectName(mapItem->objectType, mapItem->objectSubtype);
 }
+
 class ObjectExtender
 {
   protected:
-    int objectType = eObject::NO_OBJ;
-    H3Vector<UINT> objectSubtypes;
+    H3Vector<UniqueObjectInfo> objectSubtypesInfo;
     BOOL m_isInited = FALSE;
     PatcherInstance *_pi = nullptr;
 
   public:
     ObjectExtender(PatcherInstance *_pi) : _pi(_pi) {};
     ObjectExtender();
+    ObjectExtender(int objectType, int objectSubtype, PatcherInstance *_pi = nullptr)
+    {
+        if (objectType >= 0 && objectType < 232)
+        {
+            //  objectSubtypesInfo += UniqueObjectInfo{(INT16)objectType, (INT16)objectSubtype, -1};
+        }
+        _pi = this->_pi;
+    }
+    ObjectExtender(UniqueObjectInfo &info, PatcherInstance *_pi = nullptr);
     virtual ~ObjectExtender() {};
 
   protected:
@@ -106,7 +162,8 @@ class ObjectExtender
     virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
     {
     }
-    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectProperties &info) const noexcept
+    virtual H3RmgObjectGenerator *CreateRMGObjectGen(const RMGObjectProperties &info,
+                                                     const BOOL isPseudoGeneration) const noexcept
     {
         return CreateDefaultH3RmgObjectGenerator(info);
     }
@@ -135,20 +192,27 @@ class ObjectExtender
     {
         return false;
     }
-
     virtual BOOL RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes &attributes, H3String &defaultText) noexcept
     {
         return false;
     }
 
   public:
-    inline int GetObjectType() const noexcept
+    inline const H3Vector<UniqueObjectInfo> &GetObjectSubtypesInfo() const noexcept
     {
-        return objectType;
+        return objectSubtypesInfo;
     }
-    inline const H3Vector<UINT> &GetObjectSubtypes() const noexcept
+
+  public:
+    void AddUniqueObjectInfo(const int type, const int subtype = -1, const int aiScouting = -1) noexcept
     {
-        return objectSubtypes;
+        UniqueObjectInfo info{(INT16)type, (INT16)subtype, aiScouting};
+        AddUniqueObjectInfo(info);
+    }
+    void AddUniqueObjectInfo(UniqueObjectInfo &info) noexcept
+    {
+        if (info.uniqueObjectType.type >= 0 && info.uniqueObjectType.type < 252)
+            objectSubtypesInfo += info;
     }
 
     BOOL Register() noexcept
@@ -172,8 +236,8 @@ class ObjectExtender
         H3RmgObjectGenerator *objGen = nullptr;
         if (objGen = H3ObjectAllocator<H3RmgObjectGenerator>().allocate(1))
         {
-            objGen =
-                THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, info.type, info.subtype, info.value, info.density);
+            objGen = THISCALL_5(H3RmgObjectGenerator *, 0x534640, objGen, info.objectType.type, info.objectType.subtype,
+                                info.value, info.density);
         }
         return objGen;
     }

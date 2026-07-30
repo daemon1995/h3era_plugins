@@ -6,9 +6,9 @@ namespace spellMarket
 SpellMarketExtender::SpellMarketExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.SpellMarketExtender.daemon_n"))
 {
+    using namespace extender;
+   // objectSubtypesInfo += UniqueObjectType{HOTA_OBJECT_TYPE, SPELL_MARKET_OBJECT_SUBTYPE};
     CreatePatches();
-    objectType = extender::HOTA_OBJECT_TYPE;
-    objectSubtypes += SPELL_MARKET_OBJECT_SUBTYPE;
 }
 
 BOOL SpellMarketExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,

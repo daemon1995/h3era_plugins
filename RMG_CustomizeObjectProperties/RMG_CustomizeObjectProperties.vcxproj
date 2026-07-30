@@ -82,6 +82,8 @@
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <LanguageStandard>
+      </LanguageStandard>
     </ClCompile>
     <Link>
       <OptimizeReferences>true</OptimizeReferences>
@@ -94,6 +96,12 @@
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>D:\SW\ExeMapCompiler\$(TargetName).map</MapFileName>
     </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <LanguageStandard>
+      </LanguageStandard>
+    </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

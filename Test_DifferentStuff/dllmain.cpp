@@ -162,12 +162,32 @@ _LHF_(Dlg_BattleResults_StopVictoryMusic)
      //}
     return EXEC_DEFAULT;
 }
+void __fastcall b_MsgBox(
+    const char* Mes,
+    int MType,
+    int PosX,
+    int PosY,
+    int Type1,
+    int SType1,
+    int Type2,
+    int SType2,
+    int Par,
+    int Time2Show,
+    int Type3,
+    int SType3)
+{
+
+
+}
 _LHF_(HooksInit)
 {
+
     // disable battleresult mp3
-    globalPatcher->UndoAllAt(0x0462C65);
-    if (1)
+//
+    if (0)
     {
+        //    globalPatcher->UndoAllAt(0x0462C65);
+
        // _PI->WriteHiHook(0x04772E4, THISCALL_, PlayCombatResultMP3);
         //_PI->WriteHiHook(0x0477235, THISCALL_, PlayCombatResultMP3);
         _PI->WriteHiHook(0x0462C65, THISCALL_, PlayCombatResultMP3);

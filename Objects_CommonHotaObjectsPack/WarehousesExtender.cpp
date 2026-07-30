@@ -2,14 +2,17 @@
 
 namespace warehouses
 {
+WarehousesExtender *WarehousesExtender::instance = nullptr;
 
-WarehousesExtender::WarehousesExtender()
-    : ObjectExtender(_PI)
+WarehousesExtender::WarehousesExtender() : ObjectExtender(_PI)
 {
-    objectType = extender::WAREHOUSE_OBJECT_TYPE;
-    objectSubtypes.Resize(eResource::MITHRIL + 1);
+    using namespace extender;
+    objectSubtypesInfo.Reserve(eResource::MITHRIL + 1);
     for (size_t i = 0; i <= eResource::MITHRIL; i++)
-        objectSubtypes[i] = i;
+    {
+        AddUniqueObjectInfo(UniqueObjectInfo{extender::WAREHOUSE_OBJECT_TYPE, static_cast<INT16>(i), 10});
+    }
+    CreatePatches();
 }
 
 void ShowMessage(const H3MapItem *mapItem, const int resType, const int resNum)
@@ -165,8 +168,6 @@ void H3MapItemWarehouse::Reset()
         break;
     }
 }
-
-WarehousesExtender *WarehousesExtender::instance = nullptr;
 
 WarehousesExtender &WarehousesExtender::Get()
 {

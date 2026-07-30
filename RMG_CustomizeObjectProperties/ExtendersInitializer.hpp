@@ -20,28 +20,22 @@ namespace ExtendersInitializer
 
 void InitObjectExtenders()
 {
+    auto &mgr = extendersManager::ObjectExtenderManager::Get();
+    extender::ObjectExtender *extendersList[] = {
+        OBJECT_EXTENDER_GETTER(ShrinesExtender, shrines), OBJECT_EXTENDER_GETTER(SpellMarketExtender, spellMarket),
+        OBJECT_EXTENDER_GETTER(UniversityExtender, university), OBJECT_EXTENDER_GETTER(WoGObjectsExtender, wog)
 
-    if (auto mgr = extendersManager::ObjectExtenderManager::Get())
+    };
+
+    constexpr size_t extendersCount =
+        std::size(extendersList); // sizeof(extendersList) / sizeof(extender::ObjectExtender*);
+
+    // static_assert(extendersCount == 8, "Unexpected number of extenders");
+    //! Get the extenders and initialize
+    for (size_t i = 0; i < extendersCount; i++)
     {
-
-        extender::ObjectExtender *extendersList[] = {
-            OBJECT_EXTENDER_GETTER(ShrinesExtender, shrines),
-            OBJECT_EXTENDER_GETTER(SpellMarketExtender, spellMarket),
-            OBJECT_EXTENDER_GETTER(UniversityExtender, university),
-            OBJECT_EXTENDER_GETTER(WoGObjectsExtender, wog)
-
-        };
-
-        constexpr size_t extendersCount =
-            std::size(extendersList); // sizeof(extendersList) / sizeof(extender::ObjectExtender*);
-
-        // static_assert(extendersCount == 8, "Unexpected number of extenders");
-        //! Get the extenders and initialize
-        for (size_t i = 0; i < extendersCount; i++)
-        {
-            extendersList[i]->Register();
-            //  mgr->AddExtender(extendersList[i]);
-        }
+        extendersList[i]->Register();
+        //  mgr->AddExtender(extendersList[i]);
     }
 }
 
