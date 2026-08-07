@@ -33,7 +33,15 @@ DllExport INT __stdcall SetOptionValue(LPCSTR key, INT value)
     auto it = AdditionalConfig::optionsMap.find(key);
     if (it != AdditionalConfig::optionsMap.end())
     {
-        return it->second->value = Clamp(0, value, it->second->maxValue);
+        auto &entry = it->second;
+        const int oldValue = entry->value;
+        entry->value = Clamp(0, value, entry->maxValue);
+        if (oldValue != entry->value)
+        {
+            entry->Apply();
+            return true;
+        }
+        return false;
     }
     return -1;
 }

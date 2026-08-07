@@ -256,7 +256,6 @@ struct RadioBoxSetting : public ISetting
             }
 
             value.current = valueIndex + !requiresSelection; // value.current;
-                                                             //    *value.valuePtr = value.current;
 
             ClampValue();
             const auto size = checkBoxes.Size();

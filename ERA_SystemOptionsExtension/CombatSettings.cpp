@@ -11,6 +11,14 @@ CombatSettings::CombatSettings() : IGamePatch(globalPatcher->CreateInstance("Era
 
 _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
 {
+
+    enum eQuickCombatType : int
+    {
+        eQuickCombatType_Off = 0,
+        eQuickCombatType_QuickCombatWithAutoSpells = 1,
+        eQuickCombatType_QuickCombatWithoutAutoSpells = 2,
+        eQuickCombatType_Ask = 3
+    };
     auto cmb = P_CombatManager->Get();
     // if (!cmb || cmb->isHuman[0] == cmb->isHuman[1] || P_Game->inTutorial)
     //    return;
@@ -43,13 +51,14 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     if (config.quickCombat && !quickCombatType)
     {
         quickCombatType = 2 - bool(config.autoSpells);
+        quickCombatType = eQuickCombatType_QuickCombatWithoutAutoSpells - bool(config.autoSpells);
     }
     else if (!config.quickCombat && quickCombatType)
     {
-        quickCombatType = 0;
+        quickCombatType = eQuickCombatType_Off;
     }
 
-    if (quickCombatType == 3)
+    if (quickCombatType == eQuickCombatType_Ask)
     {
         LPCSTR keys[] = {"era.opt.map.quickCombat.menu", "era.opt.map.quickCombatManual.menu",
                          "era.opt.map.quickCombatMana.menu", "era.opt.map.quickCombatManaFree.menu"};
@@ -68,14 +77,14 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     switch (quickCombatType)
     {
 
-    case 0:
+    case eQuickCombatType_Off:
         config.quickCombat = false;
         break;
-    case 1:
+    case eQuickCombatType_QuickCombatWithAutoSpells:
         config.quickCombat = true;
         config.autoSpells = true;
         break;
-    case 2:
+    case eQuickCombatType_QuickCombatWithoutAutoSpells:
         config.quickCombat = true;
         config.autoSpells = false;
         break;

@@ -1,12 +1,14 @@
 #define _H3API_PLUGINS_
 #include "SystemOptionsDlg.h"
 
+#pragma comment(linker, "/EXPORT:ShowSystemOptionsDlg=_ShowSystemOptionsDlg@0")
+
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.3.1";
+constexpr LPCSTR PLUGIN_VERSION = "1.4.0";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr LPCSTR UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
@@ -14,11 +16,16 @@ constexpr LPCSTR BUTTON_NAME_KEY = "era.opt.mainMenuButton.name";
 constexpr LPCSTR BUTTON_HINT_KEY = "era.opt.mainMenuButton.hint";
 } // namespace dllText
 
-_LHF_(AdvMapSettingsDlg)
+DllExport BOOL __stdcall ShowSystemOptionsDlg()
 {
     SystemOptionsDlg dlg;
     dlg.Start();
+    return dlg.SettingsChanged();
+}
 
+_LHF_(AdvMapSettingsDlg)
+{
+    ShowSystemOptionsDlg();
     c->return_address = 0x041ABDD;
     return NO_EXEC_DEFAULT;
 }
@@ -67,8 +74,7 @@ int __fastcall HandleSystemDlgStart(void *_msg)
         }
         if (msg->IsLeftClick())
         {
-            SystemOptionsDlg dlg;
-            dlg.Start();
+            ShowSystemOptionsDlg();
         }
         else if (msg->IsRightClick())
         {

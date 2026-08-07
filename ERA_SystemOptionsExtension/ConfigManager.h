@@ -65,6 +65,7 @@ struct AdditionalConfig
         int value = 0;
         int defaultValue = 0;
         int maxValue = 1;
+        void (*applyCallback)();
 
       public:
         explicit operator int &() noexcept
@@ -74,6 +75,13 @@ struct AdditionalConfig
         explicit operator const int &() const noexcept
         {
             return *reinterpret_cast<const int *>(&value);
+        }
+
+      public:
+        void Apply()
+        {
+            if (applyCallback)
+                applyCallback();
         }
     };
     ConfigEntry alternativeButtonClick{"Sound.AlternativeButtonClick", 0, 0};

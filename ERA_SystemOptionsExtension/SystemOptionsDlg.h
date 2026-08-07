@@ -201,7 +201,6 @@ class SystemOptionsDlg : public H3Dlg
         }
     };
 
-  public:
   protected:
     BOOL isInCombat = false;
     BOOL settingsChanged = false;
@@ -327,6 +326,10 @@ class SystemOptionsDlg : public H3Dlg
     inline Era::EGameMenuTarget ResultItemId() const noexcept
     {
         return Era::EGameMenuTarget(resultItemId);
+    }
+    inline BOOL SettingsChanged() const noexcept
+    {
+        return settingsChanged;
     }
     //  hooks
     static void SetPatches(PatcherInstance *_pi);

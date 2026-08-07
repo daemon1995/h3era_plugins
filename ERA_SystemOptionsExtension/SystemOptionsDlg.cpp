@@ -286,7 +286,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             {"system_sound_effects_level",
              {panelX, rightPartY + baseSettingHeight * 2 + 70},
              itemId + count,
-             &config.effectsVolume,                // 0x06987B4,
+             &config.effectsVolume, // 0x06987B4,
              ERA_OPT(system, effectsVolume, name)} // sound effects level switch panel
         };
         void (*funcs[2])(ISetting *) = {sound::SoundSettings::OnMusicVolumeChanged,
@@ -590,21 +590,26 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         rightPartY += baseSettingHeight * 2 + ISetting::TITLE_Y_OFFSET;
 
+
         auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue");
         if (queuePI)
         {
+
+            auto &battleQueue = extraConfig.battleQueue;
+
             const SettingsInfo combatQueueCheckBoxInfo = {
                 "combat_creatures_queue",
                 {rightX, rightPartY},
                 itemId++,
-                &extraConfig.battleQueue.value,
+                &battleQueue.value,
                 ERA_OPT(combat, battleQueue, name),
                 ERA_OPT(combat, battleQueue, hint),
                 isInCombat // disable in combat since it requres dlg reconstruction
             };
 
-            auto combatQueueCheckbox = page->CreateSetting<CheckBoxSetting>(combatQueueCheckBoxInfo);
-            combatQueueCheckbox->SetOnDlgClose([queuePI](ISetting *setting) {
+            auto combatQueueCheckBox = page->CreateSetting<CheckBoxSetting>(combatQueueCheckBoxInfo);
+            combatQueueCheckBox->SetOnDlgClose([queuePI](ISetting *setting) {
+
                 const BOOL enabled = setting->value.current;
                 enabled ? queuePI->ApplyAll() : queuePI->UndoAll();
             });
