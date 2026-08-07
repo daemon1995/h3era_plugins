@@ -8,7 +8,7 @@
 #pragma comment(linker, "/EXPORT:CallLocaleSelectionDlg=_CallLocaleSelectionDlg@12")
 #pragma comment(linker, "/EXPORT:GetDisplayedName=_GetDisplayedName@0")
 
-DllExport void __stdcall CallLocaleSelectionDlg(const int x, const int y, const int styleIndex);
+DllExport Era::int32_bool __stdcall CallLocaleSelectionDlg(const int x, const int y, const int styleIndex);
 DllExport LPCSTR __stdcall GetDisplayedName();
 
 constexpr UINT16 FRAME_WIDGET_ID = 2;
@@ -30,12 +30,12 @@ bool LanguageSelectionDlg::CreateAssets(const BOOL forceRecreate)
     return !styles.empty();
 }
 
-void StartDlg(const int x, const int y, const int styleIndex, const H3DlgItem *callerItem)
+Era::int32_bool StartDlg(const int x, const int y, const int styleIndex, const H3DlgItem *callerItem)
 {
     if (styleIndex >= LanguageSelectionDlg::styles.size())
     {
         H3Messagebox("Invalid style index");
-        return;
+        return false;
     }
 
     const auto &style = LanguageSelectionDlg::styles[styleIndex];
@@ -90,25 +90,28 @@ void StartDlg(const int x, const int y, const int styleIndex, const H3DlgItem *c
         {
             mainmenu::MainMenu_SetDialogButtonText(LanguageSelectionDlg::UNIQUE_BUTTON_NAME,
                                                    GetDisplayedName()); // update button text with new locale name
+            return true;
         }
     }
     else
     {
         H3Messagebox("ERROR:\nNo locales");
     }
+    return false;
 }
 /// function to get last locale from vector
 // This function retrieves the last locale from the available locales
 // and returns it for further processing or display.
 int __fastcall CurrentDlg_HandleLocaleDlgStart(void *_msg)
 {
-    if (const auto msg = static_cast<H3Msg *>(_msg))
+    const auto msg = static_cast<H3Msg *>(_msg);
+    if (msg->IsLeftClick())
     {
         const auto callerItem = msg->GetDlg()->GetCaptionButton(msg->itemId);
-        if (callerItem && msg->IsLeftClick())
+        const BOOL languageChanged = StartDlg(-1, -1, DlgStyle::BLUE_BACK, callerItem);
+        if (languageChanged && H3Messagebox::Choice(EraJS::read("era.locale.dlg.restart")))
         {
-
-            StartDlg(-1, -1, DlgStyle::BLUE_BACK, callerItem);
+            Era::RestartCurrentProcess();
         }
     }
     return true;
@@ -364,9 +367,9 @@ void LanguageSelectionDlg::Init()
     }
 }
 
-DllExport void __stdcall CallLocaleSelectionDlg(const int x, const int y, const int styleIndex)
+DllExport Era::int32_bool __stdcall CallLocaleSelectionDlg(const int x, const int y, const int styleIndex)
 {
-    StartDlg(x, y, styleIndex, nullptr);
+    return StartDlg(x, y, styleIndex, nullptr);
 }
 DllExport LPCSTR __stdcall GetDisplayedName()
 {
