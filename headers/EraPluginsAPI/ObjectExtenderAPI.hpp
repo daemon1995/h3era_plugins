@@ -23,6 +23,19 @@ struct UniqueObjectType
     INT16 type = eObject::NO_OBJ;
     INT16 subtype = eObject::NO_OBJ;
 };
+enum eRmgDlgObjectPage
+{
+    ePageCommon,
+    ePageLearning,
+    ePageIncome,
+    ePageCreatureBank,
+    ePageDwelling,
+    ePagePrison,
+    ePageQuest = ePagePrison,
+    ePageWogObject,
+    ePageTreasure,
+    ePandoraBox
+};
 struct UniqueObjectInfo
 {
     struct FormatKey
@@ -35,30 +48,31 @@ struct UniqueObjectInfo
     };
 
     UniqueObjectType uniqueObjectType;
+    // size_t size = sizeof(UniqueObjectInfo);
     INT aiScoutingWeight = -1;
 
   public:
-    H3String GetStringMessage(LPCSTR key) const
-    {
-        H3String message = H3String::Format("{%s}", GetObjectName(uniqueObjectType.type, uniqueObjectType.subtype));
-        message.Append(EraJS::read(H3String::Format(key, uniqueObjectType.type, uniqueObjectType.subtype).String()));
-        return message;
-    }
+    // H3String GetStringMessage(LPCSTR key) const
+    //{
+    //     H3String message = H3String::Format("{%s}", GetObjectName(uniqueObjectType.type, uniqueObjectType.subtype));
+    //     message.Append(EraJS::read(H3String::Format(key, uniqueObjectType.type, uniqueObjectType.subtype).String()));
+    //     return message;
+    // }
 
-    H3String GetVisitingMessage() const
-    {
-        return GetStringMessage(FormatKey::visit);
-    }
+    // H3String GetVisitingMessage() const
+    //{
+    //     return GetStringMessage(FormatKey::visit);
+    // }
 
-    H3String GetVisitedMessage() const
-    {
-        return GetStringMessage(FormatKey::visited);
-    }
+    // H3String GetVisitedMessage() const
+    //{
+    //     return GetStringMessage(FormatKey::visited);
+    // }
 
-    H3String GetCannotVisitMessage() const
-    {
-        return GetStringMessage(FormatKey::cannotVisit);
-    }
+    // H3String GetCannotVisitMessage() const
+    //{
+    //     return GetStringMessage(FormatKey::cannotVisit);
+    // }
 };
 struct RMGObjectProperties
 {
