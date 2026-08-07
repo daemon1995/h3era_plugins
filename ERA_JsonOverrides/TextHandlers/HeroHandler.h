@@ -1,5 +1,19 @@
 #pragma once
 #include "HandlersList.h"
+
+#define HERO_INFO_FIELDS(X)                                                                                           \
+    X(isFemale)                                                                                                       \
+    X(race)                                                                                                           \
+    X(heroClass)                                                                                                      \
+    X(hasSpellbook)                                                                                                   \
+    X(startingSpell)                                                                                                  \
+    X(armyType)                                                                                                       \
+    X(smallPortrait)                                                                                                  \
+    X(largePortrait)                                                                                                  \
+    X(roeHero)                                                                                                        \
+    X(expansionHero)                                                                                                  \
+    X(campaignHero)
+
 class HeroHandler
 {
 
@@ -10,6 +24,10 @@ class HeroHandler
         static constexpr LPCSTR SPECIALTY_FULL = "era.heroes.%d.specialty.full";
         static constexpr LPCSTR SPECIALTY_DESCRIPTION = "era.heroes.%d.specialty.description";
         static constexpr LPCSTR BIOGRAPHY = "era.heroes.%d.biography";
+
+#define X(field) GENERATE_FORMAT_STR(H3HeroInfo, heroes, field)
+        HERO_INFO_FIELDS(X)
+#undef X
     };
 
   public:
@@ -36,6 +54,11 @@ class HeroHandler
             {
                 P_HeroInfo[i].name = readResult;
             }
+
+            auto &info = P_HeroInfo[i];
+#define X(field) GENERATE_PARSER_BLOCK(info, field)
+            HERO_INFO_FIELDS(X)
+#undef X
 
             libc::sprintf(h3_TextBuffer, formats::SPECIALTY_SHORT, i);
             readResult = EraJS::read(h3_TextBuffer, readSuccess);
@@ -67,3 +90,5 @@ class HeroHandler
         }
     }
 };
+
+#undef HERO_INFO_FIELDS

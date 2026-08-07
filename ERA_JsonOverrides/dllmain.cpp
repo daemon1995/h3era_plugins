@@ -3,11 +3,16 @@
 #include "framework.h"
 
 #include "TextHandlers/ArtifactHandler.h"
+#include "TextHandlers/CreatureAnimationHandler.h"
+#include "TextHandlers/CreatureBankHandler.h"
 #include "TextHandlers/HeroHandler.h"
+#include "TextHandlers/LegacyListHandler.h"
 #include "TextHandlers/MapObjectHandler.h"
 #include "TextHandlers/MonsterHandler.h"
 #include "TextHandlers/SpellHandler.h"
+#include "TextHandlers/SecondarySkillHandler.h"
 #include "TextHandlers/TownHandler.h"
+#include "TextHandlers/WallHandler.h"
 
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
@@ -29,14 +34,19 @@ _ERH_(OnReportVersion)
 
 static _ERH_(OnAfterWog)
 {
+    LegacyListHandler::Init();
     MonsterHandler::Init();
+    CreatureAnimationHandler::Init();
+    CreatureBankHandler::Init();
     ArtifactHandler::Init();
+    WallHandler::Init();
     SpellHandler::Init();
 }
 
 static _ERH_(OnAfterCreateWindow)
 {
     HeroHandler::Init();
+    SecondarySkillHandler::Init();
 }
 static _LHF_(HooksInit)
 {
