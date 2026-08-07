@@ -50,7 +50,6 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
 
     if (config.quickCombat && !quickCombatType)
     {
-        quickCombatType = 2 - bool(config.autoSpells);
         quickCombatType = eQuickCombatType_QuickCombatWithoutAutoSpells - bool(config.autoSpells);
     }
     else if (!config.quickCombat && quickCombatType)
