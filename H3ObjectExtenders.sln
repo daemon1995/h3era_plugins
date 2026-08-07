@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RMG_CustomizeObjectProperties", "RMG_CustomizeObjectProperties\RMG_CustomizeObjectProperties.vcxproj", "{01700C95-8606-446E-AAB8-96975F7B1761}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Objects_CreatureBanksExtender", "Objects_CreatureBanksExtender\Objects_CreatureBanksExtender.vcxproj", "{B2C3D4E5-F6A7-48B9-0C1D-2345678901DE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Objects_CommonHotaObjectsPack", "Objects_CommonHotaObjectsPack\Objects_CommonHotaObjectsPack.vcxproj", "{D0B2C8E1-3A7A-4B0F-8D16-0E6E9D7F4A1C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Objects_WoGObjectsExtender", "Objects_WoGObjectsExtender\Objects_WoGObjectsExtender.vcxproj", "{C9A2F0E6-8D74-4B0A-8C21-9E76A2F3D4B1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{01700C95-8606-446E-AAB8-96975F7B1761}.Debug|x86.ActiveCfg = Debug|Win32
+		{01700C95-8606-446E-AAB8-96975F7B1761}.Debug|x86.Build.0 = Debug|Win32
+		{01700C95-8606-446E-AAB8-96975F7B1761}.Release|x86.ActiveCfg = Release|Win32
+		{01700C95-8606-446E-AAB8-96975F7B1761}.Release|x86.Build.0 = Release|Win32
+		{B2C3D4E5-F6A7-48B9-0C1D-2345678901DE}.Debug|x86.ActiveCfg = Debug|Win32
+		{B2C3D4E5-F6A7-48B9-0C1D-2345678901DE}.Debug|x86.Build.0 = Debug|Win32
+		{B2C3D4E5-F6A7-48B9-0C1D-2345678901DE}.Release|x86.ActiveCfg = Release|Win32
+		{B2C3D4E5-F6A7-48B9-0C1D-2345678901DE}.Release|x86.Build.0 = Release|Win32
+		{D0B2C8E1-3A7A-4B0F-8D16-0E6E9D7F4A1C}.Debug|x86.ActiveCfg = Debug|Win32
+		{D0B2C8E1-3A7A-4B0F-8D16-0E6E9D7F4A1C}.Debug|x86.Build.0 = Debug|Win32
+		{D0B2C8E1-3A7A-4B0F-8D16-0E6E9D7F4A1C}.Release|x86.ActiveCfg = Release|Win32
+		{D0B2C8E1-3A7A-4B0F-8D16-0E6E9D7F4A1C}.Release|x86.Build.0 = Release|Win32
+		{C9A2F0E6-8D74-4B0A-8C21-9E76A2F3D4B1}.Debug|x86.ActiveCfg = Debug|Win32
+		{C9A2F0E6-8D74-4B0A-8C21-9E76A2F3D4B1}.Debug|x86.Build.0 = Debug|Win32
+		{C9A2F0E6-8D74-4B0A-8C21-9E76A2F3D4B1}.Release|x86.ActiveCfg = Release|Win32
+		{C9A2F0E6-8D74-4B0A-8C21-9E76A2F3D4B1}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B3410A04-9A3B-4987-9E85-10A701D59F89}
+	EndGlobalSection
+EndGlobal

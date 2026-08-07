@@ -2,6 +2,14 @@
 
 namespace colosseumOfTheMagi
 {
+BOOL H3MapItemColosseumOfTheMagi::IsVisitedByHero(const H3MapItemColosseumOfTheMagi *colosseumOfTheMagi,
+                                                  const H3Hero *hero) noexcept
+{
+    sprintf(h3_TextBuffer, ErmVariableFormat, colosseumOfTheMagi->id, hero->id);
+
+    return Era::GetAssocVarIntValue(h3_TextBuffer);
+}
+
 ColosseumOfTheMagiExtender *ColosseumOfTheMagiExtender::instance = nullptr;
 
 ColosseumOfTheMagiExtender &ColosseumOfTheMagiExtender::Get()
@@ -13,38 +21,32 @@ ColosseumOfTheMagiExtender &ColosseumOfTheMagiExtender::Get()
 
 ColosseumOfTheMagiExtender::ColosseumOfTheMagiExtender() : ObjectExtender(_PI)
 {
-    using namespace extender;
-
-    AddUniqueObjectInfo(UniqueObjectInfo{HOTA_OBJECT_TYPE, 2, 100});
     CreatePatches();
 }
-
-BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
-                                                    int &aiMapItemWeight, int *moveDistance,
-                                                    const H3Position pos) const noexcept
+void ColosseumOfTheMagiExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 {
+    using namespace extender;
+    AddUniqueObjectInfo(UniqueObjectInfo{HOTA_OBJECT_TYPE, 2, 100});
+}
 
-    auto colosseumOfTheMagi = extender::GetFromMapItem<H3MapItemColosseumOfTheMagi>(mapItem);
-
-    const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(colosseumOfTheMagi, hero);
-
-    if (!isVisitedByHero)
-    {
-        // ��� �� ����� ��� ��
-        int needExpoToNextLvl = FASTCALL_1(int, 0x04DA690, hero->level);
-        float moveDist = (float)(2 * needExpoToNextLvl);
-        aiMapItemWeight = static_cast<int>(moveDist * hero->AI_experienceEffectiveness);
-    }
-
+BOOL ColosseumOfTheMagiExtender::InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount,
+                                                         int subtypeCount) const noexcept
+{
+    extender::GetFromMapItem<H3MapItemColosseumOfTheMagi>(mapItem)->id = subtypeCount;
     return true;
 }
 
-BOOL H3MapItemColosseumOfTheMagi::IsVisitedByHero(const H3MapItemColosseumOfTheMagi *colosseumOfTheMagi,
-                                                  const H3Hero *hero) noexcept
+H3Messagebox::ePick AskQuestionWithTwoOptions(const H3MapItem *mapItem)
 {
-    sprintf(h3_TextBuffer, ErmVariableFormat, colosseumOfTheMagi->id, hero->id);
+    H3String objName = H3String::Format("{%s}", extender::GetObjectName(mapItem));
 
-    return Era::GetAssocVarIntValue(h3_TextBuffer);
+    objName.Append(EraJS::read(
+        H3String::Format("RMG.objectGeneration.%d.%d.text.visit", mapItem->objectType, mapItem->objectSubtype)
+            .String()));
+    H3PictureCategories picOne(ePictureCategories::SPELL_POWER, 2);
+    H3PictureCategories picTwo(ePictureCategories::KNOWLEDGE, 2);
+
+    return H3Messagebox::Choose(objName, picOne, picTwo);
 }
 
 void ShowMessage(const H3MapItem *mapItem) // , const int playerGoldAmount, const bool isVisitedByHero)
@@ -65,19 +67,6 @@ void ShowMessage(const H3MapItem *mapItem) // , const int playerGoldAmount, cons
     {
         H3Messagebox::Show(objName);
     }
-}
-
-H3Messagebox::ePick AskQuestionWithTwoOptions(const H3MapItem *mapItem)
-{
-    H3String objName = H3String::Format("{%s}", extender::GetObjectName(mapItem));
-
-    objName.Append(EraJS::read(
-        H3String::Format("RMG.objectGeneration.%d.%d.text.visit", mapItem->objectType, mapItem->objectSubtype)
-            .String()));
-    H3PictureCategories picOne(ePictureCategories::SPELL_POWER, 2);
-    H3PictureCategories picTwo(ePictureCategories::KNOWLEDGE, 2);
-
-    return H3Messagebox::Choose(objName, picOne, picTwo);
 }
 
 BOOL ColosseumOfTheMagiExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Position pos,
@@ -140,14 +129,6 @@ BOOL ColosseumOfTheMagiExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, 
 
     return true;
 }
-
-BOOL ColosseumOfTheMagiExtender::InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount,
-                                                         int subtypeCount) const noexcept
-{
-    extender::GetFromMapItem<H3MapItemColosseumOfTheMagi>(mapItem)->id = subtypeCount;
-    return true;
-}
-
 BOOL ColosseumOfTheMagiExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero,
                                                        const int interactPlayerId,
                                                        const BOOL isRightClick) const noexcept
@@ -165,6 +146,25 @@ BOOL ColosseumOfTheMagiExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const
     }
 
     sprintf(h3_TextBuffer, "%s", objName.String());
+
+    return true;
+}
+
+BOOL ColosseumOfTheMagiExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *activePlayer,
+                                                    int &aiMapItemWeight, int *moveDistance,
+                                                    const H3Position pos) const noexcept
+{
+    auto colosseumOfTheMagi = extender::GetFromMapItem<H3MapItemColosseumOfTheMagi>(mapItem);
+
+    const bool isVisitedByHero = H3MapItemColosseumOfTheMagi::IsVisitedByHero(colosseumOfTheMagi, hero);
+
+    if (!isVisitedByHero)
+    {
+        // ��� �� ����� ��� ��
+        int needExpoToNextLvl = FASTCALL_1(int, 0x04DA690, hero->level);
+        float moveDist = (float)(2 * needExpoToNextLvl);
+        aiMapItemWeight = static_cast<int>(moveDist * hero->AI_experienceEffectiveness);
+    }
 
     return true;
 }

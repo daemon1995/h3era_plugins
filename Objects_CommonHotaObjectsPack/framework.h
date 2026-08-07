@@ -1,4 +1,5 @@
 #pragma once
+
 #define OBJECTS_EXTENDER_API
 #define WIN32_LEAN_AND_MEAN // Исключите редко используемые компоненты из
 // заголовков Windows

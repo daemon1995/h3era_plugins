@@ -20,85 +20,64 @@ static BOOL ShowMultiplePicsArmyMessage(const char *message, const int messageTy
                                         H3Army *army) noexcept
 {
 
-    if (army->HasCreatures())
+    if (!army->HasCreatures())
+        return false;
+
+    H3Army armyCopy;
+    libc::memcpy(&armyCopy, army, sizeof(armyCopy));
+
+    // H3Vector<std::array<int, 2>> armyPictures;
+    H3PictureVector armyPictures;
+    struct CreatureName
     {
-        LPCSTR hexPach = nullptr;
-        switch (messageType)
+        int creature = eCreature::UNDEFINED;
+        LPCSTR oldNamePtr = 0;
+        H3String nameWithNumber;
+    } creatureNames[limits::ARMY_SLOTS];
+
+    for (size_t i = 0; i < limits::ARMY_SLOTS; ++i)
+    {
+        const int monType = armyCopy.type[i];
+        if (monType != eCreature::UNDEFINED)
         {
-        case 2: // yes/no
-            hexPach = "EB 0B 90909090";
-            break;
-        case 4: // rmc (no buttons)
-            hexPach = "E9 C2040000";
-            break;
-        default:
-            break;
-        }
-        if (!hexPach)
-            return false;
-
-        H3Army armyCopy;
-        libc::memcpy(&armyCopy, army, sizeof(armyCopy));
-
-        H3Vector<std::array<int, 2>> armyPictures;
-
-        struct CreatureName
-        {
-            int creature = eCreature::UNDEFINED;
-            LPCSTR oldNamePtr = 0;
-            H3String nameWithNumber;
-        } creatureNames[limits::ARMY_SLOTS];
-
-        for (size_t i = 0; i < limits::ARMY_SLOTS; ++i)
-        {
-            const int monType = armyCopy.type[i];
-            if (monType != eCreature::UNDEFINED)
+            int creatureCount = armyCopy.count[i];
+            for (size_t j = i + 1; j < limits::ARMY_SLOTS; ++j)
             {
-                int creatureCount = armyCopy.count[i];
-                for (size_t j = i + 1; j < limits::ARMY_SLOTS; ++j)
+                if (armyCopy.type[j] == monType)
                 {
-                    if (armyCopy.type[j] == monType)
-                    {
-                        creatureCount += armyCopy.count[j];
-                        armyCopy.type[j] = eCreature::UNDEFINED;
-                    }
-                }
-                if (creatureCount)
-                {
-                    std::array<int, 2> arr = {ePictureCategories::CREATURE, monType};
-                    armyPictures.Push(arr);
-                }
-                if (monType != eCreature::UNDEFINED)
-                {
-                    creatureNames[i].creature = monType;
-                    LPCSTR armyGroupName = H3Creature::GroupName(creatureCount, 1);
-                    creatureNames[i].oldNamePtr = P_CreatureInformation[monType].namePlural;
-                    creatureNames[i].nameWithNumber =
-                        H3String::Format("%s %s", armyGroupName, P_CreatureInformation[monType].namePlural);
-                    P_CreatureInformation[monType].namePlural = creatureNames[i].nameWithNumber.String();
+                    creatureCount += armyCopy.count[j];
+                    armyCopy.type[j] = eCreature::UNDEFINED;
                 }
             }
-        }
-
-        // set proper multiple pic dlg type
-        auto patch = _PI->WriteHexPatch(0x04F731D, hexPach);
-        // display actual dialog with correct creature names and multiple pics
-        FASTCALL_5(void, 0x004F7D20, message, &armyPictures, x, y, 0);
-        patch->Destroy();
-
-        // restore creature names
-        for (size_t i = 0; i < limits::ARMY_SLOTS; ++i)
-        {
-            const int monType = creatureNames[i].creature;
+            if (creatureCount)
+                armyPictures.Add({ePictureCategories::CREATURE, monType});
             if (monType != eCreature::UNDEFINED)
             {
-                P_CreatureInformation[monType].namePlural = creatureNames[i].oldNamePtr;
+                creatureNames[i].creature = monType;
+                LPCSTR armyGroupName = H3Creature::GroupName(creatureCount, 1);
+                creatureNames[i].oldNamePtr = P_CreatureInformation[monType].namePlural;
+                creatureNames[i].nameWithNumber =
+                    H3String::Format("%s %s", armyGroupName, P_CreatureInformation[monType].namePlural);
+                P_CreatureInformation[monType].namePlural = creatureNames[i].nameWithNumber.String();
             }
         }
-        return true;
     }
 
-    return 0;
+    // set proper multiple pic dlg type
+    // display actual dialog with correct creature names and multiple pics
+    Era::TComplexDialogOpts opts{0, messageType};
+    FASTCALL_5(VOID, 0x4F7D20, message, &armyPictures, x, y, opts.value);
+
+    // restore creature names
+    for (size_t i = 0; i < limits::ARMY_SLOTS; ++i)
+    {
+        const int monType = creatureNames[i].creature;
+        if (monType != eCreature::UNDEFINED)
+        {
+            P_CreatureInformation[monType].namePlural = creatureNames[i].oldNamePtr;
+        }
+    }
+    return true;
 }
 CreatureBanksExtender::CreatureBanksExtender() : ObjectExtender(_PI)
 {
@@ -975,7 +954,7 @@ void CreatureBanksExtender::CreatePatches()
 
         // new Rewards AI weight
         // _pi->WriteHiHook(0x0528520, FASTCALL_, AIHero_GetMapItemWeight); // any item
-      //  _pi->WriteLoHook(0x0528B8D, AIHero_GetCreatureBankItemWeight); // bank/utopia/derelict ship
+        //  _pi->WriteLoHook(0x0528B8D, AIHero_GetCreatureBankItemWeight); // bank/utopia/derelict ship
         // chaging creature bank text patches
         {
             // Pre-combat message

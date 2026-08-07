@@ -25,14 +25,15 @@ class ColosseumOfTheMagiExtender : public extender::ObjectExtender
     virtual ~ColosseumOfTheMagiExtender() {};
 
   private:
-    //	virtual void AfterLoadingObjectsTxtProc(const INT16* maxSubtypes) override final;
+    virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) override final;
     //	virtual void GetObjectPreperties() noexcept override final;
+    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount,
+                                         int subtypeCount) const noexcept override final;
 
-    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
-                                       const BOOL isRightClick) const noexcept override final;
-    virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount, int subtypeCount) const noexcept override final;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;
+    virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
+                                       const BOOL isRightClick) const noexcept override final;
     virtual BOOL SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *currentHero, const H3Player *activePlayer,
                                     int &aiMapItemWeight, int *moveDistance,
                                     const H3Position pos) const noexcept override final;

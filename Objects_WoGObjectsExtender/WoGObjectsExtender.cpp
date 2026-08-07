@@ -2,11 +2,10 @@
 
 namespace wog
 {
-std::array<int, extendersManager::limits::COMMON> WoGObjectsExtender::WoGObjectOptionsIds;
+std::array<int, 255> WoGObjectsExtender::WoGObjectOptionsIds;
 WoGObjectsExtender *WoGObjectsExtender::instance = nullptr;
 
-WoGObjectsExtender::WoGObjectsExtender()
-    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.WoGObjectsExternder.daemon_n"))
+WoGObjectsExtender::WoGObjectsExtender() : ObjectExtender(_PI)
 {
     CreatePatches();
 }
@@ -21,7 +20,7 @@ void WoGObjectsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) no
     }
 }
 
-H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const RMGObjectProperties &info,
+H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const extender::RMGObjectProperties &info,
                                                              const BOOL isPseudoGeneration) const noexcept
 {
     if (!isPseudoGeneration && !WoGObjectHasOptionEnabled(info))
@@ -31,17 +30,7 @@ H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const RMGObjectProp
     return CreateDefaultH3RmgObjectGenerator(info);
 }
 
-BOOL WoGObjectsExtender::IsWoGObject(const H3MapItem *mapItem) noexcept
-{
-    return mapItem && mapItem->objectType == WOG_OBJECT_TYPE && mapItem->objectSubtype != 0;
-}
-
-BOOL WoGObjectsExtender::IsWoGObject(const H3RmgObjectGenerator *p_ObjGen) noexcept
-{
-    return p_ObjGen && p_ObjGen->type == WOG_OBJECT_TYPE && p_ObjGen->subtype != 0;
-}
-
-BOOL WoGObjectsExtender::WoGObjectHasOptionEnabled(const RMGObjectProperties &info) noexcept
+BOOL WoGObjectsExtender::WoGObjectHasOptionEnabled(const extender::RMGObjectProperties &info) noexcept
 {
     return DwordAt(WOG_OPTIONS_ARRAY + WoGObjectOptionsIds[info.subtype] * 4);
 }

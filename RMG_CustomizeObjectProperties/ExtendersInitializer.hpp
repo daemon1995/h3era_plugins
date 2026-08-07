@@ -13,7 +13,6 @@
 OBJECT_EXTENDER_DECLARATOR(ShrinesExtender, shrines)
 OBJECT_EXTENDER_DECLARATOR(SpellMarketExtender, spellMarket)
 OBJECT_EXTENDER_DECLARATOR(UniversityExtender, university)
-OBJECT_EXTENDER_DECLARATOR(WoGObjectsExtender, wog)
 
 namespace ExtendersInitializer
 {
@@ -21,9 +20,9 @@ namespace ExtendersInitializer
 void InitObjectExtenders()
 {
     auto &mgr = extendersManager::ObjectExtenderManager::Get();
-    extender::ObjectExtender *extendersList[] = {
-        OBJECT_EXTENDER_GETTER(ShrinesExtender, shrines), OBJECT_EXTENDER_GETTER(SpellMarketExtender, spellMarket),
-        OBJECT_EXTENDER_GETTER(UniversityExtender, university), OBJECT_EXTENDER_GETTER(WoGObjectsExtender, wog)
+    extender::ObjectExtender *extendersList[] = {OBJECT_EXTENDER_GETTER(ShrinesExtender, shrines),
+                                                 OBJECT_EXTENDER_GETTER(SpellMarketExtender, spellMarket),
+                                                 OBJECT_EXTENDER_GETTER(UniversityExtender, university)
 
     };
 

@@ -16,9 +16,6 @@
     <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp">
       <Filter>source files</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectExtenders\WoGObjectsExtender.cpp">
-      <Filter>Extenders</Filter>
-    </ClCompile>
     <ClCompile Include="SoundManager.cpp">
       <Filter>source files</Filter>
     </ClCompile>
@@ -49,9 +46,6 @@
       <Filter>SettingsDlg</Filter>
     </ClInclude>
     <ClInclude Include="ObjectExtenders\ShrinesExtender.h">
-      <Filter>Extenders</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectExtenders\WoGObjectsExtender.h">
       <Filter>Extenders</Filter>
     </ClInclude>
     <ClInclude Include="SoundManager.h">

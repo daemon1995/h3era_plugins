@@ -200,6 +200,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     this->flags = 2;
 
     AddBackground(0, 0, width, height, false, false, 1, true);
+    background->SimpleFrameRegion(0, 0, width, height);
     if (background)
     {
         // background->FrameRegion(0, 0, width, height, true, 1, false);

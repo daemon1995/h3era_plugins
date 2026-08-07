@@ -54,7 +54,6 @@
     <ClInclude Include="ObjectExtenders\UniversityExtender.h" />
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="ObjectExtenders\ShrinesExtender.h" />
-    <ClInclude Include="ObjectExtenders\WoGObjectsExtender.h" />
     <ClInclude Include="RMGObjectsEditor.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RMG_SettingsDlg.h" />
@@ -69,7 +68,6 @@
     <ClCompile Include="ObjectExtenders\UniversityExtender.cpp" />
     <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="ObjectExtenders\ShrinesExtender.cpp" />
-    <ClCompile Include="ObjectExtenders\WoGObjectsExtender.cpp" />
     <ClCompile Include="RMGObjectsEditor.cpp" />
     <ClCompile Include="RMG_SettingsDlg.cpp" />
   </ItemGroup>
