@@ -13,7 +13,7 @@ namespace dllText
 const double maxAttackDamageBonus = 1.0; // +100%
 const double attackDiffBonus = 0.025;    // 2.5% per point
 
-const double maxDefenceDamageBonus = 0.65;   // (1.0 - 0.65)
+const double maxDefenceDamageBonus = 0.80;   // (1.0 - 0.80)
 const double defenceDiffBonus = 0.0125;      // 2.5% per point
 
 double __stdcall Hero_GetOffenceArmorerPower(HiHook* hook, H3Hero* hero)
