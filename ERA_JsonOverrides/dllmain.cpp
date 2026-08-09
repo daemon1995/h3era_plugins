@@ -9,8 +9,8 @@
 #include "TextHandlers/LegacyListHandler.h"
 #include "TextHandlers/MapObjectHandler.h"
 #include "TextHandlers/MonsterHandler.h"
-#include "TextHandlers/SpellHandler.h"
 #include "TextHandlers/SecondarySkillHandler.h"
+#include "TextHandlers/SpellHandler.h"
 #include "TextHandlers/TownHandler.h"
 #include "TextHandlers/WallHandler.h"
 
@@ -20,7 +20,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.1.0";
+constexpr LPCSTR PLUGIN_VERSION = "1.2.0";
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
 
@@ -34,12 +34,12 @@ _ERH_(OnReportVersion)
 
 static _ERH_(OnAfterWog)
 {
-    LegacyListHandler::Init();
+    // LegacyListHandler::Init();
     MonsterHandler::Init();
-    CreatureAnimationHandler::Init();
-    CreatureBankHandler::Init();
+    // CreatureAnimationHandler::Init();
+    // CreatureBankHandler::Init();
     ArtifactHandler::Init();
-    WallHandler::Init();
+    // WallHandler::Init();
     SpellHandler::Init();
 }
 

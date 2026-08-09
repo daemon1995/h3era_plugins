@@ -15,13 +15,11 @@ class LegacyListHandler
         for (size_t i = 0; i < count; i++)
         {
             libc::sprintf(h3_TextBuffer, "era.%s.%u", txtName, static_cast<unsigned>(i));
-            readResult = EraJS::read(h3_TextBuffer, readSuccess);
-            if (readSuccess)
-                table[i] = readResult;
+            EraJS::ReadSingleValue<LPCSTR>(table[i], h3_TextBuffer, readSuccess);
         }
     }
 
-    static LPCSTR *At(const uintptr_t address) noexcept
+    inline static LPCSTR *At(const uintptr_t address) noexcept
     {
         return reinterpret_cast<LPCSTR *>(address);
     }
@@ -47,7 +45,7 @@ class LegacyListHandler
     {
         ReadTextFile("genrltxt", H3GeneralText::Get());
         ReadTextFile("advevent", H3AdveventText::Get());
-
+        return;
         // Addresses and lengths are taken from TXT-loader pseudocode in
         // export/functions_json.
         ReadList("crgen1", At(0x00691548), 80);
