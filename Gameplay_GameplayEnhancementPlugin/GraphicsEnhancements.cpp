@@ -190,7 +190,7 @@ _LHF_(AdventureManager_Hide)
 void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
 {
     // get max towns displayable built icons from config
-    constexpr INT16 hdModMax = 7;
+    constexpr INT hdModMax = 7;
     maxTownsDisplayableBuiltIcons = Clamp(5, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", 5), hdModMax);
     // townBuiltDlgDefButtons.assign(nullptr);
     const int firstDefButtonId = globalPatcher->VarGetValue<int>("HD.AdvMgr.ID32", 32);

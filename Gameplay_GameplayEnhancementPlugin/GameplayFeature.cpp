@@ -255,6 +255,18 @@ _LHF_(LoHook_HeroRoute_SpecRouteMaxMP)
 
     return EXEC_DEFAULT;
 }
+
+_LHF_(LoHook_HeroRoute_RouteUpdate)
+{
+    if (c->esi + c->Ebx<H3Hero *>()->maxMovement < 0)
+    {
+        WordAt(c->eax * 2 + c->edx) += 50;
+        c->return_address = 0x4190DE;
+        return NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
 void GameplayFeature::CreatePatches() noexcept
 {
     if (!m_isInited)
@@ -287,14 +299,15 @@ void GameplayFeature::CreatePatches() noexcept
         if (H3GameHeight::Get() > 607)
             _pi->WriteHiHook(0x05C8590, THISCALL_, ThievesGuildDlg_Ctor);
 
-        // »нициализаци€ оставшихс€ полных очков перемещени€ геро€.
-        _PI->WriteLoHook(0x418F38, LoHook_HeroRoute_InitMaxMP); // 100F14C0
+        //// »нициализаци€ оставшихс€ полных очков перемещени€ геро€.
+        //_PI->WriteLoHook(0x418F38, LoHook_HeroRoute_InitMaxMP); // 100F14C0
 
-        // ”меньшение оставшихс€ полных очков перемещени€ геро€.
-        _PI->WriteLoHook(0x418FC5, LoHook_HeroRoute_ReduceMaxMP); // 1014BB40
+        //// ”меньшение оставшихс€ полных очков перемещени€ геро€.
+        //_PI->WriteLoHook(0x418FC5, LoHook_HeroRoute_ReduceMaxMP); // 1014BB40
 
-        // ѕоказ особых стрелок, если путь дальше, чем максимальные очки перемещени€ геро€.
-        _PI->WriteLoHook(0x4190DE, LoHook_HeroRoute_SpecRouteMaxMP);
+        //// ѕоказ особых стрелок, если путь дальше, чем максимальные очки перемещени€ геро€.
+        //_PI->WriteLoHook(0x4190DE, LoHook_HeroRoute_SpecRouteMaxMP);
+        _PI->WriteLoHook(0x4190D9, LoHook_HeroRoute_RouteUpdate);
         m_isInited = true;
     }
 }

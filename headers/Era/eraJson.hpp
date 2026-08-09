@@ -127,6 +127,30 @@ template <typename T> inline BOOL ReadSingleValue(T &target, LPCSTR jsonKey, boo
     }
     return outSuccess;
 }
+template <typename T> inline BOOL ReadSingleValue(T &target, LPCSTR jsonKey) noexcept
+{
+	bool outSuccess = false;
+    if constexpr (std::is_same_v<T, LPCSTR>)
+    {
+        LPCSTR readResult = EraJS::read(jsonKey, outSuccess);
+        if (outSuccess)
+            target = readResult;
+    }
+    else if constexpr (std::is_integral_v<T> || std::is_enum_v<T>)
+    {
+        using TargetType = safe_underlying_type_t<T>;
+        int rawValue = EraJS::readInt(jsonKey, outSuccess);
+        if (outSuccess)
+        {
+            target = static_cast<T>(static_cast<TargetType>(rawValue));
+        }
+    }
+    else
+    {
+        static_assert(sizeof(T) == 0, "Unsupported type passed to EraJson engine");
+    }
+    return outSuccess;
+}
 
 template <typename T> inline BOOL ReadField(T &target, LPCSTR format, const int idx) noexcept
 {
