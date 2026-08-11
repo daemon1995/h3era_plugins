@@ -34415,8 +34415,8 @@ namespace h3
 			static_cast<INT32>(type), -1, -1,
 			static_cast<INT32>(pic1.type), pic1.subtype,
 			static_cast<INT32>(pic2.type), pic2.subtype,
-			static_cast<INT32>(pic3.type), pic3.subtype,
-			-1, 0);
+			-1,0,
+			static_cast<INT32>(pic3.type), pic3.subtype);
 	}
 	_H3API_ VOID H3Messagebox::display(LPCSTR text, const H3PictureVector& images, INT32 timeout)
 	{
