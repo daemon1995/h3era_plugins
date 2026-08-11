@@ -5,8 +5,8 @@
 #define NLOHMAN_JSON
 #define MAIN_MENU_API
 // add headers that you want to pre-compile here
-#include "..\headers\header.h"
 #include "..\headers\era\eraModList.hpp"
+#include "..\headers\header.h"
 #include "AssemblyInformation.h"
 #include "NotificationPanel.h"
 #include "UserNotification.h"

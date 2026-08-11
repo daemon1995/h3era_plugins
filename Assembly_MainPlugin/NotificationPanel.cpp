@@ -113,15 +113,14 @@ bool FolderExists(const std::wstring &path)
 
 std::wstring GetAppDataPath()
 {
-    wchar_t *appDataPath = nullptr;
-    if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &appDataPath) != S_OK)
+    wchar_t path[MAX_PATH];
+
+    if (SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, path) != S_OK)
     {
         return L"";
     }
 
-    std::wstring result(appDataPath);
-    CoTaskMemFree(appDataPath);
-    return result;
+    return path;
 }
 
 static H3DlgCaptionButton *GetNotificationPanelCallerWidget()
@@ -380,7 +379,6 @@ void RedrawPcxText(H3LoadedPcx16 *pcx, const int notificationAmount)
         fnt->TextDraw(pcx, h3_TextBuffer, 0, 0, width, height);
     }
 }
-
 
 H3DlgItem *NotificationPanel::AddItem(H3DlgItem *item, const bool isCommon) noexcept
 {

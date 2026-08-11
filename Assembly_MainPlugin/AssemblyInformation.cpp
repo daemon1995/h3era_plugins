@@ -192,7 +192,7 @@ void OpenExternalFile(const char *path, const char *msg = nullptr)
         libc::sprintf(h3_TextBuffer, EraJS::read(jsonKey), path);
     }
 
-    if (!isUrl)
+    if (!isUrl && 0)
     {
         auto ext = PathFindExtensionA(path);
         auto appPath = GetAppForExtension(ext);
