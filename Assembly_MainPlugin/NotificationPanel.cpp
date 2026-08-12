@@ -172,7 +172,6 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
         H3RGB565 highLightColor(H3RGB888::Highlight());
         H3RGB565 lightBorderColor(H3RGB888(247, 222, 123));
         H3RGB565 darkBorderColor(H3RGB888(165, 140, 66));
-
         // used for the whole notification panel
         auto &background = runtimes.panelBackground;
         if (background.item = H3DlgPcx16::Create(x, y, nullptr))
@@ -458,8 +457,11 @@ void NotificationPanel::CreateModAreaFrame(const UINT x, const UINT y, const UIN
             _h -= 256;
         }
 
-        image.pcx->FrameRegion(0, 0, width, height, false, 1, true);
-        //       image.pcx->SimpleFrameRegion(0, 0, width, height);
+        const BOOL newTrue32 = globalPatcher->VarGetValue<int>("HD.NewTrue32", 0);
+        if (newTrue32)
+            image.pcx->SimpleFrameRegion(0, 0, width, height);
+        else
+            image.pcx->FrameRegion(0, 0, width, height, false, 1, true);
 
         image.item->SetWidth(width);
         image.item->SetHeight(height);
