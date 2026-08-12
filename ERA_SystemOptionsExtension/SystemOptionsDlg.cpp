@@ -85,9 +85,9 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
 
 void SystemOptionsDlg::CreateGameControlButtons() noexcept
 {
-    // const BOOL isNetworkGame = P_
     using target = Era::EGameMenuTarget;
     const BOOL isMainMenu = dlgCallSource == MAIN_MENU;
+    const BOOL isRealNetworkGame = IntAt(0x69959C) != 0;
     const struct
     {
         const INT32 buttonId;
@@ -97,13 +97,15 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         const INT32 disableOnCreation = FALSE;
     } gameControlButtons[]{
         {target::PAGE_LOAD_GAME, 0x0688630, eVKey::H3VK_L, ERA_OPT(common, load, hint),
-         isInCombat && networkGame || isMainMenu}, // load game
+         isInCombat && isRealNetworkGame || isMainMenu}, // load game
         {target::PAGE_SAVE_GAME, 0x0688624, eVKey::H3VK_S, ERA_OPT(common, save, hint),
          dlgCallSource != ADV_MAP}, // save game
         {target::PAGE_RESTART, 0x0688618, eVKey::H3VK_R, ERA_OPT(common, restart, hint),
-         isInCombat && networkGame || isMainMenu},                                              // restart the map
-        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, ERA_OPT(common, menu, hint), isMainMenu}, // quit to main menu
-        {target::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, ERA_OPT(common, quit, hint), isMainMenu}, // quit to desktop
+         isInCombat && isRealNetworkGame || isMainMenu},                                        // restart the map
+        {target::PAGE_MAIN, 0x068860C, eVKey::H3VK_M, ERA_OPT(common, menu, hint),
+         isMainMenu || isInCombat && isRealNetworkGame}, // quit to main menu
+        {target::PAGE_QUIT, 0x0688600, eVKey::H3VK_Q, ERA_OPT(common, quit, hint),
+         isMainMenu || isInCombat && isRealNetworkGame}, // quit to desktop
         {30722, 0x0670130, eVKey::H3VK_ESCAPE,
          isInCombat ? ERA_OPT(common, return, hint) : ERA_OPT(common, return, hint)}, // back to adv map / combat
     };

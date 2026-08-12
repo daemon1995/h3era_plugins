@@ -30,8 +30,10 @@ class CombatSettings : public IGamePatch
     virtual void CreatePatches() noexcept override;
 
   protected:
+    static void RestoreOriginalQuickCombatSettings();
     static _ERH_(OnBeforeBattleUniversal_Quit);
     static _ERH_(OnAfterBattle);
+    static _ERH_(OnGameLeave);
 
   public:
     static CombatSettings &Get();

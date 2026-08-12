@@ -95,8 +95,7 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
         config.quickCombat != quickCombatInfo.quickCombat || config.autoSpells != quickCombatInfo.autoSpells;
 }
 
-// restore quick combat settings after battle
-_ERH_(CombatSettings::OnAfterBattle)
+void CombatSettings::RestoreOriginalQuickCombatSettings()
 {
     if (!quickCombatInfo.isNeedRestore)
         return;
@@ -104,7 +103,20 @@ _ERH_(CombatSettings::OnAfterBattle)
     auto &config = OriginalConfig::Get();
     config.quickCombat = quickCombatInfo.quickCombat;
     config.autoSpells = quickCombatInfo.autoSpells;
-    // quickCombatInfo = {};
+    quickCombatInfo.isNeedRestore = false;
+}
+
+// restore quick combat settings after battle
+_ERH_(CombatSettings::OnAfterBattle)
+{
+    RestoreOriginalQuickCombatSettings();
+}
+
+// ERA FastQuitToGameMenu unwinds past OnAfterBattle. Restore the plugin's
+// private battle-local configuration before the old game is discarded.
+_ERH_(CombatSettings::OnGameLeave)
+{
+    RestoreOriginalQuickCombatSettings();
 }
 void CombatSettings::CreatePatches() noexcept
 {
@@ -143,6 +155,7 @@ void CombatSettings::CreatePatches() noexcept
     // combat setype selection
     _REH_(OnBeforeBattleUniversal_Quit);
     _REH_(OnAfterBattle);
+    _REH_(OnGameLeave);
 }
 
 CombatSettings &CombatSettings::Get()

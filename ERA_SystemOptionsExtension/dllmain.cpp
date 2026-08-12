@@ -35,8 +35,11 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
 
     using target = Era::EGameMenuTarget;
     target menuTarget = target::PAGE_DEFAULT;
+    const bool realNetworkGame = IntAt(0x69959C) != 0;
     {
         SystemOptionsDlg dlg;
+        // Preserve the stock nested-network-dialog cleanup contract used by
+        // BattleMgr::ShowBattleOptions.
         dlg.networkGame = 0;
         dlg.Start();
         dlg.networkGame = -1;
@@ -56,7 +59,10 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     case target::PAGE_LOAD_GAME:
     case target::PAGE_MAIN:
     case target::PAGE_QUIT:
-        Era::FastQuitToGameMenu(menuTarget);
+        // FastQuit is a local exception-based unwind and cannot safely
+        // synchronize the other peer during a real network battle.
+        if (!realNetworkGame)
+            Era::FastQuitToGameMenu(menuTarget);
         break;
     default:
         break;
