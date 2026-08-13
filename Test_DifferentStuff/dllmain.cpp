@@ -152,24 +152,20 @@ _LHF_(Dlg_BattleResults_StopVictoryMusic)
     //}
     return EXEC_DEFAULT;
 }
-void __fastcall b_MsgBox(const char *Mes, int MType, int PosX, int PosY, int Type1, int SType1, int Type2, int SType2,
-                         int Par, int Time2Show, int Type3, int SType3)
-{
-}
 
 H3Font *fontPtr = nullptr;
 
 // Fnt_DrawString_To_Pcx16 at 0x4B4FC0.  The original receives a pointer to
 // the already split line and its character count.  We never modify that
 // buffer: a temporary justified copy is passed only to the original call.
-void __stdcall Font_DrawString(HiHook *h, H3Font *font, const char *text, int textLength,
-                               H3LoadedPcx16 *drawBuffer, int x, int y, int arg14, int arg18,
-                               int arg1C, int arg20, int color, H3LoadedPcx16 *arg28)
+void __stdcall Font_DrawString(HiHook *h, H3Font *font, const char *text, int textLength, H3LoadedPcx16 *drawBuffer,
+                               int x, int y, int arg14, int arg18, int arg1C, int arg20, int color,
+                               H3LoadedPcx16 *arg28)
 {
     if (!font || !text || textLength <= 0)
     {
-        return THISCALL_12(void, h->GetDefaultFunc(), font, text, textLength, drawBuffer, x, y, arg14, arg18,
-                            arg1C, arg20, color, arg28);
+        return THISCALL_12(void, h->GetDefaultFunc(), font, text, textLength, drawBuffer, x, y, arg14, arg18, arg1C,
+                           arg20, color, arg28);
     }
 
     // The original function checks the right edge as arg18 + arg20 (see
@@ -182,12 +178,12 @@ void __stdcall Font_DrawString(HiHook *h, H3Font *font, const char *text, int te
 
     if (justified == line)
     {
-        return THISCALL_12(void, h->GetDefaultFunc(), font, text, textLength, drawBuffer, x, y, arg14, arg18,
-                            arg1C, arg20, color, arg28);
+        return THISCALL_12(void, h->GetDefaultFunc(), font, text, textLength, drawBuffer, x, y, arg14, arg18, arg1C,
+                           arg20, color, arg28);
     }
 
     return THISCALL_12(void, h->GetDefaultFunc(), font, justified.c_str(), static_cast<int>(justified.size()),
-                        drawBuffer, arg18, y, arg14, arg18, arg1C, arg20, color, arg28);
+                       drawBuffer, arg18, y, arg14, arg18, arg1C, arg20, color, arg28);
 }
 
 void __stdcall Font_DrawTextToPcx16(HiHook *h, H3Font *font, const char *text, H3LoadedPcx16 *drawBuffer, int x, int y,
@@ -227,7 +223,7 @@ void __stdcall Font_DrawSymbol(HiHook *h, H3Font *font, unsigned int character, 
         THISCALL_6(void, h->GetDefaultFunc(), font, character, drawBuffer, x, y, color);
 }
 
-char *fontPath = "Georgia Italic";
+char *fontPath = "Roboto Condensed Medium";
 char *fontName = "Arial20.fnt";
 char *testText =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore "
@@ -238,29 +234,32 @@ char *testText =
 void InitNewFont()
 
 {
+    fontPath = "Arial";
+
     testText = "у меня весь текст со всем оформлением по-прежнему печатается в Word'e, после чего я создаю "
                "соответствующий def. я уже привык к этому, оно долго, но достаточно удобно и пластично) большого "
                "разнообразия тоже не нужно. пока что))";
     // Register in both H3ResourceManager and the legacy font tree used by
     // H3Font::Load and DlgText::Ctor.
     TTFontOptions options;
-    H3FontLoader medFont(NH3Dlg::Text::MEDIUM);
-    options.pixelHeight = medFont->height + 8;
-    options.bold = true;
-    // options.italic = true;
+    // H3FontLoader medFont(NH3Dlg::Text::MEDIUM);
+    // options.pixelHeight += 8;
+    // options.bold = true;
+    //  options.italic = true;
 
     fontPtr = CreateH3FontFromTTF(fontPath, fontName, options, true);
 
     if (fontPtr)
     {
 
-        // _PI->WriteHiHook(0x04B4F00, THISCALL_, Font_DrawSymbol);
+        //_PI->WriteHiHook(0x04B4F00, THISCALL_, Font_DrawSymbol);
 
-        H3Dlg dlg(H3GameWidth::Get(), H3GameHeight::Get(), -1, -1, 0, 0, 0);
-        dlg.AddBackground(0, 0, H3GameWidth::Get(), H3GameHeight::Get(), 1, 0, 1, 0);
+        H3Dlg dlg(H3GameWidth::Get() / 2, H3GameHeight::Get() / 2, -1, -1, 0, 0, 0);
+        dlg.AddBackground(0, 0, H3GameWidth::Get() / 2, H3GameHeight::Get() / 2, 1, 0, 1, 0);
         dlg.CreateOKButton();
-        dlg.CreateText(40, 40, 200, 65, testText, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,eTextAlignment::MIDDLE_CENTER);
-        dlg.CreateText(40, 140, 400, 600, testText, fontName, eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
+        dlg.CreateText(40, 40, 200, 65, testText, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
+                       eTextAlignment::MIDDLE_CENTER);
+        dlg.CreateText(40, 100, 300, 300, testText, fontName, eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
         dlg.Start();
 
         // This now resolves the object from the normal game font cache.
@@ -273,20 +272,18 @@ _ERH_(OnGameEnter)
 
 _LHF_(HooksInit)
 {
-    
+
     // load new font
-     if (0)
+    if (0)
     {
-        _PI->WriteHiHook(0x04B4FC0, THISCALL_, Font_DrawString);
+        // _PI->WriteHiHook(0x04B4FC0, THISCALL_, Font_DrawString);
 
         InitNewFont();
-
     }
 
     // font draw to pcx
     if (true)
     {
-
 
         // _PI->WriteHiHook(0x05BCA99, CALL_, EXTENDED_, THISCALL_, Font_DrawTextToPcx16); // for dlgtxt: fongtext draw
         // _PI->WriteHiHook(0x04B51F0, SPLICE_, EXTENDED_, THISCALL_, Font_DrawTextToPcx16);
