@@ -51,7 +51,7 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
     combatManager->Refresh();
 
-    const bool realNetworkCombat = IntAt(0x69959C) != 0;
+    realNetworkCombat = IntAt(0x69959C) != 0;
 
     switch (menuTarget)
     {
