@@ -96,7 +96,7 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
 }
 
 // restore quick combat settings after battle
-_ERH_(CombatSettings::OnAfterBattle)
+_ERH_(CombatSettings::OnAfterBattleOrGameLeave)
 {
     if (!quickCombatInfo.isNeedRestore)
         return;
@@ -104,6 +104,7 @@ _ERH_(CombatSettings::OnAfterBattle)
     auto &config = OriginalConfig::Get();
     config.quickCombat = quickCombatInfo.quickCombat;
     config.autoSpells = quickCombatInfo.autoSpells;
+    quickCombatInfo.isNeedRestore = false;
     // quickCombatInfo = {};
 }
 void CombatSettings::CreatePatches() noexcept
@@ -142,7 +143,8 @@ void CombatSettings::CreatePatches() noexcept
 
     // combat setype selection
     _REH_(OnBeforeBattleUniversal_Quit);
-    _REH_(OnAfterBattle);
+    Era::RegisterHandler(OnAfterBattleOrGameLeave, "OnAfterBattle");
+    Era::RegisterHandler(OnAfterBattleOrGameLeave, "OnGameLeave");
 }
 
 CombatSettings &CombatSettings::Get()

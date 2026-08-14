@@ -31,7 +31,7 @@ class CombatSettings : public IGamePatch
 
   protected:
     static _ERH_(OnBeforeBattleUniversal_Quit);
-    static _ERH_(OnAfterBattle);
+    static _ERH_(OnAfterBattleOrGameLeave);
 
   public:
     static CombatSettings &Get();

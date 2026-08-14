@@ -58,6 +58,8 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
       isInCombat(P_CombatManager->Get() && P_CombatManager->dlg)
 
 {
+    if (!networkGame)
+        networkGame = IntAt(0x69959C);
     if (isInCombat)
         dlgCallSource = COMBAT;
     else if (P_AdventureManager && P_AdventureMgr->dlg)
@@ -286,7 +288,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             {"system_sound_effects_level",
              {panelX, rightPartY + baseSettingHeight * 2 + 70},
              itemId + count,
-             &config.effectsVolume, // 0x06987B4,
+             &config.effectsVolume,                // 0x06987B4,
              ERA_OPT(system, effectsVolume, name)} // sound effects level switch panel
         };
         void (*funcs[2])(ISetting *) = {sound::SoundSettings::OnMusicVolumeChanged,
@@ -590,7 +592,6 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         rightPartY += baseSettingHeight * 2 + ISetting::TITLE_Y_OFFSET;
 
-
         auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue");
         if (queuePI)
         {
@@ -609,7 +610,6 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
             auto combatQueueCheckBox = page->CreateSetting<CheckBoxSetting>(combatQueueCheckBoxInfo);
             combatQueueCheckBox->SetOnDlgClose([queuePI](ISetting *setting) {
-
                 const BOOL enabled = setting->value.current;
                 enabled ? queuePI->ApplyAll() : queuePI->UndoAll();
             });
