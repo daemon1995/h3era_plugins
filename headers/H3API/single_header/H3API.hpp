@@ -20604,6 +20604,7 @@ namespace h3
 		_H3API_ VOID SetText(LPCSTR text);
 		_H3API_ VOID SetText(const H3String& text);
 		_H3API_ VOID SetAlignment(eTextAlignment align);
+		_H3API_ H3Font* GetFont() const;
 	};
 	_H3API_ASSERT_SIZE_(H3DlgText);
 
@@ -35653,6 +35654,10 @@ namespace h3
     _H3API_ VOID H3DlgText::SetAlignment(eTextAlignment align)
     {
         alignment = align;
+    }
+    _H3API_ H3Font* H3DlgText::GetFont() const
+    {
+		return font;
     }
 } /* namespace h3 */
 
