@@ -154,6 +154,7 @@ CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature 
 H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BattleCtor(HiHook *h, H3CreatureInfoDlg *dlg, H3CombatCreature *mon,
                                                           int x, int y, int z)
 {
+    return  THISCALL_5(H3CreatureInfoDlg*, h->GetDefaultFunc(), dlg, mon, x, y, z);
 
     y -= 30; // make dlg start higher cause of new size
 
@@ -166,9 +167,6 @@ H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BattleCtor(HiHook *h, H3CreatureI
     }
 
     x -= 30;
-
-    Era::SetAssocVarIntValue("gem_a", (int)y);
-    Era::ExecErmCmd("IF:L^%i(gem_a)^;");
 
     if (800 - x < DLG_WIDTH) // set battle dlg new xPos limit
         x = 800 - DLG_WIDTH;
@@ -202,7 +200,7 @@ BOOL CreatureDlgHandler::AlignItems()
     if (hint)
         hint->SetY(DLG_HEIGHT - hint->GetHeight() - 7); // set new hint yPos
 
-    H3DlgText *name = dlg->GetText(203); // set new description pos
+    H3DlgText *name = dlg->GetText(203); // set new name pos
     if (name)
         name->SetX((DLG_WIDTH - name->GetWidth()) / 2); // align center
 
@@ -244,14 +242,18 @@ BOOL CreatureDlgHandler::AlignItems()
         {
             ParseText(text);
         }
+
+        // description->Destroy(1);
+
+        // dlg;
+        //         description.deoh
     }
 
-    int x = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.x"));
-    int y = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.y"));
-    int width = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.width"));
-    int height = std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.height"));
-    eTextAlignment align =
-        (eTextAlignment)std::atoi(Era::tr("gem_plugin.combat_dlg.creature_info.description.alignment"));
+    int x = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.x");
+    int y = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.y");
+    int width = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.width");
+    int height = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.height");
+    eTextAlignment align = (eTextAlignment)EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.alignment");
     if (!x)
         x = 24;
     if (!y)
@@ -268,6 +270,12 @@ BOOL CreatureDlgHandler::AlignItems()
         description->SetX(x);           // set new description xPos
         description->SetY(y);           // set new description xPos
         description->SetAlignment(align);
+        description->HideDeactivate();
+        THISCALL_2(void, 0x5FF320, dlg, description); // detach
+        H3DlgScrollableText *scr = H3DlgScrollableText::Create(
+            description->GetH3String().String(), description->GetX(), description->GetY(), description->GetWidth(),
+            description->GetHeight(), description->GetFont()->GetName(), 1, false);
+        dlg->AddItem(scr);
     }
 
     H3DlgCustomButton *creatureCast = dlg->GetCustomButton(301); // set new cast button postion like for faerie dragons
@@ -277,15 +285,19 @@ BOOL CreatureDlgHandler::AlignItems()
         // creatureCast->SetY(309);
         if (!description && H3CreatureInformation::Get()[dlg->creatureId].description) // create description field
         {
-            description =
-                H3DlgText::Create(x, y, width, height, H3CreatureInformation::Get()[dlg->creatureId].description,
-                                  NH3Dlg::Text::TINY, 4, -1, align);
-            dlg->AddItem(description);
+            // description =
+            //     H3DlgText::Create(x, y, width, height, H3CreatureInformation::Get()[dlg->creatureId].description,
+            //                       NH3Dlg::Text::TINY, 4, -1, align);
+            // dlg->AddItem(description);
+            H3DlgScrollableText *scr =
+                H3DlgScrollableText::Create(H3CreatureInformation::Get()[dlg->creatureId].description, x, y, width,
+                                            height, NH3Dlg::Text::TINY, 4, false);
+            dlg->AddItem(scr);
         }
     }
 
     // JackSlater block - adds a panel for creature skills
-    if (description)
+    if (0 && description)
     {
         description->DeActivate();
 
@@ -556,6 +568,12 @@ H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_NotBattleCtor(HiHook *h, H3Creatu
     return result;
     //	return EXEC_DEFAULT;
 }
+_LHF_(H3CreatureInfoDlg_NotBattle_CreateDescription)
+{
+
+    c->return_address = 0x5F4488;
+    return NO_EXEC_DEFAULT;
+}
 
 H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BuyCtor(HiHook *h, H3CreatureInfoDlg *dlg, const eCreature monId, int x,
                                                        int y, const DWORD a5)
@@ -731,6 +749,7 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance *pi)
     pi->WriteHiHook(0x5F3EF0, THISCALL_, H3CreatureInfoDlg_NotBattleCtor); // BattleCreatureInfo
     pi->WriteHiHook(0x764B38, THISCALL_, H3CreatureInfoDlg_BattleCtor);    // BattleCreatureInfo
 
+    // pi->WriteLoHook(0x5F4445, H3CreatureInfoDlg_NotBattle_CreateDescription); // BattleCreatureInfo
     pi->WriteHiHook(0x5F4C00, THISCALL_, H3CreatureInfoDlg_Proc); // dlg proc
 
     H3DLL wndPlugin = h3::H3DLL::H3DLL("wog native dialogs.era");
@@ -804,7 +823,7 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance *pi)
 
     // non combat dlg
     pi->WriteDword(0x5F3F1B + 1, DLG_HEIGHT);              // set non battle dlg height
-    pi->WriteDword(0x5F3F20 + 1, DLG_WIDTH + 145);         // set non battle dlg width
+    pi->WriteDword(0x5F3F20 + 1, DLG_WIDTH);               // set non battle dlg width
     pi->WriteDword(0x5F406B + 1, DLG_HEIGHT);              // set non battle bg_pcx height
     pi->WriteDword(0x5F4070 + 1, DLG_WIDTH);               // set non battle bg_pcx width
     pi->WriteDword(0x5F44CE + 1, 336);                     // set hint pcx width
