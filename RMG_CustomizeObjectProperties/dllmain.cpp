@@ -6,7 +6,7 @@
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "2.0.0-alfa";
+constexpr const char *PLUGIN_VERSION = "2.0.1";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr const char *PLUGIN_DATA = __DATE__;
@@ -39,10 +39,10 @@ PatcherInstance *_PI = nullptr;
     b. ...
 10. Add saving/loading settings for users;
 11. Add default Creature banks support; Done
-12. Remove all extenders code from the plugin:
-    a. create API for ObjectExtender class
-    b. create unordered map<std::pair<int objectType, int objectSubtype>, std::shared_ptr<ObjectExtender>> of extenders
-    c. call events for all extenders from this plugin
+12. Remove all extenders code from the plugin: Done
+    a. create API for ObjectExtender class: Done
+    b. create unordered map<std::pair<int objectType, int objectSubtype>, std::shared_ptr<ObjectExtender>> of extenders:
+sth Done c. call events for all extenders from this plugin
 
 13. Create complex objects extender support:
     !!

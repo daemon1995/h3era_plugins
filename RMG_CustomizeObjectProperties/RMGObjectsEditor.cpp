@@ -1080,152 +1080,115 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
 {
 
     const UINT templateBaseZoneAmount = rmg->zoneGenerators.Size();
-    if (templateBaseZoneAmount)
+    if (!templateBaseZoneAmount)
+        return;
+
+    UINT totalZoneConnectionsAmount = 0;
+    const BOOL hasWater = rmg->waterAmount;
+    if (hasWater)
     {
-        UINT totalZoneConnectionsAmount = 0;
-        const BOOL hasWater = rmg->waterAmount;
-        if (hasWater)
-        {
-            // adding zone + totalZoneConnectionsAmount cause of water connections for the land zones creation
-            std::unordered_set<UINT> connectionZonesIdPairs;
+        // adding zone + totalZoneConnectionsAmount cause of water connections for the land zones creation
+        std::unordered_set<UINT> connectionZonesIdPairs;
 
-            for (const auto &zoneGen : rmg->zoneGenerators)
+        for (const auto &zoneGen : rmg->zoneGenerators)
+        {
+            for (const auto &zoneConnection : zoneGen->zoneInfo->connections)
             {
-                for (const auto &zoneConnection : zoneGen->zoneInfo->connections)
+                const H3Position position(zoneConnection.zone->id, zoneGen->zoneInfo->id, 0);
+                if (connectionZonesIdPairs.insert(position.Mixed()).second)
                 {
-                    const H3Position position(zoneConnection.zone->id, zoneGen->zoneInfo->id, 0);
-                    if (connectionZonesIdPairs.insert(position.Mixed()).second)
-                    {
-                        totalZoneConnectionsAmount++;
-                    }
+                    totalZoneConnectionsAmount++;
                 }
             }
         }
-
-        const UINT zonesAmount = templateBaseZoneAmount + totalZoneConnectionsAmount;
-
-        maxObjectSubtype = 0;
-        // create max subtype value for all object gens
-        INT16 maxSubtypes[H3_MAX_OBJECTS] = {};
-        // and init as -1 like if there is no objects
-        // memset(maxSubtypes, -1, sizeof(maxSubtypes));
-
-        for (auto *p_ObjGen : rmg->objectGenerators)
-        {
-            // each object gen of that type has higher subtype
-            if (p_ObjGen->subtype >= maxSubtypes[p_ObjGen->type])
-            {
-                // assume that object t/s must be max limit array m_size
-                maxSubtypes[p_ObjGen->type] = p_ObjGen->subtype;
-            }
-            if (p_ObjGen->subtype >= maxObjectSubtype)
-            {
-                maxObjectSubtype = p_ObjGen->subtype + 1;
-            }
-        }
-
-        // create counters and limits
-        eachZoneGeneratedBySubtype = create3DArray(zonesAmount, H3_MAX_OBJECTS, maxObjectSubtype);
-        mapGeneratedBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
-        zoneLimitsBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
-        mapLimitsBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
-
-        const int arraylength = H3_MAX_OBJECTS * maxObjectSubtype * sizeof(int);
-
-        libc::memset(eachZoneGeneratedBySubtype, 0, zonesAmount * arraylength);
-        libc::memset(mapGeneratedBySubtype, 0, arraylength);
-        libc::memset(zoneLimitsBySubtype, 0, arraylength);
-        libc::memset(mapLimitsBySubtype, 0, arraylength);
-
-        // check if we have full random
-        const BOOL randomizeProperties = rmgdlg::RMG_SettingsDlg::completelyRandomIsPressed;
-
-        // affects only data from SettingsDlg
-        if (randomizeProperties)
-        {
-            // and start to make dirt
-            auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
-
-            const size_t vecsNum = allDlgObjects.size();
-            storedCurrentObjects = new RMGObjectInfo *[vecsNum]();
-
-            for (size_t i = 0; i < vecsNum; i++)
-            {
-                const size_t objNum = allDlgObjects[i]->size();
-                storedCurrentObjects[i] = new RMGObjectInfo[objNum]();
-                for (size_t objId = 0; objId < objNum; objId++)
-                {
-                    const auto &obj = (*allDlgObjects[i])[objId];
-                    const int type = obj.attributes->type;
-                    const int subtype = obj.attributes->subtype;
-                    auto &currentObject = userRmgInfoSet[type][subtype];
-                    storedCurrentObjects[i][objId] = currentObject;
-                    currentObject.SetRandom();
-                    currentObject.MakeReal();
-                    ;
-                    if (1)
-                    {
-                        int a = 1;
-                        currentObject.Clamp();
-                    }
-                }
-            }
-        }
-
-        const int maxSubtype = maxObjectSubtype;
-        LPCSTR iniFile = "Runtime/Rmg/Debug.ini";
-        LPCSTR section = "MAIN";
-
-        if (0)
-        {
-
-            Era::ClearIniCache(iniFile);
-
-            Era::WriteStrToIni("seed", std::to_string(rmg->randomSeed).c_str(), section, iniFile);
-            Era::WriteStrToIni("kek?", rand() & 1 ? "kek" : "no kek", section, iniFile);
-
-            section = "Assign";
-            // assign info from userData
-            Era::WriteStrToIni("initLimits", std::to_string(false).c_str(), section, iniFile);
-            Era::WriteStrToIni("maxObjectSubtype", std::to_string(maxSubtype).c_str(), section, iniFile);
-            Era::WriteStrToIni("arraylength", std::to_string(arraylength).c_str(), section, iniFile);
-            Era::WriteStrToIni("objectGenerators::Size", std::to_string(rmg->objectGenerators.Size()).c_str(), section,
-                               iniFile);
-            Era::SaveIni(iniFile);
-        }
-
-        for (const auto &vec : userRmgInfoSet)
-        {
-            for (const auto &info : vec)
-            {
-
-                try
-                {
-                    const int index2 = index2D(info.type, info.subtype, maxSubtype);
-                    zoneLimitsBySubtype[index2] = info.zoneLimit;
-                    mapLimitsBySubtype[index2] = info.mapLimit;
-                }
-                catch (const std::exception &)
-                {
-                    Era::WriteStrToIni("lastItemTypeToInit", std::to_string(info.type).c_str(), section, iniFile);
-                    Era::WriteStrToIni("lastItemTypeToInit", std::to_string(info.type).c_str(), section, iniFile);
-
-                    section = "GENERATORS";
-                    int counter = 0;
-                    for (auto *p_ObjGen : rmg->objectGenerators)
-                    {
-                        // each object gen of that type has hihgher subptype
-                        Era::WriteStrToIni("type", std::to_string(p_ObjGen->type).c_str(), section, iniFile);
-                        Era::WriteStrToIni("subtype", std::to_string(p_ObjGen->subtype).c_str(), section, iniFile);
-                    }
-
-                    Era::SaveIni(iniFile);
-                }
-            }
-        }
-
-        isInited = true;
     }
+
+    const UINT zonesAmount = templateBaseZoneAmount + totalZoneConnectionsAmount;
+
+    maxObjectSubtype = 0;
+    // create max subtype value for all object gens
+    INT16 maxSubtypes[H3_MAX_OBJECTS] = {};
+    // and init as -1 like if there is no objects
+    // memset(maxSubtypes, -1, sizeof(maxSubtypes));
+
+    for (auto *p_ObjGen : rmg->objectGenerators)
+    {
+        const int objSubtype = p_ObjGen->subtype;
+        if (objSubtype < 0)
+            continue;
+        const int objType = p_ObjGen->type;
+        // each object gen of that type has higher subtype
+        if (objSubtype >= maxSubtypes[objType])
+            // assume that object t/s must be max limit array m_size
+            maxSubtypes[objType] = objSubtype;
+
+        if (objSubtype >= maxObjectSubtype)
+            maxObjectSubtype = objSubtype + 1;
+    }
+
+    // create counters and limits
+    eachZoneGeneratedBySubtype = create3DArray(zonesAmount, H3_MAX_OBJECTS, maxObjectSubtype);
+    mapGeneratedBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
+    zoneLimitsBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
+    mapLimitsBySubtype = create2DArray(H3_MAX_OBJECTS, maxObjectSubtype);
+
+    const int arraylength = H3_MAX_OBJECTS * maxObjectSubtype * sizeof(int);
+
+    libc::memset(eachZoneGeneratedBySubtype, 0, zonesAmount * arraylength);
+    libc::memset(mapGeneratedBySubtype, 0, arraylength);
+    libc::memset(zoneLimitsBySubtype, 0, arraylength);
+    libc::memset(mapLimitsBySubtype, 0, arraylength);
+
+    // check if we have full random
+    const BOOL randomizeProperties = rmgdlg::RMG_SettingsDlg::completelyRandomIsPressed;
+
+    // affects only data from SettingsDlg
+    if (randomizeProperties)
+    {
+        // and start to make dirt
+        auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
+
+        const size_t vecsNum = allDlgObjects.size();
+        storedCurrentObjects = new RMGObjectInfo *[vecsNum]();
+
+        for (size_t i = 0; i < vecsNum; i++)
+        {
+            const size_t objNum = allDlgObjects[i]->size();
+            storedCurrentObjects[i] = new RMGObjectInfo[objNum]();
+            for (size_t objId = 0; objId < objNum; objId++)
+            {
+                const auto &obj = (*allDlgObjects[i])[objId];
+                const int type = obj.attributes->type;
+                const int subtype = obj.attributes->subtype;
+                auto &currentObject = userRmgInfoSet[type][subtype];
+                storedCurrentObjects[i][objId] = currentObject;
+                currentObject.SetRandom();
+                currentObject.MakeReal();
+
+                currentObject.Clamp();
+            }
+        }
+    }
+
+    const int maxSubtype = maxObjectSubtype;
+    int index = 0;
+    int indexB = 0;
+    for (const auto &vec : userRmgInfoSet)
+    {
+        for (const auto &info : vec)
+        {
+
+            const int objSubtype = info.subtype;
+            if (objSubtype < 0)
+                continue;
+
+            const int index2 = index2D(info.type, objSubtype, maxSubtype);
+            zoneLimitsBySubtype[index2] = info.zoneLimit;
+            mapLimitsBySubtype[index2] = info.mapLimit;
+        }
+    }
+
+    isInited = true;
 }
 
 BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, const int zoneId) const
