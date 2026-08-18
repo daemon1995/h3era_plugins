@@ -66,7 +66,7 @@ class SpellMarketExtender : public extender::ObjectExtender
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
     virtual BOOL InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount, int subtypeCount) const noexcept override;
-    
+
     virtual BOOL InitNewWeekMapItemSetup(H3MapItem *mapItem) const noexcept override;
     virtual BOOL VisitMapItem(H3Hero *currentHero, H3MapItem *mapItem, const H3Position pos,
                               const BOOL isHuman) const noexcept override final;

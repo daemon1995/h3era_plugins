@@ -7,7 +7,7 @@ SpellMarketExtender::SpellMarketExtender()
     : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.SpellMarketExtender.daemon_n"))
 {
     using namespace extender;
-   // objectSubtypesInfo += UniqueObjectType{HOTA_OBJECT_TYPE, SPELL_MARKET_OBJECT_SUBTYPE};
+    // objectSubtypesInfo += UniqueObjectType{HOTA_OBJECT_TYPE, SPELL_MARKET_OBJECT_SUBTYPE};
     CreatePatches();
 }
 

@@ -242,7 +242,6 @@ SoundManager::eLoopSooundId SoundManager::GetLoopSoundId(const H3MapItem *mapIte
     return eLoopSooundId::UNDEFINED;
 }
 
-
 void SoundManager::Init(const std::vector<ObjectSound> &additionalLoopSounds)
 {
     soundManager.CreateNewLoopSoundsTable(additionalLoopSounds);

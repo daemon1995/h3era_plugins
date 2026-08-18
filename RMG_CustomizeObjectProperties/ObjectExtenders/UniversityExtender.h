@@ -27,11 +27,11 @@ class UniversityExtender : public extender::ObjectExtender
   protected:
     virtual void CreatePatches() override;
 
-
     virtual void AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) override final;
     virtual BOOL SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *currentHero, const int interactPlayerId,
                                        const BOOL isRightClick) const noexcept override final;
-    virtual BOOL RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes& attributes, H3String&defaltText) noexcept override final;
+    virtual BOOL RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes &attributes,
+                                             H3String &defaltText) noexcept override final;
 
   private:
     static void __stdcall Game_SetupUniversity(HiHook *h, H3Main *game, const H3MapItem *university);
