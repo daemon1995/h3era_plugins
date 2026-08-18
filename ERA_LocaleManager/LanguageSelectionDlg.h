@@ -1,7 +1,6 @@
 #pragma once
 #include "H3DlgTextPcxLocale.h"
 
-
 class LanguageSelectionDlg : public H3Dlg
 {
 

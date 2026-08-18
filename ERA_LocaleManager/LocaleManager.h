@@ -11,7 +11,6 @@ constexpr LPCSTR alternative = "era.locale.name.%s";
 class LocaleManager
 {
   public:
-
     struct format
     {
         static constexpr LPCSTR name = "era.locale.list.%s.name";
@@ -214,7 +213,7 @@ class LocaleManager
         Arabic,            // ur (Urdu) -> Arabic
         Turkish,           // uz (Uzbek) -> Turkish (или 1251, если используется кириллица)
         ANSI,              // ve (Venda) -> Latin 1
-        Vietnamese,        // vi (Vietnamese) -> Vietnamese
+        Vietnamese,        // vi (Vietnamese) -> Vietnamese 1252?? thouht it is 1258
         ANSI,              // vo (Volapük) -> Latin 1
         ANSI,              // wa (Walloon) -> Latin 1
         ANSI,              // wo (Wolof) -> Latin 1
@@ -230,7 +229,6 @@ class LocaleManager
     static constexpr LPCSTR INI_LANGUAGE_KEY_NAME = "Language";
     static constexpr LPCSTR INI_CODEPAGE_KEY_NAME = "CodePage";
     static constexpr LPCSTR INI_SECTION_NAME = "Era";
-
 
   private:
     const Locale *m_current = nullptr; // Locale;
@@ -255,7 +253,6 @@ class LocaleManager
     const Locale *GetSelected() const noexcept;
 
   public:
-
     static std::string ReadLocaleFromIni();
     // const Locale* DefaultLocale() const noexcept;
 
