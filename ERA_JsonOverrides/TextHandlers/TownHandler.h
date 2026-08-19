@@ -119,10 +119,10 @@ class TownHandler
         UINT stringId = townTypeId * SPEC_BUILDINGS_PER_TOWN + 10; // silo has weird offset, so we handle it separately
 
         libc::sprintf(h3_TextBuffer, formats::BUILDING_NAME, jsonIndex, eBuildings::RESOURCE_SILO);
-        EraJS::ReadSingleValue<LPCSTR>(townSpecBuildingDescriptions[stringId], h3_TextBuffer, readSuccess);
+        EraJS::ReadSingleValue<LPCSTR>(townSpecBuildingNames[stringId], h3_TextBuffer, readSuccess);
 
         libc::sprintf(h3_TextBuffer, formats::BUILDING_DESCRIPTION, jsonIndex, eBuildings::RESOURCE_SILO);
-        EraJS::ReadSingleValue<LPCSTR>(townSpecBuildingNames[stringId], h3_TextBuffer, readSuccess);
+        EraJS::ReadSingleValue<LPCSTR>(townSpecBuildingDescriptions[stringId], h3_TextBuffer, readSuccess);
 
         // blacksmith is a special case, and it stored int the bldgneut.txt
         // libc::sprintf(h3_TextBuffer, formats::BUILDING_NAME, jsonIndex, eBuildings::BLACKSMITH);
