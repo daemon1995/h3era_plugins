@@ -16,10 +16,14 @@ _ERH_(OnAfterWog)
 
 _LHF_(HooksInit)
 {
-    TeleportSelector dlg;
-    dlg.Start();
-    TeleportDlg teleportDlg;
-    teleportDlg.Start();
+    {
+        TeleportSelector dlg;
+        dlg.Start();
+    }
+    {
+        TeleportDlg teleportDlg;
+        teleportDlg.Start();
+    }
 
     return EXEC_DEFAULT;
 }
