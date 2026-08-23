@@ -1,7 +1,6 @@
 #pragma once
 
 #include "framework.h"
-#include <string>
 
 struct TTFontOptions
 {
@@ -17,8 +16,8 @@ struct TTFontOptions
     // HoMM3 classic text is normally a single-byte Windows-1251 string.
     // Set to CP_ACP for the active Windows ANSI code page when needed.
     UINT codePage = 1251;
-    // Coverage threshold used when converting stb_truetype grayscale to the
-    // monochrome mask required by the original H3 renderer.
+    // Coverage threshold used when converting the GDI grayscale outline to
+    // the monochrome mask required by the original H3 renderer.
     unsigned char coverageThreshold = 128;
 };
 
@@ -36,14 +35,6 @@ h3::H3Font* CreateH3FontFromWindowsName(const char* windowsFontName,
                                         const char* fontName,
                                         const TTFontOptions& options = TTFontOptions(),
                                         bool addToResourceManager = false);
-
-bool DrawCustomH3Glyph(h3::H3Font* font, unsigned int character,
-                       h3::H3LoadedPcx16* drawBuffer, int x, int y, int color);
-
-// Returns one justified text line. Extra ASCII spaces are distributed between
-// existing words until the line reaches targetWidth pixels (or as close as
-// possible using whole game-space glyphs).
-std::string JustifyH3TextLine(const h3::H3Font* font, const char* text, int targetWidth);
 
 extern "C"
 {

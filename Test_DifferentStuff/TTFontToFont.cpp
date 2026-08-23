@@ -2,11 +2,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cwctype>
 #include <cstring>
 #include <fstream>
-#include <mutex>
 #include <string>
-#include <utility>
 #include <vector>
 #include <windows.h>
 
@@ -32,15 +31,6 @@ int GameByteToUnicode(int value, UINT codePage)
 
     return 0;
 }
-
-struct CustomFontData
-{
-    h3::H3Font *font;
-    std::vector<unsigned char> grayscale;
-};
-
-std::vector<CustomFontData> customFonts;
-std::mutex customFontsMutex;
 
 #pragma pack(push, 1)
 // Bytes copied by Fnt_Create from buffer to H3Font + 0x1C.
@@ -106,16 +96,10 @@ std::string TrimStyleSuffix(std::string value)
     return value;
 }
 
-bool ResolveInstalledFont(const char *family, const TTFontOptions &options, std::string &result,
-                          bool *realBold = nullptr, bool *realItalic = nullptr)
+bool ResolveInstalledFont(const char *family, const TTFontOptions &options, std::string &result)
 {
     if (!family || !*family)
         return false;
-
-    if (realBold)
-        *realBold = false;
-    if (realItalic)
-        *realItalic = false;
 
     const std::string wanted = Lower(TrimStyleSuffix(family));
 
@@ -199,13 +183,6 @@ bool ResolveInstalledFont(const char *family, const TTFontOptions &options, std:
         return false;
 
     result = best.path;
-
-    if (realBold)
-        *realBold = options.bold && best.bold;
-
-    if (realItalic)
-        *realItalic = options.italic && best.italic;
-
     return true;
 }
 
@@ -287,12 +264,19 @@ bool ReadBigEndian32(const std::vector<unsigned char> &data, size_t offset, unsi
     return true;
 }
 
-// Read the family name from a normal TrueType/OpenType font.
-// We only need the family name here so GDI can select the font that was
-// temporarily installed with AddFontMemResourceEx.
-bool ReadTtfFamilyName(const std::vector<unsigned char> &data, std::wstring &familyName)
+struct TtfFaceInfo
 {
-    familyName.clear();
+    std::wstring familyName;
+    int weight = FW_NORMAL;
+    bool italic = false;
+};
+
+// Read both family and intrinsic style. Asking GDI only for the family with
+// FW_NORMAL/non-italic would turn a file such as Georgia Italic back into the
+// regular face after AddFontMemResourceEx.
+bool ReadTtfFaceInfo(const std::vector<unsigned char> &data, TtfFaceInfo &face)
+{
+    face = TtfFaceInfo();
 
     if (data.size() < 12)
         return false;
@@ -303,6 +287,8 @@ bool ReadTtfFamilyName(const std::vector<unsigned char> &data, std::wstring &fam
 
     size_t nameTableOffset = 0;
     size_t nameTableLength = 0;
+    size_t os2TableOffset = 0;
+    size_t os2TableLength = 0;
 
     for (unsigned short i = 0; i < numTables; ++i)
     {
@@ -325,7 +311,11 @@ bool ReadTtfFamilyName(const std::vector<unsigned char> &data, std::wstring &fam
         {
             nameTableOffset = offset;
             nameTableLength = length;
-            break;
+        }
+        else if (std::memcmp(tag, "OS/2", 4) == 0)
+        {
+            os2TableOffset = offset;
+            os2TableLength = length;
         }
     }
 
@@ -346,11 +336,10 @@ bool ReadTtfFamilyName(const std::vector<unsigned char> &data, std::wstring &fam
 
     const size_t records = table + 6;
 
-    // Prefer Unicode family names (platform 3), then Unicode platform 0.
-    // Name ID 1 is the family name.  Name ID 16 is the typographic family
-    // and is useful for fonts whose family/style split is stored there.
-    int bestScore = -1;
-    std::wstring bestName;
+    int bestFamilyScore = -1;
+    int bestStyleScore = -1;
+    std::wstring bestFamily;
+    std::wstring bestStyle;
 
     for (unsigned short i = 0; i < count; ++i)
     {
@@ -362,20 +351,19 @@ bool ReadTtfFamilyName(const std::vector<unsigned char> &data, std::wstring &fam
         }
 
         unsigned short platform = 0;
-        unsigned short encoding = 0;
         unsigned short language = 0;
         unsigned short nameId = 0;
         unsigned short length = 0;
         unsigned short offset = 0;
 
-        if (!ReadBigEndian16(data, record + 0, platform) || !ReadBigEndian16(data, record + 2, encoding) ||
-            !ReadBigEndian16(data, record + 4, language) || !ReadBigEndian16(data, record + 6, nameId) ||
+        if (!ReadBigEndian16(data, record + 0, platform) || !ReadBigEndian16(data, record + 4, language) ||
+            !ReadBigEndian16(data, record + 6, nameId) ||
             !ReadBigEndian16(data, record + 8, length) || !ReadBigEndian16(data, record + 10, offset))
         {
             return false;
         }
 
-        if (nameId != 1 && nameId != 16)
+        if (nameId != 1 && nameId != 2 && nameId != 16 && nameId != 17)
             continue;
 
         const size_t stringStart = table + stringOffset + offset;
@@ -421,32 +409,59 @@ bool ReadTtfFamilyName(const std::vector<unsigned char> &data, std::wstring &fam
         if (candidate.empty())
             continue;
 
-        int score = 0;
-
-        if (nameId == 1)
-            score += 10;
-        else
-            score += 5;
-
-        if (platform == 3)
-            score += 4;
-        else if (platform == 0)
-            score += 2;
+        int score = (platform == 3) ? 4 : 2;
 
         if (language == 0x0409 || language == 0)
             score += 2;
 
-        if (score > bestScore)
+        if (nameId == 1 || nameId == 16)
         {
-            bestScore = score;
-            bestName = candidate;
+            score += (nameId == 1) ? 10 : 8;
+            if (score > bestFamilyScore)
+            {
+                bestFamilyScore = score;
+                bestFamily = candidate;
+            }
+        }
+        else
+        {
+            score += (nameId == 2) ? 10 : 8;
+            if (score > bestStyleScore)
+            {
+                bestStyleScore = score;
+                bestStyle = candidate;
+            }
         }
     }
 
-    if (bestScore < 0)
+    if (bestFamilyScore < 0)
         return false;
 
-    familyName = bestName;
+    face.familyName = bestFamily;
+
+    if (os2TableOffset && os2TableLength >= 64 && os2TableOffset + os2TableLength <= data.size())
+    {
+        unsigned short weight = 0;
+        unsigned short selection = 0;
+        if (ReadBigEndian16(data, os2TableOffset + 4, weight) && weight >= 1 && weight <= 1000)
+            face.weight = weight;
+        if (ReadBigEndian16(data, os2TableOffset + 62, selection))
+        {
+            if (selection & (1u << 5))
+                face.weight = std::max(face.weight, static_cast<int>(FW_BOLD));
+            face.italic = (selection & 1u) != 0;
+        }
+    }
+
+    std::transform(bestStyle.begin(), bestStyle.end(), bestStyle.begin(),
+                   [](wchar_t c) { return static_cast<wchar_t>(std::towlower(c)); });
+    if (bestStyle.find(L"italic") != std::wstring::npos || bestStyle.find(L"oblique") != std::wstring::npos ||
+        bestStyle.find(L"slanted") != std::wstring::npos)
+        face.italic = true;
+    if (bestStyle.find(L"bold") != std::wstring::npos || bestStyle.find(L"demi") != std::wstring::npos ||
+        bestStyle.find(L"semibold") != std::wstring::npos)
+        face.weight = std::max(face.weight, static_cast<int>(FW_BOLD));
+
     return true;
 }
 
@@ -494,8 +509,8 @@ bool CreateGdiFontContext(const std::vector<unsigned char> &file, const TTFontOp
         return false;
     }
 
-    std::wstring familyName;
-    if (!ReadTtfFamilyName(file, familyName))
+    TtfFaceInfo face;
+    if (!ReadTtfFaceInfo(file, face))
     {
         DestroyGdiFontContext(context);
         return false;
@@ -504,16 +519,19 @@ bool CreateGdiFontContext(const std::vector<unsigned char> &file, const TTFontOp
     LOGFONTW lf = {};
     lf.lfHeight = -options.pixelHeight;
 
-    wcsncpy_s(lf.lfFaceName, LF_FACESIZE, familyName.c_str(), _TRUNCATE);
+    wcsncpy_s(lf.lfFaceName, LF_FACESIZE, face.familyName.c_str(), _TRUNCATE);
     lf.lfWidth = 0;
     lf.lfEscapement = 0;
     lf.lfOrientation = 0;
 
-    // GDI uses a 0..1000 weight range. 700 is a normal "Bold".
-    lf.lfWeight = options.bold ? FW_BOLD : FW_NORMAL;
-    lf.lfItalic = options.italic ? TRUE : FALSE;
-    lf.lfUnderline = options.underline ? TRUE : FALSE;
-    lf.lfStrikeOut = options.strikeOut ? TRUE : FALSE;
+    // Preserve the style encoded in the selected file and apply requested
+    // synthetic styling only when it asks for something stronger.
+    lf.lfWeight = options.bold ? std::max(face.weight, static_cast<int>(FW_BOLD)) : face.weight;
+    lf.lfItalic = (options.italic || face.italic) ? TRUE : FALSE;
+    // GetGlyphOutlineW returns glyph outlines only; decorations are added to
+    // the generated H3 bitmap below.
+    lf.lfUnderline = FALSE;
+    lf.lfStrikeOut = FALSE;
 
     lf.lfCharSet = DEFAULT_CHARSET;
     lf.lfOutPrecision = OUT_TT_PRECIS;
@@ -557,35 +575,7 @@ unsigned char GdiGray8ToCoverage(unsigned char value)
     return static_cast<unsigned char>((static_cast<unsigned int>(value) * 255u + 32u) / 64u);
 }
 
-// Blend RGB565 foreground over RGB565 background using 8-bit coverage.
-WORD Blend565(WORD background, WORD foreground, unsigned char coverage)
-{
-    if (coverage == 0)
-        return background;
-
-    if (coverage == 255)
-        return foreground;
-
-    const unsigned int br = (background >> 11) & 0x1F;
-    const unsigned int bg = (background >> 5) & 0x3F;
-    const unsigned int bb = background & 0x1F;
-
-    const unsigned int fr = (foreground >> 11) & 0x1F;
-    const unsigned int fg = (foreground >> 5) & 0x3F;
-    const unsigned int fb = foreground & 0x1F;
-
-    const unsigned int inv = 255u - coverage;
-
-    const unsigned int r = (br * inv + fr * coverage + 127u) / 255u;
-
-    const unsigned int g = (bg * inv + fg * coverage + 127u) / 255u;
-
-    const unsigned int b = (bb * inv + fb * coverage + 127u) / 255u;
-
-    return static_cast<WORD>((r << 11) | (g << 5) | b);
-}
-
-bool GetGdiGlyph(HDC dc, wchar_t character, GLYPHMETRICS &metrics, std::vector<unsigned char> &coverage, int &pitch)
+bool GetGdiGlyph(HDC dc, wchar_t character, GLYPHMETRICS &metrics, std::vector<unsigned char> &coverage)
 {
     std::memset(&metrics, 0, sizeof(metrics));
 
@@ -605,12 +595,11 @@ bool GetGdiGlyph(HDC dc, wchar_t character, GLYPHMETRICS &metrics, std::vector<u
     if (width <= 0 || height <= 0)
     {
         coverage.clear();
-        pitch = 0;
         return true;
     }
 
     // GDI aligns every grayscale bitmap scanline to DWORD.
-    pitch = (width + 3) & ~3;
+    const int pitch = (width + 3) & ~3;
 
     std::vector<unsigned char> raw(static_cast<size_t>(pitch) * height);
 
@@ -635,176 +624,7 @@ bool GetGdiGlyph(HDC dc, wchar_t character, GLYPHMETRICS &metrics, std::vector<u
     return true;
 }
 
-void ApplyDecoration(std::vector<unsigned char> &coverage, int width, int height, bool underline, bool strikeOut)
-{
-    if (width <= 0 || height <= 0)
-        return;
-
-    if (underline)
-    {
-        const int thickness = std::max(1, height >= 8 ? 1 : 1);
-
-        for (int y = height - thickness; y < height; ++y)
-        {
-            unsigned char *row = coverage.data() + static_cast<size_t>(y) * width;
-
-            std::memset(row, 255, static_cast<size_t>(width));
-        }
-    }
-
-    if (strikeOut)
-    {
-        const int y = height / 2;
-
-        unsigned char *row = coverage.data() + static_cast<size_t>(y) * width;
-
-        std::memset(row, 255, static_cast<size_t>(width));
-    }
-}
-
 } // namespace
-
-std::string JustifyH3TextLine(const h3::H3Font *font, const char *text, int targetWidth)
-{
-    if (!font || !text || targetWidth <= 0)
-        return text ? std::string(text) : std::string();
-
-    const auto glyphWidth = [font](unsigned char character) {
-        const h3::H3Font::FontSpacing &spacing = font->width[character];
-
-        return spacing.leftMargin + spacing.span + spacing.rightMargin;
-    };
-
-    int currentWidth = 0;
-    int spaceCount = 0;
-
-    for (const unsigned char *p = reinterpret_cast<const unsigned char *>(text); *p; ++p)
-    {
-        currentWidth += glyphWidth(*p);
-
-        if (*p == ' ')
-            ++spaceCount;
-    }
-
-    if (spaceCount == 0 || currentWidth >= targetWidth)
-        return std::string(text);
-
-    const int oneSpaceWidth = glyphWidth(' ');
-
-    if (oneSpaceWidth <= 0)
-        return std::string(text);
-
-    const int extraSpaces = (targetWidth - currentWidth) / oneSpaceWidth;
-
-    if (extraSpaces <= 0)
-        return std::string(text);
-
-    const int spacesPerGap = extraSpaces / spaceCount;
-
-    const int remainder = extraSpaces % spaceCount;
-
-    std::string result;
-    result.reserve(std::strlen(text) + static_cast<size_t>(extraSpaces));
-
-    int gap = 0;
-
-    for (const unsigned char *p = reinterpret_cast<const unsigned char *>(text); *p; ++p)
-    {
-        result.push_back(static_cast<char>(*p));
-
-        if (*p == ' ')
-        {
-            const int add = spacesPerGap + (gap < remainder ? 1 : 0);
-
-            result.append(static_cast<size_t>(add), ' ');
-
-            ++gap;
-        }
-    }
-
-    return result;
-}
-
-bool DrawCustomH3Glyph(h3::H3Font *font, unsigned int character, h3::H3LoadedPcx16 *drawBuffer, int x, int y, int color)
-{
-    if (!font || !drawBuffer || character > 0xFF)
-        return false;
-
-    std::lock_guard<std::mutex> lock(customFontsMutex);
-
-    const CustomFontData *data = nullptr;
-
-    for (const CustomFontData &candidate : customFonts)
-    {
-        if (candidate.font == font)
-        {
-            data = &candidate;
-            break;
-        }
-    }
-
-    if (!data)
-        return false;
-
-    const int span = font->width[character].span;
-
-    const int height = static_cast<unsigned char>(font->height);
-
-    if (span <= 0 || height <= 0)
-        return true;
-
-    const size_t glyphSize = static_cast<size_t>(span) * height;
-
-    const unsigned int glyphOffset = font->bufferOffsets[character];
-
-    if (glyphOffset > data->grayscale.size() || glyphSize > data->grayscale.size() - glyphOffset)
-    {
-        return false;
-    }
-
-    const unsigned char *source = data->grayscale.data() + glyphOffset;
-
-    const WORD requestedColor = font->palette.color[color];
-
-    const int startX = x + font->width[character].leftMargin;
-
-    const int bufferWidth = drawBuffer->scanlineSize / 2;
-
-    for (int row = 0; row < height; ++row)
-    {
-        const int dstY = y + row;
-
-        if (dstY < 0)
-        {
-            source += span;
-            continue;
-        }
-
-        const int firstColumn = std::max(0, -startX);
-
-        const int lastColumn = std::min(span, bufferWidth - startX);
-
-        if (firstColumn < lastColumn)
-        {
-            WORD *destination = reinterpret_cast<WORD *>(
-                drawBuffer->buffer + static_cast<size_t>(dstY) * drawBuffer->scanlineSize + 2 * (startX + firstColumn));
-
-            const unsigned char *coverage = source + firstColumn;
-
-            for (int column = firstColumn; column < lastColumn; ++column, ++coverage, ++destination)
-            {
-                if (*coverage)
-                {
-                    *destination = Blend565(*destination, requestedColor, *coverage);
-                }
-            }
-        }
-
-        source += span;
-    }
-
-    return true;
-}
 
 h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, const TTFontOptions &options,
                                 bool addToResourceManager)
@@ -857,8 +677,7 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
 
     header.last = static_cast<unsigned char>(options.lastCharacter);
 
-    // Native H3 bitmap remains binary.  The original renderer expects
-    // 0/0xFF, while DrawCustomH3Glyph uses the separate grayscale buffer.
+    // Native H3 bitmap is binary: the original renderer expects 0/0xFF.
     header.depth = 1;
 
     header.xSpacing = static_cast<signed char>(std::max(-128, std::min(127, options.xSpacing)));
@@ -868,9 +687,8 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
     header.height = static_cast<unsigned char>(fontHeight);
 
     std::vector<unsigned char> bitmap;
-    std::vector<unsigned char> grayscale;
 
-    const DWORD codePage = Era::GetCodePage();
+    const DWORD codePage = options.codePage ? options.codePage : Era::GetCodePage();
 
     for (int ch = 0; ch < 256; ++ch)
     {
@@ -906,16 +724,15 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
 
         GLYPHMETRICS metrics = {};
         std::vector<unsigned char> glyphCoverage;
-        int glyphPitch = 0;
 
-        bool glyphOk = GetGdiGlyph(gdi.dc, wideCharacter, metrics, glyphCoverage, glyphPitch);
+        bool glyphOk = GetGdiGlyph(gdi.dc, wideCharacter, metrics, glyphCoverage);
 
         if (!glyphOk && !isSpace && !isNbsp && wideCharacter != L'?')
         {
             // Missing glyph: use the font's actual question-mark glyph.
             wideCharacter = L'?';
 
-            glyphOk = GetGdiGlyph(gdi.dc, wideCharacter, metrics, glyphCoverage, glyphPitch);
+            glyphOk = GetGdiGlyph(gdi.dc, wideCharacter, metrics, glyphCoverage);
         }
 
         if (!glyphOk)
@@ -931,15 +748,9 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
             glyphCoverage.clear();
         }
 
-        // GetGlyphOutlineW returns an empty black box for SPACE/NBSP. Keep a
-        // one-pixel empty storage cell so H3's bitmap offset remains valid,
-        // while all actual advance comes from gmCellIncX.
-        const int glyphWidth = (isSpace || isNbsp) ? 1 : std::max(1, static_cast<int>(metrics.gmBlackBoxX));
-
+        const int blackBoxWidth = static_cast<int>(metrics.gmBlackBoxX);
         const int glyphHeight = static_cast<int>(metrics.gmBlackBoxY);
-
         const int glyphOriginX = (isSpace || isNbsp) ? 0 : static_cast<int>(metrics.gmptGlyphOrigin.x);
-
         const int glyphOriginY = (isSpace || isNbsp) ? 0 : static_cast<int>(metrics.gmptGlyphOrigin.y);
 
         int advance = static_cast<int>(metrics.gmCellIncX);
@@ -958,6 +769,13 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
         if (advance <= 0)
             advance = std::max(1, static_cast<int>(textMetrics.tmAveCharWidth));
 
+        // Store the whole advance cell plus any italic/negative overhang.
+        // This preserves total H3 width while allowing underline and
+        // strikeout to pass through spaces and side bearings.
+        const int cellLeft = std::min(0, glyphOriginX);
+        const int cellRight = std::max(advance, glyphOriginX + blackBoxWidth);
+        const int glyphWidth = std::max(1, cellRight - cellLeft);
+
         // GDI's glyph origin is relative to the baseline.
         // H3's bitmap starts at the top of the character cell.
         const int destinationY = baseline - glyphOriginY;
@@ -968,27 +786,16 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
 
         bitmap.resize(glyphOffset + static_cast<size_t>(glyphWidth) * fontHeight, 0);
 
-        grayscale.resize(glyphOffset + static_cast<size_t>(glyphWidth) * fontHeight, 0);
-
-        header.width[ch].leftMargin = glyphOriginX;
+        header.width[ch].leftMargin = cellLeft;
 
         header.width[ch].span = glyphWidth;
 
-        header.width[ch].rightMargin = advance - glyphWidth - glyphOriginX;
+        header.width[ch].rightMargin = advance - cellRight;
 
-        if ((isSpace || isNbsp) || glyphHeight <= 0 || glyphCoverage.empty())
-        {
-            // Deliberately leave the bitmap/grayscale storage zero-filled.
-            // The character advances normally, but no pixel is drawn.
-            continue;
-        }
+        const int sourceWidth = blackBoxWidth;
+        const int destinationX = glyphOriginX - cellLeft;
 
-        ApplyDecoration(glyphCoverage, static_cast<int>(metrics.gmBlackBoxX), glyphHeight, options.underline,
-                        options.strikeOut);
-
-        const int sourceWidth = static_cast<int>(metrics.gmBlackBoxX);
-
-        for (int gy = 0; gy < glyphHeight; ++gy)
+        for (int gy = 0; gy < glyphHeight && sourceWidth > 0 && !glyphCoverage.empty(); ++gy)
         {
             const int dstY = destinationY + gy;
 
@@ -999,29 +806,36 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
 
             const unsigned char *source = glyphCoverage.data() + static_cast<size_t>(gy) * sourceWidth;
 
-            unsigned char *grayDestination = grayscale.data() + glyphOffset + static_cast<size_t>(dstY) * glyphWidth;
-
             unsigned char *binaryDestination = bitmap.data() + glyphOffset + static_cast<size_t>(dstY) * glyphWidth;
 
-            const int copyWidth = std::min(sourceWidth, glyphWidth);
+            const int copyWidth = std::min(sourceWidth, glyphWidth - destinationX);
 
             for (int gx = 0; gx < copyWidth; ++gx)
             {
                 const unsigned char coverage = source[gx];
-
-                grayDestination[gx] = coverage;
-
-                // Keep the native H3 bitmap usable by code that still
-                // calls the game's original Fnt_DrawSymbol.
-                //
-                // coverageThreshold belongs to TTFontOptions and lets
-                // callers choose how the fallback binary representation
-                // is produced.
-                binaryDestination[gx] = coverage >= options.coverageThreshold ? 0xFF : 0;
+                binaryDestination[destinationX + gx] = coverage >= options.coverageThreshold ? 0xFF : 0;
             }
         }
 
-        (void)glyphPitch;
+        const int decorationStart = std::max(0, -cellLeft);
+        const int decorationEnd = std::min(glyphWidth, advance - cellLeft);
+        if (decorationStart < decorationEnd)
+        {
+            if (options.underline)
+            {
+                const int underlineY =
+                    std::min(fontHeight - 1, baseline + std::max(0, static_cast<int>(textMetrics.tmDescent) / 2));
+                std::memset(bitmap.data() + glyphOffset + static_cast<size_t>(underlineY) * glyphWidth +
+                                decorationStart,
+                            0xFF, static_cast<size_t>(decorationEnd - decorationStart));
+            }
+            if (options.strikeOut)
+            {
+                const int strikeY = std::max(0, baseline - static_cast<int>(textMetrics.tmAscent) / 3);
+                std::memset(bitmap.data() + glyphOffset + static_cast<size_t>(strikeY) * glyphWidth + decorationStart,
+                            0xFF, static_cast<size_t>(decorationEnd - decorationStart));
+            }
+        }
     }
 
     h3::H3Font *object = h3::H3Alloc<h3::H3Font>();
@@ -1057,12 +871,6 @@ h3::H3Font *CreateH3FontFromTTF(const char *fontPath, const char *fontName, cons
         RegisterInFontTree(result, fontName);
     }
 
-    {
-        std::lock_guard<std::mutex> lock(customFontsMutex);
-
-        customFonts.push_back({result, std::move(grayscale)});
-    }
-
     DestroyGdiFontContext(gdi);
 
     return result;
@@ -1077,11 +885,7 @@ h3::H3Font *CreateH3FontFromWindowsName(const char *windowsFontName, const char 
         return nullptr;
     }
 
-    TTFontOptions rasterOptions = options;
-
-    // GDI now receives the requested style directly.  These flags are still
-    // kept for the synthetic fallback in case the requested face is absent.
-    return CreateH3FontFromTTF(path.c_str(), fontName, rasterOptions, addToResourceManager);
+    return CreateH3FontFromTTF(path.c_str(), fontName, options, addToResourceManager);
 }
 
 extern "C" h3::H3Font *__stdcall EraCreateH3FontFromTTF(const char *fontPath, const char *fontName, int pixelHeight,

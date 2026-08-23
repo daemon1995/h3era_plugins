@@ -50,7 +50,6 @@ are `0`, opaque pixels are `0xFF`. The latter value is required for the game
 to select `palette[color]`; other non-zero values select a fixed palette entry.
 The threshold can be lowered for a denser glyph or raised for a thinner glyph.
 
-`dllmain.cpp` installs a hook at `Fnt_DrawSymbol` (`0x4B4F00`). For generated
-fonts it uses the retained grayscale raster and alpha-blends it into the
-16-bit destination, while the original game function still performs text
-layout, wrapping and alignment.
+The generated bitmap contains only `0` and `0xFF`, so it is drawn by the
+original game renderer without a `Fnt_DrawSymbol` hook. Text layout, wrapping,
+alignment and color selection therefore remain native.

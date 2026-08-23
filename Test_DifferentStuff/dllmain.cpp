@@ -17,8 +17,265 @@ Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 namespace dllText
 {
-LPCSTR instanceName = "EraPlugin.Testing.daemon_n";
+LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
 }
+namespace widerMenu
+{
+constexpr bool ENABLE_WIDER_MAIN_MENU = true;
+constexpr int ORIGINAL_MENU_WIDTH = 800;
+constexpr int ORIGINAL_MENU_HEIGHT = 600;
+
+int LerpChannel(int first, int second, DWORD fraction)
+{
+    return first + ((second - first) * static_cast<int>(fraction) >> 16);
+}
+
+// Resize a snapshot instead of the live draw buffer: source and destination
+// overlap once the image becomes wider than the original 800x600 area.
+void StretchBackground(H3LoadedPcx16 *destination, H3LoadedPcx16 *source, int width, int height)
+{
+    const DWORD xStep = width > 1 ? ((source->width - 1) << 16) / (width - 1) : 0;
+    const DWORD yStep = height > 1 ? ((source->height - 1) << 16) / (height - 1) : 0;
+
+    if (H3BitMode::Get() == 4)
+    {
+        for (int y = 0; y < height; ++y)
+        {
+            const DWORD sourceY = y * yStep;
+            const int y0 = sourceY >> 16;
+            const int y1 = std::min(y0 + 1, source->height - 1);
+            const DWORD fy = sourceY & 0xFFFF;
+            const PUINT8 row0 = source->buffer + y0 * source->scanlineSize;
+            const PUINT8 row1 = source->buffer + y1 * source->scanlineSize;
+            PUINT8 destinationRow = destination->buffer + y * destination->scanlineSize;
+
+            for (int x = 0; x < width; ++x)
+            {
+                const DWORD sourceX = x * xStep;
+                const int x0 = sourceX >> 16;
+                const int x1 = std::min(x0 + 1, source->width - 1);
+                const DWORD fx = sourceX & 0xFFFF;
+
+                for (int channel = 0; channel < 4; ++channel)
+                {
+                    const int upper = LerpChannel(row0[x0 * 4 + channel], row0[x1 * 4 + channel], fx);
+                    const int lower = LerpChannel(row1[x0 * 4 + channel], row1[x1 * 4 + channel], fx);
+                    destinationRow[x * 4 + channel] = static_cast<BYTE>(LerpChannel(upper, lower, fy));
+                }
+            }
+        }
+        return;
+    }
+
+    for (int y = 0; y < height; ++y)
+    {
+        const DWORD sourceY = y * yStep;
+        const int y0 = sourceY >> 16;
+        const int y1 = std::min(y0 + 1, source->height - 1);
+        const DWORD fy = sourceY & 0xFFFF;
+        const UINT16 *row0 = reinterpret_cast<UINT16 *>(source->buffer + y0 * source->scanlineSize);
+        const UINT16 *row1 = reinterpret_cast<UINT16 *>(source->buffer + y1 * source->scanlineSize);
+        UINT16 *destinationRow = reinterpret_cast<UINT16 *>(destination->buffer + y * destination->scanlineSize);
+
+        for (int x = 0; x < width; ++x)
+        {
+            const DWORD sourceX = x * xStep;
+            const int x0 = sourceX >> 16;
+            const int x1 = std::min(x0 + 1, source->width - 1);
+            const DWORD fx = sourceX & 0xFFFF;
+
+            const UINT16 topLeft = row0[x0];
+            const UINT16 topRight = row0[x1];
+            const UINT16 bottomLeft = row1[x0];
+            const UINT16 bottomRight = row1[x1];
+
+            const int red0 = LerpChannel((topLeft >> 11) & 31, (topRight >> 11) & 31, fx);
+            const int red1 = LerpChannel((bottomLeft >> 11) & 31, (bottomRight >> 11) & 31, fx);
+            const int green0 = LerpChannel((topLeft >> 5) & 63, (topRight >> 5) & 63, fx);
+            const int green1 = LerpChannel((bottomLeft >> 5) & 63, (bottomRight >> 5) & 63, fx);
+            const int blue0 = LerpChannel(topLeft & 31, topRight & 31, fx);
+            const int blue1 = LerpChannel(bottomLeft & 31, bottomRight & 31, fx);
+
+            const int red = LerpChannel(red0, red1, fy);
+            const int green = LerpChannel(green0, green1, fy);
+            const int blue = LerpChannel(blue0, blue1, fy);
+            destinationRow[x] = static_cast<UINT16>((red << 11) | (green << 5) | blue);
+        }
+    }
+}
+
+// MainLoop has just composed the original 800x600 menu background at this
+// point. Publish its wide copy now; the quick-start scenario constructor may
+// alter the draw buffer afterwards, but its Run() (and thus screen redraw) is
+// skipped by quickStart::StartSelectedMap.
+_LHF_(ExpandMainMenuBackground)
+{
+    H3LoadedPcx16 *drawBuffer = P_WindowManager->GetDrawBuffer();
+    if (!drawBuffer || drawBuffer->width < ORIGINAL_MENU_WIDTH || drawBuffer->height < ORIGINAL_MENU_HEIGHT)
+        return EXEC_DEFAULT;
+
+    const int width = std::min(H3GameWidth::Get(), drawBuffer->width);
+    const int height = std::min(H3GameHeight::Get(), drawBuffer->height);
+    if (width < 1280 || height < 720)
+        return EXEC_DEFAULT;
+
+    H3LoadedPcx16 *source = H3LoadedPcx16::Create(ORIGINAL_MENU_WIDTH, ORIGINAL_MENU_HEIGHT);
+    if (!source)
+        return EXEC_DEFAULT;
+
+    const int bytesPerPixel = H3BitMode::Get();
+    const int sourceRowSize = ORIGINAL_MENU_WIDTH * bytesPerPixel;
+    for (int y = 0; y < ORIGINAL_MENU_HEIGHT; ++y)
+    {
+        libc::memcpy(source->buffer + y * source->scanlineSize, drawBuffer->buffer + y * drawBuffer->scanlineSize,
+                     sourceRowSize);
+    }
+
+    StretchBackground(drawBuffer, source, width, height);
+    source->Destroy();
+    P_WindowManager->H3Redraw(0, 0, width, height);
+    return EXEC_DEFAULT;
+}
+
+} // namespace widerMenu
+namespace quickStart
+{
+// Both features are independent. Put the required map in the game's Maps directory.
+constexpr bool START_MAP_FROM_MAIN_MENU = true;
+constexpr LPCSTR MAP_FILE_NAME = "Arrogance.h3m";
+constexpr bool START_BATTLE_ON_GAME_ENTER = true;
+
+constexpr int MAIN_MENU_NEW_GAME = 101;
+constexpr int NEW_GAME_SINGLE_SCENARIO = 100;
+constexpr int DIALOG_OK = 30722;
+constexpr DWORD MAIN_MENU_JUMP_TO = 0x00697728;
+constexpr DWORD SELECT_SCENARIO_START_GAME = 0x0058BFB0;
+constexpr DWORD ADVENTURE_MANAGER_START_BATTLE = 0x75ADD9;
+
+bool autoStartMapPending = START_MAP_FROM_MAIN_MENU;
+bool battleStartPending = false;
+bool battleStartedForCurrentMap = false;
+
+LPCSTR FileNamePart(LPCSTR path)
+{
+    LPCSTR result = path;
+    if (!path)
+        return h3_NullString;
+
+    for (LPCSTR cursor = path; *cursor; ++cursor)
+    {
+        if (*cursor == '\\' || *cursor == '/')
+            result = cursor + 1;
+    }
+    return result;
+}
+
+// This is the New Game / Campaign / Tutorial screen. Selecting item 100
+// follows the game's normal single-scenario path without showing the screen.
+void __stdcall ChooseSingleScenario(HiHook *hook, H3BaseDlg *dlg)
+{
+    if (autoStartMapPending)
+    {
+        P_WindowManager->resultItemID = NEW_GAME_SINGLE_SCENARIO;
+        return;
+    }
+
+    THISCALL_1(void, hook->GetDefaultFunc(), dlg);
+}
+
+// The scenario dialog constructor has already enumerated Maps and initialized
+// all player settings. Select the requested map and invoke the same routine as
+// the dialog's Begin button (0x58BFB0).
+void __stdcall StartSelectedMap(HiHook *hook, H3SelectScenarioDialog *dlg, int runMode)
+{
+    if (autoStartMapPending)
+    {
+        for (UINT i = 0; i < dlg->currentMapsList.Size(); ++i)
+        {
+            LPCSTR fileName = dlg->currentMapsList[i].playersInfo.filename;
+            if (libc::strcmpi(FileNamePart(fileName), MAP_FILE_NAME) == 0)
+            {
+                dlg->UpdateForSelectedScenario(i, FALSE);
+
+                if (THISCALL_1(char, SELECT_SCENARIO_START_GAME, dlg))
+                {
+                    autoStartMapPending = false;
+                    P_WindowManager->resultItemID = DIALOG_OK;
+                    // Do not call H3SelectScenarioDialog::Run below. Its dialog
+                    // loop reaches H3BaseDlg::Redraw at 0x602E54; returning here
+                    // keeps the prepared dialog strictly in the draw buffer.
+                    return;
+                }
+                break;
+            }
+        }
+
+        // Missing/invalid map: return to the regular scenario dialog so the
+        // user can choose a map instead of being left in a broken menu state.
+        autoStartMapPending = false;
+    }
+
+    THISCALL_2(void, hook->GetDefaultFunc(), dlg, runMode);
+}
+
+H3Hero *FindAttackingHero()
+{
+    H3Player *player = P_Game->GetPlayer();
+    if (!player)
+        return nullptr;
+
+    H3Hero *hero = player->GetActiveHero();
+    if (hero)
+        return hero;
+
+    for (int i = 0; i < 8; ++i)
+    {
+        const int heroId = player->heroIDs[i];
+        if (heroId < 0 || heroId >= 156)
+            continue;
+
+        hero = P_Game->GetHero(heroId);
+        if (hero)
+            return hero;
+    }
+    return nullptr;
+}
+
+bool StartBattleAtMapBeginning()
+{
+    if (!START_BATTLE_ON_GAME_ENTER || battleStartedForCurrentMap)
+        return true;
+
+    H3Hero *attacker = FindAttackingHero();
+    H3AdventureManager *advManager = P_AdventureManager->Get();
+    if (!attacker || !advManager || !attacker->army.HasCreatures())
+        return false;
+
+    battleStartedForCurrentMap = true;
+
+    H3Army defenders;
+    defenders.ClearAndGive(NH3Creatures::PIKEMAN, 20);
+    THISCALL_11(int, ADVENTURE_MANAGER_START_BATTLE, advManager, attacker->mixedPosition.Mixed(), attacker,
+                &attacker->army, -1, nullptr, nullptr, &defenders, -1, TRUE, FALSE);
+    return true;
+}
+
+// OnGameEnter is emitted before the executive manager makes the adventure
+// manager active. Starting a battle there leaves both managers running. The
+// first map-screen message is late enough: CallManager can now disable the
+// adventure manager, run combat exclusively and restore the map afterwards.
+int __stdcall StartPendingBattle(HiHook *hook, H3AdventureManager *advManager, H3Msg *msg)
+{
+    if (battleStartPending && advManager->status == H3Manager::ACTIVE && P_ExecutiveMgr->active_mgr == advManager)
+    {
+        if (StartBattleAtMapBeginning())
+            battleStartPending = false;
+    }
+
+    return THISCALL_2(int, hook->GetDefaultFunc(), advManager, msg);
+}
+} // namespace quickStart
+
 void ShowCreatureTableDialog();
 
 _LHF_(MainWindow_F1)
@@ -155,74 +412,6 @@ _LHF_(Dlg_BattleResults_StopVictoryMusic)
 
 H3Font *fontPtr = nullptr;
 
-// Fnt_DrawString_To_Pcx16 at 0x4B4FC0.  The original receives a pointer to
-// the already split line and its character count.  We never modify that
-// buffer: a temporary justified copy is passed only to the original call.
-void __stdcall Font_DrawString(HiHook *h, H3Font *font, const char *text, int textLength, H3LoadedPcx16 *drawBuffer,
-                               int x, int y, int arg14, int arg18, int arg1C, int arg20, int color,
-                               H3LoadedPcx16 *arg28)
-{
-    if (!font || !text || textLength <= 0)
-    {
-        return THISCALL_12(void, h->GetDefaultFunc(), font, text, textLength, drawBuffer, x, y, arg14, arg18, arg1C,
-                           arg20, color, arg28);
-    }
-
-    // The original function checks the right edge as arg18 + arg20 (see
-    // 0x4B50E0).  arg18 is the left edge and arg20 is the available width.
-    // The incoming x may already be alignment-adjusted by the game, so use
-    // the actual line rectangle for justification.
-    const int targetWidth = arg20;
-    std::string line(text, static_cast<size_t>(textLength));
-    std::string justified = JustifyH3TextLine(font, line.c_str(), targetWidth);
-
-    if (justified == line)
-    {
-        return THISCALL_12(void, h->GetDefaultFunc(), font, text, textLength, drawBuffer, x, y, arg14, arg18, arg1C,
-                           arg20, color, arg28);
-    }
-
-    return THISCALL_12(void, h->GetDefaultFunc(), font, justified.c_str(), static_cast<int>(justified.size()),
-                       drawBuffer, arg18, y, arg14, arg18, arg1C, arg20, color, arg28);
-}
-
-void __stdcall Font_DrawTextToPcx16(HiHook *h, H3Font *font, const char *text, H3LoadedPcx16 *drawBuffer, int x, int y,
-                                    int dx, int dy, int color, int flags, int a10)
-{
-
-    if (drawBuffer != P_WindowManager->GetDrawBuffer())
-    {
-        return THISCALL_10(void, h->GetDefaultFunc(), font, text, drawBuffer, x, y, dx, dy, color, flags, a10);
-    }
-    else
-    {
-        return THISCALL_10(void, h->GetDefaultFunc(), fontPtr, text, drawBuffer, x, y, dx, dy, color, flags, a10);
-    }
-    if (true)
-    {
-    }
-    //  drawBuffer->DrawThickFrame(x, y, dx, dy, 1, 0x00FFFF);
-
-    //  char buffer[16];
-    //  sprintf(buffer, "%4dx%4d", x, y);
-    // if (!stricmp(font->GetName(), NH3Dlg::Text::BIG))
-    {
-        //  return THISCALL_10(void, h->GetDefaultFunc(), font, text, drawBuffer, x, y, dx, dy, rand()%255, flags, a10);
-    }
-}
-
-// Keep the game's text layout and replace only glyph rasterization. This
-// gives generated fonts grayscale antialiasing without reimplementing
-// wrapping/alignment in Font_DrawTextToPcx16.
-void __stdcall Font_DrawSymbol(HiHook *h, H3Font *font, unsigned int character, H3LoadedPcx16 *drawBuffer, int x, int y,
-                               int color)
-{
-    if (!DrawCustomH3Glyph(font, character, drawBuffer, x, y, color))
-        // THISCALL_N counts the hidden `this` argument too.  The original
-        // Fnt_DrawSymbol therefore uses THISCALL_6 here.
-        THISCALL_6(void, h->GetDefaultFunc(), font, character, drawBuffer, x, y, color);
-}
-
 char *fontPath = "Roboto Condensed Medium";
 char *fontName = "Arial20.fnt";
 char *testText =
@@ -252,8 +441,6 @@ void InitNewFont()
     if (fontPtr)
     {
 
-        //_PI->WriteHiHook(0x04B4F00, THISCALL_, Font_DrawSymbol);
-
         H3Dlg dlg(H3GameWidth::Get() / 2, H3GameHeight::Get() / 2, -1, -1, 0, 0, 0);
         dlg.AddBackground(0, 0, H3GameWidth::Get() / 2, H3GameHeight::Get() / 2, 1, 0, 1, 0);
         dlg.CreateOKButton();
@@ -268,25 +455,50 @@ void InitNewFont()
 }
 _ERH_(OnGameEnter)
 {
+    quickStart::battleStartedForCurrentMap = false;
+    quickStart::battleStartPending = quickStart::START_BATTLE_ON_GAME_ENTER;
+}
+
+_ERH_(OnGameLeave)
+{
+    quickStart::battleStartPending = false;
+    quickStart::battleStartedForCurrentMap = false;
 }
 
 _LHF_(HooksInit)
 {
 
+    if (quickStart::START_MAP_FROM_MAIN_MENU )
+    {
+        IntAt(0x04CA645 + 6) = 1;
+        IntAt(0x04CA37F + 6) = 1;
+        _PI->WriteJmp(0x04ED933, 0x04ED9D5);
+        _PI->WriteJmp(0x04ED9E0, 0x04EDAD2);
+        _PI->WriteHiHook(0x004D5B20, THISCALL_, quickStart::ChooseSingleScenario);
+        _PI->WriteHiHook(0x00584EC0, THISCALL_, quickStart::StartSelectedMap);
+
+        // MainLoop consumes this value and enters its normal NEW_GAME branch.
+        IntAt(quickStart::MAIN_MENU_JUMP_TO) = quickStart::MAIN_MENU_NEW_GAME;
+    }
+
+    if (quickStart::START_BATTLE_ON_GAME_ENTER)
+        _PI->WriteHiHook(0x00408710, THISCALL_, quickStart::StartPendingBattle);
+    if (widerMenu::ENABLE_WIDER_MAIN_MENU && 0)
+    {
+        const DWORD windowWidth = H3GameWidth::Get();
+        const DWORD windowHeight = H3GameHeight::Get();
+        if (windowWidth >= 1280 && windowHeight >= 720)
+        {
+            // Immediately after MainLoop copies the 800x600 menu background to
+            // the draw buffer and before it branches to the selected menu page.
+            _PI->WriteLoHook(0x004EEF44, widerMenu::ExpandMainMenuBackground);
+        }
+    }
+
     // load new font
     if (0)
     {
-        // _PI->WriteHiHook(0x04B4FC0, THISCALL_, Font_DrawString);
-
         InitNewFont();
-    }
-
-    // font draw to pcx
-    if (true)
-    {
-
-        // _PI->WriteHiHook(0x05BCA99, CALL_, EXTENDED_, THISCALL_, Font_DrawTextToPcx16); // for dlgtxt: fongtext draw
-        // _PI->WriteHiHook(0x04B51F0, SPLICE_, EXTENDED_, THISCALL_, Font_DrawTextToPcx16);
     }
     // disable battleresult mp3
     //
@@ -428,6 +640,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         Era::ConnectEra(hModule, dllText::instanceName);
         _REH_(OnAfterWog);
         _REH_(OnGameEnter);
+        _REH_(OnGameLeave);
         //  EraJSTest();
 
         _PI->WriteLoHook(0x4EEAF2, HooksInit);
