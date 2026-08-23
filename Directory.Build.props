@@ -27,7 +27,9 @@
     <TargetExt>.era</TargetExt>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
-
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetExt>.era</TargetExt>
+  </PropertyGroup>
   <!-- ===================== -->
   <!-- USER OVERRIDES -->
   <!-- ===================== -->
@@ -108,14 +110,9 @@
   <!-- PLATFORM SPECIFIC -->
   <!-- ===================== -->
 
-  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32' AND '$(Configuration)'=='Debug'">
-    <Link>
-      <MapFileName>$(LocalGamePath)\Tools\ExeMapCompiler\$(ProjectName).map</MapFileName>
-    </Link>
-  </ItemDefinitionGroup>
-
   <ItemDefinitionGroup Condition="'$(Platform)'=='Win32' AND '$(Configuration)'=='Release'">
     <Link>
+      <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>$(LocalToolsPath)\ExeMapCompiler\$(ProjectName).map</MapFileName>
     </Link>
   </ItemDefinitionGroup>
@@ -129,10 +126,16 @@
       <PreprocessorDefinitions>
         UNICODE=0;
         _UNICODE=0;
+        WINVER=0x0501;
+        _WIN32_WINNT=0x0501;
         PROJECT_NAME="$(ProjectName)";
         _CRT_SECURE_NO_WARNINGS;
         %(PreprocessorDefinitions)
       </PreprocessorDefinitions>
+      <AdditionalOptions>/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
 </Project>
