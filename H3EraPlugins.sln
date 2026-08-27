@@ -41,12 +41,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_DifferentStuff", "Test
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_BasePlugin", "Test_BasePlugin\Test_BasePlugin.vcxproj", "{A1B2C3D4-E5F6-47A8-9B0C-1234567890CD}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapToDbgmap", "tools\MapToDbgmap\MapToDbgmap.vcxproj", "{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Debug|x86.ActiveCfg = Release|Win32
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.ActiveCfg = Release|Win32
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.Build.0 = Release|Win32
 		{D8E5282D-5A18-4757-8342-7E9759F5A3F3}.Debug|x86.ActiveCfg = Debug|Win32
 		{D8E5282D-5A18-4757-8342-7E9759F5A3F3}.Debug|x86.Build.0 = Debug|Win32
 		{D8E5282D-5A18-4757-8342-7E9759F5A3F3}.Release|x86.ActiveCfg = Release|Win32

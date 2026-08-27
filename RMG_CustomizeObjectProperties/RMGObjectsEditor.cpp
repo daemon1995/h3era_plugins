@@ -789,7 +789,7 @@ BOOL RMGObjectInfo::WriteToINI() const noexcept
 {
     BOOL success = true;
     constexpr int zoneType = 0;
-    H3String sectionName = H3String::Format(OBJECT_INFO_INI_FORMAT, type, subtype, zoneType);
+    H3String &sectionName = H3String::Format(OBJECT_INFO_INI_FORMAT, type, subtype, zoneType);
     // save changed settings only
     for (size_t i = 0; i < DATA_SIZE; i++)
     {
@@ -810,13 +810,12 @@ inline void RMGObjectInfo::ReadFromINI() noexcept
 
     constexpr int zoneType = 0;
 
-    H3String sectionName = H3String::Format(OBJECT_INFO_INI_FORMAT, type, subtype, zoneType);
+    H3String &sectionName = H3String::Format(OBJECT_INFO_INI_FORMAT, type, subtype, zoneType);
 
     for (size_t i = 0; i < DATA_SIZE; i++)
     {
         if (Era::ReadStrFromIni(PROPERTY_NAMES[i], sectionName.String(), INI_FILE_PATH,
                                 localBuffer)) // used for thread safety in when read from ini/json
-
         {
             const int iniValue = atoi(localBuffer);
             if (data[i] != iniValue)
@@ -883,9 +882,8 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         {
 
             // read default data from json for objTypes only
-            const int data = EraJS::readInt(
-                H3String::Format(OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, objType, PROPERTY_NAMES[keyIndex]).String(),
-                readSucces);
+            libc::sprintf(h3_TextBuffer, OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, objType, PROPERTY_NAMES[keyIndex]);
+            const int data = EraJS::readInt(h3_TextBuffer, readSucces);
 
             // and if succes
             if (readSucces)
@@ -907,11 +905,11 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
 
             for (size_t keyIndex = 0; keyIndex < DATA_SIZE; keyIndex++)
             {
+                libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT, objType, objSubtype,
+                              PROPERTY_NAMES[keyIndex]);
+
                 // read default data from json for the exact subtype
-                const int subtypeData = EraJS::readInt(H3String::Format(OBJECT_SUBTYPE_PROPERTY_JSON_KEY_FORMAT,
-                                                                        objType, objSubtype, PROPERTY_NAMES[keyIndex])
-                                                           .String(),
-                                                       readSucces);
+                const int subtypeData = EraJS::readInt(h3_TextBuffer, readSucces);
 
                 // set data according to struct offset
                 objInfo->data[keyIndex] = readSucces ? subtypeData : typeData[keyIndex];

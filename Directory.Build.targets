@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' AND '$(MSBuildProjectName)' != 'MapToDbgmap'">
+    <DebugMapsDir>$([System.IO.Path]::GetFullPath('$(OutDir)..\DebugMaps\'))</DebugMapsDir>
+    <ReleaseMapPath>$(DebugMapsDir)$(TargetName).map</ReleaseMapPath>
+    <ReleaseDbgMapPath>$(DebugMapsDir)$(TargetName).dbgmap</ReleaseDbgMapPath>
+    <MapToDbgmapExe>$(MSBuildThisFileDirectory)tools\MapToDbgmap\bin\MapToDbgmap.exe</MapToDbgmapExe>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Release' AND '$(MSBuildProjectName)' != 'MapToDbgmap'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)tools\MapToDbgmap\MapToDbgmap.vcxproj">
+      <Project>{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <GlobalPropertiesToRemove>OutDir;IntDir;TargetName;TargetExt</GlobalPropertiesToRemove>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="PrepareReleaseDebugMapsDirectory"
+          BeforeTargets="Link"
+          Condition="'$(Configuration)' == 'Release' AND '$(MSBuildProjectName)' != 'MapToDbgmap'">
+    <MakeDir Directories="$(DebugMapsDir)" />
+  </Target>
+
+  <Target Name="CompileReleaseDbgMap"
+          AfterTargets="Link"
+          Condition="'$(Configuration)' == 'Release' AND '$(MSBuildProjectName)' != 'MapToDbgmap'">
+    <Error Condition="!Exists('$(ReleaseMapPath)')" Text="Linker map was not created: $(ReleaseMapPath)" />
+    <Error Condition="!Exists('$(MapToDbgmapExe)')" Text="MapToDbgmap tool was not built: $(MapToDbgmapExe)" />
+    <Exec Command="&quot;$(MapToDbgmapExe)&quot; &quot;$(ReleaseMapPath)&quot; &quot;$(ReleaseDbgMapPath)&quot;" />
+  </Target>
+</Project>

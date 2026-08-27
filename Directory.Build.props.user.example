@@ -12,11 +12,6 @@
     <!-- 🎮 ПУТИ К ИГРЕ - настройте под ваше окружение -->
     <LocalGamePath>D:\games\HoMM 3 ERA</LocalGamePath>
     <LocalGameTestPath>D:\games\HoMM 3 ERA test</LocalGameTestPath>
-    <LocalToolsPath>D:\SW</LocalToolsPath>
-    
-    <!-- 📁 ПУТЬ К ЗАГОЛОВОЧНЫМ ФАЙЛАМ (автоматически из папки headers/) -->
-    <!-- <LocalHeadersPath>C:\CustomPath\HeroesHeaders</LocalHeadersPath> -->
-    
     <!-- 🔧 НАСТРОЙКИ КОМПИЛЯТОРА -->
     <PlatformToolset>v143</PlatformToolset>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -26,8 +21,5 @@
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     
-    <!-- 🐛 НАСТРОЙКИ ОТЛАДКИ -->
-    <GenerateDebugInformation>true</GenerateDebugInformation>
-    <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
   </PropertyGroup>
 </Project>

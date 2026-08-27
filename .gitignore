@@ -30,6 +30,9 @@ Directory.Build.targets.user
 *.fsproj.user
 
 # Локальные настройки решения
+.codex/
+**/.codex/
+.codex-*/
 *.sln.docstates
 *.sln.docstates.json
 *.suo
@@ -60,6 +63,11 @@ bld/
 *.pch
 *.pdb
 *.ipdb
+*.idb
+*.exp
+*.lib
+*.era
+*.dbgmap
 *.pgc
 *.pgd
 *.rsp
@@ -113,11 +121,6 @@ Generated\ Files/
 Artifacts_AddingNewFeatures/
 
 # Лишние solution файлы в подпапках (используем только главный H3EraPlugins.sln)
-
-# Результаты плагинов (.era файлы в рабочих папках)
-# Но НЕ исключаем их из папок релизов!
-Debug/*.era
-Release/*.era
 
 # 🔍 ИНСТРУМЕНТЫ РАЗРАБОТКИ
 # =============================================================================

@@ -52,12 +52,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_StatusSpellCumulativ
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_CasterCreatureSpellSelector", "Combat_CasterCreatureSpellSelector\Combat_CasterCreatureSpellSelector.vcxproj", "{F2A3B4C5-D6E7-4890-91A2-B3C4D5E6F7A8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapToDbgmap", "..\tools\MapToDbgmap\MapToDbgmap.vcxproj", "{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Debug|x86.ActiveCfg = Release|Win32
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.ActiveCfg = Release|Win32
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.Build.0 = Release|Win32
 		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.ActiveCfg = Debug|Win32
 		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.Build.0 = Debug|Win32
 		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Release|x86.ActiveCfg = Release|Win32

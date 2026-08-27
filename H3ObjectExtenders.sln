@@ -10,12 +10,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Objects_CommonHotaObjectsPa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Objects_WoGObjectsExtender", "Objects_WoGObjectsExtender\Objects_WoGObjectsExtender.vcxproj", "{C9A2F0E6-8D74-4B0A-8C21-9E76A2F3D4B1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapToDbgmap", "tools\MapToDbgmap\MapToDbgmap.vcxproj", "{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Debug|x86.ActiveCfg = Release|Win32
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.ActiveCfg = Release|Win32
+		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.Build.0 = Release|Win32
 		{01700C95-8606-446E-AAB8-96975F7B1761}.Debug|x86.ActiveCfg = Debug|Win32
 		{01700C95-8606-446E-AAB8-96975F7B1761}.Debug|x86.Build.0 = Debug|Win32
 		{01700C95-8606-446E-AAB8-96975F7B1761}.Release|x86.ActiveCfg = Release|Win32

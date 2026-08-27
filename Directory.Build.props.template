@@ -16,13 +16,6 @@
     <!-- 
     <LocalGamePath>C:\Games\Heroes3ERA</LocalGamePath>
     <LocalGameTestPath>C:\Games\Heroes3ERA_Test</LocalGameTestPath>
-    <LocalToolsPath>C:\Dev\Tools</LocalToolsPath>
-    -->
-    
-    <!-- 📁 ПУТЬ К ЗАГОЛОВОЧНЫМ ФАЙЛАМ (обычно не нужно менять) -->
-    <!-- По умолчанию используется папка headers/ в корне репозитория -->
-    <!-- 
-    <LocalHeadersPath>C:\Dev\HeroesHeaders</LocalHeadersPath>
     -->
     
     <!-- 🔧 НАСТРОЙКИ КОМПИЛЯТОРА (для совместимости) -->

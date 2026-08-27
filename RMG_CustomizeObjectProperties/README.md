@@ -1,55 +1,47 @@
 # RMG_CustomizeObjectProperties
 
-Плагин для настройки свойств объектов в генераторе случайных карт Heroes of Might and Magic 3 ERA.
+An ERA plugin that extends random-map object configuration and behavior in Heroes of Might and Magic III.
 
-## Быстрая настройка для разработки
+Plugins can integrate with its object lifecycle through the public `ObjectExtender` API. See the [API quick start](QUICK_START.md).
 
-### 🚀 **Начальная настройка**
+## Development setup
 
-1. **Настройте пути в корне репозитория**:
-   ```bash
-   cd ".."
-   copy Directory.Build.props.template Directory.Build.props.user
-   # Отредактируйте Directory.Build.props.user под ваши пути к игре
-   ```
+From the repository root, create the local MSBuild settings file and edit the game paths:
 
-2. **Откройте проект в Visual Studio 2022**
-3. **Настройки отладки уже настроены** в `RMG_CustomizeObjectProperties.vcxproj.user`
+```powershell
+Copy-Item Directory.Build.props.template Directory.Build.props.user
+notepad Directory.Build.props.user
+```
 
-### 🔧 **Отладка плагина**
+```xml
+<Project>
+  <PropertyGroup>
+    <LocalGamePath>C:\Games\Heroes3ERA</LocalGamePath>
+    <LocalGameTestPath>C:\Games\Heroes3ERA_Test</LocalGameTestPath>
+  </PropertyGroup>
+</Project>
+```
 
-1. **Установите брейкпоинты** в нужных местах кода
-2. **Нажмите F5** или **Debug → Start Debugging**
-3. **Игра запустится автоматически** с подключенным отладчиком
-4. **Плагин загрузится** автоматически при старте игры
+Open `H3EraPlugins.sln` in Visual Studio 2022, select an x86 configuration, set `RMG_CustomizeObjectProperties` as the startup project, and press F5. The shared settings start `$(LocalGamePath)\h3era hd.exe` with the game directory as its working directory.
 
-### 📁 **Файлы настроек (НЕ в Git)**
+For Windows XP-compatible builds, install the optional **C++ Windows XP support for VS 2017 (v141) tools** component in Visual Studio Installer and set `<PlatformToolset>v141_xp</PlatformToolset>` in `Directory.Build.props.user`.
 
-- `../Directory.Build.props.user` - ваши пути к игре и инструментам
-- `RMG_CustomizeObjectProperties.vcxproj.user` - настройки отладки VS
+## Implemented object extensions
 
-### 🎯 **Структура проекта**
+The project currently compiles extenders for spell markets, universities, creature banks, chests/gazebos, shrines, and other random-map object handling. The Visual Studio project file is the authoritative list of compiled source files.
 
-Этот проект расширяет функциональность объектов карты:
-- **Заклинательные рынки** (Spell Markets) - `SpellMarketExtender.cpp`
-- **Университеты** (Universities) - `UniversityExtender.cpp`
-- **Колизей магов** (Colosseum of the Magi) - `ColosseumOfTheMagiExtender.cpp`
-- **Банки существ** (Creature Banks) - `CreatureBanksExtender.cpp`
-- **Беседки** (Gazebos) - `GazeboExtender.cpp`
-- **Святилища** (Shrines) - `ShrinesExternder.cpp`
-- **Склады** (Warehouses) - `WarehousesExtender.cpp`
-- **Водопои** (Watering Places) - `WateringPlaceExtender.cpp`
-- **Объекты WoG** - `WoGObjectsExtender.cpp`
+## Build output
 
-### 🔨 **Сборка**
+Shared repository settings build the plugin with the `.era` extension and write it to:
 
-Проект использует общие настройки из корневого `Directory.Build.props` и автоматически:
-- Компилируется с расширением `.era`
-- Копируется в папку плагинов игры: `$(LocalGamePath)\Mods\WoG\eraplugins\`
-- Создает map-файлы для отладки: `$(LocalToolsPath)\ExeMapCompiler\`
+```text
+$(LocalGamePath)\Mods\WoG\eraplugins\
+```
 
-### 📖 **Дополнительная информация**
+Release builds generate `.map` and `.dbgmap` files in:
 
-- Все настройки проекта наследуются из `../Directory.Build.props`
-- Пользовательские настройки в `../Directory.Build.props.user`
-- Подробнее о настройке VS: `../VS_USER_SETTINGS.md`
+```text
+$(LocalGamePath)\Mods\WoG\DebugMaps\
+```
+
+The `.dbgmap` conversion is a Release-only build step. See the root [README](../README.md) and [Visual Studio settings guide](../VS_USER_SETTINGS.md) for repository-wide details.
