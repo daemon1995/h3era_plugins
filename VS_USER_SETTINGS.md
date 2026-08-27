@@ -20,8 +20,6 @@ Visual Studio позволяет сохранять пользовательск
     <!-- Ваши локальные пути -->
     <LocalGamePath>D:\Games\HoMM3ERA</LocalGamePath>
     <LocalGameTestPath>D:\Games\HoMM3ERA_Test</LocalGamePath>
-    <LocalToolsPath>D:\Tools</LocalToolsPath>
-    
     <!-- Настройки компилятора -->
     <PlatformToolset>v143</PlatformToolset>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -59,15 +57,8 @@ Visual Studio позволяет сохранять пользовательск
    Command Arguments: -plugin $(TargetPath)
    ```
 
-2. **VC++ Directories** → **Include Directories**:
-   ```
-   $(LocalHeadersPath);$(IncludePath)
-   ```
-
-3. **Build Events** → **Post-Build Event**:
-   ```
-   xcopy "$(TargetPath)" "$(LocalGamePath)\Mods\WoG\eraplugins\" /Y
-   ```
+Дополнительные include-пути и копирование после сборки не требуются: проекты используют
+заголовки из репозитория и сразу собираются в каталог `eraplugins`.
 
 ### 📁 **Файлы, которые НЕ попадают в Git**
 - ✅ `Directory.Build.props.user` - пути и настройки компиляции
@@ -94,8 +85,6 @@ File: `Directory.Build.props.user` (in repository root)
     <!-- Your local paths -->
     <LocalGamePath>D:\Games\HoMM3ERA</LocalGamePath>
     <LocalGameTestPath>D:\Games\HoMM3ERA_Test</LocalGameTestPath>
-    <LocalToolsPath>D:\Tools</LocalToolsPath>
-    
     <!-- Compiler settings -->
     <PlatformToolset>v143</PlatformToolset>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -133,15 +122,8 @@ In Visual Studio for each project:
    Command Arguments: -plugin $(TargetPath)
    ```
 
-2. **VC++ Directories** → **Include Directories**:
-   ```
-   $(LocalHeadersPath);$(IncludePath)
-   ```
-
-3. **Build Events** → **Post-Build Event**:
-   ```
-   xcopy "$(TargetPath)" "$(LocalGamePath)\Mods\WoG\eraplugins\" /Y
-   ```
+Additional include paths and post-build copying are unnecessary: projects use the
+repository headers and build directly into the `eraplugins` directory.
 
 ### 📁 **Files that DON'T go to Git**
 - ✅ `Directory.Build.props.user` - paths and compilation settings
