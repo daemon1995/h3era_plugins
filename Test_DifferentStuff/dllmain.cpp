@@ -224,7 +224,14 @@ H3Hero *FindAttackingHero()
     if (!player)
         return nullptr;
 
-    H3Hero *hero = player->GetActiveHero();
+    const int heroId = player->heroIDs[3];
+    H3Hero *hero = nullptr;
+    if (heroId < 0 || heroId >= 156)
+        hero = P_Game->GetHero(heroId);
+    if (hero)
+        return hero;
+
+    hero = player->GetActiveHero();
     if (hero)
         return hero;
 
@@ -254,7 +261,7 @@ bool StartBattleAtMapBeginning()
     battleStartedForCurrentMap = true;
 
     H3Army defenders;
-    defenders.ClearAndGive(NH3Creatures::PIKEMAN, 20);
+    defenders.ClearAndGive(rand() % NH3Creatures::CHAOS_HYDRA, rand() % 0x0FFF);
     THISCALL_11(int, ADVENTURE_MANAGER_START_BATTLE, advManager, attacker->mixedPosition.Mixed(), attacker,
                 &attacker->army, -1, nullptr, nullptr, &defenders, -1, TRUE, FALSE);
     return true;
@@ -341,8 +348,6 @@ _LHF_(AfterAdvMapTilesDraw)
     //  tempBuffer->AdjustHueSaturation(marginX, marginY, value, workingHeight, 0.75f, 1.f);
     libc::sprintf(h3_TextBuffer, "%d/%d", value, max);
 
-    H3FontLoader fnt(NH3Dlg::Text::TINY);
-    // fnt->TextDraw(tempBuffer, h3_TextBuffer, marginX, marginY, tempBuffer->width, workingHeight);
 
     auto drawBuffer = P_WindowManager->GetDrawBuffer();
     tempBuffer->DrawToPcx16(bufferX, 8, 1, drawBuffer, value);
@@ -413,7 +418,7 @@ _LHF_(Dlg_BattleResults_StopVictoryMusic)
 H3Font *fontPtr = nullptr;
 
 char *fontPath = "Roboto Condensed Medium";
-char *fontName = "Arial20.fnt";
+char *fontName = "ttest.fnt";
 char *testText =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore "
     "magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo "
@@ -421,16 +426,24 @@ char *testText =
     "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
 void InitNewFont()
-
 {
     fontPath = "Arial";
 
     testText = "у меня весь текст со всем оформлением по-прежнему печатается в Word'e, после чего я создаю "
                "соответствующий def. я уже привык к этому, оно долго, но достаточно удобно и пластично) большого "
                "разнообразия тоже не нужно. пока что))";
+
+    testText = EraJS::read("era.locale.testFont.text");
+    fontPath = EraJS::read("era.locale.testFont.path");
+    int height = EraJS::readInt("era.locale.test.testFont.height");
     // Register in both H3ResourceManager and the legacy font tree used by
     // H3Font::Load and DlgText::Ctor.
     TTFontOptions options;
+
+    if (height > 0)
+    {
+        options.pixelHeight = height;
+    }
     // H3FontLoader medFont(NH3Dlg::Text::MEDIUM);
     // options.pixelHeight += 8;
     // options.bold = true;
@@ -440,13 +453,12 @@ void InitNewFont()
 
     if (fontPtr)
     {
-
         H3Dlg dlg(H3GameWidth::Get() / 2, H3GameHeight::Get() / 2, -1, -1, 0, 0, 0);
         dlg.AddBackground(0, 0, H3GameWidth::Get() / 2, H3GameHeight::Get() / 2, 1, 0, 1, 0);
         dlg.CreateOKButton();
         dlg.CreateText(40, 40, 200, 65, testText, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
                        eTextAlignment::MIDDLE_CENTER);
-        dlg.CreateText(40, 100, 300, 300, testText, fontName, eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
+        dlg.CreateText(40, 100, 300, 65, testText, fontName, eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
         dlg.Start();
 
         // This now resolves the object from the normal game font cache.
@@ -468,7 +480,14 @@ _ERH_(OnGameLeave)
 _LHF_(HooksInit)
 {
 
-    if (quickStart::START_MAP_FROM_MAIN_MENU )
+    // load new font
+    if (0)
+    {
+        InitNewFont();
+        return EXEC_DEFAULT;
+    }
+
+    if (quickStart::START_MAP_FROM_MAIN_MENU)
     {
         IntAt(0x04CA645 + 6) = 1;
         IntAt(0x04CA37F + 6) = 1;
@@ -495,11 +514,6 @@ _LHF_(HooksInit)
         }
     }
 
-    // load new font
-    if (0)
-    {
-        InitNewFont();
-    }
     // disable battleresult mp3
     //
     if (0)
@@ -515,49 +529,6 @@ _LHF_(HooksInit)
         //_PI->WriteHiHook(0x0462C65, THISCALL_, PlayCombatResultMP3);
     }
 
-    // read hd mod ini
-    if (0)
-    {
-        std::string iniSettings = globalPatcher->VarGetValue<LPCSTR>("HD.Dir.Settings", "Default value");
-
-        iniSettings.append("\\era1.ini");
-
-        // Era::ReadStrFromIni("<UI.Ext.ScenarioMgr.Settings>", "", iniSettings.c_str(), h3_TextBuffer);
-        //  MessageBoxA(nullptr, h3_TextBuffer, "Value from hota", MB_OK);
-
-        HDIni *hdIni = globalPatcher->VarGetValue<HDIni *>("HD.Ini.Main", nullptr);
-
-        if (hdIni)
-        {
-            auto entry = hdIni->FindEntry("UI.Ext.ScenarioMgr.Settings");
-            MessageBoxA(nullptr, std::to_string((*entry)[1]->data.value).c_str(), "Value from ini", MB_OK);
-
-            //   hdIni->entries[]
-            for (size_t i = 0; i < hdIni->lineEntries; i++)
-            {
-                auto entries = hdIni->entries[i];
-                if (entries)
-                {
-                    //  Era::WriteStrToIni(entries->data.text, "1", "MAIN", iniSettings.c_str());
-                }
-            }
-            //  Era::SaveIni(iniSettings.c_str());
-            return EXEC_DEFAULT;
-            for (auto i = hdIni->begin(); i != hdIni->end(); i++)
-            {
-                MessageBoxA(nullptr, std::to_string(i->data.value).c_str(), "Value from ini", MB_OK);
-            }
-        }
-        iniSettings = globalPatcher->VarGetValue<LPCSTR>("HD.Dir.Settings", "Default value");
-        iniSettings.append("\\era.ini");
-        // iniSettings = "_HD3_Data/Settings/era.ini";
-
-        //  iniSettings = "_HD3_Data/Settings/era.ini";
-
-        Era::ReadStrFromIni("test", "", iniSettings.c_str(), h3_TextBuffer);
-
-        MessageBoxA(nullptr, h3_TextBuffer, "Value from ini", MB_OK);
-    }
     //"HD.Version.CStr"
     LPCSTR hdVersionStr = globalPatcher->VarGetValue<LPCSTR>("HD.Version.CStr", nullptr);
     //"HD.Version.Dword"

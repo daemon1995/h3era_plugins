@@ -6,8 +6,7 @@ enum CodePage : DWORD
     Korean = 949,
     Japanese = 932,
     ChineseSimplified = 936,
-    // Vietnamese = 1258, ?huh
-    Vietnamese = 1252,
+    Vietnamese = 1258,
     ANSI = 1252,
     Arabic = 1256,
     Baltic = 1257,
