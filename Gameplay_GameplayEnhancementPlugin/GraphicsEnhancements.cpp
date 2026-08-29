@@ -174,26 +174,29 @@ _LHF_(AdventureManager_Hide)
 void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
 {
     // get max towns displayable built icons from config
-    constexpr INT hdModHeroesMax = 7;
-    constexpr INT defaultHeroes = 5;
+    constexpr INT hdModTownsMax = 7;
+    constexpr INT defaultTowns = 5;
     maxTownsDisplayableBuiltIcons =
-        Clamp(defaultHeroes, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", defaultHeroes), hdModHeroesMax);
+        Clamp(defaultTowns, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", defaultTowns), hdModTownsMax);
     // townBuiltDlgDefButtons.assign(nullptr);
     const int firstDefButtonId = globalPatcher->VarGetValue<int>("HD.AdvMgr.ID32", 32);
     auto &dlg = P_AdventureManager->dlg;
 
     if (auto firstDef = dlg->GetH3DlgItem(firstDefButtonId))
     {
+
         const INT16 xPos = firstDef->GetX() + 32;
         const INT16 yBase = firstDef->GetY();
         auto &advMapDlg = builtDefButtons.advMapDlg;
 
-        for (INT16 i = 0; i < maxTownsDisplayableBuiltIcons; i++)
+        for (INT16 i = 0; i < hdModTownsMax; i++)
         {
+
             H3String buttonName = H3String::Format(GraphicsEnhancements::BUILD_BUTTON_NAME_FORMAT_MAP, i);
             const int buttonId = Era::GetButtonID(buttonName.String());
             if (buttonId != -1)
             {
+
                 auto &defButton = advMapDlg[i];
                 if (defButton = dlg->GetDefButton(buttonId))
                 {
