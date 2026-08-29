@@ -377,14 +377,14 @@ VOID RMG_SettingsDlg::OnHelp() const noexcept
         mes = EraJS::read("RMG.text.dlg.notImplemented");
     }
 
-    const int helpWidth = this->widthDlg * 0.95;
-    const int helpHeight = this->heightDlg * 0.95;
+    const int helpWidth = static_cast<int>(this->widthDlg * 0.95);
+    const int helpHeight = static_cast<int>(this->heightDlg * 0.95);
     H3Dlg dlg(helpWidth, helpHeight, -1, -1, 0, 1);
 
     H3DefLoader okBttnDef(NH3Dlg::Assets::OKAY32_DEF);
     H3DefLoader siteBttn("wogcurse.def");
 
-    const int offset = 20;
+    constexpr int offset = 20;
     const int textWidth = helpWidth - 2 * offset;
 
     const int okBttnY = helpHeight - okBttnDef->heightDEF - offset;
@@ -1006,7 +1006,7 @@ void RMG_SettingsDlg::ObjectsPage::SetDefault()
 
 RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
                                           const std::vector<GraphicalAttributes> &attributes, const BOOL ignoreSubtypes)
-    : Page(captionbttn), ignoreSubtypes(ignoreSubtypes), objectAttributes(&attributes)
+    : Page(captionbttn), ignoreSubtypes(ignoreSubtypes) //, objectAttributes(&attributes)
 
 {
 
@@ -1059,7 +1059,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
     CreateHorizontalScrollBar();
 }
 
-void RMG_SettingsDlg::ObjectsPage::FillObjects(int firstItem)
+void RMG_SettingsDlg::ObjectsPage::FillObjects(const int firstItem)
 {
     const size_t PANELS_NUM = objectsPanels.size();
     const size_t DATA_NUM = rmgDlgObjects.size();
@@ -1399,29 +1399,16 @@ BOOL RMG_SettingsDlg::OnCreate()
 {
     const size_t size = m_pages.size();
 
-    if (size)
+    if (!size)
+        return true;
+
+    for (Page *page : m_pages)
     {
-        for (Page *page : m_pages)
-        {
-            page->FillObjects();
-            page->SetVisible(false);
-        }
-        size_t pageId = m_lastPageId < size ? m_lastPageId : 0;
-        SetActivePage(pageId);
+        page->FillObjects(0);
+        page->SetVisible(false);
     }
-
-    // remove local settings for the objects that have same data as in default
-    Era::ReadStrFromIni("version", SETTINGS_INI_SECTION, INI_FILE_PATH, h3_TextBuffer);
-    {
-        float localVersion = atof(h3_TextBuffer);
-
-        if (localVersion != SETTINGS_VERSION)
-        {
-            //     H3Messagebox();
-            // return false;
-        }
-    }
-
+    size_t pageId = m_lastPageId < size ? m_lastPageId : 0;
+    SetActivePage(pageId);
     return true;
 }
 BOOL RMG_SettingsDlg::SetActivePage(const size_t pageId) noexcept
@@ -1462,7 +1449,6 @@ BOOL RMG_SettingsDlg::SetActivePage(const size_t pageId) noexcept
 RMGDlgObject::RMGDlgObject(GraphicalAttributes *graphicalAttributes) : graphicalAttributes(graphicalAttributes)
 {
     // Get data from global array
-
     objectInfo = RMGObjectInfo::CurrentObjectInfo(graphicalAttributes->attributes->type,
                                                   graphicalAttributes->attributes->subtype);
 }
@@ -1679,6 +1665,88 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVectorByOb
     return nullptr;
 }
 
+namespace
+{
+H3LoadedPcx16 *CopyDefFrameWithoutTransparentBorder(H3LoadedDef *def, H3DefFrame *frame)
+{
+    if (!def || !frame || frame->width <= 0 || frame->height <= 0)
+        return nullptr;
+
+    H3LoadedPcx16 *sourcePcx = H3LoadedPcx16::Create(frame->width, frame->height);
+    if (!sourcePcx)
+        return nullptr;
+
+    // Cyan also covers the logical margins that are outside the encoded frame.
+    sourcePcx->FillRectangle(0, 0, frame->width, frame->height, 0, 0xFF, 0xFF);
+    // Keep special DEF colors so transparent pixels are materialized as
+    // 0x00FFFF and can be excluded in a single pass.
+    frame->DrawToPcx16(0, 0, frame->width, frame->height, sourcePcx, 0, 0, def->palette565, FALSE, FALSE);
+
+    const bool is32Bit = H3BitMode::Get() == 4;
+    const int bytesPerPixel = is32Bit ? 4 : 2;
+    const auto isTransparent = [is32Bit](const PUINT8 pixel) {
+        if (is32Bit)
+        {
+            const H3ARGB888 *color = reinterpret_cast<const H3ARGB888 *>(pixel);
+            return color->r == 0 && color->g == 0xFF && color->b == 0xFF;
+        }
+        return *reinterpret_cast<const RGB565 *>(pixel) == H3RGB565::Cyan();
+    };
+
+    int left = frame->width;
+    int top = frame->height;
+    int right = -1;
+    int bottom = -1;
+
+    for (int y = 0; y < frame->height; ++y)
+    {
+        const PUINT8 sourceRow = sourcePcx->buffer + y * sourcePcx->scanlineSize;
+
+        for (int x = 0; x < frame->width; ++x)
+        {
+            if (!isTransparent(sourceRow + x * bytesPerPixel))
+            {
+                left = std::min(left, x);
+                top = std::min(top, y);
+                right = std::max(right, x);
+                bottom = std::max(bottom, y);
+            }
+        }
+    }
+
+    if (right < left || bottom < top)
+    {
+        sourcePcx->Destroy();
+        H3LoadedPcx16 *emptyPcx = H3LoadedPcx16::Create(1, 1);
+        if (emptyPcx)
+            libc::memset(emptyPcx->buffer, 0, emptyPcx->buffSize);
+        return emptyPcx;
+    }
+
+    const int croppedWidth = right - left + 1;
+    const int croppedHeight = bottom - top + 1;
+    H3LoadedPcx16 *croppedPcx = H3LoadedPcx16::Create(croppedWidth, croppedHeight);
+    if (!croppedPcx)
+        return sourcePcx;
+
+    libc::memset(croppedPcx->buffer, 0, croppedPcx->buffSize);
+    for (int y = 0; y < croppedHeight; ++y)
+    {
+        const PUINT8 sourceRow = sourcePcx->buffer + (top + y) * sourcePcx->scanlineSize;
+        PUINT8 destinationRow = croppedPcx->buffer + y * croppedPcx->scanlineSize;
+        for (int x = 0; x < croppedWidth; ++x)
+        {
+            const PUINT8 source = sourceRow + (left + x) * bytesPerPixel;
+            if (!isTransparent(source))
+                libc::memcpy(destinationRow + x * bytesPerPixel, source, bytesPerPixel);
+        }
+    }
+
+    sourcePcx->Destroy();
+    return croppedPcx;
+}
+} // namespace
+
 void RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16()
 {
     for (auto &vec : m_objectAttributes)
@@ -1690,22 +1758,12 @@ void RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16()
             do
             {
                 H3LoadedDef *def = H3LoadedDef::Load(workingAttributes->attributes->defName.String());
-                const auto frame = def->GetGroupFrame(0, 0);
-
-                //    create temp pcx to draw def there
-                if (H3LoadedPcx16 *tempPcx = H3LoadedPcx16::Create(frame->width, frame->height))
+                if (def)
                 {
-                    // fill with black color
-                    libc::memset(tempPcx->buffer, 0, tempPcx->buffSize);
-                    // copy def to temp pcx
-
-                    frame->DrawToPcx16(frame->marginLeft, frame->marginTop, frame->frameWidth, frame->height, tempPcx,
-                                       0, 0, def->palette565);
-                    // def->DrawTransparent(0, tempPcx, 52,52, 1,1);
-                    // def->DrawToPcx16(0, 0, tempPcx, 0, 0);
-                    workingAttributes->objectPcx = tempPcx;
+                    const auto frame = def->GetGroupFrame(0, 0);
+                    workingAttributes->objectPcx = CopyDefFrameWithoutTransparentBorder(def, frame);
+                    def->Dereference();
                 }
-                def->Dereference();
                 // if we have more graphics
             } while (workingAttributes = workingAttributes->next);
         }
@@ -2028,62 +2086,68 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
     userRandSeed = 0;
 }
 
+namespace
+{
+constexpr int OBJECT_PCX_WIDTH = 44;
+constexpr int OBJECT_PCX_HEIGHT = 44;
+
+void ResizeObjectPcx(GraphicalAttributes &attributes)
+{
+    H3LoadedPcx16 *sourcePcx = attributes.objectPcx;
+    if (!sourcePcx || sourcePcx->width <= 0 || sourcePcx->height <= 0)
+        return;
+
+    H3LoadedPcx16 *resizedPcx = H3LoadedPcx16::Create(OBJECT_PCX_WIDTH, OBJECT_PCX_HEIGHT);
+    if (!resizedPcx)
+        return;
+
+    libc::memset(resizedPcx->buffer, 0, resizedPcx->buffSize);
+
+    const int sourceWidth = sourcePcx->width;
+    const int sourceHeight = sourcePcx->height;
+    const int maxSourceDimension = std::max(sourceWidth, sourceHeight);
+
+    const int destinationWidth =
+        std::max(1, static_cast<int>(static_cast<double>(sourceWidth) / maxSourceDimension * OBJECT_PCX_WIDTH));
+    const int destinationHeight =
+        std::max(1, static_cast<int>(static_cast<double>(sourceHeight) / maxSourceDimension * OBJECT_PCX_HEIGHT));
+    const int destinationX = (OBJECT_PCX_WIDTH - destinationWidth) / 2;
+    const int destinationY = (OBJECT_PCX_HEIGHT - destinationHeight) / 2;
+
+    resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(resizedPcx, sourcePcx, sourceWidth, sourceHeight,
+                                                           destinationX, destinationY, destinationWidth,
+                                                           destinationHeight);
+
+    attributes.objectPcx = resizedPcx;
+    sourcePcx->Destroy();
+}
+} // namespace
+
 void CreateResizedObjectPcx()
 {
 
-    constexpr int PCX_WIDTH = 44;
-    constexpr int PCX_HEIGHT = 44;
-
     auto &objectAttributes = RMG_SettingsDlg::GetObjectAttributes();
 
-    for (auto &vec : objectAttributes)
+    for (auto *attributesVector : objectAttributes)
     {
-        for (auto &attributes : *vec)
+        if (!attributesVector)
+            continue;
+
+        for (auto &attributes : *attributesVector)
         {
-            auto workingAttributes = &attributes;
-
-            do
+            GraphicalAttributes *current = &attributes;
+            while (current)
             {
-                if (H3LoadedPcx16 *tempPcx = workingAttributes->objectPcx)
+                ResizeObjectPcx(*current);
+
+                GraphicalAttributes *next = current->next;
+                if (!next || next == &attributes)
                 {
-                    // create pcx to draw resized temp pcx there
-                    if (H3LoadedPcx16 *resizedPcx = H3LoadedPcx16::Create(PCX_WIDTH, PCX_HEIGHT))
-                    {
-                        memset(resizedPcx->buffer, 0, resizedPcx->buffSize);
-
-                        const int srcWidth = tempPcx->width;
-                        const int srcHeight = tempPcx->height;
-
-                        // place picture into "Square" thanks to @Berserker ...
-                        const int maxDim = std::max(srcWidth, srcHeight);
-
-                        const int dstWidth = static_cast<int>(static_cast<double>(srcWidth) / maxDim * PCX_WIDTH);
-                        const int dstHeight = static_cast<int>(static_cast<double>(srcHeight) / maxDim * PCX_HEIGHT);
-
-                        const int dstX = (PCX_WIDTH - dstWidth) >> 1;
-                        const int dstY = (PCX_HEIGHT - dstHeight) >> 1;
-
-                        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(resizedPcx, tempPcx, srcWidth, srcHeight,
-                                                                               dstX, dstY, dstWidth, dstHeight);
-
-                        workingAttributes->objectPcx = resizedPcx;
-                    }
-
-                    tempPcx->Destroy();
-                }
-                // if we have more graphics
-                if (workingAttributes->next)
-                {
-                    // repeat creation pictures for them
-                    workingAttributes = workingAttributes->next;
-                }
-                else
-                {
-                    // otherwise break the loop
-                    workingAttributes->next = &attributes;
+                    current->next = &attributes;
                     break;
                 }
-            } while (workingAttributes);
+                current = next;
+            }
         }
     }
 }

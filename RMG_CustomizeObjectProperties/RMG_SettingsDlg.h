@@ -29,8 +29,6 @@ class RMGDlgObject
     // std::vector<Graphics> objectPictures;
     // UINT lastDrawnFrame = NULL;
 
-  private:
-    RMGDlgObject();
 
   public:
     //	Object(const H3ObjectAttributes& attributes, const RMGObjectInfo& objectInfo);
@@ -161,9 +159,6 @@ class RMG_SettingsDlg : public H3Dlg
             BOOL isReverse = false;
         } lastSorting;
 
-        // used to have copies
-        const std::vector<GraphicalAttributes> *objectAttributes;
-        // std::vector<H3ObjectAttributes> displayedAttributes;
         BOOL ignoreSubtypes;
 
         std::vector<ObjectsPanel *> objectsPanels;
@@ -174,7 +169,7 @@ class RMG_SettingsDlg : public H3Dlg
         virtual ~ObjectsPage();
 
       protected:
-        virtual void FillObjects(int firstItemId = 0) override;
+        virtual void FillObjects(const int firstItem) override;
         virtual void SaveData();
         virtual void SetRandom(const H3Msg &msg) override;
         virtual void SetDefault() override;
@@ -182,7 +177,7 @@ class RMG_SettingsDlg : public H3Dlg
         virtual BOOL ShowObjectExtendedInfo(const ObjectsPanel *panel, const H3Msg &msg) const noexcept;
 
       protected:
-        void SetVisible(const BOOL  state);
+        void SetVisible(const BOOL state);
         void CreateVerticalScrollBar();
         void CreateHorizontalScrollBar();
 
