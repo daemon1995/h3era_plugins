@@ -2,6 +2,57 @@
 
 namespace advMapHints
 {
+namespace
+{
+constexpr int OBJECT_MASK_WIDTH = 8;
+constexpr int OBJECT_MASK_HEIGHT = 6;
+constexpr int HINT_SHADOW_SIZE = 3;
+constexpr int HINT_STAGGER_Y = 8;
+
+bool RectanglesIntersect(const RECT &left, const RECT &right) noexcept
+{
+    return left.left < right.right && left.right > right.left && left.top < right.bottom && left.bottom > right.top;
+}
+
+int GetObjectWidthInTiles(const H3MapItem *mapItem) noexcept
+{
+    auto &mainSetup = P_Game->mainSetup;
+    const UINT objectDetailsIndex = mapItem->drawnObjectIndex;
+    if (objectDetailsIndex >= mainSetup.objectDetails.Size())
+    {
+        return 1;
+    }
+
+    const UINT attributesIndex = mainSetup.objectDetails[objectDetailsIndex].num;
+    if (attributesIndex >= mainSetup.objectAttributes.Size())
+    {
+        return 1;
+    }
+
+    auto &attributes = mainSetup.objectAttributes[attributesIndex];
+    const int maskWidth = Clamp(1, static_cast<int>(attributes.width), OBJECT_MASK_WIDTH);
+    const int maskHeight = Clamp(1, static_cast<int>(attributes.height), OBJECT_MASK_HEIGHT);
+    int leftmostUsedColumn = -1;
+
+    // Mask column 0 is the object's bottom-right tile; columns grow to the left.
+    // Include both visible and transparent-but-blocked parts of the footprint.
+    for (int column = 0; column < maskWidth; ++column)
+    {
+        for (int row = 0; row < maskHeight; ++row)
+        {
+            if (attributes.colors(column, row) || !attributes.passability(column, row) ||
+                attributes.entrances(column, row))
+            {
+                leftmostUsedColumn = column;
+                break;
+            }
+        }
+    }
+
+    return leftmostUsedColumn >= 0 ? leftmostUsedColumn + 1 : maskWidth;
+}
+} // namespace
+
 RECT AdventureMapHints::m_mapView;
 
 AdventureMapHints *AdventureMapHints::instance = nullptr;
@@ -197,6 +248,7 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
     }
 
     instance->drawnOjectIndexes.clear();
+    instance->drawnHintRects.clear();
 
     return EXEC_DEFAULT;
 }
@@ -216,20 +268,14 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
 
             H3MapItem *currentItem = adv->GetMapItem(mapX, mapY, mapZ);
             if (!currentItem)
-            {
                 return;
-            }
 
             // if not entrance point find if it visible by player and don't draw current item
             if (!currentItem->IsEntrance())
             {
-                if (auto *entrance = currentItem->GetEntrance())
-                {
-                    if (H3TileVision::CanViewTile(entrance->GetCoordinates(), instance->playerID))
-                    {
-                        return;
-                    }
-                }
+                auto *entrance = currentItem->GetEntrance();
+                if (!entrance || H3TileVision::CanViewTile(entrance->GetCoordinates(), instance->playerID))
+                    return;
             }
 
             if (instance->NeedDrawMapItem(currentItem) &&
@@ -241,8 +287,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                 constexpr int TILE_WIDTH = 32;
                 constexpr int TEXT_MARGIN = 2;
 
-                constexpr int OBJECT_WIDTH = 1 * TILE_WIDTH;
-
+                int objectWidthInTiles = GetObjectWidthInTiles(currentItem);
                 H3LoadedPcx16 *tempBuffer = nullptr;
                 if (isHero)
                 {
@@ -305,25 +350,47 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                 else
                 {
 
-                    H3FontLoader fnt(NH3Dlg::Text::TINY);
+                    H3String hintText;
+                    hintText = instance->GetHintText(adv, currentItem, mapX, mapY, mapZ);
 
-                    LPCSTR hintText = instance->GetHintText(adv, currentItem, mapX, mapY, mapZ);
-                    constexpr int minTextFieldWidth = OBJECT_WIDTH;
-                    const int maxHintTextWidth = fnt->GetMaxLineWidth(hintText);
-                    constexpr int maxTextFieldWidth = TILE_WIDTH * 3;
-                    const int textWidth = Clamp(minTextFieldWidth, maxHintTextWidth, maxTextFieldWidth);
+                    LPCSTR hintTextPtr = hintText.String();
 
-                    const int hintTextLines = fnt->GetLinesCountInText(hintText, textWidth);
+                    constexpr int minTextFieldWidth = TILE_WIDTH;
+
+                    auto fnt = P_TinyFont->Get();
+                    const int maxHintTextLineWidth = fnt->GetMaxLineWidth(hintTextPtr); // get max text width
+
+                    const int maxAllowedTextWidth = TILE_WIDTH * (objectWidthInTiles + 1); // allow max width
+                    int textWidth = Clamp(minTextFieldWidth, maxHintTextLineWidth, maxAllowedTextWidth);
+
+                    if (maxHintTextLineWidth > textWidth) // if over the limit
+                    {
+                        H3Vector<H3String> stingList;
+                        fnt->SplitTextIntoLines(hintTextPtr, textWidth, stingList); // rearrange text
+                        hintText = h3_NullString;
+                        for (auto &str : stingList)
+                        {
+                            hintText += str;
+                            if (!str.Empty())
+                                hintText.Append('\n');
+                        }
+                        hintText.SetLength(hintText.Length() - 1); // remove last symbol
+                        hintTextPtr = hintText.String();           // reset ptr
+                        textWidth = fnt->GetMaxLineWidth(hintTextPtr);
+                    }
+
+                    const int pcxWidth = textWidth + TEXT_MARGIN * 2;
+
+                    const int hintTextLines = fnt->GetLinesCountInText(hintTextPtr, textWidth);
                     const int minTextFieldHeight = fnt->height + 2;
                     const int textHeight = hintTextLines * (minTextFieldHeight - 1);
-                    const int TEMP_PCX_WIDTH = textWidth + 10;
-                    const int TEMP_PCX_HEIGHT = textHeight + TEXT_MARGIN;
+                    const int pcxHeight = textHeight + TEXT_MARGIN;
 
-                    tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
+                    tempBuffer = H3LoadedPcx16::Create(pcxWidth, pcxHeight);
 
                     libc::memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
 
-                    fnt->TextDraw(tempBuffer, hintText, TEXT_MARGIN, 0, TEMP_PCX_WIDTH - TEXT_MARGIN, TEMP_PCX_HEIGHT);
+                    fnt->TextDraw(tempBuffer, hintTextPtr, TEXT_MARGIN, 0, textWidth, pcxHeight);
                 }
 
                 if (tempBuffer)
@@ -337,20 +404,34 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     //  create golden frame
 
                     // draw text to temp buffer
-                    const int TEMP_PCX_WIDTH = tempBuffer->width;
-                    const int TEMP_PCX_HEIGHT = tempBuffer->height;
+                    const int pcxWidth = tempBuffer->width;
+                    const int pcxHeight = tempBuffer->height;
 
-                    tempBuffer->DrawFrame(0, 0, TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT, 189, 149, 57);
+                    tempBuffer->DrawFrame(0, 0, pcxWidth, pcxHeight, 189, 149, 57);
                     // resize tempBuffer to align text for screen borders
 
                     int objectWidth = 1 * TILE_WIDTH;
-                    const int outOfWidthBorder = (TEMP_PCX_WIDTH - objectWidth) >> 1;
+                    const int outOfWidthBorder = (pcxWidth - objectWidth) >> 1;
 
                     int destPcxX = screenX * TILE_WIDTH + adv->screenDrawOffset.x - outOfWidthBorder;
 
                     const int additionalYOffset = instance->settings.drawObjectHint[currentItem->objectType].yOffset;
 
-                    int destPcxY = screenY * TILE_WIDTH + adv->screenDrawOffset.y - TEMP_PCX_HEIGHT + additionalYOffset;
+                    int destPcxY = screenY * TILE_WIDTH + adv->screenDrawOffset.y - pcxHeight + additionalYOffset;
+                    const RECT originalRect{destPcxX, destPcxY, destPcxX + pcxWidth + HINT_SHADOW_SIZE,
+                                            destPcxY + pcxHeight + HINT_SHADOW_SIZE};
+                    bool overlapsHintOnTheLeft = false;
+                    for (const auto &entry : instance->drawnHintRects)
+                    {
+                        const auto &previousHint = entry.second;
+                        if (previousHint.mapX < mapX && RectanglesIntersect(originalRect, previousHint.rect))
+                        {
+                            overlapsHintOnTheLeft = true;
+                            break;
+                        }
+                    }
+                    if (overlapsHintOnTheLeft)
+                        destPcxY += ((mapX + mapY) & 1) ? HINT_STAGGER_Y : -HINT_STAGGER_Y;
 
                     // adjust left border draw
                     UINT srcX = 0;
@@ -360,7 +441,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         destPcxX = m_mapView.left;
                         tempBuffer->width -= srcX;
                     }
-                    if (destPcxX + TEMP_PCX_WIDTH - m_mapView.left > m_mapView.right)
+                    if (destPcxX + pcxWidth - m_mapView.left > m_mapView.right)
                         tempBuffer->width = m_mapView.right + m_mapView.left - destPcxX;
 
                     UINT srcY = 0;
@@ -370,7 +451,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         destPcxY = m_mapView.top;
                         tempBuffer->height -= srcY;
                     }
-                    if (destPcxY + TEMP_PCX_HEIGHT - m_mapView.top > m_mapView.bottom)
+                    if (destPcxY + pcxHeight - m_mapView.top > m_mapView.bottom)
                         tempBuffer->height = m_mapView.top + m_mapView.bottom - destPcxY;
 
                     // if need to draw any hint
@@ -380,18 +461,17 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         auto drawBuffer = P_WindowManager->GetDrawBuffer();
                         tempBuffer->DrawToPcx16(destPcxX, destPcxY, 1, drawBuffer, srcX, srcY);
 
-                        constexpr UINT SHADOW_SIZE = 3;
                         int heightReserve = m_mapView.bottom - tempBuffer->height - destPcxY + m_mapView.top;
                         UINT shadowWidth = 0;
 
                         UINT shadowHeight = 0;
 
                         if (heightReserve > 0)
-                            shadowHeight = heightReserve >= SHADOW_SIZE ? SHADOW_SIZE : heightReserve;
+                            shadowHeight = heightReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : heightReserve;
 
                         int widthReserve = m_mapView.right - tempBuffer->width - destPcxX + m_mapView.left;
                         if (widthReserve > 0)
-                            shadowWidth = widthReserve >= SHADOW_SIZE ? SHADOW_SIZE : widthReserve;
+                            shadowWidth = widthReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : widthReserve;
 
                         if (shadowWidth)
                             drawBuffer->DrawShadow(destPcxX + tempBuffer->width, destPcxY, shadowWidth,
@@ -400,6 +480,11 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         if (shadowHeight)
                             drawBuffer->DrawShadow(destPcxX, destPcxY + tempBuffer->height,
                                                    tempBuffer->width + (shadowHeight ? 0 : shadowWidth), shadowHeight);
+
+                        const RECT drawnRect{destPcxX, destPcxY,
+                                             destPcxX + tempBuffer->width + static_cast<int>(shadowWidth),
+                                             destPcxY + tempBuffer->height + static_cast<int>(shadowHeight)};
+                        instance->drawnHintRects[currentItem->drawnObjectIndex] = {drawnRect, mapX};
                     }
 
                     //	backPcx->Dereference();
@@ -415,6 +500,7 @@ void __stdcall AdventureMapHints::AdvMgr_DrawCornerFrames(HiHook *h, const H3Adv
     if (instance->drawnOjectIndexes.size())
     {
         instance->drawnOjectIndexes.clear();
+        instance->drawnHintRects.clear();
     }
 }
 // Хинт при нажатии ALT по количеству затрачиваемых мув-поинтов
@@ -569,13 +655,7 @@ void __stdcall AdventureMapHints::H3AdventureManager_SetHint(HiHook *h, H3Advent
 
 bool AdventureMapHints::NeedDrawMapItem(const H3MapItem *mIt) const noexcept
 {
-    if (mIt)
-        return settings.drawObjectHint[mIt->objectType].userValue;
-    return false;
-}
-
-AdventureMapHints::~AdventureMapHints()
-{
+    return mIt ? settings.drawObjectHint[mIt->objectType].userValue : false;
 }
 
 AdventureHintsSettings::AdventureHintsSettings(const char *filePath, const char *sectionName)

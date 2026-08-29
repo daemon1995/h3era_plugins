@@ -65,63 +65,47 @@ LPCSTR HeroClass_GetMapItemDefName(const UINT classId, const bool isFemale)
     LPCSTR defName = EraJS::read(
         H3String::Format("gem_plugin.map_item_view.54.class.%d.%d", classId, isFemale).String(), readSuccess);
     // if name is read and not empty
-    if (readSuccess && libc::strcmpi(defName, h3_NullString))
-    {
+    if (readSuccess && defName[1])
         return defName;
-    }
 
     return nullptr;
 }
 H3LoadedDef *GraphicsEnhancements::Hero_GetMapItemDef(const H3Hero *hero) noexcept
 {
 
+    if (!hero)
+        return nullptr;
+
     H3LoadedDef *result = nullptr;
-    if (hero)
-    {
-        // first set hero def by id
-        if (result = instance->uniqueHeroDefs[hero->id])
-        {
-            return result;
-        }
-        // if empty set hero def by class
-        if (result = instance->heroClassDefs[hero->isFemale][hero->hero_class])
-        {
-            return result;
-        }
-    }
+    // first set hero def by id
+    if (result = instance->uniqueHeroDefs[hero->id])
+        return result;
+    // if empty set hero def by class
+    if (result = instance->heroClassDefs[hero->isFemale][hero->hero_class])
+        return result;
     return result;
-}
-int GraphicsEnhancements::GetMaxTownBuildingCount() noexcept
-{
-    return instance->maxTownsBuildings;
 }
 H3LoadedDef *GraphicsEnhancements::InitHeroData(const UINT heroId) noexcept
 {
-    H3LoadedDef *result = nullptr;
 
     if (LPCSTR defNamePtr = Hero_GetMapItemDefName(heroId))
     {
         if (auto *defBefore = uniqueHeroDefs[heroId])
-        {
             defBefore->Dereference();
-        }
 
-        result = uniqueHeroDefs[heroId] = H3LoadedDef::Load(defNamePtr);
+        return uniqueHeroDefs[heroId] = H3LoadedDef::Load(defNamePtr);
     }
 
-    return result;
+    return nullptr;
 }
 void GraphicsEnhancements::InitHeroClassData(const UINT classId) noexcept
 {
     for (size_t i = 0; i < 2; i++)
     {
-        if (heroClassDefs[i][classId] == nullptr)
-        {
-            if (LPCSTR defNamePtr = HeroClass_GetMapItemDefName(classId, i))
-            {
-                heroClassDefs[i][classId] = H3LoadedDef::Load(defNamePtr);
-            }
-        }
+        if (heroClassDefs[i][classId])
+            continue;
+        if (LPCSTR defNamePtr = HeroClass_GetMapItemDefName(classId, i))
+            heroClassDefs[i][classId] = H3LoadedDef::Load(defNamePtr);
     }
 }
 
@@ -190,8 +174,10 @@ _LHF_(AdventureManager_Hide)
 void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
 {
     // get max towns displayable built icons from config
-    constexpr INT hdModMax = 7;
-    maxTownsDisplayableBuiltIcons = Clamp(5, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", 5), hdModMax);
+    constexpr INT hdModHeroesMax = 7;
+    constexpr INT defaultHeroes = 5;
+    maxTownsDisplayableBuiltIcons =
+        Clamp(defaultHeroes, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", defaultHeroes), hdModHeroesMax);
     // townBuiltDlgDefButtons.assign(nullptr);
     const int firstDefButtonId = globalPatcher->VarGetValue<int>("HD.AdvMgr.ID32", 32);
     auto &dlg = P_AdventureManager->dlg;

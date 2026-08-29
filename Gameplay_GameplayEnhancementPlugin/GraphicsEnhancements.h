@@ -18,8 +18,8 @@ class GraphicsEnhancements : public IGamePatch
     static GraphicsEnhancements *instance;
 
     // heroes graphics defs
-    std::array<H3LoadedDef *, MAX_UNIQUE_HEROES> uniqueHeroDefs;
-    std::array<H3LoadedDef *, MAX_UNIQUE_CLASSES> heroClassDefs[2]; // 0 - male, 1 - female
+    std::array<H3LoadedDef *, MAX_UNIQUE_HEROES> uniqueHeroDefs{};
+    std::array<H3LoadedDef *, MAX_UNIQUE_CLASSES> heroClassDefs[2]{}; // 0 - male, 1 - female
 
     // towns is build graphics pointers
     int maxTownsDisplayableBuiltIcons = 5;
@@ -38,7 +38,10 @@ class GraphicsEnhancements : public IGamePatch
     static GraphicsEnhancements &Get() noexcept;
     static H3LoadedDef *Hero_GetMapItemDef(const H3Hero *hero) noexcept;
 
-    static int GetMaxTownBuildingCount() noexcept;
+    static inline int GetMaxTownBuildingCount() noexcept
+    {
+        return instance->maxTownsBuildings;
+    }
     H3LoadedDef *InitHeroData(const UINT heroId) noexcept;
     void InitHeroClassData(const UINT classId) noexcept;
     void InitAdventureMapTownBuiltDefs() noexcept;

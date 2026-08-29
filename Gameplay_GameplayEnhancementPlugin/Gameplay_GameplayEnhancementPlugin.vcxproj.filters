@@ -14,13 +14,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CombatHints.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GameplayFeature.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MapScroller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AdventureMapHints.h">
@@ -44,12 +38,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GameplayFeature.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CombatHints.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MapScroller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\headers\Era\era.cpp">

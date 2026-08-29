@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 
+#include <unordered_map>
 #include <unordered_set>
 
 namespace advMapHints
@@ -37,6 +38,12 @@ struct AdventureHintsSettings : public ISettings
 };
 class AdventureMapHints : public IGamePatch
 {
+    struct DrawnHintInfo
+    {
+        RECT rect;
+        int mapX;
+    };
+
     static constexpr LPCSTR ERM_VARIABLE_FORMAT = "gem_adventure_map_object_hints_option_%d";
 
     static RECT m_mapView;
@@ -49,6 +56,7 @@ class AdventureMapHints : public IGamePatch
     Patch *blockIgnoreHintBarFocus = nullptr;
     H3PlayersBitfield playersVisitedObjectData[32];
     AdventureHintsSettings settings;
+    std::unordered_map<UINT16, DrawnHintInfo> drawnHintRects;
 
     BOOL altIsPressed = FALSE;
     BOOL isCustomHintCreation = FALSE;
@@ -70,7 +78,7 @@ class AdventureMapHints : public IGamePatch
 
     void CreatePatches() noexcept override;
     // bool * ObjectsToDraw()  noexcept;
-    virtual ~AdventureMapHints();
+    virtual ~AdventureMapHints() {};
 
   protected:
     static void __stdcall AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,

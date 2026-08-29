@@ -17,14 +17,18 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
+  </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="AdventureMapHints.h" />
     <ClInclude Include="ArtifactHints.h" />
-    <ClInclude Include="CombatHints.h" />
     <ClInclude Include="GameplayFeature.h" />
     <ClInclude Include="GraphicsEnhancements.h" />
     <ClInclude Include="ISettings.h" />
-    <ClInclude Include="MapScroller.h" />
     <ClInclude Include="MithrilDisplay.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -32,11 +36,9 @@
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="AdventureMapHints.cpp" />
     <ClCompile Include="ArtifactHints.cpp" />
-    <ClCompile Include="CombatHints.cpp" />
     <ClCompile Include="GameplayFeature.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GraphicsEnhancements.cpp" />
-    <ClCompile Include="MapScroller.cpp" />
     <ClCompile Include="MithrilDisplay.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
