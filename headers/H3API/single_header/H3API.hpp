@@ -13129,6 +13129,7 @@ namespace h3
 		_H3API_ VOID GrayScaleArea(INT x, INT y, INT w, INT h);
 		_H3API_ VOID AdjustHueSaturation(INT x, INT y, INT w, INT h, FLOAT hue, FLOAT saturation);
 		_H3API_ BOOL BackgroundRegion(INT32 x, INT32 y, INT32 w, INT32 h, BOOL is_blue);
+		_H3API_ BOOL BackgroundRegion(INT32 x, INT32 y, INT32 w, INT32 h, LPCSTR backgroundPcxName);
 		_H3API_ BOOL SimpleFrameRegion(INT32 x, INT32 y, INT32 _width, INT32 _height);
 		_H3API_ BOOL FrameRegion(INT32 x, INT32 y, INT32 w, INT32 h, BOOL statusBar, INT32 colorIndex, BOOL is_blue);
 		_H3API_ VOID SinkArea(INT32 x, INT32 y, INT32 w, INT32 h);
@@ -31517,27 +31518,32 @@ namespace h3
     }
     _H3API_ BOOL H3LoadedPcx16::BackgroundRegion(INT32 x, INT32 y, INT32 w, INT32 h, BOOL is_blue)
     {
-        H3PcxLoader back(is_blue ? NH3Dlg::HDassets::DLGBLUEBACK : NH3Dlg::Assets::DIBOXBACK);
+		return BackgroundRegion(x, y, w, h, is_blue ? NH3Dlg::HDassets::DLGBLUEBACK : NH3Dlg::Assets::DIBOXBACK);
+    }
+    _H3API_ BOOL H3LoadedPcx16::BackgroundRegion(INT32 x, INT32 y, INT32 w, INT32 h, LPCSTR backgroundPcxName)
+    {
+        H3PcxLoader back(backgroundPcxName);
 
         if (back.Get() == nullptr)
             return FALSE;
 
         int _y = y;
         int _h = h;
-
+		const int backH = back->height;
+		const int backW = back->width;
         while (_h > 0)
         {
             int _x = x;
-            int dh = std::min(256, _h);
+            int dh = std::min(backH, _h);
             int _w = w;
             while (_w > 0)
             {
                 back.Get()->DrawToPcx16(0, 0, _w, dh, this, _x, _y, FALSE);
-                _x += 256;
-                _w -= 256;
+                _x += backW;
+                _w -= backW;
             }
-            _y += 256;
-            _h -= 256;
+            _y += backH;
+            _h -= backH;
         }
 
         return TRUE;
