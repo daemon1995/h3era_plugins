@@ -145,7 +145,7 @@ constexpr bool START_MAP_FROM_MAIN_MENU = true;
 constexpr LPCSTR MAP_FILE_NAME = "Arrogance.h3m";
 constexpr bool START_BATTLE_ON_GAME_ENTER = true;
 
-constexpr int MAIN_MENU_NEW_GAME = 101;
+constexpr int MAIN_MENU_NEW_GAME = Era::EGameMenuTarget::PAGE_NEW_GAME;
 constexpr int NEW_GAME_SINGLE_SCENARIO = 100;
 constexpr int DIALOG_OK = 30722;
 constexpr DWORD MAIN_MENU_JUMP_TO = 0x00697728;
@@ -348,7 +348,6 @@ _LHF_(AfterAdvMapTilesDraw)
     //  tempBuffer->AdjustHueSaturation(marginX, marginY, value, workingHeight, 0.75f, 1.f);
     libc::sprintf(h3_TextBuffer, "%d/%d", value, max);
 
-
     auto drawBuffer = P_WindowManager->GetDrawBuffer();
     tempBuffer->DrawToPcx16(bufferX, 8, 1, drawBuffer, value);
 
@@ -487,21 +486,23 @@ _LHF_(HooksInit)
         return EXEC_DEFAULT;
     }
 
-    if (quickStart::START_MAP_FROM_MAIN_MENU)
+    if (quickStart::START_MAP_FROM_MAIN_MENU && 0)
     {
         IntAt(0x04CA645 + 6) = 1;
         IntAt(0x04CA37F + 6) = 1;
         _PI->WriteJmp(0x04ED933, 0x04ED9D5);
         _PI->WriteJmp(0x04ED9E0, 0x04EDAD2);
+
         _PI->WriteHiHook(0x004D5B20, THISCALL_, quickStart::ChooseSingleScenario);
         _PI->WriteHiHook(0x00584EC0, THISCALL_, quickStart::StartSelectedMap);
 
         // MainLoop consumes this value and enters its normal NEW_GAME branch.
-        IntAt(quickStart::MAIN_MENU_JUMP_TO) = quickStart::MAIN_MENU_NEW_GAME;
+        IntAt(quickStart::MAIN_MENU_JUMP_TO) = Era::EGameMenuTarget::PAGE_NEW_GAME;
     }
 
-    if (quickStart::START_BATTLE_ON_GAME_ENTER)
+    if (quickStart::START_BATTLE_ON_GAME_ENTER && 0)
         _PI->WriteHiHook(0x00408710, THISCALL_, quickStart::StartPendingBattle);
+
     if (widerMenu::ENABLE_WIDER_MAIN_MENU && 0)
     {
         const DWORD windowWidth = H3GameWidth::Get();
