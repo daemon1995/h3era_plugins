@@ -24,8 +24,8 @@ class MenuWidgetManager
   private:
     struct assets
     {
-        static constexpr LPCSTR PAGE_CAPTION_DEF_NAME = "emenubig.def";
-        static constexpr LPCSTR SMALL_BUTTON = "emenusml.def";
+        static constexpr LPCSTR BIG_BUTTON_FORMAT = "ecptbig%d.def";
+        static constexpr LPCSTR SMALL_BUTTON_FORMAT = "ecptsml%d.def";
         static constexpr LPCSTR ARROW_UP = "emenuup.def";
         static constexpr LPCSTR ARROW_DOWN = "emenudwn.def";
     };

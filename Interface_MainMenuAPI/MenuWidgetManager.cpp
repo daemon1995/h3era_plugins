@@ -111,11 +111,10 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
 {
 
     const size_t registeredWidgetsCount = registeredWidgets.size();
+    // no widgets registered for this menu type
+
     if (registeredWidgetsCount == 0)
-    {
-        // no widgets registered for this menu type
         return;
-    }
 
     // createdWidgets.reserve(registeredWidgetsCount);
     menuType = menuList;
@@ -128,17 +127,11 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         if (widgetFlags & menuList)
         {
             if (widgetFlags & mainmenu::ON_TOP)
-            {
                 topWidgets.push_back(&widget);
-            }
             else if (widgetFlags & mainmenu::AT_BOTTOM)
-            {
                 bottomWidgets.push_back(&widget);
-            }
             else
-            {
                 middleWidgets.push_back(&widget);
-            }
         }
     }
 
@@ -151,8 +144,10 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     createdWidgets.shrink_to_fit();
     size_t currentMenuTypeWidgets = createdWidgets.size();
 
-    LPCSTR fontName = h3::NH3Dlg::Text::MEDIUM;
-    H3FontLoader fnt(fontName);
+    auto fnt = P_MediumFont->Get();
+    LPCSTR fontName = fnt->GetName(); // h3::NH3Dlg::Text::MEDIUM;
+
+    // H3FontLoader fnt(fontName);
     // put the "main_menu_api_widget" at the top of the list
     constexpr int assetWidth = 174;
     BOOL isBigAsset = false;
@@ -161,13 +156,10 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     {
         const auto &displayedName = createdWidgets[i]->name;
         if (displayedName == BaseGameWidgets::WIDGET_NAME_HIDE)
-        {
             hideWidgetInd = i;
-        }
+
         if (!isBigAsset && fnt->GetLinesCountInText(createdWidgets[i]->text.c_str(), assetWidth) > 1)
-        {
             isBigAsset = true;
-        }
     }
     // if we have a hide widget, put it at the top of the list
     if (hideWidgetInd >= 0)
@@ -182,14 +174,13 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         std::swap(createdWidgets[hideWidgetInd], createdWidgets[0]);
     }
 
-    LPCSTR assetName = isBigAsset ? assets::PAGE_CAPTION_DEF_NAME : assets::SMALL_BUTTON;
-
     const int gameWidth = H3GameWidth::Get();
     const int gameHeight = H3GameHeight::Get();
 
     constexpr int backgroundWidth = 800;
     constexpr int backgroundHeight = 600;
     constexpr int minimalOutsideWidth = 1180;
+    constexpr int minimalGreyHeight = 608;
     constexpr int frameWidth = 4;
     constexpr int scrollbarOffset = 0;
 
@@ -203,6 +194,31 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     const int backgroundY = gameHeight - backgroundHeight >> 1;
 
     const int frameOffset = (gameWidth < frameGameWidth) || (gameHeight < frameGameHeight) ? 0 : frameWidth;
+
+    // struct PanelStyle
+    //{
+
+    //    BOOL bigAssets = false;
+    //    LPCSTR backgroundName = NH3Dlg::Assets::DIBOXBACK;
+    //} panelStyle;
+
+    LPCSTR backgroundName = NH3Dlg::Assets::DIBOXBACK;
+
+    // panelStyle.bigAssets = isBigAsset;
+
+    // select background and button def names
+    int dlgStyle = 0;
+    if (gameHeight >= minimalGreyHeight)
+    {
+        backgroundName = "DlgGreyBk.pcx";
+        dlgStyle = 2;
+    }
+
+    LPCSTR assetName = isBigAsset ? assets::BIG_BUTTON_FORMAT : assets::SMALL_BUTTON_FORMAT;
+    libc::sprintf(h3_TextBuffer, assetName, dlgStyle);
+
+    H3String assetNameStr = h3_TextBuffer;
+    assetName = assetNameStr.String();
 
     H3DefLoader def(assetName);
     // widgetWidth = def->widthDEF;
@@ -266,15 +282,19 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
 
     framedBackgroundPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
 
-    framedBackgroundPcx->BackgroundRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight, true);
-    framedBackgroundPcx->SimpleFrameRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight);
-
     framedBackground =
         H3DlgPcx16::Create(frameStartX, frameStartY, backgroundAreaWidth, backgroundAreaHeight, 0, nullptr);
-    framedBackground->SetPcx(framedBackgroundPcx);
-    framedBackground->HideDeactivate();
 
+    framedBackground->HideDeactivate();
     dlg->AddItem(framedBackground);
+
+    framedBackgroundPcx->BackgroundRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight, backgroundName);
+
+    // framedBackgroundPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), framedBackground->GetAbsoluteX(),
+    //                                 framedBackground->GetAbsoluteY());
+    framedBackgroundPcx->SimpleFrameRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight);
+
+    framedBackground->SetPcx(framedBackgroundPcx);
 
     if (placedOutside)
     {
