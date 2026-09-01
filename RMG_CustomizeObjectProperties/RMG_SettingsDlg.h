@@ -29,7 +29,6 @@ class RMGDlgObject
     // std::vector<Graphics> objectPictures;
     // UINT lastDrawnFrame = NULL;
 
-
   public:
     //	Object(const H3ObjectAttributes& attributes, const RMGObjectInfo& objectInfo);
     // Object(const H3ObjectAttributes& attributes);

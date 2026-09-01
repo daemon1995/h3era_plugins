@@ -514,8 +514,8 @@ _LHF_(RMG__WaterWheelRiver_AtGeneration)
     if (rmg && riverStart)
     {
         const H3RmgMap &map = rmg->map;
-        if (riverStart->x < 0 || riverStart->x >= map.mapWidth || riverStart->y < 0 ||
-            riverStart->y >= map.mapHeight || riverStart->z < 0 || riverStart->z >= map.numberLevels)
+        if (riverStart->x < 0 || riverStart->x >= map.mapWidth || riverStart->y < 0 || riverStart->y >= map.mapHeight ||
+            riverStart->z < 0 || riverStart->z >= map.numberLevels)
         {
             // Stock RMG can place a Water Wheel too close to the map edge and derive an invalid river origin.
             c->esp += sizeof(H3Point);
