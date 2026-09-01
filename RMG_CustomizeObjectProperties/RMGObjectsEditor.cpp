@@ -905,7 +905,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     RMGObjectInfo *objInfo = nullptr;
     bool readSucces = false;
 
-    for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
+    for (INT objType = 0; objType < h3::limits::OBJECTS; objType++)
     {
         const int subtypesAmount = maxSubtypes[objType] + 1;
         defaultRMGObjectsInfoByType[objType].resize(subtypesAmount);
@@ -929,7 +929,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         }
 
         // now iterate all the subtpyes of that type
-        for (size_t objSubtype = 0; objSubtype < subtypesAmount; objSubtype++)
+        for (INT objSubtype = 0; objSubtype < subtypesAmount; objSubtype++)
         {
             // get RmgObjectInfo ptr
             objInfo = &defaultRMGObjectsInfoByType[objType][objSubtype];
