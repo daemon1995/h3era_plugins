@@ -494,6 +494,19 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHo
 // fixes for different RMG bugs/stuff
 namespace fixes
 {
+_LHF_(RMGObjGenScroll__AtRandomSelection)
+{
+    const _RMGObjGenScroll_ *scrollGen = reinterpret_cast<const _RMGObjGenScroll_ *>(c->edi);
+    if (!c->esi && scrollGen && scrollGen->spellLevel == _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL)
+    {
+        // No filtered spell is available for this plugin's synthetic level-6 scroll generator.
+        c->return_address = 0x53547A;
+        return NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
+
 //
 _LHF_(RMG__AtSubterranianGatesPrototypeGet)
 {
@@ -592,6 +605,7 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
 
         _pi->WriteHiHook(0x05353C0, THISCALL_, RMG__RMGObjGenScroll__CreateObject);
+        _pi->WriteLoHook(0x05353F6, fixes::RMGObjGenScroll__AtRandomSelection);
         _pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
 
         _pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);

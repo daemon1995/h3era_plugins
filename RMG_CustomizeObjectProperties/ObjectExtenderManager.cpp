@@ -365,7 +365,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
     if (addedWavNames.size())
     {
         std::thread th(&sound::SoundManager::Init, addedWavNames);
-        th.detach();
+        th.join();
         //  sound::SoundManager::Init(addedWavNames);
     }
 
