@@ -494,6 +494,39 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHo
 // fixes for different RMG bugs/stuff
 namespace fixes
 {
+_LHF_(RMGObjGenScroll__AtRandomSelection)
+{
+    const _RMGObjGenScroll_ *scrollGen = reinterpret_cast<const _RMGObjGenScroll_ *>(c->edi);
+    if (!c->esi && scrollGen && scrollGen->spellLevel == _RMGObjGenScroll_::MAP_CONTROL_SPELL_LEVEL)
+    {
+        // No filtered spell is available for this plugin's synthetic level-6 scroll generator.
+        c->return_address = 0x53547A;
+        return NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
+
+_LHF_(RMG__WaterWheelRiver_AtGeneration)
+{
+    const H3RmgRandomMapGenerator *rmg = c->Ecx<H3RmgRandomMapGenerator *>();
+    const H3Point *riverStart = reinterpret_cast<const H3Point *>(c->esp);
+    if (rmg && riverStart)
+    {
+        const H3RmgMap &map = rmg->map;
+        if (riverStart->x < 0 || riverStart->x >= map.mapWidth || riverStart->y < 0 ||
+            riverStart->y >= map.mapHeight || riverStart->z < 0 || riverStart->z >= map.numberLevels)
+        {
+            // Stock RMG can place a Water Wheel too close to the map edge and derive an invalid river origin.
+            c->esp += sizeof(H3Point);
+            c->return_address = 0x549DED;
+            return NO_EXEC_DEFAULT;
+        }
+    }
+
+    return EXEC_DEFAULT;
+}
+
 //
 _LHF_(RMG__AtSubterranianGatesPrototypeGet)
 {
@@ -592,6 +625,8 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
 
         _pi->WriteHiHook(0x05353C0, THISCALL_, RMG__RMGObjGenScroll__CreateObject);
+        _pi->WriteLoHook(0x05353F6, fixes::RMGObjGenScroll__AtRandomSelection);
+        _pi->WriteLoHook(0x0549DE8, fixes::RMG__WaterWheelRiver_AtGeneration);
         _pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
 
         _pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);
