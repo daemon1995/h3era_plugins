@@ -80,6 +80,8 @@ class AssemblyInformation : public IGamePatch
     Version *versions[3];
     BOOL alwaysDraw = false;
     BOOL isVisible = false;
+    DWORD versionBlinkLastUpdate = 0;
+    BOOL versionBlinkVisible = true;
 
   private:
     AssemblyInformation(PatcherInstance *_pi);
@@ -99,6 +101,7 @@ class AssemblyInformation : public IGamePatch
 
   private:
     void LoadDataFromJson();
+    void UpdateVersionBlink() noexcept;
 
   public:
     void CreateDlgItems(H3BaseDlg *dlg);

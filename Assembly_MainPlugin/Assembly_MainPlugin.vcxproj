@@ -19,6 +19,7 @@
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="AssemblyInformation.cpp" />
+    <ClCompile Include="ModListScanner.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="NotificationPanel.cpp" />
     <ClCompile Include="UserNotification.cpp" />
@@ -27,6 +28,7 @@
   <ItemGroup>
     <ClInclude Include="AssemblyInformation.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ModListScanner.h" />
     <ClInclude Include="NotificationPanel.h" />
     <ClInclude Include="UserNotification.h" />
   </ItemGroup>

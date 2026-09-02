@@ -1,8 +1,10 @@
 ﻿#include "framework.h"
 
+#include "ModListScanner.h"
+
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.9.0";
+const char *PLUGIN_VERSION = "1.10.0";
 const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";
@@ -30,6 +32,11 @@ BOOL __stdcall _IsIconic(HWND hwnd)
 
 int __stdcall GameStart(LoHook *h, HookContext *c)
 {
+    const BOOL needRestart = assemblyModList::Get();
+    h->Undo();
+    if (needRestart && Era::RestartCurrentProcess())
+        return EXEC_DEFAULT;
+
     AssemblyInformation::Get();
     // info->LoadDataFromJson();
     // UserNotification::Get();
@@ -42,7 +49,6 @@ int __stdcall GameStart(LoHook *h, HookContext *c)
                         NotificationPanel::OnPanelCallerClick};
     MainMenu_RegisterWidget(info);
 
-    h->Undo();
     return EXEC_DEFAULT;
 
     DWORD_PTR *pIsIconic = reinterpret_cast<DWORD_PTR *>(0x0063A2A8); // Адрес указателя на IsIconic

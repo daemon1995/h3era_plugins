@@ -238,9 +238,6 @@ void AssemblyInformation::Version::ClickProcedure() const noexcept
 void AssemblyInformation::LocalVersion::AdjustItemText() noexcept
 {
     Version::AdjustItemText();
-    if (!customText && remoteVersionIsHigher)
-    {
-    }
 }
 
 void AssemblyInformation::RemoteVersion::GetJsonData(const char *jsonSubKey)
@@ -365,16 +362,26 @@ void AssemblyInformation::CheckOnlineVersion()
 
 const BOOL AssemblyInformation::CompareVersions()
 {
-    // if there is process run then start to compare locale and remote
-    if (m_remoteVersion.workDone.load())
-    {
-        m_remoteVersion.version.ToDouble();
-        m_remoteVersion.workDone = false;
+    if (!m_remoteVersion.workDone.load())
+        return m_localVersion.remoteVersionIsHigher;
 
-        return m_remoteVersion.version.ToDouble() > m_localVersion.version.ToDouble();
+    const double remoteVersion = m_remoteVersion.version.ToDouble();
+    const BOOL wasHigher = m_localVersion.remoteVersionIsHigher;
+    m_localVersion.remoteVersionIsHigher = remoteVersion > m_localVersion.version.ToDouble();
+
+    if (m_localVersion.remoteVersionIsHigher && !wasHigher)
+    {
+        versionBlinkLastUpdate = h3::GetTime();
+        versionBlinkVisible = true;
+        if (m_localVersion.dlgItem)
+        {
+            m_localVersion.dlgItem->Show();
+            m_localVersion.dlgItem->Draw();
+            m_localVersion.dlgItem->Refresh();
+        }
     }
 
-    return false;
+    return m_localVersion.remoteVersionIsHigher;
 }
 
 void AssemblyInformation::LocalVersion::GetVersion() noexcept
@@ -503,18 +510,24 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
         H3DlgText *it = remoteVersion.dlgItem;
 
-        if (remoteVersion.workDone.load() && it && it->IsVisible())
+        if (remoteVersion.workDone.load() && it)
         {
-            remoteVersion.AdjustItemText();
-            it->SetText(remoteVersion.text);
-            H3FontLoader fn(remoteVersion.fontName);
-            it->SetWidth(fn->GetMaxLineWidth(remoteVersion.text.String())); // (remoteVersion.text.Length() + 1)*
-            // remoteVersion.characterLength);
-            it->Draw();
-            it->Refresh();
+            instance.CompareVersions();
+            if (it->IsVisible())
+            {
+                remoteVersion.AdjustItemText();
+                it->SetText(remoteVersion.text);
+                H3FontLoader fn(remoteVersion.fontName);
+                it->SetWidth(fn->GetMaxLineWidth(remoteVersion.text.String())); // (remoteVersion.text.Length() + 1)*
+                // remoteVersion.characterLength);
+                it->Draw();
+                it->Refresh();
+            }
 
             remoteVersion.workDone.store(false);
         }
+
+        instance.UpdateVersionBlink();
     }
 
     if (auto panel = NotificationPanel::instance)
@@ -536,6 +549,26 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
     }
 
     return FASTCALL_1(int, h->GetDefaultFunc(), msg);
+}
+
+void AssemblyInformation::UpdateVersionBlink() noexcept
+{
+    if (!m_localVersion.remoteVersionIsHigher || !m_localVersion.dlgItem)
+        return;
+
+    const DWORD currentTime = h3::GetTime();
+    constexpr DWORD BLINK_INTERVAL_MS = 500;
+    if (currentTime - versionBlinkLastUpdate < BLINK_INTERVAL_MS)
+        return;
+
+    versionBlinkLastUpdate = currentTime;
+    versionBlinkVisible = !versionBlinkVisible;
+    if (versionBlinkVisible)
+        m_localVersion.dlgItem->Show();
+    else
+        m_localVersion.dlgItem->Hide();
+    m_localVersion.dlgItem->Draw();
+    m_localVersion.dlgItem->Refresh();
 }
 
 void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent *e)

@@ -21,6 +21,9 @@
     <ClCompile Include="AssemblyInformation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ModListScanner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="UserNotification.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -36,6 +39,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssemblyInformation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModListScanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UserNotification.h">

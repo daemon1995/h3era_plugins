@@ -822,13 +822,9 @@ void OpenExternalFile(const char *path, const char *msg = nullptr);
 
 int __fastcall NotificationPanel::OnPanelCallerClick(void *msg) noexcept
 {
-    if (auto *h3msg = reinterpret_cast<H3Msg *>(msg))
-    {
-        if (h3msg->IsLeftClick() && instance)
-        {
-            instance->SetVisible(!instance->isVisible, true);
-        }
-    }
+    auto *h3msg = reinterpret_cast<H3Msg *>(msg);
+    if (h3msg->IsLeftClick() && instance)
+        instance->SetVisible(!instance->isVisible, true);
     return true;
 }
 
