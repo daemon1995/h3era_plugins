@@ -68,6 +68,7 @@ class MapScroller : public IGamePatch
 
   public:
     static MapScroller &Get() noexcept; // (PatcherInstance* _PI);
+    static void ApplySmoothScrollState(const BOOL state) noexcept;
 };
 
 } // namespace scroll

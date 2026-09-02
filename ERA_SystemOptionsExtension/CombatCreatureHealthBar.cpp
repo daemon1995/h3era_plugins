@@ -268,31 +268,11 @@ void CombatHints::WindMgr_DrawColoredRect(const int x, const int y, const int wi
                                                           stg->fsaturation);
 }
 
-void __fastcall SettingsDlg::ScrollBarGeneralProc(H3BaseDlg *dlg, INT32 scrollBarId, float &valuePtr)
-{
-    // auto txt = dlg->GetText(txtId);
-    auto scroll = dlg->GetScrollbar(scrollBarId);
-    auto label = dlg->GetPcx(5);
-
-    if (scroll && label) // txt && )
-    {
-        float tick = static_cast<float>(scroll->GetTick());
-        // set new settings value
-        valuePtr = tick / scroll->GetTicksCount(); // scrollBarId < 103 ? tick / scroll->GetTicksCount() : tick;
-        // draw label changes
-        if (auto stnngsDlg = dynamic_cast<SettingsDlg *>(dlg))
-        {
-            stnngsDlg->HitPointsBarDraw();
-        }
-    }
-}
-
 void SettingsDlg::HitPointsBarDraw() noexcept
 {
     // draw label colors
 
     const int labelYOffset = static_cast<int>(settings->height) * -1;
-
     const int nativeLabelY = originalLabel->GetY();
 
     // const int newLabelX = labelForHp->GetX();
@@ -305,114 +285,73 @@ void SettingsDlg::HitPointsBarDraw() noexcept
     const int labelBorderHeight = protrusionSize >= labelHeight ? 2 : 1;
     int drawHeight = Clamp(0, protrusionSize - labelBorderHeight, drawHeightMax);
 
-    //	const int newLabelHeight = Clamp(0, std::abs(newLabelY - nativeLabelY), labelForHp->GetHeight());
-    // if (newLabelHeight > 1)
+    const int drawHeightLimit = labelForHp->GetHeight() - 2;
+
+    // const int drawY = originalLabel->GetAbsoluteY() + originalLabel->GetHeight() + 1;
+    // if draw area displayed at all
+    if (drawHeight > 0)
     {
+        //	const int newLabelHeight = Clamp(0, std::abs(newLabelY - nativeLabelY), originalLabel->GetHeight());
+        const BOOL isBottomDrawing = nativeLabelY < newLabelY && protrusionSize <= drawHeightMax;
 
-        const int drawHeightLimit = labelForHp->GetHeight() - 2;
+        const int drawY = this->yDlg + (isBottomDrawing ? nativeLabelY + labelHeight : newLabelY + 1);
 
+        constexpr int filledHp = 16;
         const int drawX = labelForHp->GetAbsoluteX() + 1; // add 1px offsets for the borders
-        // const int drawY = originalLabel->GetAbsoluteY() + originalLabel->GetHeight() + 1;
-        int drawHeight = Clamp(0, protrusionSize - labelBorderHeight, drawHeightMax);
-        // if draw area displayed at all
-        if (drawHeight > 0)
-        {
 
-            //	const int newLabelHeight = Clamp(0, std::abs(newLabelY - nativeLabelY), originalLabel->GetHeight());
-            const BOOL isBottomDrawing = nativeLabelY < newLabelY && protrusionSize <= drawHeightMax;
-
-            const int drawY = this->yDlg + (isBottomDrawing ? nativeLabelY + labelHeight : newLabelY + 1);
-
-            constexpr int filledHp = 16;
-
-            // draw hp
-            CombatHints::WindMgr_DrawColoredRect(drawX, drawY, filledHp, drawHeight, settings);
-            CombatHints::WindMgr_DrawColoredRect(drawX + filledHp, drawY, labelForHp->GetWidth() - filledHp - 2,
-                                                 drawHeight, settings, true);
-            labelForHp->Refresh();
-            //  labelForHp->ParentRedraw();
-            // show changes
-        }
+        // draw hp
+        CombatHints::WindMgr_DrawColoredRect(drawX, drawY, filledHp, drawHeight, settings);
+        CombatHints::WindMgr_DrawColoredRect(drawX + filledHp, drawY, labelForHp->GetWidth() - filledHp - 2, drawHeight,
+                                             settings, true);
+        labelForHp->Refresh();
     }
 }
 
-void SettingsDlg::LabelBarDraw() noexcept
+void __fastcall SettingsDlg::ScrollBarGeneralProc(SettingsDlg *dlg, INT32 scrollBarId, float &valuePtr)
 {
-    const int x = originalLabel->GetAbsoluteX();
-    const int y = originalLabel->GetAbsoluteY();
-    const int width = originalLabel->GetWidth();
-    // draw label colors
-    THISCALL_7(void, 0x44E610, P_WindowManager->GetDrawBuffer(), x + 1, y + 1, width - 2,
-               originalLabel->GetHeight() - 2, FloatAt(0x43E3AC + 1), FloatAt(0x43E3A7 + 1));
-    // draw text over the color
-    THISCALL_10(void, 0x4B51F0, *reinterpret_cast<H3Font **>(0x698A54), "505", P_WindowManager->GetDrawBuffer(), x, y,
-                width, 15, 4, 1, -1);
-
-    // show changes
-    originalLabel->Refresh();
-    //	originalLabel->ParentRedraw();
+    // auto txt = dlg->GetText(txtId);
+    auto scroll = dlg->GetScrollbar(scrollBarId);
+    if (scroll) // txt && )
+    {
+        scroll->Draw();
+        float tick = static_cast<float>(scroll->GetTick());
+        // set new settings value
+        valuePtr = tick / scroll->GetTicksCount(); // scrollBarId < 103 ? tick / scroll->GetTicksCount() : tick;
+        dlg->HitPointsBarDraw();                   // draw label changes
+    }
 }
-
 void __fastcall SettingsDlg::ColorFillScrollBarProc(INT32 value, H3BaseDlg *dlg)
 {
-    if (auto sDlg = dynamic_cast<SettingsDlg *>(dlg))
-    {
-        ScrollBarGeneralProc(dlg, 100, sDlg->settings->fcolorFill);
-    }
+    auto sDlg = dynamic_cast<SettingsDlg *>(dlg);
+    ScrollBarGeneralProc(sDlg, 100, sDlg->settings->fcolorFill);
 }
 
 void __fastcall SettingsDlg::ColorLossScrollBarProc(INT32 value, H3BaseDlg *dlg)
 {
-    if (auto sDlg = dynamic_cast<SettingsDlg *>(dlg))
-
-        ScrollBarGeneralProc(dlg, 101, sDlg->settings->fcolorLoss);
+    auto sDlg = dynamic_cast<SettingsDlg *>(dlg);
+    ScrollBarGeneralProc(sDlg, 101, sDlg->settings->fcolorLoss);
 }
 
 void __fastcall SettingsDlg::SaturationScrollBarProc(INT32 value, H3BaseDlg *dlg)
 {
-    if (auto sDlg = dynamic_cast<SettingsDlg *>(dlg))
-
-        ScrollBarGeneralProc(dlg, 102, sDlg->settings->fsaturation);
+    auto sDlg = dynamic_cast<SettingsDlg *>(dlg);
+    ScrollBarGeneralProc(sDlg, 102, sDlg->settings->fsaturation);
 }
 
 void __fastcall SettingsDlg::HeightScrollBarProc(INT32 value, H3BaseDlg *dlg)
 {
+    auto sDlg = dynamic_cast<SettingsDlg *>(dlg);
 
-    if (auto stnngsDlg = dynamic_cast<SettingsDlg *>(dlg))
-    {
-        stnngsDlg->settings->height = static_cast<float>(value - HP_LABEL_MAX_OFFSET);
+    float newVal = static_cast<float>(value - HP_LABEL_MAX_OFFSET);
+    sDlg->settings->height = newVal;
 
-        stnngsDlg->labelForHp->SetY(stnngsDlg->originalLabel->GetY() - static_cast<int>(stnngsDlg->settings->height));
-        dlg->Redraw();
-
-        stnngsDlg->HitPointsBarDraw();
-        stnngsDlg->LabelBarDraw();
-    }
-    // ScrollBarGeneralProc(dlg, 103, settings.height);
-    // HitPointsBarDraw(hpBar);
-
-    //	LabelBarDraw(label);
+    sDlg->labelForHp->SetY(sDlg->originalLabel->GetY() - static_cast<int>(newVal));
+    ScrollBarGeneralProc(sDlg, 103, newVal);
+    dlg->Redraw();
 }
 
 BOOL SettingsDlg::DialogProc(H3Msg &msg)
 {
-
-    // v30 = WaitUntil;
-    // if ((timeGetTime() - v30) < 0)
-    //     return 1;
-    // v32 = IsWarMachine(DLG->creatureId);
-    // staticDef = DLG->animation;
-    // if (v32)
-    //     DlgDef::AnimateWarMachine(staticDef);
-    // else
-    //     DlgDef::AnimateMonstre(staticDef);
-    // DLG->VTable->redrawDlg(DLG, 1, -65535, 0xFFFF);
-    // v42 = WaitUntil;
-    // v41 = timeGetTime() - v42;
-    // if (v41 < 100)
-    //     v41 = 100;
-    // WaitUntil = v42 + v41;
-
     if (creatureDef)
     {
         DWORD waitUntil = DwordAt(0x6989E8);
@@ -439,7 +378,6 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
     {
         needRedraw = false;
         HitPointsBarDraw();
-        LabelBarDraw();
     }
 
     if (!hk.bttn->IsVisible() && msg.IsKeyDown())
@@ -571,118 +509,129 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
     background->SinkArea(creatureDef->GetX() - 5, creatureDef->GetY() + 11, creatureDef->GetWidth() + 25,
                          creatureDef->GetHeight() - 10);
     eTextColor textColor = eTextColor::WHITE;
-    originalLabel = H3DlgPcx::Create(creatureDef->GetX() + creatureDef->GetWidth() - 25,
-                                     creatureDef->GetY() + creatureDef->GetHeight() - 30, 5, barPcxName);
-    if (originalLabel)
+    originalLabel = H3DlgPcx16::Create(creatureDef->GetX() + creatureDef->GetWidth() - 25,
+                                       creatureDef->GetY() + creatureDef->GetHeight() - 30, 5, nullptr);
+    if (!originalLabel)
+        return;
+
+    H3PcxLoader barPcx(barPcxName);
+    const int lWidth = barPcx->width;
+    const int lHeight = barPcx->height;
+    originalLabel->SetWidth(lWidth);
+    originalLabel->SetHeight(lHeight);
+    H3LoadedPcx16 *barPcx16 = H3LoadedPcx16::Create(lWidth, lHeight);
+
+    barPcx->DrawToPcx16(barPcx16, 0, 0, 1);
+    barPcx16->AdjustHueSaturation(1, 1, lWidth - 2, lHeight - 2, FloatAt(0x43E3AC + 1), FloatAt(0x43E3A7 + 1));
+
+    // draw text over the color
+    barPcx16->TextDraw(P_TinyFont->Get(), "505", 0, 0, lWidth, lHeight);
+    originalLabel->SetPcx(barPcx16);
+
+    labelForHp = H3DlgPcx::Create(originalLabel->GetX(), originalLabel->GetY() - static_cast<int>(settings->height), 6,
+                                  barPcxName);
+    if (labelForHp)
+        AddItem(labelForHp);
+    // add after to draw inbefore
+    AddItem(originalLabel);
+
+    // glob = new Settings{};
+
+    textColor = eTextColor::REGULAR;
+    H3DlgDefButton *enabledChebox = H3DlgDefButton::Create(160, 30, 7, NH3Dlg::Assets::ON_OFF_CHECKBOX,
+                                                           settings->isEnabled, settings->isEnabled, false, -1);
+    AddItem(enabledChebox);
+
+    H3DlgText *enabledText =
+        CreateText(enabledChebox->GetX() + enabledChebox->GetWidth() + 12, enabledChebox->GetY() - 7, 200, 40,
+                   text->enable, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
+    SinkItem(background, enabledText);
+
+    H3DlgDefButton *onlyHeldCheckBox =
+        CreateButton(enabledChebox->GetX(), enabledChebox->GetY() + enabledText->GetHeight(), 8,
+                     NH3Dlg::Assets::ON_OFF_CHECKBOX, settings->isHeld, settings->isHeld, false, -1);
+
+    H3DlgText *onlyHeldText =
+        CreateText(enabledText->GetX(), enabledText->GetY() + enabledText->GetHeight(), enabledText->GetWidth(), 40,
+                   text->held, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
+    SinkItem(background, onlyHeldText);
+
+    // getVirtualKeyName(settings.vKey).
+
+    auto fnt = H3MediumFont::Get();
+    int textWidth = fnt->GetMaxLineWidth("'{CAPS LOCK}'");
+    int textX = widthDlg - textWidth - 16;
+
+    hk.bttn = CreateCustomButton(onlyHeldCheckBox->GetX(), onlyHeldCheckBox->GetY() + enabledText->GetHeight() - 3, 15,
+                                 "iam009.DEF", SettingsHotkeyCallback, 0, 1);
+    hk.bttn->ColorDefToPlayer(IntAt(0x69CCF4));
+    int textY = 85;
+
+    hk.text =
+        CreateText(onlyHeldText->GetX(), onlyHeldText->GetY() + onlyHeldText->GetHeight(), enabledText->GetWidth(), 40,
+                   text->setHk, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
+    SinkItem(background, hk.text);
+
+    // SinkItem(background, hk.name);
+
+    CreateBlackBox(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(),
+                   enabledText->GetHeight());
+    hk.name = CreateText(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(),
+                         enabledText->GetHeight(), getVirtualKeyName(settings->vKey).String(), fnt->GetName(),
+                         eTextColor::WHITE, 17);
+
+    // create default bttn
+    H3DlgDefButton *bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12, 13,
+                                                  false, eVKey::H3VK_D);
+    if (bttn)
     {
-        // H3RGB888 color{ 12,12,12 };
+        bttn->SetHint(text->dfltName);
+        CreatePcx(bttn->GetX() - 1, bttn->GetY() - 1, 15, NH3Dlg::Assets::BOX_64_30_PCX);
+        AddItem(bttn);
+    }
 
-        labelForHp = H3DlgPcx::Create(originalLabel->GetX(), originalLabel->GetY() - static_cast<int>(settings->height),
-                                      6, barPcxName);
-        if (labelForHp)
+    constexpr int SIZE = 4;
+    int ticks[SIZE] = {100, 100, 10, HP_LABEL_MAX_OFFSET * 2 + 1};
+    float values[SIZE] = {settings->fcolorFill, settings->fcolorLoss, settings->fsaturation,
+                          settings->height + HP_LABEL_MAX_OFFSET};
+
+    LPCSTR hints[SIZE] = {text->health, text->loss, text->density, text->height};
+    H3DlgScrollbar_proc procs[SIZE] = {ColorFillScrollBarProc, ColorLossScrollBarProc, SaturationScrollBarProc,
+                                       HeightScrollBarProc};
+    H3DlgText *description;
+
+    // background->DrawShadow(160, originalLabel->GetY() + 20, widthDlg - 60, heightDlg / 3);
+
+    H3DlgText *dlgText = CreateText(45, hk.text->GetY() + hk.text->GetHeight() + 45, widthDlg - 90, 24, text->handlers,
+                                    NH3Dlg::Text::BIG, 7, 0);
+
+    for (size_t i = 0; i < SIZE; i++)
+    {
+        H3DlgScrollbar *scrollBar = H3DlgScrollbar::Create(20, 34 * i + dlgText->GetY() + 27, 148, 16, i + 100,
+                                                           ticks[i], procs[i], false, 2, true);
+
+        // disable catch keys
+        if (scrollBar)
         {
-            AddItem(labelForHp);
-        }
-        AddItem(originalLabel);
+            IntAt(reinterpret_cast<int>(scrollBar) + 0x5C) = NULL;
+            AddItem(scrollBar);
+            scrollBar->SetTick(static_cast<int>(values[i] * ticks[i]));
 
-        // glob = new Settings{};
-
-        textColor = eTextColor::REGULAR;
-        H3DlgDefButton *enabledChebox = H3DlgDefButton::Create(160, 30, 7, NH3Dlg::Assets::ON_OFF_CHECKBOX,
-                                                               settings->isEnabled, settings->isEnabled, false, -1);
-        AddItem(enabledChebox);
-
-        H3DlgText *enabledText =
-            CreateText(enabledChebox->GetX() + enabledChebox->GetWidth() + 12, enabledChebox->GetY() - 7, 200, 40,
-                       text->enable, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
-        SinkItem(background, enabledText);
-
-        H3DlgDefButton *onlyHeldCheckBox =
-            CreateButton(enabledChebox->GetX(), enabledChebox->GetY() + enabledText->GetHeight(), 8,
-                         NH3Dlg::Assets::ON_OFF_CHECKBOX, settings->isHeld, settings->isHeld, false, -1);
-
-        H3DlgText *onlyHeldText =
-            CreateText(enabledText->GetX(), enabledText->GetY() + enabledText->GetHeight(), enabledText->GetWidth(), 40,
-                       text->held, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
-        SinkItem(background, onlyHeldText);
-
-        // getVirtualKeyName(settings.vKey).
-
-        auto fnt = H3MediumFont::Get();
-        int textWidth = fnt->GetMaxLineWidth("'{CAPS LOCK}'");
-        int textX = widthDlg - textWidth - 16;
-
-        hk.bttn = CreateCustomButton(onlyHeldCheckBox->GetX(), onlyHeldCheckBox->GetY() + enabledText->GetHeight() - 3,
-                                     15, "iam009.DEF", SettingsHotkeyCallback, 0, 1);
-        hk.bttn->ColorDefToPlayer(IntAt(0x69CCF4));
-        int textY = 85;
-
-        hk.text =
-            CreateText(onlyHeldText->GetX(), onlyHeldText->GetY() + onlyHeldText->GetHeight(), enabledText->GetWidth(),
-                       40, text->setHk, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
-        SinkItem(background, hk.text);
-
-        // SinkItem(background, hk.name);
-
-        CreateBlackBox(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(),
-                       enabledText->GetHeight());
-        hk.name = CreateText(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(),
-                             enabledText->GetHeight(), getVirtualKeyName(settings->vKey).String(), fnt->GetName(),
-                             eTextColor::WHITE, 17);
-
-        // create default bttn
-        H3DlgDefButton *bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12,
-                                                      13, false, eVKey::H3VK_D);
-        if (bttn)
-        {
-            bttn->SetHint(text->dfltName);
-            CreatePcx(bttn->GetX() - 1, bttn->GetY() - 1, 15, NH3Dlg::Assets::BOX_64_30_PCX);
-            AddItem(bttn);
+            if (i == 3)
+            {
+                scrollBar->SetTick(static_cast<int>(values[i]));
+            }
+            scrollBar->SetButtonPosition();
         }
 
-        constexpr int SIZE = 4;
-        int ticks[SIZE] = {100, 100, 10, HP_LABEL_MAX_OFFSET * 2 + 1};
-        float values[SIZE] = {settings->fcolorFill, settings->fcolorLoss, settings->fsaturation,
-                              settings->height + HP_LABEL_MAX_OFFSET};
-
-        LPCSTR hints[SIZE] = {text->health, text->loss, text->density, text->height};
-        H3DlgScrollbar_proc procs[SIZE] = {ColorFillScrollBarProc, ColorLossScrollBarProc, SaturationScrollBarProc,
-                                           HeightScrollBarProc};
-        H3DlgText *description;
-
-        // background->DrawShadow(160, originalLabel->GetY() + 20, widthDlg - 60, heightDlg / 3);
-
-        H3DlgText *dlgText = CreateText(45, hk.text->GetY() + hk.text->GetHeight() + 45, widthDlg - 90, 24,
-                                        text->handlers, NH3Dlg::Text::BIG, 7, 0);
-
-        for (size_t i = 0; i < SIZE; i++)
+        description =
+            H3DlgText::Create(scrollBar->GetX() + scrollBar->GetWidth() + 12, scrollBar->GetY() - 2, 224, 20, hints[i],
+                              NH3Dlg::Text::MEDIUM, textColor, i + 100, eTextAlignment::MIDDLE_LEFT);
+        if (description)
         {
-            H3DlgScrollbar *scrollBar = H3DlgScrollbar::Create(20, 34 * i + dlgText->GetY() + 27, 148, 16, i + 100,
-                                                               ticks[i], procs[i], false, 2, true);
-
-            // disable catch keys
-            if (scrollBar)
-            {
-                IntAt(reinterpret_cast<int>(scrollBar) + 0x5C) = NULL;
-                AddItem(scrollBar);
-                scrollBar->SetTick(static_cast<int>(values[i] * ticks[i]));
-
-                if (i == 3)
-                {
-                    scrollBar->SetTick(static_cast<int>(values[i]));
-                }
-                scrollBar->SetButtonPosition();
-            }
-
-            description =
-                H3DlgText::Create(scrollBar->GetX() + scrollBar->GetWidth() + 12, scrollBar->GetY() - 2, 224, 20,
-                                  hints[i], NH3Dlg::Text::MEDIUM, textColor, i + 100, eTextAlignment::MIDDLE_LEFT);
-            if (description)
-            {
-                background->SinkArea(description->GetX() - 5, description->GetY(), description->GetWidth() + 10,
-                                     description->GetHeight());
-                AddItem(description);
-            }
+            background->SinkArea(description->GetX() - 5, description->GetY(), description->GetWidth() + 10,
+                                 description->GetHeight());
+            AddItem(description);
         }
     }
 }
@@ -755,6 +704,12 @@ int __fastcall SettingsDlg::SettingsHotkeyCallback(H3Msg *msg) noexcept
 }
 SettingsDlg::~SettingsDlg()
 {
+    auto pcx16 = originalLabel->GetPcx();
+    if (pcx16)
+    {
+        pcx16->Destroy();
+        originalLabel->SetPcx(nullptr);
+    }
 }
 
 void Settings::reset()

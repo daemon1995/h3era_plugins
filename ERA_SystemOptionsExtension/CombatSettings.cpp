@@ -153,4 +153,15 @@ CombatSettings &CombatSettings::Get()
         instance = new CombatSettings();
     return *instance;
 }
+
+void CombatSettings::ApplyQuickCombatType(const AdditionalConfig::ConfigEntry &entry,
+                                          const AdditionalConfig::EOptionChangeSource source) noexcept
+{
+    // A zero value from the initial load preserves the game's original quick-combat state.
+    // A zero value received from the API or the dialog explicitly disables it.
+    if (source == AdditionalConfig::EOptionChangeSource::InitialLoad && entry.value == 0)
+        return;
+
+    OriginalConfig::Get().quickCombat = entry.value != 0;
+}
 } // namespace cmbsttngs

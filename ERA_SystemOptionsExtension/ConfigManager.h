@@ -55,17 +55,26 @@ struct AdditionalConfig
 {
     struct ConfigEntry;
 
+    enum class EOptionChangeSource : int
+    {
+        InitialLoad,
+        Dialog,
+        ExternalApi,
+    };
+
     static constexpr LPCSTR sectionName = "Settings.Extra";
     static constexpr LPCSTR fileName = "heroes3.ini";
     static std::unordered_map<std::string, ConfigEntry *> optionsMap;
 
     struct ConfigEntry
     {
+        using ApplyCallback = void (*)(const ConfigEntry &, EOptionChangeSource);
+
         LPCSTR keyName = nullptr;
         int value = 0;
         int defaultValue = 0;
         int maxValue = 1;
-        void (*applyCallback)();
+        ApplyCallback applyCallback = nullptr;
 
       public:
         explicit operator int &() noexcept
@@ -78,10 +87,20 @@ struct AdditionalConfig
         }
 
       public:
-        void Apply()
+        void Apply(const EOptionChangeSource source)
         {
             if (applyCallback)
-                applyCallback();
+                applyCallback(*this, source);
+        }
+        BOOL SetValue(const int newValue, const EOptionChangeSource source)
+        {
+            const int clampedValue = Clamp(0, newValue, maxValue);
+            if (value == clampedValue)
+                return FALSE;
+
+            value = clampedValue;
+            Apply(source);
+            return TRUE;
         }
     };
     ConfigEntry alternativeButtonClick{"Sound.AlternativeButtonClick", 0, 0};
@@ -93,6 +112,8 @@ struct AdditionalConfig
     ConfigEntry smoothMapScroll{"AdvMap.SmoothMapScroll", 1, 1};
 
   private:
+    void BindCallbacks() noexcept;
+
     inline ConfigEntry *data() noexcept
     {
         return &alternativeButtonClick;

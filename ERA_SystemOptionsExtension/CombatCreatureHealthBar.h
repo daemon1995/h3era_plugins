@@ -56,7 +56,7 @@ struct SettingsDlg : public H3Dlg
     // Settings settings;
   private:
     H3DlgPcx *labelForHp = nullptr;
-    H3DlgPcx *originalLabel = nullptr;
+    H3DlgPcx16 *originalLabel = nullptr;
     H3DlgDef *creatureDef = nullptr;
     BOOL needRedraw;
     const DlgText *text = nullptr;
@@ -86,12 +86,11 @@ struct SettingsDlg : public H3Dlg
     static void __fastcall SaturationScrollBarProc(INT32 id, H3BaseDlg *dlg);
     static void __fastcall HeightScrollBarProc(INT32 id, H3BaseDlg *dlg);
 
-    static void __fastcall ScrollBarGeneralProc(H3BaseDlg *dlg, INT32 scrollBarId, float &valuePtr);
+    static void __fastcall ScrollBarGeneralProc(SettingsDlg *dlg, INT32 scrollBarId, float &valuePtr);
 
     static int __fastcall SettingsHotkeyCallback(H3Msg *msg) noexcept;
 
     void HitPointsBarDraw() noexcept;
-    void LabelBarDraw() noexcept;
 };
 
 class CombatHints : public IGamePatch
@@ -118,6 +117,10 @@ class CombatHints : public IGamePatch
   public:
     static int __fastcall CombatOptionsCallback(H3Msg *msg) noexcept;
     static void ShowHealthBarDlg() noexcept;
+    static void SetHealthBarEnabled(const BOOL enabled) noexcept
+    {
+        Get().settings.isEnabled = enabled;
+    }
 
     // static void Init();
     static void WindMgr_DrawColoredRect(const int x, const int y, const int width, const int height,

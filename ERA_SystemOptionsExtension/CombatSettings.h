@@ -35,5 +35,7 @@ class CombatSettings : public IGamePatch
 
   public:
     static CombatSettings &Get();
+    static void ApplyQuickCombatType(const AdditionalConfig::ConfigEntry &entry,
+                                     AdditionalConfig::EOptionChangeSource source) noexcept;
 };
 } // namespace cmbsttngs

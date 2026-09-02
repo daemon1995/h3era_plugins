@@ -20,6 +20,13 @@ MapScroller &MapScroller::Get() noexcept
     return *instance;
 }
 
+void MapScroller::ApplySmoothScrollState(const BOOL state) noexcept
+{
+    Get().SetEnabled(state);
+    if (!state && P_AdventureManager && P_AdventureManager->dlg)
+        P_AdventureManager->screenDrawOffset = {};
+}
+
 void __stdcall MapScroller::WndMgr_AddNewDlg(HiHook *h, const H3WindowManager *wm, const H3BaseDlg *dlg,
                                              const int index, const int draw) noexcept
 {

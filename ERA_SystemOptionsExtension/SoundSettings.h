@@ -104,17 +104,15 @@ class SoundSettings : public IGamePatch
                 Get().buttonClickSoundPatches[i]->Undo();
         }
     }
-    static void StopBackgroundSounds(ISetting *sender)
+    static void ApplyBackgroundSoundsState(const BOOL enabled)
     {
-        const BOOL enableLoopSounds = sender->value.current;
-
-        auto advMan = P_AdventureManager->Get();
+        auto advMan = P_AdventureManager ? P_AdventureManager->Get() : nullptr;
         if (!advMan || !advMan->dlg)
         {
-            SetBackgroundSoundsState(enableLoopSounds);
+            SetBackgroundSoundsState(enabled);
             return;
         }
-        if (enableLoopSounds)
+        if (enabled)
         {
             Get().blockLoopSounds->Undo();
             const int currentTown = P_Game->GetPlayer()->currentTown;
@@ -124,12 +122,12 @@ class SoundSettings : public IGamePatch
             if (currentTown != -1)
             {
                 auto &town = P_Game->towns[currentTown];
-                pos = H3Position(town.x, town.y, town.z);
+                pos = H3Position(town.x, town.y, static_cast<INT8>(town.z));
             }
             else
             {
                 auto hero = P_Game->GetPlayer()->GetActiveHero();
-                pos = H3Position(hero->x, hero->y, hero->z);
+                pos = H3Position(hero->x, hero->y, static_cast<INT8>(hero->z));
             }
 
             THISCALL_3(void, 0x0418330, advMan, pos, FALSE); // start play new sounds

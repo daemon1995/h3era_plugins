@@ -4,25 +4,54 @@
 #include "framework.h"
 
 #include "CombatCreatureHealthBar.h"
+#include "CombatSettings.h"
+#include "MapScroller.h"
 #include "SoundSettings.h"
 
-#define PATCH_DECLATOR(nameSpaceName, className)                                                                       \
-    namespace nameSpaceName                                                                                            \
-    {                                                                                                                  \
-    class className : public IGamePatch                                                                                \
-    {                                                                                                                  \
-      public:                                                                                                          \
-        static className &className::Get();                                                                            \
-    };                                                                                                                 \
-    }
-PATCH_DECLATOR(scroll, MapScroller)
-// PATCH_DECLATOR(cmbhints, CombatHints)
-PATCH_DECLATOR(cmbsttngs, CombatSettings)
-// PATCH_DECLATOR(sound, SoundSettings)
 std::unordered_map<std::string, AdditionalConfig::ConfigEntry *> AdditionalConfig::optionsMap;
+
+namespace
+{
+using ConfigEntry = AdditionalConfig::ConfigEntry;
+using EOptionChangeSource = AdditionalConfig::EOptionChangeSource;
+
+void ApplyAlternativeButtonClick(const ConfigEntry &entry, const EOptionChangeSource)
+{
+    sound::SoundSettings::SetAlternativButtonClickState(entry.value);
+}
+
+void ApplyBackgroundSound(const ConfigEntry &entry, const EOptionChangeSource source)
+{
+    if (source == EOptionChangeSource::InitialLoad)
+        sound::SoundSettings::SetBackgroundSoundsState(entry.value);
+    else
+        sound::SoundSettings::ApplyBackgroundSoundsState(entry.value);
+}
+
+void ApplyBattleQueue(const ConfigEntry &entry, const EOptionChangeSource)
+{
+    if (auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue"))
+    {
+        entry.value ? queuePI->ApplyAll() : queuePI->UndoAll();
+    }
+}
+
+void ApplyHealthBar(const ConfigEntry &entry, const EOptionChangeSource)
+{
+    cmbhints::CombatHints::SetHealthBarEnabled(entry.value);
+}
+
+void ApplySmoothMapScroll(const ConfigEntry &entry, const EOptionChangeSource)
+{
+    scroll::MapScroller::ApplySmoothScrollState(entry.value);
+}
+} // namespace
 
 DllExport INT __stdcall GetOptionValue(LPCSTR key)
 {
+    if (!key)
+        return -1;
+
     auto it = AdditionalConfig::optionsMap.find(key);
     if (it != AdditionalConfig::optionsMap.end())
         return it->second->value;
@@ -30,44 +59,42 @@ DllExport INT __stdcall GetOptionValue(LPCSTR key)
 }
 DllExport INT __stdcall SetOptionValue(LPCSTR key, INT value)
 {
+    if (!key)
+        return -1;
+
     auto it = AdditionalConfig::optionsMap.find(key);
     if (it != AdditionalConfig::optionsMap.end())
     {
-        auto &entry = it->second;
-        const int oldValue = entry->value;
-        entry->value = Clamp(0, value, entry->maxValue);
-        if (oldValue != entry->value)
-        {
-            entry->Apply();
-            return true;
-        }
-        return false;
+        return it->second->SetValue(value, AdditionalConfig::EOptionChangeSource::ExternalApi);
     }
     return -1;
 }
 
+void AdditionalConfig::BindCallbacks() noexcept
+{
+    alternativeButtonClick.applyCallback = ApplyAlternativeButtonClick;
+    backgroundSound.applyCallback = ApplyBackgroundSound;
+    battleQueue.applyCallback = ApplyBattleQueue;
+    quickCombatType.applyCallback = cmbsttngs::CombatSettings::ApplyQuickCombatType;
+    showCreatureHealthBar.applyCallback = ApplyHealthBar;
+    smoothMapScroll.applyCallback = ApplySmoothMapScroll;
+}
+
 void AdditionalConfig::InitialApply()
 {
+    BindCallbacks();
+
     // if original combat speed is present, undo it
     if (auto combatSpeedOri = globalPatcher->GetInstance("BattleSpeed"))
         combatSpeedOri->UndoAll();
 
     cmbsttngs::CombatSettings::Get();
 
-    auto &mapScrollSettings = scroll::MapScroller::Get();
-    mapScrollSettings.SetEnabled(smoothMapScroll.value);
-
-    auto &soundSettings = sound::SoundSettings::Get();
-    soundSettings.SetBackgroundSoundsState(backgroundSound.value);
-    soundSettings.SetAlternativButtonClickState(alternativeButtonClick.value);
-
-    auto &combatHints = cmbhints::CombatHints::Get();
-    combatHints.settings.isEnabled = showCreatureHealthBar.value;
-    auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue");
-    if (queuePI)
+    constexpr size_t length = sizeof(AdditionalConfig) / sizeof(ConfigEntry);
+    auto array = data();
+    for (size_t i = 0; i < length; i++)
     {
-        const BOOL enabled = battleQueue.value;
-        enabled ? queuePI->ApplyAll() : queuePI->UndoAll();
+        array[i].Apply(EOptionChangeSource::InitialLoad);
     }
 }
 

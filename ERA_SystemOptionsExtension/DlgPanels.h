@@ -13,10 +13,11 @@ struct SettingsInfo
     int *const valuePtr = 0;
     LPCSTR displayedName = nullptr;
     union {
-        LPCSTR rmcHint;
+    LPCSTR rmcHint;
         LPCSTR *rmcHints = nullptr;
     };
     BOOL isBlocked = FALSE;
+    AdditionalConfig::ConfigEntry *configEntry = nullptr;
 };
 struct RadioButtonInfo
 {
@@ -29,6 +30,7 @@ struct RadioButtonInfo
     LPCSTR *textPtrs = nullptr;
     LPCSTR *rmcHints = nullptr;
     const BOOL requiresSelection = FALSE;
+    AdditionalConfig::ConfigEntry *configEntry = nullptr;
 };
 struct SwitchPanelInfo
 {
@@ -50,6 +52,7 @@ struct ISetting
         INT32 dlgStart = 0;
         INT32 current = 0;
         BOOL isBlocked = FALSE;
+        AdditionalConfig::ConfigEntry *configEntry = nullptr;
     };
     using OnChangeCallback = std::function<void(ISetting *sender)>;
     static constexpr int WIDTH = 195;
@@ -110,6 +113,8 @@ struct ISetting
     }
     void TriggerChange() noexcept
     {
+        if (value.configEntry && !value.isBlocked)
+            value.configEntry->SetValue(value.current, AdditionalConfig::EOptionChangeSource::Dialog);
         if (m_onChange)
             m_onChange(this);
     }
@@ -155,7 +160,8 @@ struct CheckBoxSetting : public ISetting
     H3DlgDef *checkBoxItem{};
 
   public:
-    CheckBoxSetting(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.isBlocked})
+    CheckBoxSetting(const SettingsInfo &info)
+        : ISetting(info.position, {info.valuePtr, 0, 0, info.isBlocked, info.configEntry})
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId;
@@ -214,7 +220,7 @@ struct RadioBoxSetting : public ISetting
 
   public:
     RadioBoxSetting(const RadioButtonInfo &info)
-        : ISetting(info.position, {info.valuePtr, 0, 0, 0}), requiresSelection(info.requiresSelection)
+        : ISetting(info.position, {info.valuePtr, 0, 0, 0, info.configEntry}), requiresSelection(info.requiresSelection)
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + info.size - 1;
@@ -377,7 +383,8 @@ struct Switch10XPanel : public ISetting
     H3DlgDef *switchButtons[BUTTONS_COUNT]{};
 
   public:
-    Switch10XPanel(const SettingsInfo &info) : ISetting(info.position, {info.valuePtr, 0, 0, info.isBlocked})
+    Switch10XPanel(const SettingsInfo &info)
+        : ISetting(info.position, {info.valuePtr, 0, 0, info.isBlocked, info.configEntry})
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + BUTTONS_COUNT - 1;

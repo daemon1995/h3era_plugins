@@ -155,8 +155,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         if (quickCombatSettingState == FALSE && extraConfig.quickCombatType.value != FALSE ||
             quickCombatSettingState != FALSE && extraConfig.quickCombatType.value == FALSE)
         {
-            extraConfig.quickCombatType.value = quickCombatSettingState;
-            settingsChanged = TRUE;
+            if (extraConfig.quickCombatType.SetValue(quickCombatSettingState,
+                                                     AdditionalConfig::EOptionChangeSource::Dialog))
+                settingsChanged = TRUE;
         }
     }
 
@@ -241,27 +242,22 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                   itemId++,
                                                   &extraConfig.backgroundSound.value,
                                                   ERA_OPT(system, backgroundSound, name),
-                                                  ERA_OPT(system, backgroundSound, hint)};
+                                                  ERA_OPT(system, backgroundSound, hint),
+                                                  FALSE,
+                                                  &extraConfig.backgroundSound};
 
-        auto bgSoundSetting = page->CreateSetting<CheckBoxSetting>(backgroundSoundInfo);
-        bgSoundSetting->SetOnDlgClose([callType](ISetting *setting) {
-            if (callType == ADV_MAP)
-                sound::SoundSettings::StopBackgroundSounds(setting);
-            else
-                sound::SoundSettings::SetBackgroundSoundsState(setting->value.current);
-        });
+        page->CreateSetting<CheckBoxSetting>(backgroundSoundInfo);
 
         const SettingsInfo splitButtonSoundInfo{extraConfig.alternativeButtonClick.keyName,
                                                 {panelX, rightPartY + baseSettingHeight},
                                                 itemId++,
                                                 &extraConfig.alternativeButtonClick.value,
                                                 ERA_OPT(system, alternativeButtonClick, name),
-                                                ERA_OPT(system, alternativeButtonClick, hint)};
+                                                ERA_OPT(system, alternativeButtonClick, hint),
+                                                FALSE,
+                                                &extraConfig.alternativeButtonClick};
 
-        auto splitButtonSoundSetting = page->CreateSetting<CheckBoxSetting>(splitButtonSoundInfo);
-
-        splitButtonSoundSetting->SetOnChange(
-            [](ISetting *setting) { sound::SoundSettings::SetAlternativButtonClickState(setting->value.current); });
+        page->CreateSetting<CheckBoxSetting>(splitButtonSoundInfo);
 
         constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
         // combat speed switch panel
@@ -408,23 +404,15 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
              itemId++,
              &extraConfig.smoothMapScroll.value, //   0x06987C0,
              ERA_OPT(map, smoothMapScroll, name),
-             ERA_OPT(map, smoothMapScroll, hint)}, // show tips in battle
+             ERA_OPT(map, smoothMapScroll, hint), // show tips in battle
+             FALSE,
+             &extraConfig.smoothMapScroll},
         };
 
         for (auto &info : checkboxesInfo)
         {
             page->CreateSetting<CheckBoxSetting>(info);
         }
-        auto &smoothScroll = *page->settings.Last();
-        smoothScroll->SetOnDlgClose([callType](ISetting *setting) {
-            const BOOL value = setting->value.current;
-            scroll::MapScroller::Get().SetEnabled(value);
-            if (!value && callType == eDlgCallSource::ADV_MAP)
-            {
-                P_AdventureManager->screenDrawOffset = {};
-            }
-        });
-
         // RIGHT PAGE PART
         constexpr int rCheckboxX = DLG_RIGHT_PART_X_MARGIN;
         int rCheckboxY = settingsStartY;
@@ -442,26 +430,19 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                      radioNums,
                                      radioTexts,
                                      radioHints,
-                                     TRUE};
+                                     TRUE,
+                                     &extraConfig.quickCombatType};
         itemId += radioNums;
         auto radioBox = page->CreateSetting<RadioBoxSetting>(radioInfo);
         radioBox->value.isBlocked = isTutorial || callType == eDlgCallSource::COMBAT;
-        // radioBox->SetOnDlgClose([callType](ISetting *sender) {
-        //     if (callType == eDlgCallSource::COMBAT)
-        //     {
-        //         // sender->value.current = sender->value.dlgStart;
-        //         *(sender->value.valuePtr) = sender->value.dlgStart;
-        //     }
-        // });
         m_pages.emplace_back(page);
     }
 
     // COMBAT PAGE
-    if (1)
     {
         // LEFT PAGE PART
         auto captionBttn =
-            H3DlgCaptionButton::Create((146 + 4 << 1) + DLG_CAPTION_BUTTON_TOP_MARGIN, DLG_CAPTION_BUTTON_TOP_MARGIN,
+            H3DlgCaptionButton::Create(((146 + 4) << 1) + DLG_CAPTION_BUTTON_TOP_MARGIN, DLG_CAPTION_BUTTON_TOP_MARGIN,
                                        ePageItemId::PAGE_ITEM_COMBAT, PAGE_CAPTION_DEF_NAME, ERA_CAPTION(combat, name),
                                        NH3Dlg::Text::BIG, 0, 0, false, eVKey::H3VK_3, eTextColor::HIGHLIGHT);
         captionBttn->SetRightClickHint(ERA_CAPTION(combat, hint));
@@ -538,7 +519,8 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                 &extraConfig.quickAutoResolve.value, // 0x06987F8,
                                                 ERA_OPT(combat, autoQuick, name),
                                                 ERA_OPT(combat, autoQuick, hint),
-                                                1}};
+                                                1,
+                                                &extraConfig.quickAutoResolve}};
 
         for (auto &info : autoCombatInfo)
         {
@@ -605,14 +587,10 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                 &battleQueue.value,
                 ERA_OPT(combat, battleQueue, name),
                 ERA_OPT(combat, battleQueue, hint),
-                isInCombat // disable in combat since it requres dlg reconstruction
-            };
+                isInCombat, // disable in combat since it requres dlg reconstruction
+                &battleQueue};
 
-            auto combatQueueCheckBox = page->CreateSetting<CheckBoxSetting>(combatQueueCheckBoxInfo);
-            combatQueueCheckBox->SetOnDlgClose([queuePI](ISetting *setting) {
-                const BOOL enabled = setting->value.current;
-                enabled ? queuePI->ApplyAll() : queuePI->UndoAll();
-            });
+            page->CreateSetting<CheckBoxSetting>(combatQueueCheckBoxInfo);
             rightPartY += baseSettingHeight;
         }
         const auto healthBarValuePtr = HealthBarIsEnabledAddress();
@@ -621,10 +599,10 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                     itemId++,
                                                     &extraConfig.showCreatureHealthBar.value,
                                                     ERA_OPT(combat, healthBar, name),
-                                                    ERA_OPT(combat, healthBar, hint)};
+                                                    ERA_OPT(combat, healthBar, hint),
+                                                    FALSE,
+                                                    &extraConfig.showCreatureHealthBar};
         auto healthBarcheckBox = page->CreateSetting<CheckBoxSetting>(healthBarcheckBoxInfo);
-        healthBarcheckBox->SetOnChange(
-            [healthBarValuePtr](ISetting *setting) { *healthBarValuePtr = setting->value.current; });
 
         const SettingsInfo healthBarCaptionInfo = {"system_health_bar",
                                                    {rightX, rightPartY + baseSettingHeight},
@@ -633,14 +611,15 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                    ERA_OPT(combat, healthBar, button),
                                                    ERA_OPT(combat, healthBar, hint)};
         auto button = page->CreateSetting<CaptionButtonSetting>(healthBarCaptionInfo);
-        button->SetOnChange([healthBarValuePtr, healthBarcheckBox](ISetting *setting) {
+        auto healthBarOption = &extraConfig.showCreatureHealthBar;
+        button->SetOnChange([healthBarValuePtr, healthBarcheckBox, healthBarOption](ISetting *setting) {
             const int checkboxStateBefore = *healthBarValuePtr;
             ShowHealthBarDlg();
             const int checkboxStateAfter = *healthBarValuePtr;
             if (checkboxStateBefore != checkboxStateAfter)
             {
                 healthBarcheckBox->value.current = checkboxStateAfter;
-                *(healthBarcheckBox->value.valuePtr) = checkboxStateAfter;
+                healthBarOption->SetValue(checkboxStateAfter, AdditionalConfig::EOptionChangeSource::Dialog);
                 CheckBoxSetting::SetCheckBoxValue(healthBarcheckBox->checkBoxItem, checkboxStateAfter);
             }
         });
@@ -735,7 +714,7 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
         page->items += scrollBar;
     }
 
-    for (size_t i = 0; i < maxButtonsToShow; i++)
+    for (INT i = 0; i < maxButtonsToShow; i++)
     {
         SettingsInfo bttnInfo = {h3_NullString, {x, callbackY}, itemId++, nullptr, nullptr, nullptr};
         auto ermButton = page->CreateSetting<CaptionButtonSetting>(bttnInfo);
@@ -855,9 +834,13 @@ SystemOptionsDlg::~SystemOptionsDlg()
             auto &value = setting->value;
             if (value.current != value.dlgStart && !value.isBlocked)
             {
-                *(value.valuePtr) = value.current;
+                if (value.configEntry)
+                    value.configEntry->SetValue(value.current, AdditionalConfig::EOptionChangeSource::Dialog);
+                else if (value.valuePtr)
+                    *(value.valuePtr) = value.current;
                 settingsChanged = TRUE;
-                setting->TriggerDlgClose();
+                if (!value.configEntry)
+                    setting->TriggerDlgClose();
             }
         }
         delete page;
@@ -865,10 +848,6 @@ SystemOptionsDlg::~SystemOptionsDlg()
     OriginalConfig &config = OriginalConfig::Get();
     AdditionalConfig &extraConfig = AdditionalConfig::Get();
 
-    if (dlgCallSource != eDlgCallSource::COMBAT)
-    {
-        config.quickCombat = extraConfig.quickCombatType.value ? true : false;
-    }
     const int newQuickCombatState = config.quickCombat;
     if (settingsChanged || quickCombatSettingState != newQuickCombatState)
     {
