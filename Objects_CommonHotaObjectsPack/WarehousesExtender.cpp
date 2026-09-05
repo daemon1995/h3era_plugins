@@ -10,7 +10,8 @@ WarehousesExtender::WarehousesExtender() : ObjectExtender(_PI)
     objectSubtypesInfo.Reserve(eResource::MITHRIL + 1);
     for (size_t i = 0; i <= eResource::MITHRIL; i++)
     {
-        AddUniqueObjectInfo(UniqueObjectInfo{extender::WAREHOUSE_OBJECT_TYPE, static_cast<INT16>(i), 10});
+        AddUniqueObjectInfo(
+            UniqueObjectInfo{extender::WAREHOUSE_OBJECT_TYPE, static_cast<INT16>(i), 10, extender::ePageIncome});
     }
     CreatePatches();
 }

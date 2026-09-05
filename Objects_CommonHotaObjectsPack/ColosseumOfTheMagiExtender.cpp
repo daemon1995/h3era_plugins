@@ -26,7 +26,7 @@ ColosseumOfTheMagiExtender::ColosseumOfTheMagiExtender() : ObjectExtender(_PI)
 void ColosseumOfTheMagiExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 {
     using namespace extender;
-    AddUniqueObjectInfo(UniqueObjectInfo{HOTA_OBJECT_TYPE, 2, 100});
+    AddUniqueObjectInfo(UniqueObjectInfo{HOTA_OBJECT_TYPE, 2, 100, ePageLearning});
 }
 
 BOOL ColosseumOfTheMagiExtender::InitNewGameMapItemSetup(H3MapItem *mapItem, int typeCount,

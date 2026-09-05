@@ -5,9 +5,8 @@ namespace gazebo
 GazeboExtender::GazeboExtender() : ObjectExtender(_PI)
 {
     using namespace extender;
-    AddUniqueObjectInfo(UniqueObjectInfo{ HOTA_OBJECT_TYPE, GAZEBO_OBJECT_SUBTYPE, 50 });
+    AddUniqueObjectInfo(UniqueObjectInfo{HOTA_OBJECT_TYPE, GAZEBO_OBJECT_SUBTYPE, 50, ePageLearning});
     CreatePatches();
-
 }
 
 BOOL GazeboExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *player, int &aiMapItemWeight,

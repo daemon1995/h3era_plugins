@@ -25,6 +25,7 @@ struct UniqueObjectType
 };
 enum eRmgDlgObjectPage
 {
+    ePageUnknown = -1,
     ePageCommon,
     ePageLearning,
     ePageIncome,
@@ -50,6 +51,8 @@ struct UniqueObjectInfo
     UniqueObjectType uniqueObjectType;
     // size_t size = sizeof(UniqueObjectInfo);
     INT aiScoutingWeight = -1;
+    // The dialog page can be assigned later, after the object has been registered.
+    eRmgDlgObjectPage page = ePageUnknown;
 
   public:
     // H3String GetStringMessage(LPCSTR key) const
@@ -74,6 +77,7 @@ struct UniqueObjectInfo
     //     return GetStringMessage(FormatKey::cannotVisit);
     // }
 };
+using UniqueObjectInfoPtr = UniqueObjectInfo *;
 struct RMGObjectProperties
 {
     constexpr static int DATA_SIZE = 5;
@@ -145,9 +149,27 @@ inline const char *GetObjectName(const H3MapItem *mapItem)
 class ObjectExtender
 {
   protected:
-    H3Vector<UniqueObjectInfo> objectSubtypesInfo;
+    // Keep the records outside of H3Vector. This keeps their addresses stable when
+    // the vector grows and allows UniqueObjectInfo to be extended without changing
+    // the layout of the vector itself.
+    H3Vector<UniqueObjectInfoPtr> objectSubtypesInfo;
     BOOL m_isInited = FALSE;
     PatcherInstance *_pi = nullptr;
+
+  protected:
+    void ReleaseObjectSubtypesInfo() noexcept
+    {
+        H3ObjectAllocator<UniqueObjectInfo> allocator;
+        for (auto *info : objectSubtypesInfo)
+        {
+            if (info)
+            {
+                allocator.destroy(info);
+                allocator.deallocate(info);
+            }
+        }
+        objectSubtypesInfo.RemoveAll();
+    }
 
   public:
     ObjectExtender(PatcherInstance *_pi) : _pi(_pi) {};
@@ -161,7 +183,10 @@ class ObjectExtender
         _pi = this->_pi;
     }
     ObjectExtender(UniqueObjectInfo &info, PatcherInstance *_pi = nullptr);
-    virtual ~ObjectExtender() {};
+    virtual ~ObjectExtender()
+    {
+        ReleaseObjectSubtypesInfo();
+    };
 
   protected:
     virtual void CreatePatches()
@@ -212,21 +237,41 @@ class ObjectExtender
     }
 
   public:
-    inline const H3Vector<UniqueObjectInfo> &GetObjectSubtypesInfo() const noexcept
+    inline H3Vector<UniqueObjectInfoPtr> &GetObjectSubtypesInfo() noexcept
+    {
+        return objectSubtypesInfo;
+    }
+
+    inline const H3Vector<UniqueObjectInfoPtr> &GetObjectSubtypesInfo() const noexcept
     {
         return objectSubtypesInfo;
     }
 
   public:
-    void AddUniqueObjectInfo(const int type, const int subtype = -1, const int aiScouting = -1) noexcept
+    void AddUniqueObjectInfo(const int type, const int subtype = -1, const int aiScouting = -1,
+                             const eRmgDlgObjectPage page = ePageUnknown) noexcept
     {
         UniqueObjectInfo info{(INT16)type, (INT16)subtype, aiScouting};
+        info.page = page;
         AddUniqueObjectInfo(info);
     }
-    void AddUniqueObjectInfo(UniqueObjectInfo &info) noexcept
+    void AddUniqueObjectInfo(const UniqueObjectInfo &info) noexcept
     {
         if (info.uniqueObjectType.type >= 0 && info.uniqueObjectType.type < 252)
-            objectSubtypesInfo += info;
+        {
+            H3ObjectAllocator<UniqueObjectInfo> allocator;
+            UniqueObjectInfo *storedInfo = allocator.allocate(1);
+            if (!storedInfo)
+                return;
+
+            allocator.construct(storedInfo, info);
+
+            if (!objectSubtypesInfo.Add(storedInfo))
+            {
+                allocator.destroy(storedInfo);
+                allocator.deallocate(storedInfo);
+            }
+        }
     }
 
     BOOL Register() noexcept

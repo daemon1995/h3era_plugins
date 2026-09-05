@@ -16,7 +16,7 @@ void WoGObjectsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) no
     for (size_t i = 1; i <= maxSubtype; i++)
     {
         WoGObjectOptionsIds[i] = EraJS::readInt(H3String::Format(jsonKeyFormat, WOG_OBJECT_TYPE, i).String());
-        AddUniqueObjectInfo(WOG_OBJECT_TYPE, i);
+        AddUniqueObjectInfo(WOG_OBJECT_TYPE, i, 0, extender::ePageWogObject);
     }
 }
 
