@@ -173,7 +173,22 @@ RMGDialogDataManager RMG_SettingsDlg::m_data;
 namespace
 {
 constexpr size_t RMG_DLG_PAGES_NUM = RMGDialogDataManager::PAGE_COUNT;
+
+size_t CountPandoraMagicSpells(const PandoraVariantKey &key) noexcept
+{
+    if (key.kind != ePandoraGeneratorKind::MAGIC)
+        return 0;
+
+    size_t result = 0;
+    for (INT32 spellId = 0; spellId < h3::limits::SPELLS; ++spellId)
+    {
+        const auto &spell = P_Spell[spellId];
+        if (spell.flags && spell.level >= key.first && spell.level <= key.second && (spell.school & key.third))
+            ++result;
+    }
+    return result;
 }
+} // namespace
 
 DllExport BOOL RMGObjectSupportsGeneration(const int objType, const int objSubtype = -1)
 {
@@ -321,7 +336,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
                        static_cast<int>(visiblePagePosition / pageColumns) * (pageButtonHeight + pageButtonYSpacing);
 
         H3DlgCaptionButton *captionbttn = H3DlgCaptionButton::Create(
-            _x, _y, pageButtonWidth, pageButtonHeight, NItemIDs::PAGE_FIRST + i, "OVBUTN3.def", pageName,
+            _x, _y, pageButtonWidth, pageButtonHeight, NItemIDs::PAGE_FIRST + i, "GSPBUTT.DEF", pageName,
             NH3Dlg::Text::SMALL, 0, 0, 0, eVKey::H3VK_1 + i, eTextColor::HIGHLIGHT);
 
         captionbttn->SetHints(EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.hint", i).String()),
@@ -1213,9 +1228,11 @@ BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *pa
         const bool result = extendersManager::ObjectExtenderManager::ShowObjectExtendedInfo(
             rmgObject->objectInfo, rmgObject->graphicalAttributes->attributes, str);
 
+        AppendObjectExtendedInfo(panel, str);
+
         //   if (!result)
         {
-            constexpr int additionalHeight = 100;
+            const int additionalHeight = GetObjectExtendedInfoAdditionalHeight(panel);
             IntAt(0x04F65D4 + 2) += additionalHeight;
             IntAt(0x04F662F + 1) += additionalHeight;
             H3Messagebox::RMB(str.String());
@@ -1276,8 +1293,7 @@ RMG_SettingsDlg::BanksPage::~BanksPage()
 {
 }
 
-RMG_SettingsDlg::PrisonPage::PrisonPage(H3DlgCaptionButton *captionbttn,
-                                        const std::vector<GraphicalAttributes> &data)
+RMG_SettingsDlg::PrisonPage::PrisonPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data)
     : ObjectsPage(captionbttn, data, false)
 {
     // Prison values are stored in RMGObjGen::Exp, not in the graphics
@@ -1308,7 +1324,7 @@ RMG_SettingsDlg::PrisonPage::~PrisonPage()
 }
 
 RMG_SettingsDlg::PandoraPage::PandoraPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data)
-    : ObjectsPage(captionbttn, data, false, 165, 7)
+    : ObjectsPage(captionbttn, data, false, 155, 7)
 {
     categories[0].kind = ePandoraGeneratorKind::GOLD;
     categories[1].kind = ePandoraGeneratorKind::EXPERIENCE;
@@ -1422,6 +1438,57 @@ void RMG_SettingsDlg::PandoraPage::ToggleMassEnabled(const BOOL reverse, const B
         if (object)
             object->objectInfo.enabled = reverse ? object->objectInfo.enabled ^ true : newState;
     }
+}
+
+int RMG_SettingsDlg::PandoraPage::GetObjectExtendedInfoAdditionalHeight(const ObjectsPanel *panel) const noexcept
+{
+    if (!panel || !panel->rmgObject || !panel->rmgObject->objectGenerator)
+        return 100;
+
+    PandoraVariantKey key;
+    if (!PandoraVariants::GetKey(panel->rmgObject->objectGenerator, key))
+        return 100;
+
+    const size_t spellsCount = CountPandoraMagicSpells(key);
+    if (!spellsCount)
+        return 100;
+
+    // spellint.def is 36 px high. Leave a little room for the line spacing
+    // used by the message-box markup and retain the generic 100 px reserve.
+    const size_t rows = (spellsCount + 6) / 7;
+    return 100 + static_cast<int>(rows * 42);
+}
+
+void RMG_SettingsDlg::PandoraPage::AppendObjectExtendedInfo(const ObjectsPanel *panel, H3String &text) const noexcept
+{
+    if (!panel || !panel->rmgObject || !panel->rmgObject->objectGenerator)
+        return;
+
+    PandoraVariantKey key;
+    if (!PandoraVariants::GetKey(panel->rmgObject->objectGenerator, key) || key.kind != ePandoraGeneratorKind::MAGIC)
+    {
+        return;
+    }
+
+    H3String spellGrid;
+    size_t spellsShown = 0;
+    for (INT32 spellId = 0; spellId < h3::limits::SPELLS; ++spellId)
+    {
+        const auto &spell = P_Spell[spellId];
+        if (!spell.flags || spell.level < key.first || spell.level > key.second || !(spell.school & key.third) ||
+            spell.spellFromArtifact)
+            continue;
+
+        if (spellsShown && spellsShown % 7 == 0)
+            spellGrid.Append("\n\n");
+        spellGrid.Append(H3String::Format("{~>%s:0:%d}", NH3Dlg::Assets::SPELL_SMALL, spellId + 1));
+        ++spellsShown;
+    }
+
+    if (!spellsShown)
+        return;
+
+    text.Append("\n\n").Append(EraJS::read("RMG.text.dlg.pandora.spells.title")).Append("\n\n").Append(spellGrid);
 }
 
 BOOL RMG_SettingsDlg::PandoraPage::Proc(H3Msg &msg)
@@ -1870,65 +1937,6 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
 
     switch (objectType)
     {
-    case eObject::CREATURE_BANK:
-    case eObject::DERELICT_SHIP:
-    case eObject::DRAGON_UTOPIA:
-    case eObject::CRYPT:
-    case eObject::SHIPWRECK:
-        return extender::ePageCreatureBank;
-    case eObject::CREATURE_GENERATOR1:
-    case eObject::CREATURE_GENERATOR4:
-    case eObject::RANDOM_DWELLING:
-    case eObject::RANDOM_DWELLING_LVL:
-    case eObject::RANDOM_DWELLING_FACTION:
-        return extender::ePageDwelling;
-
-    case eObject::PRISON:
-    case eObject::SEER_HUT:
-    case eObject::QUEST_GUARD:
-        return extender::ePagePrison;
-
-    case eObject::PYRAMID:
-        if (objectSubtype > 0)
-            return extender::ePageWogObject;
-        return extender::ePageLearning;
-
-    case eObject::PANDORAS_BOX:
-        return extender::ePandoraBox;
-
-    case eObject::ALTAR_OF_SACRIFICE:
-    case eObject::ARENA:
-    case eObject::MARLETTO_TOWER:
-
-    case eObject::GARDEN_OF_REVELATION:
-    case eObject::SCHOOL_OF_MAGIC:
-    case eObject::LIBRARY_OF_ENLIGHTENMENT:
-    case eObject::STAR_AXIS:
-
-    case eObject::SCHOLAR:
-    case eObject::SHRINE_OF_MAGIC_INCANTATION:
-    case eObject::SHRINE_OF_MAGIC_GESTURE:
-    case eObject::SHRINE_OF_MAGIC_THOUGHT:
-    case eObject::SIRENS:
-    case eObject::LEARNING_STONE:
-    case eObject::TREE_OF_KNOWLEDGE:
-    case eObject::UNIVERSITY:
-    case eObject::SCHOOL_OF_WAR:
-    case eObject::WITCH_HUT:
-
-        return extender::ePageLearning;
-
-    case eObject::MINE:
-    case eObject::LEAN_TO:
-
-    case eObject::MYSTICAL_GARDEN:
-
-    case eObject::WATER_WHEEL:
-    case eObject::WATERING_HOLE:
-    case eObject::WINDMILL:
-    case extender::WAREHOUSE_OBJECT_TYPE:
-    case eObject::ABANDONED_MINE:
-        return extender::ePageIncome;
 
         // case eObject::ARTIFACT:
         // case eObject::RANDOM_ART:
@@ -1936,17 +1944,6 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
         // case eObject::RANDOM_MINOR_ART:
         // case eObject::RANDOM_MAJOR_ART:
         // case eObject::RANDOM_RELIC_ART:
-
-    case eObject::CAMPFIRE:
-    case eObject::FLOTSAM:
-    case eObject::RANDOM_RESOURCE:
-    case eObject::RESOURCE:
-    case eObject::SEA_CHEST:
-    case eObject::SHIPWRECK_SURVIVOR:
-    case eObject::TREASURE_CHEST:
-    case eObject::WAGON:
-        return extender::ePageTreasure;
-
     case eObject::BLACK_MARKET:
     case eObject::CARTOGRAPHER:
     case eObject::SWAN_POND:
@@ -1978,12 +1975,84 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
     case eObject::TRADING_POST:
     case eObject::WAR_MACHINE_FACTORY:
     case eObject::WARRIORS_TOMB:
+    case eObject::WATERING_HOLE:
     case extender::HOTA_OBJECT_TYPE:
     case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
     case extender::HOTA_UNREACHABLE_OBJECT_TYPE:
     case eObject::FREELANCERS_GUILD:
     case eObject::TRADING_POST_SNOW:
         return extender::ePageCommon;
+
+    case eObject::ALTAR_OF_SACRIFICE:
+    case eObject::ARENA:
+    case eObject::MARLETTO_TOWER:
+
+    case eObject::GARDEN_OF_REVELATION:
+    case eObject::SCHOOL_OF_MAGIC:
+    case eObject::LIBRARY_OF_ENLIGHTENMENT:
+    case eObject::STAR_AXIS:
+
+    case eObject::SCHOLAR:
+    case eObject::SHRINE_OF_MAGIC_INCANTATION:
+    case eObject::SHRINE_OF_MAGIC_GESTURE:
+    case eObject::SHRINE_OF_MAGIC_THOUGHT:
+    case eObject::SIRENS:
+    case eObject::LEARNING_STONE:
+    case eObject::TREE_OF_KNOWLEDGE:
+    case eObject::UNIVERSITY:
+    case eObject::SCHOOL_OF_WAR:
+    case eObject::WITCH_HUT:
+
+        return extender::ePageLearning;
+
+    case eObject::MINE:
+    case eObject::LEAN_TO:
+
+    case eObject::MYSTICAL_GARDEN:
+
+    case eObject::WATER_WHEEL:
+    case eObject::WINDMILL:
+    case extender::WAREHOUSE_OBJECT_TYPE:
+    case eObject::ABANDONED_MINE:
+        return extender::ePageIncome;
+
+    case eObject::CREATURE_BANK:
+    case eObject::DERELICT_SHIP:
+    case eObject::DRAGON_UTOPIA:
+    case eObject::CRYPT:
+    case eObject::SHIPWRECK:
+        return extender::ePageCreatureBank;
+
+    case eObject::CREATURE_GENERATOR1:
+    case eObject::CREATURE_GENERATOR4:
+    case eObject::RANDOM_DWELLING:
+    case eObject::RANDOM_DWELLING_LVL:
+    case eObject::RANDOM_DWELLING_FACTION:
+        return extender::ePageDwelling;
+
+    case eObject::PRISON:
+    case eObject::SEER_HUT:
+    case eObject::QUEST_GUARD:
+        return extender::ePagePrison;
+
+    case eObject::PYRAMID:
+        if (objectSubtype > 0)
+            return extender::ePageWogObject;
+        return extender::ePageLearning;
+
+    case eObject::CAMPFIRE:
+    case eObject::FLOTSAM:
+    case eObject::RANDOM_RESOURCE:
+    case eObject::RESOURCE:
+    case eObject::SEA_CHEST:
+    case eObject::SHIPWRECK_SURVIVOR:
+    case eObject::TREASURE_CHEST:
+    case eObject::WAGON:
+        return extender::ePageTreasure;
+
+    case eObject::PANDORAS_BOX:
+        return extender::ePandoraBox;
+
     default:
         return extender::ePageUnknown;
     }

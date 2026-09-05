@@ -6,7 +6,7 @@
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "2.1.1";
+constexpr const char *PLUGIN_VERSION = "2.2.0";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr const char *PLUGIN_DATA = __DATE__;

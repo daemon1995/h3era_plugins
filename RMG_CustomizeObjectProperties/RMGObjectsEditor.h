@@ -45,10 +45,10 @@ struct _RMGObjGenPandoraExp_ : public H3RmgObjectGenerator
 enum class ePandoraGeneratorKind : INT32
 {
     UNKNOWN = -1,
-    MONSTERS,
     GOLD,
     EXPERIENCE,
-    MAGIC
+    MAGIC,
+    MONSTERS
 };
 
 struct PandoraVariantKey

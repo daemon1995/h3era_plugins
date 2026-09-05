@@ -217,6 +217,8 @@ class RMG_SettingsDlg : public H3Dlg
         virtual void ToggleMassEnabled(const BOOL reverse, const BOOL newState);
         virtual BOOL Proc(H3Msg &msg) override;
         virtual BOOL ShowObjectExtendedInfo(const ObjectsPanel *panel, const H3Msg &msg) const noexcept;
+        virtual void AppendObjectExtendedInfo(const ObjectsPanel *panel, H3String &text) const noexcept {}
+        virtual int GetObjectExtendedInfoAdditionalHeight(const ObjectsPanel *panel) const noexcept { return 100; }
         virtual void RebuildDisplayedObjects();
 
       protected:
@@ -272,6 +274,8 @@ class RMG_SettingsDlg : public H3Dlg
         virtual BOOL Proc(H3Msg &msg) override;
         virtual void SetVisible(const BOOL state) override;
         virtual void ToggleMassEnabled(const BOOL reverse, const BOOL newState) override;
+        virtual void AppendObjectExtendedInfo(const ObjectsPanel *panel, H3String &text) const noexcept override;
+        virtual int GetObjectExtendedInfoAdditionalHeight(const ObjectsPanel *panel) const noexcept override;
 
       private:
         void UpdateCategoryButtons() noexcept;
