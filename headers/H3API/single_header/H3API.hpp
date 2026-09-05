@@ -11499,6 +11499,7 @@ namespace h3
             H3VK_ALT           = 56,
             H3VK_SPACEBAR      = 57,
 
+            H3VK_F1            = 59,
             H3VK_F2            = 60,
             H3VK_F3            = 61,
             H3VK_F4            = 62,
@@ -20849,6 +20850,7 @@ namespace h3
 		_H3API_ static H3DlgPcx* Create(INT32 x, INT32 y, INT32 id, LPCSTR pcxName);
 		_H3API_ static H3DlgPcx* Create(INT32 x, INT32 y, LPCSTR pcxName);
 		_H3API_ VOID         SetPcx(H3LoadedPcx* pcx);
+		_H3API_ VOID         SetPcx(LPCSTR name);
 		_H3API_ VOID         AdjustColor(INT player);
 		_H3API_ H3LoadedPcx* GetPcx();
 		_H3API_ H3LoadedPcx* GetPcx() const;
@@ -35937,6 +35939,10 @@ namespace h3
 	_H3API_ VOID H3DlgPcx::SetPcx(H3LoadedPcx* pcx)
 	{
 		loadedPcx = pcx;
+	}
+	_H3API_ VOID H3DlgPcx::SetPcx(LPCSTR name)
+	{
+		SendCommand(11, reinterpret_cast<INT32>(name));
 	}
 	_H3API_ VOID H3DlgPcx::AdjustColor(INT player)
 	{
