@@ -3,8 +3,9 @@
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
+#include <limits>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -15,6 +16,12 @@ struct ListTxtData
     std::vector<std::string> lines;
     std::string lineEnding = "\r\n";
     bool hasFinalLineEnding = false;
+};
+
+struct ActiveModCount
+{
+    std::string modName;
+    size_t count = 0;
 };
 
 char ToLower(const char value) noexcept
@@ -121,32 +128,57 @@ bool GetDirectoryNameInMods(const std::string &modsPath, const std::string &modN
 
 bool ReadListTxt(const std::string &listPath, ListTxtData &result)
 {
-    std::ifstream listFile(listPath, std::ios::in | std::ios::binary);
-    if (!listFile)
+    const HANDLE listHandle = CreateFileA(listPath.c_str(), GENERIC_READ,
+                                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                                          FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (listHandle == INVALID_HANDLE_VALUE)
         return false;
 
-    listFile.seekg(0, std::ios::end);
-    const std::streamoff fileSize = listFile.tellg();
-    listFile.seekg(0, std::ios::beg);
-
-    std::string line;
-    while (std::getline(listFile, line))
+    LARGE_INTEGER fileSize;
+    if (!GetFileSizeEx(listHandle, &fileSize) || fileSize.QuadPart < 0 ||
+        static_cast<unsigned long long>(fileSize.QuadPart) > std::numeric_limits<size_t>::max())
     {
+        CloseHandle(listHandle);
+        return false;
+    }
+
+    std::string fileContent(static_cast<size_t>(fileSize.QuadPart), '\0');
+    size_t bytesToRead = fileContent.size();
+    size_t bytesReadTotal = 0;
+    while (bytesToRead != 0)
+    {
+        const DWORD readSize = static_cast<DWORD>(std::min<size_t>(bytesToRead, std::numeric_limits<DWORD>::max()));
+        DWORD bytesRead = 0;
+        if (!ReadFile(listHandle, &fileContent[bytesReadTotal], readSize, &bytesRead, nullptr) || bytesRead == 0)
+        {
+            CloseHandle(listHandle);
+            return false;
+        }
+        bytesReadTotal += bytesRead;
+        bytesToRead -= bytesRead;
+    }
+    CloseHandle(listHandle);
+
+    size_t lineStart = 0;
+    while (lineStart < fileContent.size())
+    {
+        const size_t lineEnd = fileContent.find('\n', lineStart);
+        const bool hasLineFeed = lineEnd != std::string::npos;
+        std::string line = fileContent.substr(lineStart, hasLineFeed ? lineEnd - lineStart : std::string::npos);
         const bool isWindowsLineEnding = !line.empty() && line.back() == '\r';
         if (isWindowsLineEnding)
             line.pop_back();
         if (result.lines.empty())
             result.lineEnding = isWindowsLineEnding ? "\r\n" : "\n";
         result.lines.push_back(std::move(line));
+
+        if (!hasLineFeed)
+            break;
+        lineStart = lineEnd + 1;
     }
 
-    if (fileSize > 0)
-    {
-        listFile.clear();
-        listFile.seekg(-1, std::ios::end);
-        char lastCharacter = 0;
-        result.hasFinalLineEnding = listFile.get(lastCharacter) && (lastCharacter == '\r' || lastCharacter == '\n');
-    }
+    result.hasFinalLineEnding = !fileContent.empty() &&
+                                (fileContent.back() == '\r' || fileContent.back() == '\n');
     return true;
 }
 
@@ -165,9 +197,51 @@ bool TryGetRenamedMod(const std::string &oldName, std::string &newNameInListTxt)
     return true;
 }
 
+size_t FindActiveModCount(const std::vector<ActiveModCount> &counts, const std::string &modName)
+{
+    for (size_t index = 0; index < counts.size(); ++index)
+    {
+        if (counts[index].modName == modName)
+            return index;
+    }
+    return counts.size();
+}
+
+void IncrementActiveModCount(std::vector<ActiveModCount> &counts, const std::string &modName)
+{
+    const size_t index = FindActiveModCount(counts, modName);
+    if (index != counts.size())
+    {
+        ++counts[index].count;
+        return;
+    }
+
+    ActiveModCount newCount;
+    newCount.modName = modName;
+    newCount.count = 1;
+    counts.push_back(std::move(newCount));
+}
+
+void DecrementActiveModCount(std::vector<ActiveModCount> &counts, const std::string &modName)
+{
+    const size_t index = FindActiveModCount(counts, modName);
+    if (index != counts.size() && counts[index].count != 0)
+        --counts[index].count;
+}
+
 bool ApplyRenames(ListTxtData &listTxt, const std::string &modsPath)
 {
     bool wasChanged = false;
+    const bool hasUtf8Bom = !listTxt.lines.empty() && HasUtf8Bom(listTxt.lines.front());
+    std::vector<ActiveModCount> enabledModCounts;
+    std::vector<bool> removeLines(listTxt.lines.size(), false);
+
+    for (size_t lineIndex = 0; lineIndex < listTxt.lines.size(); ++lineIndex)
+    {
+        std::string modName;
+        if (GetValidModName(listTxt.lines[lineIndex], lineIndex, modName))
+            IncrementActiveModCount(enabledModCounts, modName);
+    }
 
     for (size_t lineIndex = 0; lineIndex < listTxt.lines.size(); ++lineIndex)
     {
@@ -180,29 +254,64 @@ bool ApplyRenames(ListTxtData &listTxt, const std::string &modsPath)
         std::string actualNewName;
         if (!newName.empty() && newName != modName && GetDirectoryNameInMods(modsPath, newName, actualNewName))
         {
-            ReplaceListModName(listTxt.lines[lineIndex], lineIndex, actualNewName);
-            modName = newName;
+            DecrementActiveModCount(enabledModCounts, modName);
+            const size_t newNameIndex = FindActiveModCount(enabledModCounts, newName);
+            if (newNameIndex != enabledModCounts.size() && enabledModCounts[newNameIndex].count != 0)
+            {
+                removeLines[lineIndex] = true;
+            }
+            else
+            {
+                ReplaceListModName(listTxt.lines[lineIndex], lineIndex, actualNewName);
+                IncrementActiveModCount(enabledModCounts, newName);
+            }
             wasChanged = true;
         }
     }
+
+    for (size_t lineIndex = listTxt.lines.size(); lineIndex-- > 0;)
+    {
+        if (removeLines[lineIndex])
+            listTxt.lines.erase(listTxt.lines.begin() + lineIndex);
+    }
+
+    if (hasUtf8Bom && !listTxt.lines.empty() && !HasUtf8Bom(listTxt.lines.front()))
+        listTxt.lines.front().insert(0, "\xEF\xBB\xBF");
 
     return wasChanged;
 }
 
 bool WriteListTxt(const std::string &listPath, const ListTxtData &listTxt)
 {
-    std::ofstream listFile(listPath, std::ios::out | std::ios::binary | std::ios::trunc);
-    if (!listFile)
-        return false;
-
+    std::string fileContent;
     for (size_t lineIndex = 0; lineIndex < listTxt.lines.size(); ++lineIndex)
     {
-        listFile << listTxt.lines[lineIndex];
+        fileContent += listTxt.lines[lineIndex];
         if (lineIndex + 1 < listTxt.lines.size() || listTxt.hasFinalLineEnding)
-            listFile << listTxt.lineEnding;
+            fileContent += listTxt.lineEnding;
     }
 
-    return listFile.good();
+    const HANDLE listHandle = CreateFileA(listPath.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                                          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (listHandle == INVALID_HANDLE_VALUE)
+        return false;
+
+    size_t bytesToWrite = fileContent.size();
+    size_t bytesWrittenTotal = 0;
+    while (bytesToWrite != 0)
+    {
+        const DWORD writeSize = static_cast<DWORD>(std::min<size_t>(bytesToWrite, std::numeric_limits<DWORD>::max()));
+        DWORD bytesWritten = 0;
+        if (!WriteFile(listHandle, &fileContent[bytesWrittenTotal], writeSize, &bytesWritten, nullptr) || bytesWritten == 0)
+        {
+            CloseHandle(listHandle);
+            return false;
+        }
+        bytesWrittenTotal += bytesWritten;
+        bytesToWrite -= bytesWritten;
+    }
+
+    return CloseHandle(listHandle) != FALSE;
 }
 
 BOOL UpdateListTxt()

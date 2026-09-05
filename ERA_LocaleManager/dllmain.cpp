@@ -9,7 +9,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "3.1.1";
+constexpr LPCSTR PLUGIN_VERSION = "3.1.2";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText

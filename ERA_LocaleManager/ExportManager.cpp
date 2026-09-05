@@ -1,7 +1,53 @@
 ﻿#include "ExportManager.h"
 #ifdef CREATE_TEXT_JSON_EXPORTS
 
-#include <fstream>
+#include <algorithm>
+#include <limits>
+
+namespace
+{
+std::string ToWindowsLineEndings(const std::string &text)
+{
+    std::string result;
+    result.reserve(text.size());
+
+    for (const char character : text)
+    {
+        if (character == '\n' && (result.empty() || result.back() != '\r'))
+            result.push_back('\r');
+        result.push_back(character);
+    }
+    return result;
+}
+
+BOOL WriteTextFile(const std::string &filePath, const std::string &text)
+{
+    const HANDLE fileHandle = CreateFileA(filePath.c_str(), GENERIC_WRITE,
+                                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, CREATE_ALWAYS,
+                                          FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (fileHandle == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    const std::string fileContent = ToWindowsLineEndings(text);
+    size_t bytesToWrite = fileContent.size();
+    size_t bytesWrittenTotal = 0;
+    while (bytesToWrite != 0)
+    {
+        const DWORD writeSize = static_cast<DWORD>(
+            std::min<size_t>(bytesToWrite, (std::numeric_limits<DWORD>::max)()));
+        DWORD bytesWritten = 0;
+        if (!WriteFile(fileHandle, &fileContent[bytesWrittenTotal], writeSize, &bytesWritten, nullptr) || bytesWritten == 0)
+        {
+            CloseHandle(fileHandle);
+            return FALSE;
+        }
+        bytesWrittenTotal += bytesWritten;
+        bytesToWrite -= bytesWritten;
+    }
+
+    return CloseHandle(fileHandle) != FALSE;
+}
+} // namespace
 
 // Структура для хранения данных о монстре
 std::string ExportManager::LPCSTR_to_wstring(LPCSTR ansi_str)
@@ -26,18 +72,10 @@ std::string ExportManager::LPCSTR_to_wstring(LPCSTR ansi_str)
 BOOL ExportManager::WriteJsonFile(const std::string &filePath, nlohmann::json &j)
 {
     // Сохраняем JSON в файл
-    std::ofstream outFile(filePath);
-    if (outFile.is_open())
-    {
-        outFile << j.dump(4);
-        outFile.close();
+    if (WriteTextFile(filePath, j.dump(4)))
         return true;
-    }
-    else
-    {
-        throw std::runtime_error("Failed to open file for writing: " + filePath);
-    }
-    return false; // Возвращаем false, если JSON пустой
+
+    throw std::runtime_error("Failed to open file for writing: " + filePath);
 }
 
 void EnsureDirectoryExists(const std::string &filePath)
@@ -60,17 +98,10 @@ BOOL ExportManager::WriteJsonFile(const std::string &filePath, nlohmann::ordered
     if (!j.empty())
     {
         EnsureDirectoryExists(filePath);
-        std::ofstream outFile(filePath);
-        if (outFile.is_open())
-        {
-            outFile << j.dump(4);
-            outFile.close();
+        if (WriteTextFile(filePath, j.dump(4)))
             return true;
-        }
-        else
-        {
-            throw std::runtime_error("Failed to open file for writing: " + filePath);
-        }
+
+        throw std::runtime_error("Failed to open file for writing: " + filePath);
     }
     return false; // Возвращаем false, если JSON пустой
 }

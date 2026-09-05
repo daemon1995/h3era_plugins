@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 
-#include <sstream>
 #include <unordered_set>
 
 BOOL AdditionalProperties::AddProperty(std::string &other) noexcept
@@ -12,19 +11,41 @@ BOOL AdditionalProperties::AddProperty(std::string &other) noexcept
 
 std::string AdditionalProperties::GetMapKey(LPCSTR propertyString) noexcept
 {
-    std::istringstream stream(propertyString);
-    std::vector<std::string> words;
-    std::string word;
-    words.reserve(9);
-    // ��������� ������ �� ����� � ��������� �� � ������
-    while (stream >> word)
+    // Extract only the three fields used by the key. Using istringstream here
+    // pulled the complete iostream/locale implementation into the plugin.
+    std::string words[7];
+    size_t wordIndex = 0;
+    const char *current = propertyString;
+
+    while (*current && wordIndex <= 6)
     {
-        words.emplace_back(word);
+        while (*current == ' ' || *current == '\t' || *current == '\r' || *current == '\n' || *current == '\v' ||
+               *current == '\f')
+        {
+            ++current;
+        }
+
+        if (!*current)
+        {
+            break;
+        }
+
+        const char *wordBegin = current;
+        while (*current && *current != ' ' && *current != '\t' && *current != '\r' && *current != '\n' &&
+               *current != '\v' && *current != '\f')
+        {
+            ++current;
+        }
+
+        if (wordIndex == 0 || wordIndex == 5 || wordIndex == 6)
+        {
+            words[wordIndex].assign(wordBegin, static_cast<size_t>(current - wordBegin));
+        }
+        ++wordIndex;
     }
     // get map key from def + object type + object subtype
     std::transform(words[0].begin(), words[0].end(), words[0].begin(), ::tolower);
     libc::sprintf(h3_TextBuffer, UNIQUE_PROPERTY_FORMAT, words[0].c_str(), words[5].c_str(), words[6].c_str());
-    words.clear();
     return h3_TextBuffer;
 }
 // check if we have replaced property for that object
