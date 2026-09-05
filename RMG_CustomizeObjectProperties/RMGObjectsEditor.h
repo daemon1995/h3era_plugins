@@ -41,6 +41,41 @@ struct _RMGObjGenPandoraExp_ : public H3RmgObjectGenerator
 {
     int exp;
 };
+
+enum class ePandoraGeneratorKind : INT32
+{
+    UNKNOWN = -1,
+    MONSTERS,
+    GOLD,
+    EXPERIENCE,
+    MAGIC
+};
+
+struct PandoraVariantKey
+{
+    ePandoraGeneratorKind kind = ePandoraGeneratorKind::UNKNOWN;
+    INT32 first = 0;
+    INT32 second = 0;
+    INT32 third = 0;
+
+    BOOL operator==(const PandoraVariantKey &other) const noexcept
+    {
+        return kind == other.kind && first == other.first && second == other.second && third == other.third;
+    }
+};
+
+// Prison generators all use the real object pair (62, 0), so the hero
+// experience is the only stable discriminator between generator variants.
+struct PrisonVariantKey
+{
+    INT32 experience = 0;
+
+    BOOL operator==(const PrisonVariantKey &other) const noexcept
+    {
+        return experience == other.experience;
+    }
+};
+
 struct RMGObjectInfo : public extender::RMGObjectProperties
 {
     // used for thread safety in when read from ini/json
@@ -82,6 +117,7 @@ struct RMGObjectInfo : public extender::RMGObjectProperties
     BOOL Clamp() noexcept;
     void RestoreDefault() noexcept;
     void SetRandom() noexcept;
+    void SetRandom(const RMGObjectInfo &defaultInfo) noexcept;
     void SetRandom(const RMGTemplateLimits &templateInfo) noexcept;
     void MakeReal() const noexcept;
     inline LPCSTR GetRmgTypeDescription() const noexcept;
@@ -90,20 +126,88 @@ struct RMGObjectInfo : public extender::RMGObjectProperties
     LPCSTR GetDescription() const noexcept;
 
     BOOL WriteToINI() const noexcept;
+    BOOL WriteToINI(const H3RmgObjectGenerator *generator) const noexcept;
     inline void ReadFromINI() noexcept;
 
   public:
     static const RMGObjectInfo &DefaultObjectInfo(const int objType, const int subtype) noexcept;
+    static const RMGObjectInfo &DefaultObjectInfo(const H3RmgObjectGenerator *generator) noexcept;
     static const RMGObjectInfo &CurrentObjectInfo(const int objType, const int subtype) noexcept;
+    static const RMGObjectInfo &CurrentObjectInfo(const H3RmgObjectGenerator *generator) noexcept;
+    static void SetCurrentObjectInfo(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept;
+    static int GetSettingsSubtype(const H3RmgObjectGenerator *generator) noexcept;
     static std::vector<RMGObjectInfo> (&CurrentObjectInfos())[limits::OBJECTS];
 
     static void InitFromRmgObjectGenerator(const H3RmgObjectGenerator *generator);
     static void InitDefaultProperties(const ObjectLimitsInfo &limitInfo, const INT16 *maxSubtypes);
     static void LoadUserProperties();
     static LPCSTR GetObjectName(const INT32 type, const INT32 subtype);
+    static H3String GetObjectName(const H3RmgObjectGenerator *generator);
     static LPCSTR GetObjectName(const H3MapItem *mapItem);
     static LPCSTR GetObjectDescription(const INT32 type, const INT32 subtype);
     static LPCSTR GetObjectDescription(const H3MapItem *mapItem);
+};
+
+class PandoraVariants
+{
+  public:
+    struct Record
+    {
+        PandoraVariantKey key;
+        INT32 virtualSubtype = -1;
+        RMGObjectInfo defaultInfo;
+        RMGObjectInfo currentInfo;
+    };
+
+  private:
+    static std::vector<Record> records;
+
+    static Record *FindRecordMutable(const PandoraVariantKey &key) noexcept;
+    static const Record *FindRecord(const PandoraVariantKey &key) noexcept;
+    static H3String GetPersistentKey(const PandoraVariantKey &key);
+    static H3String GetIniSectionName(const PandoraVariantKey &key);
+
+  public:
+    static BOOL GetKey(const H3RmgObjectGenerator *generator, PandoraVariantKey &key) noexcept;
+    static void RegisterDefault(const H3RmgObjectGenerator *generator);
+    static void LoadUserProperties();
+    static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
+    static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
+    static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
+    static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept;
+    static H3String GetDisplayName(const H3RmgObjectGenerator *generator);
+    static const std::vector<Record> &GetRecords() noexcept;
+};
+
+class PrisonVariants
+{
+  public:
+    struct Record
+    {
+        PrisonVariantKey key;
+        INT32 virtualSubtype = -1;
+        RMGObjectInfo defaultInfo;
+        RMGObjectInfo currentInfo;
+    };
+
+  private:
+    static std::vector<Record> records;
+
+    static Record *FindRecordMutable(const PrisonVariantKey &key) noexcept;
+    static const Record *FindRecord(const PrisonVariantKey &key) noexcept;
+    static H3String GetPersistentKey(const PrisonVariantKey &key);
+    static H3String GetIniSectionName(const PrisonVariantKey &key);
+
+  public:
+    static BOOL GetKey(const H3RmgObjectGenerator *generator, PrisonVariantKey &key) noexcept;
+    static void RegisterDefault(const H3RmgObjectGenerator *generator);
+    static void LoadUserProperties();
+    static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
+    static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
+    static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
+    static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept;
+    static H3String GetDisplayName(const H3RmgObjectGenerator *generator);
+    static const std::vector<Record> &GetRecords() noexcept;
 };
 
 struct GeneratedInfo
@@ -122,13 +226,23 @@ struct GeneratedInfo
         };
         int *arrays[4];
     };
-    RMGObjectInfo **storedCurrentObjects = nullptr;
+    struct StoredCurrentObject
+    {
+        const H3RmgObjectGenerator *generator = nullptr;
+        RMGObjectInfo info;
+    };
+
+    std::vector<StoredCurrentObject> storedCurrentObjects;
+    std::unordered_map<const H3RmgObject *, int> generatedObjectVirtualSubtypes;
 
   public:
     const _RMGObjGenScroll_ *lastGeneratedSpellScroll = nullptr;
 
   public:
-    void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId);
+    void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId,
+                                 const int settingsSubtype = -1);
+    void RememberGeneratedObjectVariant(const H3RmgObject *object, const H3RmgObjectGenerator *generator);
+    int TakeGeneratedObjectVirtualSubtype(const H3RmgObject *object) noexcept;
     void Assign(const H3RmgRandomMapGenerator *rmg, std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS]);
     void Clear(const H3RmgRandomMapGenerator *rmgStruct);
     BOOL IsInited() const noexcept;
@@ -218,7 +332,7 @@ class RMGObjectsEditor : public IGamePatch
 
   private:
     RMGObjectsEditor();
-    virtual ~RMGObjectsEditor();
+    virtual ~RMGObjectsEditor() {};
 
   private:
     virtual void CreatePatches() override;
@@ -239,6 +353,10 @@ class RMGObjectsEditor : public IGamePatch
                                                                      H3RmgObjectPropsRef *ref,
                                                                      H3RmgRandomMapGenerator *rmg,
                                                                      H3RmgZoneGenerator *zoneGen) noexcept;
+    static H3RmgObject *__stdcall RMG__RMGObjGenPandora__CreateObject(HiHook *h, H3RmgObjectGenerator *generator,
+                                                                      H3RmgObjectPropsRef *ref,
+                                                                      H3RmgRandomMapGenerator *rmg,
+                                                                      H3RmgZoneGenerator *zoneGen) noexcept;
 
     static void __stdcall RMG__InitGenZones(HiHook *h, const H3RmgRandomMapGenerator *rmg,
                                             const H3RmgTemplate *RmgTemplate);

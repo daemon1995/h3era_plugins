@@ -1,4 +1,6 @@
 #pragma once
+#include <array>
+
 int GetCreatureBankIndex(const int objType, const int subtype);
 namespace rmgdlg
 {
@@ -13,6 +15,36 @@ struct GraphicalAttributes
     const H3ObjectAttributes *attributes = nullptr;
     H3LoadedPcx16 *objectPcx = nullptr;
     GraphicalAttributes *next = nullptr;
+    const H3RmgObjectGenerator *objectGenerator = nullptr;
+};
+
+class RMGDialogDataManager
+{
+  public:
+    using ObjectVector = std::vector<GraphicalAttributes>;
+    static constexpr size_t PAGE_COUNT = static_cast<size_t>(extender::ePandoraBox) + 1;
+    using PageVectors = std::array<ObjectVector, PAGE_COUNT>;
+
+  private:
+    PageVectors pageObjects;
+
+  public:
+    ObjectVector &GetPage(const size_t pageId) noexcept
+    {
+        return pageObjects[pageId];
+    }
+    const ObjectVector &GetPage(const size_t pageId) const noexcept
+    {
+        return pageObjects[pageId];
+    }
+    PageVectors &GetPages() noexcept
+    {
+        return pageObjects;
+    }
+    const PageVectors &GetPages() const noexcept
+    {
+        return pageObjects;
+    }
 };
 
 class RMGDlgObject
@@ -21,6 +53,8 @@ class RMGDlgObject
   public:
     // displayed/edited rmgObjInfo
     RMGObjectInfo objectInfo;
+    const H3RmgObjectGenerator *objectGenerator = nullptr;
+    H3String displayName;
     // properties of the real object - dont change
     //   const H3ObjectAttributes *attributes;
     // displayd resized pcx16 - should be deleted before dlg close
@@ -36,6 +70,10 @@ class RMGDlgObject
 
   public:
     BOOL SwitchToNextPicture() noexcept;
+    void RestoreDefault() noexcept;
+    void SetRandom() noexcept;
+    void SaveCurrent() const noexcept;
+    BOOL WriteToINI() const noexcept;
     // Object(std::pair < H3ObjectAttributes, H3LoadedPcx16*> info);
     //~Object();
 };
@@ -115,7 +153,7 @@ class RMG_SettingsDlg : public H3Dlg
 
         const char *name;
         UINT id;
-        BOOL visible;
+        BOOL visible = false;
         UINT firstItemCount = 0;
         H3DlgCaptionButton *captionbttn = nullptr;
         H3DlgScrollbar *verticalScrollBar = nullptr;
@@ -162,9 +200,13 @@ class RMG_SettingsDlg : public H3Dlg
 
         std::vector<ObjectsPanel *> objectsPanels;
         std::vector<RMGDlgObject> rmgDlgObjects;
+        std::vector<RMGDlgObject *> displayedObjects;
+        int objectsStartY = 100;
+        size_t maxVisiblePanels = 8;
 
         ObjectsPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &attributes,
-                    const BOOL ignoreSubtypes = false);
+                    const BOOL ignoreSubtypes = false, const int objectsStartY = 100,
+                    const size_t maxVisiblePanels = 8);
         virtual ~ObjectsPage();
 
       protected:
@@ -172,12 +214,15 @@ class RMG_SettingsDlg : public H3Dlg
         virtual void SaveData();
         virtual void SetRandom(const H3Msg &msg) override;
         virtual void SetDefault() override;
+        virtual void ToggleMassEnabled(const BOOL reverse, const BOOL newState);
         virtual BOOL Proc(H3Msg &msg) override;
         virtual BOOL ShowObjectExtendedInfo(const ObjectsPanel *panel, const H3Msg &msg) const noexcept;
+        virtual void RebuildDisplayedObjects();
 
       protected:
-        void SetVisible(const BOOL state);
+        virtual void SetVisible(const BOOL state) override;
         void CreateVerticalScrollBar();
+        void RecreateVerticalScrollBar();
         void CreateHorizontalScrollBar();
 
       public:
@@ -199,28 +244,37 @@ class RMG_SettingsDlg : public H3Dlg
         // bool SaveSettings();
     };
 
-    struct MiscPage : public ObjectsPage
+    struct PrisonPage : public ObjectsPage
     {
-        // virtual void ShowObjectExtendedInfo(const ObjectsPanel* panel) const noexcept final override;
-
-        MiscPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data);
-        virtual ~MiscPage();
-
-        // static void __fastcall ObjectPage_ScrollBarProc(INT32 tick, H3BaseDlg* dlg);
-
-        // bool SaveSettings();
+        PrisonPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data);
+        virtual ~PrisonPage();
     };
 
-    struct DwellingsPage : public ObjectsPage
+    struct PandoraPage : public ObjectsPage
     {
-        // virtual void ShowObjectExtendedInfo(const ObjectsPanel* panel) const noexcept final override;
+        static constexpr INT CATEGORY_FIRST_ID = 29000;
 
-        DwellingsPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data);
-        virtual ~DwellingsPage();
+        struct Category
+        {
+            ePandoraGeneratorKind kind;
+            H3DlgCaptionButton *button = nullptr;
+            BOOL expanded = true;
+            size_t objectsCount = 0;
+        };
 
-        // static void __fastcall ObjectPage_ScrollBarProc(INT32 tick, H3BaseDlg* dlg);
+        std::array<Category, 4> categories;
 
-        // bool SaveSettings();
+        PandoraPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data);
+        virtual ~PandoraPage();
+
+      protected:
+        virtual void RebuildDisplayedObjects() override;
+        virtual BOOL Proc(H3Msg &msg) override;
+        virtual void SetVisible(const BOOL state) override;
+        virtual void ToggleMassEnabled(const BOOL reverse, const BOOL newState) override;
+
+      private:
+        void UpdateCategoryButtons() noexcept;
     };
 
   private:
@@ -231,17 +285,14 @@ class RMG_SettingsDlg : public H3Dlg
     BOOL blockLettersInput = false;
     Page *m_currentPage;
     std::vector<Page *> m_pages;
+    std::vector<size_t> m_pageIds;
 
   private:
     static RMG_SettingsDlg *instance;
     static BOOL isDlgTextEditInput;
     static BOOL userHasAccessToDlg;
     static H3MainSetup *mainSetup; // used to get default objects info from zaobj or obje txt;
-    static std::vector<GraphicalAttributes> m_creatureBanks;
-    static std::vector<GraphicalAttributes> m_commonObjects;
-    static std::vector<GraphicalAttributes> m_creatureGenerators;
-    static std::vector<GraphicalAttributes> m_wogObjects;
-    static const std::vector<std::vector<GraphicalAttributes> *> m_objectAttributes;
+    static RMGDialogDataManager m_data;
 
     // ctors
   public:
@@ -282,16 +333,17 @@ class RMG_SettingsDlg : public H3Dlg
 
   public:
     static void SetPatches(PatcherInstance *_pi);
-    static const std::vector<std::vector<GraphicalAttributes> *> &GetObjectAttributes() noexcept
+    static RMGDialogDataManager::PageVectors &GetObjectAttributes() noexcept
     {
-        return m_objectAttributes;
+        return m_data.GetPages();
     }
-    static std::vector<GraphicalAttributes> *GetObjectAttributesVectorByObjectType(const int type) noexcept;
+    static extender::eRmgDlgObjectPage GetObjectAttributesPageByObjectType(const int type,
+                                                                           const int subtype = -1) noexcept;
     static BOOL CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGenerator *> *objectGenerators);
     static void CopyOriginalObjectDefsIntoPcx16();
     static void AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen,
                                             std::vector<GraphicalAttributes> *workingVector,
-                                            std::unordered_map<DWORD, size_t> &uniqueObjectsIndex,
+                                            std::unordered_map<UINT64, size_t> &uniqueObjectsIndex,
                                             const int objectTypeAlias) noexcept;
 
     inline static DWORD GetUserRandSeedInput() noexcept

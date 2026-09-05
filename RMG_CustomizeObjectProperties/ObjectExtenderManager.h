@@ -118,12 +118,22 @@ class ObjectExtenderManager : public IGamePatch
 {
 
   public:
+    struct RegisteredObjectInfo
+    {
+        ObjectExtender *extender = nullptr;
+        UniqueObjectInfo *object = nullptr;
+    };
+
     static constexpr LPCSTR DLG_HORIZONTAL_GAP = "\n\n\n";
 
   protected:
     BOOL skipMapMessageByHdMod = false;
     // contains all the extenders for objects addded by this and other plugins
     std::vector<ObjectExtender *> objectExtenders;
+    // Keep the owner together with the stable API record. This is the index used
+    // when assigning objects to their type/subtype lookup tables and can later be
+    // used to route records to dialog pages without losing registration metadata.
+    std::vector<RegisteredObjectInfo> registeredObjectInfos;
     // std::map<DWORD, ObjectExtender *> extendersMap;
     std::vector<RMGObjectProperties> additionalRmgObjects;
     INT16 lastObjectSubtypes[h3::limits::OBJECTS] = {};
@@ -194,13 +204,14 @@ class ObjectExtenderManager : public IGamePatch
   public:
     void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList, const BOOL isPseudoGeneration);
     BOOL AddExtender(ObjectExtender *ext);
-    BOOL IsObjectAllowedToBeGenerated(const H3RmgObjectGenerator *objGen) const noexcept
-    {
-        if (auto extender = FindExtender(objGen->type, objGen->subtype))
-        {
-        }
-        return true;
-    }
+    static eRmgDlgObjectPage GetObjectPage(const int type, const int subtype) noexcept;
+    //BOOL IsObjectAllowedToBeGenerated(const H3RmgObjectGenerator *objGen) const noexcept
+    //{
+    //    if (auto extender = FindExtender(objGen->type, objGen->subtype))
+    //    {
+    //    }
+    //    return true;
+    //}
 
   public:
     static BOOL ShowObjectExtendedInfo(const RMGObjectInfo &info, const H3ObjectAttributes *attributes,

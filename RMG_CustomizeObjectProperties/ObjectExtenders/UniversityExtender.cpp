@@ -21,7 +21,7 @@ void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
     const int length = addedSubtypes + 1;
 
     objectSubtypesInfo.Reserve(addedSubtypes);
-    for (size_t i = 0; i < addedSubtypes; i++)
+    for (int i = 0; i < addedSubtypes; i++)
     {
         AddUniqueObjectInfo(eObject::UNIVERSITY, i + 1);
     }
@@ -32,7 +32,7 @@ void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 
     bool readSuccess = false;
     bool patchIsRequired = false;
-    for (size_t i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
         std::unordered_set<UINT8> skillSet;
 

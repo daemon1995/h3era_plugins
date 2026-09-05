@@ -87,14 +87,15 @@ void SortRmgObjects(std::vector<RMGDlgObject> &objVector, const eSorting sorting
             //	return cbIdFirst < cbIdSecond;
             if (first.objectInfo.type == second.objectInfo.type)
             {
-                return first.objectInfo.subtype < second.objectInfo.subtype;
+                return RMGObjectInfo::GetSettingsSubtype(first.objectGenerator) <
+                       RMGObjectInfo::GetSettingsSubtype(second.objectGenerator);
             }
             return first.objectInfo.type < second.objectInfo.type;
 
             // return first.objectInfo.subtype < second.objectInfo.subtype;
 
         case BY_NAME:
-            return libc::strcmpi(first.objectInfo.GetName(), second.objectInfo.GetName()) < 0;
+            return libc::strcmpi(first.displayName.String(), second.displayName.String()) < 0;
 
         case BY_MAP:
             return first.objectInfo.mapLimit < second.objectInfo.mapLimit;
@@ -107,7 +108,8 @@ void SortRmgObjects(std::vector<RMGDlgObject> &objVector, const eSorting sorting
         default:
             break;
         }
-        return first.objectInfo.subtype < second.objectInfo.subtype;
+        return RMGObjectInfo::GetSettingsSubtype(first.objectGenerator) <
+               RMGObjectInfo::GetSettingsSubtype(second.objectGenerator);
     });
 
     if (!isReverse)
@@ -126,7 +128,12 @@ enum eControl : INT
     PAGE_1,
     PAGE_2,
     PAGE_3,
-    PAGE_LAST = PAGE_3,
+    PAGE_4,
+    PAGE_5,
+    PAGE_6,
+    PAGE_7,
+    PAGE_8,
+    PAGE_LAST = PAGE_8,
     BUTTON_FIRST = 30100,
     CANCEL = BUTTON_FIRST, // = 30721,
     OK,                    // = 30722,
@@ -161,23 +168,30 @@ enum eZoneType : INT
 DWORD RMG_SettingsDlg::userRandSeed = 0;
 BOOL RMG_SettingsDlg::completelyRandomIsPressed = 0;
 
-std::vector<GraphicalAttributes> RMG_SettingsDlg::m_creatureBanks, RMG_SettingsDlg::m_commonObjects,
-    RMG_SettingsDlg::m_creatureGenerators, RMG_SettingsDlg::m_wogObjects;
+RMGDialogDataManager RMG_SettingsDlg::m_data;
 
-const std::vector<std::vector<GraphicalAttributes> *> RMG_SettingsDlg::m_objectAttributes = {
-    &m_creatureBanks, &m_commonObjects, &m_creatureGenerators, &m_wogObjects};
+namespace
+{
+constexpr size_t RMG_DLG_PAGES_NUM = RMGDialogDataManager::PAGE_COUNT;
+}
 
 DllExport BOOL RMGObjectSupportsGeneration(const int objType, const int objSubtype = -1)
 {
     BOOL result = false;
     if (objType > eObject::NO_OBJ && objType < H3_MAX_OBJECTS)
     {
-        const auto vec = RMG_SettingsDlg::GetObjectAttributesVectorByObjectType(eObject(objType));
-        for (auto &prop : *vec)
+        const auto page = RMG_SettingsDlg::GetObjectAttributesPageByObjectType(objType, objSubtype);
+        if (page >= extender::ePageCommon && page <= extender::ePandoraBox)
         {
-            if (prop.attributes->type == objType)
+            const auto &allAttributes = RMG_SettingsDlg::GetObjectAttributes();
+            const auto &vec = allAttributes[static_cast<size_t>(page)];
+            for (const auto &prop : vec)
             {
-                return true;
+                if (prop.attributes && prop.attributes->type == objType &&
+                    (objSubtype < 0 || prop.attributes->subtype == objSubtype))
+                {
+                    return true;
+                }
             }
         }
     }
@@ -235,7 +249,10 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
         {{-33 - bttnWidth * 2, -50}, "RMG_okay.def", "ok", {eVKey::H3VK_ENTER, eVKey::H3VK_SPACEBAR}, true, false},
         {{25 + 8 + bttnWidth, -50}, "RMG_dflt.def", "default", {eVKey::H3VK_D, 0}, true, false},
         {{25, -50}, "RanRand.def", "random", {eVKey::H3VK_R, 0}, true, false},
-        {{-39 - bttnWidth, 13}, "RMG_help.def", "help", {eVKey::H3VK_H, 0}, false, false}};
+        // Keep the help button in the free area to the right of the three
+        // page-selector columns. This prevents it from covering a selector
+        // when all nine pages are present.
+        {{-25 - bttnWidth, 13}, "RMG_help.def", "help", {eVKey::H3VK_H, 0}, false, false}};
 
     H3DlgDefButton *bttns[5]{}; // = nullptr;
 
@@ -278,19 +295,34 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
 
     // create page selectors
 
-    constexpr size_t pagesNum = 4;
+    constexpr size_t pagesNum = RMG_DLG_PAGES_NUM;
 
-    H3DlgCaptionButton *captionButtons[pagesNum] = {}; // .resize(pagesNum);
+    H3DlgCaptionButton *captionButtons[pagesNum] = {};
+    constexpr size_t pageColumns = 3;
+    constexpr int pageButtonWidth = 220;
+    constexpr int pageButtonHeight = 16;
+    constexpr int pageButtonXOffset = 20;
+    constexpr int pageButtonYOffset = 4;
+    constexpr int pageButtonXSpacing = 10;
+    constexpr int pageButtonYSpacing = 1;
+
+    size_t visiblePagePosition = 0;
     for (size_t i = 0; i < pagesNum; i++)
     {
+        if (m_data.GetPage(i).empty())
+            continue;
+
         libc::sprintf(h3_TextBuffer, "RMG.text.dlg.pages.%d.name", i);
+        LPCSTR pageName = EraJS::read(h3_TextBuffer);
 
-        const int _x = 29 + 167 * i;
-        constexpr int _y = 10;
+        const int _x = pageButtonXOffset +
+                       static_cast<int>(visiblePagePosition % pageColumns) * (pageButtonWidth + pageButtonXSpacing);
+        const int _y = pageButtonYOffset +
+                       static_cast<int>(visiblePagePosition / pageColumns) * (pageButtonHeight + pageButtonYSpacing);
 
-        H3DlgCaptionButton *captionbttn =
-            H3DlgCaptionButton::Create(_x, _y, NItemIDs::PAGE_FIRST + i, "RMGmenbt.def", EraJS::read(h3_TextBuffer),
-                                       NH3Dlg::Text::MEDIUM, 0, 0, 0, eVKey::H3VK_1 + i, eTextColor::HIGHLIGHT);
+        H3DlgCaptionButton *captionbttn = H3DlgCaptionButton::Create(
+            _x, _y, pageButtonWidth, pageButtonHeight, NItemIDs::PAGE_FIRST + i, "OVBUTN3.def", pageName,
+            NH3Dlg::Text::SMALL, 0, 0, 0, eVKey::H3VK_1 + i, eTextColor::HIGHLIGHT);
 
         captionbttn->SetHints(EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.hint", i).String()),
                               EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.rmc", i).String()), false);
@@ -298,6 +330,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
         captionbttn->SetClickFrame(1);
         AddItem(captionbttn);
         captionButtons[i] = captionbttn;
+        ++visiblePagePosition;
     }
 
     if (bttns[1] && bttns[2])
@@ -317,12 +350,29 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
         }
     }
 
-    m_pages.emplace_back(new BanksPage{captionButtons[0], m_creatureBanks});
+    // The order is defined by extender::eRmgDlgObjectPage.
+    for (size_t i = 0; i < pagesNum; ++i)
+    {
+        if (m_data.GetPage(i).empty())
+            continue;
 
-    // create with ignored subtypes to display less data but should affect rmgDlgObjects anyway
-    m_pages.emplace_back(new ObjectsPage{captionButtons[1], m_commonObjects, false});
-    m_pages.emplace_back(new ObjectsPage{captionButtons[2], m_creatureGenerators, false});
-    m_pages.emplace_back(new ObjectsPage{captionButtons[3], m_wogObjects, false});
+        Page *page = nullptr;
+        if (i == extender::ePageCreatureBank)
+            page = new BanksPage{captionButtons[i], m_data.GetPage(i)};
+        else if (i == extender::ePagePrison)
+            page = new PrisonPage{captionButtons[i], m_data.GetPage(i)};
+        else if (i == extender::ePandoraBox)
+            page = new PandoraPage{captionButtons[i], m_data.GetPage(i)};
+        else
+            page = new ObjectsPage{captionButtons[i], m_data.GetPage(i), false};
+
+        if (page)
+        {
+            page->id = i;
+            m_pages.emplace_back(page);
+            m_pageIds.emplace_back(i);
+        }
+    }
     ReadIniDlgSettings();
 }
 
@@ -344,7 +394,7 @@ int __fastcall HelpButtonProc(H3Msg *msg)
 
                 LPSTR messageBuffer = nullptr;
 
-                // ‘ÓÏ‡ÚËÓ‚‡ÌËÂ ÒÓÓ·˘ÂÌËˇ Ó· Ó¯Ë·ÍÂ
+                // –§–æ—Ä–º–∞—Ç–∏—Ä–æ–≤–∞–Ω–∏–µ —Å–æ–æ–±—â–µ–Ω–∏—è –æ–± –æ—à–∏–±–∫–µ
                 size_t size = FormatMessageA(
                     FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                     nullptr, intRes, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
@@ -352,7 +402,7 @@ int __fastcall HelpButtonProc(H3Msg *msg)
                 std::string message(messageBuffer, size);
                 H3Messagebox(message.c_str());
 
-                // ŒÒ‚Ó·ÓÊ‰ÂÌËÂ ·ÛÙÂ‡
+                // –û—Å–≤–æ–±–æ–∂–¥–µ–Ω–∏–µ –±—É—Ñ–µ—Ä–∞
                 LocalFree(messageBuffer);
             }
         }
@@ -370,7 +420,7 @@ VOID RMG_SettingsDlg::OnHelp() const noexcept
     for (size_t i = 0; i < m_pages.size(); i++)
     {
         mes += "\n\n";
-        mes += EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.help", i).String());
+        mes += EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.help", m_pageIds[i]).String());
     }
     if (mes.Empty())
     {
@@ -439,6 +489,11 @@ BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
         case NItemIDs::PAGE_1:
         case NItemIDs::PAGE_2:
         case NItemIDs::PAGE_3:
+        case NItemIDs::PAGE_4:
+        case NItemIDs::PAGE_5:
+        case NItemIDs::PAGE_6:
+        case NItemIDs::PAGE_7:
+        case NItemIDs::PAGE_8:
             if (SetActivePage(msg.itemId - NItemIDs::PAGE_0))
                 Redraw();
             break;
@@ -562,7 +617,7 @@ BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
     //	result = false;
     //}
     //  }
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < RMG_DLG_PAGES_NUM; ++i)
     {
         // if (Era::ReadStrFromIni("DlgSettings", "lastPageId", m_iniPath, h3_TextBuffer))
         //{
@@ -609,11 +664,12 @@ BOOL RMG_SettingsDlg::SaveRMGObjectsInfo(const BOOL saveIni) const noexcept
             {
                 auto &info = object.objectInfo;
                 info.Clamp();
-                info.MakeReal();
+                object.SaveCurrent();
 
                 if (saveIni)
                 {
-                    success = info.WriteToINI();
+                    if (!object.WriteToINI())
+                        success = false;
                 }
             }
         }
@@ -628,7 +684,7 @@ void RMG_SettingsDlg::ObjectsPage::CreateVerticalScrollBar()
     constexpr int itemId = 100;
 
     const int PANELS_NUM = objectsPanels.size();
-    const int DATA_NUM = rmgDlgObjects.size();
+    const int DATA_NUM = displayedObjects.size();
     // if needed m_size > space -> create custom scroll bar
     if (PANELS_NUM < DATA_NUM)
     {
@@ -784,7 +840,9 @@ void RMG_SettingsDlg::ObjectsPanel::SetObject(RMGDlgObject *mapObject) noexcept
     {
         rmgObject = mapObject;
         pictureItem->SetPcx(rmgObject->graphicalAttributes->objectPcx);
-        objectNameItem->SetText(rmgObject->objectInfo.GetName());
+        objectNameItem->SetText(rmgObject->displayName.String());
+        objectNameItem->SetHint(rmgObject->displayName.String());
+        pictureItem->SetHint(rmgObject->displayName.String());
     }
 
     // refresh displayed info
@@ -933,6 +991,7 @@ RMG_SettingsDlg::~RMG_SettingsDlg()
         p = nullptr;
     }
     m_pages.clear();
+    m_pageIds.clear();
 
     RMG_SettingsDlg::Page::dlg = nullptr;
     instance = nullptr;
@@ -952,6 +1011,7 @@ void RMG_SettingsDlg::ObjectsPage::SetVisible(const BOOL state)
         state ? horizontalScrollBar->ShowActivate() : horizontalScrollBar->HideDeactivate();
     }
     captionbttn->SendCommand(6 - (state), 4096);
+    visible = state;
     auto time = GetTime();
     for (auto &p : objectsPanels)
     {
@@ -959,13 +1019,16 @@ void RMG_SettingsDlg::ObjectsPage::SetVisible(const BOOL state)
         p->lastChangedPictureTime = time;
     }
 
-    visible = state;
+    if (state)
+        FillObjects(firstItemCount);
 }
 
 void RMG_SettingsDlg::ObjectsPage::SaveData()
 {
     for (auto &panel : objectsPanels)
     {
+        if (!panel->rmgObject)
+            continue;
         panel->rmgObject->objectInfo.Clamp();
 
         panel->rmgObject->objectInfo.enabled = panel->enabledCheckBox->GetFrame();
@@ -989,7 +1052,7 @@ void RMG_SettingsDlg::ObjectsPage::SetRandom(const H3Msg &msg)
     }
     for (auto &rmgObject : rmgDlgObjects)
     {
-        rmgObject.objectInfo.SetRandom();
+        rmgObject.SetRandom();
     }
     //
     FillObjects(firstItemCount);
@@ -999,14 +1062,22 @@ void RMG_SettingsDlg::ObjectsPage::SetDefault()
 {
     for (auto &object : rmgDlgObjects)
     {
-        object.objectInfo.RestoreDefault();
+        object.RestoreDefault();
     }
     FillObjects(firstItemCount);
 }
 
+void RMG_SettingsDlg::ObjectsPage::ToggleMassEnabled(const BOOL reverse, const BOOL newState)
+{
+    for (auto &object : rmgDlgObjects)
+        object.objectInfo.enabled = reverse ? object.objectInfo.enabled ^ true : newState;
+}
+
 RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
-                                          const std::vector<GraphicalAttributes> &attributes, const BOOL ignoreSubtypes)
-    : Page(captionbttn), ignoreSubtypes(ignoreSubtypes) //, objectAttributes(&attributes)
+                                          const std::vector<GraphicalAttributes> &attributes, const BOOL ignoreSubtypes,
+                                          const int objectsStartY, const size_t maxVisiblePanels)
+    : Page(captionbttn), ignoreSubtypes(ignoreSubtypes), objectsStartY(objectsStartY),
+      maxVisiblePanels(maxVisiblePanels) //, objectAttributes(&attributes)
 
 {
 
@@ -1030,6 +1101,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
 
     sorting::SortRmgObjects(rmgDlgObjects, sorting::eSorting::BY_TYPE);
     lastSorting.type = sorting::eSorting::BY_TYPE;
+    RebuildDisplayedObjects();
 
     // auto* dlg = dlg;
     constexpr int x = 24;
@@ -1049,10 +1121,10 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
     // prepare creating page dlg Items aka as CreateDlgPanels
     const size_t objectsNum = rmgDlgObjects.size();
 
-    const size_t panelsNum = Clamp(0, objectsNum, 8);
+    const size_t panelsNum = Clamp(0, objectsNum, maxVisiblePanels);
     for (size_t i = 0; i < panelsNum; i++)
     {
-        objectsPanels.emplace_back(new ObjectsPanel(x, i * 55 + 100, this));
+        objectsPanels.emplace_back(new ObjectsPanel(x, i * 55 + objectsStartY, this));
     }
 
     CreateVerticalScrollBar();
@@ -1062,7 +1134,7 @@ RMG_SettingsDlg::ObjectsPage::ObjectsPage(H3DlgCaptionButton *captionbttn,
 void RMG_SettingsDlg::ObjectsPage::FillObjects(const int firstItem)
 {
     const size_t PANELS_NUM = objectsPanels.size();
-    const size_t DATA_NUM = rmgDlgObjects.size();
+    const size_t DATA_NUM = displayedObjects.size();
 
     for (size_t i = 0; i < PANELS_NUM; i++)
     {
@@ -1073,9 +1145,59 @@ void RMG_SettingsDlg::ObjectsPage::FillObjects(const int firstItem)
         if (inRange)
         {
             objectsPanels[i]->UnfocusEdits(false);
-            objectsPanels[i]->SetObject(&rmgDlgObjects[dataIndex]);
+            objectsPanels[i]->SetObject(displayedObjects[dataIndex]);
+            objectsPanels[i]->SetVisible(visible);
+        }
+        else
+        {
+            objectsPanels[i]->SetVisible(false);
+            objectsPanels[i]->rmgObject = nullptr;
         }
     }
+}
+
+void RMG_SettingsDlg::ObjectsPage::RecreateVerticalScrollBar()
+{
+    // Keep the original control in the dialog item chain, but update its
+    // internal tick count when Pandora rows are filtered by a category.
+    if (!verticalScrollBar)
+    {
+        CreateVerticalScrollBar();
+        return;
+    }
+
+    const size_t panelCount = objectsPanels.size();
+    if (displayedObjects.size() > panelCount)
+    {
+        const INT32 ticksCount = static_cast<INT32>(displayedObjects.size() + 1 - panelCount);
+
+        // vSetTickCount is the scrollbar's own range-update operation. It is
+        // protected by the H3API wrapper, so expose it through an ABI-only
+        // accessor without changing the shared API headers.
+        struct ScrollbarAccessor : H3DlgScrollbar
+        {
+            using H3DlgScrollbar::vSetTickCount;
+        };
+        reinterpret_cast<ScrollbarAccessor *>(verticalScrollBar)->vSetTickCount(ticksCount);
+
+        const INT32 lastTick = ticksCount - 1;
+        verticalScrollBar->SetTick(std::min(verticalScrollBar->GetTick(), lastTick));
+        verticalScrollBar->SetButtonPosition();
+        verticalScrollBar->ShowActivate();
+    }
+    else
+    {
+        verticalScrollBar->SetTick(0);
+        verticalScrollBar->HideDeactivate();
+    }
+}
+
+void RMG_SettingsDlg::ObjectsPage::RebuildDisplayedObjects()
+{
+    displayedObjects.clear();
+    displayedObjects.reserve(rmgDlgObjects.size());
+    for (auto &object : rmgDlgObjects)
+        displayedObjects.emplace_back(&object);
 }
 
 BOOL RMG_SettingsDlg::ObjectsPage::ShowObjectExtendedInfo(const ObjectsPanel *panel, const H3Msg &msg) const noexcept
@@ -1154,6 +1276,174 @@ RMG_SettingsDlg::BanksPage::~BanksPage()
 {
 }
 
+RMG_SettingsDlg::PrisonPage::PrisonPage(H3DlgCaptionButton *captionbttn,
+                                        const std::vector<GraphicalAttributes> &data)
+    : ObjectsPage(captionbttn, data, false)
+{
+    // Prison values are stored in RMGObjGen::Exp, not in the graphics
+    // attributes. Rebind each row explicitly to its generator-specific
+    // record before the page is first displayed.
+    for (auto &object : rmgDlgObjects)
+    {
+        if (!object.objectGenerator || object.objectGenerator->type != eObject::PRISON)
+            continue;
+
+        if (const auto *record = PrisonVariants::Find(object.objectGenerator))
+        {
+            object.objectInfo = record->currentInfo;
+            object.displayName = PrisonVariants::GetDisplayName(object.objectGenerator);
+        }
+    }
+
+    // Keep the experience variants together and in ascending order while
+    // leaving the quest generators in the same page.
+    sorting::SortRmgObjects(rmgDlgObjects, sorting::eSorting::BY_VALUE, true);
+    lastSorting.type = sorting::eSorting::BY_VALUE;
+    RebuildDisplayedObjects();
+    RecreateVerticalScrollBar();
+}
+
+RMG_SettingsDlg::PrisonPage::~PrisonPage()
+{
+}
+
+RMG_SettingsDlg::PandoraPage::PandoraPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data)
+    : ObjectsPage(captionbttn, data, false, 165, 7)
+{
+    categories[0].kind = ePandoraGeneratorKind::GOLD;
+    categories[1].kind = ePandoraGeneratorKind::EXPERIENCE;
+    categories[2].kind = ePandoraGeneratorKind::MAGIC;
+    categories[3].kind = ePandoraGeneratorKind::MONSTERS;
+    categories[3].expanded = false;
+
+    for (const auto &object : rmgDlgObjects)
+    {
+        PandoraVariantKey key;
+        if (!PandoraVariants::GetKey(object.objectGenerator, key))
+            continue;
+        for (auto &category : categories)
+        {
+            if (category.kind == key.kind)
+            {
+                ++category.objectsCount;
+                break;
+            }
+        }
+    }
+
+    constexpr int categoryX = 24;
+    constexpr int categoryY = 96;
+    constexpr int categoryWidth = 180;
+    constexpr int categoryGap = 8;
+    constexpr int categoryHeight = 24;
+
+    for (size_t i = 0; i < categories.size(); ++i)
+    {
+        auto &category = categories[i];
+        libc::sprintf(h3_TextBuffer, "RMG.text.dlg.pandora.category.%d.name", static_cast<int>(category.kind));
+        LPCSTR categoryName = EraJS::read(h3_TextBuffer);
+
+        const H3String caption = H3String::Format(EraJS::read("RMG.text.dlg.pandora.category.caption"), categoryName,
+                                                  static_cast<int>(category.objectsCount));
+        category.button = H3DlgCaptionButton::Create(
+            categoryX + static_cast<int>(i) * (categoryWidth + categoryGap), categoryY, categoryWidth, categoryHeight,
+            CATEGORY_FIRST_ID + static_cast<int>(i), "ecptsml1.def", caption.String(), NH3Dlg::Text::SMALL, 0, 0, 0, 0,
+            eTextColor::HIGHLIGHT);
+        if (category.button)
+        {
+            category.button->SetClickFrame(1);
+            category.button->HideDeactivate();
+            dlg->AddItem(category.button);
+        }
+    }
+
+    RebuildDisplayedObjects();
+    UpdateCategoryButtons();
+    RecreateVerticalScrollBar();
+}
+
+RMG_SettingsDlg::PandoraPage::~PandoraPage()
+{
+}
+
+void RMG_SettingsDlg::PandoraPage::RebuildDisplayedObjects()
+{
+    displayedObjects.clear();
+    displayedObjects.reserve(rmgDlgObjects.size());
+
+    for (const auto &category : categories)
+    {
+        if (!category.expanded)
+            continue;
+
+        for (auto &object : rmgDlgObjects)
+        {
+            PandoraVariantKey key;
+            if (PandoraVariants::GetKey(object.objectGenerator, key) && key.kind == category.kind)
+                displayedObjects.emplace_back(&object);
+        }
+    }
+}
+
+void RMG_SettingsDlg::PandoraPage::UpdateCategoryButtons() noexcept
+{
+    for (const auto &category : categories)
+    {
+        if (!category.button)
+            continue;
+
+        category.button->SetFrame(category.expanded ? 0 : 1);
+        libc::sprintf(h3_TextBuffer, "RMG.text.dlg.pandora.category.%s.hint",
+                      category.expanded ? "expanded" : "collapsed");
+        category.button->SetHint(EraJS::read(h3_TextBuffer));
+    }
+}
+
+void RMG_SettingsDlg::PandoraPage::SetVisible(const BOOL state)
+{
+    if (state)
+        firstItemCount = 0;
+    ObjectsPage::SetVisible(state);
+    if (state)
+        RecreateVerticalScrollBar();
+    for (const auto &category : categories)
+    {
+        if (!category.button)
+            continue;
+        state ? category.button->ShowActivate() : category.button->HideDeactivate();
+    }
+}
+
+void RMG_SettingsDlg::PandoraPage::ToggleMassEnabled(const BOOL reverse, const BOOL newState)
+{
+    // Apply mass toggles only to variants in expanded categories.
+    for (auto *object : displayedObjects)
+    {
+        if (object)
+            object->objectInfo.enabled = reverse ? object->objectInfo.enabled ^ true : newState;
+    }
+}
+
+BOOL RMG_SettingsDlg::PandoraPage::Proc(H3Msg &msg)
+{
+    if (msg.itemId >= CATEGORY_FIRST_ID && msg.itemId < CATEGORY_FIRST_ID + static_cast<int>(categories.size()) &&
+        msg.IsLeftClick())
+    {
+        const size_t categoryIndex = static_cast<size_t>(msg.itemId - CATEGORY_FIRST_ID);
+        auto &category = categories[categoryIndex];
+        category.expanded = !category.expanded;
+        category.button->SetFrame(category.expanded ? 0 : 1);
+        RebuildDisplayedObjects();
+        RecreateVerticalScrollBar();
+        firstItemCount = 0;
+        FillObjects(0);
+        dlg->Redraw();
+        return TRUE;
+    }
+
+    return ObjectsPage::Proc(msg);
+}
+
 BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
 {
     const int itemId = msg.itemId;
@@ -1220,7 +1510,9 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                     }
 
                     sorting::SortRmgObjects(rmgDlgObjects, sort, reverse);
-
+                    RebuildDisplayedObjects();
+                    RecreateVerticalScrollBar();
+                    firstItemCount = 0;
                     FillObjects(firstItemCount);
                     needDlgRedraw = true;
                 }
@@ -1262,10 +1554,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                             const int newSetup = objectsPanel->rmgObject->objectInfo.enabled ^= true;
                             if (doMassEnable || doMassReverse)
                             {
-                                for (auto &obj : this->rmgDlgObjects)
-                                {
-                                    obj.objectInfo.enabled = doMassReverse ? obj.objectInfo.enabled ^ true : newSetup;
-                                }
+                                ToggleMassEnabled(doMassReverse, newSetup);
                                 needMassRedraw = true;
                                 if (doMassReverse)
                                 {
@@ -1296,7 +1585,7 @@ BOOL RMG_SettingsDlg::ObjectsPage::Proc(H3Msg &msg)
                         {
 
                             objectsPanel->UnfocusEdits(true);
-                            objectsPanel->rmgObject->objectInfo.RestoreDefault();
+                            objectsPanel->rmgObject->RestoreDefault();
                             objectsPanel->ObjectInfoToPanelInfo();
                             needDlgRedraw = true;
                         }
@@ -1373,10 +1662,13 @@ void __fastcall RMG_SettingsDlg::ObjectsPage::VerticalScrollBarProc(INT32 tick, 
 
     if (auto *objDlg = dynamic_cast<RMG_SettingsDlg *>(dlg))
     {
-        if (auto currentPage = objDlg->m_currentPage)
+        if (auto *currentPage = dynamic_cast<ObjectsPage *>(objDlg->m_currentPage))
         {
-            currentPage->firstItemCount = tick;
-            currentPage->FillObjects(tick);
+            const size_t maxFirstItem = currentPage->displayedObjects.size() > currentPage->objectsPanels.size()
+                                            ? currentPage->displayedObjects.size() - currentPage->objectsPanels.size()
+                                            : 0;
+            currentPage->firstItemCount = static_cast<UINT>(std::min<size_t>(tick, maxFirstItem));
+            currentPage->FillObjects(currentPage->firstItemCount);
             objDlg->Redraw();
         }
     }
@@ -1407,15 +1699,21 @@ BOOL RMG_SettingsDlg::OnCreate()
         page->FillObjects(0);
         page->SetVisible(false);
     }
-    size_t pageId = m_lastPageId < size ? m_lastPageId : 0;
-    SetActivePage(pageId);
+    const size_t pageId = m_lastPageId;
+    if (!SetActivePage(pageId) && !m_pageIds.empty())
+        SetActivePage(m_pageIds.front());
     return true;
 }
 BOOL RMG_SettingsDlg::SetActivePage(const size_t pageId) noexcept
 {
 
-    const size_t size = m_pages.size();
-    if (m_pages[pageId] == m_currentPage)
+    size_t pagePosition = 0;
+    while (pagePosition < m_pageIds.size() && m_pageIds[pagePosition] != pageId)
+        ++pagePosition;
+
+    if (pagePosition >= m_pages.size())
+        return FALSE;
+    if (m_pages[pagePosition] == m_currentPage)
         return FALSE;
     // for (auto &caption : captionButtons)
     //{
@@ -1429,7 +1727,7 @@ BOOL RMG_SettingsDlg::SetActivePage(const size_t pageId) noexcept
         RemoveEditsFocus(true);
         m_currentPage->SetVisible(false);
     }
-    auto page = m_pages[pageId];
+    auto page = m_pages[pagePosition];
 
     m_currentPage = page;
     if (page)
@@ -1446,11 +1744,22 @@ BOOL RMG_SettingsDlg::SetActivePage(const size_t pageId) noexcept
     return TRUE;
 }
 
-RMGDlgObject::RMGDlgObject(GraphicalAttributes *graphicalAttributes) : graphicalAttributes(graphicalAttributes)
+RMGDlgObject::RMGDlgObject(GraphicalAttributes *graphicalAttributes)
+    : graphicalAttributes(graphicalAttributes),
+      objectGenerator(graphicalAttributes ? graphicalAttributes->objectGenerator : nullptr)
 {
     // Get data from global array
-    objectInfo = RMGObjectInfo::CurrentObjectInfo(graphicalAttributes->attributes->type,
-                                                  graphicalAttributes->attributes->subtype);
+    if (objectGenerator)
+    {
+        objectInfo = RMGObjectInfo::CurrentObjectInfo(objectGenerator);
+        displayName = RMGObjectInfo::GetObjectName(objectGenerator);
+    }
+    else
+    {
+        objectInfo = RMGObjectInfo::CurrentObjectInfo(graphicalAttributes->attributes->type,
+                                                      graphicalAttributes->attributes->subtype);
+        displayName = objectInfo.GetName();
+    }
 }
 
 BOOL RMGDlgObject::SwitchToNextPicture() noexcept
@@ -1462,6 +1771,33 @@ BOOL RMGDlgObject::SwitchToNextPicture() noexcept
     }
 
     return false;
+}
+
+void RMGDlgObject::RestoreDefault() noexcept
+{
+    objectInfo = objectGenerator ? RMGObjectInfo::DefaultObjectInfo(objectGenerator)
+                                 : RMGObjectInfo::DefaultObjectInfo(objectInfo.type, objectInfo.subtype);
+}
+
+void RMGDlgObject::SetRandom() noexcept
+{
+    if (objectGenerator)
+        objectInfo.SetRandom(RMGObjectInfo::DefaultObjectInfo(objectGenerator));
+    else
+        objectInfo.SetRandom();
+}
+
+void RMGDlgObject::SaveCurrent() const noexcept
+{
+    if (objectGenerator)
+        RMGObjectInfo::SetCurrentObjectInfo(objectGenerator, objectInfo);
+    else
+        objectInfo.MakeReal();
+}
+
+BOOL RMGDlgObject::WriteToINI() const noexcept
+{
+    return objectGenerator ? objectInfo.WriteToINI(objectGenerator) : objectInfo.WriteToINI();
 }
 
 RMG_SettingsDlg::ObjectsPage::PageHeader::PageHeader(const int x, const int y, const int width, const int height,
@@ -1524,29 +1860,14 @@ void RMG_SettingsDlg::ObjectsPage::PageHeader::SetVisible(const BOOL state)
     visible = state;
 }
 
-RMG_SettingsDlg::MiscPage::MiscPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data)
-    : ObjectsPage(captionbttn, data)
+extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType(const int objectType,
+                                                                                 const int objectSubtype) noexcept
 {
-}
+    extendersManager::ObjectExtenderManager::Get();
+    const auto extenderPage = extendersManager::ObjectExtenderManager::GetObjectPage(objectType, objectSubtype);
+    if (extenderPage != extender::ePageUnknown)
+        return extenderPage;
 
-RMG_SettingsDlg::MiscPage::~MiscPage()
-{
-}
-
-RMG_SettingsDlg::DwellingsPage::DwellingsPage(H3DlgCaptionButton *captionbttn,
-                                              const std::vector<GraphicalAttributes> &data)
-    : ObjectsPage(captionbttn, data)
-{
-}
-
-RMG_SettingsDlg::DwellingsPage::~DwellingsPage()
-{
-}
-
-std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVectorByObjectType(const int objectType) noexcept
-{
-
-    // spacing is added to show not adjusted object types
     switch (objectType)
     {
     case eObject::CREATURE_BANK:
@@ -1554,115 +1875,118 @@ std::vector<GraphicalAttributes> *RMG_SettingsDlg::GetObjectAttributesVectorByOb
     case eObject::DRAGON_UTOPIA:
     case eObject::CRYPT:
     case eObject::SHIPWRECK:
-        return &m_creatureBanks;
+        return extender::ePageCreatureBank;
+    case eObject::CREATURE_GENERATOR1:
+    case eObject::CREATURE_GENERATOR4:
+    case eObject::RANDOM_DWELLING:
+    case eObject::RANDOM_DWELLING_LVL:
+    case eObject::RANDOM_DWELLING_FACTION:
+        return extender::ePageDwelling;
+
+    case eObject::PRISON:
+    case eObject::SEER_HUT:
+    case eObject::QUEST_GUARD:
+        return extender::ePagePrison;
+
+    case eObject::PYRAMID:
+        if (objectSubtype > 0)
+            return extender::ePageWogObject;
+        return extender::ePageLearning;
+
+    case eObject::PANDORAS_BOX:
+        return extender::ePandoraBox;
+
     case eObject::ALTAR_OF_SACRIFICE:
-
     case eObject::ARENA:
-
-    case eObject::BLACK_MARKET:
-
-        // case eObject::BORDERGUARD:
-        //  case eObject::KEYMASTER:
-        /*
-         * eObject::KEYMASTER, @todo: place into another page
-         */
-    case eObject::CARTOGRAPHER:
-    case eObject::SWAN_POND:
-
-    case eObject::CORPSE:
     case eObject::MARLETTO_TOWER:
 
-    case eObject::FAERIE_RING:
-    case eObject::FLOTSAM:
-
     case eObject::GARDEN_OF_REVELATION:
-    case eObject::IDOL_OF_FORTUNE:
-
-    case eObject::LIBRARY_OF_ENLIGHTENMENT:
-
     case eObject::SCHOOL_OF_MAGIC:
-
-    case eObject::MAGIC_WELL:
-
-    case eObject::MERCENARY_CAMP:
+    case eObject::LIBRARY_OF_ENLIGHTENMENT:
     case eObject::STAR_AXIS:
 
-    case eObject::FOUNTAIN_OF_FORTUNE:
-    case eObject::FOUNTAIN_OF_YOUTH:
-
-    case eObject::HILL_FORT:
-
-    case eObject::LEAN_TO:
-    case eObject::MAGIC_SPRING:
-
-    case eObject::MYSTICAL_GARDEN:
-    case eObject::OASIS:
-    case eObject::OBELISK:
-    case eObject::REDWOOD_OBSERVATORY:
-
-    case eObject::PILLAR_OF_FIRE:
-
-    case eObject::RALLY_FLAG:
-
-    case eObject::REFUGEE_CAMP:
-
-    case eObject::SANCTUARY:
     case eObject::SCHOLAR:
-    case eObject::SEA_CHEST:
-
-    case eObject::SEER_HUT:
-
-    case eObject::SHIPWRECK_SURVIVOR:
-
     case eObject::SHRINE_OF_MAGIC_INCANTATION:
     case eObject::SHRINE_OF_MAGIC_GESTURE:
     case eObject::SHRINE_OF_MAGIC_THOUGHT:
-
     case eObject::SIRENS:
+    case eObject::LEARNING_STONE:
+    case eObject::TREE_OF_KNOWLEDGE:
+    case eObject::UNIVERSITY:
+    case eObject::SCHOOL_OF_WAR:
+    case eObject::WITCH_HUT:
+
+        return extender::ePageLearning;
+
+    case eObject::MINE:
+    case eObject::LEAN_TO:
+
+    case eObject::MYSTICAL_GARDEN:
+
+    case eObject::WATER_WHEEL:
+    case eObject::WATERING_HOLE:
+    case eObject::WINDMILL:
+    case extender::WAREHOUSE_OBJECT_TYPE:
+    case eObject::ABANDONED_MINE:
+        return extender::ePageIncome;
+
+        // case eObject::ARTIFACT:
+        // case eObject::RANDOM_ART:
+        // case eObject::RANDOM_TREASURE_ART:
+        // case eObject::RANDOM_MINOR_ART:
+        // case eObject::RANDOM_MAJOR_ART:
+        // case eObject::RANDOM_RELIC_ART:
+
+    case eObject::CAMPFIRE:
+    case eObject::FLOTSAM:
+    case eObject::RANDOM_RESOURCE:
+    case eObject::RESOURCE:
+    case eObject::SEA_CHEST:
+    case eObject::SHIPWRECK_SURVIVOR:
+    case eObject::TREASURE_CHEST:
+    case eObject::WAGON:
+        return extender::ePageTreasure;
+
+    case eObject::BLACK_MARKET:
+    case eObject::CARTOGRAPHER:
+    case eObject::SWAN_POND:
+    case eObject::CORPSE:
+    case eObject::FAERIE_RING:
+    case eObject::FOUNTAIN_OF_FORTUNE:
+    case eObject::FOUNTAIN_OF_YOUTH:
+    case eObject::HILL_FORT:
+
+    case eObject::IDOL_OF_FORTUNE:
+
+    case eObject::MAGIC_SPRING:
+    case eObject::MAGIC_WELL:
+    case eObject::MERCENARY_CAMP:
+
+    case eObject::OASIS:
+
+    case eObject::OBELISK:
+    case eObject::REDWOOD_OBSERVATORY:
+    case eObject::PILLAR_OF_FIRE:
+    case eObject::RALLY_FLAG:
+    case eObject::REFUGEE_CAMP:
+    case eObject::SANCTUARY:
 
     case eObject::STABLES:
     case eObject::TAVERN:
     case eObject::TEMPLE:
     case eObject::DEN_OF_THIEVES:
     case eObject::TRADING_POST:
-    case eObject::LEARNING_STONE:
-
-    case eObject::TREE_OF_KNOWLEDGE:
-
-    case eObject::UNIVERSITY:
-    case eObject::WAGON:
     case eObject::WAR_MACHINE_FACTORY:
-    case eObject::SCHOOL_OF_WAR:
     case eObject::WARRIORS_TOMB:
-    case eObject::WATER_WHEEL:
-    case eObject::WATERING_HOLE:
-
-    case eObject::WINDMILL:
-    case eObject::WITCH_HUT:
-
-    case extender::WAREHOUSE_OBJECT_TYPE:
-
     case extender::HOTA_OBJECT_TYPE:
     case extender::HOTA_PICKUPABLE_OBJECT_TYPE:
     case extender::HOTA_UNREACHABLE_OBJECT_TYPE:
-
     case eObject::FREELANCERS_GUILD:
-        // doesn't work properly cause game generates TRADING_POST and but puts TRADING_POST_2
     case eObject::TRADING_POST_SNOW:
-        return &m_commonObjects;
-
-    case eObject::CREATURE_GENERATOR1:
-    case eObject::CREATURE_GENERATOR4:
-        return &m_creatureGenerators;
-    case eObject::PYRAMID:
-        return &m_wogObjects;
-
+        return extender::ePageCommon;
     default:
-        return nullptr;
-
-        break;
+        return extender::ePageUnknown;
     }
-    return nullptr;
 }
 
 namespace
@@ -1749,9 +2073,9 @@ H3LoadedPcx16 *CopyDefFrameWithoutTransparentBorder(H3LoadedDef *def, H3DefFrame
 
 void RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16()
 {
-    for (auto &vec : m_objectAttributes)
+    for (auto &vec : m_data.GetPages())
     {
-        for (auto &attributes : *vec)
+        for (auto &attributes : vec)
         {
             auto *workingAttributes = &attributes;
 
@@ -1772,14 +2096,16 @@ void RMG_SettingsDlg::CopyOriginalObjectDefsIntoPcx16()
 
 void RMG_SettingsDlg::AssignPrototypeToObjectGens(const H3RmgObjectGenerator *objGen,
                                                   std::vector<GraphicalAttributes> *workingVector,
-                                                  std::unordered_map<DWORD, size_t> &uniqueObjectsIndex,
+                                                  std::unordered_map<UINT64, size_t> &uniqueObjectsIndex,
                                                   const int objectTypeAlias) noexcept
 {
     auto &objectTypeVector = mainSetup->objectLists[objectTypeAlias];
 
     const int objectSubtype = objGen->subtype;
+    const int settingsSubtype = RMGObjectInfo::GetSettingsSubtype(objGen);
 
-    const DWORD pair = (objGen->type << 16) | objectSubtype;
+    const UINT64 pair =
+        (static_cast<UINT64>(static_cast<UINT32>(objGen->type)) << 32) | static_cast<UINT32>(settingsSubtype);
 
     for (auto &attributes : objectTypeVector)
     {
@@ -1789,7 +2115,9 @@ void RMG_SettingsDlg::AssignPrototypeToObjectGens(const H3RmgObjectGenerator *ob
 
             if (itIndex == uniqueObjectsIndex.end())
             {
-                workingVector->emplace_back(GraphicalAttributes{&attributes});
+                GraphicalAttributes graphicalAttributes{&attributes};
+                graphicalAttributes.objectGenerator = objGen;
+                workingVector->emplace_back(graphicalAttributes);
                 uniqueObjectsIndex[pair] = workingVector->size() - 1;
             }
             else
@@ -1807,6 +2135,7 @@ void RMG_SettingsDlg::AssignPrototypeToObjectGens(const H3RmgObjectGenerator *ob
                 // access set only via loop
                 // and deleting only when the game ends
                 tail->next = new GraphicalAttributes{&attributes};
+                tail->next->objectGenerator = objGen;
             }
         }
     }
@@ -1853,9 +2182,7 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
 
     // Create object prototypes copies from the loaded generators list
 
-    std::vector<GraphicalAttributes> *workingVector = nullptr;
-
-    std::unordered_map<DWORD, size_t> uniqueObjectsIndex;
+    std::unordered_map<UINT64, size_t> uniqueObjectsIndex;
 
     // we iterate all the RMG prototypes and store copies of H3ObjectAttributes into local array taken from game
     // objects list
@@ -1863,8 +2190,10 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
     {
         const int objectType = objGen->type;
 
-        if (workingVector = GetObjectAttributesVectorByObjectType(objectType))
+        const auto page = GetObjectAttributesPageByObjectType(objectType, objGen->subtype);
+        if (page >= extender::ePageCommon && page <= extender::ePandoraBox)
         {
+            auto *workingVector = &m_data.GetPage(static_cast<size_t>(page));
 
             AssignPrototypeToObjectGens(objGen, workingVector, uniqueObjectsIndex, objectType);
             if (objectType == eObject::TRADING_POST)
@@ -2128,12 +2457,9 @@ void CreateResizedObjectPcx()
 
     auto &objectAttributes = RMG_SettingsDlg::GetObjectAttributes();
 
-    for (auto *attributesVector : objectAttributes)
+    for (auto &attributesVector : objectAttributes)
     {
-        if (!attributesVector)
-            continue;
-
-        for (auto &attributes : *attributesVector)
+        for (auto &attributes : attributesVector)
         {
             GraphicalAttributes *current = &attributes;
             while (current)
@@ -2203,7 +2529,8 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
         MenuWidgetInfo widgetInfo;
         widgetInfo.name = MAIN_MENU_WIDGET_UUID;
         widgetInfo.customProc = RMG_SettingsDlg::RMGDlgOptionsButtonProc;
-        const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::NEW_GAME | eMenuFlags::AT_BOTTOM);
+        // const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::NEW_GAME | eMenuFlags::AT_BOTTOM);
+        const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::AT_BOTTOM);
 
         widgetInfo.menuList = flags;
         widgetInfo.text = EraJS::read(MAIN_MENU_JSON_KEY);

@@ -8,6 +8,437 @@
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
 char RMGObjectInfo::localBuffer[512];
+std::vector<PandoraVariants::Record> PandoraVariants::records;
+std::vector<PrisonVariants::Record> PrisonVariants::records;
+
+namespace
+{
+constexpr DWORD RMG_OBJ_GEN_PANDORA_MON_VTABLE = 0x00640B8C;
+constexpr DWORD RMG_OBJ_GEN_PANDORA_EXP_VTABLE = 0x00640B98;
+constexpr DWORD RMG_OBJ_GEN_PANDORA_GOLD_VTABLE = 0x00640BA4;
+constexpr DWORD RMG_OBJ_GEN_PANDORA_MAGIC_VTABLE = 0x00640BB0;
+constexpr LPCSTR PANDORA_PROPERTY_JSON_KEY_FORMAT = "RMG.objectGeneration.6.pandora.%s.%s";
+constexpr LPCSTR PANDORA_NAME_JSON_KEY_FORMAT = "RMG.objectGeneration.6.pandora.%s.name";
+constexpr LPCSTR PRISON_NAME_JSON_KEY = "RMG.text.dlg.prison.display";
+
+H3String GetPandoraMagicSchoolName(const INT32 schoolBit)
+{
+    struct SchoolEntry
+    {
+        INT32 bit;
+        LPCSTR jsonName;
+    };
+
+    // The generator stores a bit mask, not a single school id. Keep the order
+    // used by the game (air, fire, water, earth) when several bits are set.
+    static constexpr SchoolEntry schools[] = {
+        {h3::eSpellchool::AIR, "air"},
+        {h3::eSpellchool::FIRE, "fire"},
+        {h3::eSpellchool::WATER, "water"},
+        {h3::eSpellchool::EARTH, "earth"},
+    };
+
+    H3String result;
+    BOOL hasName = FALSE;
+    for (const auto &school : schools)
+    {
+        if ((schoolBit & school.bit) == 0)
+            continue;
+
+        bool readSuccess = false;
+        const H3String key = H3String::Format("RMG.text.dlg.pandora.school.%s", school.jsonName);
+        const LPCSTR name = EraJS::read(key.String(), readSuccess);
+        if (!readSuccess || !name || !*name)
+            continue;
+
+        if (hasName)
+        {
+            bool separatorReadSuccess = false;
+            const LPCSTR separator = EraJS::read("RMG.text.dlg.pandora.school.separator", separatorReadSuccess);
+            result.Append(separatorReadSuccess && separator ? separator : ", ");
+        }
+        result.Append(name);
+        hasName = TRUE;
+    }
+
+    if (hasName)
+        return result;
+
+    bool unknownReadSuccess = false;
+    const LPCSTR unknown = EraJS::read("RMG.text.dlg.pandora.school.unknown", unknownReadSuccess);
+    return unknownReadSuccess && unknown ? H3String(unknown) : H3String::Format("0x%X", schoolBit);
+}
+} // namespace
+
+PandoraVariants::Record *PandoraVariants::FindRecordMutable(const PandoraVariantKey &key) noexcept
+{
+    for (auto &record : records)
+    {
+        if (record.key == key)
+            return &record;
+    }
+    return nullptr;
+}
+
+const PandoraVariants::Record *PandoraVariants::FindRecord(const PandoraVariantKey &key) noexcept
+{
+    for (const auto &record : records)
+    {
+        if (record.key == key)
+            return &record;
+    }
+    return nullptr;
+}
+
+BOOL PandoraVariants::GetKey(const H3RmgObjectGenerator *generator, PandoraVariantKey &key) noexcept
+{
+    if (!generator || generator->type != eObject::PANDORAS_BOX || !generator->vTable)
+        return FALSE;
+
+    const DWORD vTable = reinterpret_cast<DWORD>(generator->vTable);
+    switch (vTable)
+    {
+    case RMG_OBJ_GEN_PANDORA_MON_VTABLE: {
+        const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraMon_ *>(generator);
+        // Creature type is the stable identity. objectValue is derived from
+        // creature balance data and may change when another mod rebalances it.
+        key = {ePandoraGeneratorKind::MONSTERS, pandora->montype, 0, 0};
+        return TRUE;
+    }
+    case RMG_OBJ_GEN_PANDORA_GOLD_VTABLE: {
+        const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraGold_ *>(generator);
+        key = {ePandoraGeneratorKind::GOLD, pandora->gold, 0, 0};
+        return TRUE;
+    }
+    case RMG_OBJ_GEN_PANDORA_EXP_VTABLE: {
+        const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraExp_ *>(generator);
+        key = {ePandoraGeneratorKind::EXPERIENCE, pandora->exp, 0, 0};
+        return TRUE;
+    }
+    case RMG_OBJ_GEN_PANDORA_MAGIC_VTABLE: {
+        const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraMagic_ *>(generator);
+        key = {ePandoraGeneratorKind::MAGIC, pandora->minLevel, pandora->maxLevel, pandora->schoolBit};
+        return TRUE;
+    }
+    default:
+        return FALSE;
+    }
+}
+
+H3String PandoraVariants::GetPersistentKey(const PandoraVariantKey &key)
+{
+    switch (key.kind)
+    {
+    case ePandoraGeneratorKind::MONSTERS:
+        return H3String::Format("monsters.%d", key.first);
+    case ePandoraGeneratorKind::GOLD:
+        return H3String::Format("gold.%d", key.first);
+    case ePandoraGeneratorKind::EXPERIENCE:
+        return H3String::Format("experience.%d", key.first);
+    case ePandoraGeneratorKind::MAGIC:
+        return H3String::Format("magic.%d.%d.%d", key.first, key.second, key.third);
+    default:
+        return "unknown";
+    }
+}
+
+H3String PandoraVariants::GetIniSectionName(const PandoraVariantKey &key)
+{
+    return H3String::Format("6_0_pandora.%s_0", GetPersistentKey(key).String());
+}
+
+void PandoraVariants::RegisterDefault(const H3RmgObjectGenerator *generator)
+{
+    PandoraVariantKey key;
+    if (!GetKey(generator, key))
+        return;
+
+    Record *record = FindRecordMutable(key);
+    if (!record)
+    {
+        Record newRecord;
+        newRecord.key = key;
+        newRecord.virtualSubtype = static_cast<INT32>(records.size());
+        newRecord.defaultInfo = RMGObjectInfo::DefaultObjectInfo(generator->type, generator->subtype);
+
+        const H3String persistentKey = GetPersistentKey(key);
+        bool readSuccess = false;
+        for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
+        {
+            const H3String jsonKey = H3String::Format(PANDORA_PROPERTY_JSON_KEY_FORMAT, persistentKey.String(),
+                                                      RMGObjectInfo::PROPERTY_NAMES[i]);
+            const int value = EraJS::readInt(jsonKey.String(), readSuccess);
+            if (readSuccess)
+                newRecord.defaultInfo.data[i] = value;
+        }
+
+        if (newRecord.defaultInfo.value == RMGObjectInfo::UNDEFINED)
+            newRecord.defaultInfo.value = generator->value;
+        if (newRecord.defaultInfo.density == RMGObjectInfo::UNDEFINED)
+            newRecord.defaultInfo.density = generator->density;
+
+        newRecord.defaultInfo.Clamp();
+        newRecord.currentInfo = newRecord.defaultInfo;
+        records.emplace_back(newRecord);
+    }
+}
+
+void PandoraVariants::LoadUserProperties()
+{
+    for (auto &record : records)
+    {
+        record.currentInfo = record.defaultInfo;
+        const H3String legacySectionName =
+            H3String::Format(RMGObjectInfo::OBJECT_INFO_INI_FORMAT, eObject::PANDORAS_BOX, 0, 0);
+        const H3String sectionName = GetIniSectionName(record.key);
+        for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
+        {
+            // Old versions stored one shared (6, 0) record. Treat it as a
+            // common override, then let the exact Pandora variant win.
+            if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], legacySectionName.String(),
+                                    RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
+            {
+                record.currentInfo.data[i] = atoi(RMGObjectInfo::localBuffer);
+            }
+            if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], sectionName.String(),
+                                    RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
+            {
+                record.currentInfo.data[i] = atoi(RMGObjectInfo::localBuffer);
+            }
+        }
+        record.currentInfo.Clamp();
+    }
+}
+
+const PandoraVariants::Record *PandoraVariants::Find(const H3RmgObjectGenerator *generator) noexcept
+{
+    PandoraVariantKey key;
+    return GetKey(generator, key) ? FindRecord(key) : nullptr;
+}
+
+PandoraVariants::Record *PandoraVariants::FindMutable(const H3RmgObjectGenerator *generator) noexcept
+{
+    PandoraVariantKey key;
+    return GetKey(generator, key) ? FindRecordMutable(key) : nullptr;
+}
+
+int PandoraVariants::GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept
+{
+    const Record *record = Find(generator);
+    return record ? record->virtualSubtype : (generator ? generator->subtype : eObject::NO_OBJ);
+}
+
+BOOL PandoraVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept
+{
+    const Record *record = Find(generator);
+    if (!record)
+        return FALSE;
+
+    BOOL success = TRUE;
+    const H3String sectionName = GetIniSectionName(record->key);
+    for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
+    {
+        if (info.data[i] != record->defaultInfo.data[i] &&
+            !Era::WriteStrToIni(RMGObjectInfo::PROPERTY_NAMES[i], std::to_string(info.data[i]).c_str(),
+                                sectionName.String(), RMGObjectInfo::INI_FILE_PATH))
+        {
+            success = FALSE;
+        }
+    }
+    return success;
+}
+
+H3String PandoraVariants::GetDisplayName(const H3RmgObjectGenerator *generator)
+{
+    PandoraVariantKey key;
+    if (!GetKey(generator, key))
+        return RMGObjectInfo::GetObjectName(eObject::PANDORAS_BOX, 0);
+
+    const H3String persistentKey = GetPersistentKey(key);
+    const H3String jsonKey = H3String::Format(PANDORA_NAME_JSON_KEY_FORMAT, persistentKey.String());
+    bool readSuccess = false;
+    const LPCSTR translatedName = EraJS::read(jsonKey.String(), readSuccess);
+    if (readSuccess)
+        return translatedName;
+
+    const LPCSTR baseName = RMGObjectInfo::GetObjectName(eObject::PANDORAS_BOX, 0);
+    switch (key.kind)
+    {
+    case ePandoraGeneratorKind::MONSTERS:
+        if (key.first >= 0 && key.first < h3::limits::CREATURES)
+            return H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.monsters"), baseName,
+                                    P_Creatures[key.first].namePlural);
+        return H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.monstersUnknown"), baseName, key.first);
+    case ePandoraGeneratorKind::GOLD:
+        return H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.gold"), baseName, key.first,
+                                P_ResourceName[eResource::GOLD]);
+    case ePandoraGeneratorKind::EXPERIENCE:
+        return H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.experience"), baseName, key.first);
+    case ePandoraGeneratorKind::MAGIC:
+    {
+        const H3String schoolName = GetPandoraMagicSchoolName(key.third);
+        return key.first == key.second ? H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.magicSingle"),
+                                                          baseName, key.first, schoolName.String())
+                                       : H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.magicRange"),
+                                                          baseName, key.first, key.second, schoolName.String());
+    }
+    default:
+        return baseName;
+    }
+}
+
+const std::vector<PandoraVariants::Record> &PandoraVariants::GetRecords() noexcept
+{
+    return records;
+}
+
+PrisonVariants::Record *PrisonVariants::FindRecordMutable(const PrisonVariantKey &key) noexcept
+{
+    for (auto &record : records)
+    {
+        if (record.key == key)
+            return &record;
+    }
+    return nullptr;
+}
+
+const PrisonVariants::Record *PrisonVariants::FindRecord(const PrisonVariantKey &key) noexcept
+{
+    for (const auto &record : records)
+    {
+        if (record.key == key)
+            return &record;
+    }
+    return nullptr;
+}
+
+BOOL PrisonVariants::GetKey(const H3RmgObjectGenerator *generator, PrisonVariantKey &key) noexcept
+{
+    if (!generator || generator->type != eObject::PRISON)
+        return FALSE;
+
+    key.experience = reinterpret_cast<const _RMGObjGenPrison_ *>(generator)->Exp;
+    return TRUE;
+}
+
+H3String PrisonVariants::GetPersistentKey(const PrisonVariantKey &key)
+{
+    return H3String::Format("%d", key.experience);
+}
+
+H3String PrisonVariants::GetIniSectionName(const PrisonVariantKey &key)
+{
+    return H3String::Format("62_0_prison.%s_0", GetPersistentKey(key).String());
+}
+
+void PrisonVariants::RegisterDefault(const H3RmgObjectGenerator *generator)
+{
+    PrisonVariantKey key;
+    if (!GetKey(generator, key))
+        return;
+
+    if (FindRecord(key))
+        return;
+
+    Record newRecord;
+    newRecord.key = key;
+    newRecord.virtualSubtype = static_cast<INT32>(records.size());
+    if (generator->subtype >= RMGObjectInfo::defaultRMGObjectsInfoByType[generator->type].size())
+    {
+        RMGObjectInfo::defaultRMGObjectsInfoByType[generator->type].resize(generator->subtype + 1);
+        RMGObjectInfo::defaultRMGObjectsInfoByType[generator->type][generator->subtype] =
+            {generator->type, generator->subtype};
+    }
+    newRecord.defaultInfo = RMGObjectInfo::DefaultObjectInfo(generator->type, generator->subtype);
+    // Exp identifies the prison variant, while the editable RMG value is the
+    // base generator's value field.
+    newRecord.defaultInfo.value = generator->value;
+    if (newRecord.defaultInfo.density == RMGObjectInfo::UNDEFINED)
+        newRecord.defaultInfo.density = generator->density;
+    newRecord.defaultInfo.Clamp();
+    newRecord.currentInfo = newRecord.defaultInfo;
+    records.emplace_back(newRecord);
+}
+
+void PrisonVariants::LoadUserProperties()
+{
+    const H3String legacySectionName = H3String::Format(RMGObjectInfo::OBJECT_INFO_INI_FORMAT, eObject::PRISON, 0, 0);
+    for (auto &record : records)
+    {
+        record.currentInfo = record.defaultInfo;
+        const H3String sectionName = GetIniSectionName(record.key);
+        for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
+        {
+            // Migrate settings written by the earlier single-prison row.
+            if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], legacySectionName.String(),
+                                    RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
+            {
+                record.currentInfo.data[i] = atoi(RMGObjectInfo::localBuffer);
+            }
+            if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], sectionName.String(),
+                                    RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
+            {
+                record.currentInfo.data[i] = atoi(RMGObjectInfo::localBuffer);
+            }
+        }
+        record.currentInfo.Clamp();
+    }
+}
+
+const PrisonVariants::Record *PrisonVariants::Find(const H3RmgObjectGenerator *generator) noexcept
+{
+    PrisonVariantKey key;
+    return GetKey(generator, key) ? FindRecord(key) : nullptr;
+}
+
+PrisonVariants::Record *PrisonVariants::FindMutable(const H3RmgObjectGenerator *generator) noexcept
+{
+    PrisonVariantKey key;
+    return GetKey(generator, key) ? FindRecordMutable(key) : nullptr;
+}
+
+int PrisonVariants::GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept
+{
+    const Record *record = Find(generator);
+    return record ? record->virtualSubtype : (generator ? generator->subtype : eObject::NO_OBJ);
+}
+
+BOOL PrisonVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept
+{
+    const Record *record = Find(generator);
+    if (!record)
+        return FALSE;
+
+    BOOL success = TRUE;
+    const H3String sectionName = GetIniSectionName(record->key);
+    for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
+    {
+        if (info.data[i] != record->defaultInfo.data[i] &&
+            !Era::WriteStrToIni(RMGObjectInfo::PROPERTY_NAMES[i], std::to_string(info.data[i]).c_str(),
+                                sectionName.String(), RMGObjectInfo::INI_FILE_PATH))
+        {
+            success = FALSE;
+        }
+    }
+    return success;
+}
+
+H3String PrisonVariants::GetDisplayName(const H3RmgObjectGenerator *generator)
+{
+    PrisonVariantKey key;
+    if (!GetKey(generator, key))
+        return H3String(RMGObjectInfo::GetObjectName(eObject::PRISON, 0));
+
+    const H3String baseName = RMGObjectInfo::GetObjectName(eObject::PRISON, 0);
+    bool readSuccess = false;
+    const LPCSTR format = EraJS::read(PRISON_NAME_JSON_KEY, readSuccess);
+    return readSuccess ? H3String::Format(format, baseName.String(), key.experience) : baseName;
+}
+
+const std::vector<PrisonVariants::Record> &PrisonVariants::GetRecords() noexcept
+{
+    return records;
+}
 
 namespace editor
 {
@@ -78,9 +509,6 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 
     // init pseudoGenerator
 
-    // skip pandora monster generation
-    const auto storedByte = ByteAt(0x5390B7);
-    ByteAt(0x5390B7) = 0xEB;
     // pseudoH3RmgRandomMapGenerator.keyMasters.RemoveAll();
 
     isPseudoGeneration = true;
@@ -94,7 +522,6 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     // originalRMGObjectGenerators = &originalRMGObjectGeneratorsA;
 
     isPseudoGeneration = false;
-    ByteAt(0x5390B7) = storedByte;
 }
 
 const H3Vector<H3RmgObjectGenerator *> *RMGObjectsEditor::GetObjectGeneratorsList() const noexcept
@@ -109,10 +536,6 @@ RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
 
     return *instance;
     // new RMGObjectsEditor();
-}
-
-RMGObjectsEditor::~RMGObjectsEditor()
-{
 }
 
 void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRandomMapGenerator *rmgStruct)
@@ -181,12 +604,19 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 switch (rmgObjGen->type)
                 {
                     // add these objects w/o any restrictions
-                case eObject::PANDORAS_BOX:
                 // case eObject::BORDERGUARD:
                 // case eObject::KEYMASTER:
-                case eObject::PRISON:
-                case eObject::SEER_HUT:
+                case eObject::PRISON: {
+                    // Prisons have one generator subtype (62, 0). Exp selects
+                    // the variant; the editable value comes from generator->value.
+                    const auto &prisonInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen);
+                    if (prisonInfo.value != RMGObjectInfo::UNDEFINED)
+                        rmgObjGen->value = prisonInfo.value;
+                    editor.editedRMGObjectGenerators.Add(rmgObjGen);
+                    continue;
+                }
 
+                case eObject::SEER_HUT:
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
                     continue;
 
@@ -198,7 +628,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                     break;
                 }
 
-                const RMGObjectInfo &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen->type, rmgObjGen->subtype);
+                const RMGObjectInfo &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen);
                 // if object is enabled
                 if (rmgObjInfo.enabled)
                 {
@@ -303,6 +733,11 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
         auto &prototype = rmgObject->properties->prototype;
         switch (prototype->type)
         {
+        case eObject::PANDORAS_BOX: {
+            const int virtualSubtype = generatedInfo.TakeGeneratedObjectVirtualSubtype(rmgObject);
+            generatedInfo.IncreaseObjectsCounters(prototype, c->ecx, virtualSubtype);
+            break;
+        }
         case eObject::SPELL_SCROLL:
 
             if (generatedInfo.lastGeneratedSpellScroll)
@@ -491,6 +926,17 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHo
     }
     return rmgObject;
 }
+
+H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenPandora__CreateObject(HiHook *h, H3RmgObjectGenerator *generator,
+                                                                             H3RmgObjectPropsRef *ref,
+                                                                             H3RmgRandomMapGenerator *rmg,
+                                                                             H3RmgZoneGenerator *zoneGen) noexcept
+{
+    H3RmgObject *rmgObject = THISCALL_4(H3RmgObject *, h->GetDefaultFunc(), generator, ref, rmg, zoneGen);
+    if (rmgObject)
+        generatedInfo.RememberGeneratedObjectVariant(rmgObject, generator);
+    return rmgObject;
+}
 // fixes for different RMG bugs/stuff
 namespace fixes
 {
@@ -625,6 +1071,11 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
 
         _pi->WriteHiHook(0x05353C0, THISCALL_, RMG__RMGObjGenScroll__CreateObject);
+        _pi->WriteHiHook(0x0534870, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // monster
+        _pi->WriteHiHook(0x0534900, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // experience
+        _pi->WriteHiHook(0x0534980, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // gold
+        _pi->WriteHiHook(0x0534A10, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // magic
+
         _pi->WriteLoHook(0x05353F6, fixes::RMGObjGenScroll__AtRandomSelection);
         _pi->WriteLoHook(0x0549DE8, fixes::RMG__WaterWheelRiver_AtGeneration);
         _pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
@@ -660,15 +1111,34 @@ inline int index2D(const int objType, const int objSubtype, const int lineSize)
     return objType * lineSize + objSubtype;
 }
 
-void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId)
+void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId,
+                                            const int settingsSubtype)
 {
+    const int subtype = settingsSubtype >= 0 ? settingsSubtype : prop->subtype;
     // increment number of zone generated subtypes of that obj type
-    const int index3 = index3D(zoneId, prop->type, prop->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
+    const int index3 = index3D(zoneId, prop->type, subtype, H3_MAX_OBJECTS, maxObjectSubtype);
     eachZoneGeneratedBySubtype[index3]++;
 
     // increment number of map generated subtypes of that obj type
-    const int index2 = index2D(prop->type, prop->subtype, maxObjectSubtype);
+    const int index2 = index2D(prop->type, subtype, maxObjectSubtype);
     mapGeneratedBySubtype[index2]++;
+}
+
+void GeneratedInfo::RememberGeneratedObjectVariant(const H3RmgObject *object, const H3RmgObjectGenerator *generator)
+{
+    if (object && PandoraVariants::Find(generator))
+        generatedObjectVirtualSubtypes[object] = PandoraVariants::GetVirtualSubtype(generator);
+}
+
+int GeneratedInfo::TakeGeneratedObjectVirtualSubtype(const H3RmgObject *object) noexcept
+{
+    const auto it = generatedObjectVirtualSubtypes.find(object);
+    if (it == generatedObjectVirtualSubtypes.end())
+        return -1;
+
+    const int subtype = it->second;
+    generatedObjectVirtualSubtypes.erase(it);
+    return subtype;
 }
 
 BOOL RMGObjectInfo::Clamp() noexcept
@@ -742,7 +1212,12 @@ void RMGObjectInfo::RestoreDefault() noexcept
 
 void RMGObjectInfo::SetRandom() noexcept
 {
-    RMGObjectInfo tempObjInfo = defaultRMGObjectsInfoByType[type][subtype];
+    SetRandom(defaultRMGObjectsInfoByType[type][subtype]);
+}
+
+void RMGObjectInfo::SetRandom(const RMGObjectInfo &defaultInfo) noexcept
+{
+    RMGObjectInfo tempObjInfo = defaultInfo;
 
     for (size_t i = 0; i < 5; i++)
     {
@@ -840,6 +1315,15 @@ BOOL RMGObjectInfo::WriteToINI() const noexcept
     return success;
 }
 
+BOOL RMGObjectInfo::WriteToINI(const H3RmgObjectGenerator *generator) const noexcept
+{
+    if (PandoraVariants::Find(generator))
+        return PandoraVariants::WriteToINI(generator, *this);
+    if (PrisonVariants::Find(generator))
+        return PrisonVariants::WriteToINI(generator, *this);
+    return WriteToINI();
+}
+
 inline void RMGObjectInfo::ReadFromINI() noexcept
 {
 
@@ -864,9 +1348,44 @@ inline const RMGObjectInfo &RMGObjectInfo::DefaultObjectInfo(const int objType, 
 {
     return defaultRMGObjectsInfoByType[objType][subtype];
 }
+const RMGObjectInfo &RMGObjectInfo::DefaultObjectInfo(const H3RmgObjectGenerator *generator) noexcept
+{
+    if (const auto *record = PandoraVariants::Find(generator))
+        return record->defaultInfo;
+    if (const auto *record = PrisonVariants::Find(generator))
+        return record->defaultInfo;
+    return DefaultObjectInfo(generator->type, generator->subtype);
+}
 inline const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const int objType, const int subtype) noexcept
 {
     return currentRMGObjectsInfoByType[objType][subtype];
+}
+const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const H3RmgObjectGenerator *generator) noexcept
+{
+    if (const auto *record = PandoraVariants::Find(generator))
+        return record->currentInfo;
+    if (const auto *record = PrisonVariants::Find(generator))
+        return record->currentInfo;
+    return CurrentObjectInfo(generator->type, generator->subtype);
+}
+
+void RMGObjectInfo::SetCurrentObjectInfo(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept
+{
+    if (auto *record = PandoraVariants::FindMutable(generator))
+        record->currentInfo = info;
+    else if (auto *record = PrisonVariants::FindMutable(generator))
+        record->currentInfo = info;
+    else
+        currentRMGObjectsInfoByType[generator->type][generator->subtype] = info;
+}
+
+int RMGObjectInfo::GetSettingsSubtype(const H3RmgObjectGenerator *generator) noexcept
+{
+    if (PandoraVariants::Find(generator))
+        return PandoraVariants::GetVirtualSubtype(generator);
+    if (PrisonVariants::Find(generator))
+        return PrisonVariants::GetVirtualSubtype(generator);
+    return generator ? generator->subtype : eObject::NO_OBJ;
 }
 
 inline std::vector<RMGObjectInfo> (&RMGObjectInfo::CurrentObjectInfos())
@@ -874,6 +1393,20 @@ inline std::vector<RMGObjectInfo> (&RMGObjectInfo::CurrentObjectInfos())
 
 void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator *generator)
 {
+
+    PandoraVariantKey pandoraKey;
+    if (PandoraVariants::GetKey(generator, pandoraKey))
+    {
+        PandoraVariants::RegisterDefault(generator);
+        return;
+    }
+
+    PrisonVariantKey prisonKey;
+    if (PrisonVariants::GetKey(generator, prisonKey))
+    {
+        PrisonVariants::RegisterDefault(generator);
+        return;
+    }
 
     const int objType = generator->type;
     const int objSubtype = generator->subtype;
@@ -1004,6 +1537,9 @@ void RMGObjectInfo::LoadUserProperties()
             objectInfo.Clamp();
         }
     }
+
+    PandoraVariants::LoadUserProperties();
+    PrisonVariants::LoadUserProperties();
 }
 
 LPCSTR RMGObjectInfo::GetObjectName(const H3MapItem *mapItem)
@@ -1076,6 +1612,15 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     return result;
 }
 
+H3String RMGObjectInfo::GetObjectName(const H3RmgObjectGenerator *generator)
+{
+    if (PandoraVariants::Find(generator))
+        return PandoraVariants::GetDisplayName(generator);
+    if (PrisonVariants::Find(generator))
+        return PrisonVariants::GetDisplayName(generator);
+    return H3String(GetObjectName(generator->type, generator->subtype));
+}
+
 LPCSTR RMGObjectInfo::GetObjectDescription(const H3MapItem *mapItem)
 {
     if (mapItem)
@@ -1146,7 +1691,11 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
 
     for (auto *p_ObjGen : rmg->objectGenerators)
     {
-        const int objSubtype = p_ObjGen->subtype;
+        // Prison variants are split only in the settings dialog. The game
+        // still counts every prison under its real subtype 0.
+        const int objSubtype = p_ObjGen->type == eObject::PRISON
+                                   ? p_ObjGen->subtype
+                                   : RMGObjectInfo::GetSettingsSubtype(p_ObjGen);
         if (objSubtype < 0)
             continue;
         const int objType = p_ObjGen->type;
@@ -1158,6 +1707,11 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         if (objSubtype >= maxObjectSubtype)
             maxObjectSubtype = objSubtype + 1;
     }
+
+    for (const auto &record : PandoraVariants::GetRecords())
+        maxObjectSubtype = std::max(maxObjectSubtype, record.virtualSubtype + 1);
+
+    maxObjectSubtype = std::max(1, maxObjectSubtype);
 
     // create counters and limits
     eachZoneGeneratedBySubtype = create3DArray(zonesAmount, H3_MAX_OBJECTS, maxObjectSubtype);
@@ -1181,24 +1735,22 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         // and start to make dirt
         auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
 
-        const size_t vecsNum = allDlgObjects.size();
-        storedCurrentObjects = new RMGObjectInfo *[vecsNum]();
-
-        for (size_t i = 0; i < vecsNum; i++)
+        storedCurrentObjects.clear();
+        for (const auto &page : allDlgObjects)
         {
-            const size_t objNum = allDlgObjects[i]->size();
-            storedCurrentObjects[i] = new RMGObjectInfo[objNum]();
-            for (size_t objId = 0; objId < objNum; objId++)
+            for (const auto &obj : page)
             {
-                const auto &obj = (*allDlgObjects[i])[objId];
-                const int type = obj.attributes->type;
-                const int subtype = obj.attributes->subtype;
-                auto &currentObject = userRmgInfoSet[type][subtype];
-                storedCurrentObjects[i][objId] = currentObject;
-                currentObject.SetRandom();
-                currentObject.MakeReal();
+                const H3RmgObjectGenerator *generator = obj.objectGenerator;
+                if (!generator)
+                    continue;
 
-                currentObject.Clamp();
+                const RMGObjectInfo &currentObject = RMGObjectInfo::CurrentObjectInfo(generator);
+                storedCurrentObjects.push_back({generator, currentObject});
+
+                RMGObjectInfo randomizedObject = currentObject;
+                randomizedObject.SetRandom(RMGObjectInfo::DefaultObjectInfo(generator));
+                randomizedObject.Clamp();
+                RMGObjectInfo::SetCurrentObjectInfo(generator, randomizedObject);
             }
         }
     }
@@ -1221,15 +1773,25 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         }
     }
 
+    for (const auto &record : PandoraVariants::GetRecords())
+    {
+        const int index2 = index2D(eObject::PANDORAS_BOX, record.virtualSubtype, maxSubtype);
+        zoneLimitsBySubtype[index2] = record.currentInfo.zoneLimit;
+        mapLimitsBySubtype[index2] = record.currentInfo.mapLimit;
+    }
+
     isInited = true;
 }
 
 BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, const int zoneId) const
 {
+    // Prison variants share the native (62, 0) generation counter; their
+    // virtual subtype is only used to address per-variant dialog settings.
+    const int subtype = objGen->type == eObject::PRISON ? objGen->subtype : RMGObjectInfo::GetSettingsSubtype(objGen);
     // increment number of map generated subtypes of that obj type
-    const int index2 = index2D(objGen->type, objGen->subtype, maxObjectSubtype);
+    const int index2 = index2D(objGen->type, subtype, maxObjectSubtype);
     // increment number of zone generated subtypes of that obj type
-    const int index3 = index3D(zoneId, objGen->type, objGen->subtype, H3_MAX_OBJECTS, maxObjectSubtype);
+    const int index3 = index3D(zoneId, objGen->type, subtype, H3_MAX_OBJECTS, maxObjectSubtype);
     // return with that simple comparison function
     return mapGeneratedBySubtype[index2] >= mapLimitsBySubtype[index2]
                ? true
@@ -1240,25 +1802,15 @@ void GeneratedInfo::Clear(const H3RmgRandomMapGenerator *rmgStruct)
     // delete all the allocated arrays
     if (isInited)
     {
-        if (storedCurrentObjects)
+        for (const auto &storedObject : storedCurrentObjects)
         {
-            auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
-            const size_t vecsNum = allDlgObjects.size();
-            for (size_t i = 0; i < vecsNum; i++)
-            {
-                const size_t objNum = allDlgObjects[i]->size();
-                for (size_t objId = 0; objId < objNum; objId++)
-                {
-                    storedCurrentObjects[i][objId].MakeReal();
-                }
-
-                delete[] storedCurrentObjects[i];
-            }
-            delete[] storedCurrentObjects;
-            storedCurrentObjects = nullptr;
+            if (storedObject.generator)
+                RMGObjectInfo::SetCurrentObjectInfo(storedObject.generator, storedObject.info);
         }
+        storedCurrentObjects.clear();
+        generatedObjectVirtualSubtypes.clear();
 
-        for (auto arr : arrays)
+        for (auto &arr : arrays)
         {
             if (arr)
             {

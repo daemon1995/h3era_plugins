@@ -125,25 +125,33 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
         libc::memset(subTypeRelatedAiScoutingValues[type], -1, sizeof(INT) * subtypesAmount);
     }
 
-    for (auto &ext : objectExtenders)
+    registeredObjectInfos.clear();
+    for (auto *ext : objectExtenders)
     {
         const auto &objects = ext->GetObjectSubtypesInfo();
-        if (objects.IsEmpty())
-            continue;
-        for (auto &object : objects)
+        registeredObjectInfos.reserve(registeredObjectInfos.size() + objects.Size());
+        for (auto *object : objects)
         {
-            const int type = object.uniqueObjectType.type;
-            if (type >= 0 && type < h3::limits::OBJECTS)
+            if (object)
+                registeredObjectInfos.push_back({ext, object});
+        }
+    }
+
+    for (const auto &registeredObject : registeredObjectInfos)
+    {
+        const auto *object = registeredObject.object;
+        ObjectExtender *ext = registeredObject.extender;
+        const int type = object->uniqueObjectType.type;
+        if (type >= 0 && type < h3::limits::OBJECTS)
+        {
+            const size_t subtypesAmount = lastObjectSubtypes[type] + 1;
+            const int subtype = object->uniqueObjectType.subtype;
+            if (subtype < 0)
+                typeRelatedExtenders[type] = ext;
+            else if (subtype < subtypesAmount)
             {
-                const size_t subtypesAmount = lastObjectSubtypes[type] + 1;
-                const int subtype = object.uniqueObjectType.subtype;
-                if (subtype < 0)
-                    typeRelatedExtenders[type] = ext;
-                else if (subtype < subtypesAmount)
-                {
-                    subTypeRelatedExtenders[type][subtype] = ext;
-                    subTypeRelatedAiScoutingValues[type][subtype] = object.aiScoutingWeight;
-                }
+                subTypeRelatedExtenders[type][subtype] = ext;
+                subTypeRelatedAiScoutingValues[type][subtype] = object->aiScoutingWeight;
             }
         }
     }
@@ -164,6 +172,34 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
             }
         }
     }
+}
+
+eRmgDlgObjectPage ObjectExtenderManager::GetObjectPage(const int type, const int subtype) noexcept
+{
+    if (!instance)
+        return ePageUnknown;
+
+    const UniqueObjectInfo *typeInfo = nullptr;
+    for (const auto &registeredObject : instance->registeredObjectInfos)
+    {
+        const UniqueObjectInfo *object = registeredObject.object;
+        if (!object || object->uniqueObjectType.type != type)
+            continue;
+
+        const int registeredSubtype = object->uniqueObjectType.subtype;
+        const bool isExactSubtype = subtype < 0 || registeredSubtype == subtype;
+        const bool isTypeRegistration = registeredSubtype < 0;
+        if (isExactSubtype && object->page >= ePageCommon && object->page <= ePandoraBox)
+            return object->page;
+
+        if (isTypeRegistration && !typeInfo)
+            typeInfo = object;
+    }
+
+    if (typeInfo && typeInfo->page >= ePageCommon && typeInfo->page <= ePandoraBox)
+        return typeInfo->page;
+
+    return ePageUnknown;
 }
 
 int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL isRighClick)
