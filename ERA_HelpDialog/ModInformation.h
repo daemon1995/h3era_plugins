@@ -1,4 +1,10 @@
 #pragma once
+
+#include "HelpDialogDependencies.h"
+#include "ModJson.h"
+
+#include <vector>
+
 namespace hkcategories
 {
 enum eType : int
@@ -18,6 +24,31 @@ struct Content;
 struct Category;
 struct ModInformation;
 struct HotKeysCategory;
+
+// Universal content model for future mod pages. Parsing is intentionally not
+// implemented yet; pages can later render these nodes into a mod body buffer.
+enum class eHelpObjectKind : unsigned char
+{
+    Text,
+    Image,
+    Button,
+    Link,
+    ErmFunction
+};
+
+struct HelpObject
+{
+    eHelpObjectKind kind = eHelpObjectKind::Text;
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    int zOrder = 0;
+    H3String value;
+    H3String action;
+    BOOL overlay = FALSE;
+};
+
 struct Category
 {
     H3LoadedPcx16 *iconPcx = nullptr;
@@ -40,7 +71,8 @@ struct Category
 struct HotKey
 {
     hkcategories::eType type;
-    H3String combination;
+    H3String keys;
+    H3String name;
     H3String description;
 };
 
@@ -51,8 +83,8 @@ struct HotKeysCategory : public Category
 
 struct Content
 {
-    // some hard/complex string
     H3String text;
+    std::vector<HelpObject> objects;
 };
 struct LastActiveDlgModInfo
 {
@@ -65,8 +97,6 @@ struct LastActiveDlgModInfo
 struct ModInformation
 {
   protected:
-    static constexpr LPCSTR jsonBase = "help.mods.";
-
   private:
     static LastActiveDlgModInfo lastActiveModInfo;
 
@@ -76,7 +106,7 @@ struct ModInformation
     const UINT id;
     H3String name;
     H3String path;
-    H3String json;
+    ModJsonDocument document;
     int m_lastActiveCategoryId = -1;
     Category *activeCategory = nullptr;
     HotKeysCategory *hotkeysCategory = nullptr;

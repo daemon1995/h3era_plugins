@@ -1,4 +1,5 @@
-#include "framework.h"
+#include "GuideDlg.h"
+
 namespace help
 {
 GuideDlg::GuideDlg(const int width, const int height, const int x, const int y)

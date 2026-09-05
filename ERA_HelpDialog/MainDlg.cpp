@@ -1,20 +1,70 @@
+#include "MainDlg.h"
+
+#include "ArtifactsPage.h"
+#include "CreaturesPage.h"
+#include "GuideDlg.h"
+#include "HeaderPage.h"
+#include "HeroesPage.h"
+#include "HotkeysPage.h"
+#include "ModListDlg.h"
+#include "ModPage.h"
+#include "PlaceholderPage.h"
 #include "SystemFunctions.h"
-#include "framework.h"
-LastActiveDlgModInfo ModInformation::lastActiveModInfo;
+#include "SpellsPage.h"
+#include "TownsPage.h"
+
+extern const H3Town *townFromClick;
+extern eCreature creatureFromClick;
 
 namespace main
 {
 
 MainDlg *MainDlg::instance = nullptr;
 
-MainDlg::MainDlg(const int width, const int height, const int x, const int y) : H3Dlg(width, height, x, y, 1, 0)
+namespace
 {
-    // disable dlg shadow
+constexpr eHelpPage DEFAULT_PAGE = eHelpPage::MODS;
+
+BOOL IsValidPage(const eHelpPage page) noexcept
+{
+    switch (page)
+    {
+    case eHelpPage::MODS:
+    case eHelpPage::HOTKEYS:
+    case eHelpPage::CREATURES:
+    case eHelpPage::ARTIFACTS:
+    case eHelpPage::TOWNS:
+    case eHelpPage::HEROES:
+    case eHelpPage::SECONDARY_SKILLS:
+    case eHelpPage::SPELLS:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+int ReadHelpIniInt(LPCSTR key, const int defaultValue) noexcept
+{
+    h3_TextBuffer[0] = '\0';
+    Era::ReadStrFromIni(key, "Help", MainDlg::iniPath, h3_TextBuffer);
+    return h3_TextBuffer[0] ? atoi(h3_TextBuffer) : defaultValue;
+}
+
+void WriteHelpIniInt(LPCSTR key, const int value) noexcept
+{
+    libc::sprintf(h3_TextBuffer, "%d", value);
+    Era::WriteStrToIni(key, h3_TextBuffer, "Help", MainDlg::iniPath);
+}
+} // namespace
+
+MainDlg::MainDlg(const int width, const int height, const int x, const int y, const eHelpPage page,
+                 const int subtype)
+    : H3Dlg(width, height, x, y, 1, 0), initialPage(page), initialSubtype(std::max(0, subtype))
+{
+    // Disable dialog shadow.
     flags ^= 16;
+    instance = this;
 
-    MainDlg::instance = this;
-
-    // set black background
     background = H3LoadedPcx16::Create(h3_NullString, width, height);
     memset(background->buffer, 0, background->buffSize);
 
@@ -23,236 +73,498 @@ MainDlg::MainDlg(const int width, const int height, const int x, const int y) : 
 
     AddItem(backDlgPcx);
 
-    // create "ok"
-
     constexpr int borderMargin = 8;
     constexpr int panelsMargin = 4;
+    constexpr int headerY = borderMargin;
+    constexpr int headerHeight = 60;
+    headerX = borderMargin;
+    categoriesWidth = 220;
 
-    H3DlgDefButton *bttn = H3DlgDefButton::Create(25, heightDlg - 50, int(eControlId::OK), NH3Dlg::Assets::OKAY_DEF, 0,
-                                                  1, TRUE, NH3VKey::H3VK_ENTER);
+    H3DlgDefButton *okButton = H3DlgDefButton::Create(25, heightDlg - 50, int(eControlId::OK), NH3Dlg::Assets::OKAY_DEF,
+                                                      0, 1, TRUE, NH3VKey::H3VK_ENTER);
+    okButton->AddHotkey(eVKey::H3VK_ESCAPE);
+    okButton->AddHotkey(eVKey::H3VK_F1);
 
-    bttn->AddHotkey(eVKey::H3VK_ESCAPE);
-    bttn->AddHotkey(59); // F1 click
-
-    const int okWidth = bttn->GetWidth();
-    const int okHeight = bttn->GetHeight();
+    const int okWidth = okButton->GetWidth();
+    const int okHeight = okButton->GetHeight();
     const int okX = width - okWidth - borderMargin;
     const int okY = height - okHeight - borderMargin;
+    okButton->SetX(okX - 1);
+    okButton->SetY(okY + 1);
 
-    bttn->SetX(okX - 1);
-    bttn->SetY(okY + 1);
     H3RGB565 color(H3RGB888::Highlight());
+    CreateFrame(okButton, color, -1, 1);
+    AddItem(okButton);
 
-    CreateFrame(bttn, color, -1, 1);
-    AddItem(bttn);
-
-    // create hint
     hintBar = H3DlgHintBar::Create(this, borderMargin + 1, okY + 1,
                                    width - (panelsMargin + okWidth + 2 + borderMargin * 2), okHeight);
-    // golden frame around
     CreateFrame(hintBar, color, -1, 1);
     AddItem(hintBar);
 
-    /// create 3 GENERAL panels
-    /**
-    _________________________________________
-    |                                       |
-    |           HEADER MENU PANEL           |
-    |_______________________________________|
-    | CATE     |                            |
-    | GORIES   |          CONTENT           |
-    |          |                            |
-    | PANEL    |          PANEL             |
-    |          |                            |
-    |__________|____________________________|
-    */
-    constexpr int headerX = borderMargin;
+    categoriesY = headerY + headerHeight + panelsMargin;
+    categoriesHeight = height - (headerY * 2 + headerHeight + panelsMargin * 2 + okHeight);
+    contentX = headerX + categoriesWidth + panelsMargin;
+    contentWidth = width - categoriesWidth - headerX * 2 - panelsMargin;
 
-    constexpr int headerY = borderMargin;
-    constexpr int headerHeight = 50;
+    // The header is always needed. Content sections are created on their first
+    // use so opening a targeted page does not allocate every other catalogue.
+    headerPage = new HeaderPage(headerX, headerY, width - headerX * 2, headerHeight, this);
 
-    panels.headerMenuPanel = new HeaderMenuPanel(headerX, headerY, width - headerX * 2, headerHeight, this);
-
-    constexpr int categoriesWidth = 220;
-    const int categoriesY = headerY + headerHeight + panelsMargin;
-    const int categoriesHeight = height - (headerY * 2 + headerHeight + panelsMargin * 2 + okHeight);
-    panels.categoriesPanel = new CategoriesPanel(headerX, categoriesY, categoriesWidth, categoriesHeight, this);
-
-    const int contentX = headerX + categoriesWidth + panelsMargin;
-    const int contentWidth = width - categoriesWidth - headerX * 2 - panelsMargin;
-    panels.contentPanel = new ContentPanel(contentX, categoriesY, contentWidth, categoriesHeight, this);
-
-    /** create 3 Predefined CONTENT panels:
-     * Creatures, Artifacts, Towns
-     */
-
-    creaturesContentPanel = new CreaturesContentPanel(contentX, categoriesY, contentWidth, categoriesHeight, this);
-    artifactsContentPanel = new ArtifactsContentPanel(contentX, categoriesY, contentWidth, categoriesHeight, this);
-
-    std::vector<std::string> modsVector;
-
-    modList::GetEraModList(modsVector);
-
-    if (GetLoadedModsJsonInformation(modsVector))
-    {
-        m_activeMod = *(mods.begin());
-
-        panels.categoriesPanel->AssignMod(m_activeMod);
-        for (auto &mod : mods)
-        {
-            for (auto &hk : mod->hotkeysCategory->hotkeys)
-            {
-                this->hotkeys.emplace_back(&hk);
-            }
-        }
-    }
+    // Select the initial page, but do not activate its items before OnCreate.
+    headerPage->SetActiveButton(static_cast<int>(initialPage));
 }
 
 MainDlg::~MainDlg()
 {
-    // clear dlg ptr
-    main::MainDlg::instance = nullptr;
+    HidePages();
 
-    // clear panels
-    for (auto &panel : panels.asArray)
+    instance = nullptr;
+    delete townsSection;
+    delete heroesSection;
+    delete spellsSection;
+    delete artifactsSection;
+    delete hotkeysSection;
+    delete modSection;
+    delete placeholderSection;
+    delete creaturesSection;
+    delete headerPage;
+
+    if (background)
     {
-        delete panel;
+        background->Destroy();
+        background = nullptr;
     }
 
-    // clear mod data (and all inside)
-    for (auto &mod : mods)
+    for (auto *mod : mods)
     {
         delete mod;
+    }
+    if (resultItemId == buttons::RESIZE_DLG)
+    {
+        P_WindowManager->resultItemID = buttons::RESIZE_DLG;
     }
 }
 
 const Content *MainDlg::ActiveContent() const noexcept
 {
-    return m_activeMod->activeCategory->content;
+    return m_activeMod && m_activeMod->activeCategory ? m_activeMod->activeCategory->content : nullptr;
 }
 
 void MainDlg::CallHelpInHelpDlg() const noexcept
 {
     help::GuideDlg dlg(500, 500);
-
     dlg.Start();
 }
 
-void MainDlg::DisplayAllHotkeys() /*const*/ noexcept
+void MainDlg::DisplayAllHotkeys() noexcept
 {
-    if (this->hotkeys.size())
-    {
-
-        for (auto &hotkey : this->hotkeys)
-        {
-        }
-    }
+    ShowHotkeys();
 }
 
-// this function calls dlg with mods
-// and return ptr to the selected one
-ModInformation *MainDlg::CallModListDlg(const ModInformation *activeMod) const noexcept
+ModInformation *MainDlg::CallModListDlg(const ModInformation *activeMod) noexcept
 {
-
-    list::ModListDlg dlg(500, 500);
-    dlg.Start();
-    P_WindowManager->resultItemID;
-    // if ()
+    (void)activeMod;
+    int dropdownX = 0;
+    int dropdownY = 0;
+    int dropdownWidth = 240;
+    if (auto *modsButton = GetH3DlgItem(buttons::MODLIST))
     {
+        dropdownX = modsButton->GetX();
+        dropdownY = modsButton->GetY() + modsButton->GetHeight();
+        dropdownWidth = std::max(dropdownWidth, modsButton->GetWidth());
     }
+    const int rowHeight = 34;
+    const int maxRows = std::max(1, (H3GameHeight::Get() - dropdownY - 24) / rowHeight);
+    const int visibleRows = std::min(maxRows, std::max(1, static_cast<int>(mods.size())));
+    const int dropdownHeight = visibleRows * rowHeight + 54;
+    list::ModListDlg dlg(dropdownWidth, dropdownHeight, dropdownX, dropdownY, mods);
+    dlg.Start();
     return dlg.ResultMod();
 }
 
-// this function creates mod list and returns "true"
-// if there is at least one mode that may be displayed
+BOOL MainDlg::EnsureModsLoaded()
+{
+    if (modsLoaded)
+        return !mods.empty();
+
+    modsLoaded = TRUE;
+    std::vector<std::string> modNames;
+    modList::GetEraModList(modNames, TRUE);
+    if (!GetLoadedModsJsonInformation(modNames))
+        return FALSE;
+
+    m_activeMod = mods.front();
+    return TRUE;
+}
+
+HelpSection *MainDlg::EnsureSection(const eHelpPage page)
+{
+    switch (page)
+    {
+    case eHelpPage::CREATURES:
+        if (!creaturesSection)
+            creaturesSection = new CreaturesSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
+                                                    categoriesY, contentWidth, categoriesHeight, this);
+        return creaturesSection;
+    case eHelpPage::ARTIFACTS:
+        if (!artifactsSection)
+            artifactsSection = new ArtifactsSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
+                                                    categoriesY, contentWidth, categoriesHeight, this);
+        return artifactsSection;
+    case eHelpPage::HEROES:
+        if (!heroesSection)
+            heroesSection = new HeroesSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
+                                              categoriesY, contentWidth, categoriesHeight, this);
+        return heroesSection;
+    case eHelpPage::SPELLS:
+        if (!spellsSection)
+            spellsSection = new SpellsSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
+                                              categoriesY, contentWidth, categoriesHeight, this);
+        return spellsSection;
+    case eHelpPage::TOWNS:
+        if (!townsSection)
+            townsSection = new TownsSection(this);
+        return townsSection;
+    case eHelpPage::HOTKEYS:
+        EnsureModsLoaded();
+        if (!hotkeysSection)
+            hotkeysSection = new HotkeysSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
+                                                categoriesY, contentWidth, categoriesHeight, this, mods);
+        return hotkeysSection;
+    case eHelpPage::MODS:
+        EnsureModsLoaded();
+        if (!modSection)
+            modSection = new ModSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX, categoriesY,
+                                        contentWidth, categoriesHeight, this);
+        return modSection;
+    case eHelpPage::SECONDARY_SKILLS:
+        if (!placeholderSection)
+            placeholderSection = new PlaceholderSection(contentX, categoriesY, contentWidth, categoriesHeight, this);
+        return placeholderSection;
+    default:
+        return nullptr;
+    }
+}
+
 BOOL MainDlg::GetLoadedModsJsonInformation(const std::vector<std::string> &modNames)
 {
-
-    // parse string
-    if (!modNames.empty())
+    UINT modId = 0;
+    for (const auto &modName : modNames)
     {
-
-        UINT modId = 0;
-        for (auto &modName : modNames)
+        ModInformation *mod = new ModInformation(modName.c_str(), modId++);
+        if (mod->hasSomeInfo)
         {
-
-            ModInformation *mod = new ModInformation(modName.c_str(), modId++);
-            // if it has some info
-            if (mod->hasSomeInfo)
-            {
-                mods.emplace_back(mod);
-            }
-            else
-            {
-                delete mod;
-            }
+            mods.emplace_back(mod);
+        }
+        else
+        {
+            delete mod;
         }
     }
-
     return !mods.empty();
 }
 
-void MainDlg::SetActiveMod(/*const */ ModInformation *mod)
+void MainDlg::SetActiveMod(ModInformation *mod)
 {
-    if (m_activeMod != mod)
+    if (m_activeMod == mod)
     {
-        // hide old mod if existed
-        if (m_activeMod)
-        {
-            m_activeMod->SetVisible(false);
-        }
-
-        // draw new mod if exists
-        if (m_activeMod = mod)
-        {
-            m_activeMod->SetVisible(true);
-        }
+        return;
     }
+    if (m_activeMod)
+    {
+        m_activeMod->SetVisible(FALSE);
+    }
+    m_activeMod = mod;
+    if (m_activeMod)
+    {
+        m_activeMod->SetVisible(TRUE);
+    }
+}
+
+void MainDlg::ShowSection(HelpSection *section)
+{
+    // Treat the sections as mutually exclusive sources of dialog items. Do
+    // not rely only on activeSection: a lazily-created page may have become
+    // visible while another source was active.
+    HelpSection *allSections[] = {creaturesSection, hotkeysSection, modSection, artifactsSection, townsSection,
+                                  heroesSection, spellsSection, placeholderSection};
+    for (auto *candidate : allSections)
+    {
+        if (candidate && candidate != section)
+            candidate->SetVisible(FALSE);
+    }
+    activeSection = section;
+    if (activeSection)
+    {
+        activeSection->SetVisible(TRUE);
+        activeSection->Redraw();
+    }
+    // Do not draw from OnCreate: vShowAndRun() has not saved the underlying
+    // screen yet. Runtime page switches happen after this dialog becomes the
+    // window manager's active dialog and are redrawn normally.
+    if (P_WindowManager->lastDlg == this)
+    {
+        Redraw();
+    }
+}
+
+BOOL MainDlg::ShowPage(const eHelpPage page, const int subtype)
+{
+    switch (page)
+    {
+    case eHelpPage::CREATURES:
+        ShowCreatures(subtype);
+        return TRUE;
+    case eHelpPage::ARTIFACTS:
+        ShowArtifacts(subtype);
+        return TRUE;
+    case eHelpPage::TOWNS:
+        ShowTowns(subtype);
+        return TRUE;
+    case eHelpPage::HEROES:
+        ShowHeroes(subtype);
+        return TRUE;
+    case eHelpPage::SECONDARY_SKILLS:
+        ShowPlaceholder(buttons::SECONDARY_SKILLS, "The secondary skills catalogue is not implemented yet.");
+        return TRUE;
+    case eHelpPage::SPELLS:
+        ShowSpells(subtype);
+        return TRUE;
+    case eHelpPage::HOTKEYS:
+        ShowHotkeys(subtype);
+        return TRUE;
+    case eHelpPage::MODS:
+        if (EnsureModsLoaded() && m_activeMod)
+        {
+            ShowMod(m_activeMod, subtype);
+            return TRUE;
+        }
+        ShowPlaceholder(buttons::MODLIST, "No mod help is available.");
+        activePage = eHelpPage::MODS;
+        activeSubtype = 0;
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+void MainDlg::ShowCreatures(const int subtype)
+{
+    auto *section = static_cast<CreaturesSection *>(EnsureSection(eHelpPage::CREATURES));
+    if (!section)
+        return;
+    section->SetSubtype(subtype);
+    activePage = eHelpPage::CREATURES;
+    activeSubtype = section->Subtype();
+    headerPage->SetActiveButton(buttons::CREATURES);
+    if (initialized)
+        ShowSection(section);
+}
+
+void MainDlg::ShowHotkeys(const int subtype)
+{
+    auto *section = static_cast<HotkeysSection *>(EnsureSection(eHelpPage::HOTKEYS));
+    if (!section)
+        return;
+    section->SetSubtype(subtype);
+    activePage = eHelpPage::HOTKEYS;
+    activeSubtype = section->Subtype();
+    headerPage->SetActiveButton(buttons::HOTKEYS);
+    if (initialized)
+        ShowSection(section);
+}
+
+void MainDlg::ShowMod(ModInformation *mod, const int subtype)
+{
+    if (!mod)
+        return;
+    auto *section = static_cast<ModSection *>(EnsureSection(eHelpPage::MODS));
+    if (!section)
+        return;
+    SetActiveMod(mod);
+    headerPage->SetActiveButton(buttons::MODLIST);
+    section->SetMod(mod);
+    section->SetSubtype(subtype);
+    activePage = eHelpPage::MODS;
+    activeSubtype = section->Subtype();
+    if (initialized)
+        ShowSection(section);
+}
+
+void MainDlg::ShowPlaceholder(const int buttonId, LPCSTR text)
+{
+    auto *section = static_cast<PlaceholderSection *>(EnsureSection(eHelpPage::SECONDARY_SKILLS));
+    if (!section)
+        return;
+    headerPage->SetActiveButton(buttonId);
+    section->SetTitle(text);
+    activePage = buttonId == buttons::MODLIST ? eHelpPage::MODS : eHelpPage::SECONDARY_SKILLS;
+    activeSubtype = 0;
+    if (initialized)
+        ShowSection(section);
+}
+
+void MainDlg::ShowArtifacts(const int subtype)
+{
+    auto *section = static_cast<ArtifactsSection *>(EnsureSection(eHelpPage::ARTIFACTS));
+    if (!section)
+        return;
+    section->SetSubtype(subtype);
+    activePage = eHelpPage::ARTIFACTS;
+    activeSubtype = section->Subtype();
+    headerPage->SetActiveButton(buttons::ARTIFACTS);
+    if (initialized)
+        ShowSection(section);
+}
+
+void MainDlg::ShowTowns(const int subtype)
+{
+    auto *section = static_cast<TownsSection *>(EnsureSection(eHelpPage::TOWNS));
+    if (!section)
+        return;
+    activePage = eHelpPage::TOWNS;
+    activeSubtype = 0;
+    headerPage->SetActiveButton(buttons::TOWNS);
+    if (initialized)
+        ShowSection(section);
+}
+
+void MainDlg::ShowHeroes(const int subtype)
+{
+    auto *section = static_cast<HeroesSection *>(EnsureSection(eHelpPage::HEROES));
+    if (!section)
+        return;
+    section->SetSubtype(subtype);
+    activePage = eHelpPage::HEROES;
+    activeSubtype = section->Subtype();
+    headerPage->SetActiveButton(buttons::HEROES);
+    if (initialized)
+        ShowSection(section);
+}
+
+void MainDlg::ShowSpells(const int subtype)
+{
+    auto *section = static_cast<SpellsSection *>(EnsureSection(eHelpPage::SPELLS));
+    if (!section)
+        return;
+    section->SetSubtype(subtype);
+    activePage = eHelpPage::SPELLS;
+    activeSubtype = section->Subtype();
+    headerPage->SetActiveButton(buttons::SPELLS);
+    if (initialized)
+        ShowSection(section);
+}
+
+BOOL MainDlg::OnCreate()
+{
+    initialized = TRUE;
+
+    // The header is not part of the content page pair and is always active.
+    headerPage->SetVisible(TRUE);
+    if (!ShowPage(initialPage, initialSubtype))
+        ShowPage(DEFAULT_PAGE);
+    return TRUE;
+}
+
+void MainDlg::HidePages() noexcept
+{
+    if (headerPage)
+    {
+        headerPage->SetVisible(FALSE);
+    }
+    if (creaturesSection)
+        creaturesSection->SetVisible(FALSE);
+    if (hotkeysSection)
+        hotkeysSection->SetVisible(FALSE);
+    if (modSection)
+        modSection->SetVisible(FALSE);
+    if (placeholderSection)
+        placeholderSection->SetVisible(FALSE);
+    if (artifactsSection)
+        artifactsSection->SetVisible(FALSE);
+    if (townsSection)
+        townsSection->SetVisible(FALSE);
+    if (heroesSection)
+        heroesSection->SetVisible(FALSE);
+    if (spellsSection)
+        spellsSection->SetVisible(FALSE);
+    activeSection = nullptr;
+    initialized = FALSE;
+}
+
+void MainDlg::OnOK()
+{
+    HidePages();
+    Stop();
+}
+
+void MainDlg::OnCancel()
+{
+    HidePages();
+    Stop();
+}
+
+void MainDlg::OnClose(INT itemId)
+{
+    (void)itemId;
+    HidePages();
+    Stop();
 }
 
 BOOL MainDlg::DialogProc(H3Msg &msg)
 {
+    if (activeSection && activeSection->ProcessMessage(msg))
+    {
+        activeSubtype = activeSection->Subtype();
+        return 0;
+    }
+
     if (msg.IsLeftClick())
     {
-        bool headerClick = true;
         switch (msg.itemId)
         {
         case buttons::MODLIST:
-            CallModListDlg(m_activeMod);
-            break;
+            EnsureModsLoaded();
+            if (ModInformation *selectedMod = CallModListDlg(m_activeMod))
+                ShowMod(selectedMod);
+            return 0;
         case buttons::HOTKEYS:
-            SetActiveMod(0);
-            break;
+            DisplayAllHotkeys();
+            return 0;
         case buttons::CREATURES:
-
-            break;
+            ShowCreatures();
+            return 0;
         case buttons::ARTIFACTS:
-
-            break;
+            ShowArtifacts();
+            return 0;
         case buttons::TOWNS:
-
-            break;
-            // maximize button
+            ShowTowns();
+            return 0;
+        case buttons::HEROES:
+            ShowHeroes();
+            return 0;
+        case buttons::SECONDARY_SKILLS:
+            ShowPlaceholder(buttons::SECONDARY_SKILLS, "The secondary skills catalogue is not implemented yet.");
+            return 0;
+        case buttons::SPELLS:
+            ShowSpells();
+            return 0;
         case buttons::RESIZE_DLG:
-            // P_WindowManager->SetClickedItemId(2020);
-            //   restartDlg
-            //  this->Stop();
-            break;
+
+            this->resultItemId = buttons::RESIZE_DLG;
+            HidePages();
+            Stop();
+
+            return 0;
         case buttons::HELP:
             CallHelpInHelpDlg();
-            break;
+            return 0;
         default:
-            headerClick = false;
-
             break;
-        }
-        if (!headerClick)
-        {
         }
     }
     else if (msg.IsRightClick())
     {
-        // show rmc hint
         if (H3DlgItem *item = GetH3DlgItem(msg.itemId))
         {
             if (LPCSTR rmcHint = *reinterpret_cast<LPCSTR *>(reinterpret_cast<char *>(item) + 0x24))
@@ -264,7 +576,6 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
 
     if (hintBar && hintBar->IsVisible())
     {
-        // Era::ExecErmCmd("IF:L^^");
         hintBar->ShowHint(&msg);
     }
     return 0;
@@ -272,7 +583,6 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
 
 void MainDlg::AssignWithCalledDlg(const H3Town *town, const eCreature creature) noexcept
 {
-
     if (town)
     {
     }
@@ -286,108 +596,119 @@ BOOL MainDlg::DlgExists()
     return instance != nullptr;
 }
 
-const H3Town *townFromClick = nullptr;
-eCreature creatureFromClick = eCreature::UNDEFINED;
 enum H3DlgVTables : DWORD
 {
-
     H3TownSmallDlg = 0x00640704,
     H3CreatureSmallDlg = 0x06406DC,
 };
 
 void MainDlg::PrepareMainDlg(HookContext *c)
 {
-
-    if (!main::MainDlg::DlgExists())
+    (void)c;
+    eHelpPage page = DEFAULT_PAGE;
+    int subtype = 0;
+    BOOL contextualCall = FALSE;
+    const H3Town *town = nullptr;
+    eCreature creature = eCreature::UNDEFINED;
+    const DWORD currentDlgVTable = P_WindowManager->lastDlg
+                                       ? *reinterpret_cast<DWORD *>(P_WindowManager->lastDlg)
+                                       : 0;
+    if (currentDlgVTable)
     {
-        // P_SoundManager->ClickSound();
-
-        Era::ReadStrFromIni("FullScreen", "Help", main::MainDlg::iniPath, h3_TextBuffer);
-
-        const H3Town *town = nullptr;
-
-        eCreature creature = eCreature::UNDEFINED;
-
-        const DWORD currentDlgVTable = *reinterpret_cast<DWORD *>(P_WindowManager->lastDlg);
-
-        if (currentDlgVTable)
+        switch (currentDlgVTable)
         {
-
-            switch (currentDlgVTable)
-            {
-            case H3DlgVTables::H3TownSmallDlg:
-                town = townFromClick;
-                break;
-            case H3DlgVTables::H3CreatureSmallDlg:
-                creature = creatureFromClick;
-                break;
-            default:
-                break;
-            }
+        case H3DlgVTables::H3TownSmallDlg:
+            town = ::townFromClick;
+            break;
+        case H3DlgVTables::H3CreatureSmallDlg:
+            creature = ::creatureFromClick;
+            break;
+        default:
+            break;
         }
-
-        if (town)
-        {
-            //   H3Messagebox(town->name);
-            //            libc::sprintf(Era::z[0], "%s", town->name);
-            //          Era::ExecErmCmd("IF:L^%z1^;");
-        }
-        else
-        {
-            townFromClick = nullptr;
-        }
-        if (creature != eCreature::UNDEFINED)
-        {
-            //    H3Messagebox(P_CreatureInformation[creature].namePlural);
-        }
-        else
-        {
-
-            creatureFromClick = eCreature::UNDEFINED;
-        }
-        //   Era::y[55] = **reinterpret_cast<DWORD**>(P_WindowManager->lastDlg);
-        //  Era::ExecErmCmd("IF:L^%y55^;");
-        const int storeResult = P_WindowManager->resultItemID;
-        bool isFullScreen = atoi(h3_TextBuffer);
-
-        do
-        {
-            const int dialogWidth = isFullScreen ? H3GameWidth::Get() - 6 : 800;
-            const int dialogHeight = isFullScreen ? H3GameHeight::Get() - 6 : 600;
-
-            // create help dialog
-            main::MainDlg dialog(dialogWidth, dialogHeight);
-
-            // initialize help dialog
-            //	dialog.AssignWithCalledDlg();
-
-            // start help dialog
-
-            dialog.Start();
-
-            const int storeResultA = P_WindowManager->ClickedItemID();
-            storeResultA;
-            //            town ? dialog.RMB_Show(): dialog.Start();
-            if (c && town == nullptr && 0)
-            {
-                c->return_address = 0x04F8710;
-                // return NO_EXEC_DEFAULT;
-            }
-            // reverse isFullScreen after dialog closed
-
-            if (P_WindowManager->resultItemID == main::buttons::RESIZE_DLG)
-            {
-                Era::WriteStrToIni("FullScreen", (isFullScreen ^= 1) ? "1" : "0", "Help", main::MainDlg::iniPath);
-                Era::SaveIni(main::MainDlg::iniPath);
-            }
-            else
-            {
-                break;
-            }
-
-        } while (TRUE);
-        P_WindowManager->resultItemID = storeResult;
     }
+
+    if (town)
+    {
+        page = eHelpPage::TOWNS;
+        contextualCall = TRUE;
+    }
+    else
+    {
+        ::townFromClick = nullptr;
+    }
+    if (creature != eCreature::UNDEFINED)
+    {
+        page = eHelpPage::CREATURES;
+        contextualCall = TRUE;
+    }
+    else
+        ::creatureFromClick = eCreature::UNDEFINED;
+
+    if (contextualCall)
+    {
+        RunMainDlg(page, subtype, FALSE);
+        return;
+    }
+
+    page = static_cast<eHelpPage>(ReadHelpIniInt("LastPage", static_cast<int>(DEFAULT_PAGE)));
+    if (!IsValidPage(page))
+        page = DEFAULT_PAGE;
+    subtype = std::max(0, ReadHelpIniInt("LastSubtype", 0));
+    RunMainDlg(page, subtype, TRUE);
+}
+
+BOOL MainDlg::PrepareMainDlg(const eHelpPage page, const int subtype)
+{
+    return RunMainDlg(page, subtype, FALSE);
+}
+
+BOOL MainDlg::RunMainDlg(const eHelpPage requestedPage, const int subtype, const BOOL rememberPage)
+{
+    if (DlgExists())
+        return FALSE;
+
+    const int storeResult = P_WindowManager->resultItemID;
+
+    const int gameWidth = H3GameWidth::Get();
+    const int gameHeight = H3GameHeight::Get();
+    bool isFullScreen = ReadHelpIniInt("FullScreen", 0) != 0;
+    eHelpPage pageToOpen = IsValidPage(requestedPage) ? requestedPage : DEFAULT_PAGE;
+    int subtypeToOpen = std::max(0, subtype);
+
+    do
+    {
+        const int dialogWidth = Clamp(800, isFullScreen ? gameWidth - 6 : 800, gameWidth);
+        const int dialogHeight = Clamp(600, isFullScreen ? gameHeight - 6 : 600, gameHeight);
+        int dialogResult = 0;
+        {
+            MainDlg dialog(dialogWidth, dialogHeight, -1, -1, pageToOpen, subtypeToOpen);
+            dialog.Start();
+            pageToOpen = dialog.activePage;
+            subtypeToOpen = dialog.activeSubtype;
+            dialogResult = P_WindowManager->resultItemID;
+        }
+
+        if (dialogResult == buttons::RESIZE_DLG)
+        {
+
+            Era::WriteStrToIni("FullScreen", (isFullScreen ^= 1) ? "1" : "0", "Help", MainDlg::iniPath);
+            Era::SaveIni(MainDlg::iniPath);
+        }
+        else
+        {
+            break;
+        }
+    } while (TRUE);
+
+    if (rememberPage)
+    {
+        WriteHelpIniInt("LastPage", static_cast<int>(pageToOpen));
+        WriteHelpIniInt("LastSubtype", subtypeToOpen);
+        Era::SaveIni(MainDlg::iniPath);
+    }
+    P_WindowManager->resultItemID = storeResult;
+    return TRUE;
 }
 
 int __fastcall MainDlg::MainMenuButtonProc(void *msg)
@@ -399,413 +720,12 @@ int __fastcall MainDlg::MainMenuButtonProc(void *msg)
             PrepareMainDlg();
         }
     }
-
     return true;
 }
 
-void H3DlgFramedPanel::CreateBorderFrame()
-{
-    H3RGB565 frameColor = H3RGB888::Highlight();
-    panelFrame = H3DlgFrame::Create(0, 0, width, height, -1, frameColor);
-
-    // panelFrame->HideDeactivate();
-    // items += panelFrame;
-    // THISCALL_3(H3DlgItem *, 0x5AA7B0, this, panelFrame, -1);
-    this->AddItem(panelFrame);
-    panelFrame->Show();
-}
-
-H3DlgFramedPanel::~H3DlgFramedPanel()
-{
-    // clear items memory
-    items.Deref();
-}
-
-const H3BaseDlg *H3DlgFramedPanel::Parent() const noexcept
-{
-    return parent;
-}
-
-void H3DlgFramedPanel::AddScrollBar(H3DlgScrollbar *scrollBar) noexcept
-{
-    this->scrollBar = scrollBar;
-    if (scrollBar)
-    {
-        this->AddItem(scrollBar);
-    }
-}
-
-H3LoadedPcx16 *H3DlgFramedPanel::GetBackgroundPcx() const noexcept
-{
-    return dynamic_cast<H3Dlg *>(parent)->GetBackgroundPcx();
-}
-
-HeaderMenuPanel::HeaderMenuPanel(const int x, const int y, const int width, const int height, H3BaseDlg *parent)
-    : DlgPanel(x, y, width, height, parent)
-{
-    if (dlgPanel)
-    {
-        InitPanelItems();
-    }
-}
-
-HeaderMenuPanel::~HeaderMenuPanel()
-{
-}
-
-void HeaderMenuPanel::InitPanelItems()
-{
-
-    LPCSTR captionButtonDefNam = "RMGmenbt.def";
-
-    H3DefLoader def(captionButtonDefNam);
-    // return;
-    volatile int counter = 0;
-    constexpr eVKey keys[7] = {eVKey::H3VK_M, eVKey::H3VK_K, eVKey::H3VK_C, eVKey::H3VK_A,
-                               eVKey::H3VK_T, eVKey::H3VK_R, eVKey::H3VK_H};
-    for (auto &bttn : buttons.asArray)
-    {
-        bttn = H3DlgCaptionButton::Create(
-            counter * def->widthDEF * 2 / 3 + 1, 3, buttons::FIRST + counter, captionButtonDefNam,
-            EraJS::read(H3String::Format("help.dlg.main.header.%d.name", counter).String()), NH3Dlg::Text::MEDIUM, 0, 0,
-            false, keys[counter], 0);
-
-        bttn->SetClickFrame(1);
-        this->dlgPanel->AddItem(bttn);
-
-        bttn->SetHints(EraJS::read(H3String::Format("help.dlg.main.header.%d.hint", counter).String()),
-                       EraJS::read(H3String::Format("help.dlg.main.header.%d.rmc", counter).String()), false);
-        bttn->ShowActivate();
-        counter++;
-    }
-    // set "close dlg" for resize bbtn: nended to use P_
-    ByteAt(reinterpret_cast<ADDRESS>(buttons.resize) + 0x44) = true;
-
-    //	return;
-
-    for (size_t i = 1; i < 5; i++)
-    {
-        auto bttn = buttons.asArray[i];
-        const int bX = i * 56 + 256;
-        if (bttn) //> 0)
-        {
-            //		bttn->SetX(bX);
-        }
-        // auto frame = H3DlgFrame::Create(buttons.asArray[i], 1, frameColor);
-        // this->AddItem(frame);
-    }
-    dlgPanel->CreateBorderFrame();
-}
-
-void ContentPanel::InitPanelItems()
-{
-
-    const int width = dlgPanel->GetWidth();
-    const int height = dlgPanel->GetHeight();
-
-    backPcx = H3DlgPcx16::Create(1, 1, width - 2, height - 2, -1, nullptr);
-    auto pcx = H3LoadedPcx16::Create(width - 2, height - 2);
-
-    memset(pcx->buffer, 14, pcx->buffSize);
-    backPcx->SetPcx(pcx);
-
-    dlgPanel->CreateBorderFrame();
-}
-// CreaturesContentPanel::CreaturesContentPanel(const ContentPanel& other)
-//	:ContentPanel(other.dlgPanel->GetX(), other.dlgPanel->GetY(),
-// other.dlgPanel->GetWidth(), other.dlgPanel->GetY(), other.dlgPanel->Parent())
-
-//{
-//	InitPanelItems();
-
-//}
-
-void DlgPanel::CreateItemsGrid(LPCSTR const defName, const int maxItems, H3DlgScrollbar_proc scrollBarProc)
-{
-    constexpr int X_INTERVAL = 7;
-    constexpr int Y_INTERVAL = 6;
-    constexpr int xScrollBarPadding = 18;
-    constexpr int minPaddingX = 2;
-    constexpr int maxPaddingX = 6;
-    constexpr int minPaddingY = 2;
-    constexpr int maxPaddingY = 6;
-    const int width = dlgPanel->GetWidth() - xScrollBarPadding;
-    const int height = dlgPanel->GetHeight();
-
-    H3DefLoader def(defName);
-    const int defWidth = def->widthDEF;
-    const int defHeight = def->heightDEF;
-
-    const int availableWidth = width - defWidth;
-    const int availableHeight = height - defHeight;
-
-    const int columns = (availableWidth + defWidth - 1) / (defWidth + minPaddingX);
-    const int rows = (availableHeight + defHeight - 1) / (defHeight + minPaddingY);
-
-    const int paddingX =
-        std::max(minPaddingX, std::min(maxPaddingX, (availableWidth - (columns - 1) * defWidth) / columns));
-    const int paddingY =
-        std::max(minPaddingY, std::min(maxPaddingY, (availableHeight - (rows - 1) * defHeight) / rows));
-
-    int x = paddingX;
-    int y = paddingY;
-    int counter = 0;
-
-    for (int i = 0; i < rows && counter < maxItems; ++i)
-    {
-        for (int j = 0; j < columns && counter < maxItems; ++j)
-        {
-            H3DlgDef *monDef = H3DlgDef::Create(x, y, defName, 0);
-            this->dlgPanel->AddItem(monDef);
-            x += defWidth + paddingX;
-            ++counter;
-        }
-        x = paddingX;
-        y += defHeight + paddingY;
-    }
-
-    if (scrollBarProc && counter >= maxItems && columns)
-    {
-        const int extraItems = maxItems + 1 - counter;
-        const int scrollBarTicksCount = extraItems / columns + 1;
-
-        auto scrollBar = H3DlgScrollbar::Create(width - xScrollBarPadding, 2, 16, availableHeight, 123,
-                                                scrollBarTicksCount, scrollBarProc, false, 1, true);
-        this->dlgPanel->AddItem(scrollBar);
-    }
-}
-
-void CreaturesContentPanel::InitPanelItems()
-{
-    const int maxMonId = IntAt(0x4A1657) - 1;
-
-    CreateItemsGrid(NH3Dlg::Assets::CREATURE_SMALL, maxMonId, ScrollProc);
-}
-
-void __fastcall CreaturesContentPanel::ScrollProc(INT32 tick, H3BaseDlg *dlg)
-{
-}
-void __fastcall ArtifactsContentPanel::ScrollProc(INT32 tick, H3BaseDlg *dlg)
-{
-}
-ContentPanel::ContentPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent)
-    : DlgPanel(x, y, width, height, parent)
-{
-    if (dlgPanel)
-    {
-        InitPanelItems();
-    }
-}
-
-CreaturesContentPanel::CreaturesContentPanel(const int x, const int y, const int width, const int height,
-                                             const H3BaseDlg *parent)
-    : DlgPanel(x, y, width, height, parent)
-{
-    InitPanelItems();
-}
-ArtifactsContentPanel::ArtifactsContentPanel(const int x, const int y, const int width, const int height,
-                                             const H3BaseDlg *parent)
-    : DlgPanel(x, y, width, height, parent)
-{
-    InitPanelItems();
-}
-void ArtifactsContentPanel::InitPanelItems()
-{
-    const int maxArtId = P_ArtifactCount;
-
-    CreateItemsGrid(NH3Dlg::Assets::ARTIFACT_DEF, maxArtId, ScrollProc);
-}
-ContentPanel::~ContentPanel()
-{
-    if (auto pcx = backPcx->GetPcx())
-    {
-        pcx->Destroy();
-        backPcx->SetPcx(nullptr);
-    }
-}
-CategoriesPanel::CategoriesPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent)
-    : DlgPanel(x, y, width, height, parent), activeMod(nullptr)
-{
-    if (dlgPanel)
-    {
-        InitPanelItems();
-    }
-}
-CategoriesPanel::~CategoriesPanel()
-{
-}
-
-void CategoriesPanel::InitPanelItems()
-{
-
-    const int panelWidth = dlgPanel->GetWidth();
-    const int panelHeight = dlgPanel->GetHeight();
-
-    constexpr int CATEGORY_HEIGHT = 48;
-    constexpr int CATEGORY_INTERVAL = 6;
-    constexpr int padding = 1;
-    const size_t catsNum = (panelHeight - CATEGORY_INTERVAL) / (CATEGORY_HEIGHT + CATEGORY_INTERVAL);
-    // return;
-
-    H3DefLoader townDef(NH3Dlg::Assets::TOWN_SMALL);
-    if (catsNum > 0)
-    {
-        constexpr int x = 1 + padding; // dlgPanel->GetX();
-        constexpr int scrollPadding = 16 + padding;
-
-        for (size_t i = 0; i < catsNum; i++)
-        {
-            const int icoY = i * (CATEGORY_HEIGHT + CATEGORY_INTERVAL) + CATEGORY_INTERVAL;
-            constexpr int icoWidth = 48;
-            constexpr int icoHeight = 48;
-
-            constexpr int textXOffset = 3;
-            //	H3LoadedPcx16* icon = H3LoadedPcx16::Create(icoWidth,
-            // icoHeight);
-            PanelCategory panelCat;
-
-            H3DlgPcx16 *iconItem = H3DlgPcx16::Create(x, icoY, icoWidth, icoHeight, -1, 0);
-
-            //	iconItem->Show();
-
-            H3DlgTextPcx *textPcx = H3DlgTextPcx::Create(
-                x + icoWidth + textXOffset, icoY, panelWidth - icoWidth - textXOffset - scrollPadding - padding * 2 - 2,
-                CATEGORY_HEIGHT, h3_NullString, NH3Dlg::Text::MEDIUM, "gem_res.pcx", eTextColor::WHITE,
-                eTextAlignment::MIDDLE_CENTER);
-
-            this->dlgPanel->AddItem(iconItem);
-            this->dlgPanel->AddItem(textPcx);
-
-            panelCat.category = nullptr;
-            panelCat.textPcx = textPcx;
-            panelCat.icon = iconItem;
-            panelCategories.emplace_back(panelCat);
-        }
-        H3DlgScrollbar *scrollBar = H3DlgScrollbar::Create(
-            panelWidth - scrollPadding, padding, 16, panelHeight - padding * 2, 123, 123, nullptr, false, 1, true);
-
-        this->dlgPanel->AddScrollBar(scrollBar);
-        scrollBar->ShowActivate();
-    }
-
-    // create border after alll items added
-    dlgPanel->CreateBorderFrame();
-}
-
-void CategoriesPanel::AssignMod(ModInformation *mod)
-{
-    if (activeMod != mod)
-    {
-        // draw new mod panelCategories
-        activeMod = mod;
-        RedrawCategoryItems();
-    }
-    // st
-}
-
-void CategoriesPanel::RedrawCategoryItems(const int firstItemId)
-{
-
-    if (activeMod)
-    {
-        // combare max items to dra
-        const size_t modSize = activeMod->Size();
-        const size_t panelSize = panelCategories.size();
-
-        for (size_t i = 0; i < panelSize; i++)
-        {
-            const size_t dataIndex = i + firstItemId;
-            const bool inRange = dataIndex < modSize;
-
-            // set new data if object is in range
-            if (inRange)
-            {
-                if (const Category *categoryToSet = activeMod->categories[dataIndex])
-                {
-                    panelCategories[i].SetCategory(categoryToSet);
-
-                    //	customButton->Refresh();
-                    //	customButton->ParentRedraw();
-                }
-            }
-            else
-            {
-                panelCategories[i].textPcx->HideDeactivate();
-            }
-        }
-
-        activeMod->ActiveCategory().ShowContent();
-    }
-}
-
-// DlgPanel::DlgPanel(const DlgPanel &other)
-//     : DlgPanel(other.dlgPanel->GetX(), other.dlgPanel->GetY(), other.dlgPanel->GetWidth(), other.dlgPanel->GetY(),
-//              other.dlgPanel->Parent())
-//{
-//
-// }
-//  create base class with h3 extended panel
-DlgPanel::DlgPanel(const int x, const int y, const int width, const int height, const H3BaseDlg *parent)
-{
-
-    // if item is allocated
-    if (dlgPanel = H3ObjectAllocator<H3DlgFramedPanel>().allocate())
-    {
-        THISCALL_6(H3DlgFramedPanel *, 0x5AA6D0, dlgPanel, x, y, width, height, parent);
-    }
-}
-
-DlgPanel::~DlgPanel()
-{
-    H3ObjectAllocator<H3DlgFramedPanel>().deallocate(dlgPanel);
-}
-
-int DlgPanel::GetX() const noexcept
-{
-    return dlgPanel->GetX();
-}
-
-int DlgPanel::GetY() const noexcept
-{
-    return dlgPanel->GetY();
-}
-
-INT32 __fastcall CategoriesPanel::PanelCategory::Proc(H3Msg *msg)
-{
-    return 0;
-}
-
-void CategoriesPanel::PanelCategory::SetCategory(const Category *category)
-{
-
-    // if src has pcx and current doesn't
-    if (category->iconPcx && !icon->GetPcx())
-    {
-        // resize and move text item
-
-        textPcx->SetX(textPcx->GetX() + textIcoXOffset);
-        textPcx->SetWidth(textPcx->GetWidth() - textIcoXOffset);
-
-        // show icon
-        icon->ShowActivate();
-    }
-    // else if current has and source doesn't
-    else if (!category->iconPcx && icon->GetPcx())
-    {
-        // resize and move text item
-        textPcx->SetX(textPcx->GetX() - textIcoXOffset);
-        textPcx->SetWidth(textPcx->GetWidth() + textIcoXOffset);
-
-        // hide icon
-        icon->HideDeactivate();
-    }
-
-    // set new pcx
-    icon->SetPcx(category->iconPcx);
-    // assign category
-    this->category = category; //->UnfocusEdits(false);
-    // set text
-    textPcx->SetText(category->name);
-}
-
 } // namespace main
+
+DllExport BOOL __stdcall ERAHelp_ShowDialog(const main::eHelpPage page, const int subtype)
+{
+    return main::MainDlg::PrepareMainDlg(page, subtype);
+}

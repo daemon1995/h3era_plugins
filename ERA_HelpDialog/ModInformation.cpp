@@ -1,11 +1,47 @@
-#include "framework.h"
+#include "ModInformation.h"
+
+#include <cstdlib>
+#include <cstring>
+
+namespace
+{
+hkcategories::eType ParseHotkeyType(LPCSTR type)
+{
+    if (!type || !*type)
+    {
+        return hkcategories::OTHER_DLG;
+    }
+
+    char *end = nullptr;
+    const long numericType = std::strtol(type, &end, 10);
+    if (end != type && *end == '\0' && numericType >= hkcategories::ANY_DLG &&
+        numericType <= hkcategories::OTHER_DLG)
+    {
+        return static_cast<hkcategories::eType>(numericType);
+    }
+
+    if (!_stricmp(type, "ALL") || !_stricmp(type, "ANY"))
+        return hkcategories::ANY_DLG;
+    if (!_stricmp(type, "NONE") || !_stricmp(type, "GLOBAL") || !_stricmp(type, "EVERYWHERE"))
+        return hkcategories::NONE;
+    if (!_stricmp(type, "ADV_MAP") || !_stricmp(type, "ADV_MAP_DLG") || !_stricmp(type, "ADVENTURE") ||
+        !_stricmp(type, "MAP"))
+        return hkcategories::ADV_MAP_DLG;
+    if (!_stricmp(type, "HERO") || !_stricmp(type, "HERO_DLG"))
+        return hkcategories::HERO_DLG;
+    if (!_stricmp(type, "TOWN") || !_stricmp(type, "TOWN_DLG") || !_stricmp(type, "CITY"))
+        return hkcategories::TOWN_DLG;
+    if (!_stricmp(type, "COMBAT") || !_stricmp(type, "COMBAT_DLG"))
+        return hkcategories::COMBAT_DLG;
+    return hkcategories::OTHER_DLG;
+}
+}
+
+LastActiveDlgModInfo ModInformation::lastActiveModInfo;
 
 ModInformation::ModInformation(LPCSTR modFolderName, const UINT id)
-    : name(modFolderName), hasSomeInfo(false), id(id), activeCategory(nullptr)
+    : hasSomeInfo(false), id(id), name(modFolderName), document(modFolderName), activeCategory(nullptr)
 {
-
-    json = jsonBase;
-    json.Append(modFolderName);
 
     categories.clear();
     // start parsing panelCategories
@@ -44,42 +80,79 @@ ModInformation::~ModInformation()
 
 HotKeysCategory *ModInformation::CreateHotkeysCategory() const noexcept
 {
-
     HotKeysCategory *result = nullptr;
-    // H3String jsonKey = H3String::Format("%s.panelCategories.hotkeys",
-    // json.String());
-
-    bool readSucces = false;
     std::vector<HotKey> hotkeys;
-    LPCSTR hkName = EraJS::read(H3String::Format("%s.categories.hotkeys.name", json.String()).String(), readSucces);
-    if (readSucces)
+
+    // Preferred format: help.<mod_folder_name>.hotkeys[]. The adapter also
+    // probes help.mods.<mod_folder_name>.hotkeys[] for old files.
+    const H3String hotkeysBase = document.ArrayRoot("hotkeys");
+    const bool hasArrayFormat = !hotkeysBase.Empty();
+
+    if (hasArrayFormat)
     {
-        int hotkeyId = 0;
-        while (true)
+        for (int hotkeyId = 0;; ++hotkeyId)
         {
-            H3String key = EraJS::read(
-                H3String::Format("%s.categories.hotkeys.content.%d.key", json.String(), hotkeyId).String(), readSucces);
-            if (!readSucces || key.Empty())
+            bool readSuccess = false;
+            H3String itemBase(hotkeysBase);
+            itemBase.Append('.');
+            itemBase.Append(hotkeyId);
+            H3String keyPath(itemBase);
+            keyPath.Append(".keys");
+            H3String keys = document.Read(keyPath.String(), readSuccess);
+            if (!readSuccess || keys.Empty())
             {
                 break;
             }
 
-            const int type = EraJS::readInt(
-                H3String::Format("%s.categories.hotkeys.content.%d.type", json.String(), hotkeyId).String());
-            H3String description = EraJS::read(
-                H3String::Format("%s.categories.hotkeys.content.%d.description", json.String(), hotkeyId).String());
-
-            hotkeys.emplace_back(HotKey{hkcategories::eType(type), key, description});
-            hotkeyId++;
+            H3String namePath(itemBase);
+            namePath.Append(".name");
+            H3String descriptionPath(itemBase);
+            descriptionPath.Append(".description");
+            H3String typePath(itemBase);
+            typePath.Append(".type");
+            H3String name = document.Read(namePath.String());
+            H3String description = document.Read(descriptionPath.String());
+            H3String type = document.Read(typePath.String());
+            const hkcategories::eType parsedType = type.Empty() ? hkcategories::OTHER_DLG : ParseHotkeyType(type.String());
+            hotkeys.emplace_back(HotKey{parsedType, keys, name, description});
         }
     }
-    // if added at least one hotkey
-    if (hotkeys.size())
+    else
     {
+        // Legacy format: help.<mod>.categories.hotkeys.content[] (or its
+        // help.mods.<mod> equivalent).
+        bool readSuccess = false;
+        H3String hkName = document.Read("categories.hotkeys.name", readSuccess);
+        if (readSuccess)
+        {
+            for (int hotkeyId = 0;; ++hotkeyId)
+            {
+                H3String itemBase("categories.hotkeys.content.");
+                itemBase.Append(hotkeyId);
+                H3String keyPath(itemBase);
+                keyPath.Append(".key");
+                H3String keys = document.Read(keyPath.String(), readSuccess);
+                if (!readSuccess || keys.Empty())
+                    break;
+                H3String typePath(itemBase);
+                typePath.Append(".type");
+                H3String descriptionPath(itemBase);
+                descriptionPath.Append(".description");
+                const int type = document.ReadInt(typePath.String());
+                H3String description = document.Read(descriptionPath.String());
+                hotkeys.emplace_back(HotKey{static_cast<hkcategories::eType>(type), keys, h3_NullString, description});
+            }
+        }
+    }
 
+    if (!hotkeys.empty())
+    {
         result = new HotKeysCategory();
         result->hotkeys = hotkeys;
-        result->name = hkName;
+        if (hasArrayFormat)
+            result->name = document.Read("hotkeys.name");
+        else
+            result->name = document.Read("categories.hotkeys.name");
         result->content = new Content();
     }
 
@@ -91,7 +164,11 @@ Category *ModInformation::CreateNativeCategory(const int index) const noexcept
     Category *result = nullptr;
     bool readSucces = false;
 
-    LPCSTR catName = EraJS::read(H3String::Format("%s.categories.%d.name", json.String(), index).String(), readSucces);
+    H3String categoryBase("categories.");
+    categoryBase.Append(index);
+    H3String categoryNamePath(categoryBase);
+    categoryNamePath.Append(".name");
+    H3String catName = document.Read(categoryNamePath.String(), readSucces);
     if (readSucces)
     {
 
@@ -100,8 +177,9 @@ Category *ModInformation::CreateNativeCategory(const int index) const noexcept
             result->name = catName;
 
             result->content = new Content();
-            result->content->text =
-                EraJS::read(H3String::Format("%s.categories.%d.content", json.String(), index).String());
+            H3String categoryContentPath(categoryBase);
+            categoryContentPath.Append(".content");
+            result->content->text = document.Read(categoryContentPath.String());
 
             // H3String defName =
         }

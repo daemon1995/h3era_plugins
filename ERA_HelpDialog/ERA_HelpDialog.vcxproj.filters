@@ -18,6 +18,24 @@
     <Filter Include="GuideDlg">
       <UniqueIdentifier>{fb3b4c04-ac0b-47a3-a626-5d83b9046cfc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MainDlg\Header">
+      <UniqueIdentifier>{9f31ea49-315e-4f04-98ea-51a06dad16bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainDlg\Creatures">
+      <UniqueIdentifier>{7cc5c4ef-4d86-42d6-9fea-42f7165e21a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainDlg\Artifacts">
+      <UniqueIdentifier>{466928d2-0c55-4cf4-bf39-d523ac5965ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainDlg\Towns">
+      <UniqueIdentifier>{d82b2a9d-f3fc-4f4d-83fc-588424f3f7d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainDlg\Heroes">
+      <UniqueIdentifier>{f6e33b61-3e50-4a9c-8ae7-6f1fd4a4d9ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainDlg\Spells">
+      <UniqueIdentifier>{cb7ca7c3-5ae4-4eeb-a221-e0866f5ef36c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DlgEnums.h">
@@ -26,11 +44,38 @@
     <ClInclude Include="SystemFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DlgPanels.h">
+    <ClInclude Include="HelpDialogDependencies.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScrollbarUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MainDlg.h">
       <Filter>MainDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="HelpPage.h">
+      <Filter>MainDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="HotkeysPage.h">
+      <Filter>MainDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="HeaderPage.h">
+      <Filter>MainDlg\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="CreaturesPage.h">
+      <Filter>MainDlg\Creatures</Filter>
+    </ClInclude>
+    <ClInclude Include="ArtifactsPage.h">
+      <Filter>MainDlg\Artifacts</Filter>
+    </ClInclude>
+    <ClInclude Include="TownsPage.h">
+      <Filter>MainDlg\Towns</Filter>
+    </ClInclude>
+    <ClInclude Include="HeroesPage.h">
+      <Filter>MainDlg\Heroes</Filter>
+    </ClInclude>
+    <ClInclude Include="SpellsPage.h">
+      <Filter>MainDlg\Spells</Filter>
     </ClInclude>
     <ClInclude Include="GuideDlg.h">
       <Filter>GuideDlg</Filter>
@@ -38,7 +83,16 @@
     <ClInclude Include="ModListDlg.h">
       <Filter>ModListDlg</Filter>
     </ClInclude>
+    <ClInclude Include="ModPage.h">
+      <Filter>MainDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaceholderPage.h">
+      <Filter>MainDlg</Filter>
+    </ClInclude>
     <ClInclude Include="ModInformation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModJson.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -52,17 +106,44 @@
     <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DlgPanels.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MainDlg.cpp">
       <Filter>MainDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpPage.cpp">
+      <Filter>MainDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeysPage.cpp">
+      <Filter>MainDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="HeaderPage.cpp">
+      <Filter>MainDlg\Header</Filter>
+    </ClCompile>
+    <ClCompile Include="CreaturesPage.cpp">
+      <Filter>MainDlg\Creatures</Filter>
+    </ClCompile>
+    <ClCompile Include="ArtifactsPage.cpp">
+      <Filter>MainDlg\Artifacts</Filter>
+    </ClCompile>
+    <ClCompile Include="TownsPage.cpp">
+      <Filter>MainDlg\Towns</Filter>
+    </ClCompile>
+    <ClCompile Include="HeroesPage.cpp">
+      <Filter>MainDlg\Heroes</Filter>
+    </ClCompile>
+    <ClCompile Include="SpellsPage.cpp">
+      <Filter>MainDlg\Spells</Filter>
     </ClCompile>
     <ClCompile Include="GuideDlg.cpp">
       <Filter>GuideDlg</Filter>
     </ClCompile>
     <ClCompile Include="ModListDlg.cpp">
       <Filter>ModListDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="ModPage.cpp">
+      <Filter>MainDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="PlaceholderPage.cpp">
+      <Filter>MainDlg</Filter>
     </ClCompile>
     <ClCompile Include="ModInformation.cpp">
       <Filter>Source Files</Filter>

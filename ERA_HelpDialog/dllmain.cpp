@@ -29,7 +29,6 @@ _LHF_(MainWindow_F1)
 {
 
     main::MainDlg::PrepareMainDlg(c);
-   
 
     // skip original code
     c->return_address = 0x4F877D;

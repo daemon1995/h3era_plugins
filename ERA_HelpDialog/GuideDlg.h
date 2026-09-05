@@ -1,4 +1,7 @@
 #pragma once
+
+#include "HelpDialogDependencies.h"
+
 namespace help
 {
 class GuideDlg : public H3Dlg
