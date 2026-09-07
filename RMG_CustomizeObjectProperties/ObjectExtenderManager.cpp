@@ -1,4 +1,4 @@
-#pragma comment(linker, "/EXPORT:RegisterObjectExtender=_RegisterObjectExtender@4")
+#pragma comment(linker, "/EXPORT:RegisterObjectExtenderEx=_RegisterObjectExtenderEx@4")
 #pragma comment(linker, "/EXPORT:GetResolvedObjectName=_GetResolvedObjectName@8")
 #pragma comment(linker, "/EXPORT:GetObjectName=_GetObjectName@8")
 
@@ -9,13 +9,102 @@
 
 #include "SoundManager.h"
 
+namespace
+{
+constexpr size_t MAX_REGISTERED_OBJECTS = 65536;
+
+bool IsReadableMemory(const void *memory, size_t size) noexcept
+{
+    if (!size)
+        return true;
+    if (!memory)
+        return false;
+
+    uintptr_t current = reinterpret_cast<uintptr_t>(memory);
+    const uintptr_t end = current + size;
+    if (end < current)
+        return false;
+
+    while (current < end)
+    {
+        MEMORY_BASIC_INFORMATION region{};
+        if (!VirtualQuery(reinterpret_cast<const void *>(current), &region, sizeof(region)) ||
+            region.State != MEM_COMMIT || (region.Protect & (PAGE_GUARD | PAGE_NOACCESS)))
+            return false;
+
+        const uintptr_t regionEnd = reinterpret_cast<uintptr_t>(region.BaseAddress) + region.RegionSize;
+        if (regionEnd <= current)
+            return false;
+        current = regionEnd < end ? regionEnd : end;
+    }
+    return true;
+}
+
+bool CopyObjectInfo(const void *source, const size_t sourceSize, UniqueObjectInfo &result) noexcept
+{
+    if (sourceSize < sizeof(UniqueObjectType))
+        return false;
+
+    const size_t bytesToCopy = sourceSize < sizeof(result) ? sourceSize : sizeof(result);
+    if (!IsReadableMemory(source, bytesToCopy))
+        return false;
+
+    result = UniqueObjectInfo{};
+    std::memcpy(&result, source, bytesToCopy);
+    if (result.uniqueObjectType.type < 0 || result.uniqueObjectType.type >= h3::limits::OBJECTS)
+        return false;
+    if (result.page < ePageUnknown || result.page > ePandoraBox)
+        result.page = ePageUnknown;
+    return true;
+}
+
+bool DecodeObjectInfos(const ObjectExtenderObjectInfoView &view, std::vector<UniqueObjectInfo> &objects) noexcept
+{
+    constexpr size_t REQUIRED_SIZE = offsetof(ObjectExtenderObjectInfoView, flags) + sizeof(UINT32);
+    if (view.structSize < REQUIRED_SIZE || view.objectInfoCount > MAX_REGISTERED_OBJECTS ||
+        view.objectInfoSize < sizeof(UniqueObjectType) || (view.flags & ~UINT32(OBJECT_INFO_POINTERS)))
+        return false;
+
+    if (!view.objectInfoCount)
+        return true;
+    if (!view.objectInfos)
+        return false;
+
+    const bool indirect = (view.flags & OBJECT_INFO_POINTERS) != 0;
+    const size_t minimumStride = indirect ? sizeof(void *) : view.objectInfoSize;
+    if (view.objectInfoStride < minimumStride)
+        return false;
+
+    if (size_t(view.objectInfoCount - 1) > (SIZE_MAX - minimumStride) / view.objectInfoStride)
+        return false;
+    const size_t spanSize = size_t(view.objectInfoCount - 1) * view.objectInfoStride + minimumStride;
+    if (!IsReadableMemory(view.objectInfos, spanSize))
+        return false;
+
+    objects.reserve(view.objectInfoCount);
+    const BYTE *entry = static_cast<const BYTE *>(view.objectInfos);
+    for (UINT32 i = 0; i < view.objectInfoCount; ++i, entry += view.objectInfoStride)
+    {
+        const void *record = entry;
+        if (indirect)
+            std::memcpy(&record, entry, sizeof(record));
+
+        UniqueObjectInfo object;
+        if (!record || !CopyObjectInfo(record, view.objectInfoSize, object))
+            return false;
+        objects.push_back(object);
+    }
+    return true;
+}
+} // namespace
+
 DllExport LPCSTR __stdcall GetResolvedObjectName(const int objectType, const int objectSubtype)
 {
     return RMGObjectInfo::GetObjectName(objectType, objectSubtype);
 }
-DllExport BOOL __stdcall RegisterObjectExtender(ObjectExtender *extender)
+DllExport BOOL __stdcall RegisterObjectExtenderEx(const ObjectExtenderRegistration *registration)
 {
-    return extendersManager::ObjectExtenderRegistrator::Get().AddExtender(extender);
+    return extendersManager::ObjectExtenderRegistrator::Get().AddExtender(registration);
 }
 DllExport LPCSTR __stdcall GetObjectName(const int objectType, const int objectSubtype)
 {
@@ -71,7 +160,8 @@ void ObjectExtenderManager::CreatePatches()
     }
 }
 
-void ObjectExtenderManager::InitializeObjectExtenders(const std::unordered_set<ObjectExtender *> &registeredExtenders)
+void ObjectExtenderManager::InitializeObjectExtenders(
+    const std::vector<ObjectExtenderRegistrator::RegisteredExtenderInfo> &registeredExtenders)
 {
 
     auto &objectExtenders = instance->objectExtenders;
@@ -82,11 +172,31 @@ void ObjectExtenderManager::InitializeObjectExtenders(const std::unordered_set<O
     objectExtenders.reserve(extendersCount);
 
     // Get All The Extenders we have
-    for (auto &extender : registeredExtenders)
+    for (const auto &registration : registeredExtenders)
     {
+        ObjectExtender *extender = registration.extender;
         objectExtenders.emplace_back(extender);
         // call additional data loading from json
         extender->AfterLoadingObjectsTxtProc(lastObjectSubtypes);
+    }
+
+    registeredObjectInfos.clear();
+    for (const auto &registration : registeredExtenders)
+    {
+        ObjectExtenderObjectInfoView view;
+        std::vector<UniqueObjectInfo> objects;
+        if (!registration.getObjectInfos ||
+            !registration.getObjectInfos(registration.objectInfosContext, &view) ||
+            !DecodeObjectInfos(view, objects))
+        {
+            MessageBoxA(NULL, ObjectExtenderRegistrator::ErrorText::ERR_INVALID_REGISTRATION,
+                        ObjectExtenderRegistrator::ErrorText::TITLE_ERROR, MB_OK | MB_ICONEXCLAMATION);
+            continue;
+        }
+
+        registeredObjectInfos.reserve(registeredObjectInfos.size() + objects.size());
+        for (const auto &object : objects)
+            registeredObjectInfos.push_back({registration.extender, object});
     }
 
     instance->AssignExtendersToObjectSubtypes();
@@ -125,21 +235,9 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
         libc::memset(subTypeRelatedAiScoutingValues[type], -1, sizeof(INT) * subtypesAmount);
     }
 
-    registeredObjectInfos.clear();
-    for (auto *ext : objectExtenders)
-    {
-        const auto &objects = ext->GetObjectSubtypesInfo();
-        registeredObjectInfos.reserve(registeredObjectInfos.size() + objects.Size());
-        for (auto *object : objects)
-        {
-            if (object)
-                registeredObjectInfos.push_back({ext, object});
-        }
-    }
-
     for (const auto &registeredObject : registeredObjectInfos)
     {
-        const auto *object = registeredObject.object;
+        const auto *object = &registeredObject.object;
         ObjectExtender *ext = registeredObject.extender;
         const int type = object->uniqueObjectType.type;
         if (type >= 0 && type < h3::limits::OBJECTS)
@@ -182,8 +280,8 @@ eRmgDlgObjectPage ObjectExtenderManager::GetObjectPage(const int type, const int
     const UniqueObjectInfo *typeInfo = nullptr;
     for (const auto &registeredObject : instance->registeredObjectInfos)
     {
-        const UniqueObjectInfo *object = registeredObject.object;
-        if (!object || object->uniqueObjectType.type != type)
+        const UniqueObjectInfo *object = &registeredObject.object;
+        if (object->uniqueObjectType.type != type)
             continue;
 
         const int registeredSubtype = object->uniqueObjectType.subtype;
@@ -410,6 +508,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
     instance->InitializeObjectExtenders(registrator.registeredExtenders);
     // clear registered extenders from previous loads
     registrator.registeredExtenders.clear();
+    registrator.registeredExtenderPointers.clear();
 
     editor::RMGObjectsEditor::Init(lastObjectSubtypes);
 }
@@ -560,25 +659,48 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
     return 0;
 }
 
-BOOL ObjectExtenderRegistrator::AddExtender(ObjectExtender *ext)
+BOOL ObjectExtenderRegistrator::AddExtender(const ObjectExtenderRegistration *registration)
 {
-
     if (!allowRegistration)
     {
         MessageBoxA(NULL, ErrorText::ERR_REGISTRATION_CLOSED, ErrorText::TITLE_ERROR, MB_OK | MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (!ext)
+    constexpr size_t REQUIRED_SIZE = offsetof(ObjectExtenderRegistration, getObjectInfos) +
+                                     sizeof(TGetObjectExtenderObjectInfos);
+    if (!registration || !IsReadableMemory(registration, sizeof(UINT32) * 2))
+    {
+        MessageBoxA(NULL, ErrorText::ERR_INVALID_REGISTRATION, ErrorText::TITLE_ERROR, MB_OK | MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+
+    UINT32 descriptorSize = 0;
+    std::memcpy(&descriptorSize, registration, sizeof(descriptorSize));
+    if (descriptorSize < REQUIRED_SIZE || !IsReadableMemory(registration, REQUIRED_SIZE))
+    {
+        MessageBoxA(NULL, ErrorText::ERR_INVALID_REGISTRATION, ErrorText::TITLE_ERROR, MB_OK | MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+
+    ObjectExtenderRegistration localRegistration;
+    std::memcpy(&localRegistration, registration,
+                descriptorSize < sizeof(localRegistration) ? descriptorSize : sizeof(localRegistration));
+    if (localRegistration.apiVersion != ObjectExtenderRegistration::API_VERSION || !localRegistration.extender ||
+        !localRegistration.objectInfosContext || !localRegistration.getObjectInfos)
     {
         MessageBoxA(NULL, ErrorText::ERR_EMPTY_EXTENDER, ErrorText::TITLE_ERROR, MB_OK | MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (!registeredExtenders.insert(ext).second)
+    if (registeredExtenderPointers.find(localRegistration.extender) != registeredExtenderPointers.end())
     {
         MessageBoxA(NULL, ErrorText::ERR_EXTENDER_ALREADY_REGISTERED, ErrorText::TITLE_ERROR,
                     MB_OK | MB_ICONEXCLAMATION);
         return FALSE;
     }
+
+    registeredExtenderPointers.insert(localRegistration.extender);
+    registeredExtenders.push_back(
+        {localRegistration.extender, localRegistration.objectInfosContext, localRegistration.getObjectInfos});
 
     return TRUE;
 }

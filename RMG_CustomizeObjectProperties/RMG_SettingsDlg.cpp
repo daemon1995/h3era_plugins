@@ -1973,6 +1973,7 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
     case eObject::TEMPLE:
     case eObject::DEN_OF_THIEVES:
     case eObject::TRADING_POST:
+    case eObject::WAGON:
     case eObject::WAR_MACHINE_FACTORY:
     case eObject::WARRIORS_TOMB:
     case eObject::WATERING_HOLE:
@@ -2047,7 +2048,6 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
     case eObject::SEA_CHEST:
     case eObject::SHIPWRECK_SURVIVOR:
     case eObject::TREASURE_CHEST:
-    case eObject::WAGON:
         return extender::ePageTreasure;
 
     case eObject::PANDORAS_BOX:

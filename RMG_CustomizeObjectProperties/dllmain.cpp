@@ -6,7 +6,7 @@
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "2.2.0";
+constexpr const char *PLUGIN_VERSION = "2.3.0";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr const char *PLUGIN_DATA = __DATE__;
@@ -51,8 +51,8 @@ sth Done c. call events for all extenders from this plugin
 
         case
         a. spell scrolls
-        b. hero prisons;
-        c. pandora's box;
+        b. hero prisons; Done
+        c. pandora's box; Done
 14. Add object ONLY type settings:
     a. create groups of subtypes general settings;
     b. user can create custom groups of subtypes;

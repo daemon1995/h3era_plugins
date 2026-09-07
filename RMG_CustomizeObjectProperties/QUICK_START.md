@@ -62,7 +62,19 @@ if (!extender.Register())
 }
 ```
 
-`Register()` loads `EraPlugins/RMG_CustomizeObjectProperties.era` if necessary and calls its exported `RegisterObjectExtender(ObjectExtender*)` function. Registration must finish before the host plugin completes its `objects.txt` loading stage. Keep the extender instance alive after registration; the host stores and later calls the supplied pointer.
+`Register()` loads `EraPlugins/RMG_CustomizeObjectProperties.era` if necessary and prefers the versioned
+`RegisterObjectExtenderEx(ObjectExtenderRegistration*)` export. The registration descriptor carries a provider callback
+instead of a snapshot of the vector. After `objects.txt` has been loaded, the host first invokes
+`AfterLoadingObjectsTxtProc()` and then asks the provider for the current record count, size, stride, and storage mode.
+This preserves late `AddUniqueObjectInfo()` calls and remains safe if growing the vector moved its internal array.
+
+The host then copies the known prefix of every `UniqueObjectInfo`. Consequently, a host built with a larger record can
+safely accept an extender with a smaller record, while a host with a smaller record ignores an appended suffix supplied
+by a newer extender. The extender instance must remain alive because the host continues to invoke its provider and
+virtual callbacks. There is no binary compatibility with the old registration API; dependent plugins must be rebuilt
+with this header.
+
+Registration must finish before the host plugin completes its `objects.txt` loading stage.
 
 ## Callbacks
 
@@ -100,4 +112,6 @@ Working consumers of the API are available in:
 - [`Objects_WoGObjectsExtender`](../Objects_WoGObjectsExtender/)
 - [`Objects_CreatureBanksExtender`](../Objects_CreatureBanksExtender/)
 
-The API is a C++ ABI: the host and consumer plugins must use compatible class layouts, calling conventions, and shared headers. Build all participating plugins for x86/Win32.
+The callback surface is still a C++ ABI: the host and consumer plugins must preserve the `ObjectExtender` virtual-method
+order and calling conventions. `UniqueObjectInfo` is separately versioned by size; it must remain trivially copyable and
+new fields must be appended only at the end. Build all participating plugins for x86/Win32.

@@ -36,6 +36,13 @@ struct RMGObjectSetable
 
 struct ObjectExtenderRegistrator
 {
+    struct RegisteredExtenderInfo
+    {
+        ObjectExtender *extender = nullptr;
+        void *objectInfosContext = nullptr;
+        TGetObjectExtenderObjectInfos getObjectInfos = nullptr;
+    };
+
     struct ErrorText
     {
         static constexpr LPCSTR TITLE_ERROR = "Error";
@@ -45,13 +52,16 @@ struct ObjectExtenderRegistrator
             PROJECT_NAME ": ObjectExtender registration is closed after loading objects.txt.";
         static constexpr LPCSTR ERR_EXTENDER_ALREADY_REGISTERED =
             PROJECT_NAME ": Attempt to register an already registered extender.";
+        static constexpr LPCSTR ERR_INVALID_REGISTRATION =
+            PROJECT_NAME ": Invalid or unsupported ObjectExtender registration data.";
     };
 
     BOOL allowRegistration = true;
-    std::unordered_set<ObjectExtender *> registeredExtenders;
+    std::unordered_set<ObjectExtender *> registeredExtenderPointers;
+    std::vector<RegisteredExtenderInfo> registeredExtenders;
 
   public:
-    BOOL AddExtender(ObjectExtender *ext);
+    BOOL AddExtender(const ObjectExtenderRegistration *registration);
 
     static ObjectExtenderRegistrator &Get()
     {
@@ -121,7 +131,7 @@ class ObjectExtenderManager : public IGamePatch
     struct RegisteredObjectInfo
     {
         ObjectExtender *extender = nullptr;
-        UniqueObjectInfo *object = nullptr;
+        UniqueObjectInfo object;
     };
 
     static constexpr LPCSTR DLG_HORIZONTAL_GAP = "\n\n\n";
@@ -153,7 +163,8 @@ class ObjectExtenderManager : public IGamePatch
     void CreatePatches() override;
 
   private:
-    void InitializeObjectExtenders(const std::unordered_set<ObjectExtender *> &registeredExtenders);
+    void InitializeObjectExtenders(
+        const std::vector<ObjectExtenderRegistrator::RegisteredExtenderInfo> &registeredExtenders);
     void AssignExtendersToObjectSubtypes();
 
     inline ObjectExtender *findExtender(const int type, const UINT subtype)
@@ -221,7 +232,7 @@ class ObjectExtenderManager : public IGamePatch
     static void DebugObjectList();
     static void DebugObjectExtenderList();
 };
-DllExport BOOL __stdcall RegisterObjectExtenderOld(ObjectExtender *extender) noexcept;
+DllExport BOOL __stdcall RegisterObjectExtenderEx(const ObjectExtenderRegistration *registration) noexcept;
 DllExport LPCSTR __stdcall GetObjectName(const int objectType, const int objectSubtype) noexcept;
 
 // Get the singleton instance

@@ -1,11 +1,12 @@
 #pragma once
+#include <type_traits>
+
 using namespace h3;
 namespace extender
 {
 constexpr const char *RMGPluginName = "RMG_CustomizeObjectProperties.era";
 constexpr const char *RMGPluginPath = "EraPlugins/RMG_CustomizeObjectProperties.era";
 class ObjectExtender;
-typedef int(__stdcall *TRegisterObjectExtender)(ObjectExtender *);
 typedef const char *(__stdcall *TGetObjectName)(const int, const int);
 
 constexpr int WOG_OBJECT_TYPE = eObject::PYRAMID;
@@ -77,7 +78,46 @@ struct UniqueObjectInfo
     //     return GetStringMessage(FormatKey::cannotVisit);
     // }
 };
+static_assert(std::is_standard_layout<UniqueObjectInfo>::value &&
+                  std::is_trivially_copyable<UniqueObjectInfo>::value,
+              "UniqueObjectInfo must remain a trivially copyable append-only ABI record");
 using UniqueObjectInfoPtr = UniqueObjectInfo *;
+
+// Registration is a C ABI boundary. The host must not derive an element count
+// from sizeof(UniqueObjectInfo), because an extender may have been built with an
+// older or newer version of this header.
+enum eObjectInfoStorageFlags : UINT32
+{
+    OBJECT_INFO_CONTIGUOUS = 0,
+    OBJECT_INFO_POINTERS = 1
+};
+
+#pragma pack(push, 4)
+struct ObjectExtenderObjectInfoView
+{
+    UINT32 structSize = sizeof(ObjectExtenderObjectInfoView);
+    const void *objectInfos = nullptr;
+    UINT32 objectInfoCount = 0;
+    UINT32 objectInfoSize = sizeof(UniqueObjectInfo);
+    UINT32 objectInfoStride = sizeof(UniqueObjectInfoPtr);
+    UINT32 flags = OBJECT_INFO_POINTERS;
+};
+
+typedef int(__stdcall *TGetObjectExtenderObjectInfos)(void *, ObjectExtenderObjectInfoView *);
+
+struct ObjectExtenderRegistration
+{
+    static constexpr UINT32 API_VERSION = 2;
+
+    UINT32 structSize = sizeof(ObjectExtenderRegistration);
+    UINT32 apiVersion = API_VERSION;
+    ObjectExtender *extender = nullptr;
+    void *objectInfosContext = nullptr;
+    TGetObjectExtenderObjectInfos getObjectInfos = nullptr;
+};
+#pragma pack(pop)
+
+typedef int(__stdcall *TRegisterObjectExtenderEx)(const ObjectExtenderRegistration *);
 struct RMGObjectProperties
 {
     constexpr static int DATA_SIZE = 5;
@@ -169,6 +209,20 @@ class ObjectExtender
             }
         }
         objectSubtypesInfo.RemoveAll();
+    }
+
+  private:
+    static int __stdcall ProvideObjectInfos(void *context, ObjectExtenderObjectInfoView *view) noexcept
+    {
+        if (!context || !view)
+            return FALSE;
+
+        ObjectExtender *extender = static_cast<ObjectExtender *>(context);
+        const auto &objects = extender->GetObjectSubtypesInfo();
+        *view = ObjectExtenderObjectInfoView{};
+        view->objectInfos = objects.begin();
+        view->objectInfoCount = objects.Size();
+        return TRUE;
     }
 
   public:
@@ -307,9 +361,19 @@ class ObjectExtender
 
         if (HMODULE pl = GetRMGPluginModule())
         {
-            static TRegisterObjectExtender f = TRegisterObjectExtender(GetProcAddress(pl, "RegisterObjectExtender"));
-            if (f)
-                return f(extender);
+            // The extended entry point describes the foreign vector explicitly.
+            // The host copies the records during this synchronous call, so the
+            // descriptor itself may live on the stack.
+            static TRegisterObjectExtenderEx registerEx =
+                TRegisterObjectExtenderEx(GetProcAddress(pl, "RegisterObjectExtenderEx"));
+            if (registerEx)
+            {
+                ObjectExtenderRegistration registration;
+                registration.extender = extender;
+                registration.objectInfosContext = extender;
+                registration.getObjectInfos = ProvideObjectInfos;
+                return registerEx(&registration);
+            }
         }
         return NULL;
     }
