@@ -274,8 +274,7 @@ H3String PandoraVariants::GetDisplayName(const H3RmgObjectGenerator *generator)
                                 P_ResourceName[eResource::GOLD]);
     case ePandoraGeneratorKind::EXPERIENCE:
         return H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.experience"), baseName, key.first);
-    case ePandoraGeneratorKind::MAGIC:
-    {
+    case ePandoraGeneratorKind::MAGIC: {
         const H3String schoolName = GetPandoraMagicSchoolName(key.third);
         return key.first == key.second ? H3String::Format(EraJS::read("RMG.text.dlg.pandora.display.magicSingle"),
                                                           baseName, key.first, schoolName.String())
@@ -346,8 +345,8 @@ void PrisonVariants::RegisterDefault(const H3RmgObjectGenerator *generator)
     if (generator->subtype >= RMGObjectInfo::defaultRMGObjectsInfoByType[generator->type].size())
     {
         RMGObjectInfo::defaultRMGObjectsInfoByType[generator->type].resize(generator->subtype + 1);
-        RMGObjectInfo::defaultRMGObjectsInfoByType[generator->type][generator->subtype] =
-            {generator->type, generator->subtype};
+        RMGObjectInfo::defaultRMGObjectsInfoByType[generator->type][generator->subtype] = {generator->type,
+                                                                                           generator->subtype};
     }
     newRecord.defaultInfo = RMGObjectInfo::DefaultObjectInfo(generator->type, generator->subtype);
     // Exp identifies the prison variant, while the editable RMG value is the
@@ -1693,9 +1692,8 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
     {
         // Prison variants are split only in the settings dialog. The game
         // still counts every prison under its real subtype 0.
-        const int objSubtype = p_ObjGen->type == eObject::PRISON
-                                   ? p_ObjGen->subtype
-                                   : RMGObjectInfo::GetSettingsSubtype(p_ObjGen);
+        const int objSubtype =
+            p_ObjGen->type == eObject::PRISON ? p_ObjGen->subtype : RMGObjectInfo::GetSettingsSubtype(p_ObjGen);
         if (objSubtype < 0)
             continue;
         const int objType = p_ObjGen->type;

@@ -61,7 +61,7 @@ void ShowMessage(const H3Hero *hero, const H3MapItem *mapItem, const BOOL skipMa
         jsonStr = "visited";
         break;
     default:
-        break;
+        return;
     }
     if (jsonStr)
     {
@@ -137,7 +137,7 @@ BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H
         {
             if (isHuman)
             {
-                // ShowMessage(hero, mapItem, skipMapMessageByHdMod, visitError);
+                ShowMessage(hero, mapItem, true, visitError);
             }
         }
         else
@@ -164,7 +164,7 @@ BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H
             {
 
                 H3String objName = H3String::Format("{%s}", extender::GetObjectName(mapItem));
-                objName.Append("\n\n").Append(EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.text.visit",
+                objName.Append("\n\n").Append(EraJS::read(H3String::Format(extender::UniqueObjectInfo::FormatKey::visit,
                                                                            mapItem->objectType, mapItem->objectSubtype)
                                                               .String()));
                 struct DlgData
@@ -213,7 +213,7 @@ BOOL SpellMarketExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H
                 }
                 else
                 {
-                    // ShowMessage(hero, mapItem, skipMapMessageByHdMod, eVisitError::LEARNED);
+                    ShowMessage(hero, mapItem, true, eVisitError::LEARNED);
                 }
             }
             if (selectedSpellSlot != -1)
