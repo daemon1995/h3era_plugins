@@ -489,7 +489,8 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     {
         limitsInfo.zoneTypeLimits[limit[i].type] = limit[i].value;
     }
-
+    limitsInfo.mapTypesLimit[eObject::PRISON] = 100;
+    limitsInfo.zoneTypeLimits[eObject::PRISON] = 5;
     // init global defaults for all objects
     bool readSucces = false;
     const UINT mapGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.map", readSucces);
@@ -595,6 +596,35 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
             // create vector with assumed to create objects;
             editor.editedRMGObjectGenerators.RemoveAll();
+            // check if we have full random
+            const BOOL randomizeProperties = rmgdlg::RMG_SettingsDlg::completelyRandomIsPressed;
+
+            // affects only data from SettingsDlg
+            if (randomizeProperties)
+            {
+                auto &storedCurrentObjects = editor.storedCurrentObjects;
+                // and start to make dirt
+                auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
+
+                storedCurrentObjects.clear();
+                for (const auto &page : allDlgObjects)
+                {
+                    for (const auto &obj : page)
+                    {
+                        const H3RmgObjectGenerator *generator = obj.objectGenerator;
+                        if (!generator)
+                            continue;
+
+                        const RMGObjectInfo &currentObject = RMGObjectInfo::CurrentObjectInfo(generator);
+                        storedCurrentObjects.push_back({generator, currentObject});
+
+                        RMGObjectInfo randomizedObject = currentObject;
+                        randomizedObject.SetRandom(RMGObjectInfo::DefaultObjectInfo(generator));
+                        randomizedObject.Clamp();
+                        RMGObjectInfo::SetCurrentObjectInfo(generator, randomizedObject);
+                    }
+                }
+            }
 
             // init variables;
             for (auto rmgObjGen : *rmgObjectsList)
@@ -887,13 +917,6 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
     // clear generated objects counters
     generatedInfo.Clear(rmgStruct);
 
-    // swap rmgGenerators list back
-    std::swap(rmgStruct->objectGenerators, editedRMGObjectGenerators);
-    editedRMGObjectGenerators.RemoveAll();
-
-    // restore changed spell levels
-    SetMapControlSpellLevels(false);
-
     auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
     for (auto &info : monstersInfo)
     {
@@ -902,6 +925,24 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
             std::swap(info.value, P_CreatureInformation[info.subtype].aiValue);
         }
     }
+    auto &storedCurrentObjects = Get().storedCurrentObjects;
+
+    if (storedCurrentObjects.size())
+    {
+        for (const auto &storedObject : storedCurrentObjects)
+        {
+            if (storedObject.generator)
+                RMGObjectInfo::SetCurrentObjectInfo(storedObject.generator, storedObject.info);
+        }
+        storedCurrentObjects.clear();
+    }
+    // swap rmgGenerators list back
+    std::swap(rmgStruct->objectGenerators, editedRMGObjectGenerators);
+
+    editedRMGObjectGenerators.RemoveAll();
+
+    // restore changed spell levels
+    SetMapControlSpellLevels(false);
 }
 
 // set virtual object subtype to spell level to increase counters
@@ -1269,9 +1310,7 @@ void RMGObjectInfo::SetRandom(const RMGTemplateLimits &templateInfo) noexcept
 void RMGObjectInfo::MakeReal() const noexcept
 {
     if (type != eObject::NO_OBJ && subtype != eObject::NO_OBJ)
-    {
         currentRMGObjectsInfoByType[type][subtype] = *this;
-    }
 }
 
 LPCSTR RMGObjectInfo::GetRmgTypeDescription() const noexcept
@@ -1724,35 +1763,6 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
     libc::memset(zoneLimitsBySubtype, 0, arraylength);
     libc::memset(mapLimitsBySubtype, 0, arraylength);
 
-    // check if we have full random
-    const BOOL randomizeProperties = rmgdlg::RMG_SettingsDlg::completelyRandomIsPressed;
-
-    // affects only data from SettingsDlg
-    if (randomizeProperties)
-    {
-        // and start to make dirt
-        auto &allDlgObjects = rmgdlg::RMG_SettingsDlg::GetObjectAttributes();
-
-        storedCurrentObjects.clear();
-        for (const auto &page : allDlgObjects)
-        {
-            for (const auto &obj : page)
-            {
-                const H3RmgObjectGenerator *generator = obj.objectGenerator;
-                if (!generator)
-                    continue;
-
-                const RMGObjectInfo &currentObject = RMGObjectInfo::CurrentObjectInfo(generator);
-                storedCurrentObjects.push_back({generator, currentObject});
-
-                RMGObjectInfo randomizedObject = currentObject;
-                randomizedObject.SetRandom(RMGObjectInfo::DefaultObjectInfo(generator));
-                randomizedObject.Clamp();
-                RMGObjectInfo::SetCurrentObjectInfo(generator, randomizedObject);
-            }
-        }
-    }
-
     const int maxSubtype = maxObjectSubtype;
     int index = 0;
     int indexB = 0;
@@ -1800,12 +1810,6 @@ void GeneratedInfo::Clear(const H3RmgRandomMapGenerator *rmgStruct)
     // delete all the allocated arrays
     if (isInited)
     {
-        for (const auto &storedObject : storedCurrentObjects)
-        {
-            if (storedObject.generator)
-                RMGObjectInfo::SetCurrentObjectInfo(storedObject.generator, storedObject.info);
-        }
-        storedCurrentObjects.clear();
         generatedObjectVirtualSubtypes.clear();
 
         for (auto &arr : arrays)

@@ -226,13 +226,6 @@ struct GeneratedInfo
         };
         int *arrays[4];
     };
-    struct StoredCurrentObject
-    {
-        const H3RmgObjectGenerator *generator = nullptr;
-        RMGObjectInfo info;
-    };
-
-    std::vector<StoredCurrentObject> storedCurrentObjects;
     std::unordered_map<const H3RmgObject *, int> generatedObjectVirtualSubtypes;
 
   public:
@@ -329,6 +322,12 @@ class RMGObjectsEditor : public IGamePatch
 
     H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
     H3Vector<H3RmgObjectGenerator *> originalRMGObjectGenerators;
+    struct StoredCurrentObject
+    {
+        const H3RmgObjectGenerator* generator = nullptr;
+        RMGObjectInfo info;
+    };
+    std::vector<StoredCurrentObject> storedCurrentObjects;
 
   private:
     RMGObjectsEditor();
