@@ -34,9 +34,9 @@ void TownMgr_RedirectBuildingGraphics(const UINT townType, const UINT time)
                     reinterpret_cast<LPCSTR *>(0x643074)[townType * h3::limits::BUILDINGS + buildingId];
                 for (size_t frameId = 0; frameId < 100; frameId++)
                 {
-                    H3String oldDefFrameName = H3String::Format("%s.def:0_%d.png", buildingDefName, frameId);
+                    H3String& oldDefFrameName = H3String::Format("%s.def:0_%d.png", buildingDefName, frameId);
 
-                    H3String newDefFrameName = H3String::Format("Data\\Defs\\Buildings\\%s\\%d\\%s.def\\0_%d.png",
+                    H3String &newDefFrameName = H3String::Format("Data\\Defs\\Buildings\\%s\\%d\\%s.def\\0_%d.png",
                                                                 townFolderName, time, buildingDefName, frameId);
 
                     Era::RedirectFile(oldDefFrameName.String(), newDefFrameName.String());
