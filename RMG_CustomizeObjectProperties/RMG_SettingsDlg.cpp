@@ -313,11 +313,16 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     constexpr size_t pagesNum = RMG_DLG_PAGES_NUM;
 
     H3DlgCaptionButton *captionButtons[pagesNum] = {};
-    constexpr size_t pageColumns = 3;
-    constexpr int pageButtonWidth = 220;
-    constexpr int pageButtonHeight = 16;
-    constexpr int pageButtonXOffset = 20;
-    constexpr int pageButtonYOffset = 4;
+    constexpr size_t pageColumns = 5;
+
+    constexpr LPCSTR pageButtonDefName = "GSPBUT2.DEF";
+
+    H3DefLoader pageButtonDef(pageButtonDefName);
+
+    const int pageButtonWidth = pageButtonDef->widthDEF;
+    const int pageButtonHeight = pageButtonDef->heightDEF;
+    constexpr int pageButtonXOffset = 32;
+    constexpr int pageButtonYOffset = 9;
     constexpr int pageButtonXSpacing = 10;
     constexpr int pageButtonYSpacing = 1;
 
@@ -336,7 +341,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
                        static_cast<int>(visiblePagePosition / pageColumns) * (pageButtonHeight + pageButtonYSpacing);
 
         H3DlgCaptionButton *captionbttn = H3DlgCaptionButton::Create(
-            _x, _y, pageButtonWidth, pageButtonHeight, NItemIDs::PAGE_FIRST + i, "GSPBUTT.DEF", pageName,
+            _x, _y, pageButtonWidth, pageButtonHeight, NItemIDs::PAGE_FIRST + i, pageButtonDefName, pageName,
             NH3Dlg::Text::SMALL, 0, 0, 0, eVKey::H3VK_1 + i, eTextColor::HIGHLIGHT);
 
         captionbttn->SetHints(EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.hint", i).String()),
@@ -368,18 +373,28 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     // The order is defined by extender::eRmgDlgObjectPage.
     for (size_t i = 0; i < pagesNum; ++i)
     {
-        if (m_data.GetPage(i).empty())
+
+        auto &pageObjects = m_data.GetPage(i);
+        if (pageObjects.empty())
             continue;
 
         Page *page = nullptr;
-        if (i == extender::ePageCreatureBank)
-            page = new BanksPage{captionButtons[i], m_data.GetPage(i)};
-        else if (i == extender::ePagePrison)
-            page = new PrisonPage{captionButtons[i], m_data.GetPage(i)};
-        else if (i == extender::ePandoraBox)
-            page = new PandoraPage{captionButtons[i], m_data.GetPage(i)};
-        else
-            page = new ObjectsPage{captionButtons[i], m_data.GetPage(i), false};
+
+        switch (i)
+        {
+        case extender::ePageCreatureBank:
+            page = new BanksPage{captionButtons[i], pageObjects};
+            break;
+        case extender::ePagePrison:
+            page = new PrisonPage{captionButtons[i], pageObjects};
+            break;
+        case extender::ePandoraBox:
+            page = new PandoraPage{captionButtons[i], pageObjects};
+            break;
+        default:
+            page = new ObjectsPage{captionButtons[i], pageObjects, false};
+            break;
+        }
 
         if (page)
         {
@@ -2598,8 +2613,8 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
         MenuWidgetInfo widgetInfo;
         widgetInfo.name = MAIN_MENU_WIDGET_UUID;
         widgetInfo.customProc = RMG_SettingsDlg::RMGDlgOptionsButtonProc;
-        // const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::NEW_GAME | eMenuFlags::AT_BOTTOM);
-        const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::AT_BOTTOM);
+        const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::NEW_GAME | eMenuFlags::AT_BOTTOM);
+        // const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::AT_BOTTOM);
 
         widgetInfo.menuList = flags;
         widgetInfo.text = EraJS::read(MAIN_MENU_JSON_KEY);
