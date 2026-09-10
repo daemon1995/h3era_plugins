@@ -4,7 +4,7 @@
 class CombatEmulator
 {
 
-    BOOL isIinited = false;
+    BOOL isInited = false;
     union {
         struct
         {
@@ -30,7 +30,7 @@ class CombatEmulator
 
     static Patch **GetPatchesArray()
     {
-        return instance->patches;
+        return instance ? instance->patches : nullptr;
     }
     static void Init();
 };

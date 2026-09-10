@@ -1,7 +1,7 @@
 // dllmain.cpp : Определяет точку входа для приложения DLL.
 #define _H3API_PLUGINS_
 #define ERA_MODLIST
-#include "framework.h"
+#include "CombatEmulator.h"
 #pragma comment(linker, "/EXPORT:GameModIsLoaded=_GameModIsLoaded@4")
 
 Patcher *globalPatcher = nullptr;
@@ -9,14 +9,8 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
-LPCSTR pluginVersion = "0.7.0";
+LPCSTR pluginVersion = "0.8.0";
 } // namespace dllText
-class CombatEmulator
-{
-  public:
-    static void Init();
-};
-
 DllExport BOOL __stdcall GameModIsLoaded(LPCSTR modName)
 {
     if (!modName || libc::strcmp(modName, h3_NullString) == 0)
@@ -56,6 +50,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             Era::ConnectEra(hModule, dllText::instanceName);
             _PI->WriteLoHook(0x4EEAF2, HooksInit);
         }
+        break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
