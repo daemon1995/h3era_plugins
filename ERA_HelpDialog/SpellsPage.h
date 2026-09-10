@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DlgEnums.h"
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
@@ -28,7 +28,7 @@ enum eItem
 };
 } // namespace spells
 
-class SpellCategoriesPage final : public HelpPage
+class SpellCategoriesPage final : public DlgPage
 {
     H3DlgCaptionButton *buttons[spells::CATEGORY_COUNT] = {};
     int activeCategory = spells::CATEGORY_ALL;
@@ -40,7 +40,7 @@ class SpellCategoriesPage final : public HelpPage
     void SetActiveCategory(int itemId) noexcept;
 };
 
-class SpellsPage final : public HelpPage
+class SpellsPage final : public DlgPage
 {
     static SpellsPage *instance;
     const int pageX;
@@ -73,7 +73,7 @@ class SpellsPage final : public HelpPage
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
-class SpellsSection final : public HelpSection
+class SpellsSection final : public DlgSection
 {
     SpellCategoriesPage categoriesPage;
     SpellsPage contentPage;

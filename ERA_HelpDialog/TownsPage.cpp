@@ -3,11 +3,11 @@
 namespace main
 {
 
-TownCategoriesPage::TownCategoriesPage(H3Dlg *dialog) : HelpPage(dialog)
+TownCategoriesPage::TownCategoriesPage(H3Dlg *dialog) : DlgPage(dialog)
 {
 }
 
-TownsPage::TownsPage(H3Dlg *dialog) : HelpPage(dialog)
+TownsPage::TownsPage(H3Dlg *dialog) : DlgPage(dialog)
 {
 }
 

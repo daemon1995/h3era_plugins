@@ -5,7 +5,7 @@
 namespace main
 {
 
-HeaderPage::HeaderPage(const int x, const int y, const int width, const int height, H3Dlg *dialog) : HelpPage(dialog)
+HeaderPage::HeaderPage(const int x, const int y, const int width, const int height, H3Dlg *dialog) : DlgPage(dialog)
 {
     constexpr LPCSTR staticNames[6] = {"Creatures", "Artifacts", "Heroes", "Secondary Skills", "Spells", "Towns"};
     constexpr int staticIds[6] = {buttons::CREATURES, buttons::ARTIFACTS, buttons::HEROES,

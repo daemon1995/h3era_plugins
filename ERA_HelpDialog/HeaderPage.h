@@ -1,12 +1,12 @@
 #pragma once
 
 #include "DlgEnums.h"
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
 
-class HeaderPage final : public HelpPage
+class HeaderPage final : public DlgPage
 {
   public:
     static constexpr LPCSTR defName = "OVBUTN3.def";

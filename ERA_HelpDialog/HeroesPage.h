@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DlgEnums.h"
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
@@ -23,7 +23,7 @@ enum eHeroItem
 };
 } // namespace buttons
 
-class HeroCategoriesPage final : public HelpPage
+class HeroCategoriesPage final : public DlgPage
 {
     static HeroCategoriesPage *instance;
 
@@ -45,12 +45,13 @@ class HeroCategoriesPage final : public HelpPage
 
     void Redraw(int firstCategory = 0);
     void SetActiveCategory(int categoryIndex) noexcept;
+    void UpdateScrollbarActivation(const H3Msg &msg) noexcept;
 
   private:
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
-class HeroesPage : public HelpPage
+class HeroesPage : public DlgPage
 {
     static HeroesPage *instance;
 
@@ -89,7 +90,7 @@ class HeroesPage : public HelpPage
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
-class HeroesSection final : public HelpSection
+class HeroesSection final : public DlgSection
 {
     HeroCategoriesPage categoriesPage;
     HeroesPage contentPage;
@@ -100,6 +101,7 @@ class HeroesSection final : public HelpSection
 
     void SetVisible(BOOL state) noexcept override;
     void SetSubtype(int subtype);
+    void UpdateMousePosition(const H3Msg &msg) noexcept override;
     BOOL ProcessMessage(H3Msg &msg) override;
     void Redraw() override;
 };

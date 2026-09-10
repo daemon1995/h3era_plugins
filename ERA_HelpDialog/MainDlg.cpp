@@ -164,20 +164,47 @@ void MainDlg::DisplayAllHotkeys() noexcept
 ModInformation *MainDlg::CallModListDlg(const ModInformation *activeMod) noexcept
 {
     (void)activeMod;
-    int dropdownX = 0;
-    int dropdownY = 0;
-    int dropdownWidth = 240;
+    if (!EnsureModsLoaded())
+        return nullptr;
+
+    constexpr int popupMargin = 12;
+    constexpr int rowHeight = 34;
+    constexpr int minWidth = 280;
+    constexpr int maxWidth = 420;
+    const int screenWidth = std::max(1, H3GameWidth::Get());
+    const int screenHeight = std::max(1, H3GameHeight::Get());
+
+    int anchorX = popupMargin;
+    int anchorY = popupMargin;
+    int buttonWidth = minWidth - 64;
+    int buttonHeight = 0;
     if (auto *modsButton = GetH3DlgItem(buttons::MODLIST))
     {
-        dropdownX = modsButton->GetX();
-        dropdownY = modsButton->GetY() + modsButton->GetHeight();
-        dropdownWidth = std::max(dropdownWidth, modsButton->GetWidth());
+        // H3DlgItem::GetX/Y are relative to MainDlg. The child dialog needs
+        // screen coordinates, otherwise the picker opens in the wrong place
+        // when MainDlg itself is centered or fullscreen.
+        anchorX = modsButton->GetAbsoluteX();
+        anchorY = modsButton->GetAbsoluteY();
+        buttonWidth = modsButton->GetWidth();
+        buttonHeight = modsButton->GetHeight();
     }
-    const int rowHeight = 34;
-    const int maxRows = std::max(1, (H3GameHeight::Get() - dropdownY - 24) / rowHeight);
+
+    const int desiredWidth = std::max(minWidth, buttonWidth + 64);
+    const int maxAllowedWidth = std::max(1, screenWidth - popupMargin * 2);
+    const int popupWidth = std::min(maxAllowedWidth, std::min(maxWidth, desiredWidth));
+    const int maxRows = std::max(1, (screenHeight - popupMargin * 2) / rowHeight);
     const int visibleRows = std::min(maxRows, std::max(1, static_cast<int>(mods.size())));
-    const int dropdownHeight = visibleRows * rowHeight + 54;
-    list::ModListDlg dlg(dropdownWidth, dropdownHeight, dropdownX, dropdownY, mods);
+    const int popupHeight = popupMargin * 2 + visibleRows * rowHeight;
+
+    const int popupX = std::max(popupMargin, std::min(anchorX, screenWidth - popupWidth - popupMargin));
+    const int belowY = anchorY + buttonHeight;
+    const int aboveY = anchorY - popupHeight;
+    int popupY = belowY;
+    if (belowY + popupHeight > screenHeight - popupMargin)
+        popupY = aboveY;
+    popupY = std::max(popupMargin, std::min(popupY, screenHeight - popupHeight - popupMargin));
+
+    list::ModListDlg dlg(popupWidth, popupHeight, popupX, popupY, mods);
     dlg.Start();
     return dlg.ResultMod();
 }
@@ -187,17 +214,18 @@ BOOL MainDlg::EnsureModsLoaded()
     if (modsLoaded)
         return !mods.empty();
 
-    modsLoaded = TRUE;
     std::vector<std::string> modNames;
-    modList::GetEraModList(modNames, TRUE);
+    if (modList::GetEraModList(modNames, TRUE) <= 0)
+        return FALSE;
     if (!GetLoadedModsJsonInformation(modNames))
         return FALSE;
 
+    modsLoaded = TRUE;
     m_activeMod = mods.front();
     return TRUE;
 }
 
-HelpSection *MainDlg::EnsureSection(const eHelpPage page)
+DlgSection *MainDlg::EnsureSection(const eHelpPage page)
 {
     switch (page)
     {
@@ -226,13 +254,11 @@ HelpSection *MainDlg::EnsureSection(const eHelpPage page)
             townsSection = new TownsSection(this);
         return townsSection;
     case eHelpPage::HOTKEYS:
-        EnsureModsLoaded();
         if (!hotkeysSection)
             hotkeysSection = new HotkeysSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
                                                 categoriesY, contentWidth, categoriesHeight, this, mods);
         return hotkeysSection;
     case eHelpPage::MODS:
-        EnsureModsLoaded();
         if (!modSection)
             modSection = new ModSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX, categoriesY,
                                         contentWidth, categoriesHeight, this);
@@ -281,12 +307,12 @@ void MainDlg::SetActiveMod(ModInformation *mod)
     }
 }
 
-void MainDlg::ShowSection(HelpSection *section)
+void MainDlg::ShowSection(DlgSection *section)
 {
     // Treat the sections as mutually exclusive sources of dialog items. Do
     // not rely only on activeSection: a lazily-created page may have become
     // visible while another source was active.
-    HelpSection *allSections[] = {creaturesSection, hotkeysSection, modSection, artifactsSection, townsSection,
+    DlgSection *allSections[] = {creaturesSection, hotkeysSection, modSection, artifactsSection, townsSection,
                                   heroesSection, spellsSection, placeholderSection};
     for (auto *candidate : allSections)
     {
@@ -363,6 +389,11 @@ void MainDlg::ShowCreatures(const int subtype)
 
 void MainDlg::ShowHotkeys(const int subtype)
 {
+    if (!EnsureModsLoaded())
+    {
+        ShowPlaceholder(buttons::HOTKEYS, "No hotkey data is available.");
+        return;
+    }
     auto *section = static_cast<HotkeysSection *>(EnsureSection(eHelpPage::HOTKEYS));
     if (!section)
         return;
@@ -461,7 +492,11 @@ BOOL MainDlg::OnCreate()
 
     // The header is not part of the content page pair and is always active.
     headerPage->SetVisible(TRUE);
-    if (!ShowPage(initialPage, initialSubtype))
+    // The default page is the mod picker, but discovering/parsing every mod
+    // is deferred until the user actually asks for that list.
+    if (initialPage == eHelpPage::MODS)
+        ShowPlaceholder(buttons::MODLIST, "Click Mods to load the mod help list.");
+    else if (!ShowPage(initialPage, initialSubtype))
         ShowPage(DEFAULT_PAGE);
     return TRUE;
 }
@@ -513,6 +548,8 @@ void MainDlg::OnClose(INT itemId)
 
 BOOL MainDlg::DialogProc(H3Msg &msg)
 {
+    if (activeSection)
+        activeSection->UpdateMousePosition(msg);
     if (activeSection && activeSection->ProcessMessage(msg))
     {
         activeSubtype = activeSection->Subtype();
@@ -524,9 +561,10 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
         switch (msg.itemId)
         {
         case buttons::MODLIST:
-            EnsureModsLoaded();
             if (ModInformation *selectedMod = CallModListDlg(m_activeMod))
                 ShowMod(selectedMod);
+            else if (!modsLoaded)
+                ShowPlaceholder(buttons::MODLIST, "No mod help is available.");
             return 0;
         case buttons::HOTKEYS:
             DisplayAllHotkeys();
@@ -686,8 +724,10 @@ BOOL MainDlg::RunMainDlg(const eHelpPage requestedPage, const int subtype, const
             dialog.Start();
             pageToOpen = dialog.activePage;
             subtypeToOpen = dialog.activeSubtype;
-            dialogResult = P_WindowManager->resultItemID;
         }
+        // MainDlg's destructor publishes the resize result to the window
+        // manager, so read it only after the dialog object has been destroyed.
+        dialogResult = P_WindowManager->resultItemID;
 
         if (dialogResult == buttons::RESIZE_DLG)
         {

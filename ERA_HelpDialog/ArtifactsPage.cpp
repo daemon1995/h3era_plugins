@@ -14,7 +14,7 @@ ArtifactsPage *ArtifactsPage::instance = nullptr;
 
 ArtifactCategoriesPage::ArtifactCategoriesPage(const int x, const int y, const int width, const int height,
                                                H3Dlg *dialog)
-    : HelpPage(dialog)
+    : DlgPage(dialog)
 {
     AddFrame(x, y, width, height);
     for (int index = 0; index < artifacts::CATEGORY_COUNT; ++index)
@@ -53,7 +53,7 @@ void ArtifactCategoriesPage::SetActiveCategory(const int itemId) noexcept
 }
 
 ArtifactsPage::ArtifactsPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     instance = this;
     H3DefLoader def(NH3Dlg::Assets::ARTIFACT_DEF);

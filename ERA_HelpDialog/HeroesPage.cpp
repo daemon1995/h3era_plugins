@@ -22,7 +22,7 @@ HeroCategoriesPage *HeroCategoriesPage::instance = nullptr;
 HeroesPage *HeroesPage::instance = nullptr;
 
 HeroCategoriesPage::HeroCategoriesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     instance = this;
     constexpr int iconHeight = 48;
@@ -123,6 +123,21 @@ void HeroCategoriesPage::SetActiveCategory(const int categoryIndex) noexcept
     RedrawDialog();
 }
 
+void HeroCategoriesPage::UpdateScrollbarActivation(const H3Msg &msg) noexcept
+{
+    if (!scrollBar || !scrollBar->IsVisible() || !msg.IsMouseOver() || !dialog)
+        return;
+
+    const int left = dialog->GetX() + pageX;
+    const int top = dialog->GetY() + pageY;
+    const bool inside =
+        msg.GetX() >= left && msg.GetX() < left + pageWidth && msg.GetY() >= top && msg.GetY() < top + pageHeight;
+    if (inside)
+        scrollBar->Activate();
+    else
+        scrollBar->DeActivate();
+}
+
 void __fastcall HeroCategoriesPage::ScrollProc(const INT32 tick, H3BaseDlg *)
 {
     if (instance)
@@ -130,7 +145,7 @@ void __fastcall HeroCategoriesPage::ScrollProc(const INT32 tick, H3BaseDlg *)
 }
 
 HeroesPage::HeroesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     instance = this;
     constexpr int margin = 8;
@@ -193,8 +208,99 @@ HeroesPage::HeroesPage(const int x, const int y, const int width, const int heig
     RebuildHeroList();
 }
 
-void HeroesPage::CallCustomFunction(const int, const BOOL) noexcept
+void HeroesPage::CallCustomFunction(const int heroId, const BOOL) noexcept
 {
+
+    H3PcxLoader back = H3LoadedPcx::Load("HStInf.pcx");
+    if (!back)
+        return;
+
+    struct _HeroType_
+    {
+        int Belong2Town;
+        char *TypeName;
+        int Agression;
+        char PSkillStart[4];
+        char ProbPSkillToLvl9[4];
+        char ProbPSkillAfterLvl10[4];
+        char ProbSSkill[28];
+        char ProbInTown[9];
+        char field_3D[3];
+    };
+
+    const auto &typesTable = reinterpret_cast<_HeroType_ *>(0x067D868);
+    volatile int itemId = 0;
+    const int width = back->width;
+    const int height = back->height;
+    const auto &heroInfo = P_HeroInfo[heroId];
+    const auto &specInfo = P_HeroSpecialty[heroId];
+    const auto &typeInfo = typesTable[heroInfo.heroClass];
+
+    H3Dlg dlg(width, height, -1, -1, 0, 0, IntAt(0x69CCF4));
+    auto backWidget = dlg.CreatePcx(0, 0, itemId++, back->GetName());
+
+    constexpr int leftPartX = 18;
+
+    // create portrait
+    dlg.CreatePcx(leftPartX, 19, itemId++, heroInfo.largePortrait);
+    dlg.CreateText(85, 22, 200, 32, heroInfo.name, NH3Dlg::Text::BIG, eTextColor::GOLD, itemId++);
+    dlg.CreateText(85, 52, 200, 32, typeInfo.TypeName, NH3Dlg::Text::MEDIUM, 1, itemId++);
+
+    constexpr int frameIds[4] = {0, 1, 2, 5};
+    // primary skills
+    for (size_t i = 0; i < 4; i++)
+    {
+        const int x = 31 + i * (29 + 42);
+        const int y = 111;
+        constexpr int textWidth = 71;
+        dlg.CreateText(textWidth * i + 16, 90, textWidth, 16, P_PrimarySkillName[i], NH3Dlg::Text::SMALL,
+                       eTextColor::REGULAR, itemId++);
+
+        dlg.CreateDef(x, y, itemId++, NH3Dlg::Assets::PSKILL_42, frameIds[i]);
+
+        libc::sprintf(h3_TextBuffer, "%d", typeInfo.PSkillStart[i]);
+        dlg.CreateText(textWidth * i + 16, 156, textWidth, 16, h3_TextBuffer, NH3Dlg::Text::SMALL, eTextColor::REGULAR,
+                       itemId++);
+    }
+
+    // hero bio
+    specInfo;
+    // specialization
+    dlg.CreateDef(leftPartX, 326, itemId++, NH3Dlg::Assets::UN44_DEF, heroId);
+
+    std::string specializationText(specInfo.spDescr);
+    auto it = std::find(specializationText.begin(), specializationText.end(), '\n');
+    if (it != specializationText.end())
+    {
+        specializationText = specializationText.substr(0, std::distance(specializationText.begin(), it));
+    }
+    dlg.CreateText(leftPartX + 36, 328, 200, 44, specInfo.spFull, NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemId++);
+    dlg.CreateText(leftPartX, 358, 260, 84, specializationText.c_str(), NH3Dlg::Text::SMALL, eTextColor::REGULAR,
+                   itemId++);
+
+    // RIGHT DLG PART
+    // secondary skills
+    constexpr int rightPartX = 318;
+    const int x = 31 + 4 * (29 + 42);
+    int y = 111;
+
+    // starting army
+
+    // magic && book
+    if (heroInfo.hasSpellbook)
+    {
+        dlg.CreateDef(rightPartX, 382, itemId++, NH3Dlg::Assets::ARTIFACT_DEF, 0);
+        dlg.CreateText(rightPartX + 48, 376, 64, 44, P_ArtifactSetup[0].name, NH3Dlg::Text::SMALL, eTextColor::REGULAR,
+                       itemId++);
+
+        const int spellId = heroInfo.startingSpell;
+        dlg.CreateDef(rightPartX, 426, itemId++, NH3Dlg::Assets::SPELL_SMALL, spellId + 1);
+        dlg.CreateText(rightPartX + 46, 428, 64, 32, P_Spell[spellId].name, NH3Dlg::Text::SMALL, eTextColor::REGULAR,
+                       itemId++);
+    }
+    //   backWidget->SetPcx(back);
+    //  H3DlgPcx =
+    dlg.RMB_Show();
 }
 
 void HeroesPage::OnLeftClick(const int heroId) noexcept
@@ -216,8 +322,8 @@ BOOL HeroesPage::ProcessItemMessage(H3Msg &msg)
 
     const int slot = msg.itemId - buttons::HERO_ITEM_FIRST;
     const int heroIndex = firstRow * columns + slot;
-    if (!isVisible || slot < 0 || slot >= static_cast<int>(heroPortraits.size()) ||
-        heroIndex < 0 || heroIndex >= static_cast<int>(heroIds.size()))
+    if (!isVisible || slot < 0 || slot >= static_cast<int>(heroPortraits.size()) || heroIndex < 0 ||
+        heroIndex >= static_cast<int>(heroIds.size()))
         return TRUE;
 
     if (msg.IsRightClick())
@@ -378,6 +484,11 @@ void HeroesSection::SetSubtype(const int subtype)
     activeSubtype = std::max(0, std::min(subtype, buttons::HERO_CATEGORY_COUNT - 1));
     categoriesPage.SetActiveCategory(activeSubtype);
     contentPage.SetCategory(activeSubtype);
+}
+
+void HeroesSection::UpdateMousePosition(const H3Msg &msg) noexcept
+{
+    categoriesPage.UpdateScrollbarActivation(msg);
 }
 
 BOOL HeroesSection::ProcessMessage(H3Msg &msg)

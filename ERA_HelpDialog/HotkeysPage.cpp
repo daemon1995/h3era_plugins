@@ -44,7 +44,7 @@ LPCSTR TypeName(const hkcategories::eType type) noexcept
 }
 
 HotkeysCategoriesPage::HotkeysCategoriesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog)
+    : DlgPage(dialog)
 {
     AddFrame(x, y, width, height);
     constexpr LPCSTR defName = "RMGmenbt.def";
@@ -93,7 +93,7 @@ void HotkeysCategoriesPage::SetActiveCategory(const int itemId) noexcept
 
 HotkeysPage::HotkeysPage(const int x, const int y, const int width, const int height, H3Dlg *dialog,
                          const std::vector<ModInformation *> &mods)
-    : HelpPage(dialog), mods(mods)
+    : DlgPage(dialog), mods(mods)
 {
     AddFrame(x, y, width, height);
     textScroll = H3DlgScrollableText::Create(h3_NullString, x + 10, y + 8, width - 28, height - 16,

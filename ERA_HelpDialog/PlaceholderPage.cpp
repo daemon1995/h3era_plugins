@@ -4,7 +4,7 @@ namespace main
 {
 
 PlaceholderSection::PlaceholderSection(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog)
+    : DlgPage(dialog)
 {
     AddFrame(x, y, width, height);
     text = H3DlgScrollableText::Create(h3_NullString, x + 10, y + 8, width - 28, height - 16,
@@ -20,7 +20,7 @@ void PlaceholderSection::SetTitle(LPCSTR value)
 
 void PlaceholderSection::SetVisible(const BOOL state) noexcept
 {
-    HelpPage::SetVisible(state);
+    DlgPage::SetVisible(state);
 }
 
 BOOL PlaceholderSection::ProcessMessage(H3Msg &)

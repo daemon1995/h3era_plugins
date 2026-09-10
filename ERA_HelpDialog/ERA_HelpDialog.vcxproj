@@ -24,7 +24,7 @@
     <ClInclude Include="HeaderPage.h" />
     <ClInclude Include="HeroesPage.h" />
     <ClInclude Include="HelpDialogDependencies.h" />
-    <ClInclude Include="HelpPage.h" />
+    <ClInclude Include="DlgPage.h" />
     <ClInclude Include="HotkeysPage.h" />
     <ClInclude Include="MainDlg.h" />
     <ClInclude Include="GuideDlg.h" />
@@ -45,7 +45,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="HeaderPage.cpp" />
     <ClCompile Include="HeroesPage.cpp" />
-    <ClCompile Include="HelpPage.cpp" />
+    <ClCompile Include="DlgPage.cpp" />
     <ClCompile Include="HotkeysPage.cpp" />
     <ClCompile Include="MainDlg.cpp" />
     <ClCompile Include="GuideDlg.cpp" />

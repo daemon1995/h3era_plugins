@@ -7,7 +7,7 @@
 namespace main
 {
 struct HotKeysCategory;
-class HelpSection;
+class DlgSection;
 class HeaderPage;
 class HotkeysSection;
 class ModSection;
@@ -34,7 +34,7 @@ class MainDlg : public H3Dlg
     TownsSection *townsSection = nullptr;
     HeroesSection *heroesSection = nullptr;
     SpellsSection *spellsSection = nullptr;
-    HelpSection *activeSection = nullptr;
+    DlgSection *activeSection = nullptr;
 
     int headerX = 0;
     int categoriesY = 0;
@@ -69,10 +69,10 @@ class MainDlg : public H3Dlg
     void DisplayAllHotkeys() noexcept;
     ModInformation *CallModListDlg(const ModInformation *activeMod) noexcept;
     BOOL EnsureModsLoaded();
-    HelpSection *EnsureSection(eHelpPage page);
+    DlgSection *EnsureSection(eHelpPage page);
     BOOL GetLoadedModsJsonInformation(const std::vector<std::string> &modNames);
     void SetActiveMod(ModInformation *mod);
-    void ShowSection(HelpSection *section);
+    void ShowSection(DlgSection *section);
     void HidePages() noexcept;
     static BOOL RunMainDlg(eHelpPage page, int subtype, BOOL rememberPage);
 

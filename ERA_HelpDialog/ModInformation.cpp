@@ -42,6 +42,10 @@ LastActiveDlgModInfo ModInformation::lastActiveModInfo;
 ModInformation::ModInformation(LPCSTR modFolderName, const UINT id)
     : hasSomeInfo(false), id(id), name(modFolderName), document(modFolderName), activeCategory(nullptr)
 {
+    bool nameRead = false;
+    const H3String displayName = document.Read("name", nameRead);
+    if (nameRead && !displayName.Empty())
+        name = displayName;
 
     categories.clear();
     // start parsing panelCategories
@@ -69,19 +73,17 @@ ModInformation::~ModInformation()
 {
     for (auto &cat : categories)
     {
-        if (cat)
-        {
-            cat->~Category();
-        }
-        // delete cat->content;
-        //
+        delete cat;
     }
+    categories.clear();
+    hotkeysCategory = nullptr;
 }
 
 HotKeysCategory *ModInformation::CreateHotkeysCategory() const noexcept
 {
     HotKeysCategory *result = nullptr;
     std::vector<HotKey> hotkeys;
+    H3String legacyHotkeysName;
 
     // Preferred format: help.<mod_folder_name>.hotkeys[]. The adapter also
     // probes help.mods.<mod_folder_name>.hotkeys[] for old files.
@@ -99,6 +101,12 @@ HotKeysCategory *ModInformation::CreateHotkeysCategory() const noexcept
             H3String keyPath(itemBase);
             keyPath.Append(".keys");
             H3String keys = document.Read(keyPath.String(), readSuccess);
+            if (!readSuccess)
+            {
+                keyPath = itemBase;
+                keyPath.Append(".key");
+                keys = document.Read(keyPath.String(), readSuccess);
+            }
             if (!readSuccess || keys.Empty())
             {
                 break;
@@ -121,27 +129,34 @@ HotKeysCategory *ModInformation::CreateHotkeysCategory() const noexcept
     {
         // Legacy format: help.<mod>.categories.hotkeys.content[] (or its
         // help.mods.<mod> equivalent).
-        bool readSuccess = false;
-        H3String hkName = document.Read("categories.hotkeys.name", readSuccess);
-        if (readSuccess)
+        bool nameRead = false;
+        legacyHotkeysName = document.Read("categories.hotkeys.name", nameRead);
+        for (int hotkeyId = 0;; ++hotkeyId)
         {
-            for (int hotkeyId = 0;; ++hotkeyId)
+            H3String itemBase("categories.hotkeys.content.");
+            itemBase.Append(hotkeyId);
+            H3String keyPath(itemBase);
+            keyPath.Append(".key");
+            bool keyRead = false;
+            H3String keys = document.Read(keyPath.String(), keyRead);
+            if (!keyRead)
             {
-                H3String itemBase("categories.hotkeys.content.");
-                itemBase.Append(hotkeyId);
-                H3String keyPath(itemBase);
-                keyPath.Append(".key");
-                H3String keys = document.Read(keyPath.String(), readSuccess);
-                if (!readSuccess || keys.Empty())
-                    break;
-                H3String typePath(itemBase);
-                typePath.Append(".type");
-                H3String descriptionPath(itemBase);
-                descriptionPath.Append(".description");
-                const int type = document.ReadInt(typePath.String());
-                H3String description = document.Read(descriptionPath.String());
-                hotkeys.emplace_back(HotKey{static_cast<hkcategories::eType>(type), keys, h3_NullString, description});
+                keyPath = itemBase;
+                keyPath.Append(".keys");
+                keys = document.Read(keyPath.String(), keyRead);
             }
+            if (!keyRead || keys.Empty())
+                break;
+            H3String typePath(itemBase);
+            typePath.Append(".type");
+            H3String descriptionPath(itemBase);
+            descriptionPath.Append(".description");
+            const int type = document.ReadInt(typePath.String());
+            H3String description = document.Read(descriptionPath.String());
+            H3String hotkeyNamePath(itemBase);
+            hotkeyNamePath.Append(".name");
+            H3String hotkeyName = document.Read(hotkeyNamePath.String());
+            hotkeys.emplace_back(HotKey{static_cast<hkcategories::eType>(type), keys, hotkeyName, description});
         }
     }
 
@@ -152,7 +167,9 @@ HotKeysCategory *ModInformation::CreateHotkeysCategory() const noexcept
         if (hasArrayFormat)
             result->name = document.Read("hotkeys.name");
         else
-            result->name = document.Read("categories.hotkeys.name");
+            result->name = legacyHotkeysName;
+        if (result->name.Empty())
+            result->name = "Hotkeys";
         result->content = new Content();
     }
 
@@ -162,24 +179,25 @@ HotKeysCategory *ModInformation::CreateHotkeysCategory() const noexcept
 Category *ModInformation::CreateNativeCategory(const int index) const noexcept
 {
     Category *result = nullptr;
-    bool readSucces = false;
+    bool nameRead = false;
 
     H3String categoryBase("categories.");
     categoryBase.Append(index);
     H3String categoryNamePath(categoryBase);
     categoryNamePath.Append(".name");
-    H3String catName = document.Read(categoryNamePath.String(), readSucces);
-    if (readSucces)
+    H3String catName = document.Read(categoryNamePath.String(), nameRead);
+    H3String categoryContentPath(categoryBase);
+    categoryContentPath.Append(".content");
+    bool contentRead = false;
+    H3String categoryText = document.Read(categoryContentPath.String(), contentRead);
+    if (nameRead || contentRead)
     {
-
         if (result = new Category())
         {
-            result->name = catName;
+            result->name = nameRead && !catName.Empty() ? catName : H3String::Format("Category %d", index + 1);
 
             result->content = new Content();
-            H3String categoryContentPath(categoryBase);
-            categoryContentPath.Append(".content");
-            result->content->text = document.Read(categoryContentPath.String());
+            result->content->text = contentRead ? categoryText : h3_NullString;
 
             // H3String defName =
         }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DlgEnums.h"
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
@@ -30,7 +30,7 @@ enum eCreatureItem
 };
 } // namespace buttons
 
-class CreatureCategoriesPage final : public HelpPage
+class CreatureCategoriesPage final : public DlgPage
 {
     static CreatureCategoriesPage *instance;
 
@@ -52,12 +52,13 @@ class CreatureCategoriesPage final : public HelpPage
 
     void Redraw(int firstCategory = 0);
     void SetActiveCategory(int categoryIndex) noexcept;
+    void UpdateScrollbarActivation(const H3Msg &msg) noexcept;
 
   private:
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
-class CreaturesPage : public HelpPage
+class CreaturesPage : public DlgPage
 {
     static CreaturesPage *instance;
 
@@ -99,7 +100,7 @@ class CreaturesPage : public HelpPage
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
-class CreaturesSection final : public HelpSection
+class CreaturesSection final : public DlgSection
 {
     CreatureCategoriesPage categoriesPage;
     CreaturesPage contentPage;
@@ -110,6 +111,7 @@ class CreaturesSection final : public HelpSection
 
     void SetVisible(BOOL state) noexcept override;
     void SetSubtype(int subtype);
+    void UpdateMousePosition(const H3Msg &msg) noexcept override;
     BOOL ProcessMessage(H3Msg &msg) override;
     void Redraw() override;
 };

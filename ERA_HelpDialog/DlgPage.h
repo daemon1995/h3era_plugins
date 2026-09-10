@@ -7,26 +7,33 @@
 namespace main
 {
 
-class HelpSection
+class DlgSection
 {
   protected:
     int activeSubtype = 0;
 
   public:
-    virtual ~HelpSection() = default;
+    virtual ~DlgSection() = default;
 
     int Subtype() const noexcept
     {
         return activeSubtype;
     }
     virtual void SetVisible(BOOL state) noexcept = 0;
+    // Called for mouse-over messages before the active page processes the
+    // message. Pages with more than one scrollbar use it to decide which
+    // scrollbar may consume wheel/drag input.
+    virtual void UpdateMousePosition(const H3Msg &msg) noexcept
+    {
+        (void)msg;
+    }
     virtual BOOL ProcessMessage(H3Msg &msg) = 0;
     virtual void Redraw() = 0;
 };
 
 // A page owns ordinary H3 dialog items registered in MainDlg. It is not an
 // H3 dialog/panel and never draws directly to the screen.
-class HelpPage
+class DlgPage
 {
   protected:
     H3Dlg *dialog = nullptr;
@@ -35,7 +42,7 @@ class HelpPage
     std::vector<H3DlgScrollableText *> scrollableTexts;
     BOOL isVisible = FALSE;
 
-    explicit HelpPage(H3Dlg *dialog);
+    explicit DlgPage(H3Dlg *dialog);
     void AddItem(H3DlgItem *item);
     void AddScrollableText(H3DlgScrollableText *scrollableText);
     void SetScrollableText(H3DlgScrollableText *scrollableText, LPCSTR text);
@@ -46,7 +53,7 @@ class HelpPage
     void SetScrollableTextVisible(H3DlgScrollableText *scrollableText, BOOL state) const noexcept;
 
   public:
-    virtual ~HelpPage() = default;
+    virtual ~DlgPage() = default;
 
     virtual void SetVisible(BOOL state) noexcept;
     BOOL IsVisible() const noexcept;

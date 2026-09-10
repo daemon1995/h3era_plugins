@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HelpPage.h"
+#include "DlgPage.h"
 #include "ModInformation.h"
 
 namespace main
@@ -16,7 +16,7 @@ enum eItem
 };
 }
 
-class ModCategoriesPage final : public HelpPage
+class ModCategoriesPage final : public DlgPage
 {
     int pageX;
     int pageY;
@@ -36,6 +36,7 @@ class ModCategoriesPage final : public HelpPage
     BOOL IsCategory(int itemId) const noexcept;
     int CategoryIndex(int itemId) const noexcept;
     void SetActiveCategory(int index);
+    void UpdateScrollbarActivation(const H3Msg &msg) noexcept;
     void Refresh();
 
   private:
@@ -44,7 +45,7 @@ class ModCategoriesPage final : public HelpPage
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
-class ModContentPage final : public HelpPage
+class ModContentPage final : public DlgPage
 {
     int pageX;
     int pageY;
@@ -66,7 +67,7 @@ class ModContentPage final : public HelpPage
     void RebuildText();
 };
 
-class ModSection final : public HelpSection
+class ModSection final : public DlgSection
 {
     ModCategoriesPage categoriesPage;
     ModContentPage contentPage;
@@ -79,6 +80,7 @@ class ModSection final : public HelpSection
     void SetMod(const ModInformation *mod);
     void SetSubtype(int subtype);
     void SetVisible(BOOL state) noexcept override;
+    void UpdateMousePosition(const H3Msg &msg) noexcept override;
     BOOL ProcessMessage(H3Msg &msg) override;
     void Redraw() override;
 };

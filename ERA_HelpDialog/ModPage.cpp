@@ -31,7 +31,7 @@ LPCSTR HotkeyTypeName(const hkcategories::eType type) noexcept
 ModCategoriesPage *ModCategoriesPage::instance = nullptr;
 
 ModCategoriesPage::ModCategoriesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     instance = this;
     AddFrame(pageX, pageY, pageWidth, pageHeight);
@@ -115,6 +115,21 @@ void ModCategoriesPage::SetActiveCategory(const int index)
     }
 }
 
+void ModCategoriesPage::UpdateScrollbarActivation(const H3Msg &msg) noexcept
+{
+    if (!scrollBar || !scrollBar->IsVisible() || !msg.IsMouseOver() || !dialog)
+        return;
+
+    const int left = dialog->GetX() + pageX;
+    const int top = dialog->GetY() + pageY;
+    const bool inside = msg.GetX() >= left && msg.GetX() < left + pageWidth && msg.GetY() >= top &&
+                        msg.GetY() < top + pageHeight;
+    if (inside)
+        scrollBar->Activate();
+    else
+        scrollBar->DeActivate();
+}
+
 void ModCategoriesPage::Refresh()
 {
     RedrawItems(firstIndex);
@@ -146,7 +161,7 @@ void __fastcall ModCategoriesPage::ScrollProc(const INT32 tick, H3BaseDlg *)
 }
 
 ModContentPage::ModContentPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     AddFrame(pageX, pageY, pageWidth, pageHeight);
     textScroll = H3DlgScrollableText::Create(h3_NullString, pageX + 10, pageY + 8, pageWidth - 28,
@@ -249,6 +264,11 @@ void ModSection::SetVisible(const BOOL state) noexcept
         categoriesPage.Refresh();
         contentPage.RefreshVisibility();
     }
+}
+
+void ModSection::UpdateMousePosition(const H3Msg &msg) noexcept
+{
+    categoriesPage.UpdateScrollbarActivation(msg);
 }
 
 BOOL ModSection::ProcessMessage(H3Msg &msg)

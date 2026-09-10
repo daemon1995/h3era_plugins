@@ -8,7 +8,8 @@
 // shape is intentionally flat and predictable:
 //   help.<folder>.hotkeys[i] = { keys, name, description, type }
 //   help.<folder>.categories[i] = { name, content }
-// This keeps discovery at initialization and lets pages create their controls
+// MainDlg can therefore defer mod discovery/parsing until a mod list or the
+// aggregated hotkey page is actually requested, while pages create controls
 // lazily when a mod is selected.
 class ModJsonDocument final
 {
@@ -84,6 +85,12 @@ class ModJsonDocument final
             {
                 probe = root;
                 probe.Append(".0.name");
+                EraJS::read(probe.String(), success);
+            }
+            if (!success)
+            {
+                probe = root;
+                probe.Append(".0.key");
                 EraJS::read(probe.String(), success);
             }
             if (!success)

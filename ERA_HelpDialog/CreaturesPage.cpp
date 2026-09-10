@@ -9,7 +9,7 @@ CreaturesPage *CreaturesPage::instance = nullptr;
 
 CreatureCategoriesPage::CreatureCategoriesPage(const int x, const int y, const int width, const int height,
                                                H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     instance = this;
     constexpr int iconHeight = 48;
@@ -129,6 +129,21 @@ void CreatureCategoriesPage::SetActiveCategory(const int categoryIndex) noexcept
     RedrawDialog();
 }
 
+void CreatureCategoriesPage::UpdateScrollbarActivation(const H3Msg &msg) noexcept
+{
+    if (!scrollBar || !scrollBar->IsVisible() || !msg.IsMouseOver() || !dialog)
+        return;
+
+    const int left = dialog->GetX() + pageX;
+    const int top = dialog->GetY() + pageY;
+    const bool inside = msg.GetX() >= left && msg.GetX() < left + pageWidth && msg.GetY() >= top &&
+                        msg.GetY() < top + pageHeight;
+    if (inside)
+        scrollBar->Activate();
+    else
+        scrollBar->DeActivate();
+}
+
 void __fastcall CreatureCategoriesPage::ScrollProc(INT32 tick, H3BaseDlg *dlg)
 {
     if (instance)
@@ -138,7 +153,7 @@ void __fastcall CreatureCategoriesPage::ScrollProc(INT32 tick, H3BaseDlg *dlg)
 }
 
 CreaturesPage::CreaturesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     instance = this;
     H3DefLoader def(NH3Dlg::Assets::CREATURE_LARGE);
@@ -433,6 +448,11 @@ void CreaturesSection::SetSubtype(const int subtype)
     activeSubtype = std::max(0, std::min(subtype, buttons::CREATURE_CATEGORY_COUNT - 1));
     categoriesPage.SetActiveCategory(activeSubtype);
     contentPage.SetCategory(activeSubtype);
+}
+
+void CreaturesSection::UpdateMousePosition(const H3Msg &msg) noexcept
+{
+    categoriesPage.UpdateScrollbarActivation(msg);
 }
 
 BOOL CreaturesSection::ProcessMessage(H3Msg &msg)

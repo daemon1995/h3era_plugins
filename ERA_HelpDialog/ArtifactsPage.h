@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
@@ -24,7 +24,7 @@ enum eItem
 };
 }
 
-class ArtifactCategoriesPage final : public HelpPage
+class ArtifactCategoriesPage final : public DlgPage
 {
     H3DlgCaptionButton *buttons[artifacts::CATEGORY_COUNT] = {};
     int activeCategory = artifacts::CATEGORY_ALL;
@@ -36,7 +36,7 @@ class ArtifactCategoriesPage final : public HelpPage
     void SetActiveCategory(int itemId) noexcept;
 };
 
-class ArtifactsPage : public HelpPage
+class ArtifactsPage : public DlgPage
 {
     static ArtifactsPage *instance;
     const int pageX;
@@ -71,7 +71,7 @@ class ArtifactsPage : public HelpPage
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
-class ArtifactsSection final : public HelpSection
+class ArtifactsSection final : public DlgSection
 {
     ArtifactCategoriesPage categoriesPage;
     ArtifactsPage contentPage;

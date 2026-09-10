@@ -38,7 +38,7 @@ int SchoolMaskForCategory(const int categoryId) noexcept
 SpellsPage *SpellsPage::instance = nullptr;
 
 SpellCategoriesPage::SpellCategoriesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog)
+    : DlgPage(dialog)
 {
     AddFrame(x, y, width, height);
     for (int index = 0; index < spells::CATEGORY_COUNT; ++index)
@@ -77,7 +77,7 @@ void SpellCategoriesPage::SetActiveCategory(const int itemId) noexcept
 }
 
 SpellsPage::SpellsPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : HelpPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
+    : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     instance = this;
     H3DefLoader def(NH3Dlg::Assets::SPELLS_DEF);

@@ -59,7 +59,7 @@ struct Category
   public:
     //	Category(LPCSTR jsonKeyName/*, const UINT id*/);
 
-    ~Category();
+    virtual ~Category();
 
   public:
     const Category &Content() const noexcept;

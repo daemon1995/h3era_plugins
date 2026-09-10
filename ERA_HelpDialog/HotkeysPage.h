@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HelpPage.h"
+#include "DlgPage.h"
 #include "ModInformation.h"
 
 namespace main
@@ -23,7 +23,7 @@ enum eItem
 };
 }
 
-class HotkeysCategoriesPage final : public HelpPage
+class HotkeysCategoriesPage final : public DlgPage
 {
     H3DlgCaptionButton *buttons[hotkeys::CATEGORY_COUNT] = {};
     int activeCategory = hotkeys::CATEGORY_ALL;
@@ -36,7 +36,7 @@ class HotkeysCategoriesPage final : public HelpPage
     void SetActiveCategory(int itemId) noexcept;
 };
 
-class HotkeysPage final : public HelpPage
+class HotkeysPage final : public DlgPage
 {
     const std::vector<ModInformation *> &mods;
     H3DlgScrollableText *textScroll = nullptr;
@@ -54,7 +54,7 @@ class HotkeysPage final : public HelpPage
     void RebuildText();
 };
 
-class HotkeysSection final : public HelpSection
+class HotkeysSection final : public DlgSection
 {
     HotkeysCategoriesPage categoriesPage;
     HotkeysPage contentPage;

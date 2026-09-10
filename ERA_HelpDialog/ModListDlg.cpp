@@ -9,6 +9,7 @@ namespace
 {
 constexpr int kFirstItemId = 600;
 constexpr int kRowHeight = 34;
+constexpr int kMargin = 12;
 }
 
 ModListDlg *ModListDlg::instance = nullptr;
@@ -18,6 +19,10 @@ ModListDlg::ModListDlg(const int width, const int height, const int x, const int
     : H3Dlg(width, height, x, y, false, false), mods(mods)
 {
     instance = this;
+    // This is a real child dialog, so give the calculated rectangle an opaque
+    // frame/background. Without it the buttons look detached from the popup
+    // and the actual bounds are difficult to see against MainDlg.
+    AddBackground(TRUE, FALSE, 0);
     CreateDlgItems();
 }
 
@@ -29,14 +34,14 @@ ModListDlg::~ModListDlg()
 
 void ModListDlg::CreateDlgItems()
 {
-    constexpr int margin = 12;
-    const int listHeight = std::max(kRowHeight, heightDlg - 2 * margin);
+    const int listHeight = std::max(kRowHeight, heightDlg - 2 * kMargin);
     visibleCount = std::max(1, listHeight / kRowHeight);
     const int count = static_cast<int>(mods.size());
     for (int index = 0; index < count; ++index)
     {
         const LPCSTR modName = mods[index] && !mods[index]->name.Empty() ? mods[index]->name.String() : "Unknown mod";
-        auto *button = H3DlgCaptionButton::Create(margin, margin + index * kRowHeight, widthDlg - margin * 2 - 18,
+        auto *button = H3DlgCaptionButton::Create(kMargin, kMargin + index * kRowHeight,
+                                                  widthDlg - kMargin * 2 - 18,
                                                   kRowHeight - 4, kFirstItemId + index, "OVBUTN3.def",
                                                   modName,
                                                   NH3Dlg::Text::SMALL, 0, 0, false, static_cast<eVKey>(0),
@@ -51,7 +56,7 @@ void ModListDlg::CreateDlgItems()
     const int maxFirst = std::max(0, count - visibleCount);
     if (maxFirst > 0)
     {
-        scrollBar = H3DlgScrollbar::Create(widthDlg - margin - 16, margin, 16, listHeight, kFirstItemId - 1,
+        scrollBar = H3DlgScrollbar::Create(widthDlg - kMargin - 16, kMargin, 16, listHeight, kFirstItemId - 1,
                                             maxFirst + 1, ScrollProc, false, 1, true);
         AddItem(scrollBar);
     }
@@ -68,7 +73,7 @@ void ModListDlg::RedrawItems(const int requestedFirstIndex)
         const int row = static_cast<int>(index) - firstIndex;
         if (button && row >= 0 && row < visibleCount)
         {
-            button->SetY(12 + row * kRowHeight);
+            button->SetY(kMargin + row * kRowHeight);
             button->ShowActivate();
         }
         else if (button)

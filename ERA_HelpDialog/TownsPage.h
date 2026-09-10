@@ -1,23 +1,23 @@
 #pragma once
 
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
 
-class TownCategoriesPage final : public HelpPage
+class TownCategoriesPage final : public DlgPage
 {
   public:
     explicit TownCategoriesPage(H3Dlg *dialog);
 };
 
-class TownsPage final : public HelpPage
+class TownsPage final : public DlgPage
 {
   public:
     explicit TownsPage(H3Dlg *dialog);
 };
 
-class TownsSection final : public HelpSection
+class TownsSection final : public DlgSection
 {
     TownCategoriesPage categoriesPage;
     TownsPage contentPage;

@@ -53,7 +53,7 @@
     <ClInclude Include="MainDlg.h">
       <Filter>MainDlg</Filter>
     </ClInclude>
-    <ClInclude Include="HelpPage.h">
+    <ClInclude Include="DlgPage.h">
       <Filter>MainDlg</Filter>
     </ClInclude>
     <ClInclude Include="HotkeysPage.h">
@@ -109,7 +109,7 @@
     <ClCompile Include="MainDlg.cpp">
       <Filter>MainDlg</Filter>
     </ClCompile>
-    <ClCompile Include="HelpPage.cpp">
+    <ClCompile Include="DlgPage.cpp">
       <Filter>MainDlg</Filter>
     </ClCompile>
     <ClCompile Include="HotkeysPage.cpp">

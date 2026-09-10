@@ -1,13 +1,13 @@
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
 
-HelpPage::HelpPage(H3Dlg *dialog) : dialog(dialog)
+DlgPage::DlgPage(H3Dlg *dialog) : dialog(dialog)
 {
 }
 
-void HelpPage::AddItem(H3DlgItem *item)
+void DlgPage::AddItem(H3DlgItem *item)
 {
     if (!item || !dialog)
     {
@@ -19,7 +19,7 @@ void HelpPage::AddItem(H3DlgItem *item)
     item->HideDeactivate();
 }
 
-void HelpPage::AddScrollableText(H3DlgScrollableText *scrollableText)
+void DlgPage::AddScrollableText(H3DlgScrollableText *scrollableText)
 {
     if (!scrollableText || !dialog)
         return;
@@ -29,7 +29,7 @@ void HelpPage::AddScrollableText(H3DlgScrollableText *scrollableText)
     SetScrollableTextVisible(scrollableText, FALSE);
 }
 
-void HelpPage::SetScrollableText(H3DlgScrollableText *scrollableText, LPCSTR text)
+void DlgPage::SetScrollableText(H3DlgScrollableText *scrollableText, LPCSTR text)
 {
     if (!scrollableText)
         return;
@@ -41,7 +41,7 @@ void HelpPage::SetScrollableText(H3DlgScrollableText *scrollableText, LPCSTR tex
     SetScrollableTextVisible(scrollableText, isVisible);
 }
 
-void HelpPage::SetScrollableTextVisible(H3DlgScrollableText *scrollableText, const BOOL state) const noexcept
+void DlgPage::SetScrollableTextVisible(H3DlgScrollableText *scrollableText, const BOOL state) const noexcept
 {
     if (!scrollableText)
         return;
@@ -66,7 +66,7 @@ void HelpPage::SetScrollableTextVisible(H3DlgScrollableText *scrollableText, con
     }
 }
 
-void HelpPage::AddFrame(const int x, const int y, const int width, const int height)
+void DlgPage::AddFrame(const int x, const int y, const int width, const int height)
 {
     if (!dialog)
     {
@@ -87,7 +87,7 @@ void HelpPage::AddFrame(const int x, const int y, const int width, const int hei
     frame->HideDeactivate();
 }
 
-void HelpPage::SetVisible(const BOOL state) noexcept
+void DlgPage::SetVisible(const BOOL state) noexcept
 {
     if (isVisible == state)
     {
@@ -113,12 +113,12 @@ void HelpPage::SetVisible(const BOOL state) noexcept
         SetScrollableTextVisible(scrollableText, state);
 }
 
-BOOL HelpPage::IsVisible() const noexcept
+BOOL DlgPage::IsVisible() const noexcept
 {
     return isVisible;
 }
 
-void HelpPage::RedrawDialog() const noexcept
+void DlgPage::RedrawDialog() const noexcept
 {
     // OnCreate runs before H3Dlg::Start() lets the window manager save the
     // screen beneath the dialog. Drawing at that point would put our own

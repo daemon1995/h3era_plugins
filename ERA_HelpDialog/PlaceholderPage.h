@@ -1,11 +1,11 @@
 #pragma once
 
-#include "HelpPage.h"
+#include "DlgPage.h"
 
 namespace main
 {
 
-class PlaceholderSection final : public HelpSection, private HelpPage
+class PlaceholderSection final : public DlgSection, private DlgPage
 {
     H3DlgScrollableText *text = nullptr;
     H3String title;
