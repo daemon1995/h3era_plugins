@@ -4,11 +4,201 @@ using namespace h3;
 
 // void Dlg_CreatureSpellInfo_HooksInit(PatcherInstance* _PI);
 
+namespace
+{
+struct CollectedActiveSpells
+{
+    enum
+    {
+        LAST_NATIVE_SPELL_ID = 80,
+        LAST_SUPPORTED_SPELL_ID = 126,
+        CAPACITY = LAST_SUPPORTED_SPELL_ID + 1
+    };
+
+    INT32 spellIds[CAPACITY];
+    INT32 count;
+};
+
+constexpr INT32 SPELL_DURATION_OFFSET = 0x198;
+constexpr INT32 SPELL_INFLUENCE_QUEUE_OFFSET = 0x420;
+constexpr INT32 EXE_DEQUE_BLOCK_BYTES = 4096;
+constexpr INT32 MAX_REASONABLE_DEQUE_MAP_SIZE = 256;
+
+#pragma pack(push, 4)
+struct ExeDequeIteratorView
+{
+    INT32 *first;
+    INT32 *last;
+    INT32 *next;
+    INT32 **mapNode;
+};
+
+struct ExeDequeView
+{
+    INT32 allocator;
+    ExeDequeIteratorView first;
+    ExeDequeIteratorView last;
+    INT32 **map;
+    INT32 mapSize;
+    INT32 size;
+};
+#pragma pack(pop)
+
+static_assert(sizeof(ExeDequeIteratorView) == 0x10, "Unexpected Heroes III deque iterator layout");
+static_assert(sizeof(ExeDequeView) == 0x30, "Unexpected Heroes III deque layout");
+
+BOOL IsQueueMapNodeValid(const ExeDequeView &queue, INT32 **mapNode)
+{
+    if (!queue.map || !mapNode || queue.mapSize < 2 || queue.mapSize > MAX_REASONABLE_DEQUE_MAP_SIZE)
+        return FALSE;
+
+    const ULONG_PTR mapBegin = reinterpret_cast<ULONG_PTR>(queue.map);
+    const ULONG_PTR mapEnd = mapBegin + static_cast<ULONG_PTR>(queue.mapSize) * sizeof(*queue.map);
+    const ULONG_PTR node = reinterpret_cast<ULONG_PTR>(mapNode);
+    return mapEnd > mapBegin && node >= mapBegin && node < mapEnd &&
+           (node - mapBegin) % sizeof(*queue.map) == 0;
+}
+
+BOOL IsQueueIteratorValid(const ExeDequeView &queue, const ExeDequeIteratorView &iterator)
+{
+    if (!iterator.first || !iterator.last || !iterator.next ||
+        !IsQueueMapNodeValid(queue, iterator.mapNode) || *iterator.mapNode != iterator.first)
+        return FALSE;
+
+    const ULONG_PTR first = reinterpret_cast<ULONG_PTR>(iterator.first);
+    const ULONG_PTR last = reinterpret_cast<ULONG_PTR>(iterator.last);
+    const ULONG_PTR next = reinterpret_cast<ULONG_PTR>(iterator.next);
+    return last > first && last - first == EXE_DEQUE_BLOCK_BYTES && next >= first && next < last;
+}
+
+BOOL AdvanceQueueIterator(const ExeDequeView &queue, ExeDequeIteratorView &iterator)
+{
+    ++iterator.next;
+    if (iterator.next == iterator.last)
+    {
+        ++iterator.mapNode;
+        if (!IsQueueMapNodeValid(queue, iterator.mapNode) || !*iterator.mapNode)
+            return FALSE;
+
+        iterator.first = *iterator.mapNode;
+        iterator.last = iterator.first + EXE_DEQUE_BLOCK_BYTES / sizeof(INT32);
+        iterator.next = iterator.first;
+    }
+
+    return IsQueueIteratorValid(queue, iterator);
+}
+
+BOOL HasSpellId(const CollectedActiveSpells &activeSpells, INT32 spellId)
+{
+    for (INT32 i = 0; i < activeSpells.count; ++i)
+    {
+        if (activeSpells.spellIds[i] == spellId)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOL CollectSpellIdsFromQueue(const H3CombatCreature *stack, CollectedActiveSpells &activeSpells)
+{
+    const ExeDequeView &queue = *reinterpret_cast<const ExeDequeView *>(
+        reinterpret_cast<const UINT8 *>(stack) + SPELL_INFLUENCE_QUEUE_OFFSET);
+
+    if (queue.size < 0 || queue.size > CollectedActiveSpells::CAPACITY ||
+        stack->activeSpellNumber != queue.size)
+        return FALSE;
+
+    if (!queue.size)
+        return TRUE;
+
+    if (!IsQueueIteratorValid(queue, queue.first) || !IsQueueIteratorValid(queue, queue.last))
+        return FALSE;
+
+    ExeDequeIteratorView iterator = queue.first;
+    for (INT32 i = 0; i < queue.size; ++i)
+    {
+        const INT32 spellId = *iterator.next;
+        if (spellId < 0 || spellId > CollectedActiveSpells::LAST_SUPPORTED_SPELL_ID ||
+            HasSpellId(activeSpells, spellId))
+            return FALSE;
+
+        activeSpells.spellIds[activeSpells.count++] = spellId;
+        if (!AdvanceQueueIterator(queue, iterator))
+            return FALSE;
+    }
+
+    return iterator.next == queue.last.next && iterator.mapNode == queue.last.mapNode;
+}
+
+BOOL TryCollectSpellIdsFromQueue(const H3CombatCreature *stack, CollectedActiveSpells &activeSpells)
+{
+    __try
+    {
+        return CollectSpellIdsFromQueue(stack, activeSpells);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return FALSE;
+    }
+}
+
+void SortSpellIds(CollectedActiveSpells &activeSpells)
+{
+    for (INT32 i = 1; i < activeSpells.count; ++i)
+    {
+        const INT32 spellId = activeSpells.spellIds[i];
+        INT32 position = i;
+        while (position > 0 && activeSpells.spellIds[position - 1] > spellId)
+        {
+            activeSpells.spellIds[position] = activeSpells.spellIds[position - 1];
+            --position;
+        }
+        activeSpells.spellIds[position] = spellId;
+    }
+}
+
+INT32 GetStackActiveSpellDuration(const H3CombatCreature *stack, INT32 spellId)
+{
+    if (!stack || spellId < 0 || spellId > CollectedActiveSpells::LAST_SUPPORTED_SPELL_ID)
+        return 0;
+
+    // New Spells keeps IDs above 80 in the contiguous legacy spell-data region.
+    // The influence queue must identify the ID first; scanning this region would
+    // mistake native spell mastery values for additional active spells.
+    return *reinterpret_cast<const INT32 *>(reinterpret_cast<const UINT8 *>(stack) +
+                                            SPELL_DURATION_OFFSET + spellId * sizeof(INT32));
+}
+
+BOOL CollectStackActiveSpells(const H3CombatCreature *stack, CollectedActiveSpells &activeSpells)
+{
+    activeSpells.count = 0;
+    if (!stack)
+        return FALSE;
+
+    if (!TryCollectSpellIdsFromQueue(stack, activeSpells))
+    {
+        // A malformed or foreign queue must fail closed. Native effects remain
+        // displayable, but a stale total can never manufacture spell ID 0.
+        activeSpells.count = 0;
+        for (INT32 spellId = 0; spellId <= CollectedActiveSpells::LAST_NATIVE_SPELL_ID; ++spellId)
+        {
+            if (stack->activeSpellDuration[spellId])
+                activeSpells.spellIds[activeSpells.count++] = spellId;
+        }
+    }
+
+    SortSpellIds(activeSpells);
+    return activeSpells.count > 0;
+}
+} // namespace
+
 BOOL ShowStackActiveSpells(H3CombatCreature *stack, bool isRMC, H3DlgItem *clickedItem)
 {
+    CollectedActiveSpells activeSpells = {};
+    if (!CollectStackActiveSpells(stack, activeSpells))
+        return false;
 
-    int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-    int activeSpellsNum = stack->activeSpellNumber;
+    int activeSpellsNum = activeSpells.count;
     int _sqrt = static_cast<int>(floor(sqrt(activeSpellsNum)));
     int columns = _sqrt;
 
@@ -29,32 +219,30 @@ BOOL ShowStackActiveSpells(H3CombatCreature *stack, bool isRMC, H3DlgItem *click
     H3Dlg *dlg = new H3Dlg(width, height);
 
     int x = 20, y = 20;
-    int duration = 0, counter = 0;
-    for (INT32 i = 0; i < arr_size; i++)
+    int counter = 0;
+    for (INT32 i = 0; i < activeSpells.count; ++i)
     {
-        duration = stack->activeSpellDuration[i];
-        if (duration)
+        const INT32 spellId = activeSpells.spellIds[i];
+        const INT32 duration = GetStackActiveSpellDuration(stack, spellId);
+
+        H3DlgDef *def = H3DlgDef::Create(x, y, _def->GetName(), spellId + 1);
+        dlg->AddItem(def);
+
+        libc::sprintf(h3_TextBuffer, "x%d", duration);
+        // str.Append(duration);
+        H3DlgText *text = H3DlgText::Create(x, y + 25, d_w, 14, h3_TextBuffer, h3::NH3Dlg::Text::TINY, 1, 0,
+                                            eTextAlignment::MIDDLE_RIGHT);
+        if (spellId != NH3Spells::eSpell::BERSERK && spellId != NH3Spells::eSpell::DISRUPTING_RAY &&
+            spellId != NH3Spells::eSpell::BIND)
+            dlg->AddItem(text);
+        if (++counter == columns)
         {
-
-            H3DlgDef *def = H3DlgDef::Create(x, y, _def->GetName(), i + 1);
-            dlg->AddItem(def);
-
-            libc::sprintf(h3_TextBuffer, "x%d", duration);
-            // str.Append(duration);
-            H3DlgText *text = H3DlgText::Create(x, y + 25, d_w, 14, h3_TextBuffer, h3::NH3Dlg::Text::TINY, 1, 0,
-                                                eTextAlignment::MIDDLE_RIGHT);
-            if (i != NH3Spells::eSpell::BERSERK && i != NH3Spells::eSpell::DISRUPTING_RAY &&
-                i != NH3Spells::eSpell::BIND)
-                dlg->AddItem(text);
-            if (++counter == columns)
-            {
-                counter = 0;
-                x = 20;
-                y += d_h + 5;
-            }
-            else
-                x += d_w + 5;
+            counter = 0;
+            x = 20;
+            y += d_h + 5;
         }
+        else
+            x += d_w + 5;
     }
     //
 
@@ -152,10 +340,8 @@ CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature 
 }
 
 H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BattleCtor(HiHook *h, H3CreatureInfoDlg *dlg, H3CombatCreature *mon,
-                                                          int x, int y, int z)
+                                                          int x, int y, bool isLMC)
 {
-    return  THISCALL_5(H3CreatureInfoDlg*, h->GetDefaultFunc(), dlg, mon, x, y, z);
-
     y -= 30; // make dlg start higher cause of new size
 
     if (y < 0)
@@ -176,15 +362,11 @@ H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BattleCtor(HiHook *h, H3CreatureI
         y = 600 - DLG_HEIGHT;
 
     H3CreatureInfoDlg *result =
-        THISCALL_5(H3CreatureInfoDlg *, h->GetDefaultFunc(), dlg, mon, x, y, z); // , 0, 1);// , y, isLMC);
+        THISCALL_5(H3CreatureInfoDlg *, h->GetDefaultFunc(), dlg, mon, x, y, isLMC);
 
-    CreatureDlgHandler handler(result, *reinterpret_cast<H3CombatCreature **>(0x2860280));
-    // creature_dlg_stack = mon;
+    CreatureDlgHandler handler(result, mon);
 
-    //	auto result = FASTCALL_5(H3CreatureInfoDlg*, h->GetDefaultFunc(), dlg, mon, xa, x, y);
-
-    return result; // result;
-                   // return EXEC_DEFAULT;
+    return result;
 }
 
 void __fastcall CreatureDlgSrollbar_Proc(INT32 tickId, H3BaseDlg *dlg)
@@ -406,39 +588,29 @@ BOOL CreatureDlgHandler::AddExperienceButton()
 
 BOOL CreatureDlgHandler::AddSpellEfects()
 {
+    CollectedActiveSpells activeSpells = {};
+    CollectStackActiveSpells(stack, activeSpells);
 
-    H3Vector<INT32> active_spells(stack->activeSpellNumber);
-    int counter = 0;
-
-    if (stack->activeSpellNumber)
-    {
-        int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-
-        for (INT32 i = 0; i < arr_size; ++i)
-        {
-            if (stack->activeSpellDuration[i])
-                active_spells[counter++] = i;
-        }
-    }
-    //	DebugInt(stack->activeSpellNumber);
-    bool needToExpnd = stack->activeSpellNumber > 6;
-    int spellsToShow = needToExpnd ? 5 : stack->activeSpellNumber;
+    bool needToExpnd = activeSpells.count > 6;
+    int spellsToShow = needToExpnd ? 5 : activeSpells.count;
 
     // int x = 283
     H3DlgDef *spellDef;
     H3DlgText *durTextItem;
     for (INT32 i = 0; i < spellsToShow; i++)
     {
+        const INT32 spellId = activeSpells.spellIds[i];
+        const INT32 spellDuration = GetStackActiveSpellDuration(stack, spellId);
         int yPos = 42 * i + 47;
         int defId = 1000 + i;
-        spellDef = H3DlgDef::Create(283, yPos, defId, "spellint.def", active_spells[i] + 1);
+        spellDef = H3DlgDef::Create(283, yPos, defId, "spellint.def", spellId + 1);
 
         H3String hint = H3GeneralText::Get()->GetText(612);
-        H3String spellName = H3Spell::Get()[active_spells[i]].name;
-        H3String spellDesc = H3Spell::Get()[active_spells[i]].description[0];
+        H3String spellName = H3Spell::Get()[spellId].name;
+        H3String spellDesc = H3Spell::Get()[spellId].description[0];
         if (spellDesc == h3_NullString)
             spellDesc = spellName;
-        switch (active_spells[i])
+        switch (spellId)
         {
         case h3::eSpell::BIND:
             libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(),
@@ -454,7 +626,7 @@ BOOL CreatureDlgHandler::AddSpellEfects()
             break;
         default:
             libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(612), spellName.String(),
-                          stack->activeSpellDuration[active_spells[i]]);
+                          spellDuration);
             break;
         }
 
@@ -462,12 +634,11 @@ BOOL CreatureDlgHandler::AddSpellEfects()
         // spellDef->SetHint(H3Spell::Get()[active_spells[i]].description[0]);
         dlg->AddItem(spellDef);
 
-        if (stack->activeSpellDuration[active_spells[i]]      // if stack has this spell active
-            && active_spells[i] != NH3Spells::eSpell::BERSERK // and not permanent effect
-            && active_spells[i] != NH3Spells::eSpell::DISRUPTING_RAY && active_spells[i] != NH3Spells::eSpell::BIND)
+        if (spellDuration && spellId != NH3Spells::eSpell::BERSERK &&
+            spellId != NH3Spells::eSpell::DISRUPTING_RAY && spellId != NH3Spells::eSpell::BIND)
         {
             H3String duration = "";
-            duration.Append("x").Append(stack->activeSpellDuration[active_spells[i]]);
+            duration.Append("x").Append(spellDuration);
             durTextItem = H3DlgText::Create(spellDef->GetX() + spellDef->GetWidth() - 24,
                                             spellDef->GetY() + spellDef->GetHeight() - 12,
                                             24, // width
@@ -747,7 +918,8 @@ void Dlg_CreatureInfo_HooksInit(PatcherInstance *pi)
 
     pi->WriteHiHook(0x5F45B0, THISCALL_, H3CreatureInfoDlg_BuyCtor);       // BuyCreatureInfoDlg
     pi->WriteHiHook(0x5F3EF0, THISCALL_, H3CreatureInfoDlg_NotBattleCtor); // BattleCreatureInfo
-    pi->WriteHiHook(0x764B38, THISCALL_, H3CreatureInfoDlg_BattleCtor);    // BattleCreatureInfo
+    // Hook the real battle creature-info constructor, not the WoG wrapper at 0x764B38.
+    pi->WriteHiHook(0x5F3700, SPLICE_, EXTENDED_, THISCALL_, H3CreatureInfoDlg_BattleCtor);
 
     // pi->WriteLoHook(0x5F4445, H3CreatureInfoDlg_NotBattle_CreateDescription); // BattleCreatureInfo
     pi->WriteHiHook(0x5F4C00, THISCALL_, H3CreatureInfoDlg_Proc); // dlg proc
