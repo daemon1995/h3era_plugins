@@ -3,7 +3,6 @@
 
 #include "..\headers\header.h"
 
-using namespace h3;
 constexpr int MAX_BP_ARTIFACTS = 64;
 
 class HeroArts_CustomDlg : public H3Dlg
@@ -13,20 +12,22 @@ class HeroArts_CustomDlg : public H3Dlg
     int selectedArt = eArtifact::NONE;
 
   public:
+    std::map<int, H3Artifact> displayedArts = {};
+
+  public:
     HeroArts_CustomDlg(int a, int b, int x, int y, H3Hero *heroA, int slot) : H3Dlg(a, b, x, y), hero(heroA), slot(slot)
     {
     } // delegate size to H3Dlg, clear map
-    virtual ~HeroArts_CustomDlg();
-    BOOL DialogProc(H3Msg &msg) override;
+    virtual ~HeroArts_CustomDlg() {};
 
-    int GetSelectedArtd()
+    virtual BOOL DialogProc(H3Msg &msg) override;
+
+    inline int SelectedArtd()
     {
         return selectedArt;
     }
 
-    std::map<int, H3Artifact> displayedArts = {};
-
   private:
     void ShowArtifactDescription(const H3Artifact *art);
-    void SwitchHeroArtifact(H3Artifact *art, int itId);
+    bool SwitchHeroArtifact(const H3Artifact &art);
 };

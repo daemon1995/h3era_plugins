@@ -7,8 +7,19 @@ using namespace h3;
 
 constexpr int ART_NOT_PLACED = 0;
 constexpr int ART_PLACED = 1;
+
+static bool IsQuickSwitchMessage(const H3Msg *msg)
+{
+    return msg &&
+           ((msg->command == eMsgCommand::ITEM_COMMAND && msg->subtype == eMsgSubtype::LBUTTON_DOWN &&
+             msg->flags == eMsgFlag::SHIFT) ||
+            (msg->command == eMsgCommand::WHEEL_BUTTON && msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP));
+}
+
 int PrepareAndShowArtifactsDlg(H3Hero *hero, int slot, H3DlgItem *it, std::vector<H3Artifact> &heroArts, int scrollsNum)
 {
+    if (!hero || !it || heroArts.empty() || scrollsNum < 0 || scrollsNum > static_cast<int>(heroArts.size()))
+        return eArtifact::NONE;
 
     int artsNum = heroArts.size();
     int artsNoScrollsNum = artsNum - scrollsNum;
@@ -64,7 +75,8 @@ int PrepareAndShowArtifactsDlg(H3Hero *hero, int slot, H3DlgItem *it, std::vecto
         }
     }
 
-    if (globalPatcher->VarFind("HD.def.SpScrArt") != NULL)
+    const bool hasScrollDef = globalPatcher->VarFind("HD.def.SpScrArt") != NULL;
+    if (hasScrollDef)
         defName = "def.SpScrArt";
 
     x = 20; // go to new line for scrolls
@@ -75,8 +87,9 @@ int PrepareAndShowArtifactsDlg(H3Hero *hero, int slot, H3DlgItem *it, std::vecto
     {
         artToChooseDlg->displayedArts.emplace(i + 1,
                                               heroArts[i]); // copy arts into dlg std::set<int id, H3Artifact art>
-        artToChooseDlg->CreatePcx(x - 2, y - 2, i + 1, "artslot.pcx");              // place artslot bg
-        artToChooseDlg->CreateDef(x, y, i + 1, defName, heroArts[i].ScrollSpell()); // place spellScroll  def
+        artToChooseDlg->CreatePcx(x - 2, y - 2, i + 1, "artslot.pcx"); // place artslot bg
+        const int frame = hasScrollDef ? static_cast<int>(heroArts[i].ScrollSpell()) : eArtifact::SPELL_SCROLL;
+        artToChooseDlg->CreateDef(x, y, i + 1, defName, frame);
         x += 46;
 
         if (x > width - 46) // if out of width
@@ -87,7 +100,7 @@ int PrepareAndShowArtifactsDlg(H3Hero *hero, int slot, H3DlgItem *it, std::vecto
     }
 
     artToChooseDlg->Start();                          // run Dlg
-    int newArtId = artToChooseDlg->GetSelectedArtd(); // return selected art id
+    int newArtId = artToChooseDlg->SelectedArtd(); // return selected art id
 
     delete artToChooseDlg; // destroy dlg
 
@@ -96,9 +109,10 @@ int PrepareAndShowArtifactsDlg(H3Hero *hero, int slot, H3DlgItem *it, std::vecto
 
 bool CheckHeroBackPackArtifactsDlg(H3Msg *msg, H3BaseDlg *dlg, H3Hero *hero)
 {
+    if (!dlg || !hero)
+        return ART_NOT_PLACED;
 
-    if (msg->subtype == eMsgSubtype::LBUTTON_DOWN && msg->flags == eMsgFlag::SHIFT ||
-        msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP)
+    if (IsQuickSwitchMessage(msg))
     {
 
         H3DlgItem *it = dlg->ItemAtPosition(msg); // get clicked itrm
@@ -110,7 +124,7 @@ bool CheckHeroBackPackArtifactsDlg(H3Msg *msg, H3BaseDlg *dlg, H3Hero *hero)
 
             if (hero == P_DialogHero) // if std hero dlg
                 vSlot = slotId - 2;   // other case set corerct slots for hero dlg
-            else if (slotId >= 27 && slotId <= 45 || slotId >= 46 && slotId <= 64) // if Swap Dlg
+            else if ((slotId >= 27 && slotId <= 45) || (slotId >= 46 && slotId <= 64)) // if Swap Dlg
             {
                 H3SwapManager *swapMgr = H3SwapManager::Get(); // get swapMgr
                 swapMgr->heroClicked = slotId < 46 ? 0 : 1;
@@ -118,7 +132,7 @@ bool CheckHeroBackPackArtifactsDlg(H3Msg *msg, H3BaseDlg *dlg, H3Hero *hero)
                 vSlot = slotId < 46 ? slotId - 27 : slotId - 46; // and his slots
             }
 
-            if (hero->owner != P_Game->GetPlayerID())
+            if (!hero || hero->owner != P_Game->GetPlayerID())
                 return ART_NOT_PLACED;
 
             if (vSlot >= eArtifactSlots::HEAD && vSlot <= eArtifactSlots::MISC5) // if slot is in range
@@ -135,7 +149,6 @@ bool CheckHeroBackPackArtifactsDlg(H3Msg *msg, H3BaseDlg *dlg, H3Hero *hero)
                 std::vector<H3Artifact> heroArts(0);
                 heroArts.reserve(MAX_BP_ARTIFACTS);
                 int scrollsCounter = 0;
-                int spell = 0;
 
                 for (size_t i = 0; i < MAX_BP_ARTIFACTS; i++)
                 {
@@ -154,12 +167,14 @@ bool CheckHeroBackPackArtifactsDlg(H3Msg *msg, H3BaseDlg *dlg, H3Hero *hero)
                 {
 
                     std::sort(heroArts.begin(), heroArts.end(),
-                              [](H3Artifact &a, H3Artifact &b) // sort artifacts
+                              [](const H3Artifact &a, const H3Artifact &b) // sort artifacts
                               {
-                                  if (a.id != eArtifact::SPELL_SCROLL && b.id != eArtifact::SPELL_SCROLL)
+                                  const bool aIsScroll = a.id == eArtifact::SPELL_SCROLL;
+                                  const bool bIsScroll = b.id == eArtifact::SPELL_SCROLL;
+                                  if (aIsScroll != bIsScroll)
+                                      return !aIsScroll; // explicitly place artifacts before scrolls
+                                  if (!aIsScroll)
                                       return a.GetCost() > b.GetCost(); // by cost, if not scrolls
-                                  else if ((a.id == eArtifact::SPELL_SCROLL) ^ (b.id == eArtifact::SPELL_SCROLL))
-                                      return a.id > b.id; // arts before scrolls
                                   else                    // if scrolls only
                                   {
                                       H3Spell *spellA = &P_Spell[a.ScrollSpell()];
@@ -187,9 +202,7 @@ _LHF_(Dlg_HeroInfo_BeforeBlockWheel)
 {
     H3Msg *msg = (H3Msg *)c->esi;
 
-    if ((msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP                             // if mouse wheel bttn release
-         || msg->subtype == eMsgSubtype::LBUTTON_DOWN && msg->flags == eMsgFlag::SHIFT) // or LMC press + shift
-        && P_Game->GetPlayerID() == P_ActivePlayer->ownerID)                            // and for active player only
+    if (IsQuickSwitchMessage(msg) && P_Game->GetPlayerID() == P_ActivePlayer->ownerID)
     {
 
         H3Hero *hero = P_DialogHero;
@@ -208,18 +221,19 @@ _LHF_(Dlg_HeroInfo_BeforeBlockWheel)
 
 int __stdcall DlgSwapHero_Proc(HiHook *h, H3SwapManager *swapMgr, H3Msg *msg)
 {
-    if (msg->subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_UP &&
-            msg->command == eMsgCommand::WHEEL_BUTTON // if mouse wheel bttn release
-        || msg->subtype == eMsgSubtype::LBUTTON_DOWN && msg->flags == eMsgFlag::SHIFT &&
-               msg->command == eMsgCommand::ITEM_COMMAND) // or LMC press + shift
+    if (IsQuickSwitchMessage(msg) && swapMgr->dlg)
     {
         H3BaseDlg *dlg = (H3BaseDlg *)swapMgr->dlg;
         bool art = false;
         int heroSide = -1;
-        if (swapMgr->twoHumansTrade && dlg->GetH3DlgItem(302)->IsEnabled()) // if Network trade
+        if (swapMgr->twoHumansTrade) // network restrictions must not fall through to samePlayer
         {
-            heroSide = P_Game->GetPlayerID() == P_ActivePlayer->ownerID ? 0 : 1; // check hero side
-            art = CheckHeroBackPackArtifactsDlg(msg, dlg, swapMgr->hero[heroSide]);
+            H3DlgItem *tradeButton = dlg->GetH3DlgItem(302);
+            if (tradeButton && tradeButton->IsEnabled())
+            {
+                heroSide = P_Game->GetPlayerID() == P_ActivePlayer->ownerID ? 0 : 1;
+                art = CheckHeroBackPackArtifactsDlg(msg, dlg, swapMgr->hero[heroSide]);
+            }
         }
         else if (swapMgr->samePlayer)
             art = CheckHeroBackPackArtifactsDlg(msg, dlg, swapMgr->hero[0]);
@@ -235,9 +249,13 @@ int __stdcall DlgSwapHero_Proc(HiHook *h, H3SwapManager *swapMgr, H3Msg *msg)
 
             if (heroSide != -1) // if PvP trade
             {
-                swapMgr->samePlayer = 1; // correct pvp Data
+                const BOOL8 samePlayer = swapMgr->samePlayer;
+                const BOOL8 twoHumansTrade = swapMgr->twoHumansTrade;
+                swapMgr->samePlayer = 1; // required by the native send function
                 swapMgr->twoHumansTrade = 1;
-                THISCALL_1(void, 0x5AFF80, (int)swapMgr); // sendNetData((int)swapMgr)
+                THISCALL_1(void, 0x5AFF80, swapMgr); // sendNetData
+                swapMgr->samePlayer = samePlayer;
+                swapMgr->twoHumansTrade = twoHumansTrade;
             }
 
             dlg->Redraw(); // redraw to see changes

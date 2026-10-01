@@ -1,30 +1,32 @@
 #include "HeroArts_CustomDlg.h"
 
-using namespace h3;
-
-HeroArts_CustomDlg::~HeroArts_CustomDlg()
-{
-}
-
 BOOL HeroArts_CustomDlg::DialogProc(H3Msg &msg)
 {
-    if (msg.subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_DOWN && msg.command == eMsgCommand::WHEEL_BUTTON ||
+    if ((msg.subtype == eMsgSubtype::MOUSE_WHEEL_BUTTON_DOWN && msg.command == eMsgCommand::WHEEL_BUTTON) ||
         msg.command == eMsgCommand::LCLICK_OUTSIDE || msg.command == eMsgCommand::RCLICK_OUTSIDE)
         this->Stop();
-    else if (msg.subtype == eMsgSubtype::LBUTTON_DOWN || msg.subtype == eMsgSubtype::RBUTTON_DOWN)
+    else if (msg.command == eMsgCommand::MOUSE_BUTTON &&
+             (msg.subtype == eMsgSubtype::LBUTTON_DOWN || msg.subtype == eMsgSubtype::RBUTTON_DOWN))
     {
-        int indexInSet = msg.GetDlg()->ItemAtPosition(msg)->GetID();
-        if (indexInSet > 0)
+        H3DlgItem *item = ItemAtPosition(msg);
+        if (!item)
         {
-            H3Artifact *art = &displayedArts[indexInSet];
+            this->Stop();
+            return 0;
+        }
+
+        const auto displayedArt = displayedArts.find(item->GetID());
+        if (displayedArt != displayedArts.end())
+        {
+            const H3Artifact &art = displayedArt->second;
             switch (msg.subtype)
             {
             case eMsgSubtype::RBUTTON_DOWN:
-                ShowArtifactDescription(art);
+                ShowArtifactDescription(&art);
                 break;
             case eMsgSubtype::LBUTTON_DOWN:
-                SwitchHeroArtifact(art, indexInSet - 1);
-                this->Stop(); // stop dlg
+                if (SwitchHeroArtifact(art))
+                    this->Stop();
                 break;
             default:
                 break;
@@ -54,48 +56,49 @@ void HeroArts_CustomDlg::ShowArtifactDescription(const H3Artifact *art)
     H3Messagebox::RMB(artDescription.String(), pic);
 }
 
-void SortHeroBackPackArtfacts(H3Hero *hero)
+bool HeroArts_CustomDlg::SwitchHeroArtifact(const H3Artifact &art)
 {
-    std::vector<H3Artifact> bpArtVec(0);
-    bpArtVec.reserve(MAX_BP_ARTIFACTS);
-    for (int i = 0; i < MAX_BP_ARTIFACTS; i++)
-    {
-        if (hero->backpackArtifacts[i].id != eArtifact::NONE)
-            bpArtVec.emplace_back(hero->backpackArtifacts[i]);
-    }
-    int vecSize = bpArtVec.size();
+    if (!hero || art.Empty() || slot < eArtifactSlots::HEAD || slot > eArtifactSlots::MISC5 ||
+        hero->owner != P_Game->GetPlayerID())
+        return false;
 
-    for (int i = 0; i < vecSize; i++)
-        hero->backpackArtifacts[i] = bpArtVec[i];
-    for (int i = vecSize; i < MAX_BP_ARTIFACTS; i++)
-        hero->backpackArtifacts[i].Clear();
-
-    return;
-}
-void HeroArts_CustomDlg::SwitchHeroArtifact(H3Artifact *art, int itId)
-{
-
-    H3Artifact artAtSlot(hero->bodyArtifacts[slot]);
-    // H3Artifact artA
-    bool isReplaced = !artAtSlot.Empty();
-    if (isReplaced)
-        hero->RemoveArtifact(slot); // unequip old art from doll
-
-    int i = 0;
-    for (; i < MAX_BP_ARTIFACTS; i++) // loop BackPack
-        if (hero->backpackArtifacts[i] == *art)
+    int backpackIndex = 0;
+    for (; backpackIndex < MAX_BP_ARTIFACTS; ++backpackIndex)
+        if (hero->backpackArtifacts[backpackIndex] == art)
             break;
 
-    hero->GiveArtifact(*art, slot);  // Equip Selected Artifact
-    hero->RemoveBackpackArtifact(i); // remove art from BackPack
+    if (backpackIndex == MAX_BP_ARTIFACTS || !hero->CanReplaceArtifact(art.id, slot))
+        return false;
 
-    if (isReplaced)                               // if we replaced artifact
-        hero->GiveBackpackArtifact(artAtSlot, i); // place it into backpack at the same place
-    else                                          // if placed into empty slot, then we must sort arts
-        SortHeroBackPackArtfacts(hero);
+    // CanReplaceArtifact temporarily changes equipment; verify the source again after its hooks run.
+    if (hero->backpackArtifacts[backpackIndex] != art)
+        return false;
 
-    this->selectedArt = art->id;
+    const H3Artifact selectedArtifact(art);
+    const H3Artifact artAtSlot(hero->bodyArtifacts[slot]);
+    const bool isReplaced = !artAtSlot.Empty();
+    if (isReplaced)
+        hero->RemoveArtifact(slot);
+
+    // These native functions return BOOL8; the H3API wrappers discard that result.
+    if (!THISCALL_3(BOOL8, 0x4E2C70, hero, &selectedArtifact, slot))
+    {
+        if (isReplaced)
+            hero->GiveArtifact(artAtSlot, slot);
+        return false;
+    }
+
+    hero->RemoveBackpackArtifact(backpackIndex); // also shifts the remaining backpack entries
+
+    if (isReplaced && !THISCALL_3(BOOL8, 0x4E3200, hero, &artAtSlot, backpackIndex))
+    {
+        hero->RemoveArtifact(slot);
+        hero->GiveArtifact(artAtSlot, slot);
+        hero->GiveBackpackArtifact(selectedArtifact, backpackIndex);
+        return false;
+    }
+
+    selectedArt = selectedArtifact.id;
     P_SoundMgr->ClickSound();
-
-    return;
+    return true;
 }
