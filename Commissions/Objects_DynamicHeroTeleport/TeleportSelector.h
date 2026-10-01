@@ -1,36 +1,35 @@
 #pragma once
-#include "framework.h"
+
+#include "TeleportConfig.h"
+
+DllExport int __stdcall DisplayTeleportSelector(const DWORD *visitedObjectIndexes, const DWORD currentObjectIndex);
+
 class TeleportSelector : public H3Dlg
 {
-    static constexpr int ITEMS_TOP_MARGIN = 200;
-    struct TeleportItem
-    {
-        static constexpr int ITEM_WIDTH = 200;
-        static constexpr int ITEM_HEIGHT = 70;
+    static constexpr int VARIANT_FIRST_ID = 100;
+    static constexpr int CARD_X[2] = {26, 322};
+    static constexpr int CARD_WIDTH = 250;
+    static constexpr int CARD_HEIGHT = 72;
+    static constexpr int CARD_FIRST_Y = 217;
+    static constexpr int CARD_STEP_Y = 105;
 
-        size_t type;
-        union {
-            struct
-            {
-                H3DlgPcx16 *picture;
-                H3DlgText *name;
-                H3DlgFrame* frame;
+    DWORD visitedObjectIndexes[mrart::TELEPORT_VARIANT_COUNT]{};
+    DWORD currentObjectIndex;
+    H3DlgFrame *selectionFrame = nullptr;
+    std::vector<H3DlgTransparentItem *> hitAreas;
 
-            };
-            H3DlgItem *asArray[3] = {};
-        } items;
-    };
-    std::vector<TeleportItem> teleportItems;
-    //H3DlgPcx16* selectionFra
   public:
-    TeleportSelector() : TeleportSelector(COMMON_DLG_WIDTH, COMMON_DLG_HEIGHT, -1, -1) {};
-    TeleportSelector(int width, int height, int x, int y);
-    virtual ~TeleportSelector();
+    int selectedVariant = -1;
 
-  protected:
-    //  virtual BOOL OnCreate() override;
-      virtual BOOL DialogProc(H3Msg& msg) override;
-    //  virtual BOOL OnLeftClick(INT itemId, H3Msg& msg) override;
-  protected:
+  public:
+    TeleportSelector(const DWORD *visitedObjectIndexes, const DWORD currentObjectIndex);
+
+    virtual BOOL DialogProc(H3Msg &msg) override;
+    virtual VOID OnOK() override;
+    virtual VOID OnCancel() override;
+
+  private:
     void CreateItems();
+    void SelectVariant(const int variant);
+    BOOL IsAvailable(const int variant) const noexcept;
 };

@@ -21,6 +21,9 @@
     <ClInclude Include="HeroTeleport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TeleportConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="TeleportSelector.h">
       <Filter>Header Files</Filter>
     </ClInclude>

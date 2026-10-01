@@ -20,6 +20,7 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="HeroTeleport.h" />
+    <ClInclude Include="TeleportConfig.h" />
     <ClInclude Include="TeleportSelector.h" />
   </ItemGroup>
   <ItemGroup>

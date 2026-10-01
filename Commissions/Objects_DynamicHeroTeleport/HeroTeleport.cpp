@@ -1,160 +1,108 @@
-#pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@20")
-
 #include "HeroTeleport.h"
-DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int objectType, const int objectSubtype,
-                                              const int *objectIndexes, const int arraySize);
+#include "TeleportSelector.h"
 
-int HeroTeleport::objectType = eObject::NO_OBJ;
-int HeroTeleport::objectSubtype = 0;
-H3LoadedPcx16 *HeroTeleport::defaultPicture = nullptr;
-
-void TeleportDlg::RedrawDestinationPanels(const int index, const BOOL redrawDlg)
-{
-    const int lastIndex = index + MAX_DESTINATIONS;
-    const auto size = heroTeleports.size();
-    selectionFrame->Hide();
-    for (size_t i = 0; i < MAX_DESTINATIONS; i++)
-    {
-        auto &panel = destinationPanels[i];
-
-        HeroTeleport *destination = nullptr;
-        if (lastIndex < size)
-        {
-            destination = &heroTeleports[index + i];
-            if (index + i == selectedIndex)
-            {
-                selectionFrame->SetX(panel.icon->GetX());
-                selectionFrame->SetY(panel.icon->GetY());
-            }
-        }
-        panel.SetTarget(destination, redrawDlg);
-    }
-}
-
-void __fastcall TeleportDlg::ScrollBarHandler(INT32 itemID, H3BaseDlg *dlg)
-{
-    TeleportDlg *teleportDlg = static_cast<TeleportDlg *>(dlg);
-    auto scrollBar = teleportDlg->scrollBar;
-    const int scrollPos = scrollBar->GetTick();
-    scrollBar->Draw();
-    scrollBar->Refresh();
-    teleportDlg->RedrawDestinationPanels(itemID, true);
-}
-
-void TeleportDlg::CreateDestinationPanels()
-{
-
-    constexpr int scrollbarHeight = MAX_DESTINATIONS * DESTINATION_PANEL_HEIGHT;
-    const INT ticksCount = heroTeleports.size() - MAX_DESTINATIONS;
-
-    int y = 162;
-    constexpr int x = 32;
-
-    scrollBar = CreateScrollbar(widthDlg - 50, y, 16, scrollbarHeight, 3 * (MAX_DESTINATIONS + 1),
-                                ticksCount > 0 ? ticksCount : 0, ScrollBarHandler);
-
-    if (scrollBar->GetTicksCount() <= 0)
-    {
-        scrollBar->Disable();
-    }
-
-    H3RGB565 color = H3RGB565::Gold();
-    selectionFrame = H3DlgFrame::Create(x, y, widthDlg - x * 2, DESTINATION_PANEL_HEIGHT, color);
-    selectionFrame->HideDeactivate();
-
-    const size_t length = heroTeleports.size();
-    destinationPanels.resize(MAX_DESTINATIONS);
-
-    for (size_t i = 0; i < MAX_DESTINATIONS; i++)
-    {
-        auto &panel = destinationPanels[i];
-
-        panel.icon = CreatePcx16(x, y, 48, 32, 1 + i * 3, nullptr);
-        panel.text = CreateText(x + 48, y, widthDlg - x * 2 - 48, DESTINATION_PANEL_HEIGHT - 4, h3_NullString,
-                                NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, 2 + i * 3);
-        y += DESTINATION_PANEL_HEIGHT;
-
-        HeroTeleport *destination = nullptr;
-        if (i < length)
-        {
-            destination = &heroTeleports[i];
-        }
-        panel.SetTarget(destination, false);
-    }
-}
-
-void TeleportDlg::CreateMiniMap(const int index)
-{
-
-
-
-
-}
-
-BOOL TeleportDlg::DialogProc(H3Msg &msg)
-{
-
-    return 0;
-}
+#pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@20")
 
 DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int objectType, const int objectSubtype,
                                               const int *objectIndexes, const int arraySize)
 {
-    auto hero = P_Game->GetHero(heroId);
-    if (!hero || !objectIndexes || arraySize < 1)
+    (void)heroId;
+    (void)objectType;
+    (void)objectSubtype;
+
+    // Compatibility entry point for the old ERM call. The new call must pass exactly eight
+    // object indexes and the current object index through DisplayTeleportSelector.
+    if (!objectIndexes || arraySize != mrart::TELEPORT_VARIANT_COUNT)
         return -1;
-    std::vector<HeroTeleport> heroTeleports;
-    heroTeleports.reserve(arraySize);
+    return DisplayTeleportSelector(reinterpret_cast<const DWORD *>(objectIndexes), UINT_MAX);
+}
 
-    HeroTeleport::objectType = objectType;
-    HeroTeleport::objectSubtype = objectSubtype;
-    auto &pic = HeroTeleport::defaultPicture;
-    pic = H3LoadedPcx16::Create(48, 32);
-    libc::memset(pic->buffer, 0, pic->buffSize);
+TeleportDlg::TeleportDlg(const int variant, const DWORD currentObjectIndex)
+    : H3Dlg(592, 744, -1, -1, FALSE, TRUE, 1), variant(variant), currentObjectIndex(currentObjectIndex),
+      config(mrart::TeleportConfig::LoadVariant(variant))
+{
+    CreateDialogItems();
+}
 
-    auto pcx = H3LoadedPcx::Load("HPSXXX.PCX");
-    if (pcx)
+void TeleportDlg::CreateDialogItems()
+{
+    CreateText(0, 12, widthDlg, 34, mrart::TeleportConfig::DialogText("mrart.teleport_dlg.title", ""),
+               NH3Dlg::Text::BIG, eTextColor::GOLD, 1);
+    CreateText(0, 574, widthDlg, 34,
+               mrart::TeleportConfig::DialogText("mrart.teleport_dlg.quadrant_question", ""),
+               NH3Dlg::Text::MEDIUM, eTextColor::WHITE, 2);
+
+    minimap = CreatePcx16(MAP_X, MAP_Y, MAP_SIZE, MAP_SIZE, 10, config.minimapPcx);
+
+    panels.resize(config.quadrantCount);
+    for (int quadrant = 0; quadrant < config.quadrantCount; ++quadrant)
     {
-        pcx->DrawToPcx16(pic, 0, 0, 1);
-        pcx->Dereference();
+        const auto &item = config.quadrants[quadrant];
+        if (item.width <= 0 || item.height <= 0)
+            continue;
+
+        const int x = MAP_X + item.x;
+        const int y = MAP_Y + item.y;
+        panels[quadrant].picture = CreatePcx16(x, y, item.width, item.height, 100 + quadrant, item.greenPcx);
+        panels[quadrant].hitArea = CreateHidden(x, y, item.width, item.height, QUADRANT_FIRST_ID + quadrant);
     }
 
-    for (size_t i = 0; i < arraySize; i++)
+    if (config.quadrantCount > 0)
     {
-        const int index = objectIndexes[i];
-        if (index >= 0)
+        const auto &first = config.quadrants[0];
+        selectionFrame = H3DlgFrame::Create(MAP_X + first.x, MAP_Y + first.y, first.width, first.height, 0,
+                                             H3RGB565::Green());
+        if (selectionFrame)
         {
-            heroTeleports.emplace_back(HeroTeleport(index));
-            auto &teleport = heroTeleports.back();
-            teleport.CreatePcx16();
+            selectionFrame->HideDeactivate();
+            AddItem(selectionFrame);
         }
     }
 
-    int result = -1;
+    CreateCancelButton(105, 645);
+    if (H3DlgDefButton *okButton = CreateOKButton(409, 645))
+        okButton->Disable();
+}
 
-    if (heroTeleports.size())
+void TeleportDlg::SelectQuadrant(const int quadrant)
+{
+    if (quadrant < 0 || quadrant >= config.quadrantCount)
+        return;
+
+    const auto &item = config.quadrants[quadrant];
+    if (item.width <= 0 || item.height <= 0)
+        return;
+
+    selectedQuadrant = quadrant;
+    if (selectionFrame)
     {
-
-        TeleportDlg dlg(hero, heroTeleports);
-        dlg.Start();
-
-        result = dlg.selectedIndex;
+        selectionFrame->SetX(MAP_X + item.x);
+        selectionFrame->SetY(MAP_Y + item.y);
+        selectionFrame->Show();
     }
+    if (H3DlgDefButton *okButton = GetDefButton(eControlId::OK))
+        okButton->Enable();
+    Redraw();
+}
 
-    for (auto &heroTeleport : heroTeleports)
+BOOL TeleportDlg::DialogProc(H3Msg &msg)
+{
+    if (msg.IsLeftClick() && msg.itemId >= QUADRANT_FIRST_ID &&
+        msg.itemId < QUADRANT_FIRST_ID + config.quadrantCount)
     {
-        if (heroTeleport.picture)
-        {
-            heroTeleport.picture->Destroy();
-            heroTeleport.picture = nullptr;
-        }
+        SelectQuadrant(msg.itemId - QUADRANT_FIRST_ID);
+        return TRUE;
     }
+    return FALSE;
+}
 
-    if (pic)
-    {
-        pic->Destroy();
-        pic = nullptr;
-    }
+VOID TeleportDlg::OnOK()
+{
+    if (selectedQuadrant >= 0)
+        Stop();
+}
 
-    return result;
+VOID TeleportDlg::OnCancel()
+{
+    selectedQuadrant = -1;
 }
