@@ -264,39 +264,95 @@ void HeroesPage::CallCustomFunction(const int heroId, const BOOL) noexcept
     }
 
     // hero bio
-    specInfo;
+    auto bioText = H3HeroDefaultBiography::Get()[heroId];
+    // bioText = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20";
+    dlg.CreateText(leftPartX + 6, 182, 270, 148, bioText, NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemId++,
+                   eTextAlignment::TOP_LEFT);
+
     // specialization
-    dlg.CreateDef(leftPartX, 326, itemId++, NH3Dlg::Assets::UN44_DEF, heroId);
+    dlg.CreateDef(leftPartX, 325, itemId++, NH3Dlg::Assets::UN44_DEF, heroId);
 
     std::string specializationText(specInfo.spDescr);
-    auto it = std::find(specializationText.begin(), specializationText.end(), '\n');
-    if (it != specializationText.end())
-    {
-        specializationText = specializationText.substr(0, std::distance(specializationText.begin(), it));
-    }
-    dlg.CreateText(leftPartX + 36, 328, 200, 44, specInfo.spFull, NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemId++);
-    dlg.CreateText(leftPartX, 358, 260, 84, specializationText.c_str(), NH3Dlg::Text::SMALL, eTextColor::REGULAR,
-                   itemId++);
+    const size_t pos = specializationText.rfind('\n');
+    if (pos != std::string::npos)
+        specializationText.erase(0, pos + 1);
+
+    dlg.CreateText(leftPartX + 56, 324, 200, 44, specInfo.spFull, NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemId++,
+                   eTextAlignment::TOP_LEFT);
+    dlg.CreateText(leftPartX + 6, 376, 270, 84, specializationText.c_str(), NH3Dlg::Text::SMALL, eTextColor::REGULAR,
+                   itemId++, eTextAlignment::TOP_LEFT);
 
     // RIGHT DLG PART
-    // secondary skills
     constexpr int rightPartX = 318;
-    const int x = 31 + 4 * (29 + 42);
-    int y = 111;
+    constexpr int textX = rightPartX + 54;
+
+    int y = 53;
+
+    for (size_t i = 0; i < std::size(heroInfo.sskills); i++)
+    {
+        auto &skillInfo = heroInfo.sskills[i];
+        if (skillInfo.type == -1 || skillInfo.level < 1)
+            continue;
+        const int frameId = 3 + 3 * skillInfo.type + skillInfo.level - 1;
+        dlg.CreateDef(rightPartX, y, itemId++, NH3Dlg::Assets::SSKILL_44, frameId);
+        dlg.CreateText(textX, y, 64, 20, H3SecondarySkillLevel::Get()[skillInfo.level], NH3Dlg::Text::SMALL,
+                       eTextColor::REGULAR, itemId++, eTextAlignment::MIDDLE_LEFT);
+        dlg.CreateText(textX, y + 20, 64, 20, P_SecondarySkillInfo[skillInfo.type].name, NH3Dlg::Text::SMALL,
+                       eTextColor::REGULAR, itemId++, eTextAlignment::MIDDLE_LEFT);
+
+        y += 51;
+    }
+    y = 200;
+
+    int wmMonId = -1;
+
+    int usedMonX = 0;
+    for (size_t i = 0; i < std::size(heroInfo.armyType); i++)
+    {
+
+        const int monId = heroInfo.armyType[i];
+        if (monId < 0)
+            continue;
+        const int minMon = heroInfo.creatureAmount[i].lowAmount;
+        const int maxMon = heroInfo.creatureAmount[i].highAmount;
+
+        if (minMon <= 0 && maxMon <= 0)
+            continue;
+
+        int x = rightPartX + usedMonX * 42;
+        dlg.CreateDef(rightPartX, y, itemId++, NH3Dlg::Assets::CREATURE_SMALL, monId + 2);
+        typeInfo;
+        usedMonX++;
+    }
+    if (wmMonId != -1)
+    {
+        y = 200;
+        dlg.CreateDef(rightPartX, y, itemId++, NH3Dlg::Assets::UN44_DEF, wmMonId);
+        dlg.CreateText(textX, y, 64, 20, P_CreatureInformation[wmMonId].nameSingular, NH3Dlg::Text::SMALL,
+                       eTextColor::REGULAR, itemId++, eTextAlignment::MIDDLE_LEFT);
+    }
+
+    //
+    // secondary skills
+    // const int x = 31 + 4 * (29 + 42);
 
     // starting army
 
     // magic && book
     if (heroInfo.hasSpellbook)
     {
-        dlg.CreateDef(rightPartX, 382, itemId++, NH3Dlg::Assets::ARTIFACT_DEF, 0);
-        dlg.CreateText(rightPartX + 48, 376, 64, 44, P_ArtifactSetup[0].name, NH3Dlg::Text::SMALL, eTextColor::REGULAR,
-                       itemId++);
+        y = 374;
+
+        dlg.CreateDef(rightPartX + 4, y, itemId++, NH3Dlg::Assets::ARTIFACT_DEF, 0);
+        dlg.CreateText(textX, y, 64, 44, P_ArtifactSetup[0].name, NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemId++,
+                       eTextAlignment::MIDDLE_LEFT);
 
         const int spellId = heroInfo.startingSpell;
-        dlg.CreateDef(rightPartX, 426, itemId++, NH3Dlg::Assets::SPELL_SMALL, spellId + 1);
-        dlg.CreateText(rightPartX + 46, 428, 64, 32, P_Spell[spellId].name, NH3Dlg::Text::SMALL, eTextColor::REGULAR,
-                       itemId++);
+
+        y = 425;
+        dlg.CreateDef(rightPartX, y, itemId++, NH3Dlg::Assets::SPELL_SMALL, spellId + 1);
+        dlg.CreateText(textX, y, 64, 32, P_Spell[spellId].name, NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemId++,
+                       eTextAlignment::MIDDLE_LEFT);
     }
     //   backWidget->SetPcx(back);
     //  H3DlgPcx =
