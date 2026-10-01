@@ -18,7 +18,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
-    <ClInclude Include="battle_CreatureDlg_SpellsPreview.h" />
+    <ClInclude Include="CommanderSkillList.h" />
     <ClInclude Include="MonPreview.h" />
     <ClInclude Include="CreatureDlgHandler.h" />
   </ItemGroup>
@@ -27,6 +27,7 @@
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="MonPreview.cpp" />
     <ClCompile Include="CreatureDlgHandler.cpp" />
+    <ClCompile Include="CommanderSkills.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

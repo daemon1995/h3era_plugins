@@ -62,10 +62,16 @@ class CreatureDlgHandler
     H3Army *army = nullptr;
     int armySlotIndex = -1;
     bool wogStackExperience = false;
+    const H3Hero *hero = nullptr;
+    int descriptionX = 24;
+    int descriptionY = 189;
+    int descriptionWidth = 250;
+    int descriptionHeight = 55;
+    int commanderPanelHeight = 0;
 
   public:
     CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature *stack = nullptr, H3Army *army = nullptr,
-                       int armySlotIndex = -1);
+                       int armySlotIndex = -1, const H3Hero *hero = nullptr);
     // static void ProcessCreatureDlg(H3CreatureInfoDlg *dlg);
     BOOL AlignItems();
     BOOL AddExperienceButton();

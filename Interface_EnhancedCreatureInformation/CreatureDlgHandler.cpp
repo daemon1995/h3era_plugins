@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "CommanderSkillList.h"
 
 using namespace h3;
 
@@ -7,8 +8,14 @@ using namespace h3;
 BOOL ShowStackActiveSpells(H3CombatCreature *stack, bool isRMC, H3DlgItem *clickedItem)
 {
 
+    if (!stack)
+        return FALSE;
     int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-    int activeSpellsNum = stack->activeSpellNumber;
+    int activeSpellsNum = 0;
+    for (int i = 0; i < arr_size; ++i)
+        activeSpellsNum += stack->activeSpellDuration[i] != 0;
+    if (!activeSpellsNum)
+        return FALSE;
     int _sqrt = static_cast<int>(floor(sqrt(activeSpellsNum)));
     int columns = _sqrt;
 
@@ -81,7 +88,7 @@ _LHF_(Dlg_CreatureInfo_RmcProc)
     int item_id = msg->itemId;
     auto creature_dlg_stack = *reinterpret_cast<H3CombatCreature **>(0x2860280);
     if ((item_id > 220 && item_id < 224 || item_id >= 3000 && item_id < 3003) &&
-        msg->subtype == eMsgSubtype::RBUTTON_DOWN && creature_dlg_stack->activeSpellNumber)
+        msg->subtype == eMsgSubtype::RBUTTON_DOWN && creature_dlg_stack && creature_dlg_stack->activeSpellNumber)
     {
         ShowStackActiveSpells(creature_dlg_stack, true, nullptr);
         msg->itemId = -1;
@@ -137,12 +144,22 @@ BOOL ParseText(LPCSTR text)
 
     return false;
 }
-CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature *stack, H3Army *army, int armySlotIndex)
-    : dlg(dlg), stack(stack), army(army), armySlotIndex(armySlotIndex), wogStackExperience(WOG_STACK_EXPERIENCE_ON)
+CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature *stack, H3Army *army,
+                                       int armySlotIndex, const H3Hero *hero)
+    : dlg(dlg), stack(stack), army(army), armySlotIndex(armySlotIndex),
+      wogStackExperience(WOG_STACK_EXPERIENCE_ON), hero(hero)
 {
     if (dlg)
     {
-        // dlg->AddItem(H3DlgDef::Create(220, 220, "iokay32.def"),false);
+        descriptionX = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.x");
+        descriptionY = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.y");
+        descriptionWidth = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.width");
+        descriptionHeight = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.height");
+        descriptionX = Clamp(8, descriptionX ? descriptionX : 24, 262);
+        descriptionY = Clamp(185, descriptionY ? descriptionY : 189, 287);
+        descriptionWidth = Clamp(16, descriptionWidth ? descriptionWidth : 250, 278 - descriptionX);
+        descriptionHeight = Clamp(14, descriptionHeight ? descriptionHeight : 55, 301 - descriptionY);
+        AddCommanderSkills();
         AlignItems();
         if (wogStackExperience && dlg->GetDefButton(30722))
             AddExperienceButton();
@@ -154,37 +171,12 @@ CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature 
 H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BattleCtor(HiHook *h, H3CreatureInfoDlg *dlg, H3CombatCreature *mon,
                                                           int x, int y, int z)
 {
-    return  THISCALL_5(H3CreatureInfoDlg*, h->GetDefaultFunc(), dlg, mon, x, y, z);
-
-    y -= 30; // make dlg start higher cause of new size
-
-    if (y < 0)
-    {
-        if (P_CombatManager->dlg->GetHeight() == 600) // hd mod combat dlg height check
-            y = 0;                                    // non dlg changes
-        else if (y < -15)                             // new base y-value
-            y = -15;
-    }
-
-    x -= 30;
-
-    if (800 - x < DLG_WIDTH) // set battle dlg new xPos limit
-        x = 800 - DLG_WIDTH;
-    if (x < 0)
-        x = 0;
-    if (600 - y < DLG_HEIGHT)
-        y = 600 - DLG_HEIGHT;
-
-    H3CreatureInfoDlg *result =
-        THISCALL_5(H3CreatureInfoDlg *, h->GetDefaultFunc(), dlg, mon, x, y, z); // , 0, 1);// , y, isLMC);
-
-    CreatureDlgHandler handler(result, *reinterpret_cast<H3CombatCreature **>(0x2860280));
-    // creature_dlg_stack = mon;
-
-    //	auto result = FASTCALL_5(H3CreatureInfoDlg*, h->GetDefaultFunc(), dlg, mon, xa, x, y);
-
-    return result; // result;
-                   // return EXEC_DEFAULT;
+    // Clamp against the actual game resolution, including HD battle windows.
+    x = Clamp(0, x - 30, std::max(0, H3GameWidth::Get() - DLG_WIDTH));
+    y = Clamp(0, y - 30, std::max(0, H3GameHeight::Get() - DLG_HEIGHT));
+    auto *result = THISCALL_5(H3CreatureInfoDlg *, h->GetDefaultFunc(), dlg, mon, x, y, z);
+    CreatureDlgHandler handler(result, mon);
+    return result;
 }
 
 void __fastcall CreatureDlgSrollbar_Proc(INT32 tickId, H3BaseDlg *dlg)
@@ -249,19 +241,11 @@ BOOL CreatureDlgHandler::AlignItems()
         //         description.deoh
     }
 
-    int x = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.x");
-    int y = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.y");
-    int width = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.width");
-    int height = EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.height");
+    const int x = descriptionX;
+    const int y = descriptionY;
+    const int width = descriptionWidth;
+    const int height = descriptionHeight;
     eTextAlignment align = (eTextAlignment)EraJS::readInt("gem_plugin.combat_dlg.creature_info.description.alignment");
-    if (!x)
-        x = 24;
-    if (!y)
-        y = 189;
-    if (!width)
-        width = 250;
-    if (!height)
-        height = 55;
 
     if (description)
     {
@@ -271,11 +255,22 @@ BOOL CreatureDlgHandler::AlignItems()
         description->SetY(y);           // set new description xPos
         description->SetAlignment(align);
         description->HideDeactivate();
-        THISCALL_2(void, 0x5FF320, dlg, description); // detach
+        // Keep the hidden original owned by the dialog until destruction.
+        const char *originalText = description->GetH3String().String();
+        std::string text(originalText ? originalText : h3_NullString);
+        if (commanderPanelHeight)
+        {
+            const auto first = text.find('[');
+            const auto last = first == std::string::npos ? first : text.find(']', first + 1);
+            if (last != std::string::npos)
+                text.erase(first, last - first + 1);
+        }
         H3DlgScrollableText *scr = H3DlgScrollableText::Create(
-            description->GetH3String().String(), description->GetX(), description->GetY(), description->GetWidth(),
-            description->GetHeight(), description->GetFont()->GetName(), 1, false);
-        dlg->AddItem(scr);
+            text.c_str(), x, y, width, height, description->GetFont()->GetName(), 1, false);
+        if (scr)
+            dlg->AddItem(scr);
+        else
+            description->ShowActivate();
     }
 
     H3DlgCustomButton *creatureCast = dlg->GetCustomButton(301); // set new cast button postion like for faerie dragons
@@ -356,35 +351,7 @@ BOOL CreatureDlgHandler::AlignItems()
 BOOL CreatureDlgHandler::AddExperienceButton()
 {
 
-    if (dlg)
-    {
-
-        if (auto backPcx8 = dlg->GetH3DlgItem(200))
-        {
-            const int boxW = 200;
-
-            const int boxX = backPcx8->GetX() - boxW;
-            const int boxH = 100;
-            H3DlgPcx16 *boxFrame = H3DlgPcx16::Create(boxX, backPcx8->GetY(), nullptr);
-            boxFrame->SetWidth(boxW);
-            boxFrame->SetHeight(boxH);
-            H3LoadedPcx16 *boxPcx = H3LoadedPcx16::Create(boxW, boxH);
-            boxPcx->BackgroundRegion(0, 0, boxW, boxH, false);
-            boxPcx->FrameRegion(0, 0, boxW, boxH, false, 0, false);
-            // boxPcx->BevelArea(1, 1, boxW - 2, boxH - 2);
-            boxPcx->DarkenArea(1, 1, boxW - 2, boxH - 2, 50);
-            boxFrame->SetPcx(boxPcx);
-            dlg->AddItem(boxFrame);
-
-            // if (auto pcx = boxFrame->GetPcx())
-            //{
-            //	pcx->Destroy();
-            //	boxFrame->SetPcx(nullptr);
-            // }
-        }
-    }
-
-    bool isNPC = !(dlg->creatureId < 174 || dlg->creatureId > 191);
+    bool isNPC = Era::IsCommanderId(dlg->creatureId);
     if (!isNPC || stack != nullptr)
     {
         constexpr int x_pos = 180;
@@ -407,22 +374,13 @@ BOOL CreatureDlgHandler::AddExperienceButton()
 BOOL CreatureDlgHandler::AddSpellEfects()
 {
 
-    H3Vector<INT32> active_spells(stack->activeSpellNumber);
-    int counter = 0;
-
-    if (stack->activeSpellNumber)
-    {
-        int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-
-        for (INT32 i = 0; i < arr_size; ++i)
-        {
-            if (stack->activeSpellDuration[i])
-                active_spells[counter++] = i;
-        }
-    }
-    //	DebugInt(stack->activeSpellNumber);
-    bool needToExpnd = stack->activeSpellNumber > 6;
-    int spellsToShow = needToExpnd ? 5 : stack->activeSpellNumber;
+    std::vector<INT32> active_spells;
+    const int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
+    for (int i = 0; i < arr_size; ++i)
+        if (stack->activeSpellDuration[i])
+            active_spells.push_back(i);
+    const bool needToExpnd = active_spells.size() > 6;
+    const int spellsToShow = needToExpnd ? 5 : static_cast<int>(active_spells.size());
 
     // int x = 283
     H3DlgDef *spellDef;
@@ -496,38 +454,76 @@ BOOL CreatureDlgHandler::AddSpellEfects()
 
 int __stdcall H3CreatureInfoDlg_Proc(HiHook *hook, H3CreatureInfoDlg *dlg, H3Msg *msg)
 {
-    int lastHoverdItemId = *(int *)0x68C6B0; // needed for stting hints at button
-    if ((lastHoverdItemId >= 1000 && lastHoverdItemId <= 1005 || lastHoverdItemId == WOG_CREATURE_EXP_BUTTON_ID ||
-         lastHoverdItemId == DLG_SPELLS_BTTN_ID) &&
-        msg->command == eMsgCommand::MOUSE_OVER)
+    // The original procedure handles item hotkeys and may convert a key event
+    // into a button click. Dispatch the resulting message exactly once.
+    const int result = THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
+    switch (msg->command)
     {
-        H3DlgTextPcx *hint = dlg->GetTextPcx(224);
-
-        if (hint)
-            hint->SetText(dlg->GetH3DlgItem(lastHoverdItemId)->GetHint());
-    }
-
-    if (msg->command == eMsgCommand::MOUSE_BUTTON && msg->subtype != h3::eMsgSubtype::LBUTTON_DOWN)
+    case eMsgCommand::MOUSE_OVER:
     {
-        main_isRMC = msg->subtype == h3::eMsgSubtype::RBUTTON_DOWN;
-
-        switch (msg->itemId)
+        auto *item = dlg->ItemAtPosition(msg);
+        auto *hint = dlg->GetTextPcx(224);
+        if (item && hint && item->GetHint())
         {
-        case WOG_CREATURE_EXP_BUTTON_ID:   // if mouse ckick then call exp dlg
-            CDECL_0(signed int, 0x7645BB); // call wog creature dlg
-            break;
-        case DLG_SPELLS_BTTN_ID: // if clicked at spell list bttn
-
-            ShowStackActiveSpells(*reinterpret_cast<H3CombatCreature **>(0x2860280), main_isRMC,
-                                  dlg->GetH3DlgItem(DLG_SPELLS_BTTN_ID)); // call dlg with cliecked item
-            break;
-
-        default:
-            break;
+            const char *text = item->GetHint();
+            const char *previous = hint->GetH3String().String();
+            if (!previous || libc::strcmp(previous, text))
+            {
+                hint->SetText(text);
+                hint->Draw();
+                hint->Refresh();
+            }
         }
+        return result;
     }
-
-    return THISCALL_2(int, hook->GetDefaultFunc(), dlg, msg);
+    case eMsgCommand::MOUSE_BUTTON:
+    {
+        auto *item = dlg->GetH3DlgItem(msg->itemId);
+        //if (item && commanderPreview::IsSkillItem(msg->itemId))
+        //{
+        //    switch (msg->subtype)
+        //    {
+        //    case eMsgSubtype::RBUTTON_DOWN:
+        //        if (item->GetRightClickHint())
+        //            H3Messagebox::RMB(item->GetRightClickHint());
+        //        break;
+        //    default:
+        //        break;
+        //    }
+        //    return result;
+        //}
+        if (item && (msg->itemId == WOG_CREATURE_EXP_BUTTON_ID || msg->itemId == DLG_SPELLS_BTTN_ID))
+        {
+            switch (msg->subtype)
+            {
+            case eMsgSubtype::LBUTTON_CLICK:
+            case eMsgSubtype::RBUTTON_DOWN:
+            {
+                const BOOL previousRmc = main_isRMC;
+                main_isRMC = msg->subtype == eMsgSubtype::RBUTTON_DOWN;
+                switch (msg->itemId)
+                {
+                case WOG_CREATURE_EXP_BUTTON_ID:
+                    CDECL_0(signed int, 0x7645BB);
+                    break;
+                case DLG_SPELLS_BTTN_ID:
+                    ShowStackActiveSpells(*reinterpret_cast<H3CombatCreature **>(0x2860280), main_isRMC, item);
+                    break;
+                }
+                main_isRMC = previousRmc;
+                break;
+            }
+            default:
+                break;
+            }
+            return result;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return result;
 }
 
 _LHF_(gem_Dlg_CreatureInfo_AddCreatureCastButton)
@@ -563,7 +559,7 @@ H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_NotBattleCtor(HiHook *h, H3Creatu
         dlg->SetY(P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT - 145);
     }
 
-    CreatureDlgHandler handler(result, nullptr, army, slotId);
+    CreatureDlgHandler handler(result, nullptr, army, slotId, reinterpret_cast<const H3Hero *>(hero));
 
     return result;
     //	return EXEC_DEFAULT;
@@ -690,7 +686,7 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
         resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(skillPic, tempPcx, tempPcx->width, tempPcx->height, 2, 2,
                                                                skillPic->width - 4, skillPic->height - 4);
 
-        creatureSkills.emplace_back(*new CreatureSkill{0, 0, 0, 0, skillPic});
+        creatureSkills.push_back(CreatureSkill{0, 0, 0, 0, skillPic});
     }
     tempPcx->Destroy();
     // H3Messagebox::RMB(Era::IntToStr(type).c_str());
@@ -715,7 +711,10 @@ BOOL DrawCreatureSkillsList(int firstSkillIndex)
 {
     auto &skillsPictures = CreatureDlgHandler::dlgSkillPcx;
     auto &skills = CreatureDlgHandler::creatureSkills;
-    int picNum = skillsPictures.size() > skills.size() ? skills.size() : skillsPictures.size();
+    if (firstSkillIndex < 0 || firstSkillIndex > static_cast<int>(skills.size()))
+        return FALSE;
+    int picNum = std::min(static_cast<int>(skillsPictures.size()),
+                         static_cast<int>(skills.size()) - firstSkillIndex);
 
     for (int i = 0; i < picNum; i++)
     {

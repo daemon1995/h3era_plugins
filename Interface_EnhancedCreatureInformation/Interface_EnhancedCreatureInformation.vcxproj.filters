@@ -15,6 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CommanderSkills.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -32,7 +35,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="battle_CreatureDlg_SpellsPreview.h">
+    <ClInclude Include="CommanderSkillList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MonPreview.h">
