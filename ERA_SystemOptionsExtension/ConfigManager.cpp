@@ -7,6 +7,9 @@
 #include "CombatSettings.h"
 #include "MapScroller.h"
 #include "SoundSettings.h"
+#include <cerrno>
+#include <cctype>
+#include <cstdlib>
 
 std::unordered_map<std::string, AdditionalConfig::ConfigEntry *> AdditionalConfig::optionsMap;
 
@@ -14,6 +17,21 @@ namespace
 {
 using ConfigEntry = AdditionalConfig::ConfigEntry;
 using EOptionChangeSource = AdditionalConfig::EOptionChangeSource;
+
+BOOL ParseInteger(const char *text, int &value) noexcept
+{
+    char *end = nullptr;
+    errno = 0;
+    const long parsed = std::strtol(text, &end, 10);
+    if (end == text || errno == ERANGE)
+        return FALSE;
+    while (std::isspace(static_cast<unsigned char>(*end)))
+        ++end;
+    if (*end)
+        return FALSE;
+    value = static_cast<int>(parsed);
+    return TRUE;
+}
 
 void ApplyAlternativeButtonClick(const ConfigEntry &entry, const EOptionChangeSource)
 {
@@ -90,40 +108,33 @@ void AdditionalConfig::InitialApply()
 
     cmbsttngs::CombatSettings::Get();
 
-    constexpr size_t length = sizeof(AdditionalConfig) / sizeof(ConfigEntry);
-    auto array = data();
-    for (size_t i = 0; i < length; i++)
-    {
-        array[i].Apply(EOptionChangeSource::InitialLoad);
-    }
+    for (auto *entry : Entries())
+        entry->Apply(EOptionChangeSource::InitialLoad);
 }
 
 BOOL AdditionalConfig::Save()
 {
     AdditionalConfig &instance = Get();
-    constexpr size_t length = sizeof(AdditionalConfig) / sizeof(ConfigEntry);
-    auto array = instance.data();
-    for (size_t i = 0; i < length; i++)
+    BOOL success = TRUE;
+    for (auto *entry : instance.Entries())
     {
-        auto &entry = array[i];
-        libc::sprintf(h3_TextBuffer, "%d", entry.value);
-        Era::WriteStrToIni(entry.keyName, h3_TextBuffer, sectionName, fileName);
+        libc::sprintf(h3_TextBuffer, "%d", entry->value);
+        if (!Era::WriteStrToIni(entry->keyName, h3_TextBuffer, sectionName, fileName))
+            success = FALSE;
     }
-    return 1;
+    // WriteStrToIni updates ERA's cache; saving it is a separate operation.
+    return Era::SaveIni(fileName) && success;
 }
 BOOL AdditionalConfig::Load()
 {
     AdditionalConfig &instance = Get();
-    constexpr size_t length = sizeof(AdditionalConfig) / sizeof(ConfigEntry);
-    auto array = instance.data();
-    for (size_t i = 0; i < length; i++)
+    for (auto *entry : instance.Entries())
     {
-        auto &entry = array[i];
-        optionsMap[entry.keyName] = &entry;
-        if (Era::ReadStrFromIni(entry.keyName, sectionName, fileName, h3_TextBuffer))
-        {
-            entry.value = Clamp(0, atoi(h3_TextBuffer), entry.maxValue);
-        }
+        optionsMap[entry->keyName] = entry;
+        entry->value = entry->defaultValue;
+        int parsed = 0;
+        if (Era::ReadStrFromIni(entry->keyName, sectionName, fileName, h3_TextBuffer) && ParseInteger(h3_TextBuffer, parsed))
+            entry->value = Clamp(0, parsed, entry->maxValue);
     }
     instance.InitialApply();
     return 1;

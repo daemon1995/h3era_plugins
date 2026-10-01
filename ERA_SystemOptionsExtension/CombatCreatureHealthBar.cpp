@@ -1,4 +1,7 @@
 #include "CombatCreatureHealthBar.h"
+#include <cmath>
+#include <cctype>
+#include <cstdlib>
 
 void __stdcall ShowHealthBarDlg()
 {
@@ -85,7 +88,7 @@ _LHF_(CombatHints::BeforeBattleStackHintDraw)
     {
 
         // GetKeyState Call
-        if (settings.isHeld && !(STDCALL_1(SHORT, PtrAt(0x63A294), settings.vKey) & 0x800))
+        if (settings.isHeld && !(STDCALL_1(SHORT, PtrAt(0x63A294), settings.vKey) & 0x8000))
         // if key is required and isnt' pressed
         {
             return EXEC_DEFAULT; // return
@@ -264,12 +267,23 @@ void __stdcall CombatHints::BattleOptionsDlg_Show(HiHook *h, H3BaseDlg *dlg)
 void CombatHints::WindMgr_DrawColoredRect(const int x, const int y, const int width, const int height,
                                           const Settings *stg, const BOOL lost) noexcept
 {
-    P_WindowManager->GetDrawBuffer()->AdjustHueSaturation(x, y, width, height, lost ? stg->fcolorLoss : stg->fcolorFill,
-                                                          stg->fsaturation);
+    if (width <= 0 || height <= 0)
+        return;
+    auto *buffer = P_WindowManager->GetDrawBuffer();
+    // 0x44E610 clips only the right/bottom; protect the left/top edges as well.
+    const int left = Clamp(0, x, buffer->width);
+    const int top = Clamp(0, y, buffer->height);
+    const int right = Clamp(left, x + width, buffer->width);
+    const int bottom = Clamp(top, y + height, buffer->height);
+    if (right > left && bottom > top)
+        buffer->AdjustHueSaturation(left, top, right - left, bottom - top,
+                                    lost ? stg->fcolorLoss : stg->fcolorFill, stg->fsaturation);
 }
 
 void SettingsDlg::HitPointsBarDraw() noexcept
 {
+    if (!originalLabel || !labelForHp)
+        return;
     // draw label colors
 
     const int labelYOffset = static_cast<int>(settings->height) * -1;
@@ -278,14 +292,12 @@ void SettingsDlg::HitPointsBarDraw() noexcept
     // const int newLabelX = labelForHp->GetX();
     const int newLabelY = nativeLabelY + labelYOffset; // add border
     // labelForHp->SetY(newLabelY);
-    const H3CombatManager *cmbMgr = H3CombatManager::Get();
     const int labelHeight = labelForHp->GetHeight();
     const int protrusionSize = std::abs(labelYOffset);
     const int drawHeightMax = labelHeight - 2;
     const int labelBorderHeight = protrusionSize >= labelHeight ? 2 : 1;
     int drawHeight = Clamp(0, protrusionSize - labelBorderHeight, drawHeightMax);
 
-    const int drawHeightLimit = labelForHp->GetHeight() - 2;
 
     // const int drawY = originalLabel->GetAbsoluteY() + originalLabel->GetHeight() + 1;
     // if draw area displayed at all
@@ -354,22 +366,18 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
 {
     if (creatureDef)
     {
-        DWORD waitUntil = DwordAt(0x6989E8);
-        DWORD currentTime = GetTime();
+        const DWORD currentTime = GetTime();
 
-        if (int(currentTime - waitUntil) >= 0)
+        if (static_cast<INT32>(currentTime - nextAnimationAt) >= 0)
         {
             // рисуем следующий кадр анимации
             THISCALL_1(void, 0x04EB140, creatureDef);
 
-            waitUntil = DwordAt(0x6989E8);
-            int currentTimeA = GetTime() - waitUntil;
-            if (currentTimeA < 100)
-                currentTimeA = 100;
+            const DWORD elapsed = currentTime - nextAnimationAt;
+            nextAnimationAt += elapsed < 100 ? 100 : elapsed;
             Redraw();
             // creatureDef->Draw();
             // creatureDef->Refresh();
-            DwordAt(0x6989E8) = waitUntil + currentTimeA;
             needRedraw = true;
         }
     }
@@ -380,7 +388,7 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
         HitPointsBarDraw();
     }
 
-    if (!hk.bttn->IsVisible() && msg.IsKeyDown())
+    if (hk.bttn && !hk.bttn->IsVisible() && msg.IsKeyDown())
     {
         for (auto it : dlgItems)
             it->Activate();
@@ -476,7 +484,8 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
         }
     }
 
-    hintBar->ShowHint(&msg);
+    if (hintBar)
+        hintBar->ShowHint(&msg);
 
     return 0;
 }
@@ -487,7 +496,7 @@ void SinkItem(H3LoadedPcx16 *pcx, H3DlgItem *it)
 }
 
 SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgText *text)
-    : H3Dlg(width, height, -1, -1, true), text(text), needRedraw(true)
+    : H3Dlg(width, height, -1, -1, true), text(text), needRedraw(true), nextAnimationAt(GetTime())
 {
     settings = incomingSettings;
     auto okBttn = CreateOK32Button(widthDlg - 100, heightDlg - 80);
@@ -704,6 +713,8 @@ int __fastcall SettingsDlg::SettingsHotkeyCallback(H3Msg *msg) noexcept
 }
 SettingsDlg::~SettingsDlg()
 {
+    if (!originalLabel)
+        return;
     auto pcx16 = originalLabel->GetPcx();
     if (pcx16)
     {
@@ -730,20 +741,19 @@ BOOL Settings::save()
     constexpr const char *keys[SIZE] = {"fillColor", "lossColor", "colorSaturation", "yLabelShift"};
     float values[SIZE] = {fcolorFill, fcolorLoss, fsaturation, height};
 
-    // char buf[15];
+    BOOL success = TRUE;
 
     for (size_t i = 0; i < SIZE; i++)
     {
-        Era::WriteStrToIni(keys[i], std::to_string(values[i]).erase(4).c_str(), section, iniPath);
+        if (!Era::WriteStrToIni(keys[i], std::to_string(values[i]).c_str(), section, iniPath))
+            success = FALSE;
     }
 
-    Era::WriteStrToIni("enabled", std::to_string(static_cast<bool>(isEnabled)).c_str(), section, iniPath);
-    Era::WriteStrToIni("held", std::to_string(static_cast<bool>(isHeld)).c_str(), section, iniPath);
-    Era::WriteStrToIni("keyCode", std::to_string(vKey).c_str(), section, iniPath);
+    success = Era::WriteStrToIni("enabled", std::to_string(static_cast<bool>(isEnabled)).c_str(), section, iniPath) && success;
+    success = Era::WriteStrToIni("held", std::to_string(static_cast<bool>(isHeld)).c_str(), section, iniPath) && success;
+    success = Era::WriteStrToIni("keyCode", std::to_string(vKey).c_str(), section, iniPath) && success;
 
-    Era::SaveIni(iniPath);
-
-    return 0;
+    return Era::SaveIni(iniPath) && success;
 }
 
 BOOL Settings::load()
@@ -751,11 +761,11 @@ BOOL Settings::load()
 
     libc::sprintf(h3_TextBuffer, "%d", 1); // set default buffer
     if (Era::ReadStrFromIni("enabled", section, iniPath, h3_TextBuffer))
-        isEnabled = libc::atoi(h3_TextBuffer);
+        isEnabled = libc::atoi(h3_TextBuffer) != 0;
 
     libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
     if (Era::ReadStrFromIni("held", section, iniPath, h3_TextBuffer))
-        isHeld = libc::atoi(h3_TextBuffer);
+        isHeld = libc::atoi(h3_TextBuffer) != 0;
     libc::sprintf(h3_TextBuffer, "%d", MapVirtualKeyA(VK_CONTROL, MAPVK_VK_TO_CHAR)); // set default buffer
     if (Era::ReadStrFromIni("keyCode", section, iniPath, h3_TextBuffer))
     {
@@ -779,11 +789,17 @@ BOOL Settings::load()
         if (!Era::ReadStrFromIni(keys[i], section, iniPath, h3_TextBuffer))
             continue;
 
-        const double temp = libc::atof(h3_TextBuffer);
+        char *end = nullptr;
+        const double temp = std::strtod(h3_TextBuffer, &end);
+        if (end == h3_TextBuffer || !std::isfinite(temp))
+            continue;
+        while (std::isspace(static_cast<unsigned char>(*end)))
+            ++end;
+        if (*end)
+            continue;
         if (i == 3)
         {
-            const int tempInt = static_cast<int>(temp);
-            if (tempInt < -HP_LABEL_MAX_OFFSET || tempInt > HP_LABEL_MAX_OFFSET)
+            if (temp < -HP_LABEL_MAX_OFFSET || temp > HP_LABEL_MAX_OFFSET)
                 continue;
         }
         else
@@ -795,6 +811,6 @@ BOOL Settings::load()
         *(values[i]) = static_cast<float>(temp);
     }
 
-    return 0;
+    return TRUE;
 }
 } // namespace cmbhints

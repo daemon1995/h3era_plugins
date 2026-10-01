@@ -1,4 +1,5 @@
 #include "CombatSettings.h"
+#include <cstring>
 namespace cmbsttngs
 {
 CombatSettings *CombatSettings::instance = nullptr;
@@ -19,10 +20,6 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
         eQuickCombatType_QuickCombatWithoutAutoSpells = 2,
         eQuickCombatType_Ask = 3
     };
-    auto cmb = P_CombatManager->Get();
-    // if (!cmb || cmb->isHuman[0] == cmb->isHuman[1] || P_Game->inTutorial)
-    //    return;
-
     LPCSTR varNames[] = {"battle_humanOnly", "battle_isNetwork", "battle_aiOnly"};
 
     for (auto &varName : varNames)
@@ -36,12 +33,13 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     auto &config = OriginalConfig::Get();
     quickCombatInfo.quickCombat = config.quickCombat;
     quickCombatInfo.autoSpells = config.autoSpells;
-    quickCombatInfo.isNeedRestore = false;
+    quickCombatInfo.restoreQuickCombat = FALSE;
+    quickCombatInfo.restoreAutoSpells = FALSE;
 
     if (P_AutoSolo)
     {
         config.quickCombat = true;
-        quickCombatInfo.isNeedRestore = true;
+        quickCombatInfo.restoreQuickCombat = config.quickCombat != quickCombatInfo.quickCombat;
         return;
     }
 
@@ -61,15 +59,22 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     {
         LPCSTR keys[] = {"era.opt.map.quickCombat.menu", "era.opt.map.quickCombatManual.menu",
                          "era.opt.map.quickCombatMana.menu", "era.opt.map.quickCombatManaFree.menu"};
-        for (size_t i = 1; i <= 4; i++)
-        {
-            libc::sprintf(Era::z[i], "%s", EraJS::read(keys[i - 1]));
-        }
+        Era::TErmZVar storedZ[4];
+        const int storedV1 = Era::v[1];
         const int storedY1 = Era::y[1];
+        for (size_t i = 0; i < 4; i++)
+        {
+            std::memcpy(storedZ[i], Era::z[i + 1], sizeof(storedZ[i]));
+            std::strncpy(Era::z[i + 1], EraJS::read(keys[i]), sizeof(Era::z[i + 1]) - 1);
+            Era::z[i + 1][sizeof(Era::z[i + 1]) - 1] = '\0';
+        }
         Era::y[1] = 1 << quickCombatInfo.lastSelection;
         Era::ExecErmCmd("IF:G1/1/y1/1/2/3/4");
+        quickCombatType = Clamp(1, Era::v[1], 3) - 1;
+        Era::v[1] = storedV1;
         Era::y[1] = storedY1;
-        quickCombatType = Clamp(0, Era::v[1] - 1, 2); // get quick combat type from registry (0..2)
+        for (size_t i = 0; i < 4; i++)
+            std::memcpy(Era::z[i + 1], storedZ[i], sizeof(storedZ[i]));
         quickCombatInfo.lastSelection = quickCombatType;
     }
 
@@ -91,20 +96,25 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
         break;
     }
 
-    quickCombatInfo.isNeedRestore =
-        config.quickCombat != quickCombatInfo.quickCombat || config.autoSpells != quickCombatInfo.autoSpells;
+    quickCombatInfo.restoreQuickCombat = config.quickCombat != quickCombatInfo.quickCombat;
+    quickCombatInfo.restoreAutoSpells = config.autoSpells != quickCombatInfo.autoSpells;
 }
 
 // restore quick combat settings after battle or before FastQuit discards the game
 _ERH_(CombatSettings::OnAfterBattleOrFastQuit)
 {
-    if (!quickCombatInfo.isNeedRestore)
+    if (!quickCombatInfo.restoreQuickCombat && !quickCombatInfo.restoreAutoSpells)
         return;
 
     auto &config = OriginalConfig::Get();
-    config.quickCombat = quickCombatInfo.quickCombat;
-    config.autoSpells = quickCombatInfo.autoSpells;
-    quickCombatInfo.isNeedRestore = false;
+    // Restore only fields temporarily overridden for this battle. A user can
+    // change an untouched option in the manual battle's settings dialog.
+    if (quickCombatInfo.restoreQuickCombat)
+        config.quickCombat = quickCombatInfo.quickCombat;
+    if (quickCombatInfo.restoreAutoSpells)
+        config.autoSpells = quickCombatInfo.autoSpells;
+    quickCombatInfo.restoreQuickCombat = FALSE;
+    quickCombatInfo.restoreAutoSpells = FALSE;
     // quickCombatInfo = {};
 }
 void CombatSettings::CreatePatches() noexcept

@@ -8,7 +8,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.4.3";
+constexpr LPCSTR PLUGIN_VERSION = "1.5.0";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr LPCSTR UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
@@ -36,14 +36,12 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     using target = Era::EGameMenuTarget;
     target menuTarget = target::PAGE_DEFAULT;
     // in order to call dtor we use brackets
-    BOOL realNetworkCombat = FALSE;
     {
         SystemOptionsDlg dlg;
         dlg.networkGame = 0;
         dlg.Start();
         dlg.networkGame = -1;
         menuTarget = dlg.ResultItemId();
-        realNetworkCombat = dlg.networkGame;
     }
     // return THISCALL_1(void, h->GetDefaultFunc(), combatManager);
 
@@ -51,7 +49,7 @@ void __stdcall CombatManager_ShowCombatSettingsDlg(HiHook *h, H3CombatManager *c
     THISCALL_3(void, 0x04934B0, combatManager, FALSE, TRUE); // BattleMgr::DrawGrid
     combatManager->Refresh();
 
-    realNetworkCombat = IntAt(0x69959C) != 0;
+    const BOOL realNetworkCombat = IntAt(0x69959C) != 0;
 
     switch (menuTarget)
     {
@@ -74,7 +72,10 @@ int __fastcall HandleSystemDlgStart(void *_msg)
 {
     if (const auto msg = static_cast<H3Msg *>(_msg))
     {
-        const auto callerItem = msg->GetDlg()->GetCaptionButton(msg->itemId);
+        const auto dlg = msg->GetDlg();
+        if (!dlg)
+            return TRUE;
+        const auto callerItem = dlg->GetCaptionButton(msg->itemId);
         if (!callerItem)
         {
             return true;

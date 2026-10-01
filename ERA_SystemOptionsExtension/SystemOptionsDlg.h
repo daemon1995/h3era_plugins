@@ -39,7 +39,7 @@ struct RegisteredButtonInfo
     std::string descriptionKey;
     // union {
     int ermFunctionId = 0;
-    void (*callback)();
+    void (*callback)() = nullptr;
 };
 
 struct ExternalButtonsManager
@@ -63,6 +63,13 @@ struct ExternalButtonsManager
     const std::vector<RegisteredButtonInfo> &Data() const
     {
         return registeredErmButtonsVec;
+    }
+    void AppendSnapshot(std::vector<RegisteredButtonInfo> &result) const
+    {
+        result.reserve(result.size() + Size());
+        for (const auto &info : registeredErmButtonsVec)
+            if (!info.nameKey.empty())
+                result.emplace_back(info);
     }
     VOID Clear()
     {
@@ -106,8 +113,8 @@ class SystemOptionsDlg : public H3Dlg
     struct SettingsPage
     {
         H3DlgCaptionButton *captionBttn = nullptr;
-        const char *name;
-        UINT id;
+        const char *name = nullptr;
+        UINT id = 0;
         BOOL isVisible = false;
         UINT firstItemId = 0;
 
@@ -144,8 +151,7 @@ class SystemOptionsDlg : public H3Dlg
         void AddSetting(ISetting *setting)
         {
             settings += setting;
-            if (auto dlgPcx16 = setting->titleItem)
-                createdDlgTitles += dlgPcx16;
+            // A setting owns its title; this page owns only titles created directly.
 
             if (setting->firstClickableItemId > 0)
                 for (int i = setting->firstClickableItemId; i <= setting->lastClickableItemId; ++i)
@@ -193,11 +199,7 @@ class SystemOptionsDlg : public H3Dlg
         BOOL ProcessMessage(H3Msg &msg) noexcept
         {
             auto settingIt = settingsByItemId.find(msg.itemId);
-            if (settingIt != settingsByItemId.end())
-            {
-                settingIt->second->ProcessMessage(msg);
-            }
-            return 1;
+            return settingIt != settingsByItemId.end() && settingIt->second->ProcessMessage(msg);
         }
     };
 
@@ -208,13 +210,14 @@ class SystemOptionsDlg : public H3Dlg
     eDlgCallSource dlgCallSource = UNKNOWN;
     SettingsPage *m_currentPage = nullptr;
     std::vector<SettingsPage *> m_pages;
-    std::vector<const RegisteredButtonInfo *> sortedButtonsInfo;
+    std::vector<RegisteredButtonInfo> sortedButtonsInfo;
     std::vector<CaptionButtonSetting *> callbackButtons;
     H3DlgScrollbar *scrollBar = nullptr;
     UINT currentTopErmButtonIdx = 0;
 
   protected:
     static SystemOptionsDlg *instance;
+    SystemOptionsDlg *previousInstance = nullptr;
 
   public:
     // ctors
@@ -264,23 +267,26 @@ class SystemOptionsDlg : public H3Dlg
 
     VOID AssignErmButtons(const int firstItemId, const BOOL redraw) noexcept
     {
-        currentTopErmButtonIdx = firstItemId;
         const size_t length = callbackButtons.size();
+        if (!length || length > sortedButtonsInfo.size())
+            return;
+        currentTopErmButtonIdx = Clamp(0, firstItemId, static_cast<int>(sortedButtonsInfo.size() - length));
         for (size_t i = 0; i < length; i++)
         {
-            const size_t id = firstItemId + i;
+            const size_t id = currentTopErmButtonIdx + i;
             const auto &info = sortedButtonsInfo[id];
-            LPCSTR namePtr = info->nameKey.empty() ? h3_NullString : EraJS::read(info->nameKey);
-            LPCSTR descriptionPtr = info->descriptionKey.empty() ? h3_NullString : EraJS::read(info->descriptionKey);
+            LPCSTR namePtr = info.nameKey.empty() ? h3_NullString : EraJS::read(info.nameKey);
+            LPCSTR descriptionPtr = info.descriptionKey.empty() ? h3_NullString : EraJS::read(info.descriptionKey);
 
             auto button = callbackButtons[i]->captionButton;
             button->SetText(namePtr);
             button->SetRightClickHint(descriptionPtr);
-            if (const int ermFunctionId = info->ermFunctionId)
+            callbackButtons[i]->SetOnChange(nullptr);
+            if (const int ermFunctionId = info.ermFunctionId)
             {
                 callbackButtons[i]->SetOnChange([ermFunctionId](ISetting *) { CallErmFunction(ermFunctionId); });
             }
-            else if (const auto &function = info->callback)
+            else if (const auto function = info.callback)
             {
                 callbackButtons[i]->SetOnChange([function](ISetting *) { CallPluginFunction(function); });
             }
@@ -294,17 +300,10 @@ class SystemOptionsDlg : public H3Dlg
 
   private:
     static void CallWogOptionsDlg();
-    static void CallPluginFunction(void *function)
+    static void CallPluginFunction(void (*function)())
     {
-        unsigned long old_esp = 0;
-        void *local_cb = function;
-        __asm {
-            mov old_esp, esp
-            pushad;
-            call local_cb
-                popad;
-            mov esp, old_esp
-        }
+        if (function)
+            function();
     }
     static void __stdcall CallErmFunction(const int ermFunctionId)
     {
@@ -313,6 +312,8 @@ class SystemOptionsDlg : public H3Dlg
     static VOID __fastcall ScrollBarProc(INT32 itemId, H3BaseDlg *_dlg)
     {
         auto dlg = dynamic_cast<SystemOptionsDlg *>(_dlg);
+        if (!dlg || !dlg->scrollBar)
+            return;
         if (itemId != dlg->currentTopErmButtonIdx)
         {
             dlg->AssignErmButtons(itemId, TRUE);
@@ -327,10 +328,7 @@ class SystemOptionsDlg : public H3Dlg
     {
         return Era::EGameMenuTarget(resultItemId);
     }
-    inline BOOL SettingsChanged() const noexcept
-    {
-        return settingsChanged;
-    }
+    BOOL SettingsChanged() const noexcept;
     //  hooks
     static void SetPatches(PatcherInstance *_pi);
 };

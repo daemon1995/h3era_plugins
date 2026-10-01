@@ -59,6 +59,7 @@ struct SettingsDlg : public H3Dlg
     H3DlgPcx16 *originalLabel = nullptr;
     H3DlgDef *creatureDef = nullptr;
     BOOL needRedraw;
+    DWORD nextAnimationAt = 0;
     const DlgText *text = nullptr;
 
     struct HkHandler

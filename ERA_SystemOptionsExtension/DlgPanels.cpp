@@ -49,6 +49,8 @@ RadioBoxSetting *RadioBoxSetting::Create(const RadioButtonInfo &info, H3Vector<H
     RadioBoxSetting *setting = new RadioBoxSetting(info);
     if (!setting)
         return setting;
+    if (!info.size)
+        return setting;
 
     int itemX = info.position.x;
     int itemY = info.position.y;
@@ -56,8 +58,8 @@ RadioBoxSetting *RadioBoxSetting::Create(const RadioButtonInfo &info, H3Vector<H
     if (auto &text = info.displayedName)
         setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
 
-    // create code for checkboxes
-    const int frameId = setting->value.current;
+    // Clamp before selecting a frame, even if another plugin supplied an invalid value.
+    setting->value.current = Clamp(0, setting->value.current, static_cast<int>(info.size) - !!info.requiresSelection);
 
     int itemId = info.firstItemId;
     const UINT size = info.size;
@@ -156,6 +158,7 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     }
     def->Dereference();
 
+    setting->ClampValue();
     setting->switchButtons[setting->value.current - setting->valueOffset]->SendCommand(5, 4096);
 
     if (!info.rmcHints)

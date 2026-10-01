@@ -46,6 +46,8 @@ class SoundSettings : public IGamePatch
         auto snd = P_SoundManager->Get();
 
         auto secondClickSound = Get().newButtonClickSounds[1];
+        if (!snd || !secondClickSound)
+            return;
         BOOL32 backup = snd->clickSoundVar;
         snd->clickSoundVar = 1;
         secondClickSound->spinCount = 64; // volume
@@ -63,7 +65,7 @@ class SoundSettings : public IGamePatch
 
         return result;
     }
-    static DWORD __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
+    static void __stdcall DefButtonOnDraw(HiHook *hook, H3DlgDefButton *button)
     {
 
         // PlaySecondClickSound();
@@ -71,17 +73,18 @@ class SoundSettings : public IGamePatch
         {
             Get().buttonsPressed.insert(button);
         }
-        else if (button->IsActive() && Get().buttonsPressed.erase(button))
+        else if (Get().buttonsPressed.erase(button) && !button->IsPressed() && button->IsActive() &&
+                 button->GetParent() == P_WindowManager->lastDlg)
         {
             PlaySecondClickSound();
         }
-        return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
+        THISCALL_1(void, hook->GetDefaultFunc(), button);
     }
-    static DWORD __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
+    static void __stdcall DefButtonDtor(HiHook *hook, H3DlgDefButton *button)
     {
 
         Get().buttonsPressed.erase(button);
-        return THISCALL_1(DWORD, hook->GetDefaultFunc(), button);
+        THISCALL_1(void, hook->GetDefaultFunc(), button);
     }
 
   public:
@@ -91,17 +94,20 @@ class SoundSettings : public IGamePatch
     }
     static void SetAlternativButtonClickState(const BOOL enabled)
     {
-        if (enabled)
+        auto &settings = Get();
+        // Leave the original click available if either optional WAV is missing.
+        settings.buttonsPressed.clear();
+        if (enabled && settings.newButtonClickSounds[0] && settings.newButtonClickSounds[1])
         {
-            DwordAt(0x694DF4) = (DWORD)Get().newButtonClickSounds[0];
+            DwordAt(0x694DF4) = (DWORD)settings.newButtonClickSounds[0];
             for (size_t i = 0; i < 2; i++)
-                Get().buttonClickSoundPatches[i]->Apply();
+                settings.buttonClickSoundPatches[i]->Apply();
         }
         else
         {
-            DwordAt(0x694DF4) = (DWORD)(Get().originalButtonClickSound);
+            DwordAt(0x694DF4) = (DWORD)settings.originalButtonClickSound;
             for (size_t i = 0; i < 2; i++)
-                Get().buttonClickSoundPatches[i]->Undo();
+                settings.buttonClickSoundPatches[i]->Undo();
         }
     }
     static void ApplyBackgroundSoundsState(const BOOL enabled)
@@ -127,6 +133,8 @@ class SoundSettings : public IGamePatch
             else
             {
                 auto hero = P_Game->GetPlayer()->GetActiveHero();
+                if (!hero)
+                    return;
                 pos = H3Position(hero->x, hero->y, static_cast<INT8>(hero->z));
             }
 
@@ -148,7 +156,7 @@ class SoundSettings : public IGamePatch
         return instance;
     }
 
-    static inline void AdjustSoundVolume(ISetting *sender, const DWORD addres) noexcept
+    static inline void AdjustSoundVolume(ISetting *sender, const DWORD address) noexcept
     {
         auto &value = sender->value;
         auto snd = P_SoundManager->Get();
@@ -158,7 +166,7 @@ class SoundSettings : public IGamePatch
             *value.valuePtr = value.current;
             BOOL32 backup = snd->clickSoundVar;
             snd->clickSoundVar = 1;
-            THISCALL_1(VOID, 0x059A4B0, snd);
+            THISCALL_1(VOID, address, snd);
             snd->clickSoundVar = backup;
         }
         else

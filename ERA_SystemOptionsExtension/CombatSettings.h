@@ -21,7 +21,8 @@ class CombatSettings : public IGamePatch
     {
         int quickCombat = 0;
         int autoSpells = 0;
-        int isNeedRestore = 0;
+        BOOL restoreQuickCombat = FALSE;
+        BOOL restoreAutoSpells = FALSE;
         int lastSelection = 0;
     } quickCombatInfo;
 

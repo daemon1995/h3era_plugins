@@ -6,16 +6,6 @@
 #pragma comment(linker, "/EXPORT:RegisterPluginCallbackButton=_RegisterPluginCallbackButton@16")
 #pragma comment(linker, "/EXPORT:UnregisterPluginCallbackButton=_UnregisterPluginCallbackButton@4")
 
-namespace scroll
-{
-class MapScroller : public IGamePatch
-{
-  public:
-    static MapScroller &Get() noexcept;
-};
-
-} // namespace scroll
-
 #define ERA_CAPTION(page, field) EraJS::read("era.opt." #page "." #field)
 #define ERA_OPT(page, id, field) "era.opt." #page "." #id "." #field
 #define ERA_ARRAY_OPT(page, id, field, i) "era.opt." #page "." #id "." #field "." #i
@@ -29,7 +19,9 @@ ExternalButtonsManager ExternalButtonsManager::pluginsInfo{};
 
 DllExport BOOL __stdcall RegisterErmCallbackButton(LPCSTR tag, LPCSTR name, LPCSTR description, int ermFunctionId)
 {
-    return ExternalButtonsManager::GetErmInfo().RegisterButton(tag, {name, description, ermFunctionId, nullptr});
+    if (!name || !*name || !ermFunctionId)
+        return FALSE;
+    return ExternalButtonsManager::GetErmInfo().RegisterButton(tag, {name, description ? description : "", ermFunctionId, nullptr});
 }
 DllExport BOOL __stdcall UnregisterErmCallbackButton(LPCSTR tag)
 {
@@ -37,7 +29,9 @@ DllExport BOOL __stdcall UnregisterErmCallbackButton(LPCSTR tag)
 }
 DllExport BOOL __stdcall RegisterPluginCallbackButton(LPCSTR tag, LPCSTR name, LPCSTR description, void (*callback)())
 {
-    return ExternalButtonsManager::GetPluginsInfo().RegisterButton(tag, {name, description, 0, callback});
+    if (!name || !*name || !callback)
+        return FALSE;
+    return ExternalButtonsManager::GetPluginsInfo().RegisterButton(tag, {name, description ? description : "", 0, callback});
 }
 DllExport BOOL __stdcall UnregisterPluginCallbackButton(LPCSTR tag)
 {
@@ -82,6 +76,7 @@ SystemOptionsDlg::SystemOptionsDlg(int width, int height, int x, int y)
     // create and init page buttons and its actual pages with settings
     CreateDlgPages();
 
+    previousInstance = instance;
     instance = this;
 }
 
@@ -152,10 +147,10 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
     if (callType != eDlgCallSource::COMBAT)
     {
-        if (quickCombatSettingState == FALSE && extraConfig.quickCombatType.value != FALSE ||
-            quickCombatSettingState != FALSE && extraConfig.quickCombatType.value == FALSE)
+        if (!!quickCombatSettingState != !!extraConfig.quickCombatType.value)
         {
-            if (extraConfig.quickCombatType.SetValue(quickCombatSettingState,
+            const int quickCombatType = quickCombatSettingState ? (config.autoSpells ? 1 : 2) : 0;
+            if (extraConfig.quickCombatType.SetValue(quickCombatType,
                                                      AdditionalConfig::EOptionChangeSource::Dialog))
                 settingsChanged = TRUE;
         }
@@ -259,7 +254,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         page->CreateSetting<CheckBoxSetting>(splitButtonSoundInfo);
 
-        constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
+        constexpr int count = Switch10XPanel::BUTTONS_COUNT;
         // combat speed switch panel
         std::string strHints[count << 1];
 
@@ -337,9 +332,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             ERA_ARRAY_OPT(map, scrollSpeed, hints, 0), ERA_ARRAY_OPT(map, scrollSpeed, hints, 1),
             ERA_ARRAY_OPT(map, scrollSpeed, hints, 2)};
 
-        constexpr size_t playerDefNum = std::size(playerSpeedDefNames);
-        constexpr size_t enemyDefNum = std::size(enemySpeedDefNames);
-        constexpr size_t mapScrollDefNum = std::size(mapScrollDefNames);
+        constexpr int playerDefNum = static_cast<int>(std::size(playerSpeedDefNames));
+        constexpr int enemyDefNum = static_cast<int>(std::size(enemySpeedDefNames));
+        constexpr int mapScrollDefNum = static_cast<int>(std::size(mapScrollDefNames));
         SwitchPanelInfo switchPanelsInfo[] = {
             {{switchPanelX, settingsStartY},
              itemId,
@@ -529,7 +524,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         const int ySwitch = leftPartY + baseSettingHeight * 6;
 
-        constexpr size_t count = Switch10XPanel::BUTTONS_COUNT;
+        constexpr int count = Switch10XPanel::BUTTONS_COUNT;
         // combat speed switch panel
         std::string strHints[count];
         LPCSTR hintPtrs[count]{};
@@ -626,7 +621,6 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         m_pages.emplace_back(page);
     }
-    m_pages.shrink_to_fit();
     InitDlgPages();
 }
 
@@ -680,31 +674,15 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
     ExternalButtonsManager *buttonsInfos[] = {&ExternalButtonsManager::GetPluginsInfo(),
                                               &ExternalButtonsManager::GetErmInfo()};
 
-    size_t totalButtonsToAdd = 0;
     for (auto &buttonsInfo : buttonsInfos)
-    {
-        const size_t registeredNum = buttonsInfo->Size();
-        if (!registeredNum)
-            continue;
+        buttonsInfo->AppendSnapshot(sortedButtonsInfo);
 
-        for (auto &obj : buttonsInfo->Data())
-        {
-            if (!obj.nameKey.empty())
-            {
-                sortedButtonsInfo.emplace_back(&obj);
-            }
-        }
-
-        totalButtonsToAdd += registeredNum;
-    }
-
+    const size_t totalButtonsToAdd = sortedButtonsInfo.size();
     if (!totalButtonsToAdd)
         return;
 
-    sortedButtonsInfo.reserve(totalButtonsToAdd);
-
     // only for game on map
-    maxButtonsToShow = Clamp(0, maxButtonsToShow, totalButtonsToAdd);
+    maxButtonsToShow = Clamp(0, maxButtonsToShow, static_cast<int>(totalButtonsToAdd));
 
     const size_t ticksCount = totalButtonsToAdd - maxButtonsToShow + 1;
     if (ticksCount > 1)
@@ -722,6 +700,18 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
         callbackY += baseSettingHeight;
     }
     AssignErmButtons(0, FALSE);
+}
+
+BOOL SystemOptionsDlg::SettingsChanged() const noexcept
+{
+    // ShowSystemOptionsDlg queries this before the destructor commits deferred values.
+    if (settingsChanged || quickCombatSettingState != OriginalConfig::Get().quickCombat)
+        return TRUE;
+    for (const auto *page : m_pages)
+        for (const auto *setting : page->settings)
+            if (!setting->value.isBlocked && setting->value.current != setting->value.dlgStart)
+                return TRUE;
+    return FALSE;
 }
 
 BOOL SystemOptionsDlg::OnCreate()
@@ -834,9 +824,9 @@ SystemOptionsDlg::~SystemOptionsDlg()
             auto &value = setting->value;
             if (value.current != value.dlgStart && !value.isBlocked)
             {
-                if (value.configEntry)
-                    value.configEntry->SetValue(value.current, AdditionalConfig::EOptionChangeSource::Dialog);
-                else if (value.valuePtr)
+                // Extra options were already applied by TriggerChange. Reapplying
+                // a stale UI value here would overwrite a later SetOptionValue call.
+                if (!value.configEntry && value.valuePtr)
                     *(value.valuePtr) = value.current;
                 settingsChanged = TRUE;
                 if (!value.configEntry)
@@ -866,7 +856,7 @@ SystemOptionsDlg::~SystemOptionsDlg()
 
     P_WindowManager->resultItemID = this->resultItemId;
 
-    instance = nullptr;
+    instance = previousInstance;
 }
 
 static _ERH_(OnGameLeave)
@@ -885,7 +875,8 @@ void SystemOptionsDlg::SetPatches(PatcherInstance *_pi)
 
 BOOL ExternalButtonsManager::RegisterButton(LPCSTR tag, const RegisteredButtonInfo &info)
 {
-
+    if (!tag || !*tag || info.nameKey.empty() || (!info.ermFunctionId && !info.callback))
+        return FALSE;
     auto it = nameToIndexMap.find(tag);
     if (it != nameToIndexMap.cend())
     {
@@ -911,6 +902,8 @@ BOOL ExternalButtonsManager::RegisterButton(LPCSTR tag, const RegisteredButtonIn
 
 BOOL ExternalButtonsManager::UnregisterButton(LPCSTR tag)
 {
+    if (!tag || !*tag)
+        return FALSE;
     auto it = nameToIndexMap.find(tag);
     if (it == nameToIndexMap.cend())
     {

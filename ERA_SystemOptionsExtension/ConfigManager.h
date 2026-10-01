@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <unordered_map>
 #pragma pack(push, 4)
 struct OriginalConfig
@@ -79,11 +80,11 @@ struct AdditionalConfig
       public:
         explicit operator int &() noexcept
         {
-            return *reinterpret_cast<int *>(&value);
+            return value;
         }
         explicit operator const int &() const noexcept
         {
-            return *reinterpret_cast<const int *>(&value);
+            return value;
         }
 
       public:
@@ -114,9 +115,10 @@ struct AdditionalConfig
   private:
     void BindCallbacks() noexcept;
 
-    inline ConfigEntry *data() noexcept
+    std::array<ConfigEntry *, 7> Entries() noexcept
     {
-        return &alternativeButtonClick;
+        return {{&alternativeButtonClick, &backgroundSound, &quickAutoResolve, &battleQueue, &quickCombatType,
+                 &showCreatureHealthBar, &smoothMapScroll}};
     }
 
   protected:

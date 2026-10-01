@@ -113,7 +113,9 @@ struct ISetting
     }
     void TriggerChange() noexcept
     {
-        if (value.configEntry && !value.isBlocked)
+        if (value.isBlocked)
+            return;
+        if (value.configEntry)
             value.configEntry->SetValue(value.current, AdditionalConfig::EOptionChangeSource::Dialog);
         if (m_onChange)
             m_onChange(this);
@@ -183,7 +185,7 @@ struct CheckBoxSetting : public ISetting
     }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
-        if (msg.IsLeftDown() && msg.itemId == firstClickableItemId)
+        if (!value.isBlocked && msg.IsLeftDown() && msg.itemId == firstClickableItemId)
         {
             const int newValue = value.current ^= 1; // value.current;
             ClampValue();
@@ -246,7 +248,7 @@ struct RadioBoxSetting : public ISetting
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
 
-        if (msg.IsLeftDown() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        if (!value.isBlocked && msg.IsLeftDown() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
         {
             const int valueIndex = msg.itemId - firstClickableItemId;
 
@@ -256,6 +258,7 @@ struct RadioBoxSetting : public ISetting
                 {
                     CheckBoxSetting::SetCheckBoxValue(checkBoxes[valueIndex], FALSE);
                     value.current = 0;
+                    TriggerChange();
                     P_SoundManager->ClickSound();
                 }
                 return TRUE;
@@ -330,7 +333,7 @@ struct SwitchPanel : public ISetting
     {
         if (const auto size = switchButtons.Size())
         {
-            // value.current = Clamp(0 - valueOffset, value.current, size - 1 - valueOffset);
+            value.current = Clamp(valueOffset, value.current, valueOffset + size - 1);
         }
     }
     virtual void SetVisible(const BOOL visible) noexcept override
@@ -346,7 +349,7 @@ struct SwitchPanel : public ISetting
     }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
-        if (msg.IsLeftClick() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        if (!value.isBlocked && msg.IsLeftClick() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
         {
             const int buttonIndex = msg.itemId - firstClickableItemId;
             if (value.current - valueOffset == buttonIndex)
@@ -358,7 +361,6 @@ struct SwitchPanel : public ISetting
             oldButton->SendCommand(6, 4096);
             oldButton->Draw();
             oldButton->Refresh();
-            //  ClampValue();
             value.current = buttonIndex + valueOffset;
             TriggerChange();
             auto &newButton = switchButtons[buttonIndex];
@@ -388,6 +390,7 @@ struct Switch10XPanel : public ISetting
     {
         firstClickableItemId = info.firstItemId;
         lastClickableItemId = info.firstItemId + BUTTONS_COUNT - 1;
+        ClampValue();
     };
     virtual ~Switch10XPanel() {};
 
@@ -409,7 +412,7 @@ struct Switch10XPanel : public ISetting
     }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
-        if (msg.IsLeftDown() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        if (!value.isBlocked && msg.IsLeftDown() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
         {
             const int buttonIndex = msg.itemId - firstClickableItemId;
             if (value.current == buttonIndex)
