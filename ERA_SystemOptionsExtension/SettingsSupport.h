@@ -9,8 +9,6 @@
 namespace sysopts
 {
 constexpr const char *SETTINGS_FILE = "Runtime/era_system_options.ini";
-constexpr const char *LEGACY_GAME_FILE = "heroes3.ini";
-constexpr const char *LEGACY_HEALTH_FILE = "Runtime/game_enhancement_mod.ini";
 
 class SaveState
 {
@@ -70,17 +68,6 @@ inline bool ParseFloat(const char *text, float &value, const float minValue, con
         return false;
     value = static_cast<float>(parsed);
     return true;
-}
-
-// A present value in the new file always wins, including an invalid value.
-// Legacy values are consulted only before the first complete save.
-template <class Reader>
-bool ReadMigrated(Reader read, const char *key, const char *section, const bool migrate, const char *legacyKey,
-                  const char *legacySection, const char *legacyFile, char *buffer)
-{
-    if (read(key, section, SETTINGS_FILE, buffer))
-        return true;
-    return migrate && legacyFile && read(legacyKey, legacySection, legacyFile, buffer);
 }
 
 inline int NormalizedToTick(const float value, const int ticksCount) noexcept

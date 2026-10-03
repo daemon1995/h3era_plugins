@@ -104,8 +104,6 @@ class SystemOptionsDlg : public H3Dlg
     static constexpr int DLG_LEFT_PART_X_MARGIN = DLG_X_MARGIN;
     static constexpr int DLG_RIGHT_PART_X_MARGIN = DLG_WIDTH - ISetting::WIDTH - DLG_X_MARGIN;
 
-    static constexpr float SETTINGS_VERSION = .1f;
-
   public:
     static constexpr LPCSTR PAGE_CAPTION_DEF_NAME = "GSPsys1.def";
     static constexpr LPCSTR SINGLE_BUTTON = "GSPsys0.def";

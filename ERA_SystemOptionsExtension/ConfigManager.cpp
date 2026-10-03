@@ -111,19 +111,18 @@ void ApplySmoothMapScroll(const ConfigEntry &entry, const EOptionChangeSource)
 {
     scroll::MapScroller::ApplySmoothScrollState(entry.value);
 }
-BOOL ReadHealth(LPCSTR key, const BOOL migrate, char *buffer)
+BOOL ReadHealth(LPCSTR key, char *buffer)
 {
-    return sysopts::ReadMigrated(Era::ReadStrFromIni, key, HEALTH_SECTION, migrate, key, HEALTH_SECTION,
-                                 sysopts::LEGACY_HEALTH_FILE, buffer);
+    return Era::ReadStrFromIni(key, HEALTH_SECTION, AdditionalConfig::fileName, buffer);
 }
-void LoadHealth(const BOOL migrate)
+void LoadHealth()
 {
     auto &settings = cmbhints::CombatHints::Get().settings;
     char buffer[4096];
     int integer = 0;
-    if (ReadHealth("held", migrate, buffer) && sysopts::ParseInteger(buffer, integer))
+    if (ReadHealth("held", buffer) && sysopts::ParseInteger(buffer, integer))
         settings.isHeld = integer != 0;
-    if (ReadHealth("keyCode", migrate, buffer) && sysopts::ParseInteger(buffer, integer))
+    if (ReadHealth("keyCode", buffer) && sysopts::ParseInteger(buffer, integer))
     {
         const int scanCode = MapVirtualKeyA(integer, MAPVK_VK_TO_VSC);
         if (settings.validateScanCode(static_cast<eVKey>(scanCode)))
@@ -134,23 +133,21 @@ void LoadHealth(const BOOL migrate)
     }
     const char *keys[] = {"fillColor", "lossColor", "colorSaturation", "yLabelShift"};
     for (int i = 0; i < 4; ++i)
-        if (ReadHealth(keys[i], migrate, buffer))
+        if (ReadHealth(keys[i], buffer))
             sysopts::ParseFloat(buffer, settings.values[i], i == 3 ? -18.0f : 0.0f, i == 3 ? 18.0f : 1.0f);
 }
 BOOL WriteInteger(LPCSTR key, const int value, LPCSTR section)
 {
     return Era::WriteStrToIni(key, std::to_string(value).c_str(), section, AdditionalConfig::fileName);
 }
-void LoadLocale(const BOOL migrate)
+void LoadLocale()
 {
     char buffer[4096];
     std::string language;
-    if (sysopts::ReadMigrated(Era::ReadStrFromIni, "Language", LOCALE_SECTION, migrate, "Language", "Era",
-                              sysopts::LEGACY_GAME_FILE, buffer))
+    if (Era::ReadStrFromIni("Language", LOCALE_SECTION, AdditionalConfig::fileName, buffer))
         language = buffer;
     int codePage = 0;
-    const BOOL hasCodePage = sysopts::ReadMigrated(Era::ReadStrFromIni, "CodePage", LOCALE_SECTION, migrate, "CodePage",
-                                                   "Era", sysopts::LEGACY_GAME_FILE, buffer) &&
+    const BOOL hasCodePage = Era::ReadStrFromIni("CodePage", LOCALE_SECTION, AdditionalConfig::fileName, buffer) &&
                              sysopts::ParseInteger(buffer, codePage) && codePage > 0 && IsValidCodePage(codePage);
     const BOOL hasLanguage = !language.empty() && language.find_first_of("<>:\"/\\|?*") == std::string::npos;
     if (hasLanguage)
@@ -289,8 +286,6 @@ BOOL AdditionalConfig::Save()
     for (int i = 0; i < 4; ++i)
         success =
             Era::WriteStrToIni(keys[i], std::to_string(health.values[i]).c_str(), HEALTH_SECTION, fileName) && success;
-    if (success)
-        success = WriteInteger("Version", 1, "Settings");
     success = Era::SaveIni(fileName) && success;
     saveState.Saved(success != FALSE);
     return success;
@@ -314,39 +309,21 @@ BOOL AdditionalConfig::Load()
     auto &instance = Get();
     char buffer[4096];
     int parsed = 0;
-    const BOOL migrate = !Era::ReadStrFromIni("Version", "Settings", fileName, buffer) ||
-                         !sysopts::ParseInteger(buffer, parsed) || parsed < 1;
-    LoadLocale(migrate);
-    // Native values from heroes3.ini are already loaded by the game. They are
-    // defaults only until this plugin has its own saved configuration.
+    LoadLocale();
+    // Native values are loaded by the game. Their saved values in this file
+    // override them; missing additional options use their declared defaults.
     for (const auto &entry : nativeEntries)
         if (Era::ReadStrFromIni(entry.key, NATIVE_SECTION, fileName, buffer) && sysopts::ParseInteger(buffer, parsed))
             ApplyNative(entry, parsed, TRUE);
-    auto &config = OriginalConfig::Get();
-    const int inheritedType = config.quickCombat ? (config.autoSpells ? 1 : 2) : 0;
     for (auto *entry : instance.Entries())
     {
         optionsMap[entry->keyName] = entry;
-        entry->value = migrate && entry == &instance.quickCombatType ? inheritedType : entry->defaultValue;
-        const BOOL ownValue = Era::ReadStrFromIni(entry->keyName, sectionName, fileName, buffer);
-        BOOL found = ownValue;
-        if (!found && migrate)
-            found = Era::ReadStrFromIni(entry->keyName, sectionName, sysopts::LEGACY_GAME_FILE, buffer);
-        if (!found && migrate && entry == &instance.showCreatureHealthBar)
-            found = Era::ReadStrFromIni("enabled", HEALTH_SECTION, sysopts::LEGACY_HEALTH_FILE, buffer);
-        if (found && sysopts::ParseInteger(buffer, parsed))
+        entry->value = entry->defaultValue;
+        if (Era::ReadStrFromIni(entry->keyName, sectionName, fileName, buffer) && sysopts::ParseInteger(buffer, parsed))
             entry->value = Clamp(0, parsed, entry->maxValue);
-        // Legacy zero preserved the game's original quick-combat flag.
-        if (!ownValue && migrate && entry == &instance.quickCombatType && !entry->value)
-            entry->value = inheritedType;
     }
-    LoadHealth(migrate);
+    LoadHealth();
     instance.InitialApply();
-    if (migrate)
-    {
-        MarkDirty();
-        return SaveIfDirty();
-    }
     saveState.Saved(true);
     return TRUE;
 }

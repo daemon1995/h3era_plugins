@@ -59,9 +59,6 @@ bld/
 
 # Локальные тесты и их вспомогательные файлы
 **/tests/
-!ERA_SystemOptionsExtension/tests/
-ERA_SystemOptionsExtension/tests/*
-!ERA_SystemOptionsExtension/tests/*.cpp
 
 # Переводы описаний заклинаний хранятся только в установленном моде
 /Interface_SpellsDescription/lang/
