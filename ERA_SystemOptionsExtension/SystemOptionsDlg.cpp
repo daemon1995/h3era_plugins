@@ -21,7 +21,8 @@ DllExport BOOL __stdcall RegisterErmCallbackButton(LPCSTR tag, LPCSTR name, LPCS
 {
     if (!name || !*name || !ermFunctionId)
         return FALSE;
-    return ExternalButtonsManager::GetErmInfo().RegisterButton(tag, {name, description ? description : "", ermFunctionId, nullptr});
+    return ExternalButtonsManager::GetErmInfo().RegisterButton(
+        tag, {name, description ? description : "", ermFunctionId, nullptr});
 }
 DllExport BOOL __stdcall UnregisterErmCallbackButton(LPCSTR tag)
 {
@@ -31,7 +32,8 @@ DllExport BOOL __stdcall RegisterPluginCallbackButton(LPCSTR tag, LPCSTR name, L
 {
     if (!name || !*name || !callback)
         return FALSE;
-    return ExternalButtonsManager::GetPluginsInfo().RegisterButton(tag, {name, description ? description : "", 0, callback});
+    return ExternalButtonsManager::GetPluginsInfo().RegisterButton(tag,
+                                                                   {name, description ? description : "", 0, callback});
 }
 DllExport BOOL __stdcall UnregisterPluginCallbackButton(LPCSTR tag)
 {
@@ -131,6 +133,7 @@ void SystemOptionsDlg::CreateGameControlButtons() noexcept
         if (const auto hint = button.hintPtr)
         {
             bttn->SetRightClickHint(EraJS::read(hint));
+            gameControlHints.emplace_back(bttn, hint);
         }
         if (button.disableOnCreation)
         {
@@ -150,8 +153,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         if (!!quickCombatSettingState != !!extraConfig.quickCombatType.value)
         {
             const int quickCombatType = quickCombatSettingState ? (config.autoSpells ? 1 : 2) : 0;
-            if (extraConfig.quickCombatType.SetValue(quickCombatType,
-                                                     AdditionalConfig::EOptionChangeSource::Dialog))
+            if (extraConfig.quickCombatType.SetValue(quickCombatType, AdditionalConfig::EOptionChangeSource::Dialog))
                 settingsChanged = TRUE;
         }
     }
@@ -282,15 +284,11 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
              &config.effectsVolume,                // 0x06987B4,
              ERA_OPT(system, effectsVolume, name)} // sound effects level switch panel
         };
-        void (*funcs[2])(ISetting *) = {sound::SoundSettings::OnMusicVolumeChanged,
-                                        sound::SoundSettings::OnSoundVolumeChanged};
-
         for (size_t i = 0; i < std::size(switch10PanelsInfo); i++)
         {
             auto &info = switch10PanelsInfo[i];
             info.rmcHints = &hintPtrs[i * count];
-            auto panel = page->CreateSetting<Switch10XPanel>(info);
-            panel->SetOnChange(funcs[i]);
+            page->CreateSetting<Switch10XPanel>(info);
         }
 
         itemId += Switch10XPanel::BUTTONS_COUNT << 1;
@@ -514,7 +512,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                 &extraConfig.quickAutoResolve.value, // 0x06987F8,
                                                 ERA_OPT(combat, autoQuick, name),
                                                 ERA_OPT(combat, autoQuick, hint),
-                                                1,
+                                                FALSE,
                                                 &extraConfig.quickAutoResolve}};
 
         for (auto &info : autoCombatInfo)
@@ -588,7 +586,6 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
             page->CreateSetting<CheckBoxSetting>(combatQueueCheckBoxInfo);
             rightPartY += baseSettingHeight;
         }
-        const auto healthBarValuePtr = HealthBarIsEnabledAddress();
         const SettingsInfo healthBarcheckBoxInfo = {"combat_health_bar_checkbox",
                                                     {rightX, rightPartY},
                                                     itemId++,
@@ -597,7 +594,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                     ERA_OPT(combat, healthBar, hint),
                                                     FALSE,
                                                     &extraConfig.showCreatureHealthBar};
-        auto healthBarcheckBox = page->CreateSetting<CheckBoxSetting>(healthBarcheckBoxInfo);
+        page->CreateSetting<CheckBoxSetting>(healthBarcheckBoxInfo);
 
         const SettingsInfo healthBarCaptionInfo = {"system_health_bar",
                                                    {rightX, rightPartY + baseSettingHeight},
@@ -606,17 +603,9 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                                    ERA_OPT(combat, healthBar, button),
                                                    ERA_OPT(combat, healthBar, hint)};
         auto button = page->CreateSetting<CaptionButtonSetting>(healthBarCaptionInfo);
-        auto healthBarOption = &extraConfig.showCreatureHealthBar;
-        button->SetOnChange([healthBarValuePtr, healthBarcheckBox, healthBarOption](ISetting *setting) {
-            const int checkboxStateBefore = *healthBarValuePtr;
+        button->SetOnChange([this](ISetting *) {
             ShowHealthBarDlg();
-            const int checkboxStateAfter = *healthBarValuePtr;
-            if (checkboxStateBefore != checkboxStateAfter)
-            {
-                healthBarcheckBox->value.current = checkboxStateAfter;
-                healthBarOption->SetValue(checkboxStateAfter, AdditionalConfig::EOptionChangeSource::Dialog);
-                CheckBoxSetting::SetCheckBoxValue(healthBarcheckBox->checkBoxItem, checkboxStateAfter);
-            }
+            SyncSettings();
         });
 
         m_pages.emplace_back(page);
@@ -637,7 +626,7 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
     auto plugin = GetModuleHandleA("ERA_LocaleManager.era");
     if (plugin)
     {
-        typedef void(__stdcall * CallLocaleSelectionDlg_t)(int, int, int);
+        typedef BOOL(__stdcall * CallLocaleSelectionDlg_t)(int, int, int);
         typedef const char *(__stdcall * GetDisplayedName_t)();
 
         auto callLocaleSelectionDlg =
@@ -652,15 +641,17 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
             };
             callbackY += baseSettingHeight;
             auto captionSetting = page->CreateSetting<CaptionButtonSetting>(selectLang);
-            captionSetting->SetOnChange([callLocaleSelectionDlg, getDisplayedName](ISetting *setting) {
+            captionSetting->SetOnChange([this, callLocaleSelectionDlg, getDisplayedName](ISetting *setting) {
                 auto it = dynamic_cast<CaptionButtonSetting *>(setting)->captionButton;
-                callLocaleSelectionDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
+                const auto oldCodePage = Era::GetCodePage();
+                const BOOL languageChanged = callLocaleSelectionDlg(it->GetAbsoluteX() + it->GetWidth(), -1, 0);
                 LPCSTR newLangDisplayedName = getDisplayedName();
-                if (libc::strcmpi(it->GetText(), newLangDisplayedName) != 0)
+                if (languageChanged || libc::strcmpi(it->GetText(), newLangDisplayedName) != 0 ||
+                    oldCodePage != Era::GetCodePage())
                 {
                     it->SetText(newLangDisplayedName);
-                    it->Draw();
-                    it->Refresh();
+                    AdditionalConfig::MarkDirty();
+                    RefreshLanguage();
                 }
             });
         }
@@ -704,8 +695,8 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
 
 BOOL SystemOptionsDlg::SettingsChanged() const noexcept
 {
-    // ShowSystemOptionsDlg queries this before the destructor commits deferred values.
-    if (settingsChanged || quickCombatSettingState != OriginalConfig::Get().quickCombat)
+    if (settingsChanged || initialRevision != AdditionalConfig::Revision() ||
+        quickCombatSettingState != OriginalConfig::Get().quickCombat)
         return TRUE;
     for (const auto *page : m_pages)
         for (const auto *setting : page->settings)
@@ -736,6 +727,7 @@ BOOL SystemOptionsDlg::OnCreate()
 
 BOOL SystemOptionsDlg::DialogProc(H3Msg &msg)
 {
+    SyncSettings();
     const int itemId = msg.itemId;
     if (itemId < 1)
     {
@@ -817,24 +809,7 @@ void SystemOptionsDlg::CallWogOptionsDlg()
 
 SystemOptionsDlg::~SystemOptionsDlg()
 {
-    for (auto &page : m_pages)
-    {
-        for (auto &setting : page->settings)
-        {
-            auto &value = setting->value;
-            if (value.current != value.dlgStart && !value.isBlocked)
-            {
-                // Extra options were already applied by TriggerChange. Reapplying
-                // a stale UI value here would overwrite a later SetOptionValue call.
-                if (!value.configEntry && value.valuePtr)
-                    *(value.valuePtr) = value.current;
-                settingsChanged = TRUE;
-                if (!value.configEntry)
-                    setting->TriggerDlgClose();
-            }
-        }
-        delete page;
-    }
+    settingsChanged = SettingsChanged();
     OriginalConfig &config = OriginalConfig::Get();
     AdditionalConfig &extraConfig = AdditionalConfig::Get();
 
@@ -850,13 +825,42 @@ SystemOptionsDlg::~SystemOptionsDlg()
             H3NetworkData<int> netMsg(-1, eNetwork::PLAYER_QUICK, newQuickCombatState);
             netMsg.SendData(false);
         }
-        extraConfig.Save();
-        CDECL_0(LONG, 0x0050C370); // j_WriteRegistry -> save settings to heroes3.ini
     }
+    extraConfig.SaveIfDirty(TRUE);
+    for (auto *page : m_pages)
+        delete page;
 
     P_WindowManager->resultItemID = this->resultItemId;
 
     instance = previousInstance;
+}
+
+void SystemOptionsDlg::SyncSettings() noexcept
+{
+    for (auto *page : m_pages)
+        for (auto *setting : page->settings)
+            setting->SyncFromSource(page == m_currentPage);
+}
+
+void SystemOptionsDlg::RefreshLanguage()
+{
+    const char *names[] = {"era.opt.system.name", "era.opt.map.name", "era.opt.combat.name"};
+    const char *hints[] = {"era.opt.system.hint", "era.opt.map.hint", "era.opt.combat.hint"};
+    for (size_t i = 0; i < m_pages.size(); ++i)
+    {
+        auto *page = m_pages[i];
+        page->captionBttn->SetText(EraJS::read(names[i]));
+        page->name = page->captionBttn->GetText();
+        page->captionBttn->SetRightClickHint(EraJS::read(hints[i]));
+        for (const auto &update : page->languageUpdates)
+            update();
+        for (auto *setting : page->settings)
+            setting->RefreshLanguage();
+    }
+    for (const auto &hint : gameControlHints)
+        hint.first->SetRightClickHint(EraJS::read(hint.second));
+    AssignErmButtons(currentTopErmButtonIdx, FALSE);
+    Redraw();
 }
 
 static _ERH_(OnGameLeave)

@@ -156,40 +156,52 @@ class SoundSettings : public IGamePatch
         return instance;
     }
 
-    static inline void AdjustSoundVolume(ISetting *sender, const DWORD address) noexcept
+    static BOOL TryChangeVolume(int &option, const int requested, const DWORD address, const BOOL reportError) noexcept
     {
-        auto &value = sender->value;
         auto snd = P_SoundManager->Get();
+        const int newVolume = Clamp(0, requested, 9);
+        if (!sysopts::CanChangeVolume(snd != nullptr, snd && snd->driver, option, newVolume))
+        {
+            if (reportError)
+                H3Messagebox::Show(P_GeneralText->GetText(152));
+            return FALSE;
+        }
+        if (option == newVolume)
+            return TRUE;
+        option = newVolume;
+        const BOOL32 backup = snd->clickSoundVar;
+        snd->clickSoundVar = 1;
+        THISCALL_1(VOID, address, snd);
+        snd->clickSoundVar = backup;
+        return TRUE;
+    }
 
-        if (*value.valuePtr || snd->driver)
-        {
-            *value.valuePtr = value.current;
-            BOOL32 backup = snd->clickSoundVar;
-            snd->clickSoundVar = 1;
-            THISCALL_1(VOID, address, snd);
-            snd->clickSoundVar = backup;
-        }
-        else
-        {
-            H3Messagebox(P_GeneralText->GetText(152));
-        }
-    }
-    static void OnMusicVolumeChanged(ISetting *sender)
+    static BOOL TrySetMusicVolume(const int requested, const BOOL reportError = FALSE,
+                                  const BOOL remember = TRUE) noexcept
     {
-        OriginalConfig::Get().lastMusicVolume = sender->value.current;
-        AdjustSoundVolume(sender, 0x059A4B0);
+        auto &config = OriginalConfig::Get();
+        if (!TryChangeVolume(config.musicVolume, requested, 0x59A4B0, reportError))
+            return FALSE;
+        if (remember && config.musicVolume)
+            config.lastMusicVolume = config.musicVolume;
+        return TRUE;
     }
-    static void OnSoundVolumeChanged(ISetting *sender)
+
+    static BOOL TrySetEffectsVolume(const int requested, const BOOL reportError = FALSE,
+                                    const BOOL remember = TRUE) noexcept
     {
-        const int currentVolume = sender->value.current;
-        OriginalConfig::Get().lastEffectsVolume = currentVolume;
-        auto advMan = P_AdventureManager->Get();
-        if (!currentVolume && advMan && advMan->dlg)
-        {
-            H3Position pos(1023, 0, 0);                     // position that blocks sound play
-            THISCALL_3(void, 0x0418330, advMan, pos, TRUE); // stop current sound and dont play new;
-        }
-        AdjustSoundVolume(sender, 0x059A3C0);
+        auto &config = OriginalConfig::Get();
+        const int previous = config.effectsVolume;
+        if (!TryChangeVolume(config.effectsVolume, requested, 0x59A3C0, reportError))
+            return FALSE;
+        if (remember && config.effectsVolume)
+            config.lastEffectsVolume = config.effectsVolume;
+        auto adv = P_AdventureManager->Get();
+        if (!config.effectsVolume && adv && adv->dlg)
+            THISCALL_3(void, 0x418330, adv, H3Position(1023, 0, 0), TRUE);
+        else if (!previous && config.effectsVolume && AdditionalConfig::Get().backgroundSound.value)
+            ApplyBackgroundSoundsState(TRUE);
+        return TRUE;
     }
 };
 

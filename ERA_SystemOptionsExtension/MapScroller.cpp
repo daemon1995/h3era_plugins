@@ -89,8 +89,7 @@ BOOL MapScroller::IsMapPoint(const H3POINT &point) const noexcept
 
 BOOL MapScroller::IsDragThresholdReached(const H3POINT &point) const noexcept
 {
-    return Abs(point.x - startMousePoint.x) > DRAG_MOUSE_ACCESS ||
-           Abs(point.y - startMousePoint.y) > DRAG_MOUSE_ACCESS;
+    return Abs(point.x - startMousePoint.x) > DRAG_MOUSE_ACCESS || Abs(point.y - startMousePoint.y) > DRAG_MOUSE_ACCESS;
 }
 
 BOOL MapScroller::IsScrolling() const noexcept

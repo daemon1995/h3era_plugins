@@ -122,6 +122,7 @@ class SystemOptionsDlg : public H3Dlg
         H3Vector<ISetting *> settings;
         H3Vector<H3DlgPcx16 *> createdDlgTitles;
         std::unordered_map<int, ISetting *> settingsByItemId;
+        std::vector<std::function<void()>> languageUpdates;
 
       public:
         SettingsPage(H3DlgCaptionButton *captionBttn) : captionBttn(captionBttn)
@@ -160,7 +161,11 @@ class SystemOptionsDlg : public H3Dlg
 
         H3DlgPcx16 *CreateTitle(int x, int &y, LPCSTR displayedText)
         {
-            auto dlgPcx16 = ISetting::CreateTitle(x, y, displayedText, items);
+            H3DlgText *text = nullptr;
+            auto dlgPcx16 = ISetting::CreateTitle(x, y, displayedText, items, &text);
+            if (text)
+                languageUpdates.emplace_back(
+                    [text, key = std::string(displayedText)] { text->SetText(EraJS::read(key)); });
             if (dlgPcx16)
                 createdDlgTitles += dlgPcx16;
             return dlgPcx16;
@@ -206,6 +211,7 @@ class SystemOptionsDlg : public H3Dlg
   protected:
     BOOL isInCombat = false;
     BOOL settingsChanged = false;
+    const UINT initialRevision = AdditionalConfig::Revision();
     const BOOL quickCombatSettingState = OriginalConfig::Get().quickCombat;
     eDlgCallSource dlgCallSource = UNKNOWN;
     SettingsPage *m_currentPage = nullptr;
@@ -214,6 +220,7 @@ class SystemOptionsDlg : public H3Dlg
     std::vector<CaptionButtonSetting *> callbackButtons;
     H3DlgScrollbar *scrollBar = nullptr;
     UINT currentTopErmButtonIdx = 0;
+    std::vector<std::pair<H3DlgItem *, std::string>> gameControlHints;
 
   protected:
     static SystemOptionsDlg *instance;
@@ -234,6 +241,8 @@ class SystemOptionsDlg : public H3Dlg
   private:
     void CreateGameControlButtons() noexcept;
     void CreateDlgPages() noexcept;
+    void RefreshLanguage();
+    void SyncSettings() noexcept;
     void CreateImportedSettingsPanel(SettingsPage *page, const int x, const int y, int &itemId) noexcept;
 
     void InitDlgPages()
