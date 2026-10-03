@@ -1,4 +1,5 @@
 #include "HeroArts_CustomDlg.h"
+#include "..\headers\EraPluginsAPI\ArtifactDescriptionApi.h"
 
 BOOL HeroArts_CustomDlg::DialogProc(H3Msg &msg)
 {
@@ -41,6 +42,16 @@ BOOL HeroArts_CustomDlg::DialogProc(H3Msg &msg)
 
 void HeroArts_CustomDlg::ShowArtifactDescription(const H3Artifact *art)
 {
+    const auto api = globalPatcher->VarGetValue<const ArtifactDescriptionApi::Api *>(ArtifactDescriptionApi::VARIABLE,
+                                                                                  nullptr);
+    if (api && api->magic == ArtifactDescriptionApi::MAGIC && api->size >= sizeof(*api) &&
+        api->version == ArtifactDescriptionApi::VERSION && api->show)
+    {
+        const ArtifactDescriptionApi::Request request{sizeof(ArtifactDescriptionApi::Request),
+                                                     ArtifactDescriptionApi::VERSION, hero, art, slot};
+        if (api->show(&request))
+            return;
+    }
     H3PictureCategories pic;
 
     if (art->GetId() != eArtifact::SPELL_SCROLL)

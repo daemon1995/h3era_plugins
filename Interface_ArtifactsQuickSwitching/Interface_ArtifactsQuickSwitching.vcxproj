@@ -22,6 +22,7 @@
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\headers\EraPluginsAPI\ArtifactDescriptionApi.h" />
     <ClInclude Include="HeroArts_CustomDlg.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
