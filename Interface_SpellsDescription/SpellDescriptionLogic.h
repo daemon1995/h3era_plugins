@@ -110,10 +110,12 @@ inline int NextChainTarget(int x, int y, const ChainCandidate *candidates, std::
             continue;
         const double dx = double(candidates[i].x) - x;
         const double dy = double(candidates[i].y) - y;
-        const int distance = static_cast<int>(std::sqrt(dx * dx + dy * dy));
+        const double distance = std::sqrt(dx * dx + dy * dy);
         if (distance < nearest)
         {
-            nearest = distance;
+            // Comparing before conversion keeps extreme mod coordinates safe.
+            // For nonnegative distances this preserves native truncation/ties.
+            nearest = static_cast<int>(distance);
             result = static_cast<int>(i);
         }
     }
@@ -230,7 +232,10 @@ inline int NonnegativeInt(std::int64_t value)
 inline std::int64_t SacrificeHealth(int creatureHitPoints, int power, int masteryBase, int count)
 {
     const auto perCreature = std::int64_t(creatureHitPoints) + power + masteryBase;
-    return perCreature > 0 && count > 0 ? perCreature * count : 0;
+    if (perCreature <= 0 || count <= 0)
+        return 0;
+    const auto maximum = (std::numeric_limits<std::int64_t>::max)();
+    return perCreature > maximum / count ? maximum : perCreature * count;
 }
 
 inline int Killed(int alive, int hitPoints, int healthLost, int damage, bool clone = false)

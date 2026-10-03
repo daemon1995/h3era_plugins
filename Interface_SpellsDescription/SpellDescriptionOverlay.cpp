@@ -1,6 +1,7 @@
 #include "SpellDescriptionOverlay.h"
 #include "SpellDescriptionLogic.h"
 #include "SpellDescriptionText.h"
+#include "SpellDescriptionTranslations.h"
 #include "SpellDescriptionOverlayPixels.h"
 
 #include <algorithm>
@@ -105,7 +106,7 @@ void Highlight(H3LoadedPcx16 *buffer, const H3CombatSquare &square, int dx, int 
 }
 
 void Paint(H3CombatManager *combat, H3LoadedPcx16 *buffer, H3Font *font, LPCSTR format,
-           const bool *drawHex, const bool *drawBadge)
+           const bool *drawHex)
 {
     // Paint into the screen canvas after native stack drawing. RemoveLayer
     // strips our previous pixels before the next native draw, avoiding tint buildup.
@@ -123,8 +124,6 @@ void Paint(H3CombatManager *combat, H3LoadedPcx16 *buffer, H3Font *font, LPCSTR 
     // a previous number. Double-width troops get one badge on their main cell.
     for (std::size_t i = 0; i < route.count; ++i)
     {
-        if (!drawBadge[i])
-            continue;
         char label[32] = {};
         const auto number = Detail::DecimalNumber(i + 1);
         const int length = std::snprintf(label, sizeof(label), format, number.c_str());
@@ -189,20 +188,18 @@ void ComposeLayer()
     }
     auto canvas = H3WindowManager::Get()->GetDrawBuffer();
     auto font = H3SmallFont::Get();
-    const auto format = EraJS::read("interface_spells_description.battle.chainIndex");
-    if (!canvas || !canvas->buffer || !font || !Detail::ValidFormat(format, "s"))
+    const auto format = Translation::GetText(Translation::Text::ChainIndex);
+    if (!canvas || !canvas->buffer || !font || !format)
     {
         return;
     }
     bool drawHex[187] = {};
-    bool drawBadge[42] = {};
     for (std::size_t i = 0; i < route.count; ++i)
     {
         const auto &target = route.targets[i];
         drawHex[target.hex] = true;
         if (target.secondHex >= 0)
             drawHex[target.secondHex] = true;
-        drawBadge[i] = true;
     }
     Detail::PixelRect rects[84] = {};
     std::size_t count = 0;
@@ -231,7 +228,7 @@ void ComposeLayer()
     }
     Detail::ScopedValues<bool, 1> guard({&painting});
     painting = true;
-    Paint(owner, canvas, font, format, drawHex, drawBadge);
+    Paint(owner, canvas, font, format, drawHex);
     pixels.RecordPaint(canvas->buffer, canvas->scanlineSize);
     paintedCanvas = canvas;
     paintedBuffer = canvas->buffer;
@@ -302,21 +299,27 @@ void __stdcall ChangeCursor(HiHook *hook, H3MouseManager *mouse, int frame, int 
 
 _LHF_(BeforeCast)
 {
+    (void)h;
+    (void)c;
     Clear();
     return EXEC_DEFAULT;
 }
 
 _ERH_(Reset)
 {
+    (void)event;
     RemoveLayer();
     route.count = 0;
     owner = nullptr;
+    pixels.Release();
 }
 } // namespace
 
 void Clear(bool redraw)
 {
     RemoveLayer();
+    if (!route.count)
+        return;
     const auto previous = route;
     route.count = 0;
     if (redraw && previous.count)

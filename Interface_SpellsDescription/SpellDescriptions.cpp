@@ -3,6 +3,7 @@
 #include "SpellDescriptionHintApi.h"
 #include "SpellDescriptionLogic.h"
 #include "SpellDescriptionText.h"
+#include "SpellDescriptionTranslations.h"
 #include "SpellDescriptionOverlay.h"
 
 #include <algorithm>
@@ -12,88 +13,30 @@
 
 namespace SpellDescriptions
 {
+namespace Translation
+{
+const char *GetText(Text text)
+{
+    const auto index = static_cast<std::size_t>(text);
+    if (index >= static_cast<std::size_t>(Text::Count))
+        return nullptr;
+    const auto &definition = TEXTS[index];
+    bool found = false;
+    const auto format = EraJS::read(definition.key, found);
+    return found && Detail::ValidFormat(format, definition.arguments) ? format : nullptr;
+}
+} // namespace Translation
+
 namespace
 {
 using Detail::Kind;
+using Translation::Text;
+using Translation::GetText;
 constexpr int BATTLE_HEXES = 187;
 constexpr size_t TEXT_CAPACITY = 512;
 constexpr size_t API_CAPACITY = 1024;
 constexpr int COMMANDER_FIRST = 174;
 constexpr int COMMANDER_LAST = 191;
-
-enum class Text
-{
-    Damage,
-    Recovery,
-    Cure,
-    SacrificeTarget,
-    SacrificeSource,
-    BookDamage,
-    BookCure,
-    BookHypnotize,
-    BookMine,
-    BookRecovery,
-    BookFirstDamage,
-    BookSummon,
-    Demons,
-    Archangel,
-    AreaDamage,
-    ChainDamage,
-    ChainTarget,
-    ResistanceCondition,
-    ChainIndex,
-    DurationRounds,
-    DurationBattle,
-    DurationNextAttack,
-    DurationNextTurn,
-    DurationRoundsOrAttack,
-    DurationRoundsOrDamage,
-    BattleDurationTarget,
-    BattleDurationArea,
-    BookDuration,
-    Count
-};
-
-struct TextDefinition
-{
-    LPCSTR key;
-    LPCSTR arguments;
-};
-
-#define ERA_SPELL_TEXT(section, field) "interface_spells_description." #section "." #field
-
-// Store JSON keys and printf argument signatures only, like the settings dialog.
-const TextDefinition TEXTS[] = {
-    {ERA_SPELL_TEXT(battle, damage), "ssss"},
-    {ERA_SPELL_TEXT(battle, recovery), "ssss"},
-    {ERA_SPELL_TEXT(battle, cure), "ss"},
-    {ERA_SPELL_TEXT(battle, sacrificeTarget), "sss"},
-    {ERA_SPELL_TEXT(battle, sacrificeSource), "sssss"},
-    {ERA_SPELL_TEXT(book, damage), "d"},
-    {ERA_SPELL_TEXT(book, cure), "d"},
-    {ERA_SPELL_TEXT(book, hypnotize), "d"},
-    {ERA_SPELL_TEXT(book, mine), "d"},
-    {ERA_SPELL_TEXT(book, recovery), "d"},
-    {ERA_SPELL_TEXT(book, firstDamage), "d"},
-    {ERA_SPELL_TEXT(book, summon), "d"},
-    {ERA_SPELL_TEXT(battle, demons), "ss"},
-    {ERA_SPELL_TEXT(battle, archangel), "ss"},
-    {ERA_SPELL_TEXT(battle, areaDamage), "sssss"},
-    {ERA_SPELL_TEXT(battle, chainDamage), "ssssss"},
-    {ERA_SPELL_TEXT(battle, chainTarget), "sssss"},
-    {ERA_SPELL_TEXT(battle, resistanceCondition), ""},
-    {ERA_SPELL_TEXT(battle, chainIndex), "s"},
-    {ERA_SPELL_TEXT(duration, rounds), "s"},
-    {ERA_SPELL_TEXT(duration, battle), ""},
-    {ERA_SPELL_TEXT(duration, nextAttack), ""},
-    {ERA_SPELL_TEXT(duration, nextTurn), ""},
-    {ERA_SPELL_TEXT(duration, roundsOrAttack), "s"},
-    {ERA_SPELL_TEXT(duration, roundsOrDamage), "s"},
-    {ERA_SPELL_TEXT(battle, durationTarget), "sss"},
-    {ERA_SPELL_TEXT(battle, durationArea), "ss"},
-    {ERA_SPELL_TEXT(book, duration), "s"},
-};
-static_assert(sizeof(TEXTS) / sizeof(TEXTS[0]) == static_cast<size_t>(Text::Count), "Missing spell text key");
 
 bool initialized = false;
 bool previewInProgress = false;
@@ -149,14 +92,6 @@ class ScopedSpellPreview
         combat->currentActiveSide = casterSide;
     }
 };
-
-LPCSTR GetText(Text text)
-{
-    const auto &definition = TEXTS[static_cast<size_t>(text)];
-    bool found = false;
-    const auto format = EraJS::read(definition.key, found);
-    return found && Detail::ValidFormat(format, definition.arguments) ? format : nullptr;
-}
 
 bool FormatV(char *output, size_t capacity, LPCSTR format, va_list arguments)
 {
@@ -350,7 +285,8 @@ bool ResolveDuration(int spellId, int power, int mastery, Kind kind, H3Hero *her
     if (rule == Detail::DurationRule::Clone && !timerHero) duration = {};
     // ApplySpell extends an existing timer; a weaker recast never shortens it.
     if (extendTarget && target && rule != Detail::DurationRule::Clone && Detail::NumericDuration(duration.mode) &&
-        spellId < 81 && target->activeSpellDuration[spellId] > duration.rounds)
+        spellId < static_cast<int>(sizeof(target->activeSpellDuration) / sizeof(target->activeSpellDuration[0])) &&
+        target->activeSpellDuration[spellId] > duration.rounds)
         duration.rounds = target->activeSpellDuration[spellId];
     auto request = QueryArguments(spellId, context, ErmBridge::Duration, kind, hero, combat, hex, power, mastery,
                                   target, duration.rounds);
@@ -369,12 +305,12 @@ bool FormatDuration(const Detail::Duration &duration, char *output, size_t capac
     Text text;
     switch (duration.mode)
     {
-    case Detail::DurationMode::Rounds: text = Text::DurationRounds; break;
+    case Detail::DurationMode::Rounds:
+    case Detail::DurationMode::RoundsOrAttack:
+    case Detail::DurationMode::RoundsOrDamage: text = Text::DurationRounds; break;
     case Detail::DurationMode::Battle: text = Text::DurationBattle; break;
     case Detail::DurationMode::NextAttack: text = Text::DurationNextAttack; break;
     case Detail::DurationMode::NextTurn: text = Text::DurationNextTurn; break;
-    case Detail::DurationMode::RoundsOrAttack: text = Text::DurationRoundsOrAttack; break;
-    case Detail::DurationMode::RoundsOrDamage: text = Text::DurationRoundsOrDamage; break;
     default: return false;
     }
     return Detail::NumericDuration(duration.mode) ? Format(output, capacity, text, Number(duration.rounds).c_str())
@@ -620,7 +556,7 @@ bool FormatSpell(H3CombatManager *combat, H3CombatCreature *target, int hex, int
                  const Kind *resolvedKind = nullptr, Detail::ChainRoute *route = nullptr)
 {
     if (!combat || previewInProgress || queryInProgress || !ValidSpell(spellId) || !ValidSide(side) || mastery < 0 ||
-        mastery > 3)
+        mastery > 3 || hex < 0 || hex >= BATTLE_HEXES)
         return false;
     const Kind kind =
         resolvedKind ? *resolvedKind : GetKind(spellId, ErmBridge::Battle, hero, combat, hex, power, mastery, target);
@@ -668,7 +604,7 @@ bool FormatSpell(H3CombatManager *combat, H3CombatCreature *target, int hex, int
 
 bool FormatAbility(H3CombatCreature *caster, H3CombatCreature *target, bool demons, char *output, size_t capacity)
 {
-    if (!caster || !target || target->type < 0)
+    if (queryInProgress || previewInProgress || !caster || !target || target->type < 0)
         return false;
     const auto name = target->GetCreatureName();
     if (!name)
@@ -682,6 +618,7 @@ H3CombatCreature *sacrificeTarget = nullptr;
 
 _ERH_(ResetSacrificeTarget)
 {
+    (void)event;
     sacrificeTarget = nullptr;
 }
 
@@ -788,7 +725,6 @@ bool FormatBookEffect(int spellId, int power, int mastery, H3Hero *hero, char *o
         return false;
     const auto &spell = P_Spell[spellId];
     const Kind kind = GetKind(spellId, ErmBridge::Book, hero, nullptr, -1, power, mastery);
-    int amount = kind == Kind::Duration ? 0 : HeroEffect(hero, nullptr, spellId, BaseEffect(spellId, power, mastery));
     Text text = Text::Count;
     switch (kind)
     {
@@ -812,8 +748,6 @@ bool FormatBookEffect(int spellId, int power, int mastery, H3Hero *hero, char *o
         break;
     case Kind::Summon:
         text = Text::BookSummon;
-        amount = Detail::NonnegativeInt(std::int64_t(spell.baseValue[mastery]) * power);
-        amount = HeroEffect(hero, nullptr, spellId, amount);
         break;
     default:
         break;
@@ -822,6 +756,12 @@ bool FormatBookEffect(int spellId, int power, int mastery, H3Hero *hero, char *o
     char segment[TEXT_CAPACITY] = {};
     if (text != Text::Count)
     {
+        // Resolve the base only for a supported numerical description. Summon
+        // uses its own formula; hero bonuses are applied exactly once.
+        const int base = kind == Kind::Summon
+                             ? Detail::NonnegativeInt(std::int64_t(spell.baseValue[mastery]) * power)
+                             : BaseEffect(spellId, power, mastery);
+        int amount = HeroEffect(hero, nullptr, spellId, base);
         const auto request = QueryArguments(spellId, ErmBridge::Book, ErmBridge::BookEffect, kind, hero, nullptr, -1,
                                             power, mastery, nullptr, amount);
         ErmBridge::Arguments result;
@@ -847,6 +787,7 @@ bool FormatBookEffect(int spellId, int power, int mastery, H3Hero *hero, char *o
 
 _LHF_(AppendSpellbookEffect)
 {
+    (void)h;
     // Spellbook::BuildDescription (0x59BDA0), used by the RMB popup at
     // 0x59D3BA and the other full spell popup at 0x59D7B6. Its hover request
     // at 0x59DA42 uses compactDescription=true and must keep the short text.
@@ -877,7 +818,8 @@ _LHF_(CreatureResurrectionHint)
     if (!queryInProgress && !previewInProgress)
         Overlay::Clear();
     auto combat = H3CombatManager::Get();
-    if (!combat || combat->IsHiddenBattle() || !ValidSide(c->esi) || c->eax >= BATTLE_HEXES)
+    if (queryInProgress || previewInProgress || !combat || combat->IsHiddenBattle() || !ValidSide(c->esi) ||
+        c->eax >= BATTLE_HEXES)
         return EXEC_DEFAULT;
     const bool demons = h->GetAddress() == 0x492AF6;
     auto caster = reinterpret_cast<H3CombatCreature *>(c->ebx);
@@ -893,6 +835,7 @@ _LHF_(CreatureResurrectionHint)
 
 _LHF_(CreatureSpellHint)
 {
+    (void)h;
     auto combat = H3CombatManager::Get();
     auto caster = CurrentCaster(combat);
     auto target = reinterpret_cast<H3CombatCreature *>(c->eax);
@@ -915,6 +858,7 @@ _LHF_(CreatureSpellHint)
 
 _LHF_(SupremeArchangelResurrection)
 {
+    (void)h;
     // Preserve the WoG upgrade's native resurrection calculation (creature 150).
     c->return_address = c->eax == eCreature::ARCHANGEL || c->eax == 150 ? 0x44705F : 0x447098;
     return NO_EXEC_DEFAULT;
@@ -931,6 +875,8 @@ int FormatApiRequest(const SpellDescriptionHint::RequestV1 *request)
     auto combat = H3CombatManager::Get();
     if (!combat || request->battleManager != combat)
         return FORMAT_INVALID;
+    if (combat->finished || combat->IsHiddenBattle() || request->casterSide != combat->currentActiveSide)
+        return FORMAT_DECLINED;
     auto caster = static_cast<H3CombatCreature *>(request->casterStack);
     auto target = static_cast<H3CombatCreature *>(request->targetStack);
     if (!caster || !IsBattleStack(combat, caster) || (target && (!IsBattleStack(combat, target) || target->type < 0)) ||

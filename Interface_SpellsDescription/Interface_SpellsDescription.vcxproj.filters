@@ -50,6 +50,9 @@
     <ClInclude Include="SpellDescriptionText.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SpellDescriptionTranslations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="SpellDescriptionErm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -59,6 +62,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="SpellDescriptions.md">
+      <Filter>Support Files</Filter>
+    </None>
+    <None Include="RELEASE_CHECK.md">
       <Filter>Support Files</Filter>
     </None>
     <None Include="SpellDescriptionErm.md">

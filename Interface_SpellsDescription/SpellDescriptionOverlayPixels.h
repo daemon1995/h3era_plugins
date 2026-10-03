@@ -53,7 +53,40 @@ class PixelBackup
     int bytesPerPixel = 0;
     bool painted = false;
 
+    template <class Pixel>
+    static void RestoreRow(std::uint8_t *destination, const std::uint8_t *original,
+                           const std::uint8_t *overlay, int width)
+    {
+        const auto rowSize = std::size_t(width) * sizeof(Pixel);
+        if (std::memcmp(destination, overlay, rowSize) == 0)
+        {
+            std::memcpy(destination, original, rowSize);
+            return;
+        }
+        // Constant-size copies compile to unaligned loads/stores without
+        // aliasing violations or a CRT call for every individual pixel.
+        for (int column = 0; column < width; ++column)
+        {
+            const auto offset = std::size_t(column) * sizeof(Pixel);
+            Pixel current, expected;
+            std::memcpy(&current, destination + offset, sizeof(Pixel));
+            std::memcpy(&expected, overlay + offset, sizeof(Pixel));
+            if (current == expected)
+                std::memcpy(destination + offset, original + offset, sizeof(Pixel));
+        }
+    }
+
   public:
+    // Retain buffers while hovering, release them at battle/game boundaries.
+    void Release() noexcept
+    {
+        count = 0;
+        bytesPerPixel = 0;
+        painted = false;
+        std::vector<std::uint8_t>().swap(pixels);
+        std::vector<std::uint8_t>().swap(paintedPixels);
+    }
+
     bool Capture(const std::uint8_t *buffer, int width, int height, int stride, int pixelSize,
                  const PixelRect *rects, std::size_t rectCount)
     {
@@ -111,16 +144,19 @@ class PixelBackup
             const auto &patch = patches[i];
             const auto rowSize = std::size_t(patch.rect.width) * bytesPerPixel;
             for (int row = 0; row < patch.rect.height; ++row)
-                for (int column = 0; column < patch.rect.width; ++column)
-                {
-                    auto destination = buffer + std::size_t(patch.rect.y + row) * stride +
-                                       (patch.rect.x + column) * bytesPerPixel;
-                    const auto offset = patch.offset + row * rowSize + column * bytesPerPixel;
-                    // A background, sprite, number box, or dialog may have been
-                    // drawn since our snapshot. Never restore over its new pixel.
-                    if (std::memcmp(destination, paintedPixels.data() + offset, bytesPerPixel) == 0)
-                        std::memcpy(destination, pixels.data() + offset, bytesPerPixel);
-                }
+            {
+                auto destination = buffer + std::size_t(patch.rect.y + row) * stride +
+                                   patch.rect.x * bytesPerPixel;
+                const auto offset = patch.offset + row * rowSize;
+                // Preserve entire native pixels when a sprite/dialog has
+                // replaced even one byte since the recorded overlay.
+                if (bytesPerPixel == 4)
+                    RestoreRow<std::uint32_t>(destination, pixels.data() + offset,
+                                              paintedPixels.data() + offset, patch.rect.width);
+                else
+                    RestoreRow<std::uint16_t>(destination, pixels.data() + offset,
+                                              paintedPixels.data() + offset, patch.rect.width);
+            }
         }
     }
 

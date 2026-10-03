@@ -26,6 +26,7 @@
     <ClInclude Include="SpellDescriptionLogic.h" />
     <ClInclude Include="SpellDescriptionDuration.h" />
     <ClInclude Include="SpellDescriptionText.h" />
+    <ClInclude Include="SpellDescriptionTranslations.h" />
     <ClInclude Include="SpellDescriptionErm.h" />
     <ClInclude Include="SpellDescriptionHintApi.h" />
   </ItemGroup>
@@ -37,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="SpellDescriptions.md" />
+    <None Include="RELEASE_CHECK.md" />
     <None Include="SpellDescriptionErm.md" />
     <None Include="examples\remagic_spell_description.erm" />
     <None Include="examples\spell_duration_description.erm" />

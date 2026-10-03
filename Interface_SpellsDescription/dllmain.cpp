@@ -9,6 +9,8 @@ constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 
 _LHF_(HooksInit)
 {
+    (void)h;
+    (void)c;
     SpellDescriptions::Install(_PI);
     return EXEC_DEFAULT;
 }

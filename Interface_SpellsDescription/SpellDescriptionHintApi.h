@@ -41,6 +41,8 @@ struct RequestV1
     uint32_t outputCapacity;
     uint32_t reserved[2];
 };
+// Call on the game's thread, for the current caster and its acting side.
+// The input and output pointers must remain valid throughout the synchronous call.
 typedef int32_t(__stdcall *FormatBattleHintProc)(const RequestV1 *request);
 struct ApiV1
 {
