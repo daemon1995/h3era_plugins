@@ -60,7 +60,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game-dir", type=Path, required=True)
     args = parser.parse_args()
-    source = (PLUGIN / "SpellDescriptions.cpp").read_text(encoding="utf-8-sig")
+    source = (PLUGIN / "SpellDescriptionTranslations.h").read_text(encoding="utf-8-sig")
     definitions = re.findall(r'\{ERA_SPELL_TEXT\((\w+),\s*(\w+)\),\s*"([sd]*)"\}', source)
     if not definitions:
         raise ValueError("No spell text definitions found")
@@ -79,7 +79,9 @@ def main():
         fragment = read_json(target)
         translations = flatten(fragment)
         if translations.keys() != expected.keys():
-            raise ValueError(f"{language}: translation keys differ from the C++ definitions")
+            missing = sorted(expected.keys() - translations.keys())
+            extra = sorted(translations.keys() - expected.keys())
+            raise ValueError(f"{language}: missing keys {missing}; unused keys {extra}")
         for key, tokens in expected.items():
             if signature(translations[key]) != tokens:
                 raise ValueError(f"{language}: printf signature mismatch at {key}")
