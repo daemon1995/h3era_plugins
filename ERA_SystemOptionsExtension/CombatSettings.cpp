@@ -31,15 +31,9 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     }
 
     auto &config = OriginalConfig::Get();
-    quickCombatInfo.quickCombat = config.quickCombat;
-    quickCombatInfo.autoSpells = config.autoSpells;
-    quickCombatInfo.restoreQuickCombat = FALSE;
-    quickCombatInfo.restoreAutoSpells = FALSE;
-
     if (P_AutoSolo)
     {
-        config.quickCombat = true;
-        quickCombatInfo.restoreQuickCombat = config.quickCombat != quickCombatInfo.quickCombat;
+        quickCombatInfo.SetQuickCombat(config.quickCombat, TRUE);
         return;
     }
 
@@ -82,40 +76,86 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     {
 
     case eQuickCombatType_Off:
-        config.quickCombat = false;
+        quickCombatInfo.SetQuickCombat(config.quickCombat, FALSE);
         break;
     case eQuickCombatType_QuickCombatWithAutoSpells:
-        config.quickCombat = true;
-        config.autoSpells = true;
+        quickCombatInfo.SetQuickCombat(config.quickCombat, TRUE);
+        quickCombatInfo.SetAutoSpells(config.autoSpells, TRUE);
         break;
     case eQuickCombatType_QuickCombatWithoutAutoSpells:
-        config.quickCombat = true;
-        config.autoSpells = false;
+        quickCombatInfo.SetQuickCombat(config.quickCombat, TRUE);
+        quickCombatInfo.SetAutoSpells(config.autoSpells, FALSE);
         break;
     default:
         break;
     }
-
-    quickCombatInfo.restoreQuickCombat = config.quickCombat != quickCombatInfo.quickCombat;
-    quickCombatInfo.restoreAutoSpells = config.autoSpells != quickCombatInfo.autoSpells;
 }
 
 // restore quick combat settings after battle or before FastQuit discards the game
 _ERH_(CombatSettings::OnAfterBattleOrFastQuit)
 {
-    if (!quickCombatInfo.restoreQuickCombat && !quickCombatInfo.restoreAutoSpells)
-        return;
+    RestoreQuickCombatOptions();
+}
 
+void CombatSettings::RestoreQuickCombatOptions() noexcept
+{
     auto &config = OriginalConfig::Get();
     // Restore only fields temporarily overridden for this battle. A user can
     // change an untouched option in the manual battle's settings dialog.
-    if (quickCombatInfo.restoreQuickCombat)
-        config.quickCombat = quickCombatInfo.quickCombat;
-    if (quickCombatInfo.restoreAutoSpells)
-        config.autoSpells = quickCombatInfo.autoSpells;
-    quickCombatInfo.restoreQuickCombat = FALSE;
-    quickCombatInfo.restoreAutoSpells = FALSE;
-    // quickCombatInfo = {};
+    quickCombatInfo.Restore(config.quickCombat, config.autoSpells);
+}
+
+void CombatSettings::FinishBattleInstantly() noexcept
+{
+    // Clear the cursor's combat shadows before switching to hidden combat.
+    CDECL_0(int, 0x493EF0);
+    auto &config = OriginalConfig::Get();
+    quickCombatInfo.FinishInstantly(config.quickCombat, config.autoSpells);
+}
+
+int __stdcall CombatSettings::CombatManager_ProcessMessage(HiHook *hook, H3CombatManager *combatManager, H3Msg *msg)
+{
+    if (msg && msg->IsKeyDown() && msg->GetKey() == eVKey::H3VK_Q &&
+        bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
+    {
+        bool translated = false;
+        LPCSTR question = EraJS::read("era.opt.combat.autoQuick.question", translated);
+        if (!translated)
+            question = EraJS::read("wnd.combat.finish_question", translated);
+        if (!translated)
+            question = "Finish with Quick Combat?";
+
+        if (H3Messagebox::Choice(question))
+        {
+            FinishBattleInstantly();
+            return TRUE;
+        }
+    }
+    return THISCALL_2(int, hook->GetDefaultFunc(), combatManager, msg);
+}
+
+_LHF_(CombatSettings::CombatManager_AutoCombatButton)
+{
+    const auto combatManager = reinterpret_cast<H3CombatManager *>(c->ebx);
+    if (AdditionalConfig::Get().quickAutoResolve.value && !combatManager->autoCombat &&
+        bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
+    {
+        FinishBattleInstantly();
+        // The game has accepted button 2004 (or its A hotkey). Return TRUE
+        // without starting the visible auto-combat action for the current stack.
+        c->return_address = 0x47480F;
+        return NO_EXEC_DEFAULT;
+    }
+    return EXEC_DEFAULT;
+}
+
+_LHF_(CombatSettings::CombatManager_EndBattle)
+{
+    // WND restored its instant-finish override before the result dialog. Keep
+    // regular battle-type restoration at OnAfterBattle, as before.
+    auto &config = OriginalConfig::Get();
+    quickCombatInfo.RestoreInstantFinish(config.quickCombat, config.autoSpells);
+    return EXEC_DEFAULT;
 }
 void CombatSettings::CreatePatches() noexcept
 {
@@ -151,7 +191,12 @@ void CombatSettings::CreatePatches() noexcept
 
     _pi->WriteByte(0x50B556 + 2, speedsCount - 1); // NormalizeRegistry ( if ( BattleSpeed < 0 || BattleSpeed > 2->9 ))
 
-    // combat setype selection
+    // Q and the optional instant auto-combat button share WND's quick finish.
+    _pi->WriteHiHook(0x473F55, CALL_, EXTENDED_, THISCALL_, CombatManager_ProcessMessage);
+    _pi->WriteLoHook(0x47478A, CombatManager_AutoCombatButton);
+    _pi->WriteLoHook(0x476DA5, CombatManager_EndBattle);
+
+    // combat type selection
     _REH_(OnBeforeBattleUniversal_Quit);
     Era::RegisterHandler(OnAfterBattleOrFastQuit, "OnAfterBattle");
     Era::RegisterHandler(OnAfterBattleOrFastQuit, "OnBeforeFastQuitToGameMenu");
@@ -167,11 +212,15 @@ CombatSettings &CombatSettings::Get()
 void CombatSettings::ApplyQuickCombatType(const AdditionalConfig::ConfigEntry &entry,
                                           const AdditionalConfig::EOptionChangeSource source) noexcept
 {
-    // A zero value from the initial load preserves the game's original quick-combat state.
-    // A zero value received from the API or the dialog explicitly disables it.
-    if (source == AdditionalConfig::EOptionChangeSource::InitialLoad && entry.value == 0)
-        return;
-
     OriginalConfig::Get().quickCombat = entry.value != 0;
+}
+
+int CombatSettings::PersistentAutoSpells() noexcept
+{
+    return quickCombatInfo.PersistentAutoSpells(OriginalConfig::Get().autoSpells);
+}
+void CombatSettings::SetPersistentAutoSpells(const int value) noexcept
+{
+    quickCombatInfo.SetPersistentAutoSpells(OriginalConfig::Get().autoSpells, value);
 }
 } // namespace cmbsttngs

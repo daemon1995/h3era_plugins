@@ -157,6 +157,11 @@ BOOL LocaleManager::SetForUser(const Locale *locale) const
     Era::SetCodePage(codePage);
     Era::ReloadLanguageData();
 
+    // The system-options plugin owns the common configuration when installed.
+    if (const auto options = GetModuleHandleA("ERA_SystemOptionsExtension.era"))
+        if (const auto saveOptions = reinterpret_cast<BOOL(__stdcall *)()>(GetProcAddress(options, "SaveOptions")))
+            return saveOptions();
+
     Era::WriteStrToIni(INI_LANGUAGE_KEY_NAME, localeToSet, INI_SECTION_NAME, INI_FILE_NAME);
     Era::WriteStrToIni(INI_CODEPAGE_KEY_NAME, std::to_string(codePage).c_str(), INI_SECTION_NAME, INI_FILE_NAME);
     Era::SaveIni(INI_FILE_NAME);

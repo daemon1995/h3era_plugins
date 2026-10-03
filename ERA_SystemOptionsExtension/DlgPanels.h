@@ -13,7 +13,7 @@ struct SettingsInfo
     int *const valuePtr = 0;
     LPCSTR displayedName = nullptr;
     union {
-    LPCSTR rmcHint;
+        LPCSTR rmcHint;
         LPCSTR *rmcHints = nullptr;
     };
     BOOL isBlocked = FALSE;
@@ -66,6 +66,7 @@ struct ISetting
     struct Value value;
     LPCSTR displayedName = nullptr;
     H3DlgPcx16 *titleItem = nullptr;
+    std::vector<std::function<void()>> languageUpdates;
     int firstClickableItemId = -1;
     int lastClickableItemId = -1;
 
@@ -78,7 +79,7 @@ struct ISetting
     {
         if (value.valuePtr)
         {
-            const int currentValue = *value.valuePtr;
+            const int currentValue = AdditionalConfig::ReadNativeValue(value.valuePtr);
             this->value.dlgStart = currentValue;
             this->value.current = currentValue;
         }
@@ -100,6 +101,7 @@ struct ISetting
   public:
     virtual void ClampValue() noexcept {};
     virtual void SetVisible(const BOOL visible) noexcept {};
+    virtual void RefreshValue() noexcept {};
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept = 0;
 
   public:
@@ -117,8 +119,11 @@ struct ISetting
             return;
         if (value.configEntry)
             value.configEntry->SetValue(value.current, AdditionalConfig::EOptionChangeSource::Dialog);
+        else if (value.valuePtr)
+            AdditionalConfig::SetNativeValue(value.valuePtr, value.current, TRUE);
         if (m_onChange)
             m_onChange(this);
+        SyncFromSource(TRUE);
     }
     void TriggerDlgClose() noexcept
     {
@@ -126,8 +131,47 @@ struct ISetting
             m_onClose(this);
     }
 
+    void SyncFromSource(const BOOL redraw) noexcept
+    {
+        const int sourceValue = AdditionalConfig::ReadNativeValue(value.valuePtr);
+        if (value.valuePtr && value.current != sourceValue)
+        {
+            value.current = sourceValue;
+            ClampValue();
+            if (redraw)
+                RefreshValue();
+        }
+    }
+
+    template <class T> void BindText(T *item, LPCSTR key)
+    {
+        if (item && key && *key)
+            languageUpdates.emplace_back([item, key = std::string(key)] { item->SetText(EraJS::read(key)); });
+    }
+
+    void BindHint(H3DlgItem *item, LPCSTR key)
+    {
+        if (item && key && *key)
+            languageUpdates.emplace_back([item, key = std::string(key)] { item->SetRightClickHint(EraJS::read(key)); });
+    }
+
+    void RefreshLanguage()
+    {
+        for (const auto &update : languageUpdates)
+            update();
+    }
+
+    H3DlgPcx16 *CreateOwnTitle(int x, int &y, LPCSTR key, H3Vector<H3DlgItem *> &items)
+    {
+        H3DlgText *text = nullptr;
+        auto title = CreateTitle(x, y, key, items, &text);
+        BindText(text, key);
+        return title;
+    }
+
   public:
-    static H3DlgPcx16 *CreateTitle(int x, int &y, LPCSTR displayedText, H3Vector<H3DlgItem *> &itemsVec) noexcept
+    static H3DlgPcx16 *CreateTitle(int x, int &y, LPCSTR displayedText, H3Vector<H3DlgItem *> &itemsVec,
+                                   H3DlgText **createdText = nullptr) noexcept
     {
         auto titleItem = H3DlgText::Create(x, y, WIDTH, TITLE_HEIGHT, EraJS::read(displayedText), NH3Dlg::Text::MEDIUM,
                                            eTextColor::HIGHLIGHT, -1);
@@ -148,6 +192,8 @@ struct ISetting
         itemsVec += titleBack;
         itemsVec += CreateThickFrameOverItem(titleBack);
         itemsVec += titleItem;
+        if (createdText)
+            *createdText = titleItem;
 
         y += TITLE_Y_OFFSET; // +6;
 
@@ -172,13 +218,20 @@ struct CheckBoxSetting : public ISetting
     virtual ~CheckBoxSetting() {};
 
   public:
+    void RefreshValue() noexcept override
+    {
+        SetCheckBoxValue(checkBoxItem, value.current);
+    }
     virtual void ClampValue() noexcept override
     {
         value.current = Clamp(0, value.current, 1);
     }
     virtual void SetVisible(const BOOL visible) noexcept override
     {
-        if (!visible || !value.isBlocked)
+        if (!visible)
+            return;
+        checkBoxItem->SetFrame(value.current);
+        if (!value.isBlocked)
             return;
         checkBoxItem->SendCommand(5, 4096);
         checkBoxItem->SendCommand(6, 2);
@@ -230,25 +283,36 @@ struct RadioBoxSetting : public ISetting
     virtual ~RadioBoxSetting() {};
 
   public:
+    void RefreshValue() noexcept override
+    {
+        for (UINT i = 0; i < checkBoxes.Size(); ++i)
+            CheckBoxSetting::SetCheckBoxValue(checkBoxes[i], static_cast<int>(i) == value.current - !requiresSelection);
+    }
     virtual void ClampValue() noexcept override
     {
         value.current = Clamp(0, value.current, checkBoxes.Size() - requiresSelection);
     }
     virtual void SetVisible(const BOOL visible) noexcept override
     {
-        if (!visible || !value.isBlocked)
+        if (!visible)
             return;
-        for (auto &checkBox : checkBoxes)
+        for (UINT i = 0; i < checkBoxes.Size(); ++i)
         {
-            checkBox->SendCommand(5, 4096);
-            checkBox->SendCommand(6, 2);
+            auto checkBox = checkBoxes[i];
+            checkBox->SetFrame(static_cast<int>(i) == value.current - !requiresSelection);
+            if (value.isBlocked)
+            {
+                checkBox->SendCommand(5, 4096);
+                checkBox->SendCommand(6, 2);
+            }
         }
     }
 
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
 
-        if (!value.isBlocked && msg.IsLeftDown() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        if (!value.isBlocked && msg.IsLeftDown() && msg.itemId >= firstClickableItemId &&
+            msg.itemId <= lastClickableItemId)
         {
             const int valueIndex = msg.itemId - firstClickableItemId;
 
@@ -329,6 +393,15 @@ struct SwitchPanel : public ISetting
     virtual ~SwitchPanel() {};
 
   public:
+    void RefreshValue() noexcept override
+    {
+        SetVisible(TRUE);
+        for (auto *button : switchButtons)
+        {
+            button->Draw();
+            button->Refresh();
+        }
+    }
     virtual void ClampValue() noexcept override
     {
         if (const auto size = switchButtons.Size())
@@ -349,7 +422,8 @@ struct SwitchPanel : public ISetting
     }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
-        if (!value.isBlocked && msg.IsLeftClick() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        if (!value.isBlocked && msg.IsLeftClick() && msg.itemId >= firstClickableItemId &&
+            msg.itemId <= lastClickableItemId)
         {
             const int buttonIndex = msg.itemId - firstClickableItemId;
             if (value.current - valueOffset == buttonIndex)
@@ -395,6 +469,14 @@ struct Switch10XPanel : public ISetting
     virtual ~Switch10XPanel() {};
 
   public:
+    void RefreshValue() noexcept override
+    {
+        SetVisible(TRUE);
+        backgroundPcx->Draw();
+        for (auto *button : switchButtons)
+            button->Draw();
+        backgroundPcx->Refresh();
+    }
     virtual void ClampValue() noexcept override
     {
         value.current = Clamp(0, value.current, BUTTONS_COUNT - 1);
@@ -412,7 +494,8 @@ struct Switch10XPanel : public ISetting
     }
     virtual BOOL ProcessMessage(H3Msg &msg) noexcept override
     {
-        if (!value.isBlocked && msg.IsLeftDown() && msg.itemId >= firstClickableItemId && msg.itemId <= lastClickableItemId)
+        if (!value.isBlocked && msg.IsLeftDown() && msg.itemId >= firstClickableItemId &&
+            msg.itemId <= lastClickableItemId)
         {
             const int buttonIndex = msg.itemId - firstClickableItemId;
             if (value.current == buttonIndex)

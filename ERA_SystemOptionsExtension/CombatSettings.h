@@ -1,4 +1,5 @@
 #pragma once
+#include "QuickCombatState.h"
 #include "framework.h"
 
 namespace cmbsttngs
@@ -17,12 +18,8 @@ class CombatSettings : public IGamePatch
         0.025f, 0.010f          // new speed coefficients
     };
 
-    static struct QuickCombatInfo
+    static struct QuickCombatInfo : QuickCombatState
     {
-        int quickCombat = 0;
-        int autoSpells = 0;
-        BOOL restoreQuickCombat = FALSE;
-        BOOL restoreAutoSpells = FALSE;
         int lastSelection = 0;
     } quickCombatInfo;
 
@@ -33,9 +30,16 @@ class CombatSettings : public IGamePatch
   protected:
     static _ERH_(OnBeforeBattleUniversal_Quit);
     static _ERH_(OnAfterBattleOrFastQuit);
+    static int __stdcall CombatManager_ProcessMessage(HiHook *hook, H3CombatManager *combatManager, H3Msg *msg);
+    static _LHF_(CombatManager_AutoCombatButton);
+    static _LHF_(CombatManager_EndBattle);
+    static void FinishBattleInstantly() noexcept;
+    static void RestoreQuickCombatOptions() noexcept;
 
   public:
     static CombatSettings &Get();
+    static int PersistentAutoSpells() noexcept;
+    static void SetPersistentAutoSpells(int value) noexcept;
     static void ApplyQuickCombatType(const AdditionalConfig::ConfigEntry &entry,
                                      AdditionalConfig::EOptionChangeSource source) noexcept;
 };

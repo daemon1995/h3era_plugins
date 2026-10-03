@@ -1,7 +1,9 @@
 #include "CombatCreatureHealthBar.h"
-#include <cmath>
+#include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdlib>
+#include <initializer_list>
 
 void __stdcall ShowHealthBarDlg()
 {
@@ -25,7 +27,6 @@ CombatHints::CombatHints() : IGamePatch(globalPatcher->CreateInstance("EraPlugin
     CreatePatches();
 
     settings.reset();
-    settings.load();
 }
 
 CombatHints &CombatHints::Get()
@@ -198,16 +199,21 @@ void CombatHints::ShowHealthBarDlg() noexcept
                               EraJS::read("gem_plugin.combat_hints.text.hotkey"),
                               EraJS::read("gem_plugin.combat_hints.text.wrong_hotkey"),
                               EraJS::read("gem_plugin.combat_hints.text.enable"),
-                              EraJS::read("gem_plugin.combat_hints.text.toggable"),
                               EraJS::read("gem_plugin.combat_hints.text.set_hotkey"),
                               EraJS::read("gem_plugin.combat_hints.text.press_any"),
                               EraJS::read("gem_plugin.combat_hints.text.held")};
     auto &settings = Get().settings;
 
+    const Settings before = settings;
     SettingsDlg dlg(450, 450, &settings, &dlgText);
-
     dlg.Start();
-    settings.save();
+    AdditionalConfig::Get().showCreatureHealthBar.SetValue(settings.isEnabled,
+                                                           AdditionalConfig::EOptionChangeSource::Dialog);
+    if (before.isEnabled != settings.isEnabled || before.isHeld != settings.isHeld || before.vKey != settings.vKey ||
+        before.fcolorFill != settings.fcolorFill || before.fcolorLoss != settings.fcolorLoss ||
+        before.fsaturation != settings.fsaturation || before.height != settings.height)
+        AdditionalConfig::MarkDirty();
+    AdditionalConfig::SaveIfDirty(TRUE);
 }
 int __fastcall CombatHints::CombatOptionsCallback(H3Msg *msg) noexcept
 {
@@ -276,8 +282,8 @@ void CombatHints::WindMgr_DrawColoredRect(const int x, const int y, const int wi
     const int right = Clamp(left, x + width, buffer->width);
     const int bottom = Clamp(top, y + height, buffer->height);
     if (right > left && bottom > top)
-        buffer->AdjustHueSaturation(left, top, right - left, bottom - top,
-                                    lost ? stg->fcolorLoss : stg->fcolorFill, stg->fsaturation);
+        buffer->AdjustHueSaturation(left, top, right - left, bottom - top, lost ? stg->fcolorLoss : stg->fcolorFill,
+                                    stg->fsaturation);
 }
 
 void SettingsDlg::HitPointsBarDraw() noexcept
@@ -297,7 +303,6 @@ void SettingsDlg::HitPointsBarDraw() noexcept
     const int drawHeightMax = labelHeight - 2;
     const int labelBorderHeight = protrusionSize >= labelHeight ? 2 : 1;
     int drawHeight = Clamp(0, protrusionSize - labelBorderHeight, drawHeightMax);
-
 
     // const int drawY = originalLabel->GetAbsoluteY() + originalLabel->GetHeight() + 1;
     // if draw area displayed at all
@@ -319,6 +324,16 @@ void SettingsDlg::HitPointsBarDraw() noexcept
     }
 }
 
+void SettingsDlg::RedrawPreview() noexcept
+{
+    if (!creatureDef)
+        return;
+    // Restore the whole dialog before applying the label colors.
+    Redraw();
+    HitPointsBarDraw();
+    needRedraw = false;
+}
+
 void __fastcall SettingsDlg::ScrollBarGeneralProc(SettingsDlg *dlg, INT32 scrollBarId, float &valuePtr)
 {
     // auto txt = dlg->GetText(txtId);
@@ -326,10 +341,9 @@ void __fastcall SettingsDlg::ScrollBarGeneralProc(SettingsDlg *dlg, INT32 scroll
     if (scroll) // txt && )
     {
         scroll->Draw();
-        float tick = static_cast<float>(scroll->GetTick());
-        // set new settings value
-        valuePtr = tick / scroll->GetTicksCount(); // scrollBarId < 103 ? tick / scroll->GetTicksCount() : tick;
-        dlg->HitPointsBarDraw();                   // draw label changes
+        valuePtr = sysopts::TickToNormalized(scroll->GetTick(), scroll->GetTicksCount());
+        scroll->Refresh();
+        dlg->RedrawPreview();
     }
 }
 void __fastcall SettingsDlg::ColorFillScrollBarProc(INT32 value, H3BaseDlg *dlg)
@@ -358,12 +372,23 @@ void __fastcall SettingsDlg::HeightScrollBarProc(INT32 value, H3BaseDlg *dlg)
     sDlg->settings->height = newVal;
 
     sDlg->labelForHp->SetY(sDlg->originalLabel->GetY() - static_cast<int>(newVal));
-    ScrollBarGeneralProc(sDlg, 103, newVal);
-    dlg->Redraw();
+    auto scroll = dlg->GetScrollbar(103);
+    scroll->Draw();
+    scroll->Refresh();
+    sDlg->RedrawPreview();
 }
 
 BOOL SettingsDlg::DialogProc(H3Msg &msg)
 {
+    // External API changes also reach an already open advanced dialog.
+    auto enabled = GetDefButton(7);
+    if (enabled && enabled->GetFrame() != settings->isEnabled)
+    {
+        enabled->SetFrame(settings->isEnabled);
+        enabled->SetClickFrame(settings->isEnabled);
+        enabled->Draw();
+        enabled->Refresh();
+    }
     if (creatureDef)
     {
         const DWORD currentTime = GetTime();
@@ -376,8 +401,6 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
             const DWORD elapsed = currentTime - nextAnimationAt;
             nextAnimationAt += elapsed < 100 ? 100 : elapsed;
             Redraw();
-            // creatureDef->Draw();
-            // creatureDef->Refresh();
             needRedraw = true;
         }
     }
@@ -432,6 +455,9 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
             {
                 BOOL *optionPtr = itemId == 7 ? &settings->isEnabled : &settings->isHeld;
                 *optionPtr ^= 1;
+                if (itemId == 7)
+                    AdditionalConfig::Get().showCreatureHealthBar.SetValue(
+                        settings->isEnabled, AdditionalConfig::EOptionChangeSource::Dialog);
                 bttn->SetFrame(*optionPtr);
                 bttn->SetClickFrame(*optionPtr);
                 bttn->Draw();
@@ -442,13 +468,13 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
 
                 // reset settings values
                 settings->reset();
+                AdditionalConfig::Get().showCreatureHealthBar.SetValue(settings->isEnabled,
+                                                                       AdditionalConfig::EOptionChangeSource::Dialog);
                 constexpr UINT16 SIZE = 4;
                 float values[SIZE] = {settings->fcolorFill, settings->fcolorLoss, settings->fsaturation,
                                       settings->height + HP_LABEL_MAX_OFFSET};
-                H3DlgScrollbar_proc procs[SIZE] = {ColorFillScrollBarProc, ColorLossScrollBarProc,
-                                                   SaturationScrollBarProc, HeightScrollBarProc};
 
-                // set correct postitions
+                // set correct positions
                 for (UINT16 i = 0; i < SIZE; i++)
                 {
                     auto scrollBar = GetScrollbar(100 + i);
@@ -458,14 +484,13 @@ BOOL SettingsDlg::DialogProc(H3Msg &msg)
                     }
                     else
                     {
-                        scrollBar->SetTick(
-                            static_cast<int>(values[i] * static_cast<float>(scrollBar->GetTicksCount())));
+                        scrollBar->SetTick(sysopts::NormalizedToTick(values[i], scrollBar->GetTicksCount()));
                     }
 
                     scrollBar->SetButtonPosition();
-                    procs[i](scrollBar->GetTick(), this);
                     scrollBar->ParentRedraw();
                 }
+                labelForHp->SetY(originalLabel->GetY() - static_cast<int>(settings->height));
                 bttn = GetDefButton(7);
                 bttn->SetFrame(settings->isEnabled);
                 bttn->SetClickFrame(settings->isEnabled);
@@ -568,7 +593,9 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
     // getVirtualKeyName(settings.vKey).
 
     auto fnt = H3MediumFont::Get();
-    int textWidth = fnt->GetMaxLineWidth("'{CAPS LOCK}'");
+    int textWidth = 0;
+    for (const int key : {VK_SHIFT, VK_CONTROL, VK_MENU, VK_CAPITAL, VK_SPACE, VK_OEM_3, VK_BACK})
+        textWidth = (std::max)(textWidth, fnt->GetMaxLineWidth(getVirtualKeyName(key).String()));
     int textX = widthDlg - textWidth - 16;
 
     hk.bttn = CreateCustomButton(onlyHeldCheckBox->GetX(), onlyHeldCheckBox->GetY() + enabledText->GetHeight() - 3, 15,
@@ -600,7 +627,7 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
     }
 
     constexpr int SIZE = 4;
-    int ticks[SIZE] = {100, 100, 10, HP_LABEL_MAX_OFFSET * 2 + 1};
+    int ticks[SIZE] = {101, 101, 11, HP_LABEL_MAX_OFFSET * 2 + 1};
     float values[SIZE] = {settings->fcolorFill, settings->fcolorLoss, settings->fsaturation,
                           settings->height + HP_LABEL_MAX_OFFSET};
 
@@ -624,7 +651,7 @@ SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgT
         {
             IntAt(reinterpret_cast<int>(scrollBar) + 0x5C) = NULL;
             AddItem(scrollBar);
-            scrollBar->SetTick(static_cast<int>(values[i] * ticks[i]));
+            scrollBar->SetTick(sysopts::NormalizedToTick(values[i], ticks[i]));
 
             if (i == 3)
             {
@@ -654,38 +681,36 @@ BOOL Settings::validateScanCode(eVKey scanCode) const noexcept
 
 H3String SettingsDlg::getVirtualKeyName(int vKey) const noexcept
 {
-    H3String str;
+    LPCSTR key = nullptr;
     switch (vKey)
     {
     case VK_SHIFT:
-        str = "'{SHIFT}'";
+        key = "gem_plugin.combat_hints.text.key_names.shift";
         break;
-
     case VK_CONTROL:
-        str = "'{CTRL}'";
+        key = "gem_plugin.combat_hints.text.key_names.ctrl";
         break;
-
     case VK_MENU:
-        str = "'{ALT}'";
+        key = "gem_plugin.combat_hints.text.key_names.alt";
         break;
-
     case VK_CAPITAL:
-        str = "'{CAPS LOCK}'";
+        key = "gem_plugin.combat_hints.text.key_names.caps_lock";
         break;
-
     case VK_SPACE:
-        str = "'{SPACEBAR}'";
+        key = "gem_plugin.combat_hints.text.key_names.space";
         break;
-
     case VK_OEM_3:
-        str = "'{TILDE (~)}'";
+        key = "gem_plugin.combat_hints.text.key_names.tilde";
         break;
-    default:
-        str = str.Format("'{%c}'", MapVirtualKeyA(vKey, MAPVK_VK_TO_CHAR));
+    case VK_BACK:
+        key = "gem_plugin.combat_hints.text.key_names.backspace";
         break;
+    default: {
+        const char character[] = {static_cast<char>(MapVirtualKeyA(vKey, MAPVK_VK_TO_CHAR)), 0};
+        return H3String(Era::tr("gem_plugin.combat_hints.text.key_names.character", {"key", character}).c_str());
     }
-
-    return str;
+    }
+    return H3String(EraJS::read(key));
 }
 
 int __fastcall SettingsDlg::SettingsHotkeyCallback(H3Msg *msg) noexcept
@@ -735,82 +760,4 @@ void Settings::reset()
     fsaturation = HP_LABEL_SATURATION;
 }
 
-BOOL Settings::save()
-{
-    constexpr int SIZE = 4;
-    constexpr const char *keys[SIZE] = {"fillColor", "lossColor", "colorSaturation", "yLabelShift"};
-    float values[SIZE] = {fcolorFill, fcolorLoss, fsaturation, height};
-
-    BOOL success = TRUE;
-
-    for (size_t i = 0; i < SIZE; i++)
-    {
-        if (!Era::WriteStrToIni(keys[i], std::to_string(values[i]).c_str(), section, iniPath))
-            success = FALSE;
-    }
-
-    success = Era::WriteStrToIni("enabled", std::to_string(static_cast<bool>(isEnabled)).c_str(), section, iniPath) && success;
-    success = Era::WriteStrToIni("held", std::to_string(static_cast<bool>(isHeld)).c_str(), section, iniPath) && success;
-    success = Era::WriteStrToIni("keyCode", std::to_string(vKey).c_str(), section, iniPath) && success;
-
-    return Era::SaveIni(iniPath) && success;
-}
-
-BOOL Settings::load()
-{
-
-    libc::sprintf(h3_TextBuffer, "%d", 1); // set default buffer
-    if (Era::ReadStrFromIni("enabled", section, iniPath, h3_TextBuffer))
-        isEnabled = libc::atoi(h3_TextBuffer) != 0;
-
-    libc::sprintf(h3_TextBuffer, "%d", 0); // set default buffer
-    if (Era::ReadStrFromIni("held", section, iniPath, h3_TextBuffer))
-        isHeld = libc::atoi(h3_TextBuffer) != 0;
-    libc::sprintf(h3_TextBuffer, "%d", MapVirtualKeyA(VK_CONTROL, MAPVK_VK_TO_CHAR)); // set default buffer
-    if (Era::ReadStrFromIni("keyCode", section, iniPath, h3_TextBuffer))
-    {
-        int tempVirtualKey = libc::atoi(h3_TextBuffer);
-        int _scanCode = MapVirtualKeyA(tempVirtualKey, MAPVK_VK_TO_VSC);
-        if (validateScanCode(eVKey(_scanCode)))
-        {
-            vKey = tempVirtualKey;
-            scanCode = _scanCode;
-        }
-    }
-
-    constexpr int SIZE = 4;
-    constexpr const char *keys[SIZE] = {"fillColor", "lossColor", "colorSaturation", "yLabelShift"};
-    float *values[SIZE] = {&fcolorFill, &fcolorLoss, &fsaturation, &height};
-    // Era::ReadStrFromIni("1", "12","Runtime/game_enhancement_mod.ini", "12");
-    libc::sprintf(h3_TextBuffer, "%.2f", -1.0f); // set default buffer
-
-    for (size_t i = 0; i < SIZE; i++)
-    {
-        if (!Era::ReadStrFromIni(keys[i], section, iniPath, h3_TextBuffer))
-            continue;
-
-        char *end = nullptr;
-        const double temp = std::strtod(h3_TextBuffer, &end);
-        if (end == h3_TextBuffer || !std::isfinite(temp))
-            continue;
-        while (std::isspace(static_cast<unsigned char>(*end)))
-            ++end;
-        if (*end)
-            continue;
-        if (i == 3)
-        {
-            if (temp < -HP_LABEL_MAX_OFFSET || temp > HP_LABEL_MAX_OFFSET)
-                continue;
-        }
-        else
-        {
-            if (temp < 0.0f || temp > 1.f)
-                continue;
-        }
-
-        *(values[i]) = static_cast<float>(temp);
-    }
-
-    return TRUE;
-}
 } // namespace cmbhints

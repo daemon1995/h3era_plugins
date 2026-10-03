@@ -26,6 +26,12 @@
     <ClInclude Include="CombatSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="QuickCombatState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsSupport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ConfigManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>

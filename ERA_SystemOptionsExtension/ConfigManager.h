@@ -1,4 +1,5 @@
 #pragma once
+#include "SettingsSupport.h"
 #include <array>
 #include <unordered_map>
 #pragma pack(push, 4)
@@ -64,7 +65,7 @@ struct AdditionalConfig
     };
 
     static constexpr LPCSTR sectionName = "Settings.Extra";
-    static constexpr LPCSTR fileName = "heroes3.ini";
+    static constexpr LPCSTR fileName = sysopts::SETTINGS_FILE;
     static std::unordered_map<std::string, ConfigEntry *> optionsMap;
 
     struct ConfigEntry
@@ -98,9 +99,13 @@ struct AdditionalConfig
             const int clampedValue = Clamp(0, newValue, maxValue);
             if (value == clampedValue)
                 return FALSE;
+            if (!CanChangeOption(*this, source))
+                return FALSE;
 
             value = clampedValue;
             Apply(source);
+            if (source != EOptionChangeSource::InitialLoad)
+                MarkDirty();
             return TRUE;
         }
     };
@@ -132,5 +137,12 @@ struct AdditionalConfig
     }
     static BOOL Load();
     static BOOL Save();
+    static BOOL SaveIfDirty(const BOOL reportError = FALSE);
+    static void MarkDirty() noexcept;
+    static UINT Revision() noexcept;
+    static int ReadNativeValue(const int *valuePtr) noexcept;
+    static BOOL SetNativeValue(int *valuePtr, int value, BOOL reportError = FALSE) noexcept;
+    static BOOL CanChangeOption(const ConfigEntry &entry, EOptionChangeSource source) noexcept;
+    static BOOL IsInCombat() noexcept;
 };
 #pragma pack(pop)

@@ -14,8 +14,8 @@ struct QuickCombatState
 
         void Set(int &option, const int temporaryValue) noexcept
         {
-            if (option == temporaryValue)
-                return;
+            // Reserve the temporary value even when it already matches. API
+            // edits must affect the restored setting, not the running battle.
             if (!active)
             {
                 originalValue = option;

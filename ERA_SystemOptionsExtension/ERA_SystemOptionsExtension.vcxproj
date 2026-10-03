@@ -20,6 +20,8 @@
   <ItemGroup>
     <ClInclude Include="CombatCreatureHealthBar.h" />
     <ClInclude Include="CombatSettings.h" />
+    <ClInclude Include="QuickCombatState.h" />
+    <ClInclude Include="SettingsSupport.h" />
     <ClInclude Include="DlgPanels.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MapScroller.h" />

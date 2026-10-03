@@ -21,12 +21,7 @@ struct Settings
         float values[4];
     };
 
-    static constexpr LPCSTR iniPath = "Runtime/game_enhancement_mod.ini";
-    static constexpr LPCSTR section = "CombatHints";
-
     void reset();
-    BOOL load();
-    BOOL save();
     BOOL validateScanCode(eVKey scanCode) const noexcept;
 };
 struct DlgText
@@ -42,7 +37,6 @@ struct DlgText
     LPCSTR hotkey;
     LPCSTR wrong;
     LPCSTR enable;
-    LPCSTR toggable;
     LPCSTR setHk;
     LPCSTR press;
     LPCSTR held;
@@ -92,6 +86,7 @@ struct SettingsDlg : public H3Dlg
     static int __fastcall SettingsHotkeyCallback(H3Msg *msg) noexcept;
 
     void HitPointsBarDraw() noexcept;
+    void RedrawPreview() noexcept;
 };
 
 class CombatHints : public IGamePatch

@@ -1,4 +1,5 @@
 #include "DlgPanels.h"
+#include <cstring>
 
 const H3RGB565 frameColor(0x7A, 0x65, 0x48);
 
@@ -41,6 +42,8 @@ CheckBoxSetting *CheckBoxSetting::Create(const SettingsInfo &info, H3Vector<H3Dl
         H3DlgText::Create(itemX, itemY, WIDTH - CHECKBOX_WIDTH, CHECKBOX_HEIGHT, EraJS::read(info.displayedName),
                           NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
     itemsVec += text;
+    setting->BindText(text, info.displayedName);
+    setting->BindHint(checkBox, info.rmcHint);
     return setting;
 }
 
@@ -56,7 +59,7 @@ RadioBoxSetting *RadioBoxSetting::Create(const RadioButtonInfo &info, H3Vector<H
     int itemY = info.position.y;
 
     if (auto &text = info.displayedName)
-        setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
+        setting->titleItem = setting->CreateOwnTitle(itemX, itemY, text, itemsVec);
 
     // Clamp before selecting a frame, even if another plugin supplied an invalid value.
     setting->value.current = Clamp(0, setting->value.current, static_cast<int>(info.size) - !!info.requiresSelection);
@@ -78,6 +81,9 @@ RadioBoxSetting *RadioBoxSetting::Create(const RadioButtonInfo &info, H3Vector<H
             H3DlgText::Create(itemX, itemY, WIDTH - CHECKBOX_WIDTH, CHECKBOX_HEIGHT, EraJS::read(info.textPtrs[i]),
                               NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
         setting->checkBoxTexts += text;
+        setting->BindText(text, info.textPtrs[i]);
+        if (info.rmcHints)
+            setting->BindHint(checkBox, info.rmcHints[i]);
 
         itemsVec += text;
         itemsVec += checkBox;
@@ -118,6 +124,9 @@ CaptionButtonSetting *CaptionButtonSetting::Create(const SettingsInfo &info, H3V
     itemsVec += CreateThickFrameOverItem(bttn);
     itemsVec += bttn;
     setting->captionButton = bttn;
+    if (!info.uuid || std::strcmp(info.uuid, "system_select_language"))
+        setting->BindText(bttn, info.displayedName);
+    setting->BindHint(bttn, info.rmcHint);
     def->Dereference();
     return setting;
 }
@@ -135,7 +144,7 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     int itemY = info.position.y;
 
     if (auto &text = info.displayedName)
-        setting->titleItem = ISetting::CreateTitle(itemX, itemY, text, itemsVec);
+        setting->titleItem = setting->CreateOwnTitle(itemX, itemY, text, itemsVec);
 
     // create text field with name of the setting
     const auto size = info.defsNum;
@@ -153,6 +162,8 @@ SwitchPanel *SwitchPanel::Create(const SwitchPanelInfo &info, H3Vector<H3DlgItem
     {
         auto def = H3DlgDefButton::Create(itemX, itemY, info.firstItemId + i, info.defNamesPtrs[i], 0, 1, FALSE, NULL);
         setting->switchButtons += def;
+        if (info.rmcHints)
+            setting->BindHint(def, info.rmcHints[i]);
         itemsVec += def;
         itemX += def->GetWidth() + padding;
     }
@@ -181,7 +192,7 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
     int itemX = info.position.x;
     int itemY = info.position.y;
 
-    setting->titleItem = CreateTitle(itemX, itemY, info.displayedName, itemsVec);
+    setting->titleItem = setting->CreateOwnTitle(itemX, itemY, info.displayedName, itemsVec);
     itemY -= BASE_SETTINGS_Y_OFFSET - TITLE_HEIGHT; // -6;
 
     // create background pcx
@@ -198,6 +209,8 @@ Switch10XPanel *Switch10XPanel::Create(const SettingsInfo &info, H3Vector<H3DlgI
         def = H3DlgDef::Create(itemX, itemY, info.firstItemId + i, NH3Dlg::Assets::SYSLB_DEF, i);
 
         def->SendCommand(6, 4);
+        if (info.rmcHints)
+            setting->BindHint(def, info.rmcHints[i]);
         itemsVec += def;
         itemX += 19;
     }
