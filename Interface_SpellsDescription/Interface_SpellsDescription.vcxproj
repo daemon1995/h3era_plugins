@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{60495B57-B79A-4944-8547-0FC9576E8F12}</ProjectGuid>
+    <RootNamespace>Interface_SpellsDescription</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup>
+    <ClInclude Include="SpellDescriptionOverlay.h" />
+    <ClInclude Include="SpellDescriptionOverlayPixels.h" />
+    <ClInclude Include="SpellDescriptionOverlayState.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="SpellDescriptions.h" />
+    <ClInclude Include="SpellDescriptionLogic.h" />
+    <ClInclude Include="SpellDescriptionDuration.h" />
+    <ClInclude Include="SpellDescriptionText.h" />
+    <ClInclude Include="SpellDescriptionErm.h" />
+    <ClInclude Include="SpellDescriptionHintApi.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="SpellDescriptionOverlay.cpp" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="SpellDescriptions.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SpellDescriptions.md" />
+    <None Include="SpellDescriptionErm.md" />
+    <None Include="examples\remagic_spell_description.erm" />
+    <None Include="examples\spell_duration_description.erm" />
+    <None Include="tools\validate_spell_texts.py" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,0 +1,8 @@
+ZVSE2
+
+; Optional adapter for the ReMagic mod. All mod-specific knowledge stays here.
+; The plugin knows neither this option nor the replacement summon formula.
+; Until ReMagic supplies its exact preview formula, retain its own description.
+!?FU(OnQuerySpellDescription)&x1=1/x2=1/x3=0/x11=6;
+!!UN:P726/?(enabled:y);
+!!VRx13&(enabled):S0;

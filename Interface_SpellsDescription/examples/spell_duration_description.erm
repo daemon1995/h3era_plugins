@@ -1,0 +1,9 @@
+ZVSE2
+
+; Preview adapter example. It does NOT change the actual spell's mechanics.
+; Limit this event to your mod's own spell/option before enabling it.
+; x2=2 is the duration phase in both the book (x3=0) and battle (x3=1).
+; x12 is the final round count; x16 is the expiry mode (1 = rounds).
+; Example only, deliberately disabled:
+; !?FU(OnQuerySpellDescription)&x1=1/x2=2/x11=11;
+; !!VRx12&x16=1:+2;
