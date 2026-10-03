@@ -433,7 +433,7 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeGivingResources)
 {
     if (const auto mithrilToAdd = currentCreatureBank.mithrilToAdd)
     {
-        c->Ecx<H3Hero *>()->AddResource(MITHRIL_ID, mithrilToAdd);
+        currentCreatureBank.hero->AddResource(MITHRIL_ID, mithrilToAdd);
     }
 
     return EXEC_DEFAULT;
