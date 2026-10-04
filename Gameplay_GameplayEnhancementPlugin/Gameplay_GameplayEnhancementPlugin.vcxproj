@@ -15,15 +15,18 @@
     <RootNamespace>GameplayEnhancementsPlugin</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
+  <!-- Build locally by default; explicit OutDir/PluginOutDir still support deployment. -->
+  <PropertyGroup>
+    <PluginOutDir Condition="'$(PluginOutDir)' == '' AND '$(OutDir)' == ''">$(MSBuildProjectDirectory)\..\build\Gameplay_GameplayEnhancementPlugin\$(Configuration)\</PluginOutDir>
+    <LanguageStandard Condition="'$(LanguageStandard)' == ''">stdcpp17</LanguageStandard>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>D:\games\HoMM 3 ERA\Mods\Game Enhancement Mod\eraplugins\</OutDir>
-  </PropertyGroup>
   <ItemGroup>
+    <ClInclude Include="..\headers\EraPluginsAPI\ArtifactDescriptionApi.h" />
+    <ClInclude Include="ModuleSupport.h" />
+    <ClInclude Include="PluginVersion.h" />
+    <ClInclude Include="ArtifactComparison.h" />
     <ClInclude Include="AdventureMapHints.h" />
     <ClInclude Include="ArtifactHints.h" />
     <ClInclude Include="GameplayFeature.h" />
@@ -40,6 +43,9 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GraphicsEnhancements.cpp" />
     <ClCompile Include="MithrilDisplay.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PluginVersion.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

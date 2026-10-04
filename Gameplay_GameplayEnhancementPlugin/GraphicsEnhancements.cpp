@@ -1,14 +1,9 @@
 #include "GraphicsEnhancements.h"
+#include "ModuleSupport.h"
 
 namespace graphics
 {
 GraphicsEnhancements *GraphicsEnhancements::instance = nullptr;
-
-// DllExport H3LoadedDef* SetMapHeroDefName(const UINT heroId, const char* const heroDefName)
-//{
-//
-//     return 0;
-// }
 
 _LHF_(Game_AtTownSettingMapItemDef)
 {
@@ -51,7 +46,7 @@ LPCSTR Hero_GetMapItemDefName(const UINT heroId)
     // first check unique hero def name
     LPCSTR defName = EraJS::read(H3String::Format("gem_plugin.map_item_view.54.id.%d", heroId).String(), readSuccess);
     // if name is read and not empty
-    if (readSuccess && libc::strcmpi(defName, h3_NullString))
+    if (readSuccess && defName && defName[0])
     {
         return defName;
     }
@@ -65,7 +60,7 @@ LPCSTR HeroClass_GetMapItemDefName(const UINT classId, const bool isFemale)
     LPCSTR defName = EraJS::read(
         H3String::Format("gem_plugin.map_item_view.54.class.%d.%d", classId, isFemale).String(), readSuccess);
     // if name is read and not empty
-    if (readSuccess && defName[1])
+    if (readSuccess && defName && defName[0])
         return defName;
 
     return nullptr;
@@ -78,35 +73,50 @@ H3LoadedDef *GraphicsEnhancements::Hero_GetMapItemDef(const H3Hero *hero) noexce
 
     H3LoadedDef *result = nullptr;
     // first set hero def by id
-    if (result = instance->uniqueHeroDefs[hero->id])
+    if (hero->id >= 0 && hero->id < MAX_UNIQUE_HEROES &&
+        (result = instance->uniqueHeroDefs[hero->id]))
         return result;
     // if empty set hero def by class
-    if (result = instance->heroClassDefs[hero->isFemale][hero->hero_class])
+    if (hero->isFemale >= 0 && hero->isFemale < 2 && hero->hero_class >= 0 &&
+        hero->hero_class < MAX_UNIQUE_CLASSES &&
+        (result = instance->heroClassDefs[hero->isFemale][hero->hero_class]))
         return result;
     return result;
 }
+namespace
+{
+// Load before releasing the previous reference: the resource manager may return the same DEF.
+void ReplaceHeroDef(H3LoadedDef *&stored, LPCSTR name) noexcept
+{
+    if (stored && name && !libc::strcmpi(stored->GetName(), name))
+        return;
+    auto *replacement = name ? H3LoadedDef::Load(name) : nullptr;
+    if (stored)
+        stored->Dereference();
+    stored = replacement;
+}
+
+int PlayerTownId(const H3Player *player, int index) noexcept
+{
+    return player && index >= 0 && index < player->townsCount &&
+                   index < static_cast<int>(std::size(player->towns)) ? player->towns[index] : -1;
+}
+} // namespace
+
 H3LoadedDef *GraphicsEnhancements::InitHeroData(const UINT heroId) noexcept
 {
-
-    if (LPCSTR defNamePtr = Hero_GetMapItemDefName(heroId))
-    {
-        if (auto *defBefore = uniqueHeroDefs[heroId])
-            defBefore->Dereference();
-
-        return uniqueHeroDefs[heroId] = H3LoadedDef::Load(defNamePtr);
-    }
-
-    return nullptr;
+    if (heroId >= MAX_UNIQUE_HEROES)
+        return nullptr;
+    ReplaceHeroDef(uniqueHeroDefs[heroId], Hero_GetMapItemDefName(heroId));
+    return uniqueHeroDefs[heroId];
 }
+
 void GraphicsEnhancements::InitHeroClassData(const UINT classId) noexcept
 {
-    for (size_t i = 0; i < 2; i++)
-    {
-        if (heroClassDefs[i][classId])
-            continue;
-        if (LPCSTR defNamePtr = HeroClass_GetMapItemDefName(classId, i))
-            heroClassDefs[i][classId] = H3LoadedDef::Load(defNamePtr);
-    }
+    if (classId >= MAX_UNIQUE_CLASSES)
+        return;
+    for (int gender = 0; gender < 2; ++gender)
+        ReplaceHeroDef(heroClassDefs[gender][classId], HeroClass_GetMapItemDefName(classId, gender != 0));
 }
 
 _LHF_(AdventureManager_DrawHeroDef)
@@ -173,12 +183,14 @@ _LHF_(AdventureManager_Hide)
 }
 void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
 {
+    builtDefButtons.advMapDlg.fill(nullptr);
+    if (!buildingHintsEnabled)
+        return;
     // get max towns displayable built icons from config
     constexpr INT hdModTownsMax = 7;
     constexpr INT defaultTowns = 5;
     maxTownsDisplayableBuiltIcons =
         Clamp(defaultTowns, globalPatcher->VarGetValue<int>("HD.AdvMgr.TownList.L", defaultTowns), hdModTownsMax);
-    // townBuiltDlgDefButtons.assign(nullptr);
     const int firstDefButtonId = globalPatcher->VarGetValue<int>("HD.AdvMgr.ID32", 32);
     auto &dlg = P_AdventureManager->dlg;
 
@@ -204,10 +216,6 @@ void GraphicsEnhancements::InitAdventureMapTownBuiltDefs() noexcept
                     defButton->SetY(yBase + (i << 5) + 15);
                     defButton->HideDeactivate();
                 }
-            }
-            else
-            {
-                break;
             }
         }
     }
@@ -250,7 +258,9 @@ static eBuildingInfoFrames Town_GetExtendedInfoFrameId(const H3Town *town)
 }
 void AdjustTownBuiltButtonPosition(H3DlgDefButton *defButton, const int townIndex)
 {
-    if (townIndex == -1)
+    if (!defButton)
+        return;
+    if (townIndex < 0 || townIndex >= static_cast<int>(P_Game->towns.Size()))
     {
         defButton->HideDeactivate();
         return;
@@ -274,34 +284,41 @@ void AdjustTownBuiltButtonPosition(H3DlgDefButton *defButton, const int townInde
 void GraphicsEnhancements::DrawAdventureMapTownBuiltStatus(H3AdventureMgrDlg *dlg, const BOOL draw,
                                                            const BOOL updateScreen) noexcept
 {
-    if (IntAt(0x699588)) // check if force hide map
+    if (!dlg)
         return;
-
     const auto mePlayer = P_Game->GetPlayer();
-    if (mePlayer->ownerID != P_CurrentPlayerID) // check if not current player
+    if (!mePlayer || IntAt(0x699588) || mePlayer->ownerID != P_CurrentPlayerID)
+    {
+        for (auto *button : builtDefButtons.advMapDlg)
+            if (button)
+            {
+                button->HideDeactivate();
+                if (updateScreen)
+                    button->Refresh();
+            }
         return;
+    }
 
     auto &advMapDlg = builtDefButtons.advMapDlg;
-
-    for (int i = 0; i < maxTownsDisplayableBuiltIcons; i++)
+    for (int i = 0; i < maxTownsDisplayableBuiltIcons; ++i)
     {
-        const auto townIndex = mePlayer->towns[i + dlg->topTownSlotIndex];
-        if (townIndex != -1)
+        auto *button = advMapDlg[i];
+        if (!button)
+            continue;
+        const int index = i + dlg->topTownSlotIndex;
+        const int townId = PlayerTownId(mePlayer, index);
+        if (townId < 0 || townId >= static_cast<int>(P_Game->towns.Size()))
         {
-            auto &defButton = advMapDlg[i];
-            if (defButton == nullptr)
-                continue;
-
-            AdjustTownBuiltButtonPosition(defButton, townIndex);
-            if (!draw || !defButton->IsVisible())
-                continue;
-
-            defButton->Draw();
-            const int buttonId = defButton->GetID();
-
+            button->HideDeactivate();
             if (updateScreen)
-                defButton->Refresh();
+                button->Refresh();
+            continue;
         }
+        AdjustTownBuiltButtonPosition(button, townId);
+        if (draw && button->IsVisible())
+            button->Draw();
+        if (updateScreen)
+            button->Refresh();
     }
 }
 
@@ -337,6 +354,7 @@ void __stdcall AdvMgr_AtFullUpdate(HiHook *h, H3AdventureMgrDlg *dlg, char redra
 void GraphicsEnhancements::InitTownDlgDefButtons(H3TownDialog *dlg) noexcept
 {
 
+    builtDefButtons.townDlg.fill(nullptr);
     auto firstDefButton = dlg->GetH3DlgItem(155);
     if (firstDefButton)
     {
@@ -349,6 +367,8 @@ void GraphicsEnhancements::InitTownDlgDefButtons(H3TownDialog *dlg) noexcept
             if (buttonId != -1)
             {
                 auto defButton = dlg->GetDefButton(buttonId);
+                if (!defButton)
+                    continue;
                 defButton->SetX(xPos);
                 defButton->SetY(yBase + (i << 5) + 15);
                 defButton->HideDeactivate();
@@ -365,22 +385,32 @@ void GraphicsEnhancements::InitTownDlgDefButtons(H3TownDialog *dlg) noexcept
 void GraphicsEnhancements::DrawTownDlgBuiltStatus(H3TownDialog *dlg) noexcept
 {
 
+    if (!dlg)
+        return;
     const auto mePlayer = P_Game->GetPlayer();
 
     for (INT8 i = 0; i < 3; i++)
     {
         auto defButton = builtDefButtons.townDlg[i];
 
-        if (i >= mePlayer->townsCount)
+        if (!defButton)
+            continue;
+        const int index = i + dlg->townIndex;
+        const int townId = PlayerTownId(mePlayer, index);
+        if (townId < 0 || townId >= static_cast<int>(P_Game->towns.Size()))
         {
             defButton->HideDeactivate();
-            return;
+            continue;
         }
 
-        const auto townId = mePlayer->towns[i + dlg->townIndex];
         if (townId != -1)
         {
             const auto originalDef = dlg->GetDef(155 + i);
+            if (!originalDef)
+            {
+                defButton->HideDeactivate();
+                continue;
+            }
 
             defButton->SetX(originalDef->GetX() + 31);
             defButton->SetY(originalDef->GetY() + 15);
@@ -396,10 +426,16 @@ void GraphicsEnhancements::DrawTownDlgBuiltStatus(H3TownDialog *dlg) noexcept
     auto defButton = builtDefButtons.townDlg[3];
     if (defButton)
     {
-        const auto townId = P_TownManager->town->number;
+        const auto manager = P_TownManager->Get();
+        const int townId = manager && manager->town ? manager->town->number : -1;
         if (townId != -1)
         {
             const auto originalDef = dlg->GetDef(150);
+            if (!originalDef)
+            {
+                defButton->HideDeactivate();
+                return;
+            }
 
             defButton->SetX(originalDef->GetX() + 42);
             defButton->SetY(originalDef->GetY() + 48);
@@ -436,40 +472,39 @@ void __stdcall KingdomOverviewDlg_CreateAndRedrawItems(HiHook *h, H3Game *game, 
 
     const BOOL isTownsView = IntAt(0x069CCA0) == 1;
 
-    const auto firstItemIdDrawn = reinterpret_cast<int *>(0x069CCA4)[1];
-    auto playerTowns = game->GetPlayer()->towns;
-
+    const int firstItemIdDrawn = reinterpret_cast<int *>(0x069CCA4)[1];
+    const auto player = game->GetPlayer();
     auto dlg = *reinterpret_cast<H3BaseDlg **>(0x069CC88);
+    if (!player || !dlg)
+        return;
 
-    for (size_t i = 0; i < 4; i++)
+    for (int i = 0; i < 4; ++i)
     {
         const int itemId = 40 * (i * 5 + 5) + 4;
-        auto townId = playerTowns[i + firstItemIdDrawn];
-
+        const int indicatorButtonId = itemId + 21;
+        auto *buildingIndicatorButton = dlg->GetDef(indicatorButtonId);
         const auto originalDlgDef = dlg->GetH3DlgItem(itemId);
-        if (originalDlgDef == nullptr || townId < 0)
-            continue;
-
-        const auto town = &game->towns[townId];
-
-        const int indeicatorButtonId = itemId + 21;
-        H3DlgDef *buildingIndicatorButton = dlg->GetDef(indeicatorButtonId);
-
-        if (!originalDlgDef->IsVisible() && buildingIndicatorButton)
+        const int index = firstItemIdDrawn + i;
+        const int townId = PlayerTownId(player, index);
+        if (!isTownsView || !originalDlgDef || !originalDlgDef->IsVisible() ||
+            townId < 0 || townId >= static_cast<int>(game->towns.Size()))
         {
-            buildingIndicatorButton->Hide();
+            if (buildingIndicatorButton)
+                buildingIndicatorButton->HideDeactivate();
             continue;
         }
-
-        if (!isTownsView)
-            continue;
+        const auto town = &game->towns[townId];
 
         if (buildingIndicatorButton == nullptr)
         {
             H3DefLoader def("tpthchk.def");
+            if (!def.Get())
+                continue;
             const int x = originalDlgDef->GetX() + originalDlgDef->GetWidth() - def->widthDEF;
             const int y = originalDlgDef->GetY() + originalDlgDef->GetHeight() - def->heightDEF;
-            buildingIndicatorButton = H3DlgDef::Create(x, y, indeicatorButtonId, def->GetName());
+            buildingIndicatorButton = H3DlgDef::Create(x, y, indicatorButtonId, def->GetName());
+            if (!buildingIndicatorButton)
+                continue;
             dlg->AddItem(buildingIndicatorButton);
             buildingIndicatorButton->DeActivate();
         }
@@ -497,7 +532,7 @@ DWORD __stdcall Dlg_RightClick_Town_Create(HiHook *h, H3BaseDlg *dlg, H3Town *to
 {
 
     DWORD result = THISCALL_3(DWORD, h->GetDefaultFunc(), dlg, town, viewAccessLevel);
-    if (viewAccessLevel < 3) // either town owner or ally or vision power == 3
+    if (!dlg || !town || viewAccessLevel < 3) // either town owner or ally or vision power == 3
     {
         return result;
     }
@@ -509,10 +544,13 @@ DWORD __stdcall Dlg_RightClick_Town_Create(HiHook *h, H3BaseDlg *dlg, H3Town *to
         if (const auto originalDlgDef = dlg->GetDef(2001))
         {
             H3DefLoader def("tpthchk.def");
+            if (!def.Get())
+                return result;
             const int x = originalDlgDef->GetX() + originalDlgDef->GetWidth() - def->widthDEF;
             const int y = originalDlgDef->GetY() + originalDlgDef->GetHeight() - def->heightDEF;
             H3DlgDef *buildingIndicatorButton = H3DlgDef::Create(x, y, 2002, def->GetName(), extendedInfoFrameId);
-            dlg->AddItem(buildingIndicatorButton);
+            if (buildingIndicatorButton)
+                dlg->AddItem(buildingIndicatorButton);
         }
     }
     return result;
@@ -542,13 +580,13 @@ void GraphicsEnhancements::CleanUpData() noexcept
             }
         }
     }
-    auto &advMapDlg = builtDefButtons.advMapDlg;
-    libc::memset(advMapDlg.data(), 0, std::size(advMapDlg));
-    auto &townDlg = builtDefButtons.townDlg;
-    libc::memset(townDlg.data(), 0, std::size(townDlg));
+    builtDefButtons.advMapDlg.fill(nullptr);
+    builtDefButtons.townDlg.fill(nullptr);
 }
 void GraphicsEnhancements::CreatePatches() noexcept
 {
+    if (m_isInited)
+        return;
     // set different town view for fort/citadel/castle
     _pi->WriteLoHook(0x4C980D, Game_AtTownSettingMapItemDef);
 
@@ -565,14 +603,12 @@ void GraphicsEnhancements::CreatePatches() noexcept
     // is needed to load/unload defs
     _pi->WriteLoHook(0x040730F, AdventureManager_Show);
     _pi->WriteLoHook(0x04077B6, AdventureManager_Hide);
-    // town dialog built status
-    WriteHiHook(0x05C697C, THISCALL_, H3TownManager__AfterDlgCtor);
-
-    if (EraJS::readInt("gem_plugin.building_hints.enable"))
+    buildingHintsEnabled = gem::ModuleEnabled("gem_plugin.building_hints.enable", false);
+    if (buildingHintsEnabled)
     {
 
+        WriteHiHook(0x05C697C, THISCALL_, H3TownManager__AfterDlgCtor);
         maxTownsBuildings = globalPatcher->VarGetValue<int>("ERA.Towns.max_buildings_count", limits::BUILDINGS);
-        //        maxTownsBuildings
         WriteHiHook(0x0417FFB, THISCALL_, AdvMgr__AtSetActiveHero_BeforeScreenRedraw);
         WriteHiHook(0x00403420, THISCALL_, H3AdventureMgrDlg__RedrawTownSlots);
         WriteHiHook(0x004032E0, THISCALL_, H3AdventureMgrDlg__RedrawHeroSlots);
@@ -583,6 +619,8 @@ void GraphicsEnhancements::CreatePatches() noexcept
         WriteHiHook(0x0530600, THISCALL_, Dlg_RightClick_Town_Create);
         WriteHiHook(0x051C210, THISCALL_, KingdomOverviewDlg_CreateAndRedrawItems);
     }
+    m_isInited = true;
+    m_isEnabled = true;
 }
 
 GraphicsEnhancements::GraphicsEnhancements()

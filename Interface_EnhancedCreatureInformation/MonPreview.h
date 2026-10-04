@@ -5,29 +5,29 @@ namespace preview
 {
 class MonPreview : public IGamePatch
 {
-
     static MonPreview *instance;
 
-  private:
-    H3LoadedPcx *creaturePanelBackgrounds[2];
-
     H3Vector<H3LoadedPcx16 *> resizedSpellPictures;
+    H3LoadedPcx *extensionBackground = nullptr;
 
     virtual void CreatePatches() override;
 
-  private:
     MonPreview();
-    //~MonPreview();
 
-    static H3CombatMonsterPanel *__stdcall H3CombatMonsterPanel_Ctor(HiHook *h, H3CombatMonsterPanel *panel, int x,
-                                                                     int y, int a4, int dy, H3BaseDlg *parent,
+    static H3CombatMonsterPanel *__stdcall H3CombatMonsterPanel_Ctor(HiHook *hook, H3CombatMonsterPanel *panel, int x,
+                                                                     int y, int width, int height, H3BaseDlg *parent,
                                                                      DWORD type);
-    static _LHF_(H3CombatMonsterPanel_Prepare);
+    static void __stdcall H3CombatMonsterPanel_Prepare(HiHook *hook, H3CombatMonsterPanel *panel,
+                                                        H3CombatCreature *stack, H3Hero *hero);
+
     void CreateResizedSpellEffectPictures();
-    void CreatePanelBackGrounds();
+    void CreatePanelBackground();
+    void BuildExtendedPanel(H3CombatMonsterPanel *panel);
+    void UpdateExtendedPanel(H3CombatMonsterPanel *panel, H3CombatCreature *stack, H3Hero *hero);
+    void UpdateSpellSlots(H3CombatMonsterPanel *panel, H3CombatCreature *stack);
 
   public:
-    static MonPreview &Get(); //(PatcherInstance* _PI)
+    static MonPreview &Get();
 };
 
 } // namespace preview

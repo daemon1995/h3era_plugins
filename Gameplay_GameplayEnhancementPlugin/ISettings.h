@@ -5,8 +5,8 @@ class ISettings
   public:
     const char *filePath;
     const char *sectionName;
-    int scanCode;
-    int vKey;
+    int scanCode = 0;
+    int vKey = VK_MENU;
     LPCSTR settingsVersion = "1.0";
 
     ISettings(const char *filePath, const char *sectionName) : filePath(filePath), sectionName(sectionName)

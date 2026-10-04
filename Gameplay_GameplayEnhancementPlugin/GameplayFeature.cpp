@@ -1,7 +1,38 @@
 #include "GameplayFeature.h"
+#include "ModuleSupport.h"
+#include <memory>
 namespace features
 {
-GameplayFeature::GameplayFeature() : IGamePatch(_PI)
+namespace
+{
+const char *demoBttn = "iDEMO.def";
+Patch *demolishButtonPatch = nullptr;
+// Each call through the WoG wrapper gets a scope, including attempts that return
+// before the question. An inner attempt must not undo the outer attempt's patch.
+std::vector<std::unique_ptr<gem::ScopedPatch>> demolishQuestionScopes;
+_LHF_(WoG_StartTownbuildingDemolishQuestion)
+{
+    demolishQuestionScopes.emplace_back();
+    return EXEC_DEFAULT;
+}
+
+_LHF_(WoG_BeforeTownbuildingDemolishQuestion)
+{
+    if (!demolishQuestionScopes.empty() && !demolishQuestionScopes.back())
+        demolishQuestionScopes.back() = std::make_unique<gem::ScopedPatch>(demolishButtonPatch);
+    return EXEC_DEFAULT;
+}
+
+_LHF_(WoG_AfterTownbuildingDemolishQuestion)
+{
+    if (!demolishQuestionScopes.empty())
+        demolishQuestionScopes.pop_back();
+    return EXEC_DEFAULT;
+}
+
+}
+
+GameplayFeature::GameplayFeature() : IGamePatch("EraPlugin.GameplayTweaks.daemon_n")
 {
     CreatePatches();
 }
@@ -16,11 +47,11 @@ H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, 
 
     // check base conditions as std "OK_BTTN_ID" and not H3TownDlg's defName ("tsbtns.def")
     if (result && (ItemInd == eControlId::OK || ItemInd == 30722 || HotKey == eVKey::H3VK_ENTER) &&
-        DefName != reinterpret_cast<char *>(IntAt(0x05C5A08 + 1))    // skip town dlg
-        && DefName != reinterpret_cast<char *>(IntAt(0x046BC7C + 1)) // skip combat dlg
+        DefName && libc::strcmpi(DefName, reinterpret_cast<char *>(IntAt(0x05C5A08 + 1)))    // skip town dlg
+        && libc::strcmpi(DefName, reinterpret_cast<char *>(IntAt(0x046BC7C + 1))) // skip combat dlg
     )
     {
-        // add "SPCAE_BAR" into hotkey list
+        // add "SPACE_BAR" into hotkey list
         result->AddHotkey(eVKey::H3VK_SPACEBAR);
     }
     return result;
@@ -31,6 +62,9 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
 {
     const H3Hero *hero = P_Game->GetHero(heroId);
 
+    if (!hero)
+        return FASTCALL_4(int, h->GetDefaultFunc(), heroId, hideDelButton, isKingdomOverView, isRightClick);
+
     const int prevOwner = hero->owner;
     const INT8 curPlayer = P_CurrentPlayerID;
     if (hideDelButton && !isRightClick && P_ActivePlayer->ownerID == curPlayer && prevOwner == curPlayer)
@@ -39,12 +73,7 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
         hideDelButton = false;
         isKingdomOverView = true;
     }
-    // auto *patch = _PI->WriteHiHook(0x4DA401, THISCALL_, H3DlgHero__Dismiss__BeforeRedraw);
-    //  ByteAt(0x04E1C30 + 1) = 0;
     const int result = FASTCALL_4(int, h->GetDefaultFunc(), heroId, hideDelButton, isKingdomOverView, isRightClick);
-    // ByteAt(0x04E1C30 + 1) = 1;
-
-    //  patch->Destroy();
 
     const int newOwner = hero->owner;
     auto *townMgr = P_TownMgr->Get();
@@ -64,7 +93,6 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
 
         // recreate garrison bars
         THISCALL_1(void, 0x05C7210, townMgr);
-        // P_TownMgr->Draw();
     }
     return result;
 }
@@ -73,14 +101,14 @@ _LHF_(DlgEdit_CorrectInpulSymbol) noexcept
 {
     // skip select scenario dialog
     const auto dlgAddr = reinterpret_cast<DWORD>(P_WindowManager->Get()->lastDlg);
-    if (DwordAt(dlgAddr) == 0x0641CBC)
+    if (!dlgAddr || DwordAt(dlgAddr) == 0x0641CBC)
     {
         return EXEC_DEFAULT;
     }
     static UINT8 buttonsState[256];
     // get buttons state
     // check numlock state
-    if (GetKeyboardState(buttonsState) && buttonsState[VK_NUMLOCK])
+    if (GetKeyboardState(buttonsState) && (buttonsState[VK_NUMLOCK] & 1))
     {
 
         if (H3Msg *msg = reinterpret_cast<H3Msg *>(c->esi))
@@ -152,7 +180,7 @@ _LHF_(DlgEdit_CorrectInpulSymbol) noexcept
                     break;
                 }
 
-                if (vkCode != VK_NPOS && buttonsState[vkCode])
+                if (vkCode != VK_NPOS && (buttonsState[vkCode] & 0x80))
                 {
                     c->eax = scanCode;
                     msg->subtype = eMsgSubtype(scanCode);
@@ -184,81 +212,19 @@ H3Dlg *__stdcall ThievesGuildDlg_Ctor(HiHook *h, H3Dlg *dlg, const int tavernsNu
         const int tavernsNum =
             Clamp(0, THISCALL_2(int, 0x4CCAF0, P_Main->Get(), P_Main->GetPlayerID()), maxTavernsToShow);
 
-        libc::sprintf(h3_TextBuffer, format, tavernsNum, maxTavernsToShow);
+        const H3String text = H3String::Format(format, tavernsNum, maxTavernsToShow);
         const int textX = hintBarItem->GetX();
         const int textWidth = hintBarItem->GetWidth();
 
-        result->CreateText(textX, result->GetHeight() - 45, textWidth, 20, h3_TextBuffer, NH3Dlg::Text::MEDIUM,
+        result->CreateText(textX, result->GetHeight() - 45, textWidth, 20, text.String(), NH3Dlg::Text::MEDIUM,
                            eTextColor::REGULAR, -1);
     }
     return result;
 }
 
-int GameplayFeature::HeroFullMP_Rem = 0;
-
-// Инициализация оставшихся полных очков перемещения героя.
-_LHF_(LoHook_HeroRoute_InitMaxMP)
-{
-    const H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
-    const H3Player *player = &P_Game->players[hero->owner];
-
-    // Получаем полные очки перемещения героя.
-    GameplayFeature::HeroFullMP_Rem = hero->maxMovement;
-
-    const bool playerIsHere = THISCALL_1(bool, 0x4BAA40, P_ActivePlayer->Get());
-
-    const int curDayOfWeek = P_Game->date.day;
-
-    const char is_human2 = player->isLocal;
-    const char v7 = P_ActivePlayer->Get()->isLocal;
-    const INT8 curPlayerId = P_CurrentPlayerID;
-
-    if (playerIsHere || (is_human2 && v7 && v7 > is_human2) || v7 == is_human2 && curPlayerId > hero->owner)
-    {
-        if ((hero->flags & 0x1000000) == 0) // cheats
-        {
-            // Лодка и конюшни
-            if ((hero->flags & 0x40000) == 0 && (hero->flags & 2) != 0 && curDayOfWeek >= 7)
-            {
-                GameplayFeature::HeroFullMP_Rem -= IntAt(0x0698AE4); // o_MoveTXT_Obj_94
-            }
-        }
-    }
-    if (!playerIsHere)
-    {
-        IntAt(c->ebp - 0x4) = 0;
-    }
-
-    return EXEC_DEFAULT;
-}
-// Уменьшение оставшихся полных очков перемещения героя.
-_LHF_(LoHook_HeroRoute_ReduceMaxMP)
-{
-    // Герой.
-    const H3Hero *hero = reinterpret_cast<H3Hero *>(c->ebx);
-
-    // Уменьшаем полные очки перемещения героя на шаг.
-    GameplayFeature::HeroFullMP_Rem -=
-        FASTCALL_4(int, 0x4B1620, hero, c->esi, DwordAt(c->ebp - 0x1C), GameplayFeature::HeroFullMP_Rem);
-
-    return EXEC_DEFAULT;
-}
-
-// Показ особых стрелок, если путь дальше, чем максимальные очки перемещения героя.
-_LHF_(LoHook_HeroRoute_SpecRouteMaxMP)
-{
-    // Смещение кадра стрелок.
-    if (GameplayFeature::HeroFullMP_Rem < 0)
-    {
-        WordAt(c->edx + 2 * c->eax) += 25;
-    }
-
-    return EXEC_DEFAULT;
-}
-
 _LHF_(LoHook_HeroRoute_RouteUpdate)
 {
-    if (c->esi + c->Ebx<H3Hero *>()->maxMovement < 0)
+    if (static_cast<INT>(c->esi) + c->Ebx<H3Hero *>()->maxMovement < 0)
     {
         WordAt(c->eax * 2 + c->edx) += 50;
         c->return_address = 0x4190DE;
@@ -271,6 +237,13 @@ void GameplayFeature::CreatePatches() noexcept
 {
     if (!m_isInited)
     {
+        auto transient = globalPatcher->CreateInstance("EraPlugin.GameplayTweaks.Transient.daemon_n");
+        demolishButtonPatch = transient->CreateDwordPatch(0x04F738A + 1, (int)demoBttn);
+        // The register-based call at 0x70C19C returns to 0x70C1A1 on every native exit.
+        _pi->WriteLoHook(0x070C19C, WoG_StartTownbuildingDemolishQuestion);
+        _pi->WriteLoHook(0x070AD9A, WoG_BeforeTownbuildingDemolishQuestion);
+        _pi->WriteLoHook(0x070C1A1, WoG_AfterTownbuildingDemolishQuestion);
+
         // Adding support for NumPad keys number input @Hawaiing
         _pi->WriteLoHook(0x05BB0B6, DlgEdit_CorrectInpulSymbol);
 
@@ -280,8 +253,6 @@ void GameplayFeature::CreatePatches() noexcept
         // Call HeroDlg creation from TownDlg with del button enabled by default
 
         // Call HeroDlg creation from H3KigdomOverviewDlg with del button enabled by default
-        //  _PI->WriteWord(0x51FA26, 0xD231);
-        // _PI->WriteDword(0x51F46D + 1, 0);
 
         // skip Hero placement in town when HeroDlg is updated
         _pi->WriteByte(0x4E1CDB, 0xEB);
@@ -290,7 +261,6 @@ void GameplayFeature::CreatePatches() noexcept
         _pi->WriteByte(0x4DA23D, 0xEB);
 
         // Allow Town Hero Dismiss
-        //_PI->WriteByte(0x4E1C3A, 0xEB);
         _pi->WriteHiHook(0x5D5323, FASTCALL_, H3HeroDlg_Main);
         _pi->WriteHiHook(0x5D5333, FASTCALL_, H3HeroDlg_Main);
         //   _pi->WriteHiHook(0x5D52CA, FASTCALL_, H3HeroDlg_Main);
@@ -299,16 +269,9 @@ void GameplayFeature::CreatePatches() noexcept
         if (H3GameHeight::Get() > 607)
             _pi->WriteHiHook(0x05C8590, THISCALL_, ThievesGuildDlg_Ctor);
 
-        //// Инициализация оставшихся полных очков перемещения героя.
-        //_PI->WriteLoHook(0x418F38, LoHook_HeroRoute_InitMaxMP); // 100F14C0
-
-        //// Уменьшение оставшихся полных очков перемещения героя.
-        //_PI->WriteLoHook(0x418FC5, LoHook_HeroRoute_ReduceMaxMP); // 1014BB40
-
-        //// Показ особых стрелок, если путь дальше, чем максимальные очки перемещения героя.
-        //_PI->WriteLoHook(0x4190DE, LoHook_HeroRoute_SpecRouteMaxMP);
-        _PI->WriteLoHook(0x4190D9, LoHook_HeroRoute_RouteUpdate);
+        _pi->WriteLoHook(0x4190D9, LoHook_HeroRoute_RouteUpdate);
         m_isInited = true;
+        m_isEnabled = true;
     }
 }
 GameplayFeature &GameplayFeature::Get()

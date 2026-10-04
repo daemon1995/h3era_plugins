@@ -24,11 +24,12 @@ class GraphicsEnhancements : public IGamePatch
     // towns is build graphics pointers
     int maxTownsDisplayableBuiltIcons = 5;
     int maxTownsBuildings = h3::limits::BUILDINGS;
+    bool buildingHintsEnabled = false;
     struct BuiltDefButtons
     {
         std::array<H3DlgDefButton *, 7> advMapDlg;
         std::array<H3DlgDefButton *, 4> townDlg;
-    } builtDefButtons;
+    } builtDefButtons{};
 
   protected:
     GraphicsEnhancements();

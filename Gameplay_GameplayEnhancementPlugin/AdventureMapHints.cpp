@@ -1,4 +1,5 @@
 #include "AdventureMapHints.h"
+#include "ModuleSupport.h"
 
 namespace advMapHints
 {
@@ -69,6 +70,7 @@ AdventureMapHints::AdventureMapHints(PatcherInstance *pi)
     : IGamePatch(pi), settings("Runtime/gem_AdventureMapHints.ini", "StaticHintsDrawByType")
 
 {
+    drawnHintRects.reserve(64);
     m_mapView.left = 8;                                   // right panel
     m_mapView.top = 8;                                    // bottom panel
     m_mapView.right = H3GameWidth::Get() - (800 - 592);   // right panel
@@ -81,8 +83,10 @@ void AdventureMapHints::CreatePatches() noexcept
 
     if (!m_isInited)
     {
-        blockAdventureHintDraw = _pi->CreateHexPatch(0x040D0F4, const_cast<char *>("EB 40 90"));
-        blockIgnoreHintBarFocus = _pi->CreateHexPatch(0x040B0DC, const_cast<char *>("90 90 90 90 90 90"));
+        auto transient = globalPatcher->CreateInstance("EraPlugin.AdventureMapHints.Transient.daemon_n");
+        // Skip both the hint-bar text assignment and its redraw; keep h3_TextBuffer for map labels.
+        blockAdventureHintDraw = transient->CreateHexPatch(0x040D0DB, const_cast<char *>("EB 59 90 90 90"));
+        blockIgnoreHintBarFocus = transient->CreateHexPatch(0x040B0DC, const_cast<char *>("90 90 90 90 90 90"));
 
         _pi->WriteLoHook(0x040F5AB, AdvMgr_BeforeObjectsDraw);
         if (settings.drawOverFogOfWar)
@@ -103,8 +107,16 @@ void AdventureMapHints::CreatePatches() noexcept
         // hero mp status at hero_obj mouse over
         _pi->WriteLoHook(0x40BBEE, H3AdventureManager_SetHeroObjectHint);
 
+        Era::RegisterHandler(ReloadLanguage, "OnAfterReloadLanguageData");
         m_isInited = true;
+        m_isEnabled = true;
     }
+}
+
+void __stdcall AdventureMapHints::ReloadLanguage(Era::TEvent *)
+{
+    if (instance)
+        instance->settings.load();
 }
 
 void GameManager_HidePlayersVisitedInfo(H3Main *game, const int playerID, H3PlayersBitfield (&changedData)[32]) noexcept
@@ -114,117 +126,75 @@ void GameManager_HidePlayersVisitedInfo(H3Main *game, const int playerID, H3Play
     const int shrineData = game->visitedShrines.Status(playerID);
     const int treeOfKnoledgeData = game->visitedTreeKnowledge.Status(playerID);
 
-    void *address = (void *)AddressOf(P_Game->Get()->visitedBuoy);
+    void *address = (void *)AddressOf(game->visitedBuoy);
     libc::memcpy(changedData, address, sizeof(changedData));
     libc::memset(address, 0, sizeof(changedData));
 
-    game->visitedWitchHut.Set(withcHutData, playerID);
-    game->visitedShrines.Set(shrineData, playerID);
-    game->visitedTreeKnowledge.Set(treeOfKnoledgeData, playerID);
+    game->visitedWitchHut.Set(playerID, withcHutData != 0);
+    game->visitedShrines.Set(playerID, shrineData != 0);
+    game->visitedTreeKnowledge.Set(playerID, treeOfKnoledgeData != 0);
 
-    // return result;
 }
+namespace
+{
+class ScopedVisitedInfo
+{
+    H3Main *game;
+    H3PlayersBitfield backup[32];
+  public:
+    ScopedVisitedInfo(H3Main *main, int player) : game(main)
+    {
+        GameManager_HidePlayersVisitedInfo(game, player, backup);
+    }
+    ~ScopedVisitedInfo()
+    {
+        libc::memcpy(&game->visitedBuoy, backup, sizeof(backup));
+    }
+};
+}
+
 LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3MapItem *mapItem, const int mapX,
                                       const int mapY, const int mapZ) noexcept
 {
+    auto *game = P_Game->Get();
+    const int player = H3CurrentPlayerID::Get();
+    if (!mapItem || !game || player < 0 || player >= 8 || isCustomHintCreation)
+        return h3_NullString;
 
-    // create custom hints for some object types
-
-    DWORD oldCreatureHintFormat = 0;
-    BYTE skipMineOwnershipHint = 0;
-
-    DWORD skipMineArmyHint = 0;
-
-    BOOL memoryPatchSet = true;
-    switch (mapItem->objectType)
+    gem::ScopedValue<BYTE> mineOwnership(ByteAt(0x040D635));
+    gem::ScopedValue<UINT32> mineArmy(DwordAt(0x040D77F));
+    gem::ScopedValue<UINT32> creatureFormat(DwordAt(0x40C2E7 + 1));
+    if (mapItem->objectType == eObject::MINE)
     {
-    case ::eObject::CREATURE_GENERATOR1:
-    case ::eObject::CREATURE_GENERATOR4:
-
-        break;
-    case ::eObject::MINE:
-        skipMineOwnershipHint = ByteAt(0x040D635);
-        ByteAt(0x040D635) = 0xEB; // oldCreatureHintFormat;
-        skipMineArmyHint = DwordAt(0x040D77F);
-        DwordAt(0x040D77F) = 0x000096E9; // oldCreatureHintFormat;
-        break;
-    case ::eObject::MONSTER:
-        oldCreatureHintFormat = DwordAt(0x40C2E7 + 1);
-
-        // LPCSTR advMapCreatureHintFormat = settings.creatureHintFormat;
+        ByteAt(0x040D635) = 0xEB;
+        DwordAt(0x040D77F) = 0x000096E9;
+    }
+    else if (mapItem->objectType == eObject::MONSTER)
         DwordAt(0x40C2E7 + 1) = reinterpret_cast<DWORD>(settings.creatureHintFormat);
-        break;
-    default:
-        memoryPatchSet = false;
-        break;
-    }
 
-    constexpr UINT NOT_VISITED_TEXT_ID = 354;
-    constexpr UINT VISITED_TEXT_ID = 353;
-
-    // store old text pointers
-    auto visitedText = H3GeneralText::Get()->GetText(VISITED_TEXT_ID + 1);
-    auto notVisitedText = H3GeneralText::Get()->GetText(NOT_VISITED_TEXT_ID + 1);
-
-    H3String changedVisitedText = H3String::Format(settings.visitedHintFormat, visitedText).String();
-    H3String changedNotVisitedText = H3String::Format(settings.nonVisitedHintFormat, notVisitedText).String();
-
-    H3Vector<LPCSTR> *generalTextPtr = reinterpret_cast<H3Vector<LPCSTR> *>(ADDRESS(H3GeneralText::Get()) + 0x1C);
-    auto p_visited = generalTextPtr->At(VISITED_TEXT_ID);
-    auto p_notVisited = generalTextPtr->At(NOT_VISITED_TEXT_ID);
-
-    // replace "visited" and "not visited" text with own text pointers
-    *p_visited = changedVisitedText.String();
-    *p_notVisited = changedNotVisitedText.String();
-
-    instance->blockAdventureHintDraw->Apply();  // don't draw hint whne custom function call
-    instance->blockIgnoreHintBarFocus->Apply(); // don't skip hint creation when focus is on hint bar text edit
-
-    // hide "visited" info for objects by players
-    auto &visitedData = instance->playersVisitedObjectData;
-    GameManager_HidePlayersVisitedInfo(P_Game->Get(), H3CurrentPlayerID::Get(), visitedData);
-
-    // set "hint_from_plugin" flag
-    Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 1);
-    instance->isCustomHintCreation = true;
-    THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
-    instance->isCustomHintCreation = false;
-
-    // remove "hint_from_plugin" flag
-    Era::SetAssocVarIntValue("GameplayEnhancementsPlugin_AdventureMapHints_AtHint", 0);
-
-    // restore "visited" info for objects by players
-    libc::memcpy((void *)AddressOf(P_Game->Get()->visitedBuoy), visitedData, sizeof(visitedData));
-
-    // undo patches
-    instance->blockIgnoreHintBarFocus->Undo();
-    instance->blockAdventureHintDraw->Undo();
-
-    // restore "visited" and "not visited" text pointers
-    *p_visited = visitedText;
-    *p_notVisited = notVisitedText;
-
-    // restore memory patches for some object types
-    if (memoryPatchSet)
+    auto texts = reinterpret_cast<H3Vector<LPCSTR> *>(ADDRESS(H3GeneralText::Get()) + 0x1C);
+    constexpr UINT visitedId = 353;
+    constexpr UINT notVisitedId = 354;
+    if (texts->Size() <= notVisitedId)
+        return h3_NullString;
+    H3String visited = H3String::Format(settings.visitedHintFormat, (*texts)[visitedId]);
+    H3String notVisited = H3String::Format(settings.nonVisitedHintFormat, (*texts)[notVisitedId]);
+    gem::ScopedValue<LPCSTR> visitedText((*texts)[visitedId], visited.String());
+    gem::ScopedValue<LPCSTR> notVisitedText((*texts)[notVisitedId], notVisited.String());
+    gem::ScopedPatch blockDraw(blockAdventureHintDraw);
+    gem::ScopedPatch ignoreFocus(blockIgnoreHintBarFocus);
+    ScopedVisitedInfo visitedInfo(game, player);
+    gem::ScopedValue<BOOL> creating(isCustomHintCreation, TRUE);
+    const char *flag = "GameplayEnhancementsPlugin_AdventureMapHints_AtHint";
+    const int oldFlag = Era::GetAssocVarIntValue(flag);
+    struct RestoreFlag
     {
-        switch (mapItem->objectType)
-        {
-        case ::eObject::CREATURE_GENERATOR1:
-        case ::eObject::CREATURE_GENERATOR4:
-
-            break;
-        case ::eObject::MINE:
-            ByteAt(0x040D635) = skipMineOwnershipHint;
-            DwordAt(0x040D77F) = skipMineArmyHint;
-            break;
-        case ::eObject::MONSTER:
-            DwordAt(0x40C2E7 + 1) = oldCreatureHintFormat;
-            break;
-        default:
-            break;
-        }
-    }
-
+        const char *name;
+        int value;
+        ~RestoreFlag() { Era::SetAssocVarIntValue(name, value); }
+    } restoreFlag{flag, oldFlag};
+    Era::SetAssocVarIntValue(flag, 1);
+    THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
     return h3_TextBuffer;
 }
 
@@ -232,18 +202,21 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
 {
 
     instance->needDrawHints = false;
+    m_mapView.right = H3GameWidth::Get() - 208;
+    m_mapView.bottom = H3GameHeight::Get() - 56;
     // if map isn't forcelly hidden
     if (IntAt(0x699588) == 0)
     {
         const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() &&
-                               STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings.vKey) & 0x800 &&
+                               (STDCALL_1(SHORT, PtrAt(0x63A294), instance->settings.vKey) & 0x8000) &&
                                instance->settings.isHeld;
 
         if (keyIsHeld)
         {
             instance->playerID = P_Game->Get()->GetPlayerID();
             libc::sprintf(Era::z[0], ERM_VARIABLE_FORMAT, instance->playerID); // ;
-            instance->needDrawHints = Era::GetAssocVarIntValue(Era::z[0]);
+            instance->needDrawHints = instance->playerID >= 0 && instance->playerID < 8 &&
+                                      Era::GetAssocVarIntValue(Era::z[0]);
         }
     }
 
@@ -282,82 +255,23 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                 instance->drawnOjectIndexes.insert(currentItem->drawnObjectIndex).second)
             {
 
-                const bool isHero = currentItem->objectType == eObject::HERO;
-
                 constexpr int TILE_WIDTH = 32;
                 constexpr int TEXT_MARGIN = 2;
-
-                int objectWidthInTiles = GetObjectWidthInTiles(currentItem);
+                const int objectWidthInTiles = GetObjectWidthInTiles(currentItem);
                 H3LoadedPcx16 *tempBuffer = nullptr;
-                if (isHero)
                 {
-                    return;
-
-                    H3DefLoader flagDef(NH3Dlg::Assets::CREST58);
-                    currentItem->hero.index;
-                    // return;
-
-                    //   Era::y[1] = currentItem->hero.index;
-                    // Era::ExecErmCmd("HEy1:Z?y1^");
-                    //   if (Era::y[1] <= 0)
-
-                    // Era::ExecErmCmd("IF:L^%y1^");
-                    //  return;
-
-                    const H3Hero *hero = P_Game->GetHero(currentItem->hero.index);
-
-                    const int owner = hero->owner;
-
-                    const auto heroInfos = P_HeroInfo->Get();
-
-                    if (hero->id < 0 || hero->id > 154)
-                    {
-                        return;
-                    }
-                    H3PcxLoader portrait(heroInfos[hero->id].smallPortrait);
-
-                    if (true)
-                    {
-                    }
-
-                    // libc::sprintf(Era::z[1], "%d", currentItem->hero.index);
-                    // Era::ExecErmCmd("IF:L^%z1^");
-                    //                    H3Messagebox(heroInfos[hero.id].smallPortrait);
-                    //  return;
-
-                    //  if (!heroInfos[hero->id].smallPortrait)
-                    {
-                        //       return;
-                    }
-                    // return;
-
-                    const int TEMP_PCX_WIDTH = portrait->width + TEXT_MARGIN;
-                    const int TEMP_PCX_HEIGHT = portrait->height + (flagDef->heightDEF >> 1) + TEXT_MARGIN;
-                    //   return;
-
-                    tempBuffer = H3LoadedPcx16::Create(TEMP_PCX_WIDTH, TEMP_PCX_HEIGHT);
-                    //  return;
-                    const int frameId = owner >= 0 && owner < 8 ? owner : 8;
-
-                    libc::memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
-                    portrait->DrawToPcx16(tempBuffer, 1, 1, 1);
-
-                    flagDef->DrawToPcx16(0, frameId, ((flagDef->widthDEF - portrait->width) >> 1) - 1, 4,
-                                         portrait->width, (flagDef->heightDEF >> 1) - 1, tempBuffer, 1,
-                                         portrait->height + 1);
-                    //    return;
-                }
-                else
-                {
-
                     H3String hintText;
                     hintText = instance->GetHintText(adv, currentItem, mapX, mapY, mapZ);
 
+                    if (hintText.Empty())
+                        return;
                     LPCSTR hintTextPtr = hintText.String();
 
                     constexpr int minTextFieldWidth = TILE_WIDTH;
 
                     auto fnt = P_TinyFont->Get();
+                    if (!fnt)
+                        return;
                     const int maxHintTextLineWidth = fnt->GetMaxLineWidth(hintTextPtr); // get max text width
 
                     const int maxAllowedTextWidth = TILE_WIDTH * (objectWidthInTiles + 1); // allow max width
@@ -374,7 +288,8 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                             if (!str.Empty())
                                 hintText.Append('\n');
                         }
-                        hintText.SetLength(hintText.Length() - 1); // remove last symbol
+                        if (!hintText.Empty())
+                            hintText.SetLength(hintText.Length() - 1); // remove last symbol
                         hintTextPtr = hintText.String();           // reset ptr
                         textWidth = fnt->GetMaxLineWidth(hintTextPtr);
                     }
@@ -387,6 +302,8 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     const int pcxHeight = textHeight + TEXT_MARGIN;
 
                     tempBuffer = H3LoadedPcx16::Create(pcxWidth, pcxHeight);
+                    if (!tempBuffer)
+                        return;
 
                     libc::memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
 
@@ -395,15 +312,6 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
 
                 if (tempBuffer)
                 {
-                    //                    auto &attributes =
-                    //                    P_Game->mainSetup.objectAttributes[currentItem->drawnObjectIndex];
-                    // auto &passability = attributes.passability;
-
-                    // passability;
-
-                    //  create golden frame
-
-                    // draw text to temp buffer
                     const int pcxWidth = tempBuffer->width;
                     const int pcxHeight = tempBuffer->height;
 
@@ -421,9 +329,8 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     const RECT originalRect{destPcxX, destPcxY, destPcxX + pcxWidth + HINT_SHADOW_SIZE,
                                             destPcxY + pcxHeight + HINT_SHADOW_SIZE};
                     bool overlapsHintOnTheLeft = false;
-                    for (const auto &entry : instance->drawnHintRects)
+                    for (const auto &previousHint : instance->drawnHintRects)
                     {
-                        const auto &previousHint = entry.second;
                         if (previousHint.mapX < mapX && RectanglesIntersect(originalRect, previousHint.rect))
                         {
                             overlapsHintOnTheLeft = true;
@@ -433,26 +340,12 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     if (overlapsHintOnTheLeft)
                         destPcxY += ((mapX + mapY) & 1) ? HINT_STAGGER_Y : -HINT_STAGGER_Y;
 
-                    // adjust left border draw
-                    UINT srcX = 0;
-                    if (destPcxX < m_mapView.left)
-                    {
-                        srcX = m_mapView.left - destPcxX;
-                        destPcxX = m_mapView.left;
-                        tempBuffer->width -= srcX;
-                    }
-                    if (destPcxX + pcxWidth - m_mapView.left > m_mapView.right)
-                        tempBuffer->width = m_mapView.right + m_mapView.left - destPcxX;
-
-                    UINT srcY = 0;
-                    if (destPcxY < m_mapView.top)
-                    {
-                        srcY = m_mapView.top - destPcxY;
-                        destPcxY = m_mapView.top;
-                        tempBuffer->height -= srcY;
-                    }
-                    if (destPcxY + pcxHeight - m_mapView.top > m_mapView.bottom)
-                        tempBuffer->height = m_mapView.top + m_mapView.bottom - destPcxY;
+                    const int srcX = destPcxX < m_mapView.left ? m_mapView.left - destPcxX : 0;
+                    const int srcY = destPcxY < m_mapView.top ? m_mapView.top - destPcxY : 0;
+                    destPcxX += srcX;
+                    destPcxY += srcY;
+                    tempBuffer->width = (std::min<int>)(pcxWidth - srcX, m_mapView.right - destPcxX);
+                    tempBuffer->height = (std::min<int>)(pcxHeight - srcY, m_mapView.bottom - destPcxY);
 
                     // if need to draw any hint
                     if (tempBuffer->height > 0 && tempBuffer->width > 0)
@@ -461,7 +354,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         auto drawBuffer = P_WindowManager->GetDrawBuffer();
                         tempBuffer->DrawToPcx16(destPcxX, destPcxY, 1, drawBuffer, srcX, srcY);
 
-                        int heightReserve = m_mapView.bottom - tempBuffer->height - destPcxY + m_mapView.top;
+                        int heightReserve = m_mapView.bottom - tempBuffer->height - destPcxY;
                         UINT shadowWidth = 0;
 
                         UINT shadowHeight = 0;
@@ -469,7 +362,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         if (heightReserve > 0)
                             shadowHeight = heightReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : heightReserve;
 
-                        int widthReserve = m_mapView.right - tempBuffer->width - destPcxX + m_mapView.left;
+                        int widthReserve = m_mapView.right - tempBuffer->width - destPcxX;
                         if (widthReserve > 0)
                             shadowWidth = widthReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : widthReserve;
 
@@ -484,47 +377,41 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         const RECT drawnRect{destPcxX, destPcxY,
                                              destPcxX + tempBuffer->width + static_cast<int>(shadowWidth),
                                              destPcxY + tempBuffer->height + static_cast<int>(shadowHeight)};
-                        instance->drawnHintRects[currentItem->drawnObjectIndex] = {drawnRect, mapX};
+                        instance->drawnHintRects.push_back({drawnRect, mapX});
                     }
 
-                    //	backPcx->Dereference();
                     tempBuffer->Destroy();
                 }
             }
         }
     }
 }
-void __stdcall AdventureMapHints::AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *adv)
-{
-    THISCALL_1(void, h->GetDefaultFunc(), adv);
-    if (instance->drawnOjectIndexes.size())
-    {
-        instance->drawnOjectIndexes.clear();
-        instance->drawnHintRects.clear();
-    }
-}
-// Хинт при нажатии ALT по количеству затрачиваемых мув-поинтов
+// Movement hint uses the native pathfinder and leaves normal hints to SetHint.
 bool CreateKeyAltHint(H3AdventureManager *advMgr, H3MapItem *cell)
 {
     ////////////////////////////////////////// КЕЙСЫ, КОГДА НЕ ВЫДАЕМ ХИНТ
     //
     // Если мышь за пределами карты - ничего не делаем
+    if (!advMgr || !cell)
+        return false;
     H3Position mousePosition = advMgr->mousePosition;
     const int mapSize = H3MapSize::Get();
     const int mouseX = mousePosition.GetX();
     const int mouseY = mousePosition.GetY();
-    if (mouseX > mapSize || mouseX < 0 || mouseY > mapSize || mouseY < 0)
+    if (mouseX >= mapSize || mouseX < 0 || mouseY >= mapSize || mouseY < 0)
     {
         return false;
     }
 
     // Если навели на клетку, до которой не добраться, или герой не выбран - ничего не делаем
     const int currentHero = P_Game->GetPlayer()->currentHero;
-    if (cell->IsBlocked() || currentHero < 0)
+    if (currentHero < 0)
     {
         return false;
     }
     H3Hero *hero = P_Game->GetHero(currentHero);
+    if (!hero)
+        return false;
 
     // Если навели на героя - ничего не делаем
     if (H3Position(hero->x, hero->y, static_cast<INT8>(hero->z)) == mousePosition)
@@ -541,26 +428,11 @@ bool CreateKeyAltHint(H3AdventureManager *advMgr, H3MapItem *cell)
         return true;
     }
 
-    int objectType = cell->objectType;
-
-    // Герой на лодке, клетка неводная и не якорь
-    if ((hero->flags & 0x40000) != 0 && cell->land != eTerrain::WATER && objectType != eObject::ANCHOR_POINT)
-    {
-        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);
-        return true;
-    }
-    // Клетка водная и либо что-то с флагом клетки, либо тип объекта на клетке не лодка, не герой, не
-    // кораблекрушение
-    else if (cell->land == eTerrain::WATER &&
-             ((cell->mirror & 0x1000) == 0 ||
-              objectType != eObject::BOAT && objectType != eObject::HERO && objectType != eObject::SHIPWRECK))
-    {
-        libc::sprintf(h3_TextBuffer, EraJS::read(KEY_ALT_HINT_CANT_REACH), hero->name);
-        return true;
-    }
-
+    // Let the game account for boats, flying, water walking and visitable objects.
     advMgr->MovementCalculationsMouse();
     H3PathNode *pathNode = P_Pathfinder->GetPathNode(mousePosition);
+    if (!pathNode)
+        return false;
     UINT32 flags = pathNode->access;
     if ((flags & 1) == 0)
     {
@@ -584,23 +456,17 @@ bool CreateKeyAltHint(H3AdventureManager *advMgr, H3MapItem *cell)
 
 int __stdcall AdventureMapHints::H3AdventureManager_ProcMapScreen(HiHook *h, H3AdventureManager *advMgr, H3Msg *msg)
 {
-    // Если не в чате и отжатие кнопки ALT
-    if (!advMgr->dlg->screenlogEdit->IsFocused())
-    {
-        instance->altIsPressed = msg->AltPressed();
-        if (msg->GetKey() == eVKey::H3VK_ALT)
-        {
-            switch (msg->command)
-            {
-            case eMsgCommand::KEY_DOWN:
-            case eMsgCommand::KEY_UP:
-                advMgr->UpdateHintMessage();
-                break;
-            default:
-                break;
-            }
-        }
-    }
+    const bool editFocused = advMgr->dlg->screenlogEdit->IsFocused();
+    const bool altKeyEvent = (msg->command == eMsgCommand::KEY_DOWN || msg->command == eMsgCommand::KEY_UP) &&
+                             msg->GetKey() == eVKey::H3VK_ALT;
+    const BOOL previousAltState = instance->altIsPressed;
+    // Key transitions are authoritative; other messages may omit modifier flags.
+    const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() &&
+                           (STDCALL_1(SHORT, PtrAt(0x63A294), VK_MENU) & 0x8000);
+    instance->altIsPressed = !editFocused &&
+                             (altKeyEvent ? msg->command == eMsgCommand::KEY_DOWN : keyIsHeld != 0);
+    if (!editFocused && (altKeyEvent || previousAltState != instance->altIsPressed))
+        advMgr->UpdateHintMessage();
 
     return THISCALL_2(int, h->GetDefaultFunc(), advMgr, msg);
 }
@@ -655,7 +521,9 @@ void __stdcall AdventureMapHints::H3AdventureManager_SetHint(HiHook *h, H3Advent
 
 bool AdventureMapHints::NeedDrawMapItem(const H3MapItem *mIt) const noexcept
 {
-    return mIt ? settings.drawObjectHint[mIt->objectType].userValue : false;
+    return mIt && mIt->objectType >= 0 &&
+           mIt->objectType < sizeof(settings.drawObjectHint) / sizeof(settings.drawObjectHint[0]) &&
+           settings.drawObjectHint[mIt->objectType].userValue;
 }
 
 AdventureHintsSettings::AdventureHintsSettings(const char *filePath, const char *sectionName)
@@ -800,39 +668,38 @@ BOOL AdventureHintsSettings::load()
     {
         nonVisitedHintFormat = "{~Orange}\n%s}";
     }
-    for (UINT8 i = 0; i < limits::OBJECTS; ++i)
+    for (UINT i = 0; i < sizeof(drawObjectHint) / sizeof(drawObjectHint[0]); ++i)
     {
 
+        drawObjectHint[i].userValue = drawObjectHint[i].defaultValue;
         if (Era::ReadStrFromIni(Era::IntToStr(i).c_str(), sectionName, filePath, h3_TextBuffer))
         {
             const bool userValue = atoi(h3_TextBuffer);
-            if (userValue != drawObjectHint[i].defaultValue)
-            {
-                drawObjectHint[i].userValue = userValue;
-            }
+            drawObjectHint[i].userValue = userValue;
         }
     }
+    vKey = VK_MENU;
     if (Era::ReadStrFromIni("KeyCode", "ControlSettings", filePath, h3_TextBuffer))
-        vKey = atoi(h3_TextBuffer);
-    return 0;
+    {
+        const int key = atoi(h3_TextBuffer);
+        if (key > 0 && key < 256)
+            vKey = key;
+    }
+    return TRUE;
 }
 
 BOOL AdventureHintsSettings::save()
 {
     Era::ClearIniCache(filePath);
-    // DeleteFileA(filePath);
-    for (UINT8 i = 0; i < limits::OBJECTS; ++i)
+    for (UINT i = 0; i < sizeof(drawObjectHint) / sizeof(drawObjectHint[0]); ++i)
     {
-        if (drawObjectHint[i].userValue != drawObjectHint[i].defaultValue)
-        {
-            Era::WriteStrToIni(Era::IntToStr(i).c_str(), Era::IntToStr(drawObjectHint[i].userValue).c_str(),
-                               sectionName, filePath);
-        }
+        Era::WriteStrToIni(Era::IntToStr(i).c_str(), Era::IntToStr(drawObjectHint[i].userValue).c_str(),
+                           sectionName, filePath);
     }
     Era::WriteStrToIni("KeyCode", Era::IntToStr(vKey).c_str(), "ControlSettings", filePath);
 
     Era::SaveIni(filePath);
 
-    return 0;
+    return TRUE;
 }
 } // namespace advMapHints

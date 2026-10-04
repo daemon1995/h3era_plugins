@@ -20590,10 +20590,9 @@ namespace h3
 		H3String text;
 		/** @brief [40]*/
 		H3Font*  font;
+	public:
 		/** @brief [44]*/
 		INT32    color;
-	public:
-
 		/** @brief [48]*/
 		INT32    bkColor;
 		/** @brief [4C]*/

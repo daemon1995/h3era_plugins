@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include <unordered_map>
+#include <vector>
 #include <unordered_set>
 
 namespace advMapHints
@@ -13,9 +13,6 @@ constexpr LPCSTR MOUSEOVER_HINT_MOVEPTS = "gem_plugin.adventure_map_dlg.pathfind
 struct AdventureHintsSettings : public ISettings
 {
     BOOL isHeld;
-    int vKey;
-    H3String fontName;
-    UINT borderSize;
     BOOL drawOverFogOfWar = true;
     struct
     {
@@ -50,13 +47,10 @@ class AdventureMapHints : public IGamePatch
     static AdventureMapHints *instance;
     static constexpr LPCSTR vipPluginInstanceName = "EraPlugin.AdventureMapHints.daemon_n";
 
-    // bool m_objectsToDraw[232];
-
     Patch *blockAdventureHintDraw = nullptr;
     Patch *blockIgnoreHintBarFocus = nullptr;
-    H3PlayersBitfield playersVisitedObjectData[32];
     AdventureHintsSettings settings;
-    std::unordered_map<UINT16, DrawnHintInfo> drawnHintRects;
+    std::vector<DrawnHintInfo> drawnHintRects;
 
     BOOL altIsPressed = FALSE;
     BOOL isCustomHintCreation = FALSE;
@@ -77,13 +71,11 @@ class AdventureMapHints : public IGamePatch
     static AdventureMapHints &Get();
 
     void CreatePatches() noexcept override;
-    // bool * ObjectsToDraw()  noexcept;
     virtual ~AdventureMapHints() {};
 
   protected:
     static void __stdcall AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,
                                                 int screenX, int screenY);
-    static void __stdcall AdvMgr_DrawCornerFrames(HiHook *h, const H3AdventureManager *advMan);
 
     static int __stdcall H3AdventureManager_ProcMapScreen(HiHook *h, H3AdventureManager *advMgr, H3Msg *msg);
     static void __stdcall H3AdventureManager_SetHint(HiHook *h, H3AdventureManager *advMgr, H3MapItem *cell, int x,
@@ -91,6 +83,7 @@ class AdventureMapHints : public IGamePatch
     static _LHF_(H3AdventureManager_SetHeroObjectHint);
 
     static _LHF_(AdvMgr_BeforeObjectsDraw);
+    static void __stdcall ReloadLanguage(Era::TEvent *event);
 };
 
 } // namespace advMapHints

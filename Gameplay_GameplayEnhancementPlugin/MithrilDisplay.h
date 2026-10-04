@@ -31,6 +31,7 @@ struct ResourceBarInfo
     int customTextItemWidth = 0;
     int itemStep = 0;
     eFrameState frameState = FRAME_STATE_NONE;
+    H3BaseDlg *owner = nullptr;
     H3DlgItem *mithrilDlgItem = nullptr;
     H3DlgItem *mithrilTextItem = nullptr;
     H3LoadedPcx *mithrilBackPcxCache = nullptr;
@@ -39,8 +40,6 @@ class ExtendedResourcesInfo : public IGamePatch
 {
     static ExtendedResourcesInfo *instance;
     static constexpr LPCSTR MITHRIL_DEF_NAME = "SMALmith.def";
-    int m_resbarLastHintItemId = -1;
-    // bool lastHintIsMitril;
 
     std::unordered_map<DWORD, ResourceBarInfo> resourceBarPatchInfos;
 
@@ -55,7 +54,7 @@ class ExtendedResourcesInfo : public IGamePatch
 
   private:
     static BOOL ShowMithrilRMCHint(const H3Msg *msg, H3DlgItem *hintZone) noexcept;
-    static H3DlgItem *GetMitrilBarHintZone(DWORD patchAddress) noexcept;
+    static H3DlgItem *GetMitrilBarHintZone(DWORD patchAddress, const H3BaseDlg *owner) noexcept;
 
   private:
     static BOOL AlignOriginalResources(HookContext *c, const ResourceBarInfo &info);
@@ -69,8 +68,6 @@ class ExtendedResourcesInfo : public IGamePatch
     static int __stdcall KingdomOverviewDlgProc(HiHook *h, H3BaseDlg *dlg, H3Msg *msg);
 
   public:
-    const int LastHintItemId() const noexcept;
-    void SetLastHintItemId(const int itemId) noexcept;
     static ExtendedResourcesInfo &Get();
 };
 } // namespace ERI
