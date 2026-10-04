@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Artifacts_AddingNewFeatures
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Assembly_MainPlugin", "Assembly_MainPlugin\Assembly_MainPlugin.vcxproj", "{FF90A4AC-6B9F-4E22-AE7D-03B35FD0043E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_SwitchingCreatureAction", "Combat_SwitchingCreatureAction\Combat_SwitchingCreatureAction.vcxproj", "{3BB04884-C58A-465E-B8C7-46A363B91EC2}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_ArtifactsExtender", "ERA_ArtifactsExtender\ERA_ArtifactsExtender.vcxproj", "{42B5985C-5448-4D01-B607-AE2CB255D21F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_HelpDialog", "ERA_HelpDialog\ERA_HelpDialog.vcxproj", "{8047D165-9D1A-4D66-8E5B-E97AFA665596}"
@@ -61,6 +63,10 @@ Global
 		{FF90A4AC-6B9F-4E22-AE7D-03B35FD0043E}.Debug|x86.Build.0 = Debug|Win32
 		{FF90A4AC-6B9F-4E22-AE7D-03B35FD0043E}.Release|x86.ActiveCfg = Release|Win32
 		{FF90A4AC-6B9F-4E22-AE7D-03B35FD0043E}.Release|x86.Build.0 = Release|Win32
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.ActiveCfg = Debug|Win32
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.Build.0 = Debug|Win32
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Release|x86.ActiveCfg = Release|Win32
+		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Release|x86.Build.0 = Release|Win32
 		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Debug|x86.ActiveCfg = Debug|Win32
 		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Debug|x86.Build.0 = Debug|Win32
 		{42B5985C-5448-4D01-B607-AE2CB255D21F}.Release|x86.ActiveCfg = Release|Win32
