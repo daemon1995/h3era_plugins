@@ -15,9 +15,7 @@ namespace
 using ConfigEntry = AdditionalConfig::ConfigEntry;
 using EOptionChangeSource = AdditionalConfig::EOptionChangeSource;
 sysopts::SaveState saveState;
-constexpr LPCSTR NATIVE_SECTION = "Settings.Native";
-constexpr LPCSTR HEALTH_SECTION = "CombatHints";
-constexpr LPCSTR LOCALE_SECTION = "Locale";
+constexpr LPCSTR HEALTH_SECTION = "Settings.Extra.CombatStackHealthBar";
 
 struct NativeEntry
 {
@@ -70,14 +68,13 @@ const NativeEntry *FindNative(LPCSTR key) noexcept
             return &entry;
     return nullptr;
 }
-BOOL ApplyNative(const NativeEntry &entry, const int requested, const BOOL initialLoad = FALSE,
-                 const BOOL reportError = FALSE) noexcept
+BOOL ApplyNative(const NativeEntry &entry, const int requested, const BOOL reportError = FALSE) noexcept
 {
     const int value = Clamp(entry.minValue, requested, entry.maxValue);
     if (entry.offset == offsetof(OriginalConfig, musicVolume))
-        return sound::SoundSettings::TrySetMusicVolume(value, reportError, !initialLoad);
+        return sound::SoundSettings::TrySetMusicVolume(value, reportError, TRUE);
     if (entry.offset == offsetof(OriginalConfig, effectsVolume))
-        return sound::SoundSettings::TrySetEffectsVolume(value, reportError, !initialLoad);
+        return sound::SoundSettings::TrySetEffectsVolume(value, reportError, TRUE);
     if (entry.offset == offsetof(OriginalConfig, autoSpells))
     {
         cmbsttngs::CombatSettings::SetPersistentAutoSpells(value);
@@ -139,33 +136,6 @@ void LoadHealth()
 BOOL WriteInteger(LPCSTR key, const int value, LPCSTR section)
 {
     return Era::WriteStrToIni(key, std::to_string(value).c_str(), section, AdditionalConfig::fileName);
-}
-void LoadLocale()
-{
-    char buffer[4096];
-    std::string language;
-    if (Era::ReadStrFromIni("Language", LOCALE_SECTION, AdditionalConfig::fileName, buffer))
-        language = buffer;
-    int codePage = 0;
-    const BOOL hasCodePage = Era::ReadStrFromIni("CodePage", LOCALE_SECTION, AdditionalConfig::fileName, buffer) &&
-                             sysopts::ParseInteger(buffer, codePage) && codePage > 0 && IsValidCodePage(codePage);
-    const BOOL hasLanguage = !language.empty() && language.find_first_of("<>:\"/\\|?*") == std::string::npos;
-    if (hasLanguage)
-        Era::SetLanguage(language.c_str());
-    if (hasCodePage)
-        Era::SetCodePage(codePage);
-    if (hasLanguage || hasCodePage)
-        Era::ReloadLanguageData();
-}
-BOOL SaveLocale()
-{
-    BOOL success = TRUE;
-    if (const auto language = Era::GetLanguage())
-    {
-        success = Era::WriteStrToIni("Language", language, LOCALE_SECTION, AdditionalConfig::fileName);
-        Era::MemFree(language);
-    }
-    return WriteInteger("CodePage", Era::GetCodePage(), LOCALE_SECTION) && success;
 }
 } // namespace
 
@@ -237,16 +207,7 @@ BOOL AdditionalConfig::SetNativeValue(int *valuePtr, const int value, const BOOL
     for (const auto &entry : nativeEntries)
         if (&entry.Value() == valuePtr)
         {
-            const int previous = entry.ConfiguredValue();
-            const auto &config = OriginalConfig::Get();
-            const int lastMusic = config.lastMusicVolume;
-            const int lastEffects = config.lastEffectsVolume;
-            if (!ApplyNative(entry, value, FALSE, reportError))
-                return FALSE;
-            if (previous != entry.ConfiguredValue() || lastMusic != config.lastMusicVolume ||
-                lastEffects != config.lastEffectsVolume)
-                MarkDirty();
-            return TRUE;
+            return ApplyNative(entry, value, reportError);
         }
     return FALSE;
 }
@@ -270,15 +231,9 @@ void AdditionalConfig::InitialApply()
 }
 BOOL AdditionalConfig::Save()
 {
-    CreateDirectoryA("Runtime", nullptr);
-    BOOL success = SaveLocale();
+    BOOL success = TRUE;
     for (auto *entry : Get().Entries())
         success = WriteInteger(entry->keyName, entry->value, sectionName) && success;
-    for (const auto &entry : nativeEntries)
-    {
-        const int value = entry.ConfiguredValue();
-        success = WriteInteger(entry.key, Clamp(entry.minValue, value, entry.maxValue), NATIVE_SECTION) && success;
-    }
     const auto &health = cmbhints::CombatHints::Get().settings;
     success = WriteInteger("held", !!health.isHeld, HEALTH_SECTION) && success;
     success = WriteInteger("keyCode", health.vKey, HEALTH_SECTION) && success;
@@ -309,12 +264,7 @@ BOOL AdditionalConfig::Load()
     auto &instance = Get();
     char buffer[4096];
     int parsed = 0;
-    LoadLocale();
-    // Native values are loaded by the game. Their saved values in this file
-    // override them; missing additional options use their declared defaults.
-    for (const auto &entry : nativeEntries)
-        if (Era::ReadStrFromIni(entry.key, NATIVE_SECTION, fileName, buffer) && sysopts::ParseInteger(buffer, parsed))
-            ApplyNative(entry, parsed, TRUE);
+    // The game loads and saves native options; this plugin reads only its own settings.
     for (auto *entry : instance.Entries())
     {
         optionsMap[entry->keyName] = entry;

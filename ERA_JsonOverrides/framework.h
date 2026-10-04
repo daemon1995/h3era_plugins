@@ -6,7 +6,10 @@
 #include <windows.h>
 // #define ERA_MODLIST
 // #define _WOG_
+#define ERA_TRACK_TEXT_OVERRIDES
 #include "..\headers\header.h"
+#include "../headers/Era/JsonOverridesSchema.hpp"
+#include "../headers/Era/GameJsonTables.hpp"
 
 #define DECLARE_JSON_FIELD(type, field) static constexpr LPCSTR field = "era." #type ".%d." #field;
 #define DECLARE_JSON_ARRAY_FIELD(type, field) static constexpr LPCSTR field = "era." #type ".%d." #field ".%d";

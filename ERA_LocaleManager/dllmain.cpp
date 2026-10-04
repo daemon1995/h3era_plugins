@@ -1,6 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #define _H3API_PLUGINS_
 #include "framework.h"
+#include "LanguageSelectionDlg.h"
 void InitLanguageSelectionDlg();
 
 Patcher *globalPatcher = nullptr;
@@ -9,7 +10,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "3.1.2";
+constexpr LPCSTR PLUGIN_VERSION = "3.2.0";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
@@ -21,6 +22,12 @@ _ERH_(OnReportVersion)
     std::string temp(h3_TextBuffer);
     Era::ReportPluginVersion(temp.c_str());
     InitLanguageSelectionDlg();
+}
+
+_ERH_(OnAfterReloadLanguageData)
+{
+    // Other plugins can apply the saved language after OnReportVersion.
+    LanguageSelectionDlg::RefreshMenuButton();
 }
 
 _LHF_(HooksInit)
@@ -51,6 +58,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
                 Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
 
                 _REH_(OnReportVersion);
+                _REH_(OnAfterReloadLanguageData);
                 // _REH_(OnAfterWog);
                 // _REH_(OnAfterCreateWindow);
                 // _PI->WriteLoHook(0x4EEAF2, HooksInit);

@@ -16,7 +16,15 @@
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <!-- Override game defaults while retaining explicit custom output directories. -->
+    <PluginOutDir Condition="'$(PluginOutDir)' == '$(LocalGamePath)\Mods\$(PluginModName)\eraplugins\'">$(LocalGamePath)\Mods\$(PluginModName)\EraEditor\</PluginOutDir>
+    <PluginTargetExt Condition="'$(PluginTargetExt)' == '.era'">.dll</PluginTargetExt>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <LocalDebuggerCommand>$(LocalGamePath)\h3wmaped.exe</LocalDebuggerCommand>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>

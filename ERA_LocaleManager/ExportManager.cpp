@@ -22,13 +22,13 @@ std::string ToWindowsLineEndings(const std::string &text)
 
 BOOL WriteTextFile(const std::string &filePath, const std::string &text)
 {
+    const std::string fileContent = ToWindowsLineEndings(text);
     const HANDLE fileHandle = CreateFileA(filePath.c_str(), GENERIC_WRITE,
                                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, CREATE_ALWAYS,
                                           FILE_ATTRIBUTE_NORMAL, nullptr);
     if (fileHandle == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    const std::string fileContent = ToWindowsLineEndings(text);
     size_t bytesToWrite = fileContent.size();
     size_t bytesWrittenTotal = 0;
     while (bytesToWrite != 0)
@@ -53,18 +53,23 @@ BOOL WriteTextFile(const std::string &filePath, const std::string &text)
 std::string ExportManager::LPCSTR_to_wstring(LPCSTR ansi_str)
 {
     // 1. Получаем длину без нуль-терминатора
-    const int src_len = libc::strlen(ansi_str);
+    if (!ansi_str || !*ansi_str) return {};
+    const int src_len = static_cast<int>(std::strlen(ansi_str));
 
     // 2. ANSI → UTF-16
     const DWORD acp = Era::GetCodePage();
-    const int wlen = libc::MultiByteToWideChar(acp, 0, ansi_str, src_len, NULL, 0);
+    const int wlen = ::MultiByteToWideChar(acp, 0, ansi_str, src_len, NULL, 0);
+    if (wlen <= 0) throw std::runtime_error("Could not decode exported text");
     std::wstring wstr(wlen, 0);
-    libc::MultiByteToWideChar(acp, 0, ansi_str, src_len, &wstr[0], wlen);
+    if (::MultiByteToWideChar(acp, 0, ansi_str, src_len, &wstr[0], wlen) != wlen)
+        throw std::runtime_error("Could not decode exported text");
 
     // 3. UTF-16 → UTF-8
-    const int ulen = libc::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, NULL, 0, NULL, NULL);
+    const int ulen = ::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, NULL, 0, NULL, NULL);
+    if (ulen <= 0) throw std::runtime_error("Could not encode exported text");
     std::string utf8_str(ulen, 0);
-    libc::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, &utf8_str[0], ulen, NULL, NULL);
+    if (::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wlen, &utf8_str[0], ulen, NULL, NULL) != ulen)
+        throw std::runtime_error("Could not encode exported text");
 
     return utf8_str;
 }
@@ -111,7 +116,7 @@ INT ExportManager::GetMaxOriginalId(LPCSTR keySubstring, const int defaultValue)
     // Получаем максимальный ID оригинальных данных из конфигурации
     bool readSuccess = false;
     const int maxId = EraJS::readInt(MAX_ID_JSON + std::string(keySubstring), readSuccess);
-    if (!readSuccess || maxId < 0)
+    if (!readSuccess || maxId < 0 || maxId == (std::numeric_limits<int>::max)())
     {
         return defaultValue;
     }
@@ -131,19 +136,12 @@ BOOL ExportManager::CreateMonstersJson(LPCSTR filePath, const BOOL originalData,
     // Создаем структуру JSON
     for (size_t i = minId; i < maxId; ++i)
     {
-        auto &creatureInfo = P_CreatureInformation[i];
-        auto &ptr = creatureInfo.nameSingular;
-        if (ptr && libc::strcmpi(ptr, h3_NullString))
-            j["era"]["monsters"][std::to_string(i)]["name"]["singular"] = LPCSTR_to_wstring(ptr);
-
-        ptr = creatureInfo.namePlural;
-        if (ptr && libc::strcmpi(ptr, h3_NullString))
-            j["era"]["monsters"][std::to_string(i)]["name"]["plural"] = LPCSTR_to_wstring(ptr);
-
-        // Если описание не пустое, добавляем его в JSON
-        ptr = creatureInfo.description;
-        if (ptr && libc::strcmpi(ptr, h3_NullString))
-            j["era"]["monsters"][std::to_string(i)]["name"]["description"] = LPCSTR_to_wstring(ptr);
+        EraJS::VisitCreatureText(P_CreatureInformation[i], [&](LPCSTR field, LPCSTR value) {
+            if (!value || !*value) return;
+            auto &creatureJson = j["era"]["monsters"][std::to_string(i)];
+            if (std::strcmp(field, "description") == 0) creatureJson[field] = LPCSTR_to_wstring(value);
+            else creatureJson["name"][field] = LPCSTR_to_wstring(value);
+        });
     }
 
     return WriteJsonFile(filePath, j);
@@ -163,18 +161,18 @@ BOOL ExportManager::CreateArtifactsJson(LPCSTR filePath, const BOOL originalData
     // Создаем структуру JSON
     for (size_t i = minId; i < maxId; ++i)
     {
-        auto &artInfo = P_ArtifactSetup->Get()[i];
-        if (artInfo.name)
-        {
-            j["era"]["artifacts"][std::to_string(i)]["name"] = LPCSTR_to_wstring(artInfo.name);
-        }
+        const auto &artInfo = P_ArtifactSetup->Get()[i];
+        auto &artifactJson = j["era"]["artifacts"][std::to_string(i)];
+        EraJS::VisitArtifact(artInfo, [&](LPCSTR field, const auto &value) {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, LPCSTR>)
+            {
+                if (value) artifactJson[field] = LPCSTR_to_wstring(value);
+            }
+            else artifactJson[field] = static_cast<int>(value);
+        });
 
-        if (artInfo.description)
-        {
-            j["era"]["artifacts"][std::to_string(i)]["description"] = LPCSTR_to_wstring(artInfo.description);
-        }
-
-        if (event[i] && libc::strlen(event[i])) // Added argument to strlen()
+        if (event && i < EraJS::GameTables::ArtifactEventCapacity() && event[i] && libc::strlen(event[i])) // Added argument to strlen()
             j["era"]["artifacts"][std::to_string(i)]["event"] = LPCSTR_to_wstring(event[i]);
     }
 
@@ -192,7 +190,7 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
     LPCSTR *table = H3ObjectName::Get();
     for (size_t i = 0; i < objectsNum; ++i)
     {
-        if (libc::strcmpi(table[i], h3_NullString))
+        if (table[i] && libc::strcmpi(table[i], h3_NullString))
             j["era"]["objects"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
     table = H3DwellingNames1::Get();
@@ -200,28 +198,28 @@ BOOL ExportManager::CreateObjectsJson(LPCSTR filePath, const BOOL originalData, 
     constexpr int maxOriginalId1 = 100;
     const int outOfBound1 = GetMaxOriginalId("dwellings1", maxOriginalId1) + 1;
     const int minId1 = originalData ? 0 : outOfBound1;
-    const int maxAmount1 = MapObjectInfo::GetSubtypesAmount(eObject::CREATURE_GENERATOR1);
+    const int maxAmount1 = EraJS::GameTables::Dwelling1Capacity();
     const int maxId1 = Clamp(0, additionalData ? maxAmount1 : outOfBound1, maxAmount1);
 
     for (size_t i = minId1; i < maxId1; ++i)
     {
-        if (libc::strcmpi(table[i], h3_NullString))
+        if (table[i] && libc::strcmpi(table[i], h3_NullString))
             j["era"]["dwellings1"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
 
-    const int dwellings4Num = MapObjectInfo::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
+    const int dwellings4Num = EraJS::GameTables::Dwelling4Capacity();
 
     constexpr int maxOriginalId4 = 1;
     const int outOfBound4 = GetMaxOriginalId("dwellings4", maxOriginalId4) + 1;
     const int minId4 = originalData ? 0 : outOfBound4;
-    const int maxAmount4 = MapObjectInfo::GetSubtypesAmount(eObject::CREATURE_GENERATOR4);
+    const int maxAmount4 = EraJS::GameTables::Dwelling4Capacity();
     const int maxId4 = Clamp(0, additionalData ? maxAmount4 : outOfBound4, maxAmount4);
 
     table = H3DwellingNames4::Get();
 
     for (size_t i = minId4; i < maxId4; ++i)
     {
-        if (libc::strcmpi(table[i], h3_NullString))
+        if (table[i] && libc::strcmpi(table[i], h3_NullString))
             j["era"]["dwellings4"][std::to_string(i)] = LPCSTR_to_wstring(table[i]);
     }
 
@@ -266,7 +264,7 @@ BOOL ExportManager::CreateCreatureBanksJson(LPCSTR filePath, const BOOL original
     const auto bankObjectTypes = {eObject::CREATURE_BANK, eObject::DERELICT_SHIP, eObject::DRAGON_UTOPIA,
                                   eObject::CRYPT, eObject::SHIPWRECK};
 
-    int creatureBanksNumber = 0;
+    int creatureBanksNumber = EraJS::GameTables::CreatureBankCapacity();
     for (auto &i : P_Game->mainSetup.objectLists[eObject::CREATURE_BANK])
     {
         if (i.subtype >= creatureBanksNumber)
@@ -292,8 +290,9 @@ BOOL ExportManager::CreateCreatureBanksJson(LPCSTR filePath, const BOOL original
             const auto &objectPrototype = P_Game->mainSetup.objectLists[objectType][i];
 
             const int cbId = GetCreatureBankId(objectPrototype.type, objectPrototype.subtype);
-            if (!banks[cbId].name.Empty())
-                bankTypes.push_back({cbId, objectPrototype.subtype});
+            if (cbId < minId || cbId >= maxId) continue;
+            // Do not infer allocation size from sparse subtype IDs.
+            bankTypes.push_back({cbId, objectPrototype.subtype});
         }
 
         std::sort(bankTypes.begin(), bankTypes.end(),
@@ -303,10 +302,18 @@ BOOL ExportManager::CreateCreatureBanksJson(LPCSTR filePath, const BOOL original
         {
             const auto &objInfo = bankTypes[i];
 
-            const auto &bank = banks[objInfo.first];
-
-            j["RMG"]["objectGeneration"][std::to_string(objectType)][std::to_string(objInfo.second)]["name"] =
-                LPCSTR_to_wstring(bank.name.String());
+            LPCSTR name = nullptr;
+            if (objInfo.first < EraJS::GameTables::CreatureBankCapacity())
+                name = banks[objInfo.first].name.String();
+            else
+            {
+                // Some extenders relocate setups without publishing capacity.
+                // Export their existing JSON instead of probing past the known array.
+                name = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.name", objectType, objInfo.second).String(), readSuccess);
+                if (!readSuccess) name = nullptr;
+            }
+            if (name && *name)
+                j["RMG"]["objectGeneration"][std::to_string(objectType)][std::to_string(objInfo.second)]["name"] = LPCSTR_to_wstring(name);
 
             LPCSTR visitText = EraJS::read(
                 H3String::Format("RMG.objectGeneration.%d.%d.text.visit", objectType, objInfo.second).String(),
@@ -325,7 +332,9 @@ BOOL ExportManager::CreateTownBuildingsJson(LPCSTR filePath, const BOOL original
 
 {
     const UINT dwellinsPerTown = ByteAt(0x05B995F + 2);
+    if (!dwellinsPerTown) return FALSE;
     const UINT townsNum = DwordAt(0x05B9962 + 2) / dwellinsPerTown;
+    if (!townsNum) return FALSE;
 
     const UINT neutralTownId = townsNum - 1;
     const auto townDwellingNames = TownBuildingInfo::GetTownDwellingNames();
@@ -352,12 +361,12 @@ BOOL ExportManager::CreateTownBuildingsJson(LPCSTR filePath, const BOOL original
             const UINT stringId = townType * dwellinsPerTown + dwellingId;
             // if (!dwellingInfos[stringId].name.empty())
             {
-                j["era"]["towns"][std::to_string(jsonTownType)]["dwellings"][std::to_string(dwellingId)]["name"] =
+                j["era"]["towns"][std::to_string(jsonTownType)]["buildings"][std::to_string(30 + dwellingId)]["name"] =
                     LPCSTR_to_wstring(townDwellingNames[stringId]);
             }
             // if (!dwellingInfos[stringId].description.empty())
             {
-                j["era"]["towns"][std::to_string(jsonTownType)]["dwellings"][std::to_string(dwellingId)]
+                j["era"]["towns"][std::to_string(jsonTownType)]["buildings"][std::to_string(30 + dwellingId)]
                  ["description"] = LPCSTR_to_wstring(townDwellingDescriptions[stringId]);
             }
         }
@@ -398,7 +407,7 @@ BOOL ExportManager::CreateHeroesJson(LPCSTR filePath, const BOOL originalData, c
         if (str && (libc::strcmpi(str, h3_NullString)))
             j["era"]["heroes"][std::to_string(heroType)]["specialty"]["description"] = LPCSTR_to_wstring(str);
 
-        str = (*reinterpret_cast<LPCSTR **>(0x005B9A18 + 2))[heroType + 1];
+        str = EraJS::GameTables::HeroBiographies()[heroType];
         if (str && (libc::strcmpi(str, h3_NullString)))
         {
             j["era"]["heroes"][std::to_string(heroType)]["biography"] = LPCSTR_to_wstring(str);
@@ -417,155 +426,4 @@ BOOL ExportManager::CreateHeroesJson(LPCSTR filePath, const BOOL originalData, c
 //     ExportManager::CreateTownBuildingsJson(originalDatas, true);
 // }
 
-void ExportDlg::CreateDlgItems()
-{
-    CreateOKButton();
-    CreateCancelButton();
-
-    BOOL (*selectionPanelExportFunctions[])(LPCSTR, const BOOL, const BOOL) = {
-        ExportManager::CreateMonstersJson,      ExportManager::CreateArtifactsJson,
-        ExportManager::CreateObjectsJson,       ExportManager::CreateCreatureBanksJson,
-        ExportManager::CreateTownBuildingsJson, ExportManager::CreateHeroesJson};
-    LPCSTR panelPaths[] = {ExportManager::MonsterInfo::DEFAULT_PATH,      ExportManager::ArtifactInfo::DEFAULT_PATH,
-                           ExportManager::MapObjectInfo::DEFAULT_PATH,    ExportManager::CreatureBankInfo::DEFAULT_PATH,
-                           ExportManager::TownBuildingInfo::DEFAULT_PATH, ExportManager::HeroInfo::DEFAULT_PATH};
-    constexpr size_t panelsNum = std::size(selectionPanelExportFunctions);
-    constexpr int startId = 1;
-    selectionPanels.reserve(panelsNum);
-
-    constexpr int borderPadding = 20;
-
-    for (size_t i = 0; i < panelsNum; i++)
-    {
-
-        const int y = borderPadding + 30 + i * PANELS_PADDING;
-        libc::sprintf(h3_TextBuffer, PANEL_NAME_FORMAT, i);
-        if (auto panel =
-                CreateSelectionPanel(borderPadding, y, EraJS::read(h3_TextBuffer), startId + i * ITEMS_PER_PANEL,
-                                     panelPaths[i], selectionPanelExportFunctions[i]))
-        {
-            selectionPanels.emplace_back(panel);
-        }
-    }
-    if (selectionPanels.size())
-    {
-        LPCSTR text = EraJS::read("era.locale.dlg.export.item");
-        CreateText(borderPadding, borderPadding, PANEL_TEXT_WIDTH, 20, text, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
-                   -1);
-        text = EraJS::read("era.locale.dlg.export.original");
-        CreateText(borderPadding + PANEL_TEXT_WIDTH, borderPadding, PANEL_TEXT_WIDTH, 20, text, NH3Dlg::Text::MEDIUM,
-                   eTextColor::REGULAR, -1);
-        text = EraJS::read("era.locale.dlg.export.additional");
-        CreateText(borderPadding + PANEL_TEXT_WIDTH + CHECKBOX_PADDING, borderPadding, PANEL_TEXT_WIDTH, 20, text,
-                   NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, -1);
-    }
-}
-ExportDlg::SelectionPanel *ExportDlg::CreateSelectionPanel(const int x, const int y, LPCSTR text, const int startId,
-                                                           LPCSTR path,
-                                                           BOOL (*exportFunc)(LPCSTR, const BOOL, const BOOL))
-
-{
-    SelectionPanel *panel = nullptr;
-    if (panel = new SelectionPanel())
-    {
-        constexpr int panelTextW = PANEL_TEXT_WIDTH;
-
-        panel->panelText = CreateText(x, y + 3, panelTextW, 20, text, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
-                                      startId, eTextAlignment::MIDDLE_LEFT);
-        const int panelTextX = panel->panelText->GetX();
-
-        const int originalCheckBoxX = panelTextW + CHECKBOX_PADDING / 2;
-        panel->originalDataCheckBox = CreateDef(originalCheckBoxX, y, startId + 1, NH3Dlg::Assets::ON_OFF_CHECKBOX, 1);
-        panel->additionalDataCheckBox =
-            CreateDef(originalCheckBoxX + CHECKBOX_PADDING, y, startId + 2, NH3Dlg::Assets::ON_OFF_CHECKBOX, 1);
-        panel->exportPath = path;
-        panel->exportFunction = exportFunc;
-    }
-    return panel;
-}
-
-ExportDlg::ExportDlg(const int width, const int height, const int x, const int y)
-    : H3Dlg(width, height, x, y, false, false)
-{
-    this->AddBackground(true, false, ePlayer::RED);
-    this->flags ^= 0x10; // disable dlg shadow
-    CreateDlgItems();
-}
-
-ExportDlg::~ExportDlg()
-{
-    for (auto &i : selectionPanels)
-    {
-        delete i;
-    }
-}
-
-BOOL ExportDlg::DialogProc(H3Msg &msg)
-{
-    if (msg.IsLeftDown())
-    {
-        if (auto checkBox = GetDef(msg.itemId))
-        {
-            P_SoundManager->ClickSound();
-            checkBox->SetFrame(checkBox->GetFrame() ^ 1);
-            checkBox->Draw();
-            checkBox->Refresh();
-            return 1;
-        }
-    }
-
-    return 0;
-}
-// Creating json here
-VOID ExportDlg::OnOK()
-{
-    // bool exportSuccess = false;
-    std::string message, list;
-
-    std::string exportPath = Era::z[1] + std::string(SUBFOLDER_NAME);
-
-    if (Era::era_str eraLocale = Era::GetLanguage())
-    {
-        std::string currentLanguage = eraLocale;
-        Era::MemFree(eraLocale);
-        if (!currentLanguage.empty())
-        {
-            exportPath += currentLanguage + "\\";
-        }
-    }
-
-    for (auto &i : selectionPanels)
-    {
-        if (i->exportFunction)
-        {
-            const BOOL originalData = i->originalDataCheckBox->GetFrame() == 1;
-            const BOOL additionalData = i->additionalDataCheckBox->GetFrame() == 1;
-            if (originalData || additionalData)
-            {
-
-                std::string filePath = exportPath + i->exportPath;
-                LPCSTR key = i->exportFunction(filePath.c_str(), originalData, additionalData)
-                                 ? EraJS::read("era.locale.dlg.export.success")
-                                 : EraJS::read("era.locale.dlg.export.error");
-                libc::sprintf(h3_TextBuffer, key, filePath.c_str());
-                list += "\n" + std::string(h3_TextBuffer);
-            }
-        }
-    }
-    if (!list.empty())
-    {
-        message = EraJS::read("era.locale.dlg.export.completed");
-        libc::sprintf(h3_TextBuffer, message.c_str(), list.c_str());
-        if (H3Messagebox::Choice(h3_TextBuffer))
-        {
-            INT_PTR intRes =
-                STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", exportPath.c_str(), NULL, NULL, SW_SHOWNORMAL);
-        }
-    }
-    else
-    {
-        message = EraJS::read("era.locale.dlg.export.empty");
-        H3Messagebox::Show(message.c_str());
-    }
-}
 #endif // CREATE_TEXT_JSON_EXPORTS

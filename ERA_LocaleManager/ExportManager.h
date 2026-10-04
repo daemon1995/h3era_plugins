@@ -67,15 +67,7 @@ class ExportManager
     struct MapObjectInfo
     {
         static constexpr LPCSTR DEFAULT_PATH = "ObjectText.json";
-        static int GetSubtypesAmount(const eObject type) noexcept
-        {
-            std::unordered_set<int> objectSubtypes;
-            for (auto &i : P_Game->mainSetup.objectLists[type])
-            {
-                objectSubtypes.insert(i.subtype);
-            }
-            return objectSubtypes.size();
-        }
+
     };
     struct CreatureBankInfo
     {

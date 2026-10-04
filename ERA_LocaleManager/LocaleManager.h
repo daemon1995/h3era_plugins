@@ -247,13 +247,15 @@ class LocaleManager
     const Locale &LocaleAt(const int id) const noexcept;
     const Locale &operator[](const int id) const noexcept;
     UINT32 GetCount() const noexcept;
-    BOOL SetForUser(const Locale *locale) const;
+    static BOOL SetForUser(const Locale *locale);
     void SetSelected(const Locale *locale) noexcept;
     const Locale *GetCurrent() const noexcept;
     const Locale *GetSelected() const noexcept;
 
   public:
-    static std::string ReadLocaleFromIni();
+    // Read the active ERA language, with heroes3.ini as a fallback.
+    static std::string ReadCurrentLanguage();
+    static std::string GetButtonText();
     // const Locale* DefaultLocale() const noexcept;
 
     // String Get

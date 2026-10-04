@@ -1,107 +1,43 @@
-﻿#include "ArtifactHandler.h"
+#include "ArtifactHandler.h"
 
-#define READ_ART_FIELD(obj, field, idx)                                                                                \
-    ArtifactHandler::ReadField<decltype((obj).field)>((obj).field, ArtifactHandler::formats::field, idx)
-
-ArtifactHandler::TxtHandler ArtifactHandler::artifactsHandler{};
-
-// if txt file has less lines than patched lines to read we fix it
-H3TextTable *__stdcall LoadArtTraitsFile(HiHook *h, LPCSTR fileName)
+static H3TextTable *__stdcall LoadArtTraitsFile(HiHook *h, LPCSTR fileName)
 {
-    H3TextTable *artraitsTxt = CDECL_1(H3TextTable *, h->GetDefaultFunc(), fileName);
-    if (artraitsTxt)
+    auto &state = ArtifactHandler::Handler();
+    state = {};
+    auto *txt = CDECL_1(H3TextTable *, h->GetDefaultFunc(), fileName);
+    if (!txt) return nullptr;
+    const DWORD rows = txt->CountRows();
+    DWORD expectedRows = DwordAt(0x40365E + 1) / sizeof(LPCSTR);
+    // The native do/while reads row 2 even when its end operand equals 8.
+    // Leave short resources to the native minimum-row check; keep its ownership.
+    if (rows < 3 || expectedRows < 3) return txt;
+    const auto *table = *reinterpret_cast<H3ArtifactSetup **>(0x4036EC + 1);
+    // Raising only the TXT loop limit does not grow the original 144-slot array.
+    if (reinterpret_cast<DWORD>(table) == 0x59A2E0) expectedRows = (std::min)(expectedRows, DWORD(146));
+    state.rowCount = rows;
+    state.objectsCount = (std::min)(rows, expectedRows) - 2;
+    state.expectedObjectsCount = expectedRows - 2;
+    const DWORD bytes = (std::min)(rows, expectedRows) * sizeof(LPCSTR);
+    if (DwordAt(0x40365E + 1) > bytes) _PI->WriteDword(0x40365E + 1, bytes);
+    if (DwordAt(0x40369D + 2) > bytes) _PI->WriteDword(0x40369D + 2, bytes);
+    if (DwordAt(0x40382E + 3) > bytes) _PI->WriteDword(0x40382E + 3, bytes);
+    return txt;
+}
+
+static bool __stdcall LoadAllArtifactTxtFiles(HiHook *h)
+{
+    const bool loaded = CDECL_0(bool, h->GetDefaultFunc());
+    if (loaded)
     {
-
-        const DWORD rowCount = artraitsTxt->CountRows();
-        const DWORD expectedRowCount = IntAt(0x040365E + 1) >> 2;
-        auto &artifactsHandler = ArtifactHandler::Handler();
-
-        artifactsHandler.rowCount = rowCount;
-        artifactsHandler.objectsCount = rowCount - 2;
-        artifactsHandler.expectedRowCount = expectedRowCount;
-        artifactsHandler.expectedObjectsCount = expectedRowCount - 2;
-
-        const DWORD newSizeToIterate = rowCount << 2;
-
-        // if txt file has less lines than patched lines to read we fix it
-        if (IntAt(0x040365E + 1) > newSizeToIterate)
-        {
-            _PI->WriteDword(0x040365E + 1, newSizeToIterate);
-        }
-        if (IntAt(0x040369D + 2) > newSizeToIterate)
-        {
-
-            _PI->WriteDword(0x040369D + 2, newSizeToIterate);
-        }
-
-        if (IntAt(0x040382E + 3) > newSizeToIterate)
-        {
-            _PI->WriteDword(0x040382E + 3, newSizeToIterate);
-        }
+        auto *table = *reinterpret_cast<H3ArtifactSetup **>(0x4036EC + 1);
+        const auto count = ArtifactHandler::Handler().objectsCount;
+        for (DWORD i = 0; table && i < count; ++i) EraJS::ReadArtifact(table[i], static_cast<int>(i), static_cast<int>(count));
     }
-    return artraitsTxt;
+    return loaded;
 }
-
-bool __stdcall LoadAllArtifactTxtFiles(HiHook *h)
-{
-    bool result = CDECL_0(bool, h->GetDefaultFunc());
-    // if (result)
-    {
-        h->Undo();
-
-        const auto &artifactsHandler = ArtifactHandler::Handler();
-
-        const DWORD artsNum = artifactsHandler.objectsCount;
-        const DWORD expectedObjectsCount = artifactsHandler.expectedObjectsCount;
-
-        H3ArtifactSetup *artSetupTable = *reinterpret_cast<H3ArtifactSetup **>(0x04036EC + 1);
-
-        for (size_t i = 0; i < expectedObjectsCount; i++)
-        {
-            auto &artInfo = artSetupTable[i];
-
-            READ_ART_FIELD(artInfo, name, i);
-            READ_ART_FIELD(artInfo, cost, i);
-            READ_ART_FIELD(artInfo, position, i);
-            READ_ART_FIELD(artInfo, type, i);
-            READ_ART_FIELD(artInfo, description, i);
-            READ_ART_FIELD(artInfo, comboArtifactId, i);
-            READ_ART_FIELD(artInfo, partOfComboArtifactId, i);
-            READ_ART_FIELD(artInfo, disabled, i);
-            READ_ART_FIELD(artInfo, hasSpell, i);
-        }
-    }
-
-    return result;
-}
-
-inline int ArtifactHandler::GetArtifactsNumber() noexcept
-{
-    return artifactsHandler.objectsCount;
-}
-
+int ArtifactHandler::GetArtifactsNumber() noexcept { return artifactsHandler.objectsCount; }
 void ArtifactHandler::Init()
 {
-    // Warning: this hook is after all txt read
-    _PI->WriteHiHook(0x045C72C, CDECL_, LoadAllArtifactTxtFiles);
-    _PI->WriteHiHook(0x040362E, CDECL_, LoadArtTraitsFile);
-}
-template <typename T>
-inline constexpr bool is_artifact_related_v = std::is_same_v<T, int> || std::is_same_v<T, eCombinationArtifacts> ||
-                                              std::is_same_v<T, eArtifactPositions> || std::is_same_v<T, eArtifactType>;
-
-template <class T> static BOOL ArtifactHandler::ReadField(T &target, LPCSTR format, const int idx) noexcept
-{
-    bool readSuccess = false;
-    sprintf(textBuffer, format, idx);
-    T readResult;
-    if constexpr (std::is_same_v<T, LPCSTR>)
-        readResult = EraJS::read(textBuffer, readSuccess);
-    else if constexpr (is_artifact_related_v<T>)
-        readResult = static_cast<T>(EraJS::readInt(textBuffer, readSuccess));
-    else
-        return false; // unsupported type
-    if (readSuccess)
-        target = readResult;
-    return readSuccess;
+    _PI->WriteHiHook(0x45C72C, CDECL_, LoadAllArtifactTxtFiles);
+    _PI->WriteHiHook(0x40362E, CDECL_, LoadArtTraitsFile);
 }

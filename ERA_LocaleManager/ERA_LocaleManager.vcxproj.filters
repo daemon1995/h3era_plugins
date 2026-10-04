@@ -50,6 +50,9 @@
     <ClCompile Include="LocaleManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ExportDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ExportManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

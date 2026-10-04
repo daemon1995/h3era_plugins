@@ -47,4 +47,5 @@ class LanguageSelectionDlg : public H3Dlg
     static void __fastcall DlgSroll_Proc(INT32 tickId, H3BaseDlg *dlg);
     static bool CreateAssets(const BOOL forceRecreate = false);
     static void Init();
+    static void RefreshMenuButton();
 };

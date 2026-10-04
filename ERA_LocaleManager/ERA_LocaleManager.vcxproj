@@ -17,6 +17,11 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ExportManager.h" />
     <ClInclude Include="H3DlgTextPcxLocale.h" />
@@ -29,6 +34,7 @@
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ExportManager.cpp" />
+    <ClCompile Include="ExportDlg.cpp" />
     <ClCompile Include="H3DlgTextPcxLocale.cpp" />
     <ClCompile Include="LanguageSelectionDlg.cpp" />
     <ClCompile Include="LocaleManager.cpp" />

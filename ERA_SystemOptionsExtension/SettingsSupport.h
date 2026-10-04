@@ -8,7 +8,7 @@
 
 namespace sysopts
 {
-constexpr const char *SETTINGS_FILE = "Runtime/era_system_options.ini";
+constexpr const char *SETTINGS_FILE = "heroes3.ini";
 
 class SaveState
 {

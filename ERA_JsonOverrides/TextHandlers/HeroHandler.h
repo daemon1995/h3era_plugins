@@ -33,62 +33,30 @@ class HeroHandler
   public:
     static void Init()
     {
-        bool readSuccess = false;
-        LPCSTR readResult = nullptr;
-        LPCSTR *table = (*reinterpret_cast<LPCSTR **>(0x005B9A18 + 2));
-
+        auto *biographies = EraJS::GameTables::HeroBiographies();
         const int heroCount = H3HeroCount::Get();
-
-        for (size_t i = 0; i < heroCount; i++)
+        for (int i = 0; i < heroCount; ++i)
         {
-
-            libc::sprintf(h3_TextBuffer, formats::BIOGRAPHY, i);
-            readResult = EraJS::read(h3_TextBuffer, readSuccess);
-            if (readSuccess)
-            {
-                table[i] = readResult;
-            }
-            libc::sprintf(h3_TextBuffer, formats::NAME, i);
-            readResult = EraJS::read(h3_TextBuffer, readSuccess);
-            if (readSuccess)
-            {
-                P_HeroInfo[i].name = readResult;
-            }
-
+            EraJS::ReadField(biographies[i], formats::BIOGRAPHY, i);
             auto &info = P_HeroInfo[i];
-#define X(field) GENERATE_PARSER_BLOCK(info, field)
-            HERO_INFO_FIELDS(X)
-#undef X
-
-            libc::sprintf(h3_TextBuffer, formats::SPECIALTY_SHORT, i);
-            readResult = EraJS::read(h3_TextBuffer, readSuccess);
-            if (readSuccess)
-            {
-                P_HeroSpecialty[i].spShort = readResult;
-            }
-
-            libc::sprintf(h3_TextBuffer, formats::SPECIALTY_FULL, i);
-            readResult = EraJS::read(h3_TextBuffer, readSuccess);
-            if (readSuccess)
-            {
-                P_HeroSpecialty[i].spFull = readResult;
-            }
-
-            libc::sprintf(h3_TextBuffer, formats::SPECIALTY_DESCRIPTION, i);
-            readResult = EraJS::read(h3_TextBuffer, readSuccess);
-            if (readSuccess)
-            {
-                P_HeroSpecialty[i].spDescr = readResult;
-            }
-            // if (i == 203)
-            //{
-            //     auto &spec = P_HeroSpecialty[i];
-
-            //    int test = 0;
-            //    // H3Messagebox();
-            //}
+            EraJS::ReadField(info.name, formats::NAME, i);
+            EraJS::ReadNumberInRange(info.isFemale, formats::isFemale, 0, 1, i);
+            EraJS::ReadNumberInRange(info.race, formats::race, 0, 13, i);
+            EraJS::ReadNumberInRange(info.heroClass, formats::heroClass, 0, h3::limits::HERO_CLASSES - 1, i);
+            EraJS::ReadNumberInRange(info.hasSpellbook, formats::hasSpellbook, 0, 1, i);
+            EraJS::ReadNumberInRange(info.startingSpell, formats::startingSpell, -1, h3::limits::TOTAL_SPELLS - 1, i);
+            const int creatureCount = IntAt(0x4A1657);
+            for (int army = 0; army < 3; ++army)
+                EraJS::ReadNumberInRange(info.armyType[army], formats::armyType, -1, creatureCount - 1, i, army);
+            EraJS::ReadResourceField(info.smallPortrait, formats::smallPortrait, i);
+            EraJS::ReadResourceField(info.largePortrait, formats::largePortrait, i);
+            EraJS::ReadNumberInRange(info.roeHero, formats::roeHero, 0, 1, i);
+            EraJS::ReadNumberInRange(info.expansionHero, formats::expansionHero, 0, 1, i);
+            EraJS::ReadNumberInRange(info.campaignHero, formats::campaignHero, 0, 1, i);
+            EraJS::ReadField(P_HeroSpecialty[i].spShort, formats::SPECIALTY_SHORT, i);
+            EraJS::ReadField(P_HeroSpecialty[i].spFull, formats::SPECIALTY_FULL, i);
+            EraJS::ReadField(P_HeroSpecialty[i].spDescr, formats::SPECIALTY_DESCRIPTION, i);
         }
     }
 };
-
 #undef HERO_INFO_FIELDS

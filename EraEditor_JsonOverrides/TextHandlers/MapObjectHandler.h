@@ -26,5 +26,4 @@ class MapObjectHandler
     };
 
     static void Init();
-    static int GetSubtypesAmount(const eObject type) noexcept;
 };

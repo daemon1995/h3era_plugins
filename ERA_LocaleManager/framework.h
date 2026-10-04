@@ -12,6 +12,9 @@
 #define MAIN_MENU_API
 #endif // MAIN_MENU_API
 #include "..\headers\header.h"
+#include "../headers/Era/JsonOverridesSchema.hpp"
+#include "../headers/Era/GameJsonTables.hpp"
+#include "../headers/Era/JsonTextFormat.hpp"
 // add headers that you want to pre-compile here
 #include "Locale.h"
 #include "LocaleManager.h"

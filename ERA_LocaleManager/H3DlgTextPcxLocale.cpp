@@ -11,7 +11,7 @@ void H3DlgPcx16Locale::SetLocale(const Locale *locale)
         const UINT width = pcx->width;
         const UINT height = pcx->height;
 
-        loadedPcx16->CopyRegion(backgroundPcx, 0, 0);
+        if (backgroundPcx) loadedPcx16->CopyRegion(backgroundPcx, 0, 0);
         if (font)
         {
             std::string text = localName;
@@ -38,6 +38,12 @@ H3DlgPcx16Locale *H3DlgPcx16Locale::Create(const INT32 x, const INT32 y, const D
     {
         THISCALL_8(H3DlgPcx16Locale *, 0x450340, t, x, y, style.width, style.height, id, nullptr, 0x800);
         H3LoadedPcx16 *pcx = H3LoadedPcx16::Create(style.width, style.height);
+        if (!pcx)
+        {
+            t->vDestroy(TRUE);
+            return nullptr;
+        }
+        t->m_locale = nullptr;
         t->isBlueBack = style.isBlueBack;
         t->SetPcx(pcx);
         t->font = font;

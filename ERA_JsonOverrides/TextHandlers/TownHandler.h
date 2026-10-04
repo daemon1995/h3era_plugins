@@ -105,9 +105,7 @@ class TownHandler
             for (UINT j = 0; j < RANDOM_NAMES_PER_TOWN; j++)
             {
                 libc::sprintf(h3_TextBuffer, formats::TOWN_RANDOM_NAME, jsonIndex, j);
-                readResult = EraJS::read(h3_TextBuffer, readSuccess);
-                if (readSuccess)
-                    randomTownNames[townTypeId * RANDOM_NAMES_PER_TOWN + j] = readResult;
+                EraJS::ReadSingleValue(randomTownNames[townTypeId * RANDOM_NAMES_PER_TOWN + j], h3_TextBuffer);
             }
         }
 
@@ -156,10 +154,10 @@ class TownHandler
         for (size_t i = 0; i < DWELLINGS_PER_TOWN; i++)
         {
             libc::sprintf(h3_TextBuffer, formats::BUILDING_NAME, jsonIndex, buildingId);
-            EraJS::ReadSingleValue<LPCSTR>(townDwellingNames[stringId], h3_TextBuffer);
+            EraJS::ReadTownDwelling(townDwellingNames[stringId], jsonIndex, static_cast<int>(i), false);
 
             libc::sprintf(h3_TextBuffer, formats::BUILDING_DESCRIPTION, jsonIndex, buildingId);
-            EraJS::ReadSingleValue<LPCSTR>(townDwellingDescriptions[stringId], h3_TextBuffer);
+            EraJS::ReadTownDwelling(townDwellingDescriptions[stringId], jsonIndex, static_cast<int>(i), true);
 
             buildingId++;
             stringId++;

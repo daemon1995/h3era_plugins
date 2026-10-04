@@ -650,7 +650,7 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
                     oldCodePage != Era::GetCodePage())
                 {
                     it->SetText(newLangDisplayedName);
-                    AdditionalConfig::MarkDirty();
+                    // LocaleManager already saved the selection to heroes3.ini.
                     RefreshLanguage();
                 }
             });

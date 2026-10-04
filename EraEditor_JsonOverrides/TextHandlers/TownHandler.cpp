@@ -1,4 +1,5 @@
 #include "TownHandler.h"
+#include "../../headers/Era/JsonOverridesSchema.hpp"
 
 void __stdcall Load_BuildingNames(HiHook *h)
 {
@@ -20,16 +21,9 @@ void __stdcall Load_BuildingNames(HiHook *h)
             townType == neutralTownId ? -1 : townType; // Neutral town is 0 in JSON, others are 1-indexed
         for (size_t j = 0; j < dwellingsNum; j++)
         {
-            sprintf(textBuffer, TownHandler::formats::DWELLING, jsonTownId, j);
-            readResult = EraJS::read(textBuffer, readSuccess);
-            const int dwellingId = j + 20;
-            if (readSuccess)
-                townBuilding[townType][dwellingId].name = readResult;
-
-            sprintf(textBuffer, TownHandler::formats::DWELLING_DESCRIPTION, jsonTownId, j);
-            readResult = EraJS::read(textBuffer, readSuccess);
-            if (readSuccess)
-                townBuilding[townType][dwellingId].description = readResult;
+            const int dwellingId = static_cast<int>(j) + 20; // Editor layout differs from game building IDs.
+            EraJS::ReadTownDwelling(townBuilding[townType][dwellingId].name, jsonTownId, static_cast<int>(j), false);
+            EraJS::ReadTownDwelling(townBuilding[townType][dwellingId].description, jsonTownId, static_cast<int>(j), true);
         }
     }
 }

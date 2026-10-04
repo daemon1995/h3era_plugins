@@ -16,6 +16,10 @@ constexpr UINT16 FIRST_SELECTION_WIDGET_ID = 3;
 constexpr UINT16 LOCALEDLG_BUTTON_ID = 4445;
 
 std::vector<DlgStyle> LanguageSelectionDlg::styles;
+namespace
+{
+bool menuButtonRegistered = false;
+}
 
 bool LanguageSelectionDlg::CreateAssets(const BOOL forceRecreate)
 {
@@ -32,7 +36,7 @@ bool LanguageSelectionDlg::CreateAssets(const BOOL forceRecreate)
 
 Era::int32_bool StartDlg(const int x, const int y, const int styleIndex, const H3DlgItem *callerItem)
 {
-    if (styleIndex >= LanguageSelectionDlg::styles.size())
+    if (styleIndex < 0 || static_cast<size_t>(styleIndex) >= LanguageSelectionDlg::styles.size())
     {
         H3Messagebox("Invalid style index");
         return false;
@@ -65,8 +69,8 @@ Era::int32_bool StartDlg(const int x, const int y, const int styleIndex, const H
             const int gameHeight = H3GameHeight::Get();
             constexpr int backgroundWidth = 800;
             constexpr int backgroundHeight = 600;
-            const int backgroundX = gameWidth - backgroundWidth >> 1;
-            const int backgroundY = gameHeight - backgroundHeight >> 1;
+            const int backgroundX = (gameWidth - backgroundWidth) >> 1;
+            const int backgroundY = (gameHeight - backgroundHeight) >> 1;
 
             dlgX = callerX + callerWidth;
 
@@ -81,15 +85,14 @@ Era::int32_bool StartDlg(const int x, const int y, const int styleIndex, const H
             dlgY = backgroundY;
         }
 
-        const std::string currentLocale = LocaleManager::ReadLocaleFromIni();
+        const std::string currentLocale = LocaleManager::ReadCurrentLanguage();
         LanguageSelectionDlg langDlg(dlgX, dlgY, dlgWidth, dlgHeight, style, &localeManager);
         langDlg.Start();
 
-        const std::string selectedLocale = LocaleManager::ReadLocaleFromIni();
+        const std::string selectedLocale = LocaleManager::ReadCurrentLanguage();
         if (currentLocale != selectedLocale)
         {
-            mainmenu::MainMenu_SetDialogButtonText(LanguageSelectionDlg::UNIQUE_BUTTON_NAME,
-                                                   GetDisplayedName()); // update button text with new locale name
+            LanguageSelectionDlg::RefreshMenuButton();
             return true;
         }
     }
@@ -165,6 +168,7 @@ void LanguageSelectionDlg::CreateDlgItems()
 
             auto textPcx = H3DlgPcx16Locale::Create(0, y, style, &localeManager->LocaleAt(i), fontLoader.Get(),
                                                     ++lastLocaleItemId);
+            if (!textPcx) continue;
             displayedLocales.push_back(textPcx);
             AddItem(textPcx);
         }
@@ -174,20 +178,25 @@ void LanguageSelectionDlg::CreateDlgItems()
     if (createExportButton)
     {
         const UINT16 exportButtonItemId =
-            ((firstLocaleItemId != -1) ? lastLocaleItemId : FIRST_SELECTION_WIDGET_ID) + 1;
+            ((firstLocaleItemId != UINT16_MAX) ? lastLocaleItemId + 1 : FIRST_SELECTION_WIDGET_ID);
         // create special button to export available text
         exportDlgPcx = H3DlgPcx16::Create(0, localesToDraw * widgetHeight, exportButtonWidth, exportButtonHeight,
                                           exportButtonItemId, nullptr);
 
         auto pcx = H3LoadedPcx16::Create(exportButtonWidth, exportButtonHeight);
 
+        if (!exportDlgPcx || !pcx)
+        {
+            if (pcx) pcx->Destroy();
+            return;
+        }
         libc::memset(pcx->buffer, 0, pcx->buffSize);
         pcx->SimpleFrameRegion(0, 0, exportButtonWidth, exportButtonHeight);
 
         pcx->BackgroundRegion(4, 4, exportButtonWidth - 8, exportButtonHeight - 8,
                               true); // H3RGB888(0xFF, 0xFF, 0xFF));
 
-        fontLoader->TextDraw(pcx, EraJS::read(ExportDlg::BUTTON_NAME), 0, 0, exportButtonWidth, exportButtonHeight);
+        if (fontLoader.Get()) fontLoader->TextDraw(pcx, EraJS::read(ExportDlg::BUTTON_NAME), 0, 0, exportButtonWidth, exportButtonHeight);
         exportDlgPcx->SetPcx(pcx);
 
         AddItem(exportDlgPcx);
@@ -196,7 +205,7 @@ void LanguageSelectionDlg::CreateDlgItems()
 
     H3RGB565 color(H3RGB888::Highlight());
     selectionFrame = this->CreateFrame(0, 0, widgetWidth, widgetHeight, FRAME_WIDGET_ID, color);
-    selectionFrame->HideDeactivate();
+    if (selectionFrame) selectionFrame->HideDeactivate();
 
     // auto frame = CreateFrame(0, 0, widthDlg, heightDlg, -1, color);
     // frame->DeActivate();
@@ -238,7 +247,7 @@ void LanguageSelectionDlg::RedrawLocales(UINT16 firstItemId) noexcept
         { // set new locale according on the scroll offset
             auto &locale = localeManager->LocaleAt(i + firstItemId);
             selectionWidget->SetLocale(&locale);
-            if (selectionWidget->GetX() == selectionFrame->GetX() && selectionWidget->GetY() == selectionFrame->GetY())
+            if (selectionFrame && selectionWidget->GetX() == selectionFrame->GetX() && selectionWidget->GetY() == selectionFrame->GetY())
             {
                 PlaceFrameAtWidget(selectionWidget);
             }
@@ -247,11 +256,12 @@ void LanguageSelectionDlg::RedrawLocales(UINT16 firstItemId) noexcept
 }
 void LanguageSelectionDlg::HideFrame() const noexcept
 {
-    selectionFrame->HideDeactivate();
+    if (selectionFrame) selectionFrame->HideDeactivate();
     localeManager->SetSelected(nullptr);
 }
 void LanguageSelectionDlg::PlaceFrameAtWidget(const H3DlgPcx16Locale *it) const noexcept
 {
+    if (!selectionFrame || !it) return;
     selectionFrame->SetX(it->GetX());
     selectionFrame->SetY(it->GetY());
     selectionFrame->ShowActivate();
@@ -268,31 +278,27 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
 
             const Locale *locale = localeManager->GetSelected();
 
+            if (!locale) return 0;
             const BOOL sameLocale = locale == localeManager->GetCurrent();
 
             LPCSTR formatPtr = sameLocale ? dlgText.sameLocaleFormat : dlgText.questionformat;
 
-            LPCSTR comment = h3_NullString;
-            // check if locale description is broken
+            std::string comment;
             if (locale->broken)
-            {
-                comment =
-                    H3String::Format(EraJS::read(LocaleManager::format::error::name), locale->name.c_str()).String();
-            }
-
-            libc::sprintf(h3_TextBuffer, formatPtr, locale->name.c_str(), locale->displayedName.c_str(), comment);
+                comment = EraJS::FormatText(EraJS::read(LocaleManager::format::error::name), {locale->name});
+            const auto message = EraJS::FormatText(formatPtr, {locale->name, locale->displayedName, comment});
 
             if (sameLocale)
             {
-                H3Messagebox::Show(h3_TextBuffer);
+                H3Messagebox::Show(message.c_str());
             }
             else
             {
                 // ask question
-                if (H3Messagebox::Choice(h3_TextBuffer))
+                if (H3Messagebox::Choice(message.c_str()))
                 {
-                    localeManager->SetForUser(locale);
-                    Stop();
+                    if (localeManager->SetForUser(locale)) Stop();
+                    else H3Messagebox::Show("Could not apply or save the selected language.");
                 }
             }
         }
@@ -356,15 +362,22 @@ void InitLanguageSelectionDlg()
 
 void LanguageSelectionDlg::Init()
 {
-    if (CreateAssets())
+    if (!menuButtonRegistered && CreateAssets())
     {
         using namespace mainmenu;
 
         const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
 
         MenuWidgetInfo langInfo{UNIQUE_BUTTON_NAME, GetDisplayedName(), flags, &CurrentDlg_HandleLocaleDlgStart};
-        MainMenu_RegisterWidget(langInfo);
+        menuButtonRegistered = MainMenu_RegisterWidget(langInfo) != FALSE;
     }
+}
+
+void LanguageSelectionDlg::RefreshMenuButton()
+{
+    // Reload may run during startup before the menu widget has been registered.
+    if (menuButtonRegistered)
+        mainmenu::MainMenu_SetDialogButtonText(UNIQUE_BUTTON_NAME, GetDisplayedName());
 }
 
 DllExport Era::int32_bool __stdcall CallLocaleSelectionDlg(const int x, const int y, const int styleIndex)
@@ -373,6 +386,6 @@ DllExport Era::int32_bool __stdcall CallLocaleSelectionDlg(const int x, const in
 }
 DllExport LPCSTR __stdcall GetDisplayedName()
 {
-    libc::sprintf(h3_TextBuffer, EraJS::read("era.locale.dlg.buttonName"), LocaleManager::ReadLocaleFromIni().c_str());
-    return h3_TextBuffer;
+    const auto text = LocaleManager::GetButtonText();
+    return Era::ToStaticStr(text.c_str());
 }

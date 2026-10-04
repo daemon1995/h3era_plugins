@@ -20,7 +20,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.2.1";
+constexpr LPCSTR PLUGIN_VERSION = "1.3.0";
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 } // namespace dllText
 
@@ -48,6 +48,10 @@ static _ERH_(OnAfterCreateWindow)
     HeroHandler::Init();
     SecondarySkillHandler::Init();
 }
+static _ERH_(OnAfterReloadLanguageData)
+{
+    EraJS::ReloadTextOverrides();
+}
 static _LHF_(HooksInit)
 {
     MapObjectHandler::Init();
@@ -73,6 +77,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
             _REH_(OnAfterWog); // ERA way; used for new plugins and late hooks set
             _REH_(OnAfterCreateWindow);
+            _REH_(OnAfterReloadLanguageData);
             _PI->WriteLoHook(0x4EEAF2, HooksInit); // SoD way; used for old plugins and early hooks set
         }
     case DLL_THREAD_ATTACH:

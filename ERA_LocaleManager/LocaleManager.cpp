@@ -2,15 +2,6 @@
 
 #include <unordered_set>
 
-static BOOL PathIsValid(const std::string &path)
-{
-    // Check if the path is not empty and does not contain invalid characters
-    if (path.empty() || path.find_first_of("<>:\"/\\|?*") != std::string::npos)
-        return false;
-    // Check if the path exists
-    return true; // GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES;
-}
-
 LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
 {
 
@@ -40,12 +31,12 @@ LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
         auto defaultLocaleName = iso_639_1_languages[i];
 
         LPCSTR alternativeName =
-            EraJS::read(H3String::Format(format::alternative, defaultLocaleName).String(), readSuccess);
+            EraJS::read(EraJS::FormatText(format::alternative, {defaultLocaleName}), readSuccess);
 
         if (readSuccess)
         {
             std::string alternativeNameStr(alternativeName);
-            if (PathIsValid(alternativeNameStr))
+            if (EraJS::LanguageNameIsValid(alternativeNameStr))
             {
                 if (iso_639_1_languagesSet.insert(alternativeName).second)
                 {
@@ -55,9 +46,9 @@ LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
             }
             else
             {
-                libc::sprintf(h3_TextBuffer, EraJS::read(format::error::alternative), defaultLocaleName,
-                              alternativeName);
-                Era::ShowMessage(h3_TextBuffer);
+                const auto message = EraJS::FormatText(EraJS::read(format::error::alternative),
+                                                       {defaultLocaleName, alternativeName});
+                Era::ShowMessage(message.c_str());
             }
         }
     }
@@ -68,24 +59,22 @@ LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
 
         const auto &defaultLocaleName = iso_639_1_languagesVector[i];
 
-        LPCSTR langName = EraJS::read(H3String::Format(format::name, defaultLocaleName.c_str()).String(), readSuccess);
+        LPCSTR langName = EraJS::read(EraJS::FormatText(format::name, {defaultLocaleName}), readSuccess);
 
-        if (readSuccess && libc::strcmp(langName, h3_NullString))
+        if (readSuccess && langName && *langName)
         {
             int codepage =
-                EraJS::readInt(H3String::Format(format::codepage, defaultLocaleName.c_str()).String(), readSuccess);
-            if (!readSuccess)
-            {
-                codepage = iso_639_1_codepages[i];
-            }
+                EraJS::readInt(EraJS::FormatText(format::codepage, {defaultLocaleName}), readSuccess);
+            if (!readSuccess || !IsValidCodePage(codepage))
+                codepage = iso_639_1_codepages[i] ? iso_639_1_codepages[i] : Era::GetCodePage();
 
             locales.emplace_back(Locale(defaultLocaleName.c_str(), langName, codepage));
         }
     }
 
-    // get current locale from ini and check if it is in vector, otherwise create new locale and add into vector
+    // Find the active ERA language, or append it when its JSON description is absent.
 
-    const std::string currentGameLocale = ReadLocaleFromIni();
+    const std::string currentGameLocale = ReadCurrentLanguage();
     if (!currentGameLocale.empty()) // if ther is ini entry
     {
         const char *localeName = currentGameLocale.c_str();
@@ -97,31 +86,22 @@ LocaleManager::LocaleManager() : m_current(nullptr), m_seleted(nullptr)
         }
         else
         {
-            for (size_t i = 0; i < languagesCount; i++)
+            DWORD codepage = Era::GetCodePage();
+            for (size_t i = 0; i < languagesCount; ++i)
             {
-                if (libc::strcmpi(localeName, iso_639_1_languagesVector[i].c_str()) == 0)
+                if (_stricmp(localeName, iso_639_1_languagesVector[i].c_str()) == 0)
                 {
                     localeName = iso_639_1_languagesVector[i].c_str();
-
-                    int codepage = EraJS::readInt(H3String::Format(format::codepage, iso_639_1_languages[i]).String(),
-                                                  readSuccess);
-                    if (!readSuccess)
-                    {
-                        codepage = iso_639_1_codepages[i];
-                    }
-
-                    Locale current(localeName,
-                                   EraJS::read(H3String::Format(format::name, localeName).String(), readSuccess),
-                                   iso_639_1_codepages[i]);
-
+                    const int configured = EraJS::readInt(EraJS::FormatText(format::codepage, {localeName}), readSuccess);
+                    if (readSuccess && IsValidCodePage(configured)) codepage = configured;
+                    else if (iso_639_1_codepages[i]) codepage = iso_639_1_codepages[i];
                     break;
                 }
             }
-            // otherwise create new locale
-            Locale current(localeName, EraJS::read(H3String::Format(format::name, localeName).String(), readSuccess),
-                           ANSI);
+            if (!IsValidCodePage(codepage)) codepage = ANSI;
+            LPCSTR displayName = EraJS::read(EraJS::FormatText(format::name, {localeName}), readSuccess);
+            Locale current(localeName, readSuccess ? displayName : localeName, codepage);
             current.hasDescription = readSuccess && !current.displayedName.empty();
-            // and add into vector
             locales.emplace_back(current);
             m_current = &locales.back();
         }
@@ -141,48 +121,60 @@ const std::vector<Locale>::const_iterator LocaleManager::FindLocale(const char *
 {
 
     auto compareResult = std::find_if(locales.begin(), locales.end(), [&](const Locale &locale) -> bool {
-        return !libc::strcmpi(locale.name.c_str(), other);
+        return !_stricmp(locale.name.c_str(), other);
     });
 
     return compareResult;
 }
 
-BOOL LocaleManager::SetForUser(const Locale *locale) const
+BOOL LocaleManager::SetForUser(const Locale *locale)
 {
-
-    const auto localeToSet = locale->name.c_str();
-    const DWORD codePage = locale->codePage;
-
-    Era::SetLanguage(localeToSet);
-    Era::SetCodePage(codePage);
+    if (!locale || !EraJS::LanguageNameIsValid(locale->name) || !IsValidCodePage(locale->codePage)) return FALSE;
+    const std::string previousLanguage = ReadCurrentLanguage();
+    const DWORD previousCodepage = Era::GetCodePage();
+    if (!Era::SetLanguage(locale->name.c_str())) return FALSE;
+    if (!Era::SetCodePage(locale->codePage))
+    {
+        Era::SetLanguage(previousLanguage.c_str());
+        return FALSE;
+    }
     Era::ReloadLanguageData();
 
-    // The system-options plugin owns the common configuration when installed.
-    if (const auto options = GetModuleHandleA("ERA_SystemOptionsExtension.era"))
-        if (const auto saveOptions = reinterpret_cast<BOOL(__stdcall *)()>(GetProcAddress(options, "SaveOptions")))
-            return saveOptions();
-
-    Era::WriteStrToIni(INI_LANGUAGE_KEY_NAME, localeToSet, INI_SECTION_NAME, INI_FILE_NAME);
-    Era::WriteStrToIni(INI_CODEPAGE_KEY_NAME, std::to_string(codePage).c_str(), INI_SECTION_NAME, INI_FILE_NAME);
-    Era::SaveIni(INI_FILE_NAME);
-    return 0; // Era::SetLanguage(locale->name);
+    const BOOL saved =
+        Era::WriteStrToIni(INI_LANGUAGE_KEY_NAME, locale->name.c_str(), INI_SECTION_NAME, INI_FILE_NAME) &&
+        Era::WriteStrToIni(INI_CODEPAGE_KEY_NAME, std::to_string(locale->codePage).c_str(), INI_SECTION_NAME, INI_FILE_NAME) &&
+        Era::SaveIni(INI_FILE_NAME);
+    if (!saved)
+    {
+        Era::SetLanguage(previousLanguage.c_str());
+        Era::SetCodePage(previousCodepage);
+        Era::ReloadLanguageData();
+        // Restore the pending INI values too, so a later SaveIni cannot commit a failed selection.
+        Era::WriteStrToIni(INI_LANGUAGE_KEY_NAME, previousLanguage.c_str(), INI_SECTION_NAME, INI_FILE_NAME);
+        Era::WriteStrToIni(INI_CODEPAGE_KEY_NAME, std::to_string(previousCodepage).c_str(), INI_SECTION_NAME, INI_FILE_NAME);
+        Era::SaveIni(INI_FILE_NAME);
+    }
+    return saved;
 }
 
-std::string LocaleManager::ReadLocaleFromIni()
+std::string LocaleManager::ReadCurrentLanguage()
 {
-    std::string result;
-    if (Era::era_str eraLocale = Era::GetLanguage())
+    if (Era::era_str language = Era::GetLanguage())
     {
-        result = eraLocale;
-        Era::MemFree(eraLocale);
+        std::string result(language);
+        Era::MemFree(language);
         return result;
     }
+    char path[MAX_PATH], buffer[21] = {};
+    const DWORD length = GetFullPathNameA(INI_FILE_NAME, sizeof(path), path, nullptr);
+    if (length && length < sizeof(path))
+        GetPrivateProfileStringA(INI_SECTION_NAME, INI_LANGUAGE_KEY_NAME, "", buffer, sizeof(buffer), path);
+    return buffer;
+}
 
-    char buff[16];
-    libc::sprintf(buff, "%d", 0); // set default buffer
-    Era::ReadStrFromIni(INI_LANGUAGE_KEY_NAME, INI_SECTION_NAME, INI_FILE_NAME, buff);
-    result = buff;
-    return result;
+std::string LocaleManager::GetButtonText()
+{
+    return EraJS::FormatText(EraJS::read("era.locale.dlg.buttonName"), {ReadCurrentLanguage()});
 }
 
 const Locale *LocaleManager::GetCurrent() const noexcept

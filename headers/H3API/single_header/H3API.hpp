@@ -32031,7 +32031,7 @@ namespace h3
 	}
     _H3API_ UINT32 H3TextFile::Size()
     {
-        return end() - begin() >> 2;
+        return text.IsEmpty() ? 0 : static_cast<UINT32>(end() - begin());
     }
     _H3API_ H3TextFile* H3TextFile::Load(LPCSTR name)
 	{
