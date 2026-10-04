@@ -53,12 +53,14 @@ x86/
 [Aa][Rr][Mm]64/
 [Bb]in/
 [Bb]uild/
+_[Bb]uild/
 [Oo]bj/
 [Ll]og/
 bld/
 
 # Локальные тесты и их вспомогательные файлы
 **/tests/
+**/tools/
 
 # Переводы описаний заклинаний хранятся только в установленном моде
 /Interface_SpellsDescription/lang/

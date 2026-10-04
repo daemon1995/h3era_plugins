@@ -2,8 +2,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_SwitchingCreatureAction", "Combat_SwitchingCreatureAction\Combat_SwitchingCreatureAction.vcxproj", "{3BB04884-C58A-465E-B8C7-46A363B91EC2}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_SimultaneousMeleeAttack", "Combat_SimultaneousMeleeAttack\Combat_SimultaneousMeleeAttack.vcxproj", "{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_RangedRetaliation", "Combat_RangedRetaliation\Combat_RangedRetaliation.vcxproj", "{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}"
@@ -63,10 +61,6 @@ Global
 		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Debug|x86.ActiveCfg = Release|Win32
 		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.ActiveCfg = Release|Win32
 		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.Build.0 = Release|Win32
-		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.ActiveCfg = Debug|Win32
-		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Debug|x86.Build.0 = Debug|Win32
-		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Release|x86.ActiveCfg = Release|Win32
-		{3BB04884-C58A-465E-B8C7-46A363B91EC2}.Release|x86.Build.0 = Release|Win32
 		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Debug|x86.ActiveCfg = Debug|Win32
 		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Debug|x86.Build.0 = Debug|Win32
 		{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}.Release|x86.ActiveCfg = Release|Win32
