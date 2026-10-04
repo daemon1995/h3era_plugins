@@ -522,7 +522,7 @@ void __stdcall AdventureMapHints::H3AdventureManager_SetHint(HiHook *h, H3Advent
 bool AdventureMapHints::NeedDrawMapItem(const H3MapItem *mIt) const noexcept
 {
     return mIt && mIt->objectType >= 0 &&
-           mIt->objectType < sizeof(settings.drawObjectHint) / sizeof(settings.drawObjectHint[0]) &&
+           mIt->objectType < std::size(settings.drawObjectHint) &&
            settings.drawObjectHint[mIt->objectType].userValue;
 }
 
@@ -575,7 +575,7 @@ void AdventureHintsSettings::reset()
 
     drawObjectHint[eObject::GARDEN_OF_REVELATION].defaultValue = true;
 
-    drawObjectHint[eObject::HERO].defaultValue = true;
+    drawObjectHint[eObject::HERO].defaultValue = false;
     drawObjectHint[eObject::HILL_FORT].defaultValue = true;
 
     drawObjectHint[eObject::LIBRARY_OF_ENLIGHTENMENT].defaultValue = true;
