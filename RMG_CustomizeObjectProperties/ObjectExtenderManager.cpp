@@ -373,7 +373,6 @@ void __stdcall ObjectExtenderManager::Game__SetObjectsInitialParams(HiHook *h, H
     monoliths::ExtendedMonoliths::Get().ResetForNewMap();
     instance->objectCounter = new ObjectCounter(instance->lastObjectSubtypes);
     THISCALL_1(void, h->GetDefaultFunc(), game);
-    monoliths::ExtendedMonoliths::Get().ReportNewMap();
     delete instance->objectCounter;
 }
 
