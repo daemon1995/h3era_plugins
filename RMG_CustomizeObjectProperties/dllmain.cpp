@@ -1,8 +1,9 @@
-﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
+// dllmain.cpp : Определяет точку входа для приложения DLL.
 // #include "pch.h"
 #include "ExtendersInitializer.hpp"
 // declare dlg class here to avoid circular dependencies, also because it's only used in this file
 #include "RMG_SettingsDlg.h"
+#include "ExtendedMonoliths.h"
 
 namespace dllText
 {
@@ -26,7 +27,7 @@ PatcherInstance *_PI = nullptr;
 2. Make Dlg Scroll and Input text workin - Done
 3. Add Default settings reset - Done
 4. Fix Resized Pictures and add new enable button - Done
-5. Assign native global limit arrays with Object Limitizer - Done
+5. Assign native global limit arrays with Object Limitizer - Done (scoped native tables)
 6. Fix/Rewrite Loop sounds - Done
 7. Check several objects.txt merging - Done
 8. Dlg open is slow - Done
@@ -37,7 +38,7 @@ PatcherInstance *_PI = nullptr;
 9. Add each zone type settings:
     a. horizontal scroll bar
     b. ...
-10. Add saving/loading settings for users;
+10. Add saving/loading settings for users; Done (transactional INI; profiles remain TODO)
 11. Add default Creature banks support; Done
 12. Remove all extenders code from the plugin: Done
     a. create API for ObjectExtender class: Done
@@ -67,6 +68,7 @@ _LHF_(CrBanksTxt_BeforeLoad)
 {
     editor::RMGObjectsEditor::Get();
     extendersManager::ObjectExtenderManager::Get();
+    monoliths::ExtendedMonoliths::Get();
     ExtendersInitializer::InitObjectExtenders();
     //! Set patches for the RMG_SettingsDlg
     rmgdlg::RMG_SettingsDlg::SetPatches(_PI);

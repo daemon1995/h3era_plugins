@@ -73,7 +73,7 @@ class RMGDlgObject
     void RestoreDefault() noexcept;
     void SetRandom() noexcept;
     void SaveCurrent() const noexcept;
-    BOOL WriteToINI() const noexcept;
+    BOOL WriteToINI(LPCSTR iniPath = RMGObjectInfo::INI_FILE_PATH) const noexcept;
     // Object(std::pair < H3ObjectAttributes, H3LoadedPcx16*> info);
     //~Object();
 };

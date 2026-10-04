@@ -1,9 +1,9 @@
-#include <thread>
 #include <unordered_set>
 
 #include "pch.h"
 
 #include "RMG_SettingsDlg.h"
+
 
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
@@ -188,18 +188,11 @@ void PandoraVariants::LoadUserProperties()
     for (auto &record : records)
     {
         record.currentInfo = record.defaultInfo;
-        const H3String legacySectionName =
-            H3String::Format(RMGObjectInfo::OBJECT_INFO_INI_FORMAT, eObject::PANDORAS_BOX, 0, 0);
+
         const H3String sectionName = GetIniSectionName(record.key);
         for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
         {
-            // Old versions stored one shared (6, 0) record. Treat it as a
-            // common override, then let the exact Pandora variant win.
-            if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], legacySectionName.String(),
-                                    RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
-            {
-                record.currentInfo.data[i] = atoi(RMGObjectInfo::localBuffer);
-            }
+
             if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], sectionName.String(),
                                     RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
             {
@@ -228,7 +221,8 @@ int PandoraVariants::GetVirtualSubtype(const H3RmgObjectGenerator *generator) no
     return record ? record->virtualSubtype : (generator ? generator->subtype : eObject::NO_OBJ);
 }
 
-BOOL PandoraVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept
+BOOL PandoraVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
+                                 LPCSTR iniPath) noexcept
 {
     const Record *record = Find(generator);
     if (!record)
@@ -240,7 +234,7 @@ BOOL PandoraVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RM
     {
         if (info.data[i] != record->defaultInfo.data[i] &&
             !Era::WriteStrToIni(RMGObjectInfo::PROPERTY_NAMES[i], std::to_string(info.data[i]).c_str(),
-                                sectionName.String(), RMGObjectInfo::INI_FILE_PATH))
+                                sectionName.String(), iniPath))
         {
             success = FALSE;
         }
@@ -361,19 +355,14 @@ void PrisonVariants::RegisterDefault(const H3RmgObjectGenerator *generator)
 
 void PrisonVariants::LoadUserProperties()
 {
-    const H3String legacySectionName = H3String::Format(RMGObjectInfo::OBJECT_INFO_INI_FORMAT, eObject::PRISON, 0, 0);
+
     for (auto &record : records)
     {
         record.currentInfo = record.defaultInfo;
         const H3String sectionName = GetIniSectionName(record.key);
         for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
         {
-            // Migrate settings written by the earlier single-prison row.
-            if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], legacySectionName.String(),
-                                    RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
-            {
-                record.currentInfo.data[i] = atoi(RMGObjectInfo::localBuffer);
-            }
+
             if (Era::ReadStrFromIni(RMGObjectInfo::PROPERTY_NAMES[i], sectionName.String(),
                                     RMGObjectInfo::INI_FILE_PATH, RMGObjectInfo::localBuffer))
             {
@@ -402,7 +391,8 @@ int PrisonVariants::GetVirtualSubtype(const H3RmgObjectGenerator *generator) noe
     return record ? record->virtualSubtype : (generator ? generator->subtype : eObject::NO_OBJ);
 }
 
-BOOL PrisonVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept
+BOOL PrisonVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
+                                LPCSTR iniPath) noexcept
 {
     const Record *record = Find(generator);
     if (!record)
@@ -414,7 +404,7 @@ BOOL PrisonVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMG
     {
         if (info.data[i] != record->defaultInfo.data[i] &&
             !Era::WriteStrToIni(RMGObjectInfo::PROPERTY_NAMES[i], std::to_string(info.data[i]).c_str(),
-                                sectionName.String(), RMGObjectInfo::INI_FILE_PATH))
+                                sectionName.String(), iniPath))
         {
             success = FALSE;
         }
@@ -455,9 +445,8 @@ void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
     // init data in the main
     Get().InitDefaultProperties(maxSubtypes);
 
-    // load ini data in the separate thread
-    std::thread th(&RMGObjectInfo::LoadUserProperties);
-    th.detach();
+    // Finish loading before the dialog or generation can use/edit this data.
+    RMGObjectInfo::LoadUserProperties();
 }
 
 void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
@@ -493,16 +482,34 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     limitsInfo.zoneTypeLimits[eObject::PRISON] = 5;
     // init global defaults for all objects
     bool readSucces = false;
-    const UINT mapGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.map", readSucces);
+    const int mapGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.map", readSucces);
     if (readSucces)
     {
         std::fill(std::begin(limitsInfo.mapTypesLimit), std::end(limitsInfo.mapTypesLimit), mapGlobalLimitDefault);
     }
 
-    const UINT zoneGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.zone", readSucces);
+    const int zoneGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.zone", readSucces);
     if (readSucces)
     {
         std::fill(std::begin(limitsInfo.zoneTypeLimits), std::end(limitsInfo.zoneTypeLimits), zoneGlobalLimitDefault);
+    }
+
+    // Type-level JSON overrides are also the native aggregate type caps, not
+    // just defaults copied to the per-subtype rows in the dialog.
+    for (int type = 0; type < H3_MAX_OBJECTS; ++type)
+    {
+        const H3String mapKey = H3String::Format(RMGObjectInfo::OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, type, "map");
+        const int mapLimit = EraJS::readInt(mapKey.String(), readSucces);
+        if (readSucces)
+            limitsInfo.mapTypesLimit[type] = mapLimit;
+        const H3String zoneKey = H3String::Format(RMGObjectInfo::OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, type, "zone");
+        const int zoneLimit = EraJS::readInt(zoneKey.String(), readSucces);
+        if (readSucces)
+            limitsInfo.zoneTypeLimits[type] = zoneLimit;
+
+        const auto normalized = NormalizeTypeLimits(limitsInfo.mapTypesLimit[type], limitsInfo.zoneTypeLimits[type]);
+        limitsInfo.mapTypesLimit[type] = normalized.map;
+        limitsInfo.zoneTypeLimits[type] = normalized.zone;
     }
 
     RMGObjectInfo::InitDefaultProperties(limitsInfo, maxSubtypes);
@@ -717,7 +724,7 @@ _LHF_(RMGObjectsEditor::RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck)
 {
 
     // check if allowed generate that type by zone/map
-    if (c->flags.SF != c->flags.OF)
+    if (generatedInfo.IsInited() && c->flags.SF != c->flags.OF)
     {
         if (auto *objGen = reinterpret_cast<H3RmgObjectGenerator *>(c->ecx))
         {
@@ -887,6 +894,9 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 
 void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct)
 {
+    nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
+                           reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit),
+                           limitsInfo.mapTypesLimit, limitsInfo.zoneTypeLimits);
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
 
@@ -913,6 +923,7 @@ void __stdcall RMGObjectsEditor::RMG__AfterMapGenerated(HiHook *h, H3RmgRandomMa
 }
 void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept
 {
+    nativeTypeLimits.Restore();
 
     // clear generated objects counters
     generatedInfo.Clear(rmgStruct);
@@ -1190,15 +1201,15 @@ BOOL RMGObjectInfo::Clamp() noexcept
 
     const int globalMapLimit = editor::RMGObjectsEditor::Get().MaxMapTypeLimit(type);
 
-    if (mapLimit > globalMapLimit)
+    if (mapLimit < 0 || mapLimit > globalMapLimit)
     {
-        mapLimit = globalMapLimit;
+        mapLimit = std::max(0, std::min(mapLimit, globalMapLimit));
         dataChanged = true;
     }
 
-    if (zoneLimit > mapLimit)
+    if (zoneLimit < 0 || zoneLimit > mapLimit)
     {
-        zoneLimit = mapLimit;
+        zoneLimit = std::max(0, std::min(zoneLimit, mapLimit));
         dataChanged = true;
     }
     if (!zoneLimit || !mapLimit)
@@ -1333,7 +1344,7 @@ LPCSTR RMGObjectInfo::GetName() const noexcept
 {
     return GetObjectName(type, subtype);
 }
-BOOL RMGObjectInfo::WriteToINI() const noexcept
+BOOL RMGObjectInfo::WriteToINI(LPCSTR iniPath) const noexcept
 {
     BOOL success = true;
     constexpr int zoneType = 0;
@@ -1345,7 +1356,7 @@ BOOL RMGObjectInfo::WriteToINI() const noexcept
         if (data[i] != defaultRMGObjectsInfoByType[type][subtype].data[i])
         {
             if (!Era::WriteStrToIni(PROPERTY_NAMES[i], std::to_string(data[i]).c_str(), sectionName.String(),
-                                    INI_FILE_PATH))
+                                    iniPath))
                 success = false;
         }
     }
@@ -1353,13 +1364,13 @@ BOOL RMGObjectInfo::WriteToINI() const noexcept
     return success;
 }
 
-BOOL RMGObjectInfo::WriteToINI(const H3RmgObjectGenerator *generator) const noexcept
+BOOL RMGObjectInfo::WriteToINI(const H3RmgObjectGenerator *generator, LPCSTR iniPath) const noexcept
 {
     if (PandoraVariants::Find(generator))
-        return PandoraVariants::WriteToINI(generator, *this);
+        return PandoraVariants::WriteToINI(generator, *this, iniPath);
     if (PrisonVariants::Find(generator))
-        return PrisonVariants::WriteToINI(generator, *this);
-    return WriteToINI();
+        return PrisonVariants::WriteToINI(generator, *this, iniPath);
+    return WriteToINI(iniPath);
 }
 
 inline void RMGObjectInfo::ReadFromINI() noexcept

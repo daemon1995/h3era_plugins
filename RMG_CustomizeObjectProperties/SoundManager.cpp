@@ -55,7 +55,7 @@ void SoundManager::CreateNewLoopSoundsTable(const std::vector<ObjectSound> &addi
             }
         }
         // store in the map to use in hook
-        loopSoundObjectIndexes.insert(std::make_pair(loopSound.objectType, objectLoopSoundIndex));
+        loopSoundObjectIndexes.emplace(MakeObjectSoundKey(loopSound.type, loopSound.subtype), objectLoopSoundIndex);
     }
 
     // if we added new wav files into the table we should replace the original wav table
@@ -179,20 +179,10 @@ _LHF_(SoundManager::H3AdventureManager__AtTrimSound)
     {
         if (const H3AdventureManager *advManager = *reinterpret_cast<H3AdventureManager **>(c->ebp - 0x4))
         {
-            volatile int usedSoundsConuter = 0;
             auto &soundStates = soundManager.soundsStates;
-            libc::memset(soundStates.data(), 0, std::size(soundStates));
-            for (const auto &currentSound : advManager->currentSounds)
-            {
-                const int soundId = currentSound.loopSound;
-                if (soundId > eLoopSooundId::NONE && soundId < loopSoundsAmount)
-                {
-                    soundStates[soundId] = true;
-                    usedSoundsConuter++;
-                }
-            }
+            int usedSoundsCounter = PrepareLoopSoundStates(soundStates, advManager->currentSounds);
 
-            if (usedSoundsConuter < soundsToPlay)
+            if (usedSoundsCounter < soundsToPlay)
             {
                 for (size_t i = 0; i < loopSoundsAmount; i++)
                 {
@@ -200,9 +190,9 @@ _LHF_(SoundManager::H3AdventureManager__AtTrimSound)
                     {
                         if (soundManager.loopSoundsWavTable[i])
                         {
-                            ++usedSoundsConuter;
+                            ++usedSoundsCounter;
                             soundStates[i] = true;
-                            if (usedSoundsConuter >= soundsToPlay)
+                            if (usedSoundsCounter >= soundsToPlay)
                             {
                                 break;
                             }
@@ -233,13 +223,8 @@ _LHF_(SoundManager::H3AdventureManager__AtTrimSound)
 SoundManager::eLoopSooundId SoundManager::GetLoopSoundId(const H3MapItem *mapItem) const noexcept
 {
 
-    const DWORD key = (mapItem->objectType << 16) | mapItem->objectSubtype;
-    auto findResult = loopSoundObjectIndexes.find(key);
-    if (findResult != loopSoundObjectIndexes.end())
-    {
-        return eLoopSooundId(findResult->second);
-    }
-    return eLoopSooundId::UNDEFINED;
+    return eLoopSooundId(FindLoopSoundOverride(loopSoundObjectIndexes, std::uint16_t(mapItem->objectType),
+                                             std::uint16_t(mapItem->objectSubtype), eLoopSooundId::UNDEFINED));
 }
 
 void SoundManager::Init(const std::vector<ObjectSound> &additionalLoopSounds)

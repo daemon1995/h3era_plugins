@@ -1,5 +1,5 @@
 #pragma once
-#include <unordered_map>
+#include "LoopSoundSupport.h"
 
 namespace sound
 {
@@ -16,14 +16,8 @@ struct SoundManager
     struct ObjectSound
     {
         LPCSTR wavName;
-        union {
-            struct
-            {
-                WORD type;
-                WORD subtype;
-            };
-            DWORD objectType;
-        };
+        WORD type;
+        WORD subtype;
     };
 
     BOOL enterSoundChanged = false;
@@ -35,7 +29,7 @@ struct SoundManager
     std::vector<H3WavFile *> loopSoundsWavTable;
     std::vector<int> soundsStates;
 
-    std::unordered_map<DWORD, int> loopSoundObjectIndexes;
+    std::unordered_map<std::uint32_t, int> loopSoundObjectIndexes;
 
     static SoundManager soundManager;
 

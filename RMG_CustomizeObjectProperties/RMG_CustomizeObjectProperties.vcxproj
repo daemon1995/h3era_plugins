@@ -19,10 +19,16 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
     <ClInclude Include="AdditionalProperties.h" />
+    <ClInclude Include="ExtendedMonoliths.h" />
+    <ClInclude Include="MonolithGroupRegistry.h" />
+    <ClInclude Include="MonolithSaveData.h" />
     <ClInclude Include="ObjectExtenderManager.h" />
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h" />
     <ClInclude Include="ObjectExtenders\UniversityExtender.h" />
     <ClInclude Include="SoundManager.h" />
+    <ClInclude Include="LoopSoundSupport.h" />
+    <ClInclude Include="ObjectTypeLimits.h" />
+    <ClInclude Include="AtomicIniSave.h" />
     <ClInclude Include="ObjectExtenders\ShrinesExtender.h" />
     <ClInclude Include="RMGObjectsEditor.h" />
     <ClInclude Include="pch.h" />
@@ -32,6 +38,8 @@
     <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="AdditionalProperties.cpp" />
+    <ClCompile Include="AtomicIniSave.cpp" />
+    <ClCompile Include="ExtendedMonoliths.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ObjectExtenderManager.cpp" />
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp" />

@@ -8,6 +8,7 @@
 #include "pch.h"
 
 #include "SoundManager.h"
+#include "ExtendedMonoliths.h"
 
 namespace
 {
@@ -369,8 +370,10 @@ _LHF_(ObjectExtenderManager::AIHero_GetScoutingWeight)
 
 void __stdcall ObjectExtenderManager::Game__SetObjectsInitialParams(HiHook *h, H3Game *game)
 {
+    monoliths::ExtendedMonoliths::Get().ResetForNewMap();
     instance->objectCounter = new ObjectCounter(instance->lastObjectSubtypes);
     THISCALL_1(void, h->GetDefaultFunc(), game);
+    monoliths::ExtendedMonoliths::Get().ReportNewMap();
     delete instance->objectCounter;
 }
 
@@ -461,6 +464,11 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
         bool objectTypeHasLoopSound = false;
         LPCSTR objectTypeWavName = EraJS::read(H3String::Format("RMG.objectGeneration.%d.sound.loop", objType).String(),
                                                objectTypeHasLoopSound);
+        if (objectTypeHasLoopSound)
+        {
+            addedWavNames.emplace_back(
+                sound::SoundManager::ObjectSound{objectTypeWavName, WORD(objType), sound::ALL_OBJECT_SUBTYPES});
+        }
 
         auto &additionalRmgObjects = instance->additionalRmgObjects;
         // next check each object subtype value/density
@@ -487,12 +495,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
             if (objectSubtypeHasLoopSound)
             {
                 addedWavNames.emplace_back(
-                    sound::SoundManager::ObjectSound{objectSubtypeWavName, {WORD(objType), WORD(objSubtype)}});
-            }
-            else if (objectTypeHasLoopSound)
-            {
-                addedWavNames.emplace_back(
-                    sound::SoundManager::ObjectSound{objectTypeWavName, {WORD(objType), 0xFFFF}});
+                    sound::SoundManager::ObjectSound{objectSubtypeWavName, WORD(objType), WORD(objSubtype)});
             }
         }
     }

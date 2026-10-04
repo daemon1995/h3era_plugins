@@ -1,6 +1,7 @@
 #pragma once
 struct ObjectLimitsInfo;
 #include <array>
+#include "ObjectTypeLimits.h"
 
 struct RMGTemplateLimits
 {
@@ -125,8 +126,8 @@ struct RMGObjectInfo : public extender::RMGObjectProperties
     LPCSTR GetName() const noexcept;
     LPCSTR GetDescription() const noexcept;
 
-    BOOL WriteToINI() const noexcept;
-    BOOL WriteToINI(const H3RmgObjectGenerator *generator) const noexcept;
+    BOOL WriteToINI(LPCSTR iniPath = INI_FILE_PATH) const noexcept;
+    BOOL WriteToINI(const H3RmgObjectGenerator *generator, LPCSTR iniPath = INI_FILE_PATH) const noexcept;
     inline void ReadFromINI() noexcept;
 
   public:
@@ -174,7 +175,8 @@ class PandoraVariants
     static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
     static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
     static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
-    static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept;
+    static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
+                           LPCSTR iniPath = RMGObjectInfo::INI_FILE_PATH) noexcept;
     static H3String GetDisplayName(const H3RmgObjectGenerator *generator);
     static const std::vector<Record> &GetRecords() noexcept;
 };
@@ -205,7 +207,8 @@ class PrisonVariants
     static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
     static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
     static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
-    static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept;
+    static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
+                           LPCSTR iniPath = RMGObjectInfo::INI_FILE_PATH) noexcept;
     static H3String GetDisplayName(const H3RmgObjectGenerator *generator);
     static const std::vector<Record> &GetRecords() noexcept;
 };
@@ -318,6 +321,7 @@ class RMGObjectsEditor : public IGamePatch
     BOOL isPseudoGeneration = false;
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
+    NativeTypeLimitsOverride<H3_MAX_OBJECTS> nativeTypeLimits;
     std::array<INT, limits::SPELLS> savedSpellLevels = {};
 
     H3Vector<H3RmgObjectGenerator *> editedRMGObjectGenerators;
