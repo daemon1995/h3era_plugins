@@ -1,88 +1,68 @@
 #pragma once
 #include "pch.h"
 
-struct _DlgCreatureExpoInfo_
-{
-    char *Caption;          // заголовок диалога
-    char *Info;             // информация о твари
-    char *Picture;          // изображение твари
-    char *PictureHint;      // хинт к изображению твари
-    char **TxtProperties;   // [6] текстовые доп. свойства
-    char **IcoProperties;   // [6] иконки доп. свойств, "NONE" - для отображения заглушки
-    char **HintProperties;  // [6] подсказки к  доп. свойствам
-    char *ColCaptions;      // заголовки столбцов - одна строка, по 7 символов на столбец (11*7)
-    char *ColHint;          // заголовки столбцов - подсказки
-    char **RowCaptions;     // [16] заголовки строк
-    char **RowCaptionHints; // [16] заголовки строк, подсказки
-    char **Rows;            // [16] значения ячеек таблицы - 16 строк по 7 символов на столбец (11*7)
-    char **RowHints;        // [16] подсказки к строкам
-    int IcoPropertiesCount; // [0 - 6] количество иконок доп. свойств
-    int ShowSpecButton;     // показывать кнопку
-    char *SpecButtonHint;   // подсказка к кнопке
-    int CurPropColLeft;     // начало столбца с текущими координатами твари в символах
-    int CurPropColRight;    // конец столбца с текущими координатами твари в символах
-    char *ArtIcon;          // иконка артифакта ("NONE" - пустой)
-    char *ArtHint;          // хинт для иконки артифакта
-    int ArtOutput;          // артифакт отдается - 1, оставляется - 0
-    int Flags;              // флаги - см. ниже
-                            // Flags & 0x00000001 - можно передавать артефакт
-    int ArtCopy;            // значения:
-                            // 0,... - значения
-                            // <0 - скрыть
-};
+#include <string>
+#include <vector>
 
-struct StackActiveSpells
-{
-    H3Vector<INT32> activeSpellsId;
-};
-
-struct CrExpBonLine
-{
-
-    unsigned __int32 Act : 1;
-    unsigned __int32 _un : 31;
-    char Type;
-    char Mod;
-    char Lvls[11];
-};
-
-struct CreatureSkill
-{
-    int expId;
-    const char *name;
-    const char *description;
-    const char *pcx16Name;
-    H3LoadedPcx16 *pcx16;
-    ~CreatureSkill();
-};
 class CreatureDlgHandler
 {
+    struct CreatureSkill
+    {
+        int frame = -1;
+        std::string text;
+        std::string hint;
+        H3LoadedPcx16 *pcx16 = nullptr;
+    };
+
+    struct ScrolledItem
+    {
+        H3DlgItem *item = nullptr;
+        int baseY = 0;
+    };
+
     H3CreatureInfoDlg *dlg = nullptr;
     H3CombatCreature *stack = nullptr;
     H3Army *army = nullptr;
     int armySlotIndex = -1;
     bool wogStackExperience = false;
     const H3Hero *hero = nullptr;
+    int playerColor = -1;
+
     int descriptionX = 24;
     int descriptionY = 189;
     int descriptionWidth = 250;
     int descriptionHeight = 55;
     int commanderPanelHeight = 0;
 
+    int viewportX = 0;
+    int viewportY = 0;
+    int viewportWidth = 0;
+    int viewportHeight = 0;
+    int maxScrollTick = 0;
+
+    // Pixel offset for every logical row. A skill-icon row and a text row
+    // both consume exactly one scrollbar tick.
+    std::vector<int> scrollRowOffsets;
+    std::vector<CreatureSkill> creatureSkills;
+    std::vector<ScrolledItem> scrolledItems;
+
+    void ApplyDialogAppearance();
+    void HideDefaultBattleSpellItems();
+    H3DlgText *FindOriginalDescription() const;
+    std::string GetDescriptionText(H3DlgText *description) const;
+    BOOL BuildDescriptionArea();
+    BOOL BuildExperienceSkillsPanel(H3DlgText *description, const std::string &descriptionText);
+    void ReleaseUnownedSkillImages();
+
   public:
     CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature *stack = nullptr, H3Army *army = nullptr,
-                       int armySlotIndex = -1, const H3Hero *hero = nullptr);
-    // static void ProcessCreatureDlg(H3CreatureInfoDlg *dlg);
+                       int armySlotIndex = -1, const H3Hero *hero = nullptr, int playerColor = -1);
+    ~CreatureDlgHandler();
+
+    void ScrollTo(int scrollTick);
     BOOL AlignItems();
     BOOL AddExperienceButton();
     BOOL AddSpellEfects();
-    //    ~CreatureDlgHandler();
-
     BOOL AddCommanderSkills();
-
     BOOL CreateCreatureSkillsList();
-
-    // bool Adjust(Crex,
-    static std::vector<H3DlgPcx16 *> dlgSkillPcx;
-    static std::vector<CreatureSkill> creatureSkills;
 };

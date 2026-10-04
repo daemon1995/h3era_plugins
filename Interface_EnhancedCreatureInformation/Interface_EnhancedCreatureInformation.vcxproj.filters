@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -27,10 +27,19 @@
     <ClCompile Include="CreatureDlgHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CreatureDlgHooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\headers\Era\era.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PluginSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PluginSettingsDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -42,6 +51,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CreatureDlgHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CreatureDlgHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CreatureDlgLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginSettingsDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
