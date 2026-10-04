@@ -16,5 +16,4 @@
 // add headers that you want to pre-compile here
 #include "..\headers\header.h"
 #include "MenuItem.h"
-extern std::vector<std::string> gameModList;
 #endif // PCH_H

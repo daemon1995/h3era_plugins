@@ -36,6 +36,22 @@
     <ClInclude Include="MenuItem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GameContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OptionRegistry.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="OptionJson.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="OptionMenuModel.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="OptionDependencies.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="OptionExport.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="OptionsRuntime.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="WoGOptionsBridge.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="WoGProfileStore.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="OptionsMenuApi.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ObjectBans.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ObjectBansRuntime.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ObjectBansDlg.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="OptionsMenuUI.h"><Filter>Header Files</Filter></ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -62,5 +78,19 @@
     <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OptionRegistry.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="OptionJson.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="OptionMenuModel.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="OptionDependencies.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="OptionExport.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="OptionsRuntime.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="WoGOptionsBridge.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="WoGProfileStore.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ObjectBans.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ObjectBansRuntime.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ObjectBansDlg.cpp"><Filter>Source Files</Filter></ClCompile>
   </ItemGroup>
 </Project>

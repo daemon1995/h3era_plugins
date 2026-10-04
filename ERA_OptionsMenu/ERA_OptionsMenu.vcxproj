@@ -14,9 +14,21 @@
     <ProjectGuid>{96374a46-2883-41e8-a242-c2195b772ef7}</ProjectGuid>
     <RootNamespace>ERAOptionsMenu</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <LanguageStandard>stdcpp17</LanguageStandard>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="lang\era_options_wog.json" />
+    <None Include="tools\ImportWoGOptions.mjs" />
+    <None Include="lang\era_options_wog_scripts.json" />
+    <None Include="lang\era_options_era_scripts.json" />
+    <None Include="tools\ImportScriptOptions.mjs" />
+    <None Include="tools\InstallWoGOptions.ps1" />
+    <None Include="scripts\00 era options - object bans.erm" />
+    <None Include="tools\PatchWoGSpellBans.mjs" />
+  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EMod.h" />
     <ClInclude Include="EModPage.h" />
@@ -25,6 +37,20 @@
     <ClInclude Include="EraMenuDlg.h" />
     <ClInclude Include="MenuItem.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="OptionRegistry.h" />
+    <ClInclude Include="OptionJson.h" />
+    <ClInclude Include="OptionMenuModel.h" />
+    <ClInclude Include="OptionDependencies.h" />
+    <ClInclude Include="OptionExport.h" />
+    <ClInclude Include="OptionsRuntime.h" />
+    <ClInclude Include="OptionsMenuApi.h" />
+    <ClInclude Include="WoGOptionsBridge.h" />
+    <ClInclude Include="WoGProfileStore.h" />
+    <ClInclude Include="ObjectBans.h" />
+    <ClInclude Include="ObjectBansRuntime.h" />
+    <ClInclude Include="ObjectBansDlg.h" />
+    <ClInclude Include="OptionsMenuUI.h" />
+    <ClInclude Include="GameContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
@@ -35,6 +61,21 @@
     <ClCompile Include="EOption.cpp" />
     <ClCompile Include="EraMenuDlg.cpp" />
     <ClCompile Include="MenuItem.cpp" />
+    <ClCompile Include="OptionRegistry.cpp" />
+    <ClCompile Include="OptionJson.cpp" />
+    <ClCompile Include="OptionMenuModel.cpp" />
+    <ClCompile Include="OptionDependencies.cpp" />
+    <ClCompile Include="OptionExport.cpp" />
+    <ClCompile Include="OptionsRuntime.cpp" />
+    <ClCompile Include="WoGOptionsBridge.cpp" />
+    <ClCompile Include="WoGProfileStore.cpp" />
+    <ClCompile Include="ObjectBans.cpp" />
+    <ClCompile Include="ObjectBansRuntime.cpp" />
+    <ClCompile Include="ObjectBansDlg.cpp" />
+    <ClCompile Include="GameContext.cpp" />
   </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile><ExceptionHandling>Sync</ExceptionHandling></ClCompile>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

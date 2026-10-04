@@ -1,0 +1,869 @@
+{
+  "era_options": {
+    "era scripts": {
+      "name": "ERA Scripts",
+      "options": [
+        {
+          "key": "era_scripts.option.281",
+          "id": "281",
+          "wog_option": "281",
+          "name": "Buckler of Beelzebub",
+          "default": "1",
+          "hint": "Adds a new composite artifact, the Beelzebub Shield.",
+          "popup": "Buckler of Beelzebub\n\nOption 281 [Author - Archer30. daemon_n, Idea - Jim Vogan]\n\nAdds a new combo artifact formed with \"Sword of Hellfire\", \"Shield of the Damned\", \"Hellstorm Helmet\" and \"Breastplate of Brimstone\", and represented by a shield.\n\nHeld with the left hand, the Buckler of Beelzebub gives the wearer a devil's power to teleport and avoid retaliation, and increases all attributes by 2.",
+          "category": "Artifacts",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.282",
+          "id": "282",
+          "wog_option": "282",
+          "name": "Improved Armor of the Damned",
+          "default": "1",
+          "hint": "Hero primary attributes are increased by 1 for every five hero levels in addition to the standard effect of \"Armor of the Damned\".",
+          "popup": "Improved Armor of the Damned\n\nOption 282 [Author - Jim Vogan]\n\nNow the wearer's primary attributes are increased by 1 for every five hero levels in addition to the standard effect of \"Armor of the Damned\".",
+          "category": "Artifacts",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.350",
+          "id": "350",
+          "wog_option": "350",
+          "name": "Lizard Warrior Ranged Retaliation",
+          "hint": "Lizard Warrior Ranged Retaliation",
+          "popup": "Lizard Warrior Ranged Retaliation\n\nOption 350 [Author - Archer30]\n\nLizard Warriors retaliate ranged attacks with shooting.\n\nThe Fight Value of Lizard Warriors is increased by 5%.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.351",
+          "id": "351",
+          "wog_option": "351",
+          "name": "New Cover of Darkness",
+          "default": "1",
+          "hint": "New Cover of Darkness",
+          "popup": "New Cover of Darkness\n\nOption 351 [Author - Archer30]\n\nCover of Darkness (both the Necropolis building and the map object) and Veil of Darkness (Darkness Dragon's ability) no longer cover the map, instead:\n\nCover of Darkness as a Necropolis building reduces an intruder hero's morale by -1 when defending against a siege.\n\nCover of Darkness as a map object protects the hero from attacks by other heroes until the end of the second day. The effect will disapperar if the hero enters a battle.\n\nDarkness Dragon's Veil of Darkness casts Disguise on the hero every day.",
+          "category": "Map Exploration",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.724",
+          "id": "724",
+          "wog_option": "724",
+          "name": "Leprechauns` Bank",
+          "hint": "Leprechauns` Bank",
+          "popup": "Leprechauns` Bank\n\nOption 724 [Authors - Algor, Sandris]\n\nIn towns with Marketplace, Offices of the Leprechauns Bank, which issues loans to the player, are added.\n\nFor each type of loaned resources are set next individual options: rate, available amount, daily payment. Within the available amount, the player may take several loans, but the daily payment in this case may be higher.The conditions of loans are affected by the selected level of difficulty, in-game time and all players' sources of income available (towns, mines, buildings, artifacts, heroes).\n\nIf it is impossible to pay the daily payment on the loan, the Bank withholds a penalty for every under-received resource unit. If it is impossible to withhold a fine, Bank increases the rate for new loans in the form of a resource for which non-payment has occurred.\n\nAny loan can be repaid ahead of schedule, but only in full. If the amount of early repayment is not less than half the maximum available amount on the resource, the Bank will reduce the rate.\n\n{Attention!} The script disables the functionality of the WoG option \"Bank\". A \"Resource Trading Center\" and \"Ability to transfer ALL resources\" options now work only by right-clicking on the Bank button.",
+          "category": "Economy",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.725",
+          "id": "725",
+          "wog_option": "725",
+          "name": "Bounty Hunting",
+          "hint": "Bounty Hunting",
+          "popup": "Bounty Hunting\n\nOption 725 [Author - Algor, Sandris (graphics)]\n\nIf there is an unused player colour, bands of renegade heroes may appear on the map, living without cities on some small territory and trading ill-gotten gains. Over time, the gangs of such \"heroes\" grow and they themselves get resources, experience and equipment.\n\nTo fight gangs, the Bounty Hunters Guild announces rewards for the heads of renegade heroes. After defeating these \"bandits\", the player can either execute him and get the reward due or recruit him, but in this case, receive no reward. \n\nAI factions prefer to recruit a hero only if they are at least level 15 or more experienced than the winning hero.\n\nIf there is a city in a gang's territory and the gang was able to capture it, all active bandits become united in a new faction and the Bounty Hunters Guild revokes all rewards for their heads. After the appearance of such a faction, new bandits will appear on the map under a different flag available and, in turn, can also capture the city on \"their\" territory and create a new faction.\n\nIf the player has defeated all the opponents, the bandits run away and they do not need to be killed to complete the game.",
+          "category": "World Events",
+          "page": "Rules and AI"
+        },
+        {
+          "key": "era_scripts.option.726",
+          "id": "726",
+          "wog_option": "726",
+          "name": "ReMagic",
+          "hint": "ReMagic",
+          "popup": "ReMagic\n\nOption 726 [Author - Algor]\n\nReMagic (formerly separate ReMagic mod) is a global modification to the magic system. There are many spell changes - levels, mana costs, effects, schools, descriptions and mechanics.\n\nSpells with modified mechanics: Slayer, Quicksand, Summoning spells, Town Portal, Clone, Force Field. Details are given in spell descriptions.\n\n{Attention!} Modified magic system option may be critically incompatible with campaigns, author customized maps, third-party options and mods, violating authors ideas, balance, gameplay.\n\nRecommended for use on random maps.",
+          "category": "Magic and Scrolls",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.727",
+          "id": "727",
+          "wog_option": "727",
+          "name": "Backpack Artifacts",
+          "default": "1",
+          "hint": "Backpack Artifacts",
+          "popup": "Backpack Artifacts\n\nOption 727 [Author - Algor]\n\nArtifacts that produce resources and grant movement points now provide their bonuses even when stored in a hero's backpack (without needing to be equipped).",
+          "category": "Artifacts",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.728",
+          "id": "728",
+          "wog_option": "728",
+          "name": "Heroes Without Armies",
+          "hint": "Heroes Without Armies",
+          "popup": "Heroes Without Armies\n\nOption 728 [Authors - igrik, Algor]\n\nEnabling this option allows the hero to transfer or dismiss all troops and leave heroes without an army. \n\nHeroes without armies receive a 25% movement penalty at the beginning of the day (equivalent to a fine for having creature squads with a speed of 3 in the hero's army.) \n\nThe penalty does not apply to movement on water.",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.730",
+          "id": "730",
+          "wog_option": "730",
+          "name": "Single-slot Composite Artifacts",
+          "default": "1",
+          "hint": "Single-slot Composite Artifacts",
+          "popup": "Single-slot Composite Artifacts\n\nOption 730 [Author - igrik]\n\nThe composite artifacts now require only one slot (without blocking others).",
+          "category": "Artifacts",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.731",
+          "id": "731",
+          "wog_option": "731",
+          "name": "Trained AI",
+          "hint": "Trained AI",
+          "popup": "Trained AI\n\nOption 731 [Author - Algor, idea igrik]\n\nDepending on the selected level of difficulty, each AI hero has a chance when leveling up 0/25/50/75/100% to additionally increase by 1 profile primary parameter.\n\nThe profile of the parameters is determined by the class of the hero.",
+          "category": "Artificial Intelligence",
+          "page": "Rules and AI"
+        },
+        {
+          "key": "era_scripts.option.732",
+          "id": "732",
+          "wog_option": "732",
+          "name": "Hero Limit",
+          "default": "1",
+          "hint": "Hero Limit",
+          "popup": "Hero Limit\n\nOption 732 [Author - igrik]\n\nThis option limits the number of heroes on the map for each player up to 5 heroes (the value is set in the ini file - from 1 to 8).\n\nGarrison heroes do not count.",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.733",
+          "id": "733",
+          "wog_option": "733",
+          "name": "Third Class",
+          "hint": "Third Class",
+          "popup": "Third Class\n\nOption 733 [Author - Algor]\n\nNow heroes are divided not only into 2 classes, like \"warrior-mage\", but into 3 classes: \"warrior-wanderer-mage\" based on specialization. \n\nWarriors are specialists in creatures and combat sec. skills. \n\nMages are specialists in spells and magic secondary skills. \n\nWanderers are specialists in resource extraction, secondary skills of wanderers and non-standard specializations. \n\nWhen leveling up, the hero gains 1 primary skill point and a choice of up to 3 secondary skills. Both the primary and secondary skills offered when raising a level depends on the race and class of the hero. Profile skills for races are offered more often. \n\nOption settings and additional information can be found in the file \"option 733 - third class.ini\". \n\nForcibly disables the incompatible option 881 \"Modified hero leveling\".",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.734",
+          "id": "734",
+          "wog_option": "734",
+          "name": "Team AI",
+          "hint": "Team AI",
+          "popup": "Team AI\n\nOption 734 [Author - Algor]\n\nAt the end of each move, every AI player transfers all of its resources (incl. mithril) to the next AI player on his/her team.",
+          "category": "Artificial Intelligence",
+          "page": "Rules and AI"
+        },
+        {
+          "key": "era_scripts.option.735",
+          "id": "735",
+          "wog_option": "735",
+          "name": "Advanced Artifact Market",
+          "default": "1",
+          "hint": "Advanced Artifact Market",
+          "popup": "Advanced Artifact Market\n\nOption 735 [Authors - igrik, Algor]\n\nTown Artifact Merchants and Black Markets, instead of the redeemed goods typically sold, they now sell new and sometimes more rare artifacts.",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.736",
+          "id": "736",
+          "wog_option": "736",
+          "name": "Battle Experience",
+          "hint": "Battle Experience",
+          "popup": "Battle Experience\n\nOption 736 [Author - Algor]\n\nTroops in human-player battles receive experience and new ranks directly in the battlefield.\n\nExperience is awarded only for killing enemy units of creatures (in any way) and only the one who's killed a troop. A unit that was the direct target of attack gets experience for all losses related to this attack. Typically more experience is gained with the use of multicellular attacks, fire shield, fire wall, moat, mines, etc.\n\nSummoned creatures do not gain experience. Also defeating clones doesn't give you any experience. Banners with a bonus to experience gives rise to the corresponding increase.",
+          "category": "Battle Rules and Experience",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.737",
+          "id": "737",
+          "wog_option": "737",
+          "name": "Machines Capture",
+          "hint": "Machines Capture",
+          "popup": "Capture Machines\n\nOption 737 [Author - Algor]\n\nAfter the battle, the victorious hero receives the surviving war machines of the enemy if he/she has free slots for them. If there are no free slots, war machines are destroyed.\n\nUpon surrender, war machines remain with the losing hero.\n\nUnnecessary war machines can be destroyed by right-clicking its icon in the hero window.",
+          "category": "War Machines",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.739",
+          "id": "739",
+          "wog_option": "739",
+          "name": "Pathfinding",
+          "default": "1",
+          "hint": "Pathfinding",
+          "popup": "Pathfinding\n\nOption 739 [Author - Algor]\n\nThis option changes movement costs on different terrains for different levels of the Pathfinding skill so that with each skill level, albeit in varying degrees, the hero becomes more useful on EVERY Terrain.\n\nFor the majority of terrain, the costs are increased without a Pathfinding skill.",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.740",
+          "id": "740",
+          "wog_option": "740",
+          "name": "Enhanced Creature Specialists",
+          "default": "1",
+          "hint": "Enhanced Creature Specialists",
+          "popup": "Enhanced Creature Specialists\n\nOption 740 [Idea and sponsorship: swallowmee]\n\nSimple and improved creatures that the hero specializes on receive the following bonuses under his/her command:\n\n+1 speed \n+1 to attack skill for every even level of the hero \n+1 to defense skill for every odd level of the hero \n\nThis option automatically disables creature specialties from option 733, 'HeroSpecialization Boost', in the WoG Scripts mod.",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.741",
+          "id": "741",
+          "wog_option": "741",
+          "name": "War Zealots Interceptors",
+          "hint": "War Zealots Interceptors",
+          "popup": "War Zealots Interceptors\n\nOption 741 [Author - Archer30, Idea - Algor]\n\nWar Zealots gain the ability to intercept and redirect the spells from a hostile target.\nChance of interception = 1% for each War Zealot in stack.\n\nAfter intercepting, the spell can be redirected by Magic mirror (standard chance).\n\nThe Fight Value of War Zealots is increased by 5%.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.743",
+          "id": "743",
+          "wog_option": "743",
+          "name": "Health Artifacts",
+          "default": "1",
+          "hint": "Health Artifacts",
+          "popup": "Health Artifacts\n\nOption 743 [Author - Algor]\n\nArtifacts \"Ring of Vitality\", \"Ring of Life\" and \"Vial of Lifeblood\" give 5%, 5% and 10% bonus to the health of living creatures accordingly and DID NOT effect on undead/elementals/golems.\n\n\"Elixir of Life\" also LOSE the bonus of its components \"+4 health.\"",
+          "category": "Artifacts",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.744",
+          "id": "744",
+          "wog_option": "744",
+          "name": "Field Repairs",
+          "hint": "Field Repairs",
+          "popup": "Field Repairs\n\nOption 744 [Author - Algor, Idea - Ivor]\n\nHero having war machine skills can repair broken machines after battle. \n\nBasic repair cost is double the cost of that machine. Basic repair time takes 400 movement points. \n\nEvery level gained for war machine skills and war machine speciality lower repair cost and time by 10%.\n\nAI always repairs machines when possible.",
+          "category": "War Machines",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.745",
+          "id": "745",
+          "wog_option": "745",
+          "name": "Hi-level Monsters",
+          "default": "1",
+          "hint": "Hi-level Monsters",
+          "popup": "Hi-level Monsters\n\nOption 745 [Author - Algor, Idea - Ivor]\n\nThe creature groups on the map can be replaced by higher level creatures with the same strength and race.\n\nNeutral creature units are not replaced. The new number is rounded up from 1/3.",
+          "category": "Neutral Armies and Rewards",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.747",
+          "id": "747",
+          "wog_option": "747",
+          "name": "Self-education",
+          "hint": "Self-education",
+          "popup": "Self-education\n\nOption 747 [Author - Algor]\n\nA garrisoned hero (guest hero if no hero in the garrison) in a town with built \"educative\" building, the hero can spend remaining movement points (mp) to self-educate by converting mp into expirience points (xp).\n\n\"Educative\" buildings are: Mage Guild (every level separately), Library, Battle Scholar Academy and Magic University. Every building lets the hero convert 5% mp into xp.\n\nThe Learning skill lets the hero self-educate even outside the town, converting 10/20/30% mp into xp, and while the hero is in a garrison it increases the efficiency of \"Educative\" buildings by up to 6/7/8%.\n\n* Self-education is disabled if there is only one player in a game.",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.748",
+          "id": "748",
+          "wog_option": "748",
+          "name": "Refusal of Dwellings",
+          "hint": "Refusal of Dwellings",
+          "popup": "Refusal of Dwellings\n\nOption 748 [Author - Archer30, Idea - Antib]\n\nShift + left-click on a captured dwelling to divest dwelling ownership and turn all unhired creatures into guards. Creatures level 4 or lower will guard dwellings only until the week's end.\n\n8th level creatures dwelling divestment is denyed if this dwelling doesn't work like common dwellings.",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.749",
+          "id": "749",
+          "wog_option": "749",
+          "name": "Mana Shrines",
+          "default": "1",
+          "hint": "Mana Shrines",
+          "popup": "Mana Shrines\n\nOption 749 [Author - Algor, idea - Ivor]\n\nEvery day, shrines accumulate mana. First visiting hero in a day restores \"5* shrine level\" mana but no more than maximum.",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.750",
+          "id": "750",
+          "wog_option": "750",
+          "name": "Demonic Rage",
+          "hint": "Demonic Rage",
+          "popup": "Demonic Rage\n\nOption 750 [Author - Algor]\n\nHorned demons recieve the ability before attacking to \"get raged\", losing defense (-1) but increasing it's own attack (+3). Effect is additive.\n\nThe Fight Value for Horned Demons is increased by 10%.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.751",
+          "id": "751",
+          "wog_option": "751",
+          "name": "Necromancy",
+          "hint": "Necromancy",
+          "popup": "Necromancy\n\nOption 751 [Author - D'yacon)]\n\nNecromancy raises up to 15/30/50% of the hero's {own} creatures as undead after battle.",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.752",
+          "id": "752",
+          "wog_option": "752",
+          "name": "Evading Halflings",
+          "hint": "Evading Halflings",
+          "popup": "Evading Halflings\n\nOption 752 [Author - Algor]\n\nAgilie Halfling can evade from non-direct attack or spell.\n\nDisabling effects (blind, paralize etc) forbid evading.\n\nThe Fight Value of Halflings is increased by 5%.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.753",
+          "id": "753",
+          "wog_option": "753",
+          "name": "Stunning Boars",
+          "hint": "Stunning Boars",
+          "popup": "Stunning Boars\n\nOption 753 [Author - Algor]\n\nAttacking Boars can stun the enemy (effect only works on living creatures). The stunned stack cannot move and counterattack in a single round.\n\nStunning chance depends on the boar and enemy stack size.\n\nThe Fight Value of Boars is increased by 10%.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.755",
+          "id": "755",
+          "wog_option": "755",
+          "name": "Mines Exhaustion ",
+          "hint": "Mines Exhaustion ",
+          "popup": "Mines Exhaustion\n\nOption 755 [Author - Algor, idea from Phoenix-mod]\n\nMines now have a limited resource capacity. The capacity of resources are random for every mine. It sets at game start and depends on the map size.\n\nRight-click on the mine entrance to show current capacity.",
+          "category": "Economy",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.756",
+          "id": "756",
+          "wog_option": "756",
+          "name": "Siegecraft",
+          "hint": "Siegecraft",
+          "popup": "Siegecraft\n\nOption 756 [Author - Algor]\n\nThe Ballistics skill is replaced by the Siegecraft skill. Siegecraft gives the attacking hero standard Ballistics bonuses, and for the town defending hero increases towers and moat damage by {10/20/30%} during the siege.",
+          "category": "War Machines",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.757",
+          "id": "757",
+          "wog_option": "757",
+          "name": "Dragon Towns",
+          "hint": "Dragon Towns",
+          "popup": "Dragon Towns\n\nOption 757 [Author - Archer30, Idea - Algor]\n\nThe player can now rebuild \"visited\" Dragon Utopias into a town with a castle and mage guild level 3 for some resources. The new town type depends on the hero's race.\n\nThe new town will not be rebuilt if there are 48 towns or more on the map, or if the surrounding tiles are not passable.\n\nNote: this script is disabled for network games.",
+          "category": "Town Development and Recruitment",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.758",
+          "id": "758",
+          "wog_option": "758",
+          "name": "Cutthroats",
+          "hint": "Cutthroats",
+          "popup": "Cutthroats\n\nOption 758 [Author - Archer30, Idea - Algor]\n\nRogues become coldblooded cutthroats and now aren't affected by morale from the hero or from other troops in the army but recieve encouragement (one more action) after killing an enemy stack.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.759",
+          "id": "759",
+          "wog_option": "759",
+          "name": "Devilish Sacrifice",
+          "hint": "Devilish Sacrifice",
+          "popup": "Devilish Sacrifice\n\nOption 759 [Author - Archer30, Idea - Algor]\n\nArch Devils and Hell Barons get ability 1/2 times per battle to sacrifice a friendly stack of living non-summoned creatures to resurrect itself. The quantity of Arch Devils / Hell Barons after resurrection can not be more than their quantity before the battle.\n\nAI can use this ability if their Arch Devils / Hell Barons stack lost at least 30% creatures.\n\nIf AI have several of such stacks it chooses the stack with minimal \"Fight Value sacrificed / quantity of resurrected\".",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.760",
+          "id": "760",
+          "wog_option": "760",
+          "name": "Achievements",
+          "default": "1",
+          "hint": "Achievements",
+          "popup": "Achievements\n\nOption 760 [Author - Algor, Sandris (graphics)]\n\nWhen performing certain actions in the game, heroes gain achievements to represent those actions. Each achievement has a rank of 1 to 9. Depending on the type of achievement and rank obtained, the hero gains a special in-game bonus. \n\nIn the hero screen or in the heroes meeting screen, by right-clicking on a hero portrait you can view a list of the current achievements for this hero.",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.761",
+          "id": "761",
+          "wog_option": "761",
+          "name": "Battle Dwarves Reinforcement",
+          "hint": "Battle Dwarves Reinforcement",
+          "popup": "Battle Dwarves Reinforcement\n\nOption 761 [Author - Algor]\n\nBattle Dwarves receive the \"Reinforcement\" ability, increasing their defense by 2 whenever they are attacked during a battle (once per round).",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.762",
+          "id": "762",
+          "wog_option": "762",
+          "name": "Zombie-Flesheaters",
+          "hint": "Zombie-Flesheaters",
+          "popup": "Zombie-Flesheaters\n\nOption 762 [Author - Archer30, Idea - Ivor]\n\nZombies gain the ability to devour enemy corpses restoring health and number if they completely destroy a squad of living creatures.\n\nThe eaten squad loses the ability to revive (such as phoenixes and trolls) and disappears from the field.\n\nThe max. restored health is the overall health of the eaten squad.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.763",
+          "id": "763",
+          "wog_option": "763",
+          "name": "Hidden Enemies",
+          "hint": "Hidden Enemies",
+          "popup": "Hidden Enemies\n\nOption 763 [Author - Algor]\n\nBesides the obvious enemies known from the start, now there is also a hidden enemy that appears on the map. \n\nAt the beginning of each week, any town can be attacked by an army led by heroes from a faction hidden at the start. The hidden faction will only appear starting from Month:2 Week:1 Day:1 \n\nThe chance of an invader is 10% for AI towns and 5-25% for human towns depending on difficulty level. \n\nAll invaders are in the same alliance. For towns without forts, chances are doubled.",
+          "category": "World Events",
+          "page": "Rules and AI"
+        },
+        {
+          "key": "era_scripts.option.764",
+          "id": "764",
+          "wog_option": "764",
+          "name": "Balanced Starting Army",
+          "hint": "Balanced Starting Army",
+          "popup": "Balanced Starting Army\n\nOption 764 [Author - Algor]\n\nFor random maps only, the starting army of heroes change according to the following rules: \n\n1. Always consists of 3 units with the total fight value of 3000. \n\n2. In slots 1-3, hero starts with creatures of 1-3 levels. \n\n3. Level 1 creature specialists have the creature they specialize with in all 3 slots. \n\n4. Level 2-3 creature specialists have the creature they specialize with in the 2nd and 3rd slots. \n\n5. Level 4-5 creature specialists have upg. creatures in the 3rd slot and 1st level creatures in the 1st and 2nd slots. \n\nThis option disables opt.199 \"Rebalanced Starting Armies\".",
+          "category": "Hero Development",
+          "page": "Heroes and Skills",
+          "disables": [
+            {
+              "tag": "199"
+            }
+          ]
+        },
+        {
+          "key": "era_scripts.option.765",
+          "id": "765",
+          "wog_option": "765",
+          "name": "Town Treasuries",
+          "hint": "Town Treasuries",
+          "popup": "Town Treasuries\n\nOption 765 [Author - Timothy Pulver]\n\nAll the resources of each player are distributed among the towns in proportions according to the following building levels: \n\nCapitol : 4 shares\nCity hall : 3 shares\nTown hall: 2 shares\nVillage hall : 1 share\n\nWhen a player captures an enemy town, he/she receives (and former owner loses respectively) part of their resources stored in the captured town.\n\nHuman player will get 100/80/60/40/20% of the resources in the treasury depending on the selected difficulty level.\n\nAI player will always get 100% of the treasury. \n\nThese coefficients for the human player are set in the file \"option 765 - town treasuries.ini\".",
+          "category": "Economy",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.766",
+          "id": "766",
+          "wog_option": "766",
+          "name": "Leadership",
+          "hint": "Leadership",
+          "popup": "Leadership\n\nOption 766 [Author - Algor]\n\nIn addition to increasing morale, Leadership weekly attract recruits (2% per skill level) to living stacks of hero army.\n\nPercentage values you can change in \"option 766 - leadership.ini\".",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.767",
+          "id": "767",
+          "wog_option": "767",
+          "name": "Unrestricted (mis)fortune and (dis)morale",
+          "default": "1",
+          "hint": "Unrestricted (mis)fortune and (dis)morale",
+          "popup": "Unrestricted (mis)fortune and (dis)morale\n\nOption 767 [Author - JackSlater]\n\nThis option removes a restriction on min/max morale and luck.\n\nChance of triggering a positive morale and luck = 1/24 for each point.\n\nChance of triggering a negative morale and luck = 1/12 for each point.\n\n\nExample: creature with luck -5 has a chance to attack with misfortune 1/12 * 5 = 41.67%",
+          "category": "Battle Rules and Experience",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.768",
+          "id": "768",
+          "wog_option": "768",
+          "name": "Monsters Drop Resources",
+          "hint": "Monsters Drop Resources",
+          "popup": "Monsters Drop Resources\n\nOption 768 [Author - Timothy Pulver]\n\nAll creatures on the map now have gold and, possibly, some amount of resources that the hero can collect after a battle victory, spending 500 movepoints upon collection.\n\nResource specialists increase the collected amount of that specific resource.\n\nIf the creatures flees, the hero can collect only half of the resources (some escapees manage to take it with them).\n\nCreature groups having artifacts have no resources.",
+          "category": "Neutral Armies and Rewards",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.769",
+          "id": "769",
+          "wog_option": "769",
+          "name": "Monsters Drop Artifacts",
+          "default": "1",
+          "hint": "Monsters Drop Artifacts",
+          "popup": "Monsters Drop Artifacts\n\nOption 769 [Author - Archer30, Idea - Fnord]\n\nAbout a quarter of all neutral creatures on the map has an artifact which class depends on the power of the monsters.\n\nComponent and disallowed artifacts, \"Boots of Speed\", \"Equestrian's Gloves, \"Boots of Levitation\" and \"Angel Wings\" can not be obtained by troops.",
+          "category": "Neutral Armies and Rewards",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.770",
+          "id": "770",
+          "wog_option": "770",
+          "name": "Tyrant",
+          "hint": "Tyrant",
+          "popup": "Tyrant\n\nOption 770 [Author - Archer30, Idea - Algor]\n\nThese lands have a \"lawful\" government - A tyrant who owns all the towns, mines and dwellings. \n\nThe tyrant would be assigned a colour from unused player colours and appear in the game, becomes the owner of neutral cities, mines and dwellings (levels 1-4). The tyrant, at the start, gets a few \"legendary\" characters and resources, the number of which depends upon the number of towns and selected difficulty level. \n\nDepending on the map-template, the tyrant can be VERY strong!",
+          "category": "World Events",
+          "page": "Rules and AI"
+        },
+        {
+          "key": "era_scripts.option.771",
+          "id": "771",
+          "wog_option": "771",
+          "name": "Randomizer",
+          "hint": "Randomizer",
+          "popup": "Randomizer\n\nOption 771 [Author - Algor]\n\nThe main purpose of this script is to vary the game on random maps by adding random restrictions, events, changes in creature growths and heroes starting skills.\n\nTo learn more about the events and changes look in the file \"option 771 - randomizer.ini\". You can also change the parameters of innovation.",
+          "category": "World Events",
+          "page": "Rules and AI"
+        },
+        {
+          "key": "era_scripts.option.772",
+          "id": "772",
+          "wog_option": "772",
+          "name": "External Dwellings Upgrades",
+          "hint": "External Dwellings Upgrades",
+          "popup": "External Dwellings Upgrades\n\nOption 772 [Author - Archer30, daemon_n, Idea - Algor]\n\nUpgraded creatures in external dwellings and refugee camps can now upgrade non-upgraded creatures in the hero's army for a fee, the amount of which depends on the difficulty level and \"Diplomatic bargaining\" option (if enabled).\n\nOn the normal difficulty level, the fee equals the upgrade cost in a town. On easy - 90%, on impossible - 130%.\n\nFor AI players this upgrade is automatic, free and without experience penalty for upgrading creatures.",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.773",
+          "id": "773",
+          "wog_option": "773",
+          "name": "Landing Navigation",
+          "hint": "Landing Navigation",
+          "popup": "Landing Navigation\n\nOption 773 [Author - Algor]\n\nLanding in a boat and disembarkation now cost 600 movepoints (MP). The skill \"Navigation\" reduces this cost by 100/200/300 MP (The \"Navigation\" specialization adds +100 MP), but the speed bonus is reduced to 10/20/30%.\n\nIf map contains less than 15% of water, then\n- \"Navigation\" is replaced by \"Logistics\" in the starting skills, specializations, universities, witches and scholars\n- map will not generate \"water\" artifacts,\n- \"water\" spells are forbidden in the Mage Guilds.\n\n* \"Navigation\" can still be offered at level-up.\n\n** If the \"spell banning\" options (scrolls/scholars/spell shrines/starting spells) are selected, water spells will be forbidden.",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.774",
+          "id": "774",
+          "wog_option": "774",
+          "name": "Experience Exchange",
+          "hint": "Experience Exchange",
+          "popup": "Experience Exchange\n\nOption 774 [Author - Algor]\n\nHeroes with the Scholar skill, at level-up, accumulate some experience that can be transmitted when allied heroes meet.\n\nThe learning process takes some time (movepoints) for both heroes, depending on the amount of transmitted experience and hero's Scholar level.\n\nAI players spend only half as much movepoints.",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.775",
+          "id": "775",
+          "wog_option": "775",
+          "name": "Neutral Monsters Exchange",
+          "hint": "Neutral Monsters Exchange",
+          "popup": "Neutral Monsters Exchange\n\nOption 775 [Author - Algor]\n\nExchange low-level neutrals for high-level neutrals in relevant dwellings on favorable terms.\n\n{Peasants} => {Halflings}, {Rogues}, {Mummies}, {Werewolves}.\n{Halflings} => {Rogues}, {Mummies} and {Werewolves}.\n{Rogues} => {Nomads}, {Mummies} and {Werewolves}.\n{Boars} => {Nomads}, {Trolls}.\n{Nomads} =>{ Trolls}.\n\nAI always uses the exchange.",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.776",
+          "id": "776",
+          "wog_option": "776",
+          "name": "Elemental Suppression",
+          "hint": "Elemental Suppression",
+          "popup": "Elemental Suppression\n\nOption 776 [Author - Algor]\n\n\"Eagle Eye\" is replaced by \"Elemental Suppression\" (ES).\n\nDuring battle, enemies levels of Air/Water/Fire/Earth Magic are reduced by the hero's (ES) level.\n\nIf enemy also has (ES) then the skills first neutralize each other (like Tactics), and then the remaining (ES) effect goes on \"Magic\" skills.\n\nES speciality acts as an additional level of (ES).\n\n\"Bird of Perception\", \"Stoic Watchman\" and \"Emblem of Cognizance\" acts as +1/+1/+2 level of ES (ES not required).",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.777",
+          "id": "777",
+          "wog_option": "777",
+          "name": "Enhanced Resistance",
+          "hint": "Enhanced Resistance",
+          "popup": "Enhanced Resistance\n\nOption 777 [Author - Algor]\n\nResistance is enhanced with a \"golem-like\" component, reducing spell damage by 5/10/15%. Skill specialists hava an additional 5%.\n\n\"Garniture of Interference\", \"Surcoat of Counterpoise\" and \"Boots of Polarity\" are enhanced with 5/10/15% \"golem-like\" resistance.\n\nThis option disables the WoG-option \"Resistance II\".",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.778",
+          "id": "778",
+          "wog_option": "778",
+          "name": "Neighbor Creatures",
+          "hint": "Neighbor Creatures",
+          "popup": "Neighbor Creatures\n\nOption 778 [Author - Algor]\n\nCombines in the dwellings of various \"friendly\" neutral creatures:\n\n{Peasants} and {Halflings}.\n{Rogues}, {Boars} and {Nomads}.\n{Mummies} and {Werewolves}.\n{Sharpshooter} and {Arctic} with {Lava} ones.\n{War Zealots}, {Sorceress} and {Enchanters}.\n{Nightmares} and {Hell Steeds}.\n{Gorynyches} and {Trolls} (in Gorynyches Cave only).",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.779",
+          "id": "779",
+          "wog_option": "779",
+          "name": "Advanced Learning Stones",
+          "default": "1",
+          "hint": "Advanced Learning Stones",
+          "popup": "Advanced Learning Stones\n\nOption 779 [Author - Algor]\n\nThe Learning Stones now give more experience to high level heroes (+100 experience per level).",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.780",
+          "id": "780",
+          "wog_option": "780",
+          "name": "Size-limited Cities",
+          "hint": "Size-limited Cities",
+          "popup": "Size-limited Cities\n\nOption 780 [Author - Algor]\n\nLimits the number of creatures available for hire in towns (3* normalgrowth). Creature growth over this limit will be lost.\n\nHorde buildings that increase the limit of the corresponding creatures (Grail, external dwellings and \"legion artifacts\") the limit no longer increases.\n\nIf option 785 \"Peons\" is enabled, then for AI 20/25/33/50/100% of the extra creatures (depending on the level of difficulty) become peons.",
+          "category": "Town Development and Recruitment",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.781",
+          "id": "781",
+          "wog_option": "781",
+          "name": "Conflux Balancing",
+          "hint": "Conflux Balancing",
+          "popup": "Conflux Balancing\n\nOption 781 [Author - Algor]\n\nGrowth of Pixie / Sprite: 15\nGrowth of All Elementals: 5\nFirebirds/Phoenixes are now treated as \"elemental\".",
+          "category": "Army Balance and Upgrades",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.782",
+          "id": "782",
+          "wog_option": "782",
+          "name": "Medicine",
+          "hint": "Medicine",
+          "popup": "Medicine\n\nOption 782 [Author - Algor]\n\nThe skill \"First Aid\" is replaced by \"Medicine\".\n\n\"Medicine\" increases health for regular living units by 1/2/3. First aid tents healing is increased: 0-25/26-50/51-75/76-100.\n\nSkill specialists get another +1 to creature health and +25 to first aid tent healing.",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.783",
+          "id": "783",
+          "wog_option": "783",
+          "name": "Scholars Instead of Obelisks",
+          "default": "1",
+          "hint": "Scholars Instead of Obelisks",
+          "popup": "Scholars Instead of Obelisks\n\nOption 783 [Author - Algor]\n\nAll obelisks on the map are replaced by scholars.\n\nScholars now do not offer primary skill learning if it's impossible to learn his subject. Instead he asks the hero what he/she wants to learn and demandsa fee for the training, the size of which depends on the subject matter.\n\nRestrictions do not apply to AI: AI learns and gets free primary skills, even if the training is not possible.",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.785",
+          "id": "785",
+          "wog_option": "785",
+          "name": "Peons",
+          "hint": "Peons",
+          "popup": "Peons\n\nOption 785 [Author - Algor]\n\nUnits in the town garrison can now be disbanded and sent to work to increase the daily income of the town. \n\nYou can view information about current income and adding new peons by pressing a new button in the town screen. \n\nIncome from peons directly depends on it's Fight Value. Peasants work with a fivefold efficiency. \n\nDisbanded units can not be collected again! \n\nAI-players never use this feature, but with the option 780 \"Size-limited cities\" 20/25/33/50/100% of \"extra\" AI creatures (depending on the level of difficulty) goes into the category of peons.",
+          "category": "Economy",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.786",
+          "id": "786",
+          "wog_option": "786",
+          "name": "Diplomatic Bargaining",
+          "hint": "Diplomatic Bargaining",
+          "popup": "Diplomatic Bargaining\n\nOption 786 [Author - daemon_n, Archer30, Idea - Algor]\n\nHeroes with the Diplomacy skill receive a discount when hiring creatures in outer dwellings or upgrading creatures in a Hill Fort. \n\nThe discount is 10% * Diplomacy level (only the gold part of the price).\n\nDiplomacy also reduces the surrender price (20/40/60%). \n\nAll neutral monster stacks' hostility ratings are set to Savage they are set to always join hero.\n\nEach worn \"Diplomacy\" artifact also gives a 10% discount (Diplomacy isn't required) and reduces surrender price by 10%",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.787",
+          "id": "787",
+          "wog_option": "787",
+          "name": "New Mana Regeneration System",
+          "hint": "New Mana Regeneration System",
+          "popup": "New Mana Regeneration System\n\nOption 787 [Author - Algor]\n\nNow the heroes will recover 3% every day of their maximum mana reserve (min. 1), but visiting magical wells only restore 20% (min. 20).\n\nOvernight stay in a town with a Mage Guild will restore a 20% reserve (min. 20) dependant on Guild level.\n\nMysticism and Mana Artifacts allow restoring additional mana on a daily basis and when visiting wells and sleepovers in towns with mage guilds.\n\nAI heroes receive the same bonus and corresponds to one level of the Mysticism skill. (+3%/+20% min. 1/20) for every level of difficulty above \"Easy\".\n\nThis option automatically disables the spell points regeneration feature of Wog- option 35 \"Mysticism I\".",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.788",
+          "id": "788",
+          "wog_option": "788",
+          "name": "Mortal Heroes",
+          "hint": "Mortal Heroes",
+          "popup": "Mortal Heroes\n\nOption 788 [Author - Algor]\n\nA hero who lost a battle (not retreated or surrendered) will reborn with new parameters, skills and specialty.",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.789",
+          "id": "789",
+          "wog_option": "789",
+          "name": "Critical Sorcery",
+          "default": "1",
+          "hint": "Critical Sorcery",
+          "popup": "Critical Sorcery\n\nOption 789 [Author - Algor]\n\nNow each hero with Sorcery has 10%/20%/30% chance to deal sesquialteral damage with a spell for each target. \n\nSkill specialists have +10% for a critical chance. \n\nParts of Ring of the Magi get +5/10/15% to the chance of Critical damage and the Ring itself is +50%. \n\nEnabling this option disables the WoG-option \"Sorcery II\".",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.790",
+          "id": "790",
+          "wog_option": "790",
+          "name": "Mana Arrow",
+          "hint": "Mana Arrow",
+          "popup": "Mana Arrow\n\nOption 790 [Author - daemon_n, Archer30, Idea - Algor]\n\nThis script expands the \"Magic Arrow\" spell, making it possible to use all available mana to deal extra damage (*).\n\nDamage = Power * Mana : 2 + X * Mana, where X = max(Air/Water/Earth/Fire) Magic skill (0-3)\n\nCiele, as a Magic Arrow specialist, gets damage bonus +5% per hero level.\n\nAI always uses all mana using \"Magic Arrow\".\n\n* If the new damage is less than the standard, ordinary \"Magic Arrow\" is used.",
+          "category": "Magic and Scrolls",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.792",
+          "id": "792",
+          "wog_option": "792",
+          "name": "Not a Place for People",
+          "hint": "Not a Place for People",
+          "popup": "Not a Place for People\n\nOption 792 [Author - Algor]\n\nThe game is set to use double the radius of \"thinking\" of SoD AI.\n\nOn the first day of the game, AI heroes get an experience bonus depending on the selected difficulty level: 0/1000/4000/9000/16000, which corresponds to the starting level the first AI heroes will be (i.e. level 1/2/4/7/10).\n\nAI can see towns on the map and seeks to capture them with high priority.",
+          "category": "Artificial Intelligence",
+          "page": "Rules and AI"
+        },
+        {
+          "key": "era_scripts.option.793",
+          "id": "793",
+          "wog_option": "793",
+          "name": "Economy",
+          "hint": "Economy",
+          "popup": "Economy\n\nOption 793 [Author - Algor]\n\nEconomy replaces the Estates skill. Each level of Economy for each hero increases the daily income of towns by 5%. Skill specialists have a doubled effect.\n\nThe town's income is considered as income from administrative buildings (e.g. Capitol) and Grail.\n\nIf \"Peons\" is enabled, income from them is also considered.",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.794",
+          "id": "794",
+          "wog_option": "794",
+          "name": "Opened Map",
+          "hint": "Opened Map",
+          "popup": "Opened Map\n\nOption 794 [Author - Archer30, Idea - Algor]\n\nBefore the start of the game, you are given a selection menu for which players can see the full map.\n\nThis option may be useful for testing map templates, as well as fans of offline tournaments and playing the game with a revealed map.",
+          "category": "Map Exploration",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.795",
+          "id": "795",
+          "wog_option": "795",
+          "name": "Nightly Scouting",
+          "hint": "Nightly Scouting",
+          "popup": "Nightly Scouting\n\nOption 795 [Author - Algor, Sandris (graphics)]\n\nBefore and during the game on some available map areas, random events are placed that can be activated by any hero who sleeps over (ends turn) on that area or the areas nearby.\n\nHeroes with the Scouting skill and/or artifacts Speculum and Spyglass, during the night, can detect events in neighbouring areas.\n\nNo more than one event is activated per night (even if there are several events in the search radius). After activation, the event disappears regardless of whether the hero has used it or not.\n\nAI uses events only if they are beneficial to him/her.",
+          "category": "Secondary Skills",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.796",
+          "id": "796",
+          "wog_option": "796",
+          "name": "Use of the Scrolls, Banners And Artifacts",
+          "default": "1",
+          "hint": "Use of the Scrolls, Banners And Artifacts",
+          "popup": "Use of the Scrolls, Banners and Artifacts\n\nOption 796 [Author - Algor]\n\nCtrl-clicking on artifacts from the Hero screen or Heroes meeting screen to sacrifice them.\n\nBy Ctrl-clicking on Spell Scrolls the hero can get 15* <spell level> of mana points.\n\nBy Ctrl-clicking on Warlord's Banner it can reward +500 movement points that lasts over the next three days.\n\nBy Ctrl-clicking on the other artifacts, you can sacrifice it without even being at an altar, but the experience gained in this way will be half as much.\n\nAI with a lack of mana (less than 20%) at the beginning of the day destroys the first of the scrolls in his/her backpack getting 15 * <spell level> * <DL> mana points. Also before the battle, the AI hero can destroy up to three spell scrolls.\n\nAnd if there is no speed bonus, the AI uses a banner in his/her backpack getting 500 * <DL>movement points for 3 days* <DL>.\n\nAnd an AI hero who is weaker than level 15, once a day sacrifices one artifact in his/her backpack that's not a Major or Relic, commander's, \"empty\" (new) or a part of a composite artifact.\n\n<DL> - difficulty level bonus - 0.8/1.0/1.0/1.2/1.6/2.0.",
+          "category": "Artifacts",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.820",
+          "id": "820",
+          "wog_option": "820",
+          "name": "Additional Upgrades",
+          "hint": "Additional Upgrades",
+          "popup": "Additional Upgrades\n\n\nOption 820 [Author - Gamecreator]\n\nAdditional Upgrades in Hill Forts:\n\nHalberdier - Swordsman; Crusader - Cavalier;\nMarksman - Sharpshooter;\nCentaur Captain - Sylvan Centaur;\nGrand Elf - Sharpshooter;\nWar Unicorn - Hell Steed;\nRogue - Nomad;\nArch Mage - Enchanter;\nGhost - Wraith;\nBlood Dragon - Dracolich - Blood Dragon;\nHobgoblin - Boar;\nGnoll Marauder - Werewolf;\nIce Elemental - Water Messenger;\nEnergy Elemental - Fire Messenger;\nMagma Elemental - Earth Messenger;\nStorm Elemental - Air Messenger;\nCrystal/Faerie/Rust Dragon - Azure Dragon;",
+          "category": "Army Balance and Upgrades",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.821",
+          "id": "821",
+          "wog_option": "821",
+          "name": "Non-neutrals",
+          "default": "1",
+          "hint": "Non-neutrals",
+          "popup": "Non-neutrals\n\nOption 821 [Author - Chortos-2]\n\nMost neutrals now belong to new factions:\n\nSupreme Archangel, War zealot ------------------------------------------------------------------ Castle;\n\nAll Sharpshooters, Diamond Dragon, Sylvan Centaur ----------------------------------- Rampart;\n\nGolems, Crystal Dragon, Enchanter, Sorceress, Santa Gremlin, Lord of Thunder - Tower;\n\nHell Baron --------------------------------------------------------------------------------------------- Inferno;\n\nMummy, Blood Dragon, Dracolich, Ghost ------------------------------------------------ Necropolis;\n\nDarkness Dragon ---------------------------------------------------------------------------------- Dungeon;\n\nBoar, Ghost Behemoth ------------------------------------------------------------------------ Stronghold;\n\nHell Hydra, Gorynych, Werewolf --------------------------------------------------------------- Fortress;\n\nSacred Phoenix, all Messengers ----------------------------------------------------------------- Conflux.",
+          "category": "Army Balance and Upgrades",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.822",
+          "id": "822",
+          "wog_option": "822",
+          "name": "Sharpshooters and Wraiths Block",
+          "hint": "Sharpshooters and Wraiths Block",
+          "popup": "Sharpshooters and Wraiths Block\n\nOption 822, [Author - Archer30]\n\nWights and Wraiths get 30% chance to block any physical damage and have reduced health.\nArctic Sharpshooters get 15% of physical damage reduction.\nLava Sharpshooters get 20% of physical damage reduction.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.824",
+          "id": "824",
+          "wog_option": "824",
+          "name": "Maximum Secondary Skills",
+          "default": "1",
+          "hint": "Maximum Secondary Skills",
+          "popup": "Maximum Secondary skills\n\nOption 824 [Author - igrik]\n\nThe number of secondary skills available to heroes is increased to 12 (you can specify your value in file \"option 824 - 28 secondary skills.ini\"). \n\nTo be able to view skills that do not fit in the list, you must enable WoG option \"Display hidden skills\" or ERA-mod \"Secondary skills scrolling\".",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.878",
+          "id": "878",
+          "wog_option": "878",
+          "name": "Experience For Letting Go",
+          "default": "1",
+          "hint": "Experience For Letting Go",
+          "popup": "Experience For Letting Go\n\nOption 878 [Author - DracoLich]\n\nNow hero gains experience if he/she lets monsters go without a fight. Gained experience is dependent on the difficulty level (Default is 100/80/60/40/20% of experience you would've gotten for killing them). \n\nIn file \"option 878 - experience for letting go.ini\" you can override these coefficients.",
+          "category": "Neutral Armies and Rewards",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.879",
+          "id": "879",
+          "wog_option": "879",
+          "name": "Capture Mills and Gardens",
+          "default": "1",
+          "hint": "Capture Mills and Gardens",
+          "popup": "Capture Mills and Gardens\n\nOption 879 [Author - DracoLich]\n\nNow, once a hero visits a Mystical Garden, Windmill or Waterwheel, you become the owner of that building and you gain resources at the beginning of the week.",
+          "category": "Economy",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.880",
+          "id": "880",
+          "wog_option": "880",
+          "name": "Study Spell Scrolls",
+          "default": "1",
+          "hint": "Study Spell Scrolls",
+          "popup": "Study Spell Scrolls\n\nOption 880 [Author - Archer30, Idea - DracoLich]\n\nNow, in the Mages Guild, you can rewrite the spell from the scrolls in the hero's Spell Book if the spell level no higher than the Guild level. The procedure is not free, of course.\n\nSHIFT+Left-click on the Mages Guild for writing spells.",
+          "category": "Magic and Scrolls",
+          "page": "Artifacts and Magic"
+        },
+        {
+          "key": "era_scripts.option.881",
+          "id": "881",
+          "wog_option": "881",
+          "name": "Custom Primary Skills",
+          "hint": "Custom Primary Skills",
+          "popup": "Custom Primary Skills\n\nOption 881 [Author - DracoLich]\n\nNow you can manually assign primary skills after leveling up. That is, you can do \"Pure Mage\" by putting all skill points in Power and Knowledge or \"Tank\" in Attack and Defense.\n\nTo do this, after obtaining new skill points, SHIFT-Click in the hero screen on the desired primary skill icon.\n\"Basic Scholar\" gives the hero an extra skill point every 4 levels.\n\"Advanced Scholar\" gives an extra skill point every 2 levels.\n\"Expert Scholar\" gives an extra skill point every time you level up.\n\nThis option is automatically disabled when using option 733 Third Class.",
+          "category": "Hero Development",
+          "page": "Heroes and Skills"
+        },
+        {
+          "key": "era_scripts.option.882",
+          "id": "882",
+          "wog_option": "882",
+          "name": "Skeletons With Artifacts",
+          "hint": "All the skeletons objects on the map will contain the artifact.",
+          "popup": "Skeletons With Artifacts\n\nOption 882 [Author - DracoLich]\n\nUsing this script makes all the skeletons (objects) on the map contain an artifact.\n\nThe artifact is completely random, but may be protected by a reinforced skeleton which doesn't want to give away the treasure.",
+          "category": "Objects and Dwellings",
+          "page": "Adventure Map"
+        },
+        {
+          "key": "era_scripts.option.994",
+          "id": "994",
+          "wog_option": "994",
+          "name": "Military Duty",
+          "default": "1",
+          "hint": "Military Duty",
+          "popup": "Military Duty\n\nOption 994 [Author - Algor]\n\nEvery Sunday, unredeemed creatures from captured external dwellings arrive for hire in player city, with suitable built-up housing.\n\nIf cities with suitable built-up housing the player does not, creatures remain in external dwellings.\n\nThe order of choosing a city from several suitable ones, determined by the order in the list of players and cities - city, being in the list above has a higher priority.\n\nThe order of cities can be changed using WoG-option 244 \"Hero and Town List Reordering\".\n\nLevel 8 creatures are not subject to military duty and fall into the cities of the hero in a standard way for them.",
+          "category": "Town Development and Recruitment",
+          "page": "Towns and Economy"
+        },
+        {
+          "key": "era_scripts.option.995",
+          "id": "995",
+          "wog_option": "995",
+          "name": "Ranged Death Stare",
+          "hint": "Ranged Death Stare",
+          "popup": "Ranged Death Stare\n\nOption 995 [Author - Berserker]\n\nMighty Gorgons can make an alternative attack at a distance with \"Death Stare\". Press the Esc key to toggle between normal and ranged attacks. Distance is limited by the speed of the Mighty Gorgons. Mighty Gorgons kill 3.6/2.2/1.1/0.8/0.6/0.4/0.2*<Mighty Gorgons amount> enemies depending on creature level. Ranged Death Stare does not work on level 8 creatures, commanders, undead creatures and machines.\n\nNote: AI does not use Ranged Death Stare.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.996",
+          "id": "996",
+          "wog_option": "996",
+          "name": "Gnolls Marauders Strike First",
+          "hint": "Gnolls Marauders Strike First",
+          "popup": "Gnolls Marauders Strike First\n\nOption 996 [Author - daemon_n, Idea - Berserker]\n\nGnolls Marauders retaliate BEFORE enemy attacks.\n\nThe Fight Value of Gnolls Marauders is increased by 5%.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        },
+        {
+          "key": "era_scripts.option.997",
+          "id": "997",
+          "wog_option": "997",
+          "name": "Grand Maneuver",
+          "hint": "Grand Maneuver",
+          "popup": "Grand Maneuver\n\nOption 997 [Author - Archer30, Idea - Berserker]\n\nThe Grand Elves can now make a Grand Maneuver: Move 1 hex away from the enemy and make a single shot.",
+          "category": "Creature Abilities",
+          "page": "Creatures and Combat"
+        }
+      ]
+    }
+  }
+}

@@ -1,43 +1,76 @@
 #pragma once
-// #include "header.h"
-#include "EMod.h"
-// #include "EModPageCategory.h"
-// #include "EOption.h"
-constexpr int MAX_OPTION_COUNT = 1000;
-using namespace h3;
-class EraMenuDlg : virtual public H3Dlg, public MenuItem
+
+#include "pch.h"
+#include "OptionsRuntime.h"
+#include "OptionMenuModel.h"
+#include "OptionsMenuUI.h"
+
+class EraMenuDlg final : public era_options::OptionsDialog
 {
+    struct SidebarEntry { int mod; int page; };
+    struct OptionRow
+    {
+        H3DlgText *name = nullptr;
+        H3DlgDefButton *checkbox = nullptr;
+        H3DlgDefButton *radio = nullptr;
+        era_options::OptionCell cell;
+    };
 
-    bool m_needRestart = false;
-    H3String m_searchInput;
+    era_options::OptionMenuModel model;
+    std::vector<SidebarEntry> sidebarEntries;
+    std::vector<H3DlgCaptionButton *> modRows;
+    std::vector<OptionRow> optionRows;
+    std::vector<int> rowHeights;
+    std::vector<era_options::OptionGridRow> grid;
+    H3DlgScrollbar *modScroll = nullptr;
+    H3DlgScrollbar *optionScroll = nullptr;
+    std::map<std::pair<int, int>, H3DlgScrollbar *> pageScrollbars;
+    H3DlgEdit *search = nullptr;
+    H3DlgText *summary = nullptr;
+    H3DlgText *empty = nullptr;
+    H3DlgText *pageTitle = nullptr;
+    int firstMod = 0;
+    int firstOption = 0;
+    int lastOptionStart = 0;
+    int listHeight = 0;
+    int sidebarHeight = 0;
+    int sidebarWidth = 0;
+    int optionX = 0;
+    int columnWidth = 0;
+    int textWidth = 0;
+    bool activated = false;
+    bool resizeRequested = false;
+    bool bansRequested = false;
+    bool fullScreen = false;
+    bool allowEditing = true;
+    bool currentMap = false;
 
-    H3DlgEdit *m_searchWidget = nullptr;
+    EraMenuDlg(int width, int height, bool fullScreen, const era_options::OptionMenuModel &state, int sidebarPosition,
+        bool allowEditing, bool currentMap);
+    int DisplayValue(const era_options::EOption &option) const;
+    void CreateBackground();
+    void CreateWidgets();
+    void RebuildOptions();
+    void SelectPageScrollbar();
+    void RefreshOptions();
+    void RefreshMods(bool revealSelection = false);
+    void SyncSearch();
+    void UpdateScrollActivity();
+    bool SaveAndClose();
+    void ShowErrors();
+    era_options::EOption *OptionAtControl(int controlId) const;
+    const OptionRow *RowAtControl(int controlId) const;
+    static void __fastcall ModScrollProc(INT32 tick, H3BaseDlg *dlg);
+    static void __fastcall OptionScrollProc(INT32 tick, H3BaseDlg *dlg);
+    INT vDialogProc(H3Msg &msg) override;
+    INT vPreProcess(H3Msg &msg) override;
+    BOOL OnKeyPress(eVKey key, eMsgFlag flag) override;
+    BOOL OnLeftClick(INT itemId, H3Msg &msg) override;
+    BOOL OnRightClick(H3DlgItem *item) override;
+    BOOL OnMouseWheel(INT direction) override;
+    BOOL OnMouseHover(H3DlgItem *item) override;
+    void OnClose(INT itemId) override;
 
-  protected:
-    INT16 options[MAX_OPTION_COUNT]{};
-    int m_ratio{};
-    std::vector<EMod *> mods;
-
-    EraMenuDlg(int width, int height, std::vector<std::string> &modNames);
-    bool NeedRestart() const;
-    virtual ~EraMenuDlg();
-
-    // void
-
-    BOOL DialogProc(H3Msg &msg) override;
-    // BOOL OnLeftClick(INT itemId, H3Msg& msg) override;
-    // BOOL OnLeftClickOutside() override;
-    // BOOL OnMouseWheel(INT32 direction) override;
-    // BOOL OnNotify(H3DlgItem* it, H3Msg& msg) override;
-
-    BOOL CreateMods(EMod &mod, int i);
-
-    BOOL CreateWidgets();
-    // BOOL InitMods(std::vector<H3String>& modNames);
   public:
-    static BOOL CreateAndRun();
-
-    // BOOL OnM
-    //	BOOL OnRightClickOutside() override;
-    //	BOOL OnRightClick(H3DlgItem* it) override;
+    static BOOL CreateAndRun(bool showBans = false, bool allowEditing = true);
 };

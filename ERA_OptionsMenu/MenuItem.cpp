@@ -1,5 +1,7 @@
 #include "MenuItem.h"
 
+int MenuItem::item_id = 100;
+
 MenuItem::MenuItem()
 {
 }

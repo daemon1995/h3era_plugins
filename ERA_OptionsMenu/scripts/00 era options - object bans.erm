@@ -1,0 +1,108 @@
+ZVSE2
+
+; Selected object IDs are snapshotted by the plugin at new-map initialization.
+; These callbacks never consult the options registry or the future-map profile.
+
+!?FU(ERA_MENU_IsSpellBanned);
+!#VA(spell:x) (banned:x);
+!!SN:F^ERA_OptionsMenu:EraOptions_MapObjectBanned^/0/(spell);
+!!VR(banned):Sv1;
+
+!?FU(ERA_MENU_Bans_Sources);
+!#VA(source:y) (active[5]:y);
+!!re (source)/0/4;
+  !!SN:F^ERA_OptionsMenu:EraOptions_MapBanSource^/(source);
+  !!VR(active[source]):Sv1;
+!!en;
+
+; Replace selected spells at shrines with a spell of the same level if possible.
+!!if&(active[1]);
+  !!re (type:y)/(OBJ_SHRINE_OF_MAGIC_INCANTATION)/(OBJ_SHRINE_OF_MAGIC_THOUGHT);
+    !!VR(x:y):S-1;
+    !!re i;
+      !!UN:U(type)/(ANY_OBJ)/-1/(x)/(y:y)/(z:y);
+      !!br&(x)<0;
+      !!SR(x)/(y)/(z):S?(spell:y);
+      !!FU(ERA_MENU_IsSpellBanned):P(spell)/?(banned:y);
+      !!co&(banned)=0;
+      !!VR(level:y):S(type) -87;
+      !!SN:F^ERA_OptionsMenu:EraOptions_ReplacementSpell^/(level);
+      !!VR(replacement:y):Sv1;
+      !!if&(replacement)>=0;
+        !!SR(x)/(y)/(z):S(replacement);
+      !!el;
+        !!UN:O(x)/(y)/(z);
+      !!en;
+    !!en;
+  !!en;
+!!en;
+
+; Scholars without an available spell grant a primary skill instead.
+!!if&(active[2]);
+  !!VR(x):S-1;
+  !!re i;
+    !!UN:U(OBJ_SCHOLAR)/(ANY_OBJ)/-1/(x)/(y)/(z);
+    !!br&(x)<0;
+    !!SC(x)/(y)/(z):T?(type);
+    !!co&(type)<>2;
+    !!SC(x)/(y)/(z):L?(spell);
+    !!VR(spell):-1024;
+    !!FU(ERA_MENU_IsSpellBanned):P(spell)/?(banned);
+    !!co&(banned)=0;
+    !!SS(spell):L?(level);
+    !!SN:F^ERA_OptionsMenu:EraOptions_ReplacementSpell^/(level);
+    !!VR(replacement):Sv1;
+    !!if&(replacement)>=0;
+      !!SC(x)/(y)/(z):L(replacement);
+    !!el;
+      !!VR(skill:y):R0/0/3;
+      !!SC(x)/(y)/(z):T1 S(skill);
+    !!en;
+  !!en;
+!!en;
+
+; Remove empty scroll sources rather than substituting another banned spell.
+!!if&(active[3]);
+  !!VR(x):S-1;
+  !!re i;
+    !!UN:U(OBJ_SPELL_SCROLL)/(ANY_OBJ)/-1/(x)/(y)/(z);
+    !!br&(x)<0;
+    !!AR(x)/(y)/(z):V?(spell);
+    !!FU(ERA_MENU_IsSpellBanned):P(spell)/?(banned);
+    !!co&(banned)=0;
+    !!SS(spell):L?(level);
+    !!SN:F^ERA_OptionsMenu:EraOptions_ReplacementSpell^/(level);
+    !!VR(replacement):Sv1;
+    !!if&(replacement)>=0;
+      !!OB(x)/(y)/(z):C(replacement);
+    !!el;
+      !!UN:O(x)/(y)/(z);
+    !!en;
+  !!en;
+  !!VR(x):S-1;
+  !!re i;
+    !!UN:U(OBJ_PANDORAS_BOX)/(ANY_OBJ)/-1/(x)/(y)/(z);
+    !!br&(x)<0;
+    !!re (spell)/0/69;
+      !!FU(ERA_MENU_IsSpellBanned):P(spell)/?(banned);
+      !!PA(x)/(y)/(z)&(banned):S(spell)/(NO_SPELL);
+    !!en;
+  !!en;
+!!en;
+
+; Remove chosen spells from starting spellbooks after other initializers ran.
+!!if&(active[4]);
+  !!re (spell)/0/69;
+    !!FU(ERA_MENU_IsSpellBanned):P(spell)/?(banned);
+    !!co&(banned)=0;
+    !!re (hero:y)/0/(HERO_LAST_WOG);
+      !!HE(hero):M(spell)/(FALSE);
+    !!en;
+  !!en;
+!!en;
+
+!?FU(OnAfterErmInited_Quit);
+; Run once, after other initializers. Script reloads must not alter played maps.
+!!FU|i^era_options.bans.version^<>1/i^era_options.bans.sources_applied^:E;
+!!FU(ERA_MENU_Bans_Sources):P;
+!!VRi^era_options.bans.sources_applied^:S(TRUE);

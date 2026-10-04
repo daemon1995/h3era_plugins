@@ -1,0 +1,87 @@
+{
+  "era_options": {
+    "ui": {
+      "title": "Опции ERA",
+      "all": "Все моды",
+      "search": "Поиск по названию, ключу, ID и тегам",
+      "clear": "Сброс",
+      "defaults": "По умолчанию",
+      "errors": "Ошибки JSON",
+      "empty": "Нет опций. Добавьте описание в Lang/era_options.json активного мода.",
+      "save_error": "Не удалось сохранить значения опций или профиль WoG."
+    },
+    "wog scripts": {
+      "name": "Примеры опций",
+      "options": [
+        {
+          "key": "example.checkbox",
+          "change_during_game": "true",
+          "name": "Демонстрационная галочка",
+          "hint": "Нажмите для переключения; ПКМ открывает описание.",
+          "popup": "Эта опция демонстрирует загрузку из JSON. Игровые скрипты могут читать её через API плагина.",
+          "tags": [
+            "example",
+            "interface"
+          ],
+          "default": "true",
+          "disables": [
+            { "id": "20000" },
+            { "tag": "choice", "value": "0" }
+          ],
+          "page": "Интерфейс",
+          "category": "Галочки"
+        },
+        {
+          "key": "example.fixed",
+          "id": "20000",
+          "name": "Пример с явно заданным ID 20000",
+          "requires": [{ "tag": "choice", "value": "1" }],
+          "tags": [
+            "example",
+            "static"
+          ],
+          "default": "false",
+          "page": "Интерфейс",
+          "category": "Галочки"
+        },
+        {
+          "key": "example.mode",
+          "type": "choice",
+          "name": "Выбор режима (пример)",
+          "hint": "Выберите нужный вариант радиокнопкой. Демонстрационная галочка блокирует этот выбор.",
+          "choices": [
+            "Первый",
+            "Второй",
+            "Третий"
+          ],
+          "default": "1",
+          "tags": [
+            "example",
+            "choice"
+          ],
+          "page": "Правила игры",
+          "category": "Режимы"
+        },
+        {
+          "key": "example.disabled",
+          "name": "Недоступная для изменения опция",
+          "enabled": "false",
+          "default": "true",
+          "tags": [
+            "example",
+            "disabled"
+          ],
+          "page": "Интерфейс",
+          "category": "Общее"
+        },
+        {
+          "key": "example.hidden",
+          "name": "Скрытая опция, доступная через API",
+          "visible": "false",
+          "default": "false",
+          "category": "Общее"
+        }
+      ]
+    }
+  }
+}
