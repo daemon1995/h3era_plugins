@@ -291,27 +291,45 @@ bool WriteListTxt(const std::string &listPath, const ListTxtData &listTxt)
             fileContent += listTxt.lineEnding;
     }
 
-    const HANDLE listHandle = CreateFileA(listPath.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                                          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (listHandle == INVALID_HANDLE_VALUE)
+    // Write beside list.txt so replacing it never crosses filesystem volumes.
+    const size_t separator = listPath.find_last_of("\\/");
+    const std::string directory = separator == std::string::npos ? "." : listPath.substr(0, separator + 1);
+    char temporaryPath[MAX_PATH];
+    if (!GetTempFileNameA(directory.c_str(), "erm", 0, temporaryPath))
         return false;
+    const HANDLE listHandle = CreateFileA(temporaryPath, GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+                                          FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (listHandle == INVALID_HANDLE_VALUE)
+    {
+        DeleteFileA(temporaryPath);
+        return false;
+    }
 
     size_t bytesToWrite = fileContent.size();
     size_t bytesWrittenTotal = 0;
+    bool success = true;
     while (bytesToWrite != 0)
     {
         const DWORD writeSize = static_cast<DWORD>(std::min<size_t>(bytesToWrite, std::numeric_limits<DWORD>::max()));
         DWORD bytesWritten = 0;
         if (!WriteFile(listHandle, &fileContent[bytesWrittenTotal], writeSize, &bytesWritten, nullptr) || bytesWritten == 0)
         {
-            CloseHandle(listHandle);
-            return false;
+            success = false;
+            break;
         }
         bytesWrittenTotal += bytesWritten;
         bytesToWrite -= bytesWritten;
     }
 
-    return CloseHandle(listHandle) != FALSE;
+    if (success && !FlushFileBuffers(listHandle))
+        success = false;
+    if (!CloseHandle(listHandle))
+        success = false;
+    if (success)
+        success = MoveFileExA(temporaryPath, listPath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
+    if (!success)
+        DeleteFileA(temporaryPath);
+    return success;
 }
 
 BOOL UpdateListTxt()

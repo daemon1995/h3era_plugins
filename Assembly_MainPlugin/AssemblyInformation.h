@@ -1,5 +1,5 @@
 #pragma once
-#include <atomic>
+#include <future>
 
 class AssemblyInformation : public IGamePatch
 {
@@ -68,11 +68,14 @@ class AssemblyInformation : public IGamePatch
     {
         static constexpr LPCSTR LAST_VERSION_INI_KEY = "LastVersionReceived";
         static constexpr LPCSTR LAST_TIME_CHECKED_INI_KEY = "LastRemoteCheckTime";
-        std::atomic<bool> workDone;
+        // Only the game thread accesses the version, INI cache and display flag.
+        std::future<std::string> request;
+        bool workDone = false;
 
       public:
         virtual void GetJsonData(const char *jsonSubKey) final override;
         virtual void GetVersion() noexcept final override;
+        void ApplyCompletedRequest();
         // virtual void ClickProcedure() noexcept final override;
 
     } m_remoteVersion;

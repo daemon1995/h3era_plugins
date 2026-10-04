@@ -1,5 +1,6 @@
 #include "NotificationPanel.h"
 
+#include <algorithm>
 #include <fstream>
 #include <shlobj.h>
 #include <windows.h>
@@ -48,6 +49,7 @@ NotificationPanel::ModInfo::ModInfo(LPCSTR description, LPCSTR folderName, const
 BOOL NotificationPanel::ModInfo::MarkAsHiddenByUser() noexcept
 {
     isVisible = false;
+    isHiddenByUser = true;
 
     if (!savedAsHiddenByUser)
     {
@@ -99,7 +101,10 @@ BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
 
         externalLink = readSuccess && libc::strlen(link) > 0 ? link : nullptr;
 
-        currentDescriptionHash = Era::Hash32(displayedText, len);
+        const UINT newHash = Era::Hash32(displayedText, len);
+        if (newHash != currentDescriptionHash)
+            savedAsHiddenByUser = false;
+        currentDescriptionHash = newHash;
         return true;
     }
     return false;
@@ -301,7 +306,7 @@ void NotificationPanel::CreateModInfoList(std::vector<std::string> &modList) noe
     notificationsTotal = 0;
     if (const size_t length = modList.size())
     {
-        volatile int infoIndex = 0;
+        UINT infoIndex = 0;
         modInfos.reserve(length);
         for (size_t i = 0; i < length; i++)
         {
@@ -315,8 +320,8 @@ void NotificationPanel::CreateModInfoList(std::vector<std::string> &modList) noe
             LPCSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
             if (readSuccess && strlen(notificationText))
             {
-                modInfos.emplace_back(ModInfo(notificationText, modFolderNamePtr, ModInfo::NONE_INDEX));
-                modInfos.at(infoIndex).displayedIndex = infoIndex++;
+                modInfos.emplace_back(notificationText, modFolderNamePtr, ModInfo::NONE_INDEX);
+                modInfos.back().displayedIndex = ++infoIndex;
             }
             else
             {
@@ -329,8 +334,8 @@ void NotificationPanel::CreateModInfoList(std::vector<std::string> &modList) noe
                     LPCSTR notificationText = EraJS::read(h3_TextBuffer, readSuccess);
                     if (readSuccess && strlen(notificationText))
                     {
-                        modInfos.emplace_back(ModInfo(notificationText, modFolderNamePtr, modIndex));
-                        modInfos.at(infoIndex).displayedIndex = infoIndex++;
+                        modInfos.emplace_back(notificationText, modFolderNamePtr, modIndex);
+                        modInfos.back().displayedIndex = ++infoIndex;
                     }
 
                 } while (readSuccess && ++modIndex < ModInfo::NOTIFICATIONS_PER_MOD);
@@ -346,9 +351,11 @@ NotificationPanel::~NotificationPanel() noexcept
 
     for (auto runtime : runtimes.asArray)
     {
-        if (runtime->item && runtime->pcx && runtime->item->GetPcx() == runtime->pcx)
-        {
+        // An item may currently show backupScreen rather than its owned image.
+        if (runtime->item)
             runtime->item->SetPcx(nullptr);
+        if (runtime->pcx)
+        {
             runtime->pcx->Destroy();
             runtime->pcx = nullptr;
         }
@@ -398,10 +405,7 @@ void NotificationPanel::UpdateVisibleNotificationsList() noexcept
     notificationsVisible = 0;
     for (auto &i : modInfos)
     {
-        if (!i.isHiddenByUser && i.isVisible)
-        {
-            notificationsVisible++;
-        }
+        i.displayedIndex = !i.isHiddenByUser && i.isVisible ? ++notificationsVisible : 0;
     }
     if (isVisible && notificationsCounter)
     {
@@ -413,10 +417,9 @@ void NotificationPanel::UpdateVisibleNotificationsList() noexcept
 NotificationPanel::ModInfo *NotificationPanel::GetModInfoFromVisible(const UINT index) noexcept
 {
     ModInfo *result = nullptr;
-    volatile int i = 0;
     for (auto &it : modInfos)
     {
-        if (it.isVisible && it.displayedIndex == index)
+        if (!it.isHiddenByUser && it.isVisible && it.displayedIndex == index)
         {
             result = &it;
             break;
@@ -501,6 +504,8 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
     modInfo.delimiterFrame = H3DlgFrame::Create(x + 10, y + 30, width - 16, 1, highLightColor);
     modInfo.items.emplace_back(modInfo.delimiterFrame);
 
+    // Keep both text controls to avoid the game's scrollbar truncating a
+    // description after a language change.
     modInfo.descriptionTextScrollBar =
         H3DlgScrollableText::Create(modInfo.displayedText, x + 10, y + 40, width - 16, height - 53,
                                     NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, true);
@@ -539,96 +544,54 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
 
 void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNotifications) noexcept
 {
-    if (this->isVisible != visible)
-    {
-        this->isVisible = visible;
-        auto &background = runtimes.panelBackground.item;
+    auto *background = runtimes.panelBackground.item;
+    if (!notificationsTotal || !background || !runtimes.panelBackground.pcx || !backupScreen ||
+        this->isVisible == visible)
+        return;
 
+    if (visible)
+    {
+        for (auto &info : modInfos)
+        {
+            if (activateAllNotifications)
+                info.isHiddenByUser = false;
+            info.isVisible = !info.isHiddenByUser;
+        }
+        UpdateVisibleNotificationsList();
+        if (!notificationsVisible)
+            return;
+        if (!currentModInfo || currentModInfo->isHiddenByUser || !currentModInfo->isVisible)
+            currentModInfo = GetModInfoFromVisible(1);
+        if (!currentModInfo)
+            return;
+        currentModInfoIndex = currentModInfo->displayedIndex;
+
+        // Account for HD Mod's main menu drawing offset.
+        const int _x = x + (H3GameWidth::Get() - 800) / 2;
+        const int _y = y + (H3GameHeight::Get() - 600) / 2;
+        backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
+    }
+
+    this->isVisible = visible;
+    background->SetPcx(visible ? runtimes.panelBackground.pcx : backupScreen);
+    UpdateVisibleNotificationsList();
+    for (auto *item : items)
+    {
         if (visible)
         {
-            // making hd mod wrong main menu drawing offset fix
-            const int _x = x + (H3GameWidth::Get() - 800) / 2;
-            const int _y = y + (H3GameHeight::Get() - 600) / 2;
-            backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
-        }
-
-        background->SetPcx(visible ? runtimes.panelBackground.pcx : backupScreen);
-
-        volatile int index = 0;
-
-        if (activateAllNotifications)
-        {
-            for (auto &i : modInfos)
-            {
-                i.displayedIndex = ++index;
-                i.isHiddenByUser = false;
-                i.isVisible = visible; // (visible && !i.isHiddenByUser) || activateAllNotifications;
-            }
+            item->ShowActivate();
+            item->Draw();
+            item->Refresh();
         }
         else
-        {
-            for (auto &i : modInfos)
-            {
-                if (visible)
-                {
-                    if (!i.isHiddenByUser)
-                        i.displayedIndex = ++index;
-                }
-                else
-                {
-                    i.isHiddenByUser = false;
-                }
-                i.isVisible = visible && !i.isHiddenByUser;
-            }
-        }
-
-        if (this->notificationsTotal)
-        {
-            // if setting panel visible and there are notifications
-            if (visible)
-            {
-                if (currentModInfo == nullptr)
-                {
-                    currentModInfo = this->GetModInfoFromVisible(1);
-                    if (currentModInfo == nullptr)
-                    {
-                        currentModInfo = &modInfos[0];
-                    }
-                    currentModInfoIndex = currentModInfo->displayedIndex;
-                }
-                this->UpdateVisibleNotificationsList();
-            }
-            else if (notificationsVisible != this->notificationsTotal)
-            {
-                // now manage mod items
-                if (currentModInfo)
-                {
-                    SetModVisible(*currentModInfo, visible);
-                }
-
-                currentModInfoIndex = 0;
-                currentModInfo = nullptr;
-            }
-        }
-
-        // manage all items in panel
-        for (auto &i : items)
-        {
-            visible ? i->ShowActivate(), i->Draw(), i->Refresh() : i->HideDeactivate();
-        }
-
-        // now manage mod items
-        if (currentModInfo)
-        {
-            SetModVisible(*currentModInfo, visible);
-        }
-
-        // if panel is not visible draw backup screen
-        if (visible == false)
-        {
-            background->Draw();
-            background->Refresh();
-        }
+            item->HideDeactivate();
+    }
+    if (currentModInfo)
+        SetModVisible(*currentModInfo, visible);
+    if (!visible)
+    {
+        background->Draw();
+        background->Refresh();
     }
 }
 void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL visible) noexcept
@@ -637,11 +600,12 @@ void NotificationPanel::SetModVisible(ModInfo &modInfo, const BOOL visible) noex
     if (this->isVisible && visible == false)
     {
         auto &modBackground = this->runtimes.modBackground.item;
-        modBackground->Draw();
-        modBackground->Refresh();
+        if (modBackground)
+        {
+            modBackground->Draw();
+            modBackground->Refresh();
+        }
     }
-
-    this->isVisible = visible;
 
     if (visible)
     {
@@ -750,7 +714,7 @@ void NotificationPanel::Retranslate(const BOOL redraw) noexcept
 {
     bool readSuccess = false;
     LPCSTR str = EraJS::read(panelText::HIDE_ALL, readSuccess);
-    if (readSuccess)
+    if (readSuccess && hideAllButton)
     {
         hideAllButton->SetText(str);
         if (redraw)
@@ -760,7 +724,7 @@ void NotificationPanel::Retranslate(const BOOL redraw) noexcept
         }
     }
     str = EraJS::read(panelText::HIDE_ONE, readSuccess);
-    if (readSuccess)
+    if (readSuccess && hideOneButton)
     {
         hideOneButton->SetText(str);
         if (redraw)
@@ -770,7 +734,7 @@ void NotificationPanel::Retranslate(const BOOL redraw) noexcept
         }
     }
     str = EraJS::read(panelText::TITLE, readSuccess);
-    if (readSuccess)
+    if (readSuccess && panelTitle)
     {
         panelTitle->SetText(str);
         if (redraw)
@@ -796,7 +760,7 @@ void NotificationPanel::SwitchModInfo(const int step) noexcept
         if (newModInfoIndex != currentModInfoIndex)
         {
             auto assumedModInfo = GetModInfoFromVisible(newModInfoIndex);
-            if (currentModInfo != assumedModInfo)
+            if (assumedModInfo && currentModInfo != assumedModInfo)
             {
                 if (currentModInfo)
                 {
@@ -823,13 +787,15 @@ void OpenExternalFile(const char *path, const char *msg = nullptr);
 int __fastcall NotificationPanel::OnPanelCallerClick(void *msg) noexcept
 {
     auto *h3msg = reinterpret_cast<H3Msg *>(msg);
-    if (h3msg->IsLeftClick() && instance)
+    if (h3msg && h3msg->IsLeftClick() && instance && instance->notificationsTotal)
         instance->SetVisible(!instance->isVisible, true);
     return true;
 }
 
 BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept
 {
+    if (!isVisible || !notificationsTotal)
+        return false;
 
     BOOL result = false;
     if (msg)
@@ -849,32 +815,21 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
                 SwitchModInfo(1);
                 break;
             case HIDE_ONE_BUTTON_ID:
+                if (!currentModInfo)
+                    break;
                 // first, mark current mod as hidden
                 if (currentModInfo->MarkAsHiddenByUser())
                 {
                     Era::SaveIni(INI_FILE_NAME);
                 }
 
-                // if there are more than one visible notification
-                if (notificationsVisible > 1)
+                SetModVisible(*currentModInfo, false);
+                UpdateVisibleNotificationsList();
+                if (notificationsVisible)
                 {
-                    // hide current mod to make space for the next one
-
-                    SetModVisible(*currentModInfo, false);
-                    UpdateVisibleNotificationsList();
-
-                    volatile int i = 0;
-                    for (auto &it : modInfos)
-                    {
-                        it.displayedIndex = it.isVisible && !it.isHiddenByUser ? ++i : 0;
-                    }
-
-                    if (currentModInfoIndex > notificationsVisible)
-                    {
-                        currentModInfoIndex = currentModInfoIndex - 1;
-                    }
-
-                    if (currentModInfo = GetModInfoFromVisible(currentModInfoIndex))
+                    currentModInfoIndex = std::min(currentModInfoIndex, notificationsVisible);
+                    currentModInfo = GetModInfoFromVisible(currentModInfoIndex);
+                    if (currentModInfo)
                     {
                         SetModVisible(*currentModInfo, true);
                         UpdateVisibleNotificationsList();
@@ -901,7 +856,9 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
                 {
                     Era::SaveIni(INI_FILE_NAME);
                 }
-
+                UpdateVisibleNotificationsList();
+                currentModInfo = nullptr;
+                currentModInfoIndex = 0;
                 break;
 
             default:
@@ -968,6 +925,8 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
 
 void NotificationPanel::ReloadLanguageData() noexcept
 {
+    if (!notificationsTotal)
+        return;
 
     if (parentCaller)
     {
@@ -989,9 +948,13 @@ void NotificationPanel::ReloadLanguageData() noexcept
     {
         if (i.displayedText && i.ReloadDescription())
         {
-            i.descriptionTextScrollBar->SetText(i.displayedText);
-            i.descriptionText->SetText(i.displayedText);
-            i.modNameDlgText->SetText(i.displayedName);
+            if (i.descriptionTextScrollBar)
+                i.descriptionTextScrollBar->SetText(i.displayedText);
+            if (i.descriptionText)
+                i.descriptionText->SetText(i.displayedText);
+            if (i.modNameDlgText)
+                i.modNameDlgText->SetText(i.displayedName);
+            SetModVisible(i, false);
         }
     }
     if (isVisibleBefore)

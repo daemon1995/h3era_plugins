@@ -1,6 +1,7 @@
-#include <thread>
+#include <chrono>
 
 #include "framework.h"
+#include "VersionUtils.h"
 // #include "webFunctions.cpp"
 
 #include "Shlwapi.h"
@@ -242,13 +243,13 @@ void AssemblyInformation::LocalVersion::AdjustItemText() noexcept
 
 void AssemblyInformation::RemoteVersion::GetJsonData(const char *jsonSubKey)
 {
-    workDone = false;
+    ApplyCompletedRequest();
 
     Version::GetJsonData(jsonSubKey);
     Era::ReadStrFromIni("Remote", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
     shellExecutePath = h3_TextBuffer;
 
-    if (show && !customText && !workDone.load())
+    if (show && !customText && !request.valid())
     {
         constexpr DWORD FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 
@@ -266,64 +267,86 @@ void AssemblyInformation::RemoteVersion::GetJsonData(const char *jsonSubKey)
                     !cachedVersion.Empty())
                 {
                     version = cachedVersion;
-                    workDone.store(true);
+                    workDone = true;
                     return;
                 }
             }
         }
 
-        std::thread th(&AssemblyInformation::RemoteVersion::GetVersion, this);
-        th.detach();
+        GetVersion();
     }
 }
 
 void AssemblyInformation::RemoteVersion::GetVersion() noexcept
 {
-    // reset buffer
-    sprintf(h3_TextBuffer, "%s", "");
-
-    // create WideStringsPtr
-    constexpr LPCSTR sectionName = "GitHub";
-    Era::ReadStrFromIni("API", sectionName, ASSEMBLY_INI_FILE, h3_TextBuffer);
-    std::string narrowString = h3_TextBuffer;
-    std::wstring api(narrowString.begin(), narrowString.end());
-
-    Era::ReadStrFromIni("Host", sectionName, ASSEMBLY_INI_FILE, h3_TextBuffer);
-    narrowString = h3_TextBuffer;
-    std::wstring host(narrowString.begin(), narrowString.end());
-
-    Era::ReadStrFromIni("Path", sectionName, ASSEMBLY_INI_FILE, h3_TextBuffer);
-    narrowString = h3_TextBuffer;
-    std::wstring path(narrowString.begin(), narrowString.end());
-
-    version = "";
-    if (!api.empty() && !host.empty() && !path.empty())
+    if (request.valid())
+        return;
+    try
     {
-        // make an HTTP request (thanks to Chat GPT)
-        std::string requestResponce = web::PerformWinHTTPRequest(api.c_str(), host.c_str(), path.c_str());
-        if (!requestResponce.empty())
-        {
-            // parse json (thanks to nlohmann)
-            nlohmann::json j = nlohmann::json::parse(requestResponce, nullptr, false);
-            // get object and check if versions is correct
-            auto &obj = j["tag_name"];
-            if (!obj.is_null() && obj.is_string())
-                version = obj.get<std::string>().c_str();
-        }
+        // ERA and H3 data stay on the game thread. The worker owns its input and result.
+        const auto readSetting = [](const char *key) {
+            h3_TextBuffer[0] = '\0';
+            if (!Era::ReadStrFromIni(key, "GitHub", ASSEMBLY_INI_FILE, h3_TextBuffer))
+                return std::wstring{};
+            const std::string value = h3_TextBuffer;
+            return std::wstring(value.begin(), value.end());
+        };
+        const std::wstring api = readSetting("API");
+        const std::wstring host = readSetting("Host");
+        const std::wstring path = readSetting("Path");
+        if (api.empty() || host.empty() || path.empty())
+            return;
+        request = std::async(std::launch::async, [api, host, path]() -> std::string {
+            try
+            {
+                const auto response = web::PerformWinHTTPRequest(api.c_str(), host.c_str(), path.c_str());
+                const auto json = nlohmann::json::parse(response, nullptr, false);
+                if (!json.is_object())
+                    return {};
+                const auto tag = json.find("tag_name");
+                if (tag == json.end() || !tag->is_string())
+                    return {};
+                const auto value = tag->get<std::string>();
+                assemblyVersion::ParsedVersion parsed;
+                return assemblyVersion::Parse(value, parsed) ? value : std::string{};
+            }
+            catch (...)
+            {
+                return {};
+            }
+        });
     }
+    catch (...)
+    {
+        // A failed optional update check must not stop the game.
+    }
+}
 
-    workDone.store(true);
-
-    sprintf(h3_TextBuffer, "%lu", h3::GetTime());
-    Era::WriteStrToIni(RemoteVersion::LAST_TIME_CHECKED_INI_KEY, h3_TextBuffer, ASSEMBLY_SETTINGS_SECTION,
-                       ASSEMBLY_SETTINGS_INI);
-
-    // save last version
-    Era::WriteStrToIni(RemoteVersion::LAST_VERSION_INI_KEY, version.String(), ASSEMBLY_SETTINGS_SECTION,
-                       ASSEMBLY_SETTINGS_INI);
-    // check if remote version is higher
-    Era::SaveIni(ASSEMBLY_SETTINGS_INI);
-    // save last check time
+void AssemblyInformation::RemoteVersion::ApplyCompletedRequest()
+{
+    if (!request.valid() || request.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+        return;
+    std::string receivedVersion;
+    try
+    {
+        receivedVersion = request.get();
+    }
+    catch (...)
+    {
+        return;
+    }
+    // Keep the last successful version and its cache when the network check fails.
+    if (!receivedVersion.empty())
+    {
+        version = receivedVersion.c_str();
+        workDone = true;
+        sprintf(h3_TextBuffer, "%lu", h3::GetTime());
+        Era::WriteStrToIni(LAST_TIME_CHECKED_INI_KEY, h3_TextBuffer, ASSEMBLY_SETTINGS_SECTION,
+                           ASSEMBLY_SETTINGS_INI);
+        Era::WriteStrToIni(LAST_VERSION_INI_KEY, version.String(), ASSEMBLY_SETTINGS_SECTION,
+                           ASSEMBLY_SETTINGS_INI);
+        Era::SaveIni(ASSEMBLY_SETTINGS_INI);
+    }
 }
 
 void AssemblyInformation::LocalVersion::GetJsonData(const char *jsonSubKey)
@@ -362,23 +385,29 @@ void AssemblyInformation::CheckOnlineVersion()
 
 const BOOL AssemblyInformation::CompareVersions()
 {
-    if (!m_remoteVersion.workDone.load())
-        return m_localVersion.remoteVersionIsHigher;
-
-    const double remoteVersion = m_remoteVersion.version.ToDouble();
+    m_remoteVersion.ApplyCompletedRequest();
     const BOOL wasHigher = m_localVersion.remoteVersionIsHigher;
-    m_localVersion.remoteVersionIsHigher = remoteVersion > m_localVersion.version.ToDouble();
+    m_localVersion.remoteVersionIsHigher =
+        assemblyVersion::IsNewer(m_remoteVersion.version.String(), m_localVersion.version.String());
 
     if (m_localVersion.remoteVersionIsHigher && !wasHigher)
     {
         versionBlinkLastUpdate = h3::GetTime();
         versionBlinkVisible = true;
-        if (m_localVersion.dlgItem)
+        if (isVisible && m_localVersion.dlgItem)
         {
             m_localVersion.dlgItem->Show();
             m_localVersion.dlgItem->Draw();
             m_localVersion.dlgItem->Refresh();
         }
+    }
+    else if (wasHigher && !m_localVersion.remoteVersionIsHigher && isVisible && m_localVersion.dlgItem)
+    {
+        // Do not leave the installed version hidden when blinking stops.
+        versionBlinkVisible = true;
+        m_localVersion.dlgItem->Show();
+        m_localVersion.dlgItem->Draw();
+        m_localVersion.dlgItem->Refresh();
     }
 
     return m_localVersion.remoteVersionIsHigher;
@@ -435,6 +464,8 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
         delete notificationPanel;
     }
     Get().isVisible = false;
+    for (auto *version : Get().versions)
+        version->dlgItem = nullptr;
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
 // int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h,
@@ -454,6 +485,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 // }
 void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 {
+    CompareVersions();
     // hide wnd version hint
     if (auto *it = dlg->GetH3DlgItem(545))
         it->Hide();
@@ -510,7 +542,8 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
         H3DlgText *it = remoteVersion.dlgItem;
 
-        if (remoteVersion.workDone.load() && it)
+        remoteVersion.ApplyCompletedRequest();
+        if (remoteVersion.workDone && it)
         {
             instance.CompareVersions();
             if (it->IsVisible())
@@ -524,7 +557,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
                 it->Refresh();
             }
 
-            remoteVersion.workDone.store(false);
+            remoteVersion.workDone = false;
         }
 
         instance.UpdateVersionBlink();

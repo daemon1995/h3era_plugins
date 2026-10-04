@@ -31,6 +31,7 @@
     <ClInclude Include="ModListScanner.h" />
     <ClInclude Include="NotificationPanel.h" />
     <ClInclude Include="UserNotification.h" />
+    <ClInclude Include="VersionUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
