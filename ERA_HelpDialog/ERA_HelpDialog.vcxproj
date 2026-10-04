@@ -18,13 +18,27 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
-    <ClInclude Include="ArtifactsPage.h" />
-    <ClInclude Include="CreaturesPage.h" />
+    <None Include="README.md" />
+    <None Include=".clang-format" />
+    <None Include="lang\era_help.json" />
+    <None Include="examples\HelpDialogExample.erm" />
+    <None Include="examples\gem_help.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="DlgEnums.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\HelpDialogAPI.hpp" />
     <ClInclude Include="HeaderPage.h" />
-    <ClInclude Include="HeroesPage.h" />
     <ClInclude Include="HelpDialogDependencies.h" />
     <ClInclude Include="DlgPage.h" />
+    <ClInclude Include="HelpLogic.h" />
+    <ClInclude Include="PluginFiles.h" />
+    <ClInclude Include="HelpUI.h" />
+    <ClInclude Include="CatalogueData.h" />
+    <ClInclude Include="MasteryPopup.h" />
+    <ClInclude Include="ObjectCard.h" />
+    <ClInclude Include="CardLayout.h" />
+    <ClInclude Include="CataloguePage.h" />
+    <ClInclude Include="SearchPanel.h" />
     <ClInclude Include="HotkeysPage.h" />
     <ClInclude Include="MainDlg.h" />
     <ClInclude Include="GuideDlg.h" />
@@ -34,28 +48,24 @@
     <ClInclude Include="ModPage.h" />
     <ClInclude Include="PlaceholderPage.h" />
     <ClInclude Include="ScrollbarUtils.h" />
-    <ClInclude Include="SystemFunctions.h" />
-    <ClInclude Include="SpellsPage.h" />
-    <ClInclude Include="TownsPage.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
-    <ClCompile Include="ArtifactsPage.cpp" />
-    <ClCompile Include="CreaturesPage.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="HeaderPage.cpp" />
-    <ClCompile Include="HeroesPage.cpp" />
     <ClCompile Include="DlgPage.cpp" />
     <ClCompile Include="HotkeysPage.cpp" />
     <ClCompile Include="MainDlg.cpp" />
+    <ClCompile Include="CatalogueData.cpp" />
+    <ClCompile Include="MasteryPopup.cpp" />
+    <ClCompile Include="ObjectCard.cpp" />
+    <ClCompile Include="CataloguePage.cpp" />
+    <ClCompile Include="SearchPanel.cpp" />
     <ClCompile Include="GuideDlg.cpp" />
     <ClCompile Include="ModInformation.cpp" />
     <ClCompile Include="ModListDlg.cpp" />
     <ClCompile Include="ModPage.cpp" />
     <ClCompile Include="PlaceholderPage.cpp" />
-    <ClCompile Include="SystemFunctions.cpp" />
-    <ClCompile Include="SpellsPage.cpp" />
-    <ClCompile Include="TownsPage.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

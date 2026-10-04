@@ -1,238 +1,152 @@
 #include "ModInformation.h"
-
-#include <cstdlib>
-#include <cstring>
-
+#include "HelpUI.h"
+#include "PluginFiles.h"
 namespace
 {
-hkcategories::eType ParseHotkeyType(LPCSTR type)
+constexpr int kMaxEntries = 4096;
+void ReadObjects(const ModJsonDocument &document, const H3String &category, Content &content)
 {
-    if (!type || !*type)
+    for (int index = 0; index < kMaxEntries; ++index)
     {
-        return hkcategories::OTHER_DLG;
+        const H3String prefix = H3String::Format("%s.objects.%d", category.String(), index);
+        bool found = false;
+        const H3String kind = document.Read(H3String::Format("%s.kind", prefix.String()).String(), found);
+        if (!found)
+            break;
+        const std::string type = helpdlg::Lower(kind.String());
+        HelpObject object;
+        if (type == "image")
+            object.kind = eHelpObjectKind::Image;
+        else if (type == "button")
+            object.kind = eHelpObjectKind::Button;
+        else if (type == "link")
+            object.kind = eHelpObjectKind::Link;
+        else if (type == "erm" || type == "ermfunction")
+            object.kind = eHelpObjectKind::ErmFunction;
+        else if (type != "text")
+            continue;
+        object.value = document.Read(H3String::Format("%s.value", prefix.String()).String());
+        object.action = document.Read(H3String::Format("%s.action", prefix.String()).String());
+        object.x = document.ReadInt(H3String::Format("%s.x", prefix.String()).String());
+        object.y = document.ReadInt(H3String::Format("%s.y", prefix.String()).String());
+        object.width = document.ReadInt(H3String::Format("%s.width", prefix.String()).String());
+        object.height = document.ReadInt(H3String::Format("%s.height", prefix.String()).String());
+        object.frame = document.ReadInt(H3String::Format("%s.frame", prefix.String()).String());
+        object.zOrder = document.ReadInt(H3String::Format("%s.zOrder", prefix.String()).String());
+        object.overlay = document.ReadInt(H3String::Format("%s.overlay", prefix.String()).String()) != 0;
+        content.objects.push_back(object);
     }
-
-    char *end = nullptr;
-    const long numericType = std::strtol(type, &end, 10);
-    if (end != type && *end == '\0' && numericType >= hkcategories::ANY_DLG &&
-        numericType <= hkcategories::OTHER_DLG)
-    {
-        return static_cast<hkcategories::eType>(numericType);
-    }
-
-    if (!_stricmp(type, "ALL") || !_stricmp(type, "ANY"))
-        return hkcategories::ANY_DLG;
-    if (!_stricmp(type, "NONE") || !_stricmp(type, "GLOBAL") || !_stricmp(type, "EVERYWHERE"))
-        return hkcategories::NONE;
-    if (!_stricmp(type, "ADV_MAP") || !_stricmp(type, "ADV_MAP_DLG") || !_stricmp(type, "ADVENTURE") ||
-        !_stricmp(type, "MAP"))
-        return hkcategories::ADV_MAP_DLG;
-    if (!_stricmp(type, "HERO") || !_stricmp(type, "HERO_DLG"))
-        return hkcategories::HERO_DLG;
-    if (!_stricmp(type, "TOWN") || !_stricmp(type, "TOWN_DLG") || !_stricmp(type, "CITY"))
-        return hkcategories::TOWN_DLG;
-    if (!_stricmp(type, "COMBAT") || !_stricmp(type, "COMBAT_DLG"))
-        return hkcategories::COMBAT_DLG;
-    return hkcategories::OTHER_DLG;
+    std::stable_sort(content.objects.begin(), content.objects.end(),
+                     [](const HelpObject &a, const HelpObject &b) { return a.zOrder < b.zOrder; });
 }
-}
-
-LastActiveDlgModInfo ModInformation::lastActiveModInfo;
-
-ModInformation::ModInformation(LPCSTR modFolderName, const UINT id)
-    : hasSomeInfo(false), id(id), name(modFolderName), document(modFolderName), activeCategory(nullptr)
+// Enumerate only physical files belonging to this active mod. No plugin is loaded here.
+Category *MakePluginsCategory(LPCSTR folder, const ModJsonDocument &document)
 {
-    bool nameRead = false;
-    const H3String displayName = document.Read("name", nameRead);
-    if (nameRead && !displayName.Empty())
-        name = displayName;
-
-    categories.clear();
-    // start parsing panelCategories
-    // first parse hotkeys
-
-    if (hotkeysCategory = CreateHotkeysCategory())
+    std::vector<std::string> files;
+    std::vector<helpdlg::PluginNote> notes;
+    int missing = 0;
+    for (int index = 0; index < kMaxEntries && missing < 32; ++index)
     {
-        categories.emplace_back(hotkeysCategory);
+        const auto prefix = H3String::Format("plugins.%d", index);
+        bool found = false;
+        const auto file = document.Read(H3String::Format("%s.file", prefix.String()).String(), found);
+        if (!found || file.Empty())
+        {
+            ++missing;
+            continue;
+        }
+        missing = 0;
+        notes.push_back({file.String(), document.Read(H3String::Format("%s.name", prefix.String()).String()).String(),
+                         document.Read(H3String::Format("%s.description", prefix.String()).String()).String()});
+    }
+    char executable[MAX_PATH] = {};
+    const DWORD length = GetModuleFileNameA(nullptr, executable, MAX_PATH);
+    const std::string modFolder = folder ? folder : "";
+    std::string root(executable);
+    const auto separator = root.find_last_of("/\\");
+    if (length && length < MAX_PATH && separator != std::string::npos && !modFolder.empty() && modFolder != "." &&
+        modFolder != ".." && modFolder.find_first_of("/\\:") == std::string::npos)
+    {
+        root.resize(separator);
+        root += "\\Mods\\" + modFolder;
+        files = helpdlg::EnumeratePluginFiles(root);
     }
 
-    // create native catigories while json is parsed
-    int startIndex = 0;
-    while (auto category = CreateNativeCategory(startIndex++))
-    {
-        categories.emplace_back(category);
-    }
+    if (files.empty())
+        return nullptr;
 
-    if (!categories.empty())
-    {
-        hasSomeInfo = true;
-    }
+    auto *category = new Category();
+    category->name = helpdlg::Text("help.ui.plugins", "Plugins");
+    category->content = new Content();
+    auto &text = category->content->text;
+    text = helpdlg::Text("help.ui.plugins_intro", "Plugin and patch files supplied by this mod:");
+    text.Append("\n\n");
+    text.Append(helpdlg::GroupPluginFiles(files, notes).c_str());
+    return category;
 }
-
-ModInformation::~ModInformation()
+} // namespace
+ModInformation::ModInformation(LPCSTR folder, UINT identifier, bool physicalMod)
+    : id(identifier), name(folder), path(folder), document(folder)
 {
-    for (auto &cat : categories)
-    {
-        delete cat;
-    }
-    categories.clear();
-    hotkeysCategory = nullptr;
-}
-
-HotKeysCategory *ModInformation::CreateHotkeysCategory() const noexcept
-{
-    HotKeysCategory *result = nullptr;
+    const H3String title = document.Read("name");
+    if (!title.Empty())
+        name = title;
     std::vector<HotKey> hotkeys;
-    H3String legacyHotkeysName;
-
-    // Preferred format: help.<mod_folder_name>.hotkeys[]. The adapter also
-    // probes help.mods.<mod_folder_name>.hotkeys[] for old files.
-    const H3String hotkeysBase = document.ArrayRoot("hotkeys");
-    const bool hasArrayFormat = !hotkeysBase.Empty();
-
-    if (hasArrayFormat)
-    {
-        for (int hotkeyId = 0;; ++hotkeyId)
-        {
-            bool readSuccess = false;
-            H3String itemBase(hotkeysBase);
-            itemBase.Append('.');
-            itemBase.Append(hotkeyId);
-            H3String keyPath(itemBase);
-            keyPath.Append(".keys");
-            H3String keys = document.Read(keyPath.String(), readSuccess);
-            if (!readSuccess)
-            {
-                keyPath = itemBase;
-                keyPath.Append(".key");
-                keys = document.Read(keyPath.String(), readSuccess);
-            }
-            if (!readSuccess || keys.Empty())
-            {
-                break;
-            }
-
-            H3String namePath(itemBase);
-            namePath.Append(".name");
-            H3String descriptionPath(itemBase);
-            descriptionPath.Append(".description");
-            H3String typePath(itemBase);
-            typePath.Append(".type");
-            H3String name = document.Read(namePath.String());
-            H3String description = document.Read(descriptionPath.String());
-            H3String type = document.Read(typePath.String());
-            const hkcategories::eType parsedType = type.Empty() ? hkcategories::OTHER_DLG : ParseHotkeyType(type.String());
-            hotkeys.emplace_back(HotKey{parsedType, keys, name, description});
-        }
-    }
-    else
-    {
-        // Legacy format: help.<mod>.categories.hotkeys.content[] (or its
-        // help.mods.<mod> equivalent).
-        bool nameRead = false;
-        legacyHotkeysName = document.Read("categories.hotkeys.name", nameRead);
-        for (int hotkeyId = 0;; ++hotkeyId)
-        {
-            H3String itemBase("categories.hotkeys.content.");
-            itemBase.Append(hotkeyId);
-            H3String keyPath(itemBase);
-            keyPath.Append(".key");
-            bool keyRead = false;
-            H3String keys = document.Read(keyPath.String(), keyRead);
-            if (!keyRead)
-            {
-                keyPath = itemBase;
-                keyPath.Append(".keys");
-                keys = document.Read(keyPath.String(), keyRead);
-            }
-            if (!keyRead || keys.Empty())
-                break;
-            H3String typePath(itemBase);
-            typePath.Append(".type");
-            H3String descriptionPath(itemBase);
-            descriptionPath.Append(".description");
-            const int type = document.ReadInt(typePath.String());
-            H3String description = document.Read(descriptionPath.String());
-            H3String hotkeyNamePath(itemBase);
-            hotkeyNamePath.Append(".name");
-            H3String hotkeyName = document.Read(hotkeyNamePath.String());
-            hotkeys.emplace_back(HotKey{static_cast<hkcategories::eType>(type), keys, hotkeyName, description});
-        }
-    }
-
+    for (const auto &record : helpdlg::ReadHotkeyRecords([this](const std::string &key, bool &found) {
+             return std::string(document.Read(key.c_str(), found).String());
+         }))
+        hotkeys.push_back(HotKey{static_cast<hkcategories::eType>(record.context), record.keys.c_str(),
+                                 record.name.c_str(), record.description.c_str(), record.id});
     if (!hotkeys.empty())
     {
-        result = new HotKeysCategory();
-        result->hotkeys = hotkeys;
-        if (hasArrayFormat)
-            result->name = document.Read("hotkeys.name");
-        else
-            result->name = legacyHotkeysName;
-        if (result->name.Empty())
-            result->name = "Hotkeys";
-        result->content = new Content();
+        hotkeysCategory = new HotKeysCategory();
+        hotkeysCategory->hotkeys.swap(hotkeys);
+        hotkeysCategory->name = document.Read("hotkeys.name");
+        if (hotkeysCategory->name.Empty())
+            hotkeysCategory->name = document.Read("categories.hotkeys.name");
+        if (hotkeysCategory->name.Empty())
+            hotkeysCategory->name = helpdlg::PageName(main::eHelpPage::HOTKEYS);
+        hotkeysCategory->content = new Content();
+        categories.push_back(hotkeysCategory);
     }
-
-    return result;
-}
-
-Category *ModInformation::CreateNativeCategory(const int index) const noexcept
-{
-    Category *result = nullptr;
-    bool nameRead = false;
-
-    H3String categoryBase("categories.");
-    categoryBase.Append(index);
-    H3String categoryNamePath(categoryBase);
-    categoryNamePath.Append(".name");
-    H3String catName = document.Read(categoryNamePath.String(), nameRead);
-    H3String categoryContentPath(categoryBase);
-    categoryContentPath.Append(".content");
-    bool contentRead = false;
-    H3String categoryText = document.Read(categoryContentPath.String(), contentRead);
-    if (nameRead || contentRead)
+    int missing = 0;
+    for (int index = 0; index < kMaxEntries && missing < 32; ++index)
     {
-        if (result = new Category())
+        const H3String prefix = H3String::Format("categories.%d", index);
+        bool hasName = false, hasText = false, hasObjects = false;
+        H3String title = document.Read(H3String::Format("%s.name", prefix.String()).String(), hasName);
+        H3String text = document.Read(H3String::Format("%s.content", prefix.String()).String(), hasText);
+        document.Read(H3String::Format("%s.objects.0.kind", prefix.String()).String(), hasObjects);
+        if (!hasName && !hasText && !hasObjects)
         {
-            result->name = nameRead && !catName.Empty() ? catName : H3String::Format("Category %d", index + 1);
-
-            result->content = new Content();
-            result->content->text = contentRead ? categoryText : h3_NullString;
-
-            // H3String defName =
+            ++missing;
+            continue;
         }
+        missing = 0;
+        auto *category = new Category();
+        category->name = title.Empty() ? H3String::Format("Category %d", index + 1) : title;
+        category->content = new Content();
+        category->content->text = text;
+        ReadObjects(document, prefix, *category->content);
+        categories.push_back(category);
     }
-
-    return result;
-}
-
-const Category &ModInformation::ActiveCategory() const noexcept
-{
-    return *activeCategory;
-}
-
-size_t ModInformation::Size() const noexcept
-{
-    return categories.size();
-}
-
-void ModInformation::SetVisible(const BOOL state)
-{
-}
-
-void ModInformation::StoreModInfoAsActive() const noexcept
-{
-    // lastActiveModInfo.scrollBarPos  = this->activeCategory
-    lastActiveModInfo.categoryId = m_lastActiveCategoryId;
-}
-Category::~Category()
-{
-    if (content)
+    const H3String description = document.Read("description");
+    if (!description.Empty())
     {
-        delete content;
-        content = nullptr;
+        auto *overview = new Category();
+        overview->name = helpdlg::Text("help.ui.overview", "Overview");
+        overview->content = new Content();
+        overview->content->text = description;
+        categories.push_back(overview);
     }
+    // Append generated sections so existing navigation indices stay valid.
+    if (physicalMod)
+        if (auto *plugins = MakePluginsCategory(folder, document))
+            categories.push_back(plugins);
+    hasSomeInfo = !categories.empty();
 }
-void Category::ShowContent() const noexcept
+ModInformation::~ModInformation()
 {
+    for (auto *category : categories)
+        delete category;
 }

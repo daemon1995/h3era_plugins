@@ -1,34 +1,19 @@
 #include "ModPage.h"
 #include "ScrollbarUtils.h"
+#include "HelpUI.h"
 
 #include <algorithm>
 #include <string>
 
 namespace main
 {
-namespace
-{
-LPCSTR HotkeyTypeName(const hkcategories::eType type) noexcept
-{
-    switch (type)
-    {
-    case hkcategories::ANY_DLG:
-        return "everywhere";
-    case hkcategories::ADV_MAP_DLG:
-        return "map";
-    case hkcategories::HERO_DLG:
-        return "hero";
-    case hkcategories::TOWN_DLG:
-        return "town";
-    case hkcategories::COMBAT_DLG:
-        return "battle";
-    default:
-        return "other";
-    }
-}
-}
-
 ModCategoriesPage *ModCategoriesPage::instance = nullptr;
+
+ModCategoriesPage::~ModCategoriesPage()
+{
+    if (instance == this)
+        instance = nullptr;
+}
 
 ModCategoriesPage::ModCategoriesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
     : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
@@ -75,9 +60,8 @@ void ModCategoriesPage::CreateForMod(const ModInformation *mod)
         Category *category = mod->categories[index];
         const LPCSTR categoryName = category && !category->name.Empty() ? category->name.String() : "Category";
         auto *button = H3DlgCaptionButton::Create(pageX + 4, pageY + 4 + index * 34, modpage::CATEGORY_FIRST + index,
-                                                  "OVBUTN3.def", categoryName,
-                                                  NH3Dlg::Text::SMALL, 0, 0, false, static_cast<eVKey>(0),
-                                                  eTextColor::REGULAR);
+                                                  "OVBUTN3.def", categoryName, NH3Dlg::Text::SMALL, 0, 0, false,
+                                                  static_cast<eVKey>(0), eTextColor::REGULAR);
         if (button)
         {
             button->SetWidth(pageWidth - 26);
@@ -89,9 +73,9 @@ void ModCategoriesPage::CreateForMod(const ModInformation *mod)
     }
     if (!scrollBar && count > visibleCount)
     {
-        scrollBar = H3DlgScrollbar::Create(pageX + pageWidth - 20, pageY + 4, 16, pageHeight - 8,
-                                            modpage::CATEGORY_SCROLLBAR, count - visibleCount + 1,
-                                            ScrollProc, false, 1, true);
+        scrollBar =
+            H3DlgScrollbar::Create(pageX + pageWidth - 20, pageY + 4, 16, pageHeight - 8, modpage::CATEGORY_SCROLLBAR,
+                                   count - visibleCount + 1, ScrollProc, false, 1, true);
         AddItem(scrollBar);
     }
 }
@@ -108,11 +92,16 @@ int ModCategoriesPage::CategoryIndex(const int itemId) const noexcept
 
 void ModCategoriesPage::SetActiveCategory(const int index)
 {
+    if (index < firstIndex)
+        firstIndex = index;
+    if (index >= firstIndex + visibleCount)
+        firstIndex = index - visibleCount + 1;
     for (size_t i = 0; i < buttons.size(); ++i)
     {
         if (buttons[i])
             buttons[i]->SetFrame(static_cast<int>(i) == index ? 1 : 0);
     }
+    RedrawItems(firstIndex);
 }
 
 void ModCategoriesPage::UpdateScrollbarActivation(const H3Msg &msg) noexcept
@@ -122,8 +111,8 @@ void ModCategoriesPage::UpdateScrollbarActivation(const H3Msg &msg) noexcept
 
     const int left = dialog->GetX() + pageX;
     const int top = dialog->GetY() + pageY;
-    const bool inside = msg.GetX() >= left && msg.GetX() < left + pageWidth && msg.GetY() >= top &&
-                        msg.GetY() < top + pageHeight;
+    const bool inside =
+        msg.GetX() >= left && msg.GetX() < left + pageWidth && msg.GetY() >= top && msg.GetY() < top + pageHeight;
     if (inside)
         scrollBar->Activate();
     else
@@ -144,7 +133,7 @@ void ModCategoriesPage::RedrawItems(const int requestedFirstIndex)
     {
         auto *button = buttons[i];
         const int row = static_cast<int>(i) - firstIndex;
-        if (button && isVisible && row >= 0 && row < visibleCount)
+        if (button && isVisible && static_cast<int>(i) < itemCount && row >= 0 && row < visibleCount)
         {
             button->SetY(pageY + 4 + row * 34);
             button->ShowActivate();
@@ -152,6 +141,7 @@ void ModCategoriesPage::RedrawItems(const int requestedFirstIndex)
         else if (button)
             button->HideDeactivate();
     }
+    RedrawDialog();
 }
 
 void __fastcall ModCategoriesPage::ScrollProc(const INT32 tick, H3BaseDlg *)
@@ -164,8 +154,8 @@ ModContentPage::ModContentPage(const int x, const int y, const int width, const 
     : DlgPage(dialog), pageX(x), pageY(y), pageWidth(width), pageHeight(height)
 {
     AddFrame(pageX, pageY, pageWidth, pageHeight);
-    textScroll = H3DlgScrollableText::Create(h3_NullString, pageX + 10, pageY + 8, pageWidth - 28,
-                                              pageHeight - 16, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, true);
+    textScroll = H3DlgScrollableText::Create(h3_NullString, pageX + 10, pageY + 8, pageWidth - 28, pageHeight - 16,
+                                             NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, false);
     AddScrollableText(textScroll);
 }
 
@@ -177,8 +167,13 @@ void ModContentPage::SetMod(const ModInformation *mod)
 
 void ModContentPage::SetCategory(const int index)
 {
+    if (renderedCategory)
+        scrollPositions[renderedCategory] = ScrollPosition();
+    const Category *previous = renderedCategory;
     activeCategory = std::max(0, index);
     RebuildText();
+    if (renderedCategory && renderedCategory != previous)
+        SetScrollPosition(scrollPositions[renderedCategory]);
 }
 
 void ModContentPage::RefreshVisibility()
@@ -188,6 +183,7 @@ void ModContentPage::RefreshVisibility()
 
 void ModContentPage::RebuildText()
 {
+    const H3String previousText(renderedText);
     renderedText = h3_NullString;
     if (activeMod && activeCategory < static_cast<int>(activeMod->categories.size()))
     {
@@ -196,34 +192,171 @@ void ModContentPage::RebuildText()
         {
             if (category == activeMod->hotkeysCategory)
             {
-                std::string text;
-                text = "[hotkeys][STD][HD_MOD][MODS][ALL]\n\n";
-                hkcategories::eType previousType = static_cast<hkcategories::eType>(127);
+                std::vector<helpdlg::HotkeyLine> entries;
                 for (const auto &hotkey : activeMod->hotkeysCategory->hotkeys)
-                {
-                    if (hotkey.type != previousType)
-                    {
-                        text += "(";
-                        text += HotkeyTypeName(hotkey.type);
-                        text += ")\n";
-                        previousType = hotkey.type;
-                    }
-                    text += "[" + std::string(hotkey.keys.String()) + "]  ";
-                    text += hotkey.name.Empty() ? "Unnamed hotkey" : hotkey.name.String();
-                    text += "\n";
-                    if (!hotkey.description.Empty())
-                        text += std::string(hotkey.description.String()) + "\n";
-                    text += "\n";
-                }
-                renderedText = text.c_str();
+                    entries.push_back({hotkey.type, "", helpdlg::Safe(hotkey.keys.String()),
+                                       hotkey.name.Empty() ? "Unnamed hotkey" : helpdlg::Safe(hotkey.name.String()),
+                                       static_cast<int>(activeMod->id), hotkey.id,
+                                       helpdlg::Safe(hotkey.description.String())});
+                renderedText = helpdlg::GroupHotkeys(entries, helpdlg::ContextName).c_str();
             }
             else if (category->content)
+            {
                 renderedText = category->content->text;
+                for (const auto &object : category->content->objects)
+                    if (object.kind == eHelpObjectKind::Text && !object.overlay)
+                    {
+                        renderedText.Append("\n\n");
+                        renderedText.Append(object.value);
+                    }
+            }
+            if (renderedCategory != category)
+                RebuildObjects(category);
         }
     }
     if (renderedText.Empty())
-        renderedText = "This category has no content yet.";
-    SetScrollableText(textScroll, renderedText.String());
+        renderedText = helpdlg::Text("help.ui.empty_category",
+                                     "This category has no text. Interactive objects may be available below.");
+    if (strcmp(previousText.String(), renderedText.String()))
+    {
+        SetScrollableText(textScroll, renderedText.String());
+        if (renderedCategory)
+            SetScrollPosition(scrollPositions[renderedCategory]);
+    }
+}
+
+void ModContentPage::RebuildObjects(const Category *category)
+{
+    for (auto *item : objectItems)
+        if (item)
+            item->HideDeactivate();
+    objectItems.clear();
+    actions.clear();
+    pendingAction = h3_NullString;
+    renderedCategory = category;
+    if (!category || !category->content)
+        return;
+    auto cached = objectCache.find(category);
+    if (cached != objectCache.end())
+    {
+        objectItems = cached->second.items;
+        actions = cached->second.actions;
+        if (isVisible)
+            for (auto *item : objectItems)
+                if (item)
+                    item->ShowActivate();
+        return;
+    }
+    // Controls belong to H3Dlg. IDs grow within a private range, and only the
+    // current category's action table is considered during dispatch.
+    for (const auto &object : category->content->objects)
+    {
+        if (nextObjectId >= 25000)
+            break;
+        if (object.kind == eHelpObjectKind::Text && !object.overlay)
+            continue;
+        const int left = pageX + helpdlg::Bound(object.x, 8, pageWidth - 32);
+        const int top = pageY + helpdlg::Bound(object.y, 8, pageHeight - 36);
+        const int width = helpdlg::Bound(object.width ? object.width : 180, 20, pageX + pageWidth - left - 8);
+        const int height = helpdlg::Bound(object.height ? object.height : 28, 20, pageY + pageHeight - top - 8);
+        const int id = nextObjectId++;
+        H3DlgItem *item = nullptr;
+        if (object.kind == eHelpObjectKind::Text)
+            item = H3DlgText::Create(left, top, width, height, object.value.String(), NH3Dlg::Text::SMALL,
+                                     eTextColor::REGULAR, id, eTextAlignment::TOP_LEFT);
+        else if (object.kind == eHelpObjectKind::Image)
+        {
+            const std::string resource = helpdlg::Lower(object.value.String());
+            if (resource.size() >= 4 && resource.substr(resource.size() - 4) == ".def")
+            {
+                H3DefLoader def(object.value.String());
+                if (def.Get() && def->groupsCount > 0 && def->groups && def->groups[0] && object.frame >= 0 &&
+                    object.frame < def->groups[0]->count && def->widthDEF <= width && def->heightDEF <= height)
+                    item = H3DlgDef::Create(left, top, id, object.value.String(), object.frame);
+            }
+            else
+            {
+                H3PcxLoader pcx(object.value.String());
+                if (pcx.Get() && pcx->width <= width && pcx->height <= height)
+                    item = H3DlgPcx::Create(left, top, width, height, id, object.value.String());
+            }
+        }
+        else
+        {
+            item = helpdlg::Button(nullptr, left, top, width, height, id, object.value.String());
+            H3String action(object.action);
+            if (object.kind == eHelpObjectKind::ErmFunction && !action.Empty() &&
+                std::string(action.String()).compare(0, 4, "erm:") != 0)
+                action = H3String::Format("erm:%s", action.String());
+            if (!action.Empty())
+                actions.emplace_back(id, action);
+        }
+        if (item)
+        {
+            AddItem(item);
+            objectItems.push_back(item);
+            if (isVisible)
+                item->ShowActivate();
+        }
+    }
+    objectCache.emplace(category, ObjectControls{objectItems, actions});
+}
+
+int ModContentPage::ScrollPosition() const
+{
+    return TextScrollPosition(textScroll);
+}
+void ModContentPage::SetScrollPosition(int position)
+{
+    SetTextScrollPosition(textScroll, position);
+}
+
+void ModContentPage::SetVisible(BOOL state) noexcept
+{
+    DlgPage::SetVisible(state);
+    // DlgPage also tracks controls from previous categories. Restore only the
+    // current category; retired controls remain hidden in the native dialog.
+    for (auto *item : items)
+        if (item)
+            item->HideDeactivate();
+    for (auto *item : objectItems)
+        if (item && state)
+            item->ShowActivate();
+}
+
+void ModContentPage::UpdateScrollbarActivation(const H3Msg &msg) noexcept
+{
+    FlushTextScrollPositions();
+    if (!textScroll || !msg.IsMouseOver())
+        return;
+    auto *scroll = textScroll->GetTextScrollBar();
+    if (!scroll || !scroll->IsVisible())
+        return;
+    const int left = dialog->GetX() + pageX, top = dialog->GetY() + pageY;
+    if (msg.GetX() >= left && msg.GetX() < left + pageWidth && msg.GetY() >= top && msg.GetY() < top + pageHeight)
+        scroll->Activate();
+    else
+        scroll->DeActivate();
+}
+
+BOOL ModContentPage::ProcessMessage(H3Msg &msg)
+{
+    if (!isVisible || !msg.IsLeftClick())
+        return FALSE;
+    for (const auto &action : actions)
+        if (action.first == msg.itemId)
+        {
+            pendingAction = action.second;
+            return TRUE;
+        }
+    return FALSE;
+}
+
+H3String ModContentPage::TakeAction()
+{
+    H3String result(pendingAction);
+    pendingAction = h3_NullString;
+    return result;
 }
 
 ModSection::ModSection(const int categoriesX, const int categoriesY, const int categoriesWidth,
@@ -269,10 +402,13 @@ void ModSection::SetVisible(const BOOL state) noexcept
 void ModSection::UpdateMousePosition(const H3Msg &msg) noexcept
 {
     categoriesPage.UpdateScrollbarActivation(msg);
+    contentPage.UpdateScrollbarActivation(msg);
 }
 
 BOOL ModSection::ProcessMessage(H3Msg &msg)
 {
+    if (contentPage.ProcessMessage(msg))
+        return TRUE;
     if (!msg.IsLeftClick() || !categoriesPage.IsCategory(msg.itemId))
         return FALSE;
     const int index = categoriesPage.CategoryIndex(msg.itemId);

@@ -1,0 +1,225 @@
+{
+  "help": {
+    "game enhancement mod": {
+      "name": "Game Enhancement Mod",
+      "description": "GEM by daemon_n adds interface improvements, optional gameplay features, scripts, plugins and binary patches. Optional features depend on GEM settings and the installed build. This reference belongs to this mod and is listed only while it is active.",
+      "hotkeys": [
+        {
+          "keys": "Alt",
+          "type": "ADV_MAP",
+          "name": "Object labels",
+          "description": "Hold Alt to show supported map-object labels when adventure hints are enabled."
+        },
+        {
+          "keys": "Alt+hover",
+          "type": "ADV_MAP",
+          "name": "Route movement cost",
+          "description": "Show required and remaining movement points for the selected hero."
+        },
+        {
+          "keys": "Alt+RMB",
+          "type": "ADV_MAP",
+          "name": "Separate map-object hint",
+          "description": "Show the object hint in a message when supported by the hint script."
+        },
+        {
+          "keys": "Ctrl+L",
+          "type": "ADV_MAP",
+          "name": "Load without confirmation",
+          "description": "The included igrik script opens the load-game screen directly."
+        },
+        {
+          "keys": "` / ~",
+          "type": "TOWN",
+          "name": "Additional town menu",
+          "description": "Default key code 192; configurable in gem_settings.town_menu.dlg_run_bttn."
+        },
+        {
+          "keys": "A+LMB",
+          "type": "TOWN",
+          "name": "Quick creature upgrade",
+          "description": "Use on creature stacks or hero armies; requires fast upgrade stacks in town.dll."
+        },
+        {
+          "keys": "A+hover",
+          "type": "TOWN",
+          "name": "Upgrade cost hint",
+          "description": "Hold A over the supported town troop or hero item to preview the upgrade cost."
+        },
+        {
+          "keys": "L",
+          "type": "COMBAT",
+          "name": "Load with confirmation",
+          "description": "The included igrik script requests confirmation before opening the load-game screen."
+        },
+        {
+          "keys": "Ctrl+L",
+          "type": "COMBAT",
+          "name": "Load without confirmation",
+          "description": "Open the load-game screen directly."
+        },
+        {
+          "keys": "Alt+W",
+          "type": "COMBAT",
+          "name": "Wait with all troops",
+          "description": "Apply waiting to the local human army for this round. Disabled during Tactics; multiplayer battles may request confirmation."
+        },
+        {
+          "keys": "Alt+D / Alt+Space",
+          "type": "COMBAT",
+          "name": "Defend with all troops",
+          "description": "Apply defence to the local human army for this round. Disabled during Tactics; multiplayer battles may request confirmation."
+        },
+        {
+          "keys": "Shift+LMB artifact slot",
+          "type": "HERO",
+          "name": "Quick artifact picker",
+          "description": "List compatible artifacts from this hero's backpack for the clicked equipment slot. Requires Interface_ArtifactsQuickSwitching.era; can override HD Shift-click transfer."
+        },
+        {
+          "keys": "MMB artifact slot",
+          "type": "HERO",
+          "name": "Quick artifact picker",
+          "description": "Open the same equipment picker with the middle mouse button."
+        },
+        {
+          "keys": "Shift+LMB artifact slot",
+          "type": "OTHER",
+          "name": "Meeting: Quick artifact picker",
+          "description": "List compatible artifacts from this hero's backpack for the clicked equipment slot. Requires Interface_ArtifactsQuickSwitching.era; can override HD Shift-click transfer."
+        },
+        {
+          "keys": "MMB artifact slot",
+          "type": "OTHER",
+          "name": "Meeting: Quick artifact picker",
+          "description": "Open the same equipment picker with the middle mouse button."
+        },
+        {
+          "keys": "Space",
+          "type": "OTHER",
+          "name": "Dialog: confirm",
+          "description": "The gameplay features module adds Space to supported OK buttons."
+        },
+        {
+          "keys": "NumPad digits",
+          "type": "OTHER",
+          "name": "Numeric input with Num Lock",
+          "description": "The gameplay features module maps the numeric keypad to digits while Num Lock is on."
+        }
+      ],
+      "categories": [
+        {
+          "name": "Interface and hints",
+          "content": "Hero-class appearances and town-level appearances improve map readability. Optional creature health bars and expanded creature previews add battle information. Resource counters support large values; mithril display needs sufficient screen width. Artifact hints can show primary-skill bonuses and combination parts. Adventure hints add map labels and route costs while Alt is held."
+        },
+        {
+          "name": "Settings and optional gameplay",
+          "content": "Open GEM settings with its adventure-map button or the registered GEM entry in System Options. The town extra-functions menu uses the configured grave/tilde key by default. Optional quick-combat controls, spell research and additional town commands depend on settings. The author readme also documents grave/tilde on the adventure map; its binding can differ between builds. Use the settings button if it is unassigned."
+        },
+        {
+          "name": "Gameplay plugin modules",
+          "content": "Gameplay_GameplayEnhancementPlugin.era supplies GEM interface hooks. Its module switches are graphics, features, resources, artifact_hints and adventure_hints under gem_plugin.modules. Restart after changing startup module switches. Resources and some interfaces require HD support. In-game feature options are separate from these startup switches."
+        },
+        {
+          "name": "Army and artifact controls",
+          "content": "Hold A in town to preview upgrade cost, then click a supported troop or hero item to upgrade. Alt+W and Alt+D apply waiting or defence to the army for the round. Shift-click or middle-click an equipment slot to choose a compatible backpack artifact. GEM can override standard or HD controls in these places; consult the GEM Hotkeys section."
+        },
+        {
+          "name": "Fixes and patches",
+          "content": "The included files cover guarded artifacts, pre-battle saves, battle replay, AI-versus-AI battle results, random-map descriptions, town upgrades, dwelling accumulation and map rendering. The generated Plugins section shows the actual files in this installation. Optional author descriptions attach only to matching files."
+        },
+        {
+          "name": "Documentation sources",
+          "content": "Compiled from this mod's description_en.md, gem_script_text.json, gem_main.json, gem_settings.erm, gem_town_menu.erm, 79 wog - igrik.erm and Protection by all units in battle.erm, plus the gameplay and artifact-picker source code in this workspace. Help integration uses the separately installed ERA Help Dialog plugin. Keys mentioned only in older FAQ text are not assumed to be active in every build."
+        }
+      ],
+      "plugins": [
+        {
+          "file": "EraPlugins/ArchBugFixes.era",
+          "name": "ArchBugFixes",
+          "description": "Bundled bug-fix plugin. This package does not include a detailed feature list."
+        },
+        {
+          "file": "EraPlugins/ArtGuard.dll",
+          "name": "Guarded artifacts",
+          "description": "Prevents collecting artifacts or scrolls beside guarding monsters without resolving the guard."
+        },
+        {
+          "file": "EraPlugins/BattleReplay.era",
+          "name": "Battle replay",
+          "description": "Provides battle replay functionality."
+        },
+        {
+          "file": "EraPlugins/BattleSave.dll",
+          "name": "Pre-battle save",
+          "description": "Creates the BATTLE! save before battle."
+        },
+        {
+          "file": "EraPlugins/BattleSpellsPanel.dll",
+          "name": "BattleSpellsPanel",
+          "description": "Bundled battle-spell panel plugin. Additional controls depend on its version."
+        },
+        {
+          "file": "EraPlugins/ChooseAttack.dll",
+          "name": "Creature attack choice",
+          "description": "Provides alternative creature combat actions; GEM includes a compatibility fix for shooting commanders."
+        },
+        {
+          "file": "EraPlugins/DimensionDoorFix.dll",
+          "name": "DimensionDoorFix",
+          "description": "Bundled Dimension Door fix. This package does not specify its exact rule changes."
+        },
+        {
+          "file": "EraPlugins/fast upgrade stacks in town.dll",
+          "name": "Quick town upgrades",
+          "description": "Adds A+click upgrades for supported troop and hero items in town."
+        },
+        {
+          "file": "EraPlugins/Gameplay_GameplayEnhancementPlugin.era",
+          "name": "GEM gameplay and interface",
+          "description": "Supplies the graphics, gameplay, resources, artifact-hint and adventure-hint modules."
+        },
+        {
+          "file": "EraPlugins/H3.RMGDescription.dll",
+          "name": "Random-map descriptions",
+          "description": "Corrects generated map names and descriptions."
+        },
+        {
+          "file": "EraPlugins/Interface_ArtifactsQuickSwitching.era",
+          "name": "Quick artifact picker",
+          "description": "Shift-click or middle-click an equipment slot to choose a compatible backpack artifact."
+        },
+        {
+          "file": "EraPlugins/prima.dll",
+          "name": "prima",
+          "description": "Bundled ERA PLUS library, version 0.1.9 according to file metadata. No separate control reference is supplied."
+        },
+        {
+          "file": "EraPlugins/remove theoretical battle ai vs ai.dll",
+          "name": "AI battle results",
+          "description": "Allows proper experience and skeleton rewards from AI-versus-AI battles."
+        },
+        {
+          "file": "EraPlugins/AfterWog/accumulate_8lv_creatures.bin",
+          "name": "Level-eight dwelling accumulation",
+          "description": "Lets level-eight creatures accumulate in their dwellings."
+        },
+        {
+          "file": "EraPlugins/AfterWog/accumulate_santagremlins_creatures.bin",
+          "name": "Santa Gremlin dwelling accumulation",
+          "description": "Lets Santa Gremlins accumulate in their dwellings."
+        },
+        {
+          "file": "EraPlugins/AfterWog/draw soils.bin",
+          "name": "Map ground rendering",
+          "description": "Corrects ground, road and landscape rendering."
+        },
+        {
+          "file": "EraPlugins/AfterWog/StartArmyAllSlots.bin",
+          "name": "Starting army slots",
+          "description": "Enables three starting creature slots for heroes; scripts can replace the starting army."
+        }
+      ]
+    }
+  }
+}

@@ -7,8 +7,8 @@ PlaceholderSection::PlaceholderSection(const int x, const int y, const int width
     : DlgPage(dialog)
 {
     AddFrame(x, y, width, height);
-    text = H3DlgScrollableText::Create(h3_NullString, x + 10, y + 8, width - 28, height - 16,
-                                       NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, true);
+    text = H3DlgScrollableText::Create(h3_NullString, x + 10, y + 8, width - 28, height - 16, NH3Dlg::Text::MEDIUM,
+                                       eTextColor::REGULAR, false);
     AddScrollableText(text);
 }
 
@@ -28,8 +28,6 @@ BOOL PlaceholderSection::ProcessMessage(H3Msg &)
     return FALSE;
 }
 
-void PlaceholderSection::Redraw()
-{
-}
+void PlaceholderSection::Redraw() {}
 
 } // namespace main

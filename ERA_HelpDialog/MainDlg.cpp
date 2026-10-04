@@ -1,771 +1,799 @@
 #include "MainDlg.h"
-
-#include "ArtifactsPage.h"
-#include "CreaturesPage.h"
 #include "GuideDlg.h"
 #include "HeaderPage.h"
-#include "HeroesPage.h"
 #include "HotkeysPage.h"
-#include "ModListDlg.h"
 #include "ModPage.h"
+#include "ModListDlg.h"
 #include "PlaceholderPage.h"
-#include "SystemFunctions.h"
-#include "SpellsPage.h"
-#include "TownsPage.h"
+#include "SearchPanel.h"
+#include <shellapi.h>
 
+#pragma comment(lib, "Shell32.lib")
+// Stable undecorated API names for GetProcAddress, in addition to stdcall names.
+#pragma comment(linker, "/EXPORT:ERAHelp_ShowDialog=_ERAHelp_ShowDialog@8")
+#pragma comment(linker, "/EXPORT:ERAHelp_ShowObject=_ERAHelp_ShowObject@8")
+#pragma comment(linker, "/EXPORT:ERAHelp_ShowObjectHint=_ERAHelp_ShowObjectHint@12")
 extern const H3Town *townFromClick;
-extern eCreature creatureFromClick;
+extern bool helpDialogInitialized;
 
 namespace main
 {
-
 MainDlg *MainDlg::instance = nullptr;
-
 namespace
 {
-constexpr eHelpPage DEFAULT_PAGE = eHelpPage::MODS;
-
-BOOL IsValidPage(const eHelpPage page) noexcept
+struct Session
 {
-    switch (page)
+    bool loaded = false;
+    std::map<eHelpPage, helpdlg::CatalogueFilter> filters;
+    std::map<std::string, int> modCategories;
+    std::string modFolder;
+    helpdlg::HotkeyFilter hotkeys;
+    std::map<std::string, int> modScroll;
+} session;
+const eHelpPage kPages[] = {eHelpPage::CREATURES, eHelpPage::ARTIFACTS,        eHelpPage::HEROES,
+                            eHelpPage::SPELLS,    eHelpPage::SECONDARY_SKILLS, eHelpPage::TOWNS};
+bool IsCatalogue(eHelpPage page)
+{
+    return std::find(std::begin(kPages), std::end(kPages), page) != std::end(kPages);
+}
+bool ValidPage(eHelpPage page)
+{
+    return IsCatalogue(page) || page == eHelpPage::MODS || page == eHelpPage::HOTKEYS;
+}
+std::string ReadIni(LPCSTR key)
+{
+    h3_TextBuffer[0] = 0;
+    if (Era::ReadStrFromIni)
+        Era::ReadStrFromIni(key, "Help", MainDlg::iniPath, h3_TextBuffer);
+    return h3_TextBuffer;
+}
+int ReadInt(LPCSTR key, int fallback = 0)
+{
+    return helpdlg::ParseInt(ReadIni(key), fallback);
+}
+void WriteIni(LPCSTR key, const std::string &value)
+{
+    if (Era::WriteStrToIni)
+        Era::WriteStrToIni(key, value.c_str(), "Help", MainDlg::iniPath);
+}
+void LoadSession()
+{
+    if (session.loaded)
+        return;
+    session.loaded = true;
+    session.modFolder = ReadIni("LastMod");
+    session.hotkeys.context = ReadInt("HotkeyContext");
+    session.hotkeys.firstRow = ReadInt("HotkeyRow");
+    session.hotkeys.query = ReadIni("HotkeyQuery");
+    const bool migrateSort = ReadInt("SortSchema") < 1;
+    for (auto page : kPages)
     {
-    case eHelpPage::MODS:
-    case eHelpPage::HOTKEYS:
-    case eHelpPage::CREATURES:
-    case eHelpPage::ARTIFACTS:
-    case eHelpPage::TOWNS:
-    case eHelpPage::HEROES:
-    case eHelpPage::SECONDARY_SKILLS:
-    case eHelpPage::SPELLS:
-        return TRUE;
-    default:
-        return FALSE;
+        auto &filter = session.filters[page];
+        const H3String prefix = H3String::Format("Page.%d", static_cast<int>(page));
+        filter.category = ReadInt(H3String::Format("%s.Category", prefix.String()).String());
+        filter.levels = static_cast<unsigned>(ReadInt(H3String::Format("%s.Levels", prefix.String()).String()));
+        filter.sort = migrateSort ? 1 : ReadInt(H3String::Format("%s.Sort", prefix.String()).String(), 1);
+        filter.firstRow = ReadInt(H3String::Format("%s.Row", prefix.String()).String());
+        filter.selectedId = ReadInt(H3String::Format("%s.Selected", prefix.String()).String(), -1);
+        filter.query = ReadIni(H3String::Format("%s.Query", prefix.String()).String());
+        for (int facet = 0; facet < 4; ++facet)
+            filter.facets[facet] = ReadInt(H3String::Format("%s.Facet%d", prefix.String(), facet).String());
     }
-}
-
-int ReadHelpIniInt(LPCSTR key, const int defaultValue) noexcept
-{
-    h3_TextBuffer[0] = '\0';
-    Era::ReadStrFromIni(key, "Help", MainDlg::iniPath, h3_TextBuffer);
-    return h3_TextBuffer[0] ? atoi(h3_TextBuffer) : defaultValue;
-}
-
-void WriteHelpIniInt(LPCSTR key, const int value) noexcept
-{
-    libc::sprintf(h3_TextBuffer, "%d", value);
-    Era::WriteStrToIni(key, h3_TextBuffer, "Help", MainDlg::iniPath);
 }
 } // namespace
 
-MainDlg::MainDlg(const int width, const int height, const int x, const int y, const eHelpPage page,
-                 const int subtype)
-    : H3Dlg(width, height, x, y, 1, 0), initialPage(page), initialSubtype(std::max(0, subtype))
+MainDlg::MainDlg(int width, int height, int x, int y, eHelpPage page, int subtype)
+    : H3Dlg(width, height, x, y, false, false), initialPage(page), activePage(page), initialSubtype(subtype)
 {
-    // Disable dialog shadow.
-    flags ^= 16;
+    helpdlg::AddSafeBackground(*this);
     instance = this;
-
-    background = H3LoadedPcx16::Create(h3_NullString, width, height);
-    memset(background->buffer, 0, background->buffSize);
-
-    H3DlgPcx16 *backDlgPcx = H3DlgPcx16::Create(0, 0, background->width, background->height, 0, nullptr);
-    backDlgPcx->SetPcx(background);
-
-    AddItem(backDlgPcx);
-
-    constexpr int borderMargin = 8;
-    constexpr int panelsMargin = 4;
-    constexpr int headerY = borderMargin;
-    constexpr int headerHeight = 60;
-    headerX = borderMargin;
-    categoriesWidth = 220;
-
-    H3DlgDefButton *okButton = H3DlgDefButton::Create(25, heightDlg - 50, int(eControlId::OK), NH3Dlg::Assets::OKAY_DEF,
-                                                      0, 1, TRUE, NH3VKey::H3VK_ENTER);
-    okButton->AddHotkey(eVKey::H3VK_ESCAPE);
-    okButton->AddHotkey(eVKey::H3VK_F1);
-
-    const int okWidth = okButton->GetWidth();
-    const int okHeight = okButton->GetHeight();
-    const int okX = width - okWidth - borderMargin;
-    const int okY = height - okHeight - borderMargin;
-    okButton->SetX(okX - 1);
-    okButton->SetY(okY + 1);
-
-    H3RGB565 color(H3RGB888::Highlight());
-    CreateFrame(okButton, color, -1, 1);
-    AddItem(okButton);
-
-    hintBar = H3DlgHintBar::Create(this, borderMargin + 1, okY + 1,
-                                   width - (panelsMargin + okWidth + 2 + borderMargin * 2), okHeight);
-    CreateFrame(hintBar, color, -1, 1);
-    AddItem(hintBar);
-
-    categoriesY = headerY + headerHeight + panelsMargin;
-    categoriesHeight = height - (headerY * 2 + headerHeight + panelsMargin * 2 + okHeight);
-    contentX = headerX + categoriesWidth + panelsMargin;
-    contentWidth = width - categoriesWidth - headerX * 2 - panelsMargin;
-
-    // The header is always needed. Content sections are created on their first
-    // use so opening a targeted page does not allocate every other catalogue.
-    headerPage = new HeaderPage(headerX, headerY, width - headerX * 2, headerHeight, this);
-
-    // Select the initial page, but do not activate its items before OnCreate.
-    headerPage->SetActiveButton(static_cast<int>(initialPage));
+    LoadSession();
+    bodyHeight = height - bodyY - 56;
+    contentWidth = width - contentX - 8;
+    header = new HeaderPage(8, 8, width - 16, 84, this);
+    auto *ok = helpdlg::CloseButtonRight(*this);
+    if (ok)
+    {
+        ok->AddHotkey(eVKey::H3VK_ESCAPE);
+        ok->AddHotkey(eVKey::H3VK_F1);
+    }
+    hintBar = CreateHint(10, height - 42, width - 100, 30);
 }
-
 MainDlg::~MainDlg()
 {
-    HidePages();
-
-    instance = nullptr;
-    delete townsSection;
-    delete heroesSection;
-    delete spellsSection;
-    delete artifactsSection;
-    delete hotkeysSection;
+    StoreState();
+    if (activeSection)
+        activeSection->SetVisible(FALSE);
+    delete header;
+    for (auto &section : catalogueSections)
+        delete section.second;
     delete modSection;
-    delete placeholderSection;
-    delete creaturesSection;
-    delete headerPage;
-
-    if (background)
-    {
-        background->Destroy();
-        background = nullptr;
-    }
-
+    delete hotkeysSection;
+    delete placeholder;
+    delete searchPanel;
     for (auto *mod : mods)
-    {
         delete mod;
-    }
+    instance = nullptr;
     if (resultItemId == buttons::RESIZE_DLG)
-    {
         P_WindowManager->resultItemID = buttons::RESIZE_DLG;
-    }
 }
-
-const Content *MainDlg::ActiveContent() const noexcept
+const helpdlg::Catalogue &MainDlg::EnsureCatalogue(eHelpPage page)
 {
-    return m_activeMod && m_activeMod->activeCategory ? m_activeMod->activeCategory->content : nullptr;
+    auto found = catalogues.find(page);
+    if (found == catalogues.end())
+        found = catalogues.emplace(page, helpdlg::BuildCatalogue(page)).first;
+    return found->second;
 }
-
-void MainDlg::CallHelpInHelpDlg() const noexcept
+CatalogueSection *MainDlg::EnsureCatalogueSection(eHelpPage page)
 {
-    help::GuideDlg dlg(500, 500);
-    dlg.Start();
+    auto found = catalogueSections.find(page);
+    if (found != catalogueSections.end())
+        return found->second;
+    auto *section =
+        new CatalogueSection(8, bodyY, 220, bodyHeight, contentX, contentWidth, this, EnsureCatalogue(page));
+    section->SetFilter(session.filters[page]);
+    catalogueSections.emplace(page, section);
+    return section;
 }
-
-void MainDlg::DisplayAllHotkeys() noexcept
-{
-    ShowHotkeys();
-}
-
-ModInformation *MainDlg::CallModListDlg(const ModInformation *activeMod) noexcept
-{
-    (void)activeMod;
-    if (!EnsureModsLoaded())
-        return nullptr;
-
-    constexpr int popupMargin = 12;
-    constexpr int rowHeight = 34;
-    constexpr int minWidth = 280;
-    constexpr int maxWidth = 420;
-    const int screenWidth = std::max(1, H3GameWidth::Get());
-    const int screenHeight = std::max(1, H3GameHeight::Get());
-
-    int anchorX = popupMargin;
-    int anchorY = popupMargin;
-    int buttonWidth = minWidth - 64;
-    int buttonHeight = 0;
-    if (auto *modsButton = GetH3DlgItem(buttons::MODLIST))
-    {
-        // H3DlgItem::GetX/Y are relative to MainDlg. The child dialog needs
-        // screen coordinates, otherwise the picker opens in the wrong place
-        // when MainDlg itself is centered or fullscreen.
-        anchorX = modsButton->GetAbsoluteX();
-        anchorY = modsButton->GetAbsoluteY();
-        buttonWidth = modsButton->GetWidth();
-        buttonHeight = modsButton->GetHeight();
-    }
-
-    const int desiredWidth = std::max(minWidth, buttonWidth + 64);
-    const int maxAllowedWidth = std::max(1, screenWidth - popupMargin * 2);
-    const int popupWidth = std::min(maxAllowedWidth, std::min(maxWidth, desiredWidth));
-    const int maxRows = std::max(1, (screenHeight - popupMargin * 2) / rowHeight);
-    const int visibleRows = std::min(maxRows, std::max(1, static_cast<int>(mods.size())));
-    const int popupHeight = popupMargin * 2 + visibleRows * rowHeight;
-
-    const int popupX = std::max(popupMargin, std::min(anchorX, screenWidth - popupWidth - popupMargin));
-    const int belowY = anchorY + buttonHeight;
-    const int aboveY = anchorY - popupHeight;
-    int popupY = belowY;
-    if (belowY + popupHeight > screenHeight - popupMargin)
-        popupY = aboveY;
-    popupY = std::max(popupMargin, std::min(popupY, screenHeight - popupHeight - popupMargin));
-
-    list::ModListDlg dlg(popupWidth, popupHeight, popupX, popupY, mods);
-    dlg.Start();
-    return dlg.ResultMod();
-}
-
-BOOL MainDlg::EnsureModsLoaded()
+bool MainDlg::EnsureModsLoaded()
 {
     if (modsLoaded)
         return !mods.empty();
-
-    std::vector<std::string> modNames;
-    if (modList::GetEraModList(modNames, TRUE) <= 0)
-        return FALSE;
-    if (!GetLoadedModsJsonInformation(modNames))
-        return FALSE;
-
-    modsLoaded = TRUE;
-    m_activeMod = mods.front();
-    return TRUE;
-}
-
-DlgSection *MainDlg::EnsureSection(const eHelpPage page)
-{
-    switch (page)
+    modsLoaded = true;
+    std::vector<std::string> names = modList::GetEraModList(TRUE);
+    // Built-in references are independent of physical mod folders.
+    // Every remaining entry comes from the active VFS mod list.
+    names.insert(names.begin(), "era help");
+    names.push_back("heroes iii");
+    if (GetModuleHandleA("_HD3_.dll") || GetModuleHandleA("HD_WOG.dll"))
+        names.push_back("hd mod");
+    std::vector<std::string> seen;
+    UINT id = 0;
+    for (const auto &name : names)
     {
-    case eHelpPage::CREATURES:
-        if (!creaturesSection)
-            creaturesSection = new CreaturesSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
-                                                    categoriesY, contentWidth, categoriesHeight, this);
-        return creaturesSection;
-    case eHelpPage::ARTIFACTS:
-        if (!artifactsSection)
-            artifactsSection = new ArtifactsSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
-                                                    categoriesY, contentWidth, categoriesHeight, this);
-        return artifactsSection;
-    case eHelpPage::HEROES:
-        if (!heroesSection)
-            heroesSection = new HeroesSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
-                                              categoriesY, contentWidth, categoriesHeight, this);
-        return heroesSection;
-    case eHelpPage::SPELLS:
-        if (!spellsSection)
-            spellsSection = new SpellsSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
-                                              categoriesY, contentWidth, categoriesHeight, this);
-        return spellsSection;
-    case eHelpPage::TOWNS:
-        if (!townsSection)
-            townsSection = new TownsSection(this);
-        return townsSection;
-    case eHelpPage::HOTKEYS:
-        if (!hotkeysSection)
-            hotkeysSection = new HotkeysSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX,
-                                                categoriesY, contentWidth, categoriesHeight, this, mods);
-        return hotkeysSection;
-    case eHelpPage::MODS:
-        if (!modSection)
-            modSection = new ModSection(headerX, categoriesY, categoriesWidth, categoriesHeight, contentX, categoriesY,
-                                        contentWidth, categoriesHeight, this);
-        return modSection;
-    case eHelpPage::SECONDARY_SKILLS:
-        if (!placeholderSection)
-            placeholderSection = new PlaceholderSection(contentX, categoriesY, contentWidth, categoriesHeight, this);
-        return placeholderSection;
-    default:
-        return nullptr;
-    }
-}
-
-BOOL MainDlg::GetLoadedModsJsonInformation(const std::vector<std::string> &modNames)
-{
-    UINT modId = 0;
-    for (const auto &modName : modNames)
-    {
-        ModInformation *mod = new ModInformation(modName.c_str(), modId++);
+        const std::string folder = helpdlg::Lower(name);
+        if (std::find(seen.begin(), seen.end(), folder) != seen.end())
+            continue;
+        seen.push_back(folder);
+        auto *mod = new ModInformation(name.c_str(), id++,
+                                       folder != "era help" && folder != "heroes iii" && folder != "hd mod");
         if (mod->hasSomeInfo)
-        {
-            mods.emplace_back(mod);
-        }
+            mods.push_back(mod);
         else
-        {
             delete mod;
-        }
     }
+    for (auto *mod : mods)
+    {
+        const std::string folder = mod->path.String();
+        if (session.modCategories.find(folder) == session.modCategories.end())
+            session.modCategories[folder] = ReadInt(("Mod." + folder + ".Category").c_str());
+        if (session.modFolder == mod->path.String())
+            activeMod = mod;
+    }
+    if (!activeMod && !mods.empty())
+        activeMod = mods.front();
     return !mods.empty();
 }
-
-void MainDlg::SetActiveMod(ModInformation *mod)
-{
-    if (m_activeMod == mod)
-    {
-        return;
-    }
-    if (m_activeMod)
-    {
-        m_activeMod->SetVisible(FALSE);
-    }
-    m_activeMod = mod;
-    if (m_activeMod)
-    {
-        m_activeMod->SetVisible(TRUE);
-    }
-}
-
 void MainDlg::ShowSection(DlgSection *section)
 {
-    // Treat the sections as mutually exclusive sources of dialog items. Do
-    // not rely only on activeSection: a lazily-created page may have become
-    // visible while another source was active.
-    DlgSection *allSections[] = {creaturesSection, hotkeysSection, modSection, artifactsSection, townsSection,
-                                  heroesSection, spellsSection, placeholderSection};
-    for (auto *candidate : allSections)
-    {
-        if (candidate && candidate != section)
-            candidate->SetVisible(FALSE);
-    }
+    for (auto &entry : catalogueSections)
+        if (entry.second != section)
+            entry.second->SetVisible(FALSE);
+    if (modSection && modSection != section)
+        modSection->SetVisible(FALSE);
+    if (hotkeysSection && hotkeysSection != section)
+        hotkeysSection->SetVisible(FALSE);
+    if (placeholder && placeholder != section)
+        placeholder->SetVisible(FALSE);
+    if (searchPanel && searchPanel != section)
+        searchPanel->SetVisible(FALSE);
     activeSection = section;
-    if (activeSection)
+    if (section)
     {
-        activeSection->SetVisible(TRUE);
-        activeSection->Redraw();
+        section->SetVisible(TRUE);
+        section->Redraw();
+        activeSubtype = section->Subtype();
     }
-    // Do not draw from OnCreate: vShowAndRun() has not saved the underlying
-    // screen yet. Runtime page switches happen after this dialog becomes the
-    // window manager's active dialog and are redrawn normally.
+    header->SetActiveButton(section == searchPanel ? buttons::SEARCH : static_cast<int>(activePage));
     if (P_WindowManager->lastDlg == this)
-    {
         Redraw();
-    }
 }
-
-BOOL MainDlg::ShowPage(const eHelpPage page, const int subtype)
+void MainDlg::ShowEmpty(eHelpPage page, LPCSTR message)
 {
-    switch (page)
-    {
-    case eHelpPage::CREATURES:
-        ShowCreatures(subtype);
-        return TRUE;
-    case eHelpPage::ARTIFACTS:
-        ShowArtifacts(subtype);
-        return TRUE;
-    case eHelpPage::TOWNS:
-        ShowTowns(subtype);
-        return TRUE;
-    case eHelpPage::HEROES:
-        ShowHeroes(subtype);
-        return TRUE;
-    case eHelpPage::SECONDARY_SKILLS:
-        ShowPlaceholder(buttons::SECONDARY_SKILLS, "The secondary skills catalogue is not implemented yet.");
-        return TRUE;
-    case eHelpPage::SPELLS:
-        ShowSpells(subtype);
-        return TRUE;
-    case eHelpPage::HOTKEYS:
-        ShowHotkeys(subtype);
-        return TRUE;
-    case eHelpPage::MODS:
-        if (EnsureModsLoaded() && m_activeMod)
-        {
-            ShowMod(m_activeMod, subtype);
-            return TRUE;
-        }
-        ShowPlaceholder(buttons::MODLIST, "No mod help is available.");
-        activePage = eHelpPage::MODS;
-        activeSubtype = 0;
-        return TRUE;
-    default:
-        return FALSE;
-    }
+    if (!placeholder)
+        placeholder = new PlaceholderSection(contentX, bodyY, contentWidth, bodyHeight, this);
+    placeholder->SetTitle(message);
+    activePage = page;
+    activeSubtype = 0;
+    ShowSection(placeholder);
 }
-
-void MainDlg::ShowCreatures(const int subtype)
-{
-    auto *section = static_cast<CreaturesSection *>(EnsureSection(eHelpPage::CREATURES));
-    if (!section)
-        return;
-    section->SetSubtype(subtype);
-    activePage = eHelpPage::CREATURES;
-    activeSubtype = section->Subtype();
-    headerPage->SetActiveButton(buttons::CREATURES);
-    if (initialized)
-        ShowSection(section);
-}
-
-void MainDlg::ShowHotkeys(const int subtype)
-{
-    if (!EnsureModsLoaded())
-    {
-        ShowPlaceholder(buttons::HOTKEYS, "No hotkey data is available.");
-        return;
-    }
-    auto *section = static_cast<HotkeysSection *>(EnsureSection(eHelpPage::HOTKEYS));
-    if (!section)
-        return;
-    section->SetSubtype(subtype);
-    activePage = eHelpPage::HOTKEYS;
-    activeSubtype = section->Subtype();
-    headerPage->SetActiveButton(buttons::HOTKEYS);
-    if (initialized)
-        ShowSection(section);
-}
-
-void MainDlg::ShowMod(ModInformation *mod, const int subtype)
+void MainDlg::ShowMod(ModInformation *mod, int subtype)
 {
     if (!mod)
         return;
-    auto *section = static_cast<ModSection *>(EnsureSection(eHelpPage::MODS));
-    if (!section)
-        return;
-    SetActiveMod(mod);
-    headerPage->SetActiveButton(buttons::MODLIST);
-    section->SetMod(mod);
-    section->SetSubtype(subtype);
+    if (activeMod && modSection)
+    {
+        session.modCategories[activeMod->path.String()] = modSection->Subtype();
+        session.modScroll[std::string(activeMod->path.String()) + "." + std::to_string(modSection->Subtype())] =
+            modSection->ScrollPosition();
+    }
+    activeMod = mod;
+    session.modFolder = mod->path.String();
+    if (!modSection)
+        modSection = new ModSection(8, bodyY, 220, bodyHeight, contentX, bodyY, contentWidth, bodyHeight, this);
+    modSection->SetMod(mod);
+    const int category = subtype >= 0 ? subtype : session.modCategories[session.modFolder];
+    modSection->SetSubtype(category);
+    const std::string scrollKey = session.modFolder + "." + std::to_string(modSection->Subtype());
+    if (session.modScroll.find(scrollKey) == session.modScroll.end())
+        session.modScroll[scrollKey] = ReadInt(("ModScroll." + scrollKey).c_str());
+    modSection->SetScrollPosition(session.modScroll[scrollKey]);
     activePage = eHelpPage::MODS;
-    activeSubtype = section->Subtype();
-    if (initialized)
-        ShowSection(section);
+    ShowSection(modSection);
 }
-
-void MainDlg::ShowPlaceholder(const int buttonId, LPCSTR text)
+BOOL MainDlg::ShowPage(eHelpPage page, int subtype)
 {
-    auto *section = static_cast<PlaceholderSection *>(EnsureSection(eHelpPage::SECONDARY_SKILLS));
-    if (!section)
-        return;
-    headerPage->SetActiveButton(buttonId);
-    section->SetTitle(text);
-    activePage = buttonId == buttons::MODLIST ? eHelpPage::MODS : eHelpPage::SECONDARY_SKILLS;
-    activeSubtype = 0;
-    if (initialized)
+    if (!ValidPage(page))
+        return FALSE;
+    if (IsCatalogue(page))
+    {
+        auto *section = EnsureCatalogueSection(page);
+        if (subtype >= 0)
+            section->SetSubtype(subtype);
+        activePage = page;
         ShowSection(section);
+    }
+    else if (page == eHelpPage::MODS)
+    {
+        if (EnsureModsLoaded())
+            ShowMod(activeMod, subtype);
+        else
+            ShowEmpty(page, helpdlg::Text("help.ui.no_mods",
+                                          "No mod help is available. Add help data to a language JSON file."));
+    }
+    else
+    {
+        EnsureModsLoaded();
+        if (!hotkeysSection)
+        {
+            hotkeysSection =
+                new HotkeysSection(8, bodyY, 220, bodyHeight, contentX, bodyY, contentWidth, bodyHeight, this, mods);
+            hotkeysSection->SetFilter(session.hotkeys);
+        }
+        if (subtype >= 0)
+            hotkeysSection->SetSubtype(subtype);
+        activePage = page;
+        ShowSection(hotkeysSection);
+    }
+    return TRUE;
 }
-
-void MainDlg::ShowArtifacts(const int subtype)
-{
-    auto *section = static_cast<ArtifactsSection *>(EnsureSection(eHelpPage::ARTIFACTS));
-    if (!section)
-        return;
-    section->SetSubtype(subtype);
-    activePage = eHelpPage::ARTIFACTS;
-    activeSubtype = section->Subtype();
-    headerPage->SetActiveButton(buttons::ARTIFACTS);
-    if (initialized)
-        ShowSection(section);
-}
-
-void MainDlg::ShowTowns(const int subtype)
-{
-    auto *section = static_cast<TownsSection *>(EnsureSection(eHelpPage::TOWNS));
-    if (!section)
-        return;
-    activePage = eHelpPage::TOWNS;
-    activeSubtype = 0;
-    headerPage->SetActiveButton(buttons::TOWNS);
-    if (initialized)
-        ShowSection(section);
-}
-
-void MainDlg::ShowHeroes(const int subtype)
-{
-    auto *section = static_cast<HeroesSection *>(EnsureSection(eHelpPage::HEROES));
-    if (!section)
-        return;
-    section->SetSubtype(subtype);
-    activePage = eHelpPage::HEROES;
-    activeSubtype = section->Subtype();
-    headerPage->SetActiveButton(buttons::HEROES);
-    if (initialized)
-        ShowSection(section);
-}
-
-void MainDlg::ShowSpells(const int subtype)
-{
-    auto *section = static_cast<SpellsSection *>(EnsureSection(eHelpPage::SPELLS));
-    if (!section)
-        return;
-    section->SetSubtype(subtype);
-    activePage = eHelpPage::SPELLS;
-    activeSubtype = section->Subtype();
-    headerPage->SetActiveButton(buttons::SPELLS);
-    if (initialized)
-        ShowSection(section);
-}
-
 BOOL MainDlg::OnCreate()
 {
-    initialized = TRUE;
-
-    // The header is not part of the content page pair and is always active.
-    headerPage->SetVisible(TRUE);
-    // The default page is the mod picker, but discovering/parsing every mod
-    // is deferred until the user actually asks for that list.
-    if (initialPage == eHelpPage::MODS)
-        ShowPlaceholder(buttons::MODLIST, "Click Mods to load the mod help list.");
-    else if (!ShowPage(initialPage, initialSubtype))
-        ShowPage(DEFAULT_PAGE);
+    header->SetVisible(TRUE);
+    ShowPage(initialPage, initialSubtype);
+    if (pendingObject >= 0 && IsCatalogue(initialPage))
+        EnsureCatalogueSection(initialPage)->FocusObject(pendingObject, false);
+    return TRUE;
+}
+void MainDlg::OnOK()
+{
+    Stop();
+}
+void MainDlg::OnCancel()
+{
+    Stop();
+}
+void MainDlg::OnClose(INT)
+{
+    Stop();
+}
+BOOL MainDlg::OnMouseWheel(INT)
+{
     return TRUE;
 }
 
-void MainDlg::HidePages() noexcept
+void MainDlg::Search()
 {
-    if (headerPage)
+    if (searchPanel)
     {
-        headerPage->SetVisible(FALSE);
-    }
-    if (creaturesSection)
-        creaturesSection->SetVisible(FALSE);
-    if (hotkeysSection)
-        hotkeysSection->SetVisible(FALSE);
-    if (modSection)
-        modSection->SetVisible(FALSE);
-    if (placeholderSection)
-        placeholderSection->SetVisible(FALSE);
-    if (artifactsSection)
-        artifactsSection->SetVisible(FALSE);
-    if (townsSection)
-        townsSection->SetVisible(FALSE);
-    if (heroesSection)
-        heroesSection->SetVisible(FALSE);
-    if (spellsSection)
-        spellsSection->SetVisible(FALSE);
-    activeSection = nullptr;
-    initialized = FALSE;
-}
-
-void MainDlg::OnOK()
-{
-    HidePages();
-    Stop();
-}
-
-void MainDlg::OnCancel()
-{
-    HidePages();
-    Stop();
-}
-
-void MainDlg::OnClose(INT itemId)
-{
-    (void)itemId;
-    HidePages();
-    Stop();
-}
-
-BOOL MainDlg::DialogProc(H3Msg &msg)
-{
-    if (activeSection)
-        activeSection->UpdateMousePosition(msg);
-    if (activeSection && activeSection->ProcessMessage(msg))
-    {
-        activeSubtype = activeSection->Subtype();
-        return 0;
-    }
-
-    if (msg.IsLeftClick())
-    {
-        switch (msg.itemId)
+        searchPanel->SetQuery(header->Query());
+        if (activeSection != searchPanel)
         {
-        case buttons::MODLIST:
-            if (ModInformation *selectedMod = CallModListDlg(m_activeMod))
-                ShowMod(selectedMod);
-            else if (!modsLoaded)
-                ShowPlaceholder(buttons::MODLIST, "No mod help is available.");
-            return 0;
-        case buttons::HOTKEYS:
-            DisplayAllHotkeys();
-            return 0;
-        case buttons::CREATURES:
-            ShowCreatures();
-            return 0;
-        case buttons::ARTIFACTS:
-            ShowArtifacts();
-            return 0;
-        case buttons::TOWNS:
-            ShowTowns();
-            return 0;
-        case buttons::HEROES:
-            ShowHeroes();
-            return 0;
-        case buttons::SECONDARY_SKILLS:
-            ShowPlaceholder(buttons::SECONDARY_SKILLS, "The secondary skills catalogue is not implemented yet.");
-            return 0;
-        case buttons::SPELLS:
-            ShowSpells();
-            return 0;
-        case buttons::RESIZE_DLG:
-
-            this->resultItemId = buttons::RESIZE_DLG;
-            HidePages();
-            Stop();
-
-            return 0;
-        case buttons::HELP:
-            CallHelpInHelpDlg();
-            return 0;
-        default:
-            break;
+            ShowSection(searchPanel);
+            header->FocusSearch();
         }
+        return;
     }
-    else if (msg.IsRightClick())
-    {
-        if (H3DlgItem *item = GetH3DlgItem(msg.itemId))
+    std::vector<helpdlg::SearchEntry> entries;
+    for (auto page : kPages)
+        for (const auto &object : EnsureCatalogue(page).entries)
         {
-            if (LPCSTR rmcHint = *reinterpret_cast<LPCSTR *>(reinterpret_cast<char *>(item) + 0x24))
+            helpdlg::SearchEntry entry;
+            entry.page = page;
+            entry.objectId = object.id;
+            entry.label = std::string(helpdlg::PageName(page)) + " / " + object.name;
+            entry.searchable = entry.label;
+            entries.push_back(entry);
+        }
+    EnsureModsLoaded();
+    for (auto *mod : mods)
+        for (size_t category = 0; category < mod->categories.size(); ++category)
+        {
+            auto *item = mod->categories[category];
+            helpdlg::SearchEntry entry;
+            entry.modId = mod->id;
+            entry.category = static_cast<int>(category);
+            entry.label = std::string(mod->name.String()) + " / " + item->name.String();
+            entry.searchable = entry.label;
+            entries.push_back(entry);
+            if (item == mod->hotkeysCategory)
+                for (const auto &key : mod->hotkeysCategory->hotkeys)
+                {
+                    entry.page = eHelpPage::HOTKEYS;
+                    entry.hotkeyContext = key.type;
+                    entry.hotkeyId = key.id;
+                    entry.hotkeyQuery = std::string(key.keys.String()) + " " + key.name.String();
+                    entry.label =
+                        std::string(mod->name.String()) + " / [" + key.keys.String() + "] " + key.name.String();
+                    entry.searchable = entry.label;
+                    entries.push_back(entry);
+                }
+        }
+    searchPanel = new helpdlg::SearchPanel(8, bodyY, 220, bodyHeight, contentX, contentWidth, this, std::move(entries));
+    searchPanel->SetQuery(header->Query());
+    ShowSection(searchPanel);
+    header->FocusSearch();
+}
+
+void MainDlg::CloseSearch()
+{
+    header->SetQuery("");
+    searchQuery.clear();
+    if (activeSection == searchPanel)
+        ShowPage(activePage);
+}
+
+void MainDlg::NavigateSearch(const helpdlg::SearchEntry &target)
+{
+    ReleaseInputFocus();
+    if (target.modId >= 0)
+    {
+        for (auto *mod : mods)
+            if (mod->id == static_cast<UINT>(target.modId))
             {
-                H3Messagebox::RMB(rmcHint);
+                if (target.page == eHelpPage::HOTKEYS)
+                {
+                    ShowPage(eHelpPage::HOTKEYS);
+                    hotkeysSection->FocusHotkey(mod->path.String(), target.hotkeyContext, target.hotkeyQuery);
+                    Redraw();
+                }
+                else
+                    ShowMod(mod, target.category);
+                break;
+            }
+    }
+    else
+    {
+        ShowPage(target.page, 0);
+        EnsureCatalogueSection(target.page)->FocusObject(target.objectId, false);
+    }
+}
+
+void MainDlg::PreviewSearch(const helpdlg::SearchEntry &target)
+{
+    if (target.modId < 0)
+    {
+        const auto &data = EnsureCatalogue(target.page);
+        for (const auto &entry : data.entries)
+            if (entry.id == target.objectId)
+            {
+                helpdlg::ShowObjectDetails(entry, true);
+                return;
+            }
+        return;
+    }
+    for (auto *mod : mods)
+    {
+        if (mod->id != static_cast<UINT>(target.modId))
+            continue;
+        helpdlg::CatalogueEntry preview{};
+        preview.name = target.label;
+        preview.summary = mod->name.String();
+        if (target.page == eHelpPage::HOTKEYS)
+        {
+            if (!mod->hotkeysCategory)
+                return;
+            for (const auto &key : mod->hotkeysCategory->hotkeys)
+                if (key.id == target.hotkeyId)
+                {
+                    helpdlg::ShowHotkeyPreview(key, mod->name.String());
+                    return;
+                }
+            return;
+        }
+        if (target.category < 0 || target.category >= static_cast<int>(mod->categories.size()))
+            return;
+        auto *category = mod->categories[target.category];
+        if (!category)
+            return;
+        if (category == mod->hotkeysCategory)
+        {
+            std::vector<helpdlg::HotkeyLine> keys;
+            for (const auto &key : mod->hotkeysCategory->hotkeys)
+                keys.push_back({key.type, "", helpdlg::Safe(key.keys.String()), helpdlg::Safe(key.name.String()),
+                                static_cast<int>(mod->id), key.id, helpdlg::Safe(key.description.String())});
+            preview.description = helpdlg::GroupHotkeys(keys, helpdlg::ContextName);
+        }
+        else if (category && category->content)
+        {
+            preview.description = category->content->text.String();
+            for (const auto &object : category->content->objects)
+            {
+                if (object.kind == eHelpObjectKind::Text)
+                    preview.description += "\n\n" + helpdlg::Safe(object.value.String());
+                else if (object.kind == eHelpObjectKind::Image && !preview.def && preview.pcx.empty())
+                {
+                    const std::string resource = helpdlg::Lower(object.value.String());
+                    if (resource.size() >= 4 && resource.substr(resource.size() - 4) == ".def")
+                    {
+                        preview.def = object.value.String();
+                        preview.frame = object.frame;
+                    }
+                    else
+                        preview.pcx = object.value.String();
+                }
             }
         }
+        if (preview.description.empty())
+            preview.description = helpdlg::Text("help.ui.empty_category", "No text in this category.");
+        helpdlg::ShowObjectDetails(preview, true);
+        return;
     }
-
-    if (hintBar && hintBar->IsVisible())
-    {
-        hintBar->ShowHint(&msg);
-    }
-    return 0;
 }
 
-void MainDlg::AssignWithCalledDlg(const H3Town *town, const eCreature creature) noexcept
+void MainDlg::ExecuteAction(LPCSTR command)
+{
+    const std::string action = command ? command : "";
+    if (action == "search")
+    {
+        ReleaseInputFocus();
+        Search();
+        header->FocusSearch();
+        return;
+    }
+    if (action == "guide")
+    {
+        help::GuideDlg guide(620, 540);
+        guide.Start();
+        return;
+    }
+    const size_t separator = action.find(':');
+    if (separator == std::string::npos)
+        return;
+    const std::string kind = helpdlg::Lower(action.substr(0, separator));
+    const std::string value = action.substr(separator + 1);
+    if (kind == "http" || kind == "https")
+    {
+        ShellExecuteA(nullptr, "open", action.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        return;
+    }
+    if (kind == "erm")
+    {
+        if (!Era::AllocErmFunc || !Era::ExecErmCmd || value.empty())
+            return;
+        int function = 0;
+        const int numeric = helpdlg::ParseInt(value, -1);
+        if (numeric >= 0)
+            function = numeric;
+        else
+            Era::AllocErmFunc(value.c_str(), function);
+        if (function > 0)
+            Era::ExecErmCmd(H3String::Format("!!FU%d:P;", function).String());
+        return;
+    }
+    if (kind == "mod")
+    {
+        EnsureModsLoaded();
+        const size_t colon = value.rfind(':');
+        const std::string folder = helpdlg::Lower(value.substr(0, colon));
+        const int category = colon == std::string::npos ? 0 : helpdlg::ParseInt(value.substr(colon + 1), -1);
+        if (category < 0)
+            return;
+        for (auto *mod : mods)
+            if (folder == helpdlg::Lower(mod->path.String()))
+            {
+                ShowMod(mod, category);
+                return;
+            }
+        return;
+    }
+    const LPCSTR kinds[] = {"creatures", "artifacts", "heroes", "spells", "skills", "towns"};
+    for (int index = 0; index < 6; ++index)
+        if (kind == kinds[index])
+        {
+            const int id = helpdlg::ParseInt(value, -1);
+            if (id < 0)
+                return;
+            ShowObject(kPages[index], id);
+            return;
+        }
+}
+void MainDlg::ReleaseInputFocus(int keepItemId)
+{
+    header->ReleaseInputFocus(keepItemId);
+    for (auto &entry : catalogueSections)
+        entry.second->ReleaseInputFocus(keepItemId);
+    if (hotkeysSection)
+        hotkeysSection->ReleaseInputFocus(keepItemId);
+}
+BOOL MainDlg::DialogProc(H3Msg &msg)
+{
+    const std::string query = header->Query();
+    if (query != searchQuery)
+    {
+        searchQuery = query;
+        if (!query.empty())
+            Search();
+        else if (activeSection == searchPanel)
+            ShowPage(activePage);
+    }
+    if (msg.IsLeftDown() || msg.IsLeftClick() || msg.IsRightClick())
+        ReleaseInputFocus(msg.itemId);
+    if (msg.IsKeyPress() && msg.IsCtrlPressed() && msg.GetKey() == eVKey::H3VK_F)
+    {
+        ReleaseInputFocus();
+        Search();
+        header->FocusSearch();
+        return FALSE;
+    }
+    if (activeSection)
+    {
+        activeSection->UpdateMousePosition(msg);
+        if (activeSection->ProcessMessage(msg))
+        {
+            activeSubtype = activeSection->Subtype();
+            if (activeSection == searchPanel)
+            {
+                if (searchPanel->TakeBackRequest())
+                    CloseSearch();
+                else
+                {
+                    bool popup = false;
+                    if (const auto *target = searchPanel->TakeSelection(popup))
+                    {
+                        if (popup)
+                            PreviewSearch(*target);
+                        else
+                            NavigateSearch(*target);
+                    }
+                }
+            }
+            else if (activeSection == modSection)
+            {
+                const H3String action = modSection->TakeAction();
+                if (!action.Empty())
+                    ExecuteAction(action.String());
+            }
+            Redraw();
+            return FALSE;
+        }
+    }
+    if (msg.IsLeftClick())
+    {
+        if (msg.itemId == buttons::MODLIST)
+        {
+            if (!EnsureModsLoaded())
+            {
+                ShowPage(eHelpPage::MODS);
+                return FALSE;
+            }
+            auto *button = GetH3DlgItem(buttons::MODLIST);
+            if (!button)
+                return FALSE;
+            const auto layout = helpdlg::FitModDropdown(
+                GetX() + button->GetX(), GetY() + button->GetY(), button->GetWidth(), button->GetHeight(),
+                static_cast<int>(mods.size()), H3GameWidth::Get(), H3GameHeight::Get());
+            list::ModListDlg picker(layout, mods, activeMod);
+            picker.Start();
+            if (picker.ResultMod())
+                ShowMod(picker.ResultMod(), -1);
+            return FALSE;
+        }
+        if (msg.itemId == buttons::SEARCH_CLEAR)
+        {
+            CloseSearch();
+            return FALSE;
+        }
+        if (msg.itemId == buttons::HELP)
+        {
+            help::GuideDlg guide(620, 540);
+            guide.Start();
+            return FALSE;
+        }
+        if (msg.itemId == buttons::RESIZE_DLG)
+        {
+            resultItemId = buttons::RESIZE_DLG;
+            Stop();
+            return FALSE;
+        }
+        const eHelpPage page = static_cast<eHelpPage>(msg.itemId);
+        if (ValidPage(page))
+        {
+            ShowPage(page);
+            return FALSE;
+        }
+    }
+    if (hintBar && msg.IsMouseOver())
+        hintBar->ShowHint(&msg);
+    return TRUE;
+}
+void MainDlg::StoreState()
+{
+    for (const auto &section : catalogueSections)
+        session.filters[section.first] = section.second->Filter();
+    if (modSection && activeMod)
+    {
+        session.modCategories[activeMod->path.String()] = modSection->Subtype();
+        session.modScroll[std::string(activeMod->path.String()) + "." + std::to_string(modSection->Subtype())] =
+            modSection->ScrollPosition();
+    }
+    if (hotkeysSection)
+        session.hotkeys = hotkeysSection->Filter();
+    WriteIni("LastMod", session.modFolder);
+    WriteIni("SortSchema", "1");
+    WriteIni("HotkeyContext", std::to_string(session.hotkeys.context));
+    WriteIni("HotkeyRow", std::to_string(session.hotkeys.firstRow));
+    WriteIni("HotkeyQuery", session.hotkeys.query);
+    for (const auto &entry : session.filters)
+    {
+        const auto &filter = entry.second;
+        const H3String prefix = H3String::Format("Page.%d", static_cast<int>(entry.first));
+        WriteIni(H3String::Format("%s.Category", prefix.String()).String(), std::to_string(filter.category));
+        WriteIni(H3String::Format("%s.Levels", prefix.String()).String(), std::to_string(filter.levels));
+        WriteIni(H3String::Format("%s.Sort", prefix.String()).String(), std::to_string(filter.sort));
+        WriteIni(H3String::Format("%s.Row", prefix.String()).String(), std::to_string(filter.firstRow));
+        WriteIni(H3String::Format("%s.Selected", prefix.String()).String(), std::to_string(filter.selectedId));
+        WriteIni(H3String::Format("%s.Query", prefix.String()).String(), filter.query);
+        for (int facet = 0; facet < 4; ++facet)
+            WriteIni(H3String::Format("%s.Facet%d", prefix.String(), facet).String(),
+                     std::to_string(filter.facets[facet]));
+    }
+    for (const auto &mod : session.modCategories)
+        WriteIni(("Mod." + mod.first + ".Category").c_str(), std::to_string(mod.second));
+    for (const auto &scroll : session.modScroll)
+        WriteIni(("ModScroll." + scroll.first).c_str(), std::to_string(scroll.second));
+}
+void MainDlg::AssignWithCalledDlg(const H3Town *town, eCreature creature) noexcept
 {
     if (town)
     {
+        ShowPage(eHelpPage::TOWNS, 0);
+        EnsureCatalogueSection(eHelpPage::TOWNS)->FocusObject(town->type, false);
     }
     else if (creature != eCreature::UNDEFINED)
     {
+        ShowPage(eHelpPage::CREATURES, 0);
+        EnsureCatalogueSection(eHelpPage::CREATURES)->FocusObject(static_cast<int>(creature), false);
     }
 }
-
-BOOL MainDlg::DlgExists()
+void MainDlg::PrepareMainDlg(HookContext *)
 {
-    return instance != nullptr;
-}
-
-enum H3DlgVTables : DWORD
-{
-    H3TownSmallDlg = 0x00640704,
-    H3CreatureSmallDlg = 0x06406DC,
-};
-
-void MainDlg::PrepareMainDlg(HookContext *c)
-{
-    (void)c;
-    eHelpPage page = DEFAULT_PAGE;
-    int subtype = 0;
-    BOOL contextualCall = FALSE;
-    const H3Town *town = nullptr;
-    eCreature creature = eCreature::UNDEFINED;
-    const DWORD currentDlgVTable = P_WindowManager->lastDlg
-                                       ? *reinterpret_cast<DWORD *>(P_WindowManager->lastDlg)
-                                       : 0;
-    if (currentDlgVTable)
+    if (P_WindowManager->lastDlg && *reinterpret_cast<DWORD *>(P_WindowManager->lastDlg) == 0x640704 && townFromClick)
     {
-        switch (currentDlgVTable)
-        {
-        case H3DlgVTables::H3TownSmallDlg:
-            town = ::townFromClick;
-            break;
-        case H3DlgVTables::H3CreatureSmallDlg:
-            creature = ::creatureFromClick;
-            break;
-        default:
-            break;
-        }
-    }
-
-    if (town)
-    {
-        page = eHelpPage::TOWNS;
-        contextualCall = TRUE;
-    }
-    else
-    {
-        ::townFromClick = nullptr;
-    }
-    if (creature != eCreature::UNDEFINED)
-    {
-        page = eHelpPage::CREATURES;
-        contextualCall = TRUE;
-    }
-    else
-        ::creatureFromClick = eCreature::UNDEFINED;
-
-    if (contextualCall)
-    {
-        RunMainDlg(page, subtype, FALSE);
+        RunMainDlg(eHelpPage::TOWNS, 0, FALSE, townFromClick->type);
         return;
     }
-
-    page = static_cast<eHelpPage>(ReadHelpIniInt("LastPage", static_cast<int>(DEFAULT_PAGE)));
-    if (!IsValidPage(page))
-        page = DEFAULT_PAGE;
-    subtype = std::max(0, ReadHelpIniInt("LastSubtype", 0));
-    RunMainDlg(page, subtype, TRUE);
+    townFromClick = nullptr;
+    eHelpPage page = static_cast<eHelpPage>(ReadInt("LastPage", static_cast<int>(eHelpPage::MODS)));
+    if (!ValidPage(page))
+        page = eHelpPage::MODS;
+    RunMainDlg(page, -1, TRUE);
 }
-
-BOOL MainDlg::PrepareMainDlg(const eHelpPage page, const int subtype)
+BOOL MainDlg::PrepareMainDlg(eHelpPage page, int subtype)
 {
     return RunMainDlg(page, subtype, FALSE);
 }
-
-BOOL MainDlg::RunMainDlg(const eHelpPage requestedPage, const int subtype, const BOOL rememberPage)
+BOOL MainDlg::ShowObject(eHelpPage page, int objectId)
 {
-    if (DlgExists())
+    if (!IsCatalogue(page) || objectId < 0)
         return FALSE;
-
-    const int storeResult = P_WindowManager->resultItemID;
-
-    const int gameWidth = H3GameWidth::Get();
-    const int gameHeight = H3GameHeight::Get();
-    bool isFullScreen = ReadHelpIniInt("FullScreen", 0) != 0;
-    eHelpPage pageToOpen = IsValidPage(requestedPage) ? requestedPage : DEFAULT_PAGE;
-    int subtypeToOpen = std::max(0, subtype);
-
+    if (instance)
+    {
+        const auto &data = instance->EnsureCatalogue(page);
+        if (std::none_of(data.entries.begin(), data.entries.end(),
+                         [objectId](const helpdlg::CatalogueEntry &entry) { return entry.id == objectId; }))
+            return FALSE;
+        instance->ShowPage(page, 0);
+        instance->EnsureCatalogueSection(page)->FocusObject(objectId);
+        return TRUE;
+    }
+    const auto data = helpdlg::BuildCatalogue(page);
+    if (std::none_of(data.entries.begin(), data.entries.end(),
+                     [objectId](const helpdlg::CatalogueEntry &entry) { return entry.id == objectId; }))
+        return FALSE;
+    return RunMainDlg(page, 0, FALSE, objectId);
+}
+BOOL MainDlg::RunMainDlg(eHelpPage page, int subtype, BOOL remember, int objectId)
+{
+    if (DlgExists() || !ValidPage(page))
+        return FALSE;
+    const int savedResult = P_WindowManager->resultItemID;
+    bool full = ReadInt("FullScreen") != 0;
+    int result = 0;
     do
     {
-        const int dialogWidth = Clamp(800, isFullScreen ? gameWidth - 6 : 800, gameWidth);
-        const int dialogHeight = Clamp(600, isFullScreen ? gameHeight - 6 : 600, gameHeight);
-        int dialogResult = 0;
+        const int gameWidth = H3GameWidth::Get(), gameHeight = H3GameHeight::Get();
+        const int width = full ? gameWidth : std::min(gameWidth, 800);
+        const int height = full ? gameHeight : std::min(gameHeight, 600);
         {
-            MainDlg dialog(dialogWidth, dialogHeight, -1, -1, pageToOpen, subtypeToOpen);
+            MainDlg dialog(width, height, -1, -1, page, subtype);
+            dialog.pendingObject = objectId;
             dialog.Start();
-            pageToOpen = dialog.activePage;
-            subtypeToOpen = dialog.activeSubtype;
+            page = dialog.activePage;
+            subtype = -1;
+            objectId = -1;
+            result = dialog.resultItemId;
         }
-        // MainDlg's destructor publishes the resize result to the window
-        // manager, so read it only after the dialog object has been destroyed.
-        dialogResult = P_WindowManager->resultItemID;
-
-        if (dialogResult == buttons::RESIZE_DLG)
+        if (result == buttons::RESIZE_DLG)
         {
-
-            Era::WriteStrToIni("FullScreen", (isFullScreen ^= 1) ? "1" : "0", "Help", MainDlg::iniPath);
-            Era::SaveIni(MainDlg::iniPath);
+            full = !full;
+            WriteIni("FullScreen", full ? "1" : "0");
         }
-        else
-        {
-            break;
-        }
-    } while (TRUE);
-
-    if (rememberPage)
+    } while (result == buttons::RESIZE_DLG);
+    if (remember)
     {
-        WriteHelpIniInt("LastPage", static_cast<int>(pageToOpen));
-        WriteHelpIniInt("LastSubtype", subtypeToOpen);
-        Era::SaveIni(MainDlg::iniPath);
+        WriteIni("LastPage", std::to_string(static_cast<int>(page)));
+        WriteIni("LastSubtype", "0");
     }
-    P_WindowManager->resultItemID = storeResult;
+    if (Era::SaveIni)
+        Era::SaveIni(iniPath);
+    P_WindowManager->resultItemID = savedResult;
     return TRUE;
 }
-
-int __fastcall MainDlg::MainMenuButtonProc(void *msg)
+int __fastcall MainDlg::MainMenuButtonProc(void *message)
 {
-    if (auto mes = static_cast<H3Msg *>(msg))
-    {
-        if (mes->IsLeftClick())
-        {
-            PrepareMainDlg();
-        }
-    }
-    return true;
+    if (message && static_cast<H3Msg *>(message)->IsLeftClick())
+        PrepareMainDlg();
+    return TRUE;
 }
-
 } // namespace main
-
-DllExport BOOL __stdcall ERAHelp_ShowDialog(const main::eHelpPage page, const int subtype)
+DllExport BOOL __stdcall ERAHelp_ShowDialog(main::eHelpPage page, int subtype)
 {
     return main::MainDlg::PrepareMainDlg(page, subtype);
+}
+DllExport BOOL __stdcall ERAHelp_ShowObject(main::eHelpPage page, int objectId)
+{
+    return main::MainDlg::ShowObject(page, objectId);
+}
+DllExport BOOL __stdcall ERAHelp_ShowObjectHint(main::eHelpPage page, int objectId, BOOL popup)
+{
+    static bool showing = false;
+    if (!helpDialogInitialized || showing || !P_WindowManager)
+        return FALSE;
+    struct CallState
+    {
+        bool &showing;
+        H3WindowManager *window;
+        int result;
+        CallState(bool &busy, H3WindowManager *manager) : showing(busy), window(manager), result(manager->resultItemID)
+        {
+            showing = true;
+        }
+        ~CallState()
+        {
+            window->resultItemID = result;
+            showing = false;
+        }
+    } state(showing, P_WindowManager);
+    try
+    {
+        helpdlg::CatalogueEntry entry{};
+        if (!helpdlg::TryBuildObjectEntry(page, objectId, entry))
+            return FALSE;
+        return helpdlg::ShowObjectDetails(entry, popup != FALSE) ? TRUE : FALSE;
+    }
+    catch (const std::exception &)
+    {
+        return FALSE;
+    }
 }

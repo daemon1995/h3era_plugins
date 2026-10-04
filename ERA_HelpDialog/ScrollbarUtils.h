@@ -16,6 +16,10 @@ class AdjustableScrollbar : public H3DlgScrollbar
     {
         vSetTickCount(tickCount);
     }
+    void RefreshOwner() const
+    {
+        vScrollCallOwner();
+    }
 };
 
 // A native scrollbar stores the number of positions, not the last position.

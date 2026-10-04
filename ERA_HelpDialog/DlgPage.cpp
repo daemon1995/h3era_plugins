@@ -1,11 +1,11 @@
 #include "DlgPage.h"
+#include "HelpLogic.h"
+#include "ScrollbarUtils.h"
 
 namespace main
 {
 
-DlgPage::DlgPage(H3Dlg *dialog) : dialog(dialog)
-{
-}
+DlgPage::DlgPage(H3Dlg *dialog) : dialog(dialog) {}
 
 void DlgPage::AddItem(H3DlgItem *item)
 {
@@ -38,7 +38,54 @@ void DlgPage::SetScrollableText(H3DlgScrollableText *scrollableText, LPCSTR text
     // their state immediately so a hidden page cannot leak freshly-created
     // lines into the active page.
     scrollableText->SetText(text ? text : h3_NullString);
+    pendingTextScroll.erase(scrollableText);
     SetScrollableTextVisible(scrollableText, isVisible);
+}
+
+void DlgPage::SetTextScrollPosition(H3DlgScrollableText *text, int position)
+{
+    if (!text)
+        return;
+    pendingTextScroll[text] = std::max(0, position);
+    FlushTextScrollPositions();
+}
+
+int DlgPage::TextScrollPosition(H3DlgScrollableText *text) const
+{
+    const auto pending = pendingTextScroll.find(text);
+    if (pending != pendingTextScroll.end())
+        return pending->second;
+    auto *scroll = text ? text->GetTextScrollBar() : nullptr;
+    return scroll ? scroll->GetTick() : 0;
+}
+
+void DlgPage::FlushTextScrollPositions() const noexcept
+{
+    for (auto pending = pendingTextScroll.begin(); pending != pendingTextScroll.end();)
+    {
+        auto *text = pending->first;
+        // The native callback at 0x5BA350 draws through the canvas allocated
+        // during item initialization. Calling it before that dereferences a
+        // null PCX in ERA's drawing hook (the Hotkeys/WoG opening crash).
+        if (!helpdlg::CanRestoreTextScroll(isVisible != FALSE, dialog && P_WindowManager->lastDlg == dialog,
+                                           text->GetPcx() != nullptr))
+        {
+            ++pending;
+            continue;
+        }
+        auto *scroll = text->GetTextScrollBar();
+        if (scroll && scroll->GetTicksCount() > 1)
+        {
+            const int position = helpdlg::Bound(pending->second, 0, scroll->GetTicksCount() - 1);
+            if (position != scroll->GetTick())
+            {
+                scroll->SetTick(position);
+                scroll->SetButtonPosition();
+                reinterpret_cast<helpdlg::AdjustableScrollbar *>(scroll)->RefreshOwner();
+            }
+        }
+        pending = pendingTextScroll.erase(pending);
+    }
 }
 
 void DlgPage::SetScrollableTextVisible(H3DlgScrollableText *scrollableText, const BOOL state) const noexcept
@@ -111,6 +158,7 @@ void DlgPage::SetVisible(const BOOL state) noexcept
     }
     for (auto *scrollableText : scrollableTexts)
         SetScrollableTextVisible(scrollableText, state);
+    FlushTextScrollPositions();
 }
 
 BOOL DlgPage::IsVisible() const noexcept
@@ -120,6 +168,7 @@ BOOL DlgPage::IsVisible() const noexcept
 
 void DlgPage::RedrawDialog() const noexcept
 {
+    FlushTextScrollPositions();
     // OnCreate runs before H3Dlg::Start() lets the window manager save the
     // screen beneath the dialog. Drawing at that point would put our own
     // controls into that backup and make them reappear after closing.

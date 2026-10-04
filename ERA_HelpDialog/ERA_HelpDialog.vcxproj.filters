@@ -1,152 +1,54 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="MainDlg">
-      <UniqueIdentifier>{ce8d4a84-5bc8-41f9-b902-abaaf4fbc6df}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ModListDlg">
-      <UniqueIdentifier>{e857667e-370b-45b6-9c8d-b416520625ba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GuideDlg">
-      <UniqueIdentifier>{fb3b4c04-ac0b-47a3-a626-5d83b9046cfc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainDlg\Header">
-      <UniqueIdentifier>{9f31ea49-315e-4f04-98ea-51a06dad16bc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainDlg\Creatures">
-      <UniqueIdentifier>{7cc5c4ef-4d86-42d6-9fea-42f7165e21a4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainDlg\Artifacts">
-      <UniqueIdentifier>{466928d2-0c55-4cf4-bf39-d523ac5965ea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainDlg\Towns">
-      <UniqueIdentifier>{d82b2a9d-f3fc-4f4d-83fc-588424f3f7d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainDlg\Heroes">
-      <UniqueIdentifier>{f6e33b61-3e50-4a9c-8ae7-6f1fd4a4d9ce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainDlg\Spells">
-      <UniqueIdentifier>{cb7ca7c3-5ae4-4eeb-a221-e0866f5ef36c}</UniqueIdentifier>
-    </Filter>
+    <Filter Include="Source Files"><UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier></Filter>
+    <Filter Include="Header Files"><UniqueIdentifier>{93995380-89BD-4B04-88EB-625FBE52EBFB}</UniqueIdentifier></Filter>
+    <Filter Include="Documentation"><UniqueIdentifier>{D7EEB5C2-72BA-4DEB-82BB-38893556FA72}</UniqueIdentifier></Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DlgEnums.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SystemFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HelpDialogDependencies.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ScrollbarUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MainDlg.h">
-      <Filter>MainDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="DlgPage.h">
-      <Filter>MainDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="HotkeysPage.h">
-      <Filter>MainDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="HeaderPage.h">
-      <Filter>MainDlg\Header</Filter>
-    </ClInclude>
-    <ClInclude Include="CreaturesPage.h">
-      <Filter>MainDlg\Creatures</Filter>
-    </ClInclude>
-    <ClInclude Include="ArtifactsPage.h">
-      <Filter>MainDlg\Artifacts</Filter>
-    </ClInclude>
-    <ClInclude Include="TownsPage.h">
-      <Filter>MainDlg\Towns</Filter>
-    </ClInclude>
-    <ClInclude Include="HeroesPage.h">
-      <Filter>MainDlg\Heroes</Filter>
-    </ClInclude>
-    <ClInclude Include="SpellsPage.h">
-      <Filter>MainDlg\Spells</Filter>
-    </ClInclude>
-    <ClInclude Include="GuideDlg.h">
-      <Filter>GuideDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="ModListDlg.h">
-      <Filter>ModListDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="ModPage.h">
-      <Filter>MainDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="PlaceholderPage.h">
-      <Filter>MainDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="ModInformation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ModJson.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SystemFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\headers\Era\era.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MainDlg.cpp">
-      <Filter>MainDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="DlgPage.cpp">
-      <Filter>MainDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="HotkeysPage.cpp">
-      <Filter>MainDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="HeaderPage.cpp">
-      <Filter>MainDlg\Header</Filter>
-    </ClCompile>
-    <ClCompile Include="CreaturesPage.cpp">
-      <Filter>MainDlg\Creatures</Filter>
-    </ClCompile>
-    <ClCompile Include="ArtifactsPage.cpp">
-      <Filter>MainDlg\Artifacts</Filter>
-    </ClCompile>
-    <ClCompile Include="TownsPage.cpp">
-      <Filter>MainDlg\Towns</Filter>
-    </ClCompile>
-    <ClCompile Include="HeroesPage.cpp">
-      <Filter>MainDlg\Heroes</Filter>
-    </ClCompile>
-    <ClCompile Include="SpellsPage.cpp">
-      <Filter>MainDlg\Spells</Filter>
-    </ClCompile>
-    <ClCompile Include="GuideDlg.cpp">
-      <Filter>GuideDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="ModListDlg.cpp">
-      <Filter>ModListDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="ModPage.cpp">
-      <Filter>MainDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="PlaceholderPage.cpp">
-      <Filter>MainDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="ModInformation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <None Include="README.md"><Filter>Documentation</Filter></None>
+    <None Include="lang\era_help.json"><Filter>Documentation</Filter></None>
+    <None Include="examples\HelpDialogExample.erm"><Filter>Documentation</Filter></None>
+    <ClInclude Include="DlgEnums.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="HeaderPage.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="HelpDialogDependencies.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="DlgPage.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="PluginFiles.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="HelpLogic.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="HelpUI.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ObjectCard.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="CardLayout.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="MasteryPopup.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="CatalogueData.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="CataloguePage.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="SearchPanel.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="HotkeysPage.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="MainDlg.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="GuideDlg.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ModInformation.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ModJson.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ModListDlg.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ModPage.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="PlaceholderPage.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ScrollbarUtils.h"><Filter>Header Files</Filter></ClInclude>
+    <ClCompile Include="..\headers\Era\era.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="dllmain.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="HeaderPage.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="DlgPage.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="HotkeysPage.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="MainDlg.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ObjectCard.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="MasteryPopup.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="CatalogueData.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="CataloguePage.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="SearchPanel.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="GuideDlg.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ModInformation.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ModListDlg.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ModPage.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="PlaceholderPage.cpp"><Filter>Source Files</Filter></ClCompile>
+    <None Include="examples\gem_help.json"><Filter>Documentation</Filter></None>
+    <None Include=".clang-format"><Filter>Documentation</Filter></None>
+    <ClInclude Include="..\headers\EraPluginsAPI\HelpDialogAPI.hpp"><Filter>Header Files</Filter></ClInclude>
   </ItemGroup>
 </Project>

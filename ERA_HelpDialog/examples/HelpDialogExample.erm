@@ -1,0 +1,7 @@
+ZVSE
+
+; Companion to the ERM action example in lang/era_help.json.
+; Install in an active mod's Data/s directory and restart the game.
+; Opening the help category does not call this function.
+!?FU(HelpDialog_Example);
+!!IF:M^ERA Help JSON example: this message was opened by an explicitly clicked ERM action.^;

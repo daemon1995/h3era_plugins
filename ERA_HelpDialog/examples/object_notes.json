@@ -1,0 +1,39 @@
+{
+  "help": {
+    "creatures": {
+      "entries": {
+        "0": {
+          "description": "JSON note example: add mod-specific creature abilities here. Base combat statistics are read from the current game table."
+        }
+      }
+    },
+    "artifacts": {
+      "entries": {
+        "7": {
+          "description": "JSON note example: add mod-specific behavior here. The native artifact description and availability remain visible above."
+        }
+      }
+    },
+    "heroes": {
+      "entries": {
+        "0": {
+          "description": "JSON note example: describe script-based changes to this hero's specialty here. Native starting data are shown above."
+        }
+      }
+    },
+    "spells": {
+      "entries": {
+        "15": {
+          "description": "JSON note example: this field supplements the native mastery descriptions. Document mod changes without replacing the live mana costs."
+        }
+      }
+    },
+    "skills": {
+      "entries": {
+        "2": {
+          "description": "The displayed skill descriptions come from the game. A mod can document scripted movement changes in this additional note."
+        }
+      }
+    }
+  }
+}

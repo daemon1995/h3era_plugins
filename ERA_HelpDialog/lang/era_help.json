@@ -1,0 +1,1622 @@
+{
+  "help": {
+    "wog": {
+      "name": "WoG",
+      "hotkeys": {
+        "0": {
+          "keys": "F5",
+          "type": "COMBAT",
+          "name": "All statistics",
+          "description": "Show all statistics and active spells for the selected creature in battle."
+        },
+        "1": {
+          "keys": "F6",
+          "type": "COMBAT",
+          "name": "Battlefield grid",
+          "description": "Toggle the hex grid over the battlefield."
+        },
+        "2": {
+          "keys": "F7",
+          "type": "COMBAT",
+          "name": "Cursor shadow",
+          "description": "Toggle the hex shadow under the combat cursor."
+        },
+        "3": {
+          "keys": "F8",
+          "type": "COMBAT",
+          "name": "Movement shadow",
+          "description": "Toggle the movement-range shadow for the selected creature."
+        },
+        "4": {
+          "keys": "CTRL+RIGHT CLICK",
+          "type": "ADV_MAP",
+          "name": "Leave one troop stack",
+          "description": "Leave one troop stack on an empty adjacent map square when the WoG option is enabled."
+        },
+        "5": {
+          "keys": "CTRL+CLICK",
+          "type": "HERO",
+          "name": "Combine Sylvan Centaurs",
+          "description": "Combine Grand Elves and Centaur Captains in the Hero screen when the WoG option is enabled."
+        },
+        "6": {
+          "keys": "ALT",
+          "type": "COMBAT",
+          "name": "Switch creature action",
+          "description": "Open the supported combat action switcher while the Alt key is held."
+        },
+        "7": {
+          "keys": "1 / 2 / 3 / 4",
+          "type": "COMBAT",
+          "name": "Choose creature action",
+          "description": "Choose an action in the combat action switcher."
+        },
+        "8": {
+          "keys": "W",
+          "type": "HERO",
+          "name": "Hero class table",
+          "description": "Open the enhanced hero class table where the WoG hero panel provides it."
+        },
+        "9": {
+          "keys": "E",
+          "type": "HERO",
+          "name": "Hero bonus list",
+          "description": "Open the enhanced hero bonus list where the WoG hero panel provides it."
+        },
+        "10": {
+          "keys": "A / D",
+          "type": "COMBAT",
+          "name": "Previous or next skill",
+          "description": "Move between commander or secondary-skill entries in the supported combat panel."
+        },
+        "11": {
+          "keys": "LEFT / RIGHT",
+          "type": "COMBAT",
+          "name": "Previous or next skill",
+          "description": "Move between commander or secondary-skill entries in the supported combat panel."
+        },
+        "name": "WoG hotkeys"
+      },
+      "categories": {
+        "0": {
+          "name": "WoG overview",
+          "content": "Wake of Gods extends Heroes III with configurable mechanics and scripts. The documented hotkeys below depend on the installed options. The catalogue uses live game tables; this document supplies explanations for the optional WoG features."
+        },
+        "1": {
+          "name": "Combat shortcuts",
+          "content": "F5 shows creature statistics, F6 toggles the battlefield grid, F7 toggles the cursor shadow, and F8 toggles the movement shadow. Alt and number keys are used by the optional action switcher."
+        },
+        "2": {
+          "name": "Adventure and hero shortcuts",
+          "content": "Ctrl+right-click and Ctrl+click provide optional troop and creature-management actions. W and E are used by supported enhanced hero panels."
+        }
+      }
+    },
+    "era scripts": {
+      "name": "ERA Scripts",
+      "hotkeys": {
+        "0": {
+          "keys": "ALT",
+          "type": "ADV_MAP",
+          "name": "Adventure map hints",
+          "description": "Hold Alt on the adventure map to show the enhanced movement or destination hint."
+        },
+        "1": {
+          "keys": "ALT",
+          "type": "COMBAT",
+          "name": "Combat action switcher",
+          "description": "Hold Alt to open the creature-action switcher when that commission is installed and enabled."
+        },
+        "2": {
+          "keys": "1 / 2 / 3 / 4",
+          "type": "COMBAT",
+          "name": "Select combat action",
+          "description": "Select an action in the creature-action switcher."
+        },
+        "3": {
+          "keys": "A / D",
+          "type": "COMBAT",
+          "name": "Commander skill navigation",
+          "description": "Use A and D to move to the previous or next commander skill in the supported panel."
+        },
+        "4": {
+          "keys": "LEFT / RIGHT",
+          "type": "COMBAT",
+          "name": "Commander skill navigation",
+          "description": "Use the left and right arrows to move between commander skills in the supported panel."
+        },
+        "5": {
+          "keys": "L",
+          "type": "OTHER",
+          "name": "Load game",
+          "description": "Open the load-game page in the extended system options dialog."
+        },
+        "6": {
+          "keys": "S",
+          "type": "OTHER",
+          "name": "Save game",
+          "description": "Open the save-game page in the extended system options dialog."
+        },
+        "7": {
+          "keys": "R",
+          "type": "OTHER",
+          "name": "Restart scenario",
+          "description": "Restart the current scenario from the extended system options dialog."
+        },
+        "8": {
+          "keys": "M",
+          "type": "OTHER",
+          "name": "Main menu",
+          "description": "Return to the main menu from the extended system options dialog."
+        },
+        "9": {
+          "keys": "Q",
+          "type": "OTHER",
+          "name": "Quit game",
+          "description": "Quit to the desktop from the extended system options dialog."
+        },
+        "10": {
+          "keys": "ESC / ENTER / O",
+          "type": "OTHER",
+          "name": "Return or close",
+          "description": "Close or return from the extended system options dialog."
+        },
+        "11": {
+          "keys": "1 / 2 / 3",
+          "type": "OTHER",
+          "name": "Options pages",
+          "description": "Switch between the first three pages of the extended system options dialog."
+        },
+        "12": {
+          "keys": "H",
+          "type": "OTHER",
+          "name": "Open help",
+          "description": "Open the help dialog from supported settings dialogs."
+        },
+        "13": {
+          "keys": "1..10",
+          "type": "MAIN_MENU",
+          "name": "Main-menu widgets",
+          "description": "The first ten main-menu widgets receive numeric hotkeys in their displayed order."
+        },
+        "14": {
+          "keys": "W",
+          "type": "OTHER",
+          "name": "Options action",
+          "description": "Open the W action in the ERA options menu."
+        },
+        "15": {
+          "keys": "E",
+          "type": "OTHER",
+          "name": "Options action",
+          "description": "Open the E action in the ERA options menu."
+        },
+        "16": {
+          "keys": "SPACE",
+          "type": "OTHER",
+          "name": "Confirm dialog",
+          "description": "The gameplay enhancement plugin adds Space as an alternative to OK in supported dialogs."
+        },
+        "17": {
+          "keys": "CTRL+LEFT CLICK",
+          "type": "COMBAT",
+          "name": "Creature spell selector",
+          "description": "Open the optional creature spell selector from a combat creature window."
+        },
+        "18": {
+          "keys": "H",
+          "type": "COMBAT",
+          "name": "Combat hint settings",
+          "description": "Open the combat hint settings panel when the combat-hints extension is installed."
+        },
+        "19": {
+          "keys": "ENTER / ESC / F1",
+          "type": "OTHER",
+          "name": "Help dialog controls",
+          "description": "Confirm or close the Help dialog; F1 is an alternate OK key and Escape cancels it."
+        },
+        "20": {
+          "keys": "H / ESC",
+          "type": "OTHER",
+          "name": "Close help guide",
+          "description": "Close the Help guide window with H or Escape."
+        },
+        "21": {
+          "keys": "NUMPAD 7/8/9/4/5/6/1/2/3/0/.",
+          "type": "ADV_MAP",
+          "name": "Numpad map controls",
+          "description": "With NumLock enabled, the gameplay extension maps the numpad to the corresponding map navigation keys."
+        },
+        "name": "ERA Scripts hotkeys"
+      },
+      "categories": {
+        "0": {
+          "name": "Adventure map tools",
+          "content": "ERA scripts add configurable adventure, hero, combat and system tools. Their shortcuts are grouped by the window where the feature is used. Alt adventure hints and combat action switching depend on installed and enabled modules."
+        },
+        "1": {
+          "name": "Combat tools",
+          "content": "The optional combat action switcher uses Alt and number keys. Commander-skill navigation supports A/D and the left/right arrows in its supported panel."
+        },
+        "2": {
+          "name": "System controls",
+          "content": "The extended system options dialog provides L, S, R, M, Q, Escape, Enter, O, and page keys 1 through 3. H opens supported help dialogs."
+        }
+      }
+    },
+    "dlg": {
+      "main": {
+        "header": [
+          {
+            "name": "Mods",
+            "hint": "Open the mods reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          },
+          {
+            "name": "Hotkeys",
+            "hint": "Open the hotkeys reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          },
+          {
+            "name": "Creatures",
+            "hint": "Open the creatures reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          },
+          {
+            "name": "Artifacts",
+            "hint": "Open the artifacts reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          },
+          {
+            "name": "Heroes",
+            "hint": "Open the heroes reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          },
+          {
+            "name": "Secondary skills",
+            "hint": "Open the secondary skills reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          },
+          {
+            "name": "Spells",
+            "hint": "Open the spells reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          },
+          {
+            "name": "Towns",
+            "hint": "Open the towns reference.",
+            "rmc": "Browse, combine filters and open an object card."
+          }
+        ]
+      }
+    },
+    "creatures": {
+      "categories": [
+        {
+          "name": "All",
+          "hint": "Show all creatures.",
+          "rmc": "All registered creatures. Use Sort to choose name, ID or level/name."
+        },
+        {
+          "name": "Castle",
+          "hint": "Show Castle creatures.",
+          "rmc": "Castle creature portraits."
+        },
+        {
+          "name": "Rampart",
+          "hint": "Show Rampart creatures.",
+          "rmc": "Rampart creature portraits."
+        },
+        {
+          "name": "Tower",
+          "hint": "Show Tower creatures.",
+          "rmc": "Tower creature portraits."
+        },
+        {
+          "name": "Inferno",
+          "hint": "Show Inferno creatures.",
+          "rmc": "Inferno creature portraits."
+        },
+        {
+          "name": "Necropolis",
+          "hint": "Show Necropolis creatures.",
+          "rmc": "Necropolis creature portraits."
+        },
+        {
+          "name": "Dungeon",
+          "hint": "Show Dungeon creatures.",
+          "rmc": "Dungeon creature portraits."
+        },
+        {
+          "name": "Stronghold",
+          "hint": "Show Stronghold creatures.",
+          "rmc": "Stronghold creature portraits."
+        },
+        {
+          "name": "Fortress",
+          "hint": "Show Fortress creatures.",
+          "rmc": "Fortress creature portraits."
+        },
+        {
+          "name": "Conflux",
+          "hint": "Show Conflux creatures.",
+          "rmc": "Conflux creature portraits."
+        },
+        {
+          "name": "Neutral",
+          "hint": "Show neutral creatures.",
+          "rmc": "Creatures which do not belong to a town."
+        },
+        {
+          "name": "War Machines",
+          "hint": "Show war machines.",
+          "rmc": "Creatures registered with the siege weapon flag."
+        },
+        {
+          "name": "Commanders",
+          "hint": "Show commanders.",
+          "rmc": "Creatures registered as ERA commanders."
+        }
+      ],
+      "levels": [
+        {
+          "hint": "Show level 1 creatures.",
+          "rmc": "Click again to clear the level filter."
+        },
+        {
+          "hint": "Show level 2 creatures.",
+          "rmc": "Click again to clear the level filter."
+        },
+        {
+          "hint": "Show level 3 creatures.",
+          "rmc": "Click again to clear the level filter."
+        },
+        {
+          "hint": "Show level 4 creatures.",
+          "rmc": "Click again to clear the level filter."
+        },
+        {
+          "hint": "Show level 5 creatures.",
+          "rmc": "Click again to clear the level filter."
+        },
+        {
+          "hint": "Show level 6 creatures.",
+          "rmc": "Click again to clear the level filter."
+        },
+        {
+          "hint": "Show level 7 creatures.",
+          "rmc": "Click again to clear the level filter."
+        }
+      ],
+      "towns": [
+        {
+          "name": "Castle",
+          "hint": "Show Castle creatures.",
+          "rmc": "Castle creature portraits."
+        },
+        {
+          "name": "Rampart",
+          "hint": "Show Rampart creatures.",
+          "rmc": "Rampart creature portraits."
+        },
+        {
+          "name": "Tower",
+          "hint": "Show Tower creatures.",
+          "rmc": "Tower creature portraits."
+        },
+        {
+          "name": "Inferno",
+          "hint": "Show Inferno creatures.",
+          "rmc": "Inferno creature portraits."
+        },
+        {
+          "name": "Necropolis",
+          "hint": "Show Necropolis creatures.",
+          "rmc": "Necropolis creature portraits."
+        },
+        {
+          "name": "Dungeon",
+          "hint": "Show Dungeon creatures.",
+          "rmc": "Dungeon creature portraits."
+        },
+        {
+          "name": "Stronghold",
+          "hint": "Show Stronghold creatures.",
+          "rmc": "Stronghold creature portraits."
+        },
+        {
+          "name": "Fortress",
+          "hint": "Show Fortress creatures.",
+          "rmc": "Fortress creature portraits."
+        },
+        {
+          "name": "Conflux",
+          "hint": "Show Conflux creatures.",
+          "rmc": "Conflux creature portraits."
+        },
+        {
+          "name": "Neutral",
+          "hint": "Show neutral creatures.",
+          "rmc": "Neutral creature portraits."
+        }
+      ],
+      "entries": {}
+    },
+    "ui": {
+      "title": "ERA reference library",
+      "menu_button": "Help and reference",
+      "mods": "Mods",
+      "hotkeys": "Hotkeys",
+      "creatures": "Creatures",
+      "artifacts": "Artifacts",
+      "heroes": "Heroes",
+      "skills": "Secondary skills",
+      "spells": "Spells",
+      "towns": "Towns",
+      "all": "All",
+      "neutral": "Neutral / independent",
+      "search": "Search (Ctrl+F)",
+      "search_title": "Search the help catalogue",
+      "search_scope": "Search in",
+      "resize": "Resize",
+      "guide": "User guide",
+      "clear": "Clear",
+      "results": "results",
+      "reset_filters": "Reset filters",
+      "all_levels": "All levels",
+      "filter_hint": "Filter titles only.",
+      "level_hint": "Click to toggle a level.",
+      "no_results": "No matches.",
+      "no_hotkeys": "No matching hotkeys.",
+      "no_mods": "No mod help available.",
+      "empty_category": "No text in this category.",
+      "filter": "Filter:",
+      "all_mods": "All mods",
+      "hotkey_source": "Hotkey source",
+      "back": "Back",
+      "filter_cycle_hint": "Left: next; right: previous.",
+      "search_label": "Search:",
+      "search_hint": "Titles only. Ctrl+F: focus. Results: left to go, right for preview.",
+      "search_result_hint": "Left: go to and highlight. Right: hold for preview.",
+      "object_hint": "Left: open details. Right: hold for preview.",
+      "plugins": "Plugins",
+      "plugins_intro": "Plugin and patch files supplied by this mod:",
+      "plugins_empty": "\n\nNo .era, .dll or .bin files in this mod's EraPlugins folders.",
+      "overview": "Overview"
+    },
+    "contexts": {
+      "0": "Unspecified",
+      "1": "Adventure map",
+      "2": "Hero window",
+      "3": "Town window",
+      "4": "Battle",
+      "5": "Main menu",
+      "6": "Other",
+      "everywhere": "Everywhere"
+    },
+    "era help": {
+      "name": "ERA Help — guide and JSON examples",
+      "hotkeys": {
+        "0": {
+          "keys": "F1",
+          "name": "Open / close help",
+          "description": "Open the help dialogue; F1 closes the main help window when it is already open.",
+          "type": "EVERYWHERE"
+        },
+        "1": {
+          "keys": "Ctrl+F",
+          "name": "Search help",
+          "description": "Open the searchable result list from the main help window.",
+          "type": "OTHER"
+        },
+        "2": {
+          "keys": "Up / Down / Enter",
+          "name": "Navigate search results",
+          "description": "Select and open a search result or filter option.",
+          "type": "OTHER"
+        },
+        "3": {
+          "keys": "Escape",
+          "name": "Close child window",
+          "description": "Close a result list, filter picker, object card or guide.",
+          "type": "OTHER"
+        },
+        "name": "Help controls"
+      },
+      "categories": [
+        {
+          "name": "Welcome",
+          "content": "Press F1 to open help. Browse the tabs or type in the Search field."
+        },
+        {
+          "name": "Browsing objects",
+          "content": "Left click a portrait or name for details. Hold the right mouse button for a popup preview."
+        },
+        {
+          "name": "Combining filters",
+          "content": "Categories are on the left; other filters are above the objects. Left click advances a filter; right click goes back. Reset clears filters and restores ID order."
+        },
+        {
+          "name": "Selecting several levels",
+          "content": "Click level buttons to select several levels. Click again to remove a level."
+        },
+        {
+          "name": "Creature filters",
+          "content": "Combine town, level, movement, attack, life and upgrade filters."
+        },
+        {
+          "name": "Artifact filters",
+          "content": "Combine artifact class, position, availability, combination and spell filters."
+        },
+        {
+          "name": "Hero filters",
+          "content": "Filter by town, class, availability, spellbook and gender."
+        },
+        {
+          "name": "Spell filters",
+          "content": "Combine school, level, use, damage and mass-effect filters. Creature abilities include native IDs 70–80."
+        },
+        {
+          "name": "Secondary skills",
+          "content": "All 28 skills fit at 800x600. Browse skill groups and compare Basic, Advanced and Expert effects."
+        },
+        {
+          "name": "Town reference",
+          "content": "Town names, creature rosters and hero classes come from the game."
+        },
+        {
+          "name": "Global search",
+          "content": "Type a title in the top Search field or press Ctrl+F to focus it. Results appear in this window. Choose a scope on the left. Article text and descriptions are excluded."
+        },
+        {
+          "name": "Following search results",
+          "content": "Left click a result to go to and highlight it. Hold the right mouse button for a popup preview. Up/Down and Enter navigate too. Clear or Escape returns to browsing."
+        },
+        {
+          "name": "Hotkey reference",
+          "content": "Hotkeys are grouped by where they work. Filter by context, mod or text."
+        },
+        {
+          "name": "Window state",
+          "content": "Filters and the selected mod are preserved when resizing and reopening."
+        },
+        {
+          "name": "Writing a mod document",
+          "content": "Use help.<lowercase mod folder>.name, hotkeys and categories. The compatibility root help.mods.<folder> is also accepted. The display name can differ from the actual folder key. Active mods without help categories or hotkeys are omitted from the mod list."
+        },
+        {
+          "name": "Hotkey JSON example",
+          "content": "The preferred hotkey record contains keys, name, description and type. Example: { \"keys\": \"Ctrl+F\", \"name\": \"Search help\", \"description\": \"Show the help search panel\", \"type\": \"EVERYWHERE\" }. The records can be a JSON array or an object with numeric keys."
+        },
+        {
+          "name": "Context aliases",
+          "content": "EVERYWHERE, GLOBAL, ANY and ALL mean a global binding. MAIN_MENU is supported explicitly. ADV_MAP, HERO, TOWN, COMBAT and OTHER select their respective contexts. Legacy numeric values -1 through 6 are supported; missing or unknown types go to Other."
+        },
+        {
+          "name": "Legacy JSON compatibility",
+          "content": "The old categories.hotkeys.content format remains accepted with key or keys fields and numeric context values. The preferred format takes precedence when it yields records. Missing optional names/descriptions do not expose unresolved language keys."
+        },
+        {
+          "name": "Category JSON example",
+          "content": "A category is { \"name\": \"Rules\", \"content\": \"The rules of this mod...\", \"objects\": [] }. Numeric category and hotkey objects may have short gaps; parsing stops after 32 consecutive missing records. Arrays should normally use consecutive indices."
+        },
+        {
+          "name": "Text object example",
+          "content": "Text objects without overlay are appended to the category's scrollable document. Overlay text uses x, y, width and height within the content panel. zOrder determines the order of positioned objects. See the interactive examples below."
+        },
+        {
+          "name": "Image object example",
+          "content": "Image objects accept an existing game PCX or DEF resource. DEF records use frame. The image must fit within the requested rectangle. Missing or oversized resources are skipped; their text documentation remains available."
+        },
+        {
+          "name": "Navigation actions",
+          "content": "Buttons and links accept creatures:<id>, artifacts:<id>, heroes:<id>, spells:<id>, skills:<id>, towns:<id>, mod:<folder>:<category>, search and guide. Mod category indices include the hotkey category when one is present. IDs refer to the current game's native tables."
+        },
+        {
+          "name": "Web links",
+          "content": "A Link record may use a full http:// or https:// URL. It is opened only when the user clicks the link. Link labels should describe the destination; the help reader does not follow URLs during parsing or search."
+        },
+        {
+          "name": "ERM actions",
+          "content": "An ErmFunction record names an existing ERM function or its positive numeric ID. Clicking it executes a no-argument function call. Merely opening a category never executes ERM. The example record refers to a demonstration function that mod authors can implement."
+        },
+        {
+          "name": "Integration API",
+          "content": "ERAHelp_ShowDialog(page, subtype) opens a page/category. ERAHelp_ShowObject(page, id) navigates to a particular game object. Calls must occur on the game's UI thread. Stable export names and the decorated stdcall names are available."
+        },
+        {
+          "name": "Data and supported limits",
+          "content": "The native tables supply 163 heroes, 28 secondary skills, nine towns and 81 spells, including creature abilities. Creature and artifact counts come from the game. Additional scripted towns, skills or spells require their own metadata/API support and are not inferred from unrelated memory."
+        },
+        {
+          "name": "Interactive navigation example",
+          "content": "These buttons demonstrate navigation to native objects and built-in help tools.",
+          "objects": [
+            {
+              "kind": "button",
+              "value": "Creature #0",
+              "action": "creatures:0",
+              "x": 12,
+              "y": 90,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "link",
+              "value": "Artifact #7",
+              "action": "artifacts:7",
+              "x": 12,
+              "y": 128,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "button",
+              "value": "Hero #0",
+              "action": "heroes:0",
+              "x": 12,
+              "y": 166,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "link",
+              "value": "Spell #15",
+              "action": "spells:15",
+              "x": 12,
+              "y": 204,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "button",
+              "value": "Skill #2",
+              "action": "skills:2",
+              "x": 12,
+              "y": 242,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "link",
+              "value": "Town #0",
+              "action": "towns:0",
+              "x": 12,
+              "y": 280,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "button",
+              "value": "Search all objects",
+              "action": "search",
+              "x": 208,
+              "y": 90,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "button",
+              "value": "Read the guide",
+              "action": "guide",
+              "x": 208,
+              "y": 128,
+              "width": 180,
+              "height": 30
+            }
+          ]
+        },
+        {
+          "name": "Images and overlay example",
+          "content": "This category combines a game sprite, positioned explanation and a link.",
+          "objects": [
+            {
+              "kind": "image",
+              "value": "TwCrPort.def",
+              "frame": 2,
+              "x": 16,
+              "y": 100,
+              "width": 58,
+              "height": 64,
+              "zOrder": 1
+            },
+            {
+              "kind": "text",
+              "value": "Creature portraits use a frame offset of two in TwCrPort.def.",
+              "x": 92,
+              "y": 100,
+              "width": 250,
+              "height": 64,
+              "overlay": 1,
+              "zOrder": 2
+            },
+            {
+              "kind": "image",
+              "value": "artifact.def",
+              "frame": 7,
+              "x": 16,
+              "y": 190,
+              "width": 44,
+              "height": 44,
+              "zOrder": 1
+            },
+            {
+              "kind": "text",
+              "value": "An artifact image is a DEF frame; its native ID is also the frame index.",
+              "x": 92,
+              "y": 190,
+              "width": 250,
+              "height": 64,
+              "overlay": 1,
+              "zOrder": 2
+            },
+            {
+              "kind": "link",
+              "value": "View this artifact",
+              "action": "artifacts:7",
+              "x": 92,
+              "y": 270,
+              "width": 180,
+              "height": 30,
+              "zOrder": 3
+            },
+            {
+              "kind": "text",
+              "value": "This non-overlay text is appended to the scrollable document."
+            }
+          ]
+        },
+        {
+          "name": "Web link example",
+          "content": "This sample opens the author's public source repository only when clicked.",
+          "objects": [
+            {
+              "kind": "link",
+              "value": "H3EraPlugins source repository",
+              "action": "https://github.com/daemon1995/h3era_plugins",
+              "x": 12,
+              "y": 90,
+              "width": 300,
+              "height": 30
+            }
+          ]
+        },
+        {
+          "name": "ERM function example",
+          "content": "Install examples/HelpDialogExample.erm in an active mod's Data/s directory and restart the game. The button below then calls the supplied demonstration function to show a message. Opening this category never invokes it.",
+          "objects": [
+            {
+              "kind": "ErmFunction",
+              "value": "Call HelpDialog_Example",
+              "action": "HelpDialog_Example",
+              "x": 12,
+              "y": 120,
+              "width": 250,
+              "height": 30
+            }
+          ]
+        },
+        {
+          "name": "Mod category navigation example",
+          "content": "Internal mod links identify a lower-case folder key and a category index. The hotkey page, if present, occupies category zero.",
+          "objects": [
+            {
+              "kind": "link",
+              "value": "WoG hotkeys",
+              "action": "mod:wog:0",
+              "x": 12,
+              "y": 110,
+              "width": 220,
+              "height": 30
+            }
+          ]
+        },
+        {
+          "name": "Plugin descriptions",
+          "content": "Active physical mods with matching files get a Plugins section. Mods without their own help content or matching files are omitted. It scans EraPlugins, EraPlugins/BeforeWog and EraPlugins/AfterWog for .era, .dll and .bin files. Backup files and other subfolders are ignored. This lists supplied files, including dependencies; it does not report load status. Optional plugin notes use help.<mod-folder>.plugins, matched by relative file path or filename. Full paths take precedence.\n\nExample:\n\"plugins\": [\n  { \"file\": \"EraPlugins/MyPlugin.era\", \"name\": \"My plugin\", \"description\": \"Adds a feature.\" },\n  { \"file\": \"EraPlugins/AfterWog/Fix.bin\", \"description\": \"Applies a patch after WoG.\" }\n]\n\nA top-level description creates an Overview section. These generated sections are appended, preserving existing category indices."
+        }
+      ]
+    },
+    "guide": {
+      "content": "Browse\nChoose a tab. Objects are sorted by ID. Left click an object for details; hold right click for a preview.\n\nFilters\nCategories are on the left; other filters are above the objects. Left click: next value. Right click: previous value. Reset clears filters.\n\nSearch\nType a title in the top Search field. Ctrl+F focuses it. Left click a result to go to and highlight it. Hold right click for a preview. Up/Down and Enter navigate too. Clear or Escape returns to browsing.\n\nHotkeys\nBindings are grouped by where they work."
+    },
+    "towns": {
+      "categories": [
+        {
+          "name": "All"
+        },
+        {
+          "name": "Good"
+        },
+        {
+          "name": "Evil"
+        },
+        {
+          "name": "Neutral alignment"
+        }
+      ],
+      "entries": {
+        "0": {
+          "description": "Castle combines human troops and angels. Its creature roster and default hero classes are listed above."
+        },
+        "1": {
+          "description": "Rampart combines forest creatures and elven troops. Check the live roster and individual creature cards for the current mod's values."
+        },
+        "2": {
+          "description": "Tower combines magical troops and constructs. Its hero and creature details are supplied by the current game tables."
+        },
+        "3": {
+          "description": "Inferno combines demonic troops. Optional WoG scripts may change its special mechanics; consult the mod documentation for those rules."
+        },
+        "4": {
+          "description": "Necropolis combines undead troops. Use the undead filter to compare creatures across factions and the Necromancy skill card to inspect its current descriptions."
+        },
+        "5": {
+          "description": "Dungeon combines subterranean creatures and dragons. Use school and creature filters to compare the available magic and troops."
+        },
+        "6": {
+          "description": "Might-oriented troops and hero classes."
+        },
+        "7": {
+          "description": "Fortress combines swamp troops. Creature cards show defense, health, speed, costs and documented traits."
+        },
+        "8": {
+          "description": "Conflux combines elemental troops. Multi-school spells can appear in more than one school category."
+        }
+      }
+    },
+    "artifacts": {
+      "categories": [
+        {
+          "name": "All"
+        },
+        {
+          "name": "Treasure"
+        },
+        {
+          "name": "Minor"
+        },
+        {
+          "name": "Major"
+        },
+        {
+          "name": "Relic"
+        },
+        {
+          "name": "Special / other"
+        }
+      ],
+      "entries": {}
+    },
+    "heroes": {
+      "categories": [
+        {
+          "name": "All"
+        },
+        {
+          "name": "Castle"
+        },
+        {
+          "name": "Rampart"
+        },
+        {
+          "name": "Tower"
+        },
+        {
+          "name": "Inferno"
+        },
+        {
+          "name": "Necropolis"
+        },
+        {
+          "name": "Dungeon"
+        },
+        {
+          "name": "Stronghold"
+        },
+        {
+          "name": "Fortress"
+        },
+        {
+          "name": "Conflux"
+        }
+      ],
+      "entries": {}
+    },
+    "spells": {
+      "categories": [
+        {
+          "name": "All"
+        },
+        {
+          "name": "Fire"
+        },
+        {
+          "name": "Air"
+        },
+        {
+          "name": "Water"
+        },
+        {
+          "name": "Earth"
+        },
+        {
+          "name": "Creature abilities"
+        }
+      ],
+      "entries": {}
+    },
+    "skills": {
+      "categories": [
+        {
+          "name": "All"
+        },
+        {
+          "name": "Adventure"
+        },
+        {
+          "name": "Combat"
+        },
+        {
+          "name": "Magic"
+        },
+        {
+          "name": "Economy / leadership"
+        }
+      ],
+      "entries": {}
+    },
+    "heroes iii": {
+      "name": "Heroes III",
+      "description": "Standard game controls, grouped by screen. Mods may override individual bindings. Spellbook, creature and System Options commands apply inside their respective windows.",
+      "hotkeys": [
+        {
+          "keys": "Esc",
+          "type": "EVERYWHERE",
+          "name": "Cancel or close",
+          "description": "Cancel the current action or close the current window."
+        },
+        {
+          "keys": "H",
+          "type": "ADV_MAP",
+          "name": "Next hero",
+          "description": ""
+        },
+        {
+          "keys": "M",
+          "type": "ADV_MAP",
+          "name": "Follow route",
+          "description": ""
+        },
+        {
+          "keys": "K",
+          "type": "ADV_MAP",
+          "name": "Kingdom overview",
+          "description": ""
+        },
+        {
+          "keys": "U",
+          "type": "ADV_MAP",
+          "name": "Surface / underground",
+          "description": ""
+        },
+        {
+          "keys": "C",
+          "type": "ADV_MAP",
+          "name": "Adventure spellbook",
+          "description": ""
+        },
+        {
+          "keys": "Z",
+          "type": "ADV_MAP",
+          "name": "Sleep hero",
+          "description": ""
+        },
+        {
+          "keys": "W",
+          "type": "ADV_MAP",
+          "name": "Wake hero",
+          "description": ""
+        },
+        {
+          "keys": "Q",
+          "type": "ADV_MAP",
+          "name": "Quest log",
+          "description": ""
+        },
+        {
+          "keys": "E",
+          "type": "ADV_MAP",
+          "name": "End turn",
+          "description": ""
+        },
+        {
+          "keys": "V",
+          "type": "ADV_MAP",
+          "name": "World map",
+          "description": ""
+        },
+        {
+          "keys": "P",
+          "type": "ADV_MAP",
+          "name": "Grail puzzle",
+          "description": ""
+        },
+        {
+          "keys": "D",
+          "type": "ADV_MAP",
+          "name": "Dig for Grail",
+          "description": ""
+        },
+        {
+          "keys": "I",
+          "type": "ADV_MAP",
+          "name": "Scenario information",
+          "description": ""
+        },
+        {
+          "keys": "O",
+          "type": "ADV_MAP",
+          "name": "System options",
+          "description": ""
+        },
+        {
+          "keys": "Arrow keys",
+          "type": "ADV_MAP",
+          "name": "Move hero",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+Arrow keys",
+          "type": "ADV_MAP",
+          "name": "Scroll map",
+          "description": ""
+        },
+        {
+          "keys": "Enter",
+          "type": "ADV_MAP",
+          "name": "Center selected hero or town",
+          "description": ""
+        },
+        {
+          "keys": "Tab",
+          "type": "ADV_MAP",
+          "name": "Chat",
+          "description": ""
+        },
+        {
+          "keys": "Up / Down",
+          "type": "TOWN",
+          "name": "Previous / next town",
+          "description": ""
+        },
+        {
+          "keys": "Space",
+          "type": "TOWN",
+          "name": "Swap visiting and garrison heroes",
+          "description": ""
+        },
+        {
+          "keys": "A",
+          "type": "COMBAT",
+          "name": "Automatic combat",
+          "description": ""
+        },
+        {
+          "keys": "D",
+          "type": "COMBAT",
+          "name": "Defend",
+          "description": ""
+        },
+        {
+          "keys": "W",
+          "type": "COMBAT",
+          "name": "Wait",
+          "description": ""
+        },
+        {
+          "keys": "C",
+          "type": "COMBAT",
+          "name": "Combat spellbook",
+          "description": ""
+        },
+        {
+          "keys": "R",
+          "type": "COMBAT",
+          "name": "Retreat",
+          "description": ""
+        },
+        {
+          "keys": "S",
+          "type": "COMBAT",
+          "name": "Surrender",
+          "description": ""
+        },
+        {
+          "keys": "O",
+          "type": "COMBAT",
+          "name": "Combat options",
+          "description": ""
+        },
+        {
+          "keys": "T",
+          "type": "COMBAT",
+          "name": "Troop information",
+          "description": ""
+        },
+        {
+          "keys": "F5",
+          "type": "COMBAT",
+          "name": "Creature popup mode",
+          "description": ""
+        },
+        {
+          "keys": "F6",
+          "type": "COMBAT",
+          "name": "Battlefield grid",
+          "description": ""
+        },
+        {
+          "keys": "F7",
+          "type": "COMBAT",
+          "name": "Cursor hex shadow",
+          "description": ""
+        },
+        {
+          "keys": "F8",
+          "type": "COMBAT",
+          "name": "Movement range shadow",
+          "description": ""
+        },
+        {
+          "keys": "Up / Down",
+          "type": "COMBAT",
+          "name": "Scroll battle log",
+          "description": ""
+        },
+        {
+          "keys": "Space",
+          "type": "COMBAT",
+          "name": "Next troop in Tactics",
+          "description": "During deployment."
+        },
+        {
+          "keys": "S",
+          "type": "COMBAT",
+          "name": "Finish Tactics",
+          "description": "Start the battle after deployment."
+        },
+        {
+          "keys": "Left / Right",
+          "type": "OTHER",
+          "name": "Spellbook: change page",
+          "description": ""
+        },
+        {
+          "keys": "Up / Down",
+          "type": "OTHER",
+          "name": "Spellbook: change school",
+          "description": ""
+        },
+        {
+          "keys": "A",
+          "type": "OTHER",
+          "name": "Spellbook: adventure spells",
+          "description": ""
+        },
+        {
+          "keys": "C",
+          "type": "OTHER",
+          "name": "Spellbook: combat spells",
+          "description": ""
+        },
+        {
+          "keys": "U",
+          "type": "OTHER",
+          "name": "Creature window: upgrade",
+          "description": ""
+        },
+        {
+          "keys": "D",
+          "type": "OTHER",
+          "name": "Creature window: dismiss",
+          "description": ""
+        },
+        {
+          "keys": "M",
+          "type": "OTHER",
+          "name": "System options: main menu",
+          "description": ""
+        },
+        {
+          "keys": "L",
+          "type": "OTHER",
+          "name": "System options: load",
+          "description": ""
+        },
+        {
+          "keys": "R",
+          "type": "OTHER",
+          "name": "System options: restart",
+          "description": ""
+        },
+        {
+          "keys": "S",
+          "type": "OTHER",
+          "name": "System options: save",
+          "description": ""
+        },
+        {
+          "keys": "Q",
+          "type": "OTHER",
+          "name": "System options: quit",
+          "description": ""
+        },
+        {
+          "keys": "Esc",
+          "type": "OTHER",
+          "name": "System options: return",
+          "description": ""
+        }
+      ],
+      "categories": [
+        {
+          "name": "Keyboard reference",
+          "content": "Standard controls shared with Heroes III. The publisher manual lists them on pages 18-19. Its HD Edition graphics-switch command is not a feature of this ERA installation.",
+          "objects": [
+            {
+              "kind": "link",
+              "value": "Publisher manual",
+              "action": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/297000/manuals/Heroes_of_Might_and_Magic_III_HDEdition_OnlineManual_EN.pdf?t=1699009789",
+              "x": 8,
+              "y": 110,
+              "width": 190,
+              "height": 25
+            }
+          ]
+        }
+      ]
+    },
+    "hd mod": {
+      "name": "HD mod",
+      "description": "Shown when HD mod is loaded. Controls depend on HD version, enabled UI tweaks and ERA compatibility. Army management applies to troop slots in adventure, hero, meeting, town and garrison panels. A hero keeps at least one creature. Costume slots are shared by the player; missing artifacts are skipped. Other bindings show their window in the title.",
+      "hotkeys": [
+        {
+          "keys": "Alt+LMB",
+          "type": "ADV_MAP",
+          "name": "Reorder hero / town",
+          "description": "Click its list portrait to move it first."
+        },
+        {
+          "keys": "B",
+          "type": "ADV_MAP",
+          "name": "Marketplace",
+          "description": "Requires marketplace."
+        },
+        {
+          "keys": "G",
+          "type": "ADV_MAP",
+          "name": "Thieves guild",
+          "description": "Requires tavern."
+        },
+        {
+          "keys": "B",
+          "type": "TOWN",
+          "name": "Marketplace",
+          "description": "Requires marketplace."
+        },
+        {
+          "keys": "G",
+          "type": "TOWN",
+          "name": "Thieves guild",
+          "description": "Requires tavern."
+        },
+        {
+          "keys": "F5 / MMB",
+          "type": "ADV_MAP",
+          "name": "Quick menu",
+          "description": ""
+        },
+        {
+          "keys": "Mouse wheel",
+          "type": "ADV_MAP",
+          "name": "Scroll towns",
+          "description": ""
+        },
+        {
+          "keys": "F5 / MMB",
+          "type": "MAIN_MENU",
+          "name": "System options",
+          "description": ""
+        },
+        {
+          "keys": "L",
+          "type": "COMBAT",
+          "name": "Load saved game",
+          "description": ""
+        },
+        {
+          "keys": "Q",
+          "type": "COMBAT",
+          "name": "Resolve combat quickly",
+          "description": "Confirmation; no spells."
+        },
+        {
+          "keys": "Shift+hover",
+          "type": "COMBAT",
+          "name": "Range with blockers",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+hover",
+          "type": "COMBAT",
+          "name": "Range ignoring creatures",
+          "description": ""
+        },
+        {
+          "keys": "LMB",
+          "type": "COMBAT",
+          "name": "Select Tactics troop",
+          "description": ""
+        },
+        {
+          "keys": "F10",
+          "type": "TOWN",
+          "name": "Exchange armies",
+          "description": ""
+        },
+        {
+          "keys": "Space",
+          "type": "TOWN",
+          "name": "Move visiting / garrison hero",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+LMB",
+          "type": "TOWN",
+          "name": "Recruit immediately",
+          "description": "Castle or growth icon."
+        },
+        {
+          "keys": "Alt+LMB",
+          "type": "TOWN",
+          "name": "Recruit basic creatures",
+          "description": "Castle or growth icon."
+        },
+        {
+          "keys": "Tab",
+          "type": "TOWN",
+          "name": "Chat",
+          "description": ""
+        },
+        {
+          "keys": "F10",
+          "type": "OTHER",
+          "name": "Meeting / garrison: exchange armies",
+          "description": ""
+        },
+        {
+          "keys": "Right arrow",
+          "type": "OTHER",
+          "name": "Meeting: select right hero",
+          "description": ""
+        },
+        {
+          "keys": "Alt+transfer button",
+          "type": "OTHER",
+          "name": "Meeting: move army",
+          "description": "Retains one creature."
+        },
+        {
+          "keys": "Ctrl+transfer button",
+          "type": "OTHER",
+          "name": "Meeting: move one",
+          "description": "Empty target slot."
+        },
+        {
+          "keys": "Shift+transfer button",
+          "type": "OTHER",
+          "name": "Meeting: merge one",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+artifact button",
+          "type": "OTHER",
+          "name": "Meeting: transfer equipment",
+          "description": ""
+        },
+        {
+          "keys": "Shift+artifact button",
+          "type": "OTHER",
+          "name": "Meeting: transfer backpack",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+LMB artifact",
+          "type": "OTHER",
+          "name": "Meeting: transfer and equip",
+          "description": ""
+        },
+        {
+          "keys": "Shift+LMB artifact",
+          "type": "OTHER",
+          "name": "Meeting: transfer to backpack",
+          "description": ""
+        },
+        {
+          "keys": "Alt+LMB artifact",
+          "type": "HERO",
+          "name": "Equip / backpack",
+          "description": ""
+        },
+        {
+          "keys": "Alt+LMB artifact",
+          "type": "OTHER",
+          "name": "Meeting: equip / backpack",
+          "description": ""
+        },
+        {
+          "keys": "Mouse wheel",
+          "type": "HERO",
+          "name": "Scroll backpack",
+          "description": ""
+        },
+        {
+          "keys": "Mouse wheel",
+          "type": "OTHER",
+          "name": "Meeting: scroll backpack",
+          "description": ""
+        },
+        {
+          "keys": "1-9",
+          "type": "HERO",
+          "name": "Equip saved costume",
+          "description": ""
+        },
+        {
+          "keys": "0",
+          "type": "HERO",
+          "name": "Restore previous costume",
+          "description": ""
+        },
+        {
+          "keys": "Left Shift+1-9",
+          "type": "HERO",
+          "name": "Overlay saved costume",
+          "description": ""
+        },
+        {
+          "keys": "1-9",
+          "type": "ADV_MAP",
+          "name": "Equip saved costume",
+          "description": ""
+        },
+        {
+          "keys": "0",
+          "type": "ADV_MAP",
+          "name": "Restore previous costume",
+          "description": ""
+        },
+        {
+          "keys": "Left Shift+1-9",
+          "type": "ADV_MAP",
+          "name": "Overlay saved costume",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+1-9",
+          "type": "HERO",
+          "name": "Save costume",
+          "description": ""
+        },
+        {
+          "keys": "Shift+LMB",
+          "type": "OTHER",
+          "name": "Army management: Split evenly",
+          "description": "Click an unselected stack."
+        },
+        {
+          "keys": "Alt+LMB",
+          "type": "OTHER",
+          "name": "Army management: Consolidate stacks",
+          "description": "Same creature."
+        },
+        {
+          "keys": "Alt+Shift+LMB",
+          "type": "OTHER",
+          "name": "Army management: Dismiss stack",
+          "description": "Confirmation."
+        },
+        {
+          "keys": "Ctrl+LMB",
+          "type": "OTHER",
+          "name": "Army management: Split one",
+          "description": "Empty slot."
+        },
+        {
+          "keys": "Ctrl+Shift+LMB",
+          "type": "OTHER",
+          "name": "Army management: Fill empty slots",
+          "description": "One creature each."
+        },
+        {
+          "keys": "Ctrl+Alt+LMB",
+          "type": "OTHER",
+          "name": "Army management: Transfer stack",
+          "description": "Two armies."
+        },
+        {
+          "keys": "Ctrl+Alt+Shift+LMB",
+          "type": "OTHER",
+          "name": "Army management: Transfer army",
+          "description": "Retains one creature."
+        },
+        {
+          "keys": "Ctrl+C / Ctrl+Insert",
+          "type": "OTHER",
+          "name": "Text field: copy",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+V / Shift+Insert",
+          "type": "OTHER",
+          "name": "Text field: paste",
+          "description": ""
+        },
+        {
+          "keys": "Mouse wheel",
+          "type": "OTHER",
+          "name": "Scroll panels",
+          "description": ""
+        },
+        {
+          "keys": "Double LMB",
+          "type": "OTHER",
+          "name": "Confirm skill / message choice",
+          "description": ""
+        },
+        {
+          "keys": "Ctrl+Tab",
+          "type": "EVERYWHERE",
+          "name": "Toggle cursor confinement",
+          "description": "UI.ClipCursor = 2."
+        }
+      ],
+      "categories": [
+        {
+          "name": "HD controls and compatibility",
+          "content": "LMB: left mouse button. MMB: middle mouse button. Modified army clicks apply to creature slots; modified artifact clicks apply to artifact slots. For the original split dialog, select a stack before holding Shift. ERA does not support every HD feature. GEM can override artifact clicks, loading and battle actions.",
+          "objects": [
+            {
+              "kind": "link",
+              "value": "HD functionality",
+              "action": "https://sites.google.com/site/heroes3hd/eng/functionality",
+              "x": 8,
+              "y": 166,
+              "width": 180,
+              "height": 25
+            },
+            {
+              "kind": "link",
+              "value": "HD tweaks",
+              "action": "https://sites.google.com/site/heroes3hd/eng/tweaks",
+              "x": 192,
+              "y": 166,
+              "width": 145,
+              "height": 25
+            },
+            {
+              "kind": "link",
+              "value": "HD compatibility",
+              "action": "https://sites.google.com/site/heroes3hd/eng/description",
+              "x": 8,
+              "y": 199,
+              "width": 180,
+              "height": 25
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

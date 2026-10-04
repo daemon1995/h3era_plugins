@@ -1,237 +1,181 @@
 #include "HotkeysPage.h"
-
-#include <algorithm>
-#include <cstring>
-#include <string>
+#include "HelpUI.h"
+#include "CardLayout.h"
 
 namespace main
 {
 namespace
 {
-constexpr int kCategoryCount = hotkeys::CATEGORY_COUNT;
-constexpr int kButtonHeight = 42;
-constexpr int kButtonGap = 4;
-constexpr LPCSTR kCategoryNames[kCategoryCount] = {"All", "Everywhere", "Adventure Map", "Hero Window",
-                                                    "Town Window", "Battle Window", "Other"};
-constexpr LPCSTR kCategoryHints[kCategoryCount] = {"Show all registered hotkeys.", "Hotkeys available everywhere.",
-                                                    "Hotkeys for the adventure map.", "Hotkeys for the hero window.",
-                                                    "Hotkeys for the town window.", "Hotkeys for combat.",
-                                                    "Hotkeys with an unknown or unsupported context."};
-
-bool IsKnownType(hkcategories::eType type) noexcept
-{
-    return type >= hkcategories::ANY_DLG && type <= hkcategories::OTHER_DLG;
+const int kContexts[] = {-2, -1, 1, 2, 3, 4, 5, 6};
 }
-
-LPCSTR TypeName(const hkcategories::eType type) noexcept
+HotkeysSection::HotkeysSection(int cx, int cy, int cw, int ch, int x, int y, int w, int h, H3Dlg *parent,
+                               const std::vector<ModInformation *> &source)
+    : DlgPage(parent), mods(source)
 {
-    switch (type)
+    AddFrame(cx, cy, cw, ch);
+    AddFrame(x, y, w, h);
+    for (int index = 0; index < 8; ++index)
     {
-    case hkcategories::ANY_DLG:
-        return "Everywhere";
-    case hkcategories::ADV_MAP_DLG:
-        return "Adventure Map";
-    case hkcategories::HERO_DLG:
-        return "Hero Window";
-    case hkcategories::TOWN_DLG:
-        return "Town Window";
-    case hkcategories::COMBAT_DLG:
-        return "Battle Window";
-    default:
-        return "Other";
-    }
-}
-}
-
-HotkeysCategoriesPage::HotkeysCategoriesPage(const int x, const int y, const int width, const int height, H3Dlg *dialog)
-    : DlgPage(dialog)
-{
-    AddFrame(x, y, width, height);
-    constexpr LPCSTR defName = "RMGmenbt.def";
-    H3DefLoader def(defName);
-    const int buttonWidth = std::max(1, def->widthDEF * 2 / 3);
-    for (int index = 0; index < kCategoryCount; ++index)
-    {
-        const int itemId = hotkeys::CATEGORY_FIRST + index;
-        auto *button = H3DlgCaptionButton::Create(x + 4, y + 4 + index * (kButtonHeight + kButtonGap), itemId, defName,
-                                                  kCategoryNames[index], NH3Dlg::Text::MEDIUM, 0, 0, false,
-                                                  static_cast<eVKey>(0), 0);
-        if (!button)
-            continue;
-        button->SetWidth(buttonWidth);
-        button->SetHeight(kButtonHeight);
-        button->SetClickFrame(1);
-        button->SetHints(kCategoryHints[index], "Select a hotkey context category.", false);
-        buttons[index] = button;
+        const LPCSTR label = index == 0 ? helpdlg::Text("help.ui.all", "All") : helpdlg::ContextName(kContexts[index]);
+        auto *button = helpdlg::Button(nullptr, cx + 6, cy + 6 + index * 32, cw - 12, 28, 26000 + index, label);
         AddItem(button);
+        contexts.push_back(button);
     }
-    SetActiveCategory(hotkeys::CATEGORY_ALL);
+    AddItem(H3DlgText::Create(x + 8, y + 6, 48, 22, helpdlg::Text("help.ui.filter", "Filter:"), NH3Dlg::Text::SMALL,
+                              eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT));
+    queryEdit = H3DlgEdit::Create(x + 58, y + 6, w - 66, 22, 128, "", NH3Dlg::Text::SMALL, eTextColor::REGULAR,
+                                  eTextAlignment::MIDDLE_LEFT, nullptr, 26011, true, 2, 2);
+    AddItem(queryEdit);
+    if (queryEdit)
+        queryEdit->SetHints(helpdlg::Text("help.ui.filter_hint", "Filter titles only."), nullptr, false);
+    text = H3DlgScrollableText::Create("", x + 10, y + 30, w - 30, h - 38, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
+                                       false);
+    AddScrollableText(text);
+    Rebuild();
 }
-
-BOOL HotkeysCategoriesPage::IsCategory(const int itemId) const noexcept
+void HotkeysSection::SetVisible(BOOL state) noexcept
 {
-    return itemId >= hotkeys::CATEGORY_FIRST && itemId <= hotkeys::CATEGORY_LAST;
+    DlgPage::SetVisible(state);
+    if (!state && queryEdit && queryEdit->IsFocused())
+        queryEdit->SetFocus(FALSE);
 }
-
-int HotkeysCategoriesPage::ActiveCategory() const noexcept
+void HotkeysSection::SetSubtype(int subtype)
 {
-    return activeCategory;
+    activeSubtype = helpdlg::Bound(subtype, 0, 7);
+    Rebuild();
 }
-
-void HotkeysCategoriesPage::SetActiveCategory(const int itemId) noexcept
+helpdlg::HotkeyFilter HotkeysSection::Filter() const
 {
-    if (!IsCategory(itemId))
-        return;
-    activeCategory = itemId;
-    for (int index = 0; index < kCategoryCount; ++index)
-    {
-        if (buttons[index])
-            buttons[index]->SetFrame(hotkeys::CATEGORY_FIRST + index == activeCategory ? 1 : 0);
-    }
-    RedrawDialog();
+    helpdlg::HotkeyFilter filter;
+    filter.context = activeSubtype;
+    filter.query = query;
+    filter.firstRow = TextScrollPosition(text);
+    return filter;
 }
-
-HotkeysPage::HotkeysPage(const int x, const int y, const int width, const int height, H3Dlg *dialog,
-                         const std::vector<ModInformation *> &mods)
-    : DlgPage(dialog), mods(mods)
+void HotkeysSection::SetFilter(const helpdlg::HotkeyFilter &filter)
 {
-    AddFrame(x, y, width, height);
-    textScroll = H3DlgScrollableText::Create(h3_NullString, x + 10, y + 8, width - 28, height - 16,
-                                              NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, true);
-    AddScrollableText(textScroll);
-    SetCategory(hotkeys::CATEGORY_ALL);
+    activeSubtype = helpdlg::Bound(filter.context, 0, 7);
+    query = filter.query;
+    if (queryEdit)
+        queryEdit->SetText(query.c_str());
+    Rebuild();
+    SetTextScrollPosition(text, filter.firstRow);
 }
-
-void HotkeysPage::SetCategory(const int categoryId)
+void HotkeysSection::FocusHotkey(LPCSTR folder, int context, const std::string &search)
 {
-    if (categoryId < hotkeys::CATEGORY_FIRST || categoryId > hotkeys::CATEGORY_LAST)
-        return;
-    activeCategory = categoryId;
-    RebuildText();
-    RedrawDialog();
+    helpdlg::HotkeyFilter filter;
+    filter.query = search + " " + helpdlg::Safe(folder);
+    if (context == hkcategories::NONE)
+        context = hkcategories::OTHER_DLG;
+    const auto position = std::find(std::begin(kContexts), std::end(kContexts), context);
+    filter.context = position == std::end(kContexts) ? 0 : static_cast<int>(position - std::begin(kContexts));
+    SetFilter(filter);
 }
-
-bool HotkeysPage::MatchesCategory(const HotKey &hotkey) const noexcept
+void HotkeysSection::Rebuild()
 {
-    switch (activeCategory)
-    {
-    case hotkeys::CATEGORY_ALL:
-        return true;
-    case hotkeys::CATEGORY_EVERYWHERE:
-        return hotkey.type == hkcategories::ANY_DLG;
-    case hotkeys::CATEGORY_ADVENTURE:
-        return hotkey.type == hkcategories::ADV_MAP_DLG;
-    case hotkeys::CATEGORY_HERO:
-        return hotkey.type == hkcategories::HERO_DLG;
-    case hotkeys::CATEGORY_TOWN:
-        return hotkey.type == hkcategories::TOWN_DLG;
-    case hotkeys::CATEGORY_COMBAT:
-        return hotkey.type == hkcategories::COMBAT_DLG;
-    case hotkeys::CATEGORY_OTHER:
-        return !IsKnownType(hotkey.type) || hotkey.type == hkcategories::NONE || hotkey.type == hkcategories::OTHER_DLG;
-    default:
-        return false;
-    }
-}
-
-void HotkeysPage::RebuildText()
-{
-    std::string text;
-    std::vector<std::pair<const ModInformation *, const HotKey *>> entries;
-    for (const auto *mod : mods)
+    std::vector<helpdlg::HotkeyLine> entries;
+    for (auto *mod : mods)
     {
         if (!mod || !mod->hotkeysCategory)
             continue;
-        for (const auto &hotkey : mod->hotkeysCategory->hotkeys)
+        const auto source = helpdlg::Safe(mod->path.String());
+        for (const auto &key : mod->hotkeysCategory->hotkeys)
         {
-            if (!MatchesCategory(hotkey))
+            const int context = helpdlg::HotkeyContext(key.type);
+            if (activeSubtype && context != kContexts[activeSubtype])
                 continue;
-            entries.emplace_back(mod, &hotkey);
+            if (helpdlg::MatchesWords(source + " " + key.keys.String() + " " + key.name.String(), query))
+                entries.push_back({context, source, helpdlg::Safe(key.keys.String()), helpdlg::Safe(key.name.String()),
+                                   static_cast<int>(mod->id), key.id, helpdlg::Safe(key.description.String())});
         }
     }
-    std::sort(entries.begin(), entries.end(), [](const auto &left, const auto &right) {
-        if (left.second->type != right.second->type)
-            return left.second->type < right.second->type;
-        const LPCSTR leftModName = left.first->name.Empty() ? "" : left.first->name.String();
-        const LPCSTR rightModName = right.first->name.Empty() ? "" : right.first->name.String();
-        const int modCompare = std::strcmp(leftModName, rightModName);
-        if (modCompare != 0)
-            return modCompare < 0;
-        const LPCSTR leftName = left.second->name.Empty() ? "" : left.second->name.String();
-        const LPCSTR rightName = right.second->name.Empty() ? "" : right.second->name.String();
-        return std::strcmp(leftName, rightName) < 0;
-    });
-
-    hkcategories::eType previousType = static_cast<hkcategories::eType>(127);
-    const ModInformation *previousMod = nullptr;
-    for (const auto &entry : entries)
-    {
-        const ModInformation *mod = entry.first;
-        const HotKey *hotkey = entry.second;
-        if (hotkey->type != previousType)
-        {
-            text += "\n== ";
-            text += TypeName(hotkey->type);
-            text += " ==\n";
-            previousType = hotkey->type;
-            previousMod = nullptr;
-        }
-        if (mod != previousMod)
-        {
-            const LPCSTR modName = mod->name.Empty() ? "Unknown mod" : mod->name.String();
-            text += "\n" + std::string(modName) + "\n";
-            previousMod = mod;
-        }
-        text += "----------------------------------------\n[";
-            text += hotkey->keys.Empty() ? "" : hotkey->keys.String();
-        text += "]  ";
-        text += hotkey->name.Empty() ? "Unnamed hotkey" : hotkey->name.String();
-        text += "\n";
-        if (!hotkey->description.Empty())
-            text += std::string(hotkey->description.String()) + "\n";
-        text += "\n";
-    }
+    std::string output = helpdlg::GroupHotkeys(entries, helpdlg::ContextName);
     if (entries.empty())
-        text = "No hotkeys are registered for this category.";
-    renderedText = text.c_str();
-    SetScrollableText(textScroll, renderedText.String());
+        output += helpdlg::Text("help.ui.no_hotkeys", "No matching hotkeys.");
+    if (output != rendered.String())
+    {
+        rendered = output.c_str();
+        SetScrollableText(text, rendered.String());
+    }
+    for (size_t index = 0; index < contexts.size(); ++index)
+        if (contexts[index])
+            contexts[index]->SetFrame(index == static_cast<size_t>(activeSubtype) ? 1 : 0);
+    RedrawDialog();
 }
-
-HotkeysSection::HotkeysSection(const int categoriesX, const int categoriesY, const int categoriesWidth,
-                               const int categoriesHeight, const int contentX, const int contentY,
-                               const int contentWidth, const int contentHeight, H3Dlg *dialog,
-                               const std::vector<ModInformation *> &mods)
-    : categoriesPage(categoriesX, categoriesY, categoriesWidth, categoriesHeight, dialog),
-      contentPage(contentX, contentY, contentWidth, contentHeight, dialog, mods)
-{
-}
-
-void HotkeysSection::SetVisible(const BOOL state) noexcept
-{
-    categoriesPage.SetVisible(state);
-    contentPage.SetVisible(state);
-}
-
-void HotkeysSection::SetSubtype(const int subtype)
-{
-    activeSubtype = std::max(0, std::min(subtype, hotkeys::CATEGORY_COUNT - 1));
-    const int category = hotkeys::CATEGORY_FIRST + activeSubtype;
-    categoriesPage.SetActiveCategory(category);
-    contentPage.SetCategory(category);
-}
-
+void HotkeysSection::UpdateMousePosition(const H3Msg &) noexcept {}
 BOOL HotkeysSection::ProcessMessage(H3Msg &msg)
 {
-    if (!msg.IsLeftClick() || !categoriesPage.IsCategory(msg.itemId))
-        return FALSE;
-    activeSubtype = msg.itemId - hotkeys::CATEGORY_FIRST;
-    categoriesPage.SetActiveCategory(msg.itemId);
-    contentPage.SetCategory(msg.itemId);
-    return TRUE;
+    FlushTextScrollPositions();
+    const std::string current = queryEdit ? helpdlg::Safe(queryEdit->GetText()) : "";
+    if (current != query)
+    {
+        query = current;
+        Rebuild();
+    }
+    if (msg.IsLeftClick() && msg.itemId >= 26000 && msg.itemId < 26008)
+    {
+        SetSubtype(msg.itemId - 26000);
+        return TRUE;
+    }
+    return FALSE;
 }
-
 void HotkeysSection::Redraw()
 {
+    RedrawDialog();
 }
-
+void HotkeysSection::ReleaseInputFocus(int keepItemId) noexcept
+{
+    auto *edit = queryEdit;
+    if (edit && edit->IsFocused() && edit->GetID() != keepItemId)
+        edit->SetFocus(FALSE);
+}
 } // namespace main
+
+namespace helpdlg
+{
+bool ShowHotkeyPreview(const HotKey &key, LPCSTR modName)
+{
+    const int width = std::min(560, H3GameWidth::Get() - 20);
+    const int maxHeight = std::min(520, H3GameHeight::Get() - 20);
+    const int left = 18, contentWidth = width - 36;
+    H3BinaryLoader<H3Font> keyFont(NH3Dlg::Text::BIG);
+    H3BinaryLoader<H3Font> titleFont(NH3Dlg::Text::MEDIUM);
+    H3BinaryLoader<H3Font> sourceFont(NH3Dlg::Text::SMALL);
+    const auto binding = Safe(key.keys.String());
+    const auto action = key.name.Empty() ? std::string(Text("help.ui.hotkey", "Hotkey")) : Safe(key.name.String());
+    const auto description = Safe(key.description.String());
+    const std::string source = Safe(modName) + " / " + ContextName(HotkeyContext(key.type));
+    const int keyHeight = std::max(36, CardTextHeight(keyFont.Get(), binding, contentWidth - 24));
+    const int boxHeight = keyHeight + 16;
+    const int titleY = 18 + boxHeight + 12;
+    const int titleHeight = std::max(26, CardTextHeight(titleFont.Get(), action, contentWidth));
+    const int sourceY = titleY + titleHeight + 6;
+    const int sourceHeight = CardTextHeight(sourceFont.Get(), source, contentWidth);
+    const int bodyY = sourceY + sourceHeight + 14;
+    const int naturalHeight = description.empty() ? 0 : CardTextHeight(titleFont.Get(), description, contentWidth - 18);
+    const int bodyHeight = std::min(naturalHeight, std::max(0, maxHeight - bodyY - 18));
+    H3Dlg dlg(width, bodyY + bodyHeight + 18, -1, -1, false, false);
+    if (!AddSafeBackground(dlg))
+        return false;
+    dlg.CreateFrame(left, 18, contentWidth, boxHeight, -1, H3RGB565(H3RGB888(190, 151, 70)));
+    dlg.CreateFrame(left + 1, 19, contentWidth - 2, boxHeight - 2, -1, H3RGB565(H3RGB888(89, 65, 31)));
+    dlg.CreateText(left + 12, 26, contentWidth - 24, keyHeight, binding.c_str(), NH3Dlg::Text::BIG, eTextColor::GOLD,
+                   -1);
+    dlg.CreateText(left, titleY, contentWidth, titleHeight, action.c_str(), NH3Dlg::Text::MEDIUM, eTextColor::WHITE,
+                   -1);
+    dlg.CreateText(left, sourceY, contentWidth, sourceHeight, source.c_str(), NH3Dlg::Text::SMALL, eTextColor::GOLD,
+                   -1);
+    if (bodyHeight > 0)
+    {
+        dlg.CreateFrame(left, bodyY - 7, contentWidth, 1, -1, H3RGB565(H3RGB888(116, 100, 70)));
+        if (naturalHeight <= bodyHeight)
+            dlg.CreateText(left, bodyY, contentWidth, bodyHeight, description.c_str(), NH3Dlg::Text::MEDIUM,
+                           eTextColor::REGULAR, -1, eTextAlignment::TOP_LEFT);
+        else if (auto *text = H3DlgScrollableText::Create(description.c_str(), left, bodyY, contentWidth, bodyHeight,
+                                                          NH3Dlg::Text::MEDIUM, eTextColor::REGULAR, false))
+            dlg.AddItem(text);
+    }
+    dlg.RMB_Show();
+    return true;
+}
+} // namespace helpdlg

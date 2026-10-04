@@ -1,0 +1,10 @@
+BasedOnStyle: Microsoft
+IndentWidth: 4
+ColumnLimit: 120
+SortIncludes: Never
+PointerAlignment: Right
+NamespaceIndentation: None
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortBlocksOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
