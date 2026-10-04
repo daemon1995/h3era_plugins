@@ -2,6 +2,7 @@
 
 #include "DlgPage.h"
 #include "ModInformation.h"
+#include <map>
 
 namespace main
 {
@@ -10,11 +11,11 @@ namespace modpage
 {
 enum eItem
 {
-    CATEGORY_FIRST = 700,
-    CATEGORY_SCROLLBAR = 720,
-    CONTENT_SCROLLBAR = 721
+    CATEGORY_FIRST = 16000,
+    CATEGORY_SCROLLBAR = 15998,
+    CONTENT_SCROLLBAR = 15999
 };
-}
+} // namespace modpage
 
 class ModCategoriesPage final : public DlgPage
 {
@@ -31,6 +32,7 @@ class ModCategoriesPage final : public DlgPage
 
   public:
     ModCategoriesPage(int x, int y, int width, int height, H3Dlg *dialog);
+    ~ModCategoriesPage() override;
 
     void SetMod(const ModInformation *mod);
     BOOL IsCategory(int itemId) const noexcept;
@@ -55,6 +57,18 @@ class ModContentPage final : public DlgPage
     H3String renderedText;
     const ModInformation *activeMod = nullptr;
     int activeCategory = 0;
+    std::vector<H3DlgItem *> objectItems;
+    std::vector<std::pair<int, H3String>> actions;
+    H3String pendingAction;
+    const Category *renderedCategory = nullptr;
+    struct ObjectControls
+    {
+        std::vector<H3DlgItem *> items;
+        std::vector<std::pair<int, H3String>> actions;
+    };
+    std::map<const Category *, ObjectControls> objectCache;
+    std::map<const Category *, int> scrollPositions;
+    int nextObjectId = 21000;
 
   public:
     ModContentPage(int x, int y, int width, int height, H3Dlg *dialog);
@@ -62,9 +76,16 @@ class ModContentPage final : public DlgPage
     void SetMod(const ModInformation *mod);
     void SetCategory(int index);
     void RefreshVisibility();
+    void SetVisible(BOOL state) noexcept override;
+    void UpdateScrollbarActivation(const H3Msg &msg) noexcept;
+    BOOL ProcessMessage(H3Msg &msg);
+    H3String TakeAction();
+    int ScrollPosition() const;
+    void SetScrollPosition(int position);
 
   private:
     void RebuildText();
+    void RebuildObjects(const Category *category);
 };
 
 class ModSection final : public DlgSection
@@ -74,8 +95,8 @@ class ModSection final : public DlgSection
     const ModInformation *activeMod = nullptr;
 
   public:
-    ModSection(int categoriesX, int categoriesY, int categoriesWidth, int categoriesHeight, int contentX,
-               int contentY, int contentWidth, int contentHeight, H3Dlg *dialog);
+    ModSection(int categoriesX, int categoriesY, int categoriesWidth, int categoriesHeight, int contentX, int contentY,
+               int contentWidth, int contentHeight, H3Dlg *dialog);
 
     void SetMod(const ModInformation *mod);
     void SetSubtype(int subtype);
@@ -83,6 +104,18 @@ class ModSection final : public DlgSection
     void UpdateMousePosition(const H3Msg &msg) noexcept override;
     BOOL ProcessMessage(H3Msg &msg) override;
     void Redraw() override;
+    H3String TakeAction()
+    {
+        return contentPage.TakeAction();
+    }
+    int ScrollPosition() const
+    {
+        return contentPage.ScrollPosition();
+    }
+    void SetScrollPosition(int position)
+    {
+        contentPage.SetScrollPosition(position);
+    }
 };
 
 } // namespace main

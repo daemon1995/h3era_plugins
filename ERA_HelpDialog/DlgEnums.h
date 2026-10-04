@@ -1,4 +1,5 @@
 #pragma once
+#include "../headers/EraPluginsAPI/HelpDialogAPI.hpp"
 namespace main
 {
 namespace buttons
@@ -17,7 +18,9 @@ enum eButton
     HEROES,
     SECONDARY_SKILLS,
     SPELLS,
-    LAST = SPELLS
+    LAST = SPELLS,
+    SEARCH = 110,
+    SEARCH_CLEAR = 111
 };
 } // namespace buttons
 
@@ -25,14 +28,14 @@ enum eButton
 // button IDs so integrations can persist or pass them without another map.
 enum class eHelpPage : int
 {
-    MODS = buttons::MODLIST,
-    HOTKEYS = buttons::HOTKEYS,
-    CREATURES = buttons::CREATURES,
-    ARTIFACTS = buttons::ARTIFACTS,
-    TOWNS = buttons::TOWNS,
-    HEROES = buttons::HEROES,
-    SECONDARY_SKILLS = buttons::SECONDARY_SKILLS,
-    SPELLS = buttons::SPELLS
+    MODS = static_cast<int>(era_help::Page::Mods),
+    HOTKEYS = static_cast<int>(era_help::Page::Hotkeys),
+    CREATURES = static_cast<int>(era_help::Page::Creatures),
+    ARTIFACTS = static_cast<int>(era_help::Page::Artifacts),
+    TOWNS = static_cast<int>(era_help::Page::Towns),
+    HEROES = static_cast<int>(era_help::Page::Heroes),
+    SECONDARY_SKILLS = static_cast<int>(era_help::Page::SecondarySkills),
+    SPELLS = static_cast<int>(era_help::Page::Spells)
 };
 
 } // namespace main

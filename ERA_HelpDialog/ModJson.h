@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HelpDialogDependencies.h"
+#include "HelpLogic.h"
 
 // Small adapter around EraJS used by all mod-help readers.  New documents
 // live under help.<mod-folder>, while help.mods.<mod-folder> remains a
@@ -18,22 +19,17 @@ class ModJsonDocument final
 
     static H3String MakePath(const H3String &root, LPCSTR relative)
     {
-        if (!relative || !*relative)
-            return root;
-        H3String path(root);
-        path.Append('.');
-        path.Append(relative);
-        return path;
+        return helpdlg::JsonPath(root.String(), relative ? relative : "").c_str();
     }
 
     static H3String ReadPath(const H3String &path, bool &success)
     {
-        return EraJS::read(path.String(), success);
+        LPCSTR value = EraJS::read(path.String(), success);
+        return success && value ? value : h3_NullString;
     }
 
   public:
-    explicit ModJsonDocument(LPCSTR modFolderName)
-        : primaryRoot("help."), legacyRoot("help.mods.")
+    explicit ModJsonDocument(LPCSTR modFolderName) : primaryRoot("help."), legacyRoot("help.mods.")
     {
         primaryRoot.Append(modFolderName ? modFolderName : "");
         legacyRoot.Append(modFolderName ? modFolderName : "");
@@ -69,42 +65,4 @@ class ModJsonDocument final
         bool success = false;
         return ReadInt(relative, success);
     }
-
-    // Returns the first existing array root.  The extra probes make the
-    // helper useful for both object arrays (keys/name) and text categories.
-    H3String ArrayRoot(LPCSTR relative) const
-    {
-        const H3String roots[] = {MakePath(primaryRoot, relative), MakePath(legacyRoot, relative)};
-        for (const H3String &root : roots)
-        {
-            bool success = false;
-            H3String probe(root);
-            probe.Append(".0.keys");
-            EraJS::read(probe.String(), success);
-            if (!success)
-            {
-                probe = root;
-                probe.Append(".0.name");
-                EraJS::read(probe.String(), success);
-            }
-            if (!success)
-            {
-                probe = root;
-                probe.Append(".0.key");
-                EraJS::read(probe.String(), success);
-            }
-            if (!success)
-            {
-                probe = root;
-                probe.Append(".0.content");
-                EraJS::read(probe.String(), success);
-            }
-            if (success)
-                return root;
-        }
-        return h3_NullString;
-    }
-
-    const H3String &PrimaryRoot() const noexcept { return primaryRoot; }
-    const H3String &LegacyRoot() const noexcept { return legacyRoot; }
 };

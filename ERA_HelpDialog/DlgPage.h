@@ -3,6 +3,7 @@
 #include "HelpDialogDependencies.h"
 
 #include <vector>
+#include <map>
 
 namespace main
 {
@@ -29,6 +30,7 @@ class DlgSection
     }
     virtual BOOL ProcessMessage(H3Msg &msg) = 0;
     virtual void Redraw() = 0;
+    virtual void ReleaseInputFocus(int keepItemId = -1) noexcept {}
 };
 
 // A page owns ordinary H3 dialog items registered in MainDlg. It is not an
@@ -41,11 +43,15 @@ class DlgPage
     std::vector<H3DlgItem *> decorations;
     std::vector<H3DlgScrollableText *> scrollableTexts;
     BOOL isVisible = FALSE;
+    mutable std::map<H3DlgScrollableText *, int> pendingTextScroll;
 
     explicit DlgPage(H3Dlg *dialog);
     void AddItem(H3DlgItem *item);
     void AddScrollableText(H3DlgScrollableText *scrollableText);
     void SetScrollableText(H3DlgScrollableText *scrollableText, LPCSTR text);
+    void SetTextScrollPosition(H3DlgScrollableText *text, int position);
+    int TextScrollPosition(H3DlgScrollableText *text) const;
+    void FlushTextScrollPositions() const noexcept;
     void AddFrame(int x, int y, int width, int height);
     void RedrawDialog() const noexcept;
 
