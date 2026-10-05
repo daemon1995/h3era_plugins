@@ -2,7 +2,11 @@
 
 namespace commanderPreview
 {
-enum { MAX_SKILLS = 15, FIRST_ITEM_ID = 4500 };
+enum
+{
+    MAX_SKILLS = 15,
+    FIRST_ITEM_ID = 4500
+};
 
 struct SkillList
 {
@@ -54,4 +58,4 @@ inline PanelLayout Layout(int count, int width, int availableHeight)
     }
     return result;
 }
-}
+} // namespace commanderPreview

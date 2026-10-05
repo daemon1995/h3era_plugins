@@ -28,7 +28,7 @@ class MonPreview : public IGamePatch
                                                                      int y, int width, int height, H3BaseDlg *parent,
                                                                      DWORD type);
     static void __stdcall H3CombatMonsterPanel_Prepare(HiHook *hook, H3CombatMonsterPanel *panel,
-                                                        H3CombatCreature *stack, H3Hero *hero);
+                                                       H3CombatCreature *stack, H3Hero *hero);
     static void __stdcall H3CombatMonsterPanel_Dtor(HiHook *hook, H3CombatMonsterPanel *panel);
 
     static void __stdcall OnBeforeBattleUniversal(Era::TEvent *event);
@@ -46,8 +46,7 @@ class MonPreview : public IGamePatch
     void CreatePanelBackground();
     void BuildExtendedPanel(H3CombatMonsterPanel *panel);
     void UpdateExtendedPanel(H3CombatMonsterPanel *panel, H3CombatCreature *stack, H3Hero *hero);
-    void UpdateSpellSlots(const std::array<H3DlgPcx16 *, 12> &pictures,
-                          const std::array<H3DlgText *, 12> &durations,
+    void UpdateSpellSlots(const std::array<H3DlgPcx16 *, 12> &pictures, const std::array<H3DlgText *, 12> &durations,
                           H3CombatCreature *stack);
 
   public:

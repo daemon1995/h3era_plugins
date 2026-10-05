@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "CommanderSkillList.h"
-#include "../headers/WoG/NPC.h"
 #include <cstddef>
 
 static_assert(sizeof(WoG::NPC) == 296, "Unexpected WoG commander structure");
@@ -16,8 +15,7 @@ BOOL CreatureDlgHandler::AddCommanderSkills()
     {
         // The actual side also remains correct when the stack is hypnotized.
         auto *owner = P_CombatManager->hero[stack->side];
-        npc = owner ? WoG::NPC::Get(owner->id)
-                    : reinterpret_cast<WoG::NPC *>(stack->side ? 0x2861F98 : 0x2861E70);
+        npc = owner ? WoG::NPC::Get(owner->id) : reinterpret_cast<WoG::NPC *>(stack->side ? 0x2861F98 : 0x2861E70);
     }
     else if (!stack && hero)
         npc = WoG::NPC::Get(hero->id);
@@ -37,8 +35,7 @@ BOOL CreatureDlgHandler::AddCommanderSkills()
     if (!buffer)
         return FALSE;
 
-    const unsigned char textRows[commanderPreview::MAX_SKILLS] =
-        {1, 2, 3, 4, 5, 8, 9, 10, 11, 15, 16, 17, 22, 23, 29};
+    const unsigned char textRows[commanderPreview::MAX_SKILLS] = {1, 2, 3, 4, 5, 8, 9, 10, 11, 15, 16, 17, 22, 23, 29};
     int added = 0;
     for (int i = 0; i < skills.count; ++i)
     {
@@ -48,9 +45,8 @@ BOOL CreatureDlgHandler::AddCommanderSkills()
         if (!picture)
             break;
         auto *item = H3DlgPcx16::Create(descriptionX + (i % layout.columns) * (layout.iconSize + 4),
-                                        descriptionY + (i / layout.columns) * (layout.iconSize + 4),
-                                        layout.iconSize, layout.iconSize,
-                                        commanderPreview::FIRST_ITEM_ID + i, nullptr);
+                                        descriptionY + (i / layout.columns) * (layout.iconSize + 4), layout.iconSize,
+                                        layout.iconSize, commanderPreview::FIRST_ITEM_ID + i, nullptr);
         if (!item)
         {
             picture->Destroy();
@@ -59,8 +55,8 @@ BOOL CreatureDlgHandler::AddCommanderSkills()
 
         buffer->FillRectangle(0, 0, buffer->width, buffer->height, 0, 0, 0);
         def->DrawToPcx16(0, frame, buffer, 0, 0);
-        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(
-            picture, buffer, buffer->width, buffer->height, 0, 0, layout.iconSize, layout.iconSize);
+        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(picture, buffer, buffer->width, buffer->height, 0, 0,
+                                                               layout.iconSize, layout.iconSize);
 
         const char *hint = CDECL_3(char *, 0x77710B, 28 + row, 1, 0x2860724);
         const char *description = CDECL_3(char *, 0x77710B, 64 + row, 1, 0x2860724);
