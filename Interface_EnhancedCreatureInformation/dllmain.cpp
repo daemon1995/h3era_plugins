@@ -15,6 +15,8 @@ _LHF_(HooksInit)
     Dlg_CreatureInfo_HooksInit(_PI);
     Dlg_CreatureSpellInfo_HooksInit(_PI);
 
+    creatureInfo::RegisterPluginSettingsButton();
+
     return EXEC_DEFAULT;
 }
 
@@ -35,7 +37,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance("EraPlugins.CreatureInformation.daemon_n");
             Era::ConnectEra(hModule, "EraPlugins.CreatureInformation.daemon_n");
-            Era::RegisterHandler(creatureInfo::RegisterPluginSettingsButton, "OnAfterErmInited");
             _PI->WriteLoHook(0x4EEAF2, HooksInit);
         }
     case DLL_THREAD_ATTACH:

@@ -1,4 +1,5 @@
 #include "pch.h"
+
 #include "CreatureDlgHandler.h"
 #include "CreatureDlgHooks.h"
 #include "CreatureDlgLayout.h"
@@ -12,71 +13,22 @@
 using namespace h3;
 using namespace creatureInfo;
 
-
 namespace
 {
-struct _DlgCreatureExpoInfo_
-{
-    char *Caption;
-    char *Info;
-    char *Picture;
-    char *PictureHint;
-    char **TxtProperties;
-    char **IcoProperties;
-    char **HintProperties;
-    char *ColCaptions;
-    char *ColHint;
-    char **RowCaptions;
-    char **RowCaptionHints;
-    char **Rows;
-    char **RowHints;
-    int IcoPropertiesCount;
-    int ShowSpecButton;
-    char *SpecButtonHint;
-    int CurPropColLeft;
-    int CurPropColRight;
-    char *ArtIcon;
-    char *ArtHint;
-    int ArtOutput;
-    int Flags;
-    int ArtCopy;
-};
+
+typedef WoG::_CreatureExpo_ _DlgCreatureExpoInfo_;
 
 static_assert(offsetof(_DlgCreatureExpoInfo_, TxtProperties) == 0x10, "Unexpected CrExp text array offset");
 static_assert(offsetof(_DlgCreatureExpoInfo_, IcoProperties) == 0x14, "Unexpected CrExp icon array offset");
 static_assert(offsetof(_DlgCreatureExpoInfo_, HintProperties) == 0x18, "Unexpected CrExp hint array offset");
 static_assert(offsetof(_DlgCreatureExpoInfo_, IcoPropertiesCount) == 0x34, "Unexpected CrExp icon count offset");
 
-struct CrExpBonLine
-{
-    unsigned __int32 Act : 1;
-    unsigned __int32 _unused : 31;
-    char Type;
-    char Mod;
-    char Lvls[11];
-};
-
-static_assert(offsetof(CrExpBonLine, Lvls) == 6, "Unexpected CrExp bonus level offset");
+static_assert(offsetof(WoG::CrExpModStr, Lvls) == 6, "Unexpected CrExp bonus level offset");
 
 // WoG stores CrExpo records in 16-byte slots. For a purchase-preview there is
 // no persistent CrExpo record, but CrExpBon_Dlg_PrepareInfo still expects one
 // when it builds the icon/text buffers. This local record is never registered
 // in CrExpoSet and therefore cannot alter game state.
-struct PreviewCrExpo
-{
-    int experience = 0;
-    int count = 1;
-    DWORD flags = 0;
-    DWORD artifact = 0;
-};
-
-constexpr int CR_EXP_BONUS_LINES = 20;
-constexpr DWORD CR_EXP_BONUS_TABLE = 0x0847D98;
-
-CrExpBonLine *GetCrExpBonusLine(int index)
-{
-    return reinterpret_cast<CrExpBonLine *>(CR_EXP_BONUS_TABLE + index * 17);
-}
 
 DWORD MakePreviewCrExpoFlags(int creatureId)
 {
@@ -85,8 +37,7 @@ DWORD MakePreviewCrExpoFlags(int creatureId)
     // code still expects an active record with a valid non-zero storage type.
     // CE_HERO (1) is harmless here because no lookup by location is performed.
     constexpr DWORD CE_HERO = 1;
-    return 1u | (CE_HERO << 1) |
-           ((static_cast<DWORD>(static_cast<unsigned char>(creatureId)) << 5) & 0x1FE0u);
+    return 1u | (CE_HERO << 1) | ((static_cast<DWORD>(static_cast<unsigned char>(creatureId)) << 5) & 0x1FE0u);
 }
 } // namespace
 
@@ -100,10 +51,10 @@ void CreatureDlgHandler::HideDefaultBattleSpellItems()
             item->HideDeactivate();
 }
 
-CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature *stack, H3Army *army,
-                                       int armySlotIndex, const H3Hero *hero, int playerColor)
-    : dlg(dlg), stack(stack), army(army), armySlotIndex(armySlotIndex),
-      wogStackExperience(WogStackExperienceEnabled()), hero(hero), playerColor(playerColor)
+CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature *stack, H3Army *army, int armySlotIndex,
+                                       const H3Hero *hero, int playerColor)
+    : dlg(dlg), stack(stack), army(army), armySlotIndex(armySlotIndex), wogStackExperience(WogStackExperienceEnabled()),
+      hero(hero), playerColor(playerColor)
 {
     if (!dlg)
         return;
@@ -279,8 +230,8 @@ BOOL CreatureDlgHandler::BuildDescriptionArea()
     // Commanders already have their own reduced icon block. Ordinary creatures
     // use current active skills for stack/army dialogs and the full 0..10 rank
     // preview for a purchase dialog that has no persistent CrExpo record.
-    if (GetPluginSettings().showCreatureSkills && !Era::IsCommanderId(dlg->creatureId) &&
-        CreateCreatureSkillsList() && !creatureSkills.empty())
+    if (GetPluginSettings().showCreatureSkills && !Era::IsCommanderId(dlg->creatureId) && CreateCreatureSkillsList() &&
+        !creatureSkills.empty())
     {
         if (BuildExperienceSkillsPanel(description, descriptionText))
             return TRUE;
@@ -288,19 +239,24 @@ BOOL CreatureDlgHandler::BuildDescriptionArea()
 
     ReleaseUnownedSkillImages();
     const int availableHeight = std::max(descriptionHeight, CONTENT_BOTTOM - descriptionY);
-    const char *fontName = description && description->GetFont() ? description->GetFont()->GetName() : NH3Dlg::Text::TINY;
-    const int color = description ? description->color : 4;
-    H3DlgScrollableText *scrollable = H3DlgScrollableText::Create(descriptionText.c_str(), descriptionX, descriptionY,
-                                                                  descriptionWidth, availableHeight, fontName, color,
-                                                                  false);
-    if (scrollable)
-    {
-        dlg->AddItem(scrollable);
-        return TRUE;
-    }
 
     if (description)
+    {
+        description->SetWidth(descriptionWidth);
+        description->SetHeight(availableHeight);
+        description->SetX(descriptionX);
+        description->SetY(descriptionY);
         description->ShowActivate();
+    }
+    else if (!descriptionText.empty())
+    {
+
+        description =
+            H3DlgText::Create(descriptionX, descriptionY, descriptionWidth, availableHeight, descriptionText.c_str(),
+                              P_TinyFont->GetName(), eTextColor::WHITE, -1, eTextAlignment::TOP_LEFT);
+        if (description)
+            dlg->AddItem(description);
+    }
     return FALSE;
 }
 
@@ -314,7 +270,8 @@ BOOL CreatureDlgHandler::BuildExperienceSkillsPanel(H3DlgText *description, cons
     maxScrollTick = 0;
     scrollRowOffsets.clear();
 
-    const char *fontName = description && description->GetFont() ? description->GetFont()->GetName() : NH3Dlg::Text::TINY;
+    const char *fontName =
+        description && description->GetFont() ? description->GetFont()->GetName() : NH3Dlg::Text::TINY;
     const int textColor = description ? description->color : 4;
     const int textAlign = description ? description->alignment : GetPluginSettings().descriptionAlignment;
     H3Font *font = H3Font::Load(fontName);
@@ -391,9 +348,9 @@ BOOL CreatureDlgHandler::BuildExperienceSkillsPanel(H3DlgText *description, cons
         item->SetPcx(skill.pcx16);
         skill.pcx16 = nullptr; // ownership is now held by the native dialog item
 
-		libc::sprintf(h3_TextBuffer, "{~>%s:0:%d block}\n\n%s", CREATURE_EXP_DEF, skill.frame, skill.text.c_str());
+        libc::sprintf(h3_TextBuffer, "{~>%s:0:%d block}\n\n%s", CREATURE_EXP_DEF, skill.frame, skill.text.c_str());
 
-		std::string popup(h3_TextBuffer);
+        std::string popup(h3_TextBuffer);
         item->SetHints(skill.hint.c_str(), h3_TextBuffer, TRUE);
         dlg->AddItem(item);
         scrolledItems.push_back({item, baseY});
@@ -411,8 +368,8 @@ BOOL CreatureDlgHandler::BuildExperienceSkillsPanel(H3DlgText *description, cons
     const int textStartY = descriptionY + skillBlockHeight + (lines.Size() ? 2 : 0);
     for (UINT32 i = 0; i < lines.Size(); ++i)
     {
-        H3DlgText *line = H3DlgText::Create(descriptionX, textStartY + static_cast<int>(i) * lineHeight,
-                                            contentWidth, lineHeight, lines[i].String(), fontName, textColor,
+        H3DlgText *line = H3DlgText::Create(descriptionX, textStartY + static_cast<int>(i) * lineHeight, contentWidth,
+                                            lineHeight, lines[i].String(), fontName, textColor,
                                             CREATURE_EXP_TEXT_FIRST_ID + static_cast<int>(i), textAlign);
         if (!line)
             continue;
@@ -426,9 +383,8 @@ BOOL CreatureDlgHandler::BuildExperienceSkillsPanel(H3DlgText *description, cons
     if (needScrollbar && maxScrollTick > 0)
     {
         H3DlgScrollbar *scrollbar = H3DlgScrollbar::Create(
-            descriptionX + descriptionWidth - EXP_SCROLLBAR_WIDTH, descriptionY, EXP_SCROLLBAR_WIDTH,
-            viewportHeight, CREATURE_EXP_SCROLLBAR_ID, maxScrollTick + 1, CreatureSkillsScrollbarProc,
-            false, 1, true);
+            descriptionX + descriptionWidth - EXP_SCROLLBAR_WIDTH, descriptionY, EXP_SCROLLBAR_WIDTH, viewportHeight,
+            CREATURE_EXP_SCROLLBAR_ID, maxScrollTick + 1, CreatureSkillsScrollbarProc, false, 1, true);
         if (scrollbar)
         {
             // stepSize=1 means one scrollbar tick == one logical content row.
@@ -470,8 +426,8 @@ BOOL CreatureDlgHandler::AddExperienceButton()
     if (frame)
         dlg->AddItem(frame);
 
-    H3DlgDefButton *button = H3DlgDefButton::Create(x, y, WOG_CREATURE_EXP_BUTTON_ID, "CrExpBut.def", 0, 1, false,
-                                                    eVKey::H3VK_E);
+    H3DlgDefButton *button =
+        H3DlgDefButton::Create(x, y, WOG_CREATURE_EXP_BUTTON_ID, "CrExpBut.def", 0, 1, false, eVKey::H3VK_E);
     if (!button)
         return FALSE;
     H3String hint = isNpc ? Era::tr("eci.combat_dialog.creature_info.npc_hint")
@@ -498,7 +454,7 @@ BOOL CreatureDlgHandler::AddSpellEfects()
     {
         const int yPos = 42 * i + 47;
         const int spellId = activeSpells[i];
-        H3DlgDef *spellDef = H3DlgDef::Create(283, yPos, 1000 + i,  NH3Dlg::Assets::SPELL_SMALL, spellId + 1);
+        H3DlgDef *spellDef = H3DlgDef::Create(283, yPos, 1000 + i, NH3Dlg::Assets::SPELL_SMALL, spellId + 1);
         if (!spellDef)
             continue;
 
@@ -533,10 +489,9 @@ BOOL CreatureDlgHandler::AddSpellEfects()
         {
             H3String duration("x");
             duration.Append(stack->activeSpellDuration[spellId]);
-            H3DlgText *durationText = H3DlgText::Create(spellDef->GetX() + spellDef->GetWidth() - 24,
-                                                        spellDef->GetY() + spellDef->GetHeight() - 12, 24, 12,
-                                                        duration.String(), NH3Dlg::Text::TINY, 1, 0,
-                                                        eTextAlignment::BOTTOM_RIGHT);
+            H3DlgText *durationText = H3DlgText::Create(
+                spellDef->GetX() + spellDef->GetWidth() - 24, spellDef->GetY() + spellDef->GetHeight() - 12, 24, 12,
+                duration.String(), NH3Dlg::Text::TINY, 1, 0, eTextAlignment::BOTTOM_RIGHT);
             if (durationText)
             {
                 durationText->SetHints(h3_TextBuffer, spellDesc.String(), true);
@@ -546,8 +501,8 @@ BOOL CreatureDlgHandler::AddSpellEfects()
 
         if (i == 4 && needToExpand)
         {
-            H3DlgDefButton *button = H3DlgDefButton::Create(283, yPos + 42, DLG_SPELLS_BTTN_ID, SPELL_LIST_BUTTON_DEF, 0, 1,
-                                                            false, eVKey::H3VK_S);
+            H3DlgDefButton *button = H3DlgDefButton::Create(283, yPos + 42, DLG_SPELLS_BTTN_ID, SPELL_LIST_BUTTON_DEF,
+                                                            0, 1, false, eVKey::H3VK_S);
             if (button)
             {
                 button->SetHints(Era::tr("eci.combat_dialog.creature_info.spell_list_hint"), h3_NullString, true);
@@ -558,7 +513,6 @@ BOOL CreatureDlgHandler::AddSpellEfects()
     return TRUE;
 }
 
-
 BOOL CreatureDlgHandler::CreateCreatureSkillsList()
 {
     ReleaseUnownedSkillImages();
@@ -566,67 +520,43 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
         return FALSE;
 
     const int creatureId = dlg->creatureId;
-    const bool hasArmyExperienceSource = army && armySlotIndex >= 0 && armySlotIndex <= 6;
+    const bool hasArmyExperienceSource = army && armySlotIndex >= 0 && armySlotIndex < limits::ARMY_SLOTS;
     const bool hasExperienceSource = stack || hasArmyExperienceSource;
     const bool isPreviewWithoutCrExpo = !hasExperienceSource;
+    using namespace WoG;
+    _CrExpo_ *crExpo = nullptr;
 
-    DWORD crExpo = 0;
-    int experience = 0;
-
+    int stackId = -1;
     if (stack)
     {
-        const int expoCreatureType = CDECL_1(int, 0x716C8E, stack);
-        CDECL_2(void, 0x728120, expoCreatureType, creatureId);
-        crExpo = CDECL_1(DWORD, 0x728110, expoCreatureType);
+        stackId = CDECL_1(int, 0x716C8E, stack);
+        crExpo = _CrExpo_::GetFromCombatCreatureIndex(stackId);
     }
-    else
+    else if (hasArmyExperienceSource)
     {
-        // Select the Creature Experience bonus table for this creature. This is
-        // sufficient for army and purchase dialogs; only the former has a
-        // persistent CrExpo record.
-        CDECL_2(void, 0x728120, -1, creatureId);
-
-        if (hasArmyExperienceSource)
+        eExpType expType = eExpType::CE_UNKNOWN;
+        _CrExpo_::UniData expData;
+        if (CDECL_4(int, 0x71A1B7, army, armySlotIndex, &expType, &expData) && expType >= eExpType::CE_FIRST &&
+            expType <= eExpType::CE_LAST)
         {
-            int expType = 0;
-            DWORD expData = 0;
-            CDECL_4(void, 0x71A1B7, army, armySlotIndex, &expType, &expData);
-            if (expType >= 1 && expType <= 5)
-                crExpo = CDECL_2(DWORD, 0x718617, expType, expData);
+            crExpo = CDECL_2(_CrExpo_ *, 0x0718617, expType, expData);
         }
     }
 
-    if (hasExperienceSource)
-    {
-        // A concrete battle/army stack keeps the strict old behavior: no
-        // CrExpo or zero experience means no skill icon panel.
-        if (!crExpo)
-            return FALSE;
-
-        experience = IntAt(crExpo);
-        if (experience <= 0)
-            return FALSE;
-    }
+    CrExpBon::MakeCurrent(stackId, creatureId);
 
     int creatureCount = dlg->numberCreatures;
     if (creatureCount <= 0 && hasArmyExperienceSource)
         creatureCount = army->count[armySlotIndex];
     creatureCount = std::max(1, creatureCount);
 
-    H3LoadedDef *skillsDef = H3LoadedDef::Load(CREATURE_EXP_DEF);
+    H3DefLoader skillsDef = H3LoadedDef::Load(CREATURE_EXP_DEF);
     if (!skillsDef || !skillsDef->groups || !skillsDef->groups[0] || skillsDef->groups[0]->count <= 0)
-    {
-        if (skillsDef)
-            skillsDef->Dereference();
         return FALSE;
-    }
 
     H3LoadedPcx16 *source = H3LoadedPcx16::Create(skillsDef->widthDEF, skillsDef->heightDEF);
     if (!source)
-    {
-        skillsDef->Dereference();
         return FALSE;
-    }
 
     struct PreparedSkill
     {
@@ -636,20 +566,22 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
         std::string hint;
     };
 
-    auto readPreparedSkills = [&](int preparedExperience, DWORD preparedCrExpo) {
+    IntAt(0x841940) = 0;
+    auto readPreparedSkills = [&](const _CrExpo_ *preparedCrExpo, const bool hasArmyExperienceSource) {
         std::vector<PreparedSkill> result;
 
-        CDECL_5(void, 0x71EF2B, creatureId, creatureCount, preparedExperience, preparedCrExpo, hero ? 1 : 0);
+        CDECL_5(void, 0x71EF2B, creatureId, creatureCount, preparedCrExpo ? preparedCrExpo->experience : 0,
+                preparedCrExpo, hero ? 1 : 0);
         auto *info = reinterpret_cast<_DlgCreatureExpoInfo_ *>(0x845880);
-        const int count = Clamp(0, info->IcoPropertiesCount, 6);
+        const int count = Clamp(0, info->IcoPropertiesCount, 8);
         if (!count || !info->IcoProperties)
             return result;
 
         result.reserve(count);
         for (int i = 0; i < count; ++i)
         {
-            const int frame = reinterpret_cast<int>(info->IcoProperties[i]);
-            if (frame < 0 || frame >= skillsDef->groups[0]->count)
+            const int frame = info->IcoPropertiesInt[i];
+            if (frame < 0 || frame >= skillsDef->groups[0]->count || (hasArmyExperienceSource && (frame & 1) == 0))
                 continue;
 
             const char *propertyText = info->TxtProperties ? info->TxtProperties[i] : nullptr;
@@ -667,64 +599,7 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
 
     std::vector<PreparedSkill> preparedSkills;
 
-    if (!isPreviewWithoutCrExpo)
-    {
-        // Concrete stack: native WoG preparation already chooses the correct
-        // frame for every currently displayed property.
-        preparedSkills = readPreparedSkills(experience, crExpo);
-    }
-    else
-    {
-        // Purchase dialog: emulate a valid zero-experience CrExpo in local
-        // memory. The record is read-only from the game's point of view and is
-        // never inserted into CrExpoSet.
-        PreviewCrExpo previewCrExpo;
-        previewCrExpo.experience = 0;
-        previewCrExpo.count = creatureCount;
-        previewCrExpo.flags = MakePreviewCrExpoFlags(creatureId);
-        const DWORD previewCrExpoPtr = reinterpret_cast<DWORD>(&previewCrExpo);
-
-        // CrExpBonLine already contains the configured values for all 11 ranks.
-        // Temporarily project each rank into Lvls[0], ask the native WoG UI
-        // preparation code to describe that rank, and take the union by icon
-        // frame. This avoids hard-coding rank experience thresholds and also
-        // supports custom Crexpbon.txt configurations where abilities disappear
-        // again at later ranks.
-        char originalRank0[CR_EXP_BONUS_LINES] = {};
-        for (int lineIndex = 0; lineIndex < CR_EXP_BONUS_LINES; ++lineIndex)
-            originalRank0[lineIndex] = GetCrExpBonusLine(lineIndex)->Lvls[0];
-
-        for (int rank = 0; rank <= 10; ++rank)
-        {
-            for (int lineIndex = 0; lineIndex < CR_EXP_BONUS_LINES; ++lineIndex)
-            {
-                CrExpBonLine *line = GetCrExpBonusLine(lineIndex);
-                line->Lvls[0] = line->Lvls[rank];
-            }
-
-            const auto rankSkills = readPreparedSkills(0, previewCrExpoPtr);
-            for (const auto &skill : rankSkills)
-            {
-                // IcoProperties has six logical property slots. The native
-                // code may use different DEF frames for inactive/active states
-                // of the same slot. Union by slot, not by frame, otherwise the
-                // same skill is added twice and spills into a second row.
-                //
-                // Ranks are processed from 0 upward, so when rank 0 already
-                // supplies an inactive frame we keep exactly that native frame.
-                const auto found = std::find_if(preparedSkills.begin(), preparedSkills.end(),
-                                                [&](const PreparedSkill &other) {
-                                                    return other.slot == skill.slot;
-                                                });
-                if (found == preparedSkills.end())
-                    preparedSkills.push_back(skill);
-            }
-        }
-
-        // Always restore the shared WoG bonus table before creating any widgets.
-        for (int lineIndex = 0; lineIndex < CR_EXP_BONUS_LINES; ++lineIndex)
-            GetCrExpBonusLine(lineIndex)->Lvls[0] = originalRank0[lineIndex];
-    }
+    preparedSkills = readPreparedSkills(crExpo, hasArmyExperienceSource);
 
     creatureSkills.reserve(preparedSkills.size());
     for (const auto &prepared : preparedSkills)
@@ -735,8 +610,8 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
 
         source->FillRectangle(0, 0, source->width, source->height, 0, 0, 0);
         skillsDef->DrawToPcx16(0, prepared.frame, source, 0, 0);
-        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(
-            picture, source, source->width, source->height, 0, 0, EXP_SKILL_ICON_SIZE, EXP_SKILL_ICON_SIZE);
+        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(picture, source, source->width, source->height, 0, 0,
+                                                               EXP_SKILL_ICON_SIZE, EXP_SKILL_ICON_SIZE);
 
         // Do not synthesize an inactive appearance here. DlgCrExp.def already
         // contains the frame selected by native WoG preparation for this state.
@@ -749,7 +624,7 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
     }
 
     source->Destroy();
-    skillsDef->Dereference();
+
     return !creatureSkills.empty();
 }
 

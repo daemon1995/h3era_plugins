@@ -12,6 +12,9 @@
 #ifndef RESIZED_PCX
 #define RESIZED_PCX
 #endif // RESIZED_PCX
+#ifndef _WOG_
+#define _WOG_
+#endif // _WOG_
 // Добавьте сюда заголовочные файлы для предварительной компиляции
 #include "..\headers\header.h"
 #include "MonPreview.h"

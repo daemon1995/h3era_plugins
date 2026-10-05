@@ -2,11 +2,6 @@
 
 #include <windows.h>
 
-namespace Era
-{
-struct TEvent;
-}
-
 namespace creatureInfo
 {
 struct PluginSettings
@@ -29,5 +24,5 @@ PluginSettings &GetPluginSettings() noexcept;
 void LoadPluginSettings() noexcept;
 BOOL SavePluginSettings(const PluginSettings &settings) noexcept;
 void OpenPluginSettingsDialog();
-void __stdcall RegisterPluginSettingsButton(Era::TEvent *event);
+void __stdcall RegisterPluginSettingsButton();
 } // namespace creatureInfo

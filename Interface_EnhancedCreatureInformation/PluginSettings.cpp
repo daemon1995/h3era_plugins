@@ -91,7 +91,7 @@ void OpenPluginSettingsDialog()
     dialog.Start();
 }
 
-void __stdcall RegisterPluginSettingsButton(Era::TEvent *)
+void __stdcall RegisterPluginSettingsButton()
 {
     LoadPluginSettings();
 
