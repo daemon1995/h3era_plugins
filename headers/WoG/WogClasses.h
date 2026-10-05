@@ -36,7 +36,7 @@ struct CrExpBon
     }
     inline static CrExpModStr *GetBonusLine(int lineId)
     {
-        return reinterpret_cast<WoG::CrExpModStr*>(CR_EXP_BONUS_TABLE + lineId * 17);
+        return reinterpret_cast<WoG::CrExpModStr *>(CR_EXP_BONUS_TABLE + lineId * 17);
     }
 };
 
@@ -149,15 +149,14 @@ struct _CrExpo_
 
 struct _CreatureExpo_
 {
-    char *Caption;          // заголовок диалога
-    char *Info;             // информация о твари
-    char *Picture;          // изображение твари
-    char *PictureHint;      // хинт к изображению твари
-    char **TxtProperties;   // [8] текстовые доп. свойства
-    union
-    {
-        char** IcoProperties;   // [8] иконки доп. свойств, "NONE" - для отображения заглушки
-		int *IcoPropertiesInt; // [8] иконки доп. свойств, "NONE" - для отображ
+    char *Caption;        // заголовок диалога
+    char *Info;           // информация о твари
+    char *Picture;        // изображение твари
+    char *PictureHint;    // хинт к изображению твари
+    char **TxtProperties; // [8] текстовые доп. свойства
+    union {
+        char **IcoProperties;  // [8] иконки доп. свойств, "NONE" - для отображения заглушки
+        int *IcoPropertiesInt; // [8] иконки доп. свойств, "NONE" - для отображ
     };
     char **HintProperties;  // [8] подсказки к  доп. свойствам
     char *ColCaptions;      // заголовки столбцов - одна строка, по 7 символов на столбец (11*7)
