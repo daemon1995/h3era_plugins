@@ -15320,9 +15320,13 @@ namespace h3
 		/** @brief [39] planned y destination*/
 		INT32	dest_y;
 		/** @brief [3D] planned z destination*/
-		INT32	dest_z;
-	protected:
-		h3unk8	_f_41[3];
+		INT16	dest_z;
+		/** @brief [3F] */
+		INT16	last_magic_school_level;
+		/** @brief [41] */
+		INT16	target_distance;
+		/** @brief [43] */
+		BOOL8	target_is_critical;
 	public:
 		/** @brief [44] starting x position*/
 		UINT8   patrol_x;
