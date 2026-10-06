@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CommanderSkills.cpp">
+    <ClCompile Include="CreatureSkillIcons.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
@@ -44,9 +44,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CommanderSkillList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MonPreview.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CreatureDlgHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CreatureSpellEffects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CreatureDlgLayout.h">

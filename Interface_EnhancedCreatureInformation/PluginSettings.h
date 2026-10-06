@@ -10,6 +10,7 @@ struct PluginSettings
     bool showArmyDialog = true;
     bool showRecruitmentDialog = true;
     bool showCreatureSkills = true;
+    bool showInactiveCreatureSkills = true;
     bool showCommanderSkills = true;
     bool showExpandedBattleMonsterPanel = true;
 

@@ -4,49 +4,21 @@
 #include "CreatureDlgHooks.h"
 #include "CreatureDlgLayout.h"
 #include "PluginSettings.h"
+#include "CreatureSpellEffects.h"
 
 #include <algorithm>
-#include <cstddef>
 #include <string>
-#include <vector>
+#include <cstdio>
 
 using namespace h3;
 using namespace creatureInfo;
-
-namespace
-{
-
-typedef WoG::_CreatureExpo_ _DlgCreatureExpoInfo_;
-
-static_assert(offsetof(_DlgCreatureExpoInfo_, TxtProperties) == 0x10, "Unexpected CrExp text array offset");
-static_assert(offsetof(_DlgCreatureExpoInfo_, IcoProperties) == 0x14, "Unexpected CrExp icon array offset");
-static_assert(offsetof(_DlgCreatureExpoInfo_, HintProperties) == 0x18, "Unexpected CrExp hint array offset");
-static_assert(offsetof(_DlgCreatureExpoInfo_, IcoPropertiesCount) == 0x34, "Unexpected CrExp icon count offset");
-
-static_assert(offsetof(WoG::CrExpModStr, Lvls) == 6, "Unexpected CrExp bonus level offset");
-
-// WoG stores CrExpo records in 16-byte slots. For a purchase-preview there is
-// no persistent CrExpo record, but CrExpBon_Dlg_PrepareInfo still expects one
-// when it builds the icon/text buffers. This local record is never registered
-// in CrExpoSet and therefore cannot alter game state.
-
-DWORD MakePreviewCrExpoFlags(int creatureId)
-{
-    // CrExpo bit layout: Act:1, Type:4, MType:8, then artifact bits.
-    // Preview records are not inserted into CrExpoSet, but native WoG dialog
-    // code still expects an active record with a valid non-zero storage type.
-    // CE_HERO (1) is harmless here because no lookup by location is performed.
-    constexpr DWORD CE_HERO = 1;
-    return 1u | (CE_HERO << 1) | ((static_cast<DWORD>(static_cast<unsigned char>(creatureId)) << 5) & 0x1FE0u);
-}
-} // namespace
 
 void CreatureDlgHandler::HideDefaultBattleSpellItems()
 {
     if (!dlg)
         return;
 
-    for (int id = 221; id <= 223; ++id)
+    for (int id = DLG_NATIVE_SPELL_FIRST_ID; id <= DLG_NATIVE_SPELL_LAST_ID; ++id)
         if (auto *item = dlg->GetH3DlgItem(id))
             item->HideDeactivate();
 }
@@ -64,12 +36,12 @@ CreatureDlgHandler::CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature 
     if (GetPluginSettings().showCommanderSkills)
         AddCommanderSkills();
     AlignItems();
-    if (wogStackExperience && dlg->GetDefButton(30722))
+    if (wogStackExperience && dlg->GetDefButton(DLG_OK_ID))
         AddExperienceButton();
     if (stack)
     {
         HideDefaultBattleSpellItems();
-        AddSpellEfects();
+        AddSpellEffects();
     }
 }
 
@@ -89,7 +61,7 @@ void CreatureDlgHandler::ApplyDialogAppearance()
     dlg->SetWidth(DLG_WIDTH);
     dlg->SetHeight(DLG_HEIGHT);
 
-    if (auto *background = dlg->GetPcx(200))
+    if (auto *background = dlg->GetPcx(DLG_BACKGROUND_ID))
     {
         background->SetWidth(DLG_WIDTH);
         background->SetHeight(DLG_HEIGHT);
@@ -99,7 +71,7 @@ void CreatureDlgHandler::ApplyDialogAppearance()
         // DlgStaticPcx8_Colorize (0x4501D0). SetPcx above reloads the PCX,
         // therefore the native Colorize done inside the original constructor
         // must be applied once more to the final resource.
-        if (playerColor >= 0 && playerColor < 8)
+        if (playerColor >= 0 && playerColor < limits::PLAYERS)
             background->AdjustColor(playerColor);
     }
 }
@@ -110,6 +82,7 @@ void CreatureDlgHandler::ScrollTo(int scrollTick)
         return;
 
     scrollTick = Clamp(0, scrollTick, maxScrollTick);
+    currentScrollTick = scrollTick;
 
     int scrollOffset = 0;
     if (!scrollRowOffsets.empty())
@@ -137,9 +110,9 @@ void CreatureDlgHandler::ScrollTo(int scrollTick)
 
 H3DlgText *CreatureDlgHandler::FindOriginalDescription() const
 {
-    H3DlgText *description = dlg ? dlg->GetText(-1) : nullptr;
+    H3DlgText *description = dlg ? dlg->GetText(DLG_DESCRIPTION_ID) : nullptr;
     if (!description && dlg)
-        description = dlg->GetText(1);
+        description = dlg->GetText(DLG_DESCRIPTION_FALLBACK_ID);
     return description;
 }
 
@@ -165,71 +138,50 @@ BOOL CreatureDlgHandler::AlignItems()
     if (!dlg)
         return FALSE;
 
-    if (auto *hint = dlg->GetTextPcx(224))
+    if (auto *hint = dlg->GetTextPcx(DLG_HINT_ID))
     {
-        hint->SetX(7);
-        hint->SetY(DLG_HEIGHT - hint->GetHeight() - 7);
-        hint->SetWidth(DLG_WIDTH - 14);
+        hint->SetX(HINT_MARGIN);
+        hint->SetY(DLG_HEIGHT - hint->GetHeight() - HINT_MARGIN);
+        hint->SetWidth(DLG_WIDTH - HINT_MARGIN * 2);
     }
-    if (auto *name = dlg->GetText(203))
+    if (auto *name = dlg->GetText(DLG_NAME_ID))
         name->SetX((DLG_WIDTH - name->GetWidth()) / 2);
 
-    if (auto *morale = dlg->GetDef(219))
+    constexpr struct MoraleLuckPosition
     {
-        morale->SetX(24);
-        morale->SetY(DLG_HEIGHT - morale->GetHeight() - 46);
-        if (auto *text = dlg->GetText(3006))
-            text->SetY(morale->GetY() + morale->GetHeight() - text->GetHeight());
-    }
-    if (auto *luck = dlg->GetDef(220))
+        int iconId, textId, x;
+    } positions[] = {{DLG_MORALE_ID, DLG_MORALE_TEXT_ID, MORALE_X},
+                     {DLG_LUCK_ID, DLG_LUCK_TEXT_ID, LUCK_X}};
+    for (const auto &position : positions)
     {
-        luck->SetX(78);
-        luck->SetY(DLG_HEIGHT - luck->GetHeight() - 46);
-        if (auto *text = dlg->GetText(3007))
-            text->SetY(luck->GetY() + luck->GetHeight() - text->GetHeight());
+        if (auto *icon = dlg->GetDef(position.iconId))
+        {
+            icon->SetX(position.x);
+            icon->SetY(DLG_HEIGHT - icon->GetHeight() - MORALE_LUCK_BOTTOM_MARGIN);
+            if (auto *text = dlg->GetText(position.textId))
+                text->SetY(icon->GetY() + icon->GetHeight() - text->GetHeight());
+        }
     }
-    if (auto *ok = dlg->GetDefButton(30722))
+    constexpr int buttonIds[] = {DLG_OK_ID, DLG_DISMISS_ID, DLG_UPGRADE_ID, DLG_CAST_ID};
+    for (const int id : buttonIds)
     {
-        ok->SetX(OK_BUTTON_X);
-        ok->SetY(BUTTON_Y);
-        ok->SetWidth(BUTTON_WIDTH);
-        ok->SetHeight(BUTTON_HEIGHT);
+        int x = 0;
+        if (GetDialogButtonX(id, x))
+            SetDialogButtonBounds(dlg->GetH3DlgItem(id), x);
     }
-    if (auto *dismiss = dlg->GetDefButton(30723))
-    {
-        dismiss->SetX(127);
-        dismiss->SetY(BUTTON_Y);
-        dismiss->SetWidth(BUTTON_WIDTH);
-        dismiss->SetHeight(BUTTON_HEIGHT);
-    }
-    if (auto *upgrade = dlg->GetDefButton(300))
-    {
-        upgrade->SetX(233);
-        upgrade->SetY(BUTTON_Y);
-        upgrade->SetWidth(BUTTON_WIDTH);
-        upgrade->SetHeight(BUTTON_HEIGHT);
-    }
-    if (auto *creatureCast = dlg->GetCustomButton(301))
-    {
-        creatureCast->SetX(126);
-        creatureCast->SetY(BUTTON_Y);
-        creatureCast->SetWidth(BUTTON_WIDTH);
-        creatureCast->SetHeight(BUTTON_HEIGHT);
-    }
-
     return BuildDescriptionArea();
 }
 
 BOOL CreatureDlgHandler::BuildDescriptionArea()
 {
+    ResetExperienceSkillsPanel();
     H3DlgText *description = FindOriginalDescription();
     const std::string descriptionText = GetDescriptionText(description);
     if (description)
         description->HideDeactivate();
 
     // Commanders already have their own reduced icon block. Ordinary creatures
-    // use current active skills for stack/army dialogs and the full 0..10 rank
-    // preview for a purchase dialog that has no persistent CrExpo record.
+    // use WoG's prepared skills and equipped artifact in the scrollable panel.
     if (GetPluginSettings().showCreatureSkills && !Era::IsCommanderId(dlg->creatureId) && CreateCreatureSkillsList() &&
         !creatureSkills.empty())
     {
@@ -253,165 +205,11 @@ BOOL CreatureDlgHandler::BuildDescriptionArea()
 
         description =
             H3DlgText::Create(descriptionX, descriptionY, descriptionWidth, availableHeight, descriptionText.c_str(),
-                              P_TinyFont->GetName(), eTextColor::WHITE, -1, eTextAlignment::TOP_LEFT);
+                              P_TinyFont->GetName(), eTextColor::WHITE, DLG_DESCRIPTION_ID, eTextAlignment::TOP_LEFT);
         if (description)
             dlg->AddItem(description);
     }
     return FALSE;
-}
-
-BOOL CreatureDlgHandler::BuildExperienceSkillsPanel(H3DlgText *description, const std::string &descriptionText)
-{
-    scrolledItems.clear();
-    viewportX = descriptionX;
-    viewportY = descriptionY;
-    viewportWidth = descriptionWidth;
-    viewportHeight = std::max(descriptionHeight, CONTENT_BOTTOM - descriptionY);
-    maxScrollTick = 0;
-    scrollRowOffsets.clear();
-
-    const char *fontName =
-        description && description->GetFont() ? description->GetFont()->GetName() : NH3Dlg::Text::TINY;
-    const int textColor = description ? description->color : 4;
-    const int textAlign = description ? description->alignment : GetPluginSettings().descriptionAlignment;
-    H3Font *font = H3Font::Load(fontName);
-    if (!font)
-    {
-        ReleaseUnownedSkillImages();
-        return FALSE;
-    }
-
-    int contentWidth = descriptionWidth;
-    int columns = std::max(1, (contentWidth + EXP_SKILL_GAP) / (EXP_SKILL_ICON_SIZE + EXP_SKILL_GAP));
-    columns = std::min(columns, static_cast<int>(creatureSkills.size()));
-    int rows = (static_cast<int>(creatureSkills.size()) + columns - 1) / columns;
-    int skillBlockHeight = rows * (EXP_SKILL_ICON_SIZE + EXP_SKILL_GAP);
-    const int lineHeight = std::max(10, static_cast<int>(font->height) + 2);
-
-    H3Vector<H3String> lines;
-    font->SplitTextIntoLines(descriptionText.c_str(), contentWidth, lines);
-    int totalHeight = skillBlockHeight + (lines.Size() ? 2 : 0) + static_cast<int>(lines.Size()) * lineHeight;
-    bool needScrollbar = totalHeight > viewportHeight;
-
-    if (needScrollbar)
-    {
-        contentWidth = std::max(32, descriptionWidth - EXP_SCROLLBAR_WIDTH - EXP_SCROLLBAR_GAP);
-        columns = std::max(1, (contentWidth + EXP_SKILL_GAP) / (EXP_SKILL_ICON_SIZE + EXP_SKILL_GAP));
-        columns = std::min(columns, static_cast<int>(creatureSkills.size()));
-        rows = (static_cast<int>(creatureSkills.size()) + columns - 1) / columns;
-        skillBlockHeight = rows * (EXP_SKILL_ICON_SIZE + EXP_SKILL_GAP);
-        lines.RemoveAll();
-        font->SplitTextIntoLines(descriptionText.c_str(), contentWidth, lines);
-        totalHeight = skillBlockHeight + (lines.Size() ? 2 : 0) + static_cast<int>(lines.Size()) * lineHeight;
-    }
-
-    // Build logical rows after the final content width is known.
-    // One icon row == one tick; one wrapped text line == one tick.
-    scrollRowOffsets.reserve(static_cast<size_t>(rows) + lines.Size());
-    for (int row = 0; row < rows; ++row)
-        scrollRowOffsets.push_back(row * (EXP_SKILL_ICON_SIZE + EXP_SKILL_GAP));
-
-    const int textStartOffset = skillBlockHeight + (lines.Size() ? 2 : 0);
-    for (UINT32 lineIndex = 0; lineIndex < lines.Size(); ++lineIndex)
-        scrollRowOffsets.push_back(textStartOffset + static_cast<int>(lineIndex) * lineHeight);
-
-    if (needScrollbar && totalHeight > viewportHeight && !scrollRowOffsets.empty())
-    {
-        const int overflowPixels = totalHeight - viewportHeight;
-
-        // Find how many complete logical rows have to be skipped before the
-        // remaining content fits in the viewport. This row index is max tick.
-        maxScrollTick = static_cast<int>(scrollRowOffsets.size()) - 1;
-        for (size_t rowIndex = 1; rowIndex < scrollRowOffsets.size(); ++rowIndex)
-        {
-            if (scrollRowOffsets[rowIndex] >= overflowPixels)
-            {
-                maxScrollTick = static_cast<int>(rowIndex);
-                break;
-            }
-        }
-    }
-
-    int addedSkills = 0;
-    for (size_t i = 0; i < creatureSkills.size(); ++i)
-    {
-        CreatureSkill &skill = creatureSkills[i];
-        if (!skill.pcx16)
-            continue;
-
-        const int baseY = descriptionY + static_cast<int>(i / columns) * (EXP_SKILL_ICON_SIZE + EXP_SKILL_GAP);
-        const int x = descriptionX + static_cast<int>(i % columns) * (EXP_SKILL_ICON_SIZE + EXP_SKILL_GAP);
-        H3DlgPcx16 *item = H3DlgPcx16::Create(x, baseY, EXP_SKILL_ICON_SIZE, EXP_SKILL_ICON_SIZE,
-                                              CREATURE_EXP_SKILL_FIRST_ID + static_cast<int>(i), nullptr);
-        if (!item)
-            continue;
-        item->SetPcx(skill.pcx16);
-        skill.pcx16 = nullptr; // ownership is now held by the native dialog item
-
-        libc::sprintf(h3_TextBuffer, "{~>%s:0:%d block}\n\n%s", CREATURE_EXP_DEF, skill.frame, skill.text.c_str());
-
-        std::string popup(h3_TextBuffer);
-        item->SetHints(skill.hint.c_str(), h3_TextBuffer, TRUE);
-        dlg->AddItem(item);
-        scrolledItems.push_back({item, baseY});
-        ++addedSkills;
-    }
-
-    if (!addedSkills)
-    {
-        font->Dereference();
-        ReleaseUnownedSkillImages();
-        scrolledItems.clear();
-        return FALSE;
-    }
-
-    const int textStartY = descriptionY + skillBlockHeight + (lines.Size() ? 2 : 0);
-    for (UINT32 i = 0; i < lines.Size(); ++i)
-    {
-        H3DlgText *line = H3DlgText::Create(descriptionX, textStartY + static_cast<int>(i) * lineHeight, contentWidth,
-                                            lineHeight, lines[i].String(), fontName, textColor,
-                                            CREATURE_EXP_TEXT_FIRST_ID + static_cast<int>(i), textAlign);
-        if (!line)
-            continue;
-        dlg->AddItem(line);
-        scrolledItems.push_back({line, line->GetY()});
-    }
-
-    font->Dereference();
-    ReleaseUnownedSkillImages();
-
-    if (needScrollbar && maxScrollTick > 0)
-    {
-        H3DlgScrollbar *scrollbar = H3DlgScrollbar::Create(
-            descriptionX + descriptionWidth - EXP_SCROLLBAR_WIDTH, descriptionY, EXP_SCROLLBAR_WIDTH, viewportHeight,
-            CREATURE_EXP_SCROLLBAR_ID, maxScrollTick + 1, CreatureSkillsScrollbarProc, false, 1, true);
-        if (scrollbar)
-        {
-            // stepSize=1 means one scrollbar tick == one logical content row.
-            dlg->AddItem(scrollbar);
-        }
-        else
-        {
-            maxScrollTick = 0;
-            scrollRowOffsets.clear();
-        }
-    }
-
-    ScrollTo(0);
-    return TRUE;
-}
-
-void CreatureDlgHandler::ReleaseUnownedSkillImages()
-{
-    for (auto &skill : creatureSkills)
-    {
-        if (skill.pcx16)
-        {
-            skill.pcx16->Destroy();
-            skill.pcx16 = nullptr;
-        }
-    }
-    creatureSkills.clear();
 }
 
 BOOL CreatureDlgHandler::AddExperienceButton()
@@ -420,217 +218,66 @@ BOOL CreatureDlgHandler::AddExperienceButton()
     if (isNpc && !stack)
         return FALSE;
 
-    constexpr int x = 180;
+    constexpr int x = EXPERIENCE_BUTTON_X;
     const int y = BUTTON_Y;
-    H3DlgPcx *frame = H3DlgPcx::Create(x - 1, y - 1, -1, "box46x32.pcx");
+    H3DlgPcx *frame =
+        H3DlgPcx::Create(x - BUTTON_FRAME_BORDER, y - BUTTON_FRAME_BORDER, DLG_DESCRIPTION_ID, BUTTON_FRAME_PCX);
     if (frame)
         dlg->AddItem(frame);
 
     H3DlgDefButton *button =
-        H3DlgDefButton::Create(x, y, WOG_CREATURE_EXP_BUTTON_ID, "CrExpBut.def", 0, 1, false, eVKey::H3VK_E);
+        H3DlgDefButton::Create(x, y, WOG_CREATURE_EXP_BUTTON_ID, EXPERIENCE_BUTTON_DEF, 0, 1, false, eVKey::H3VK_E);
     if (!button)
         return FALSE;
-    H3String hint = isNpc ? Era::tr("eci.combat_dialog.creature_info.npc_hint")
+    const char *hint = isNpc ? Era::tr("eci.combat_dialog.creature_info.npc_hint")
                           : Era::tr("eci.combat_dialog.creature_info.stack_exp_hint");
-    button->SetHints(hint.String(), h3_NullString, true);
+    button->SetHints(hint, h3_NullString, true);
     dlg->AddItem(button);
     return TRUE;
 }
 
-BOOL CreatureDlgHandler::AddSpellEfects()
+BOOL CreatureDlgHandler::AddSpellEffects()
 {
     if (!stack)
         return FALSE;
-
-    std::vector<INT32> activeSpells;
-    const int arrSize = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-    for (int i = 0; i < arrSize; ++i)
-        if (stack->activeSpellDuration[i])
-            activeSpells.push_back(i);
-
-    const bool needToExpand = activeSpells.size() > 6;
-    const int spellsToShow = needToExpand ? 5 : static_cast<int>(activeSpells.size());
-    for (INT32 i = 0; i < spellsToShow; ++i)
+    const auto spells = CollectActiveSpells(stack);
+    const bool needButton = spells.count > SPELL_VISIBLE_ROWS;
+    const int visibleCount = needButton ? SPELL_ROWS_WITH_BUTTON : spells.count;
+    for (int row = 0; row < visibleCount; ++row)
     {
-        const int yPos = 42 * i + 47;
-        const int spellId = activeSpells[i];
-        H3DlgDef *spellDef = H3DlgDef::Create(283, yPos, 1000 + i, NH3Dlg::Assets::SPELL_SMALL, spellId + 1);
-        if (!spellDef)
+        const int spellId = spells.ids[row];
+        const int y = SPELL_COLUMN_Y + row * SPELL_ROW_HEIGHT;
+        auto *icon = H3DlgDef::Create(SPELL_COLUMN_X, y, DLG_SPELL_FIRST_ID + row,
+                                    NH3Dlg::Assets::SPELL_SMALL, spellId + SPELL_DEF_FRAME_OFFSET);
+        if (!icon)
             continue;
-
-        H3String spellName = H3Spell::Get()[spellId].name;
-        H3String spellDesc = H3Spell::Get()[spellId].description[0];
-        if (spellDesc == h3_NullString)
-            spellDesc = spellName;
-        switch (spellId)
+        SetCreatureSpellHints(icon, stack, spellId);
+        dlg->AddItem(icon);
+        if (HasVisibleSpellDuration(spellId))
         {
-        case eSpell::BIND:
-            libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(),
-                          H3GeneralText::Get()->GetText(682));
-            break;
-        case eSpell::BERSERK:
-            libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(),
-                          H3GeneralText::Get()->GetText(683));
-            break;
-        case eSpell::DISRUPTING_RAY:
-            libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(681), spellName.String(),
-                          H3GeneralText::Get()->GetText(684));
-            break;
-        default:
-            libc::sprintf(h3_TextBuffer, H3GeneralText::Get()->GetText(612), spellName.String(),
-                          stack->activeSpellDuration[spellId]);
-            break;
-        }
-        spellDef->SetHints(h3_TextBuffer, spellDesc.String(), true);
-        dlg->AddItem(spellDef);
-
-        if (stack->activeSpellDuration[spellId] && spellId != eSpell::BERSERK && spellId != eSpell::DISRUPTING_RAY &&
-            spellId != eSpell::BIND)
-        {
-            H3String duration("x");
-            duration.Append(stack->activeSpellDuration[spellId]);
-            H3DlgText *durationText = H3DlgText::Create(
-                spellDef->GetX() + spellDef->GetWidth() - 24, spellDef->GetY() + spellDef->GetHeight() - 12, 24, 12,
-                duration.String(), NH3Dlg::Text::TINY, 1, 0, eTextAlignment::BOTTOM_RIGHT);
-            if (durationText)
+            char duration[SPELL_DURATION_BUFFER_SIZE];
+            std::snprintf(duration, sizeof(duration), "x%d", stack->activeSpellDuration[spellId]);
+            auto *text = H3DlgText::Create(icon->GetX() + icon->GetWidth() - SPELL_DURATION_WIDTH,
+                                          icon->GetY() + icon->GetHeight() - SPELL_DURATION_HEIGHT,
+                                          SPELL_DURATION_WIDTH, SPELL_DURATION_HEIGHT, duration, NH3Dlg::Text::TINY,
+                                          eTextColor::WHITE, DLG_SPELL_DURATION_FIRST_ID + row,
+                                          eTextAlignment::BOTTOM_RIGHT);
+            if (text)
             {
-                durationText->SetHints(h3_TextBuffer, spellDesc.String(), true);
-                dlg->AddItem(durationText);
+                SetCreatureSpellHints(text, stack, spellId);
+                dlg->AddItem(text);
             }
         }
-
-        if (i == 4 && needToExpand)
+    }
+    if (needButton)
+    {
+        auto *button = H3DlgDefButton::Create(SPELL_COLUMN_X, SPELL_COLUMN_Y + visibleCount * SPELL_ROW_HEIGHT,
+                                             DLG_SPELLS_BTTN_ID, SPELL_LIST_BUTTON_DEF, 0, 1, false, eVKey::H3VK_S);
+        if (button)
         {
-            H3DlgDefButton *button = H3DlgDefButton::Create(283, yPos + 42, DLG_SPELLS_BTTN_ID, SPELL_LIST_BUTTON_DEF,
-                                                            0, 1, false, eVKey::H3VK_S);
-            if (button)
-            {
-                button->SetHints(Era::tr("eci.combat_dialog.creature_info.spell_list_hint"), h3_NullString, true);
-                dlg->AddItem(button);
-            }
+            button->SetHints(Era::tr("eci.combat_dialog.creature_info.spell_list_hint"), h3_NullString, true);
+            dlg->AddItem(button);
         }
     }
     return TRUE;
-}
-
-BOOL CreatureDlgHandler::CreateCreatureSkillsList()
-{
-    ReleaseUnownedSkillImages();
-    if (!dlg || !wogStackExperience)
-        return FALSE;
-
-    const int creatureId = dlg->creatureId;
-    const bool hasArmyExperienceSource = army && armySlotIndex >= 0 && armySlotIndex < limits::ARMY_SLOTS;
-    const bool hasExperienceSource = stack || hasArmyExperienceSource;
-    const bool isPreviewWithoutCrExpo = !hasExperienceSource;
-    using namespace WoG;
-    _CrExpo_ *crExpo = nullptr;
-
-    int stackId = -1;
-    if (stack)
-    {
-        stackId = CDECL_1(int, 0x716C8E, stack);
-        crExpo = _CrExpo_::GetFromCombatCreatureIndex(stackId);
-    }
-    else if (hasArmyExperienceSource)
-    {
-        eExpType expType = eExpType::CE_UNKNOWN;
-        _CrExpo_::UniData expData;
-        if (CDECL_4(int, 0x71A1B7, army, armySlotIndex, &expType, &expData) && expType >= eExpType::CE_FIRST &&
-            expType <= eExpType::CE_LAST)
-        {
-            crExpo = CDECL_2(_CrExpo_ *, 0x0718617, expType, expData);
-        }
-    }
-
-    CrExpBon::MakeCurrent(stackId, creatureId);
-
-    int creatureCount = dlg->numberCreatures;
-    if (creatureCount <= 0 && hasArmyExperienceSource)
-        creatureCount = army->count[armySlotIndex];
-    creatureCount = std::max(1, creatureCount);
-
-    H3DefLoader skillsDef = H3LoadedDef::Load(CREATURE_EXP_DEF);
-    if (!skillsDef || !skillsDef->groups || !skillsDef->groups[0] || skillsDef->groups[0]->count <= 0)
-        return FALSE;
-
-    H3LoadedPcx16 *source = H3LoadedPcx16::Create(skillsDef->widthDEF, skillsDef->heightDEF);
-    if (!source)
-        return FALSE;
-
-    struct PreparedSkill
-    {
-        int slot = -1;
-        int frame = -1;
-        std::string text;
-        std::string hint;
-    };
-
-    IntAt(0x841940) = 0;
-    auto readPreparedSkills = [&](const _CrExpo_ *preparedCrExpo, const bool hasArmyExperienceSource) {
-        std::vector<PreparedSkill> result;
-
-        CDECL_5(void, 0x71EF2B, creatureId, creatureCount, preparedCrExpo ? preparedCrExpo->experience : 0,
-                preparedCrExpo, hero ? 1 : 0);
-        auto *info = reinterpret_cast<_DlgCreatureExpoInfo_ *>(0x845880);
-        const int count = Clamp(0, info->IcoPropertiesCount, 8);
-        if (!count || !info->IcoProperties)
-            return result;
-
-        result.reserve(count);
-        for (int i = 0; i < count; ++i)
-        {
-            const int frame = info->IcoPropertiesInt[i];
-            if (frame < 0 || frame >= skillsDef->groups[0]->count || (hasArmyExperienceSource && (frame & 1) == 0))
-                continue;
-
-            const char *propertyText = info->TxtProperties ? info->TxtProperties[i] : nullptr;
-            const char *propertyHint = info->HintProperties ? info->HintProperties[i] : nullptr;
-
-            PreparedSkill skill;
-            skill.slot = i;
-            skill.frame = frame;
-            skill.text = propertyText && *propertyText ? propertyText : (propertyHint ? propertyHint : h3_NullString);
-            skill.hint = propertyHint && *propertyHint ? propertyHint : skill.text;
-            result.push_back(skill);
-        }
-        return result;
-    };
-
-    std::vector<PreparedSkill> preparedSkills;
-
-    preparedSkills = readPreparedSkills(crExpo, hasArmyExperienceSource);
-
-    creatureSkills.reserve(preparedSkills.size());
-    for (const auto &prepared : preparedSkills)
-    {
-        H3LoadedPcx16 *picture = H3LoadedPcx16::Create(EXP_SKILL_ICON_SIZE, EXP_SKILL_ICON_SIZE);
-        if (!picture)
-            continue;
-
-        source->FillRectangle(0, 0, source->width, source->height, 0, 0, 0);
-        skillsDef->DrawToPcx16(0, prepared.frame, source, 0, 0);
-        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(picture, source, source->width, source->height, 0, 0,
-                                                               EXP_SKILL_ICON_SIZE, EXP_SKILL_ICON_SIZE);
-
-        // Do not synthesize an inactive appearance here. DlgCrExp.def already
-        // contains the frame selected by native WoG preparation for this state.
-        CreatureSkill skill;
-        skill.frame = prepared.frame;
-        skill.text = prepared.text;
-        skill.hint = prepared.hint;
-        skill.pcx16 = picture;
-        creatureSkills.push_back(skill);
-    }
-
-    source->Destroy();
-
-    return !creatureSkills.empty();
-}
-
-EXTERN_C __declspec(dllexport) void AddExternalCreatureSkill(const char *name, const char *description,
-                                                             const char *pcx16Name)
-{
-    // Reserved ABI entry point. Creature Experience skills are currently read
-    // from WoG's prepared _DlgCreatureExpoInfo_ structure.
 }

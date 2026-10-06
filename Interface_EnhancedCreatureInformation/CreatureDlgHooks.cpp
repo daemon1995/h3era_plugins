@@ -3,8 +3,11 @@
 #include "CreatureDlgHandler.h"
 #include "CreatureDlgLayout.h"
 #include "PluginSettings.h"
+#include "CreatureSpellEffects.h"
 
 #include <algorithm>
+#include <array>
+#include <cstdio>
 #include <map>
 #include <memory>
 
@@ -13,6 +16,50 @@ using namespace creatureInfo;
 
 namespace
 {
+constexpr int MAX_BUILD_CONTEXT_DEPTH = 8;
+constexpr int EXPERIENCE_RMB_HOOK_SKIP = 21;
+constexpr int COMMANDER_RMB_HOOK_SKIP = 0x20;
+constexpr int EXPERIENCE_SHOW_PATTERN_OFFSET = 6;
+constexpr int COMMANDER_SHOW_PATTERN_OFFSET = 15;
+namespace native
+{
+constexpr DWORD STACK_OWNER_HERO = 0x4423B0;
+constexpr DWORD BATTLE_GENERATED_START = 0x760000;
+constexpr DWORD BATTLE_GENERATED_END = 0x770000;
+constexpr DWORD SHOW_EXPERIENCE_DIALOG = 0x7645BB;
+constexpr DWORD CURRENT_CREATURE_STACK = 0x2860280;
+constexpr DWORD CREATURE_RMB_PROC = 0x5F4C5D;
+constexpr DWORD BUY_CTOR = 0x5F45B0;
+constexpr DWORD ARMY_CTOR = 0x5F3EF0;
+constexpr DWORD BATTLE_CTOR = 0x764B38;
+constexpr DWORD CREATURE_PROC = 0x5F4C00;
+constexpr DWORD CREATURE_DTOR = 0x5F4980;
+constexpr DWORD DLG_CTOR = 0x41AFA0;
+constexpr DWORD PCX_CTOR = 0x44FFA0;
+constexpr DWORD TEXT_CTOR = 0x5BC6A0;
+constexpr DWORD TEXT_PCX_CTOR = 0x5BCB70;
+constexpr DWORD DEF_CTOR = 0x4EA800;
+constexpr DWORD BUTTON_CTOR = 0x455BD0;
+constexpr DWORD CUSTOM_BUTTON_CTOR = 0x456A10;
+constexpr DWORD NAME_CALLS[] = {0x5F39BF, 0x5F4129, 0x5F47A5};
+constexpr DWORD DESCRIPTION_CALLS[] = {0x5F3E59, 0x5F4484, 0x5F489F};
+constexpr DWORD HINT_CALLS[] = {0x5F3CF2, 0x5F44E1, 0x5F48FC};
+constexpr DWORD MORALE_LUCK_CALLS[] = {0x5F3AE7, 0x5F3C27, 0x5F429C, 0x5F437F};
+}
+struct NativeItemRect
+{
+    int x, y, width, height;
+    bool Matches(int px, int py, int w, int h) const { return x == px && y == py && width == w && height == h; }
+};
+constexpr NativeItemRect NATIVE_NAME_RECT = {20, 21, 258, 19};
+constexpr NativeItemRect NATIVE_DESCRIPTION_RECT = {20, 232, 192, 41};
+constexpr NativeItemRect NATIVE_HINT_RECT = {7, 285, 284, 19};
+constexpr NativeItemRect NATIVE_MORALE_RECT = {23, 189, 42, 38};
+constexpr NativeItemRect NATIVE_LUCK_RECT = {77, 189, 42, 38};
+constexpr NativeItemRect NATIVE_UPGRADE_FRAME_RECT = {74, 236, 48, 34};
+constexpr NativeItemRect NATIVE_DISMISS_FRAME_RECT = {19, 236, 48, 34};
+constexpr LPCSTR NATIVE_BACKGROUND_PCX = "crstkpu.pcx";
+constexpr LPCSTR NATIVE_HINT_PCX = "varback.pcx";
 enum class CreatureDialogKind
 {
     None,
@@ -27,10 +74,18 @@ struct CreatureDialogBuildContext
     H3CreatureInfoDlg *dlg = nullptr;
 };
 
-CreatureDialogBuildContext g_buildContexts[8];
+CreatureDialogBuildContext g_buildContexts[MAX_BUILD_CONTEXT_DEPTH];
 int g_buildContextDepth = 0;
 std::map<H3CreatureInfoDlg *, std::unique_ptr<CreatureDlgHandler>> g_dialogHandlers;
 BOOL main_isRMC = false;
+
+class RightClickDialogScope
+{
+    const BOOL previous = main_isRMC;
+  public:
+    explicit RightClickDialogScope(bool rightClick) { main_isRMC = rightClick; }
+    ~RightClickDialogScope() { main_isRMC = previous; }
+};
 
 CreatureDialogBuildContext *CurrentBuildContext()
 {
@@ -90,7 +145,7 @@ int CurrentPlayerColor()
     if (P_Game)
     {
         const int player = P_Game->GetPlayerID();
-        if (player >= 0 && player < 8)
+        if (player >= 0 && player < limits::PLAYERS)
             return player;
     }
     return -1;
@@ -100,8 +155,8 @@ int ResolveBattleDialogColor(H3CombatCreature *stack)
 {
     if (stack)
     {
-        H3Hero *owner = THISCALL_1(H3Hero *, 0x4423B0, stack); // BattleStack::GetOwnerHero
-        if (owner && owner->owner >= 0 && owner->owner < 8)
+        H3Hero *owner = THISCALL_1(H3Hero *, native::STACK_OWNER_HERO, stack); // BattleStack::GetOwnerHero
+        if (owner && owner->owner >= 0 && owner->owner < limits::PLAYERS)
             return owner->owner;
     }
     return CurrentPlayerColor();
@@ -109,7 +164,7 @@ int ResolveBattleDialogColor(H3CombatCreature *stack)
 
 int ResolveAdventureDialogColor(const H3Hero *hero)
 {
-    if (hero && hero->owner >= 0 && hero->owner < 8)
+    if (hero && hero->owner >= 0 && hero->owner < limits::PLAYERS)
         return hero->owner;
     return CurrentPlayerColor();
 }
@@ -121,29 +176,32 @@ bool SameResource(LPCSTR lhs, LPCSTR rhs)
 
 bool IsBattleGeneratedReturnAddress(DWORD returnAddress)
 {
-    return returnAddress >= 0x760000 && returnAddress < 0x770000;
+    return returnAddress >= native::BATTLE_GENERATED_START && returnAddress < native::BATTLE_GENERATED_END;
 }
 
-bool IsCurrentCreatureDialogBuild()
+CreatureDialogBuildContext *ActiveBuildContext()
 {
     auto *ctx = CurrentBuildContext();
-    if (!ctx || ctx->kind == CreatureDialogKind::None || !ctx->dlg)
-        return false;
-
+    if (!ctx || !ctx->dlg)
+        return nullptr;
     const auto &settings = GetPluginSettings();
     switch (ctx->kind)
     {
-    case CreatureDialogKind::Battle:
-        return settings.showBattleDialog;
-    case CreatureDialogKind::NotBattle:
-        return settings.showArmyDialog;
-    case CreatureDialogKind::Buy:
-        return settings.showRecruitmentDialog;
-    default:
-        return false;
+    case CreatureDialogKind::Battle: return settings.showBattleDialog ? ctx : nullptr;
+    case CreatureDialogKind::NotBattle: return settings.showArmyDialog ? ctx : nullptr;
+    case CreatureDialogKind::Buy: return settings.showRecruitmentDialog ? ctx : nullptr;
+    default: return nullptr;
     }
 }
 
+template<size_t N>
+bool IsKnownConstructorCall(DWORD address, const DWORD (&calls)[N], const CreatureDialogBuildContext *ctx)
+{
+    for (const DWORD call : calls)
+        if (address == call)
+            return true;
+    return ctx->kind == CreatureDialogKind::Battle && IsBattleGeneratedReturnAddress(address);
+}
 void GetDialogDrawBounds(int &width, int &height)
 {
     width = H3GameWidth::Get();
@@ -189,14 +247,14 @@ namespace
 {
 H3Dlg *__stdcall CreatureDlg_DlgCtor(HiHook *hook, H3Dlg *dlg, int x, int y, int width, int height, int flags)
 {
-    auto *ctx = CurrentBuildContext();
+    auto *ctx = ActiveBuildContext();
     // The build scope already proves that we are inside one of the three
     // H3CreatureInfoDlg constructors. Do not require a fixed return address
     // here: another HiHook may put a trampoline between the creature ctor and
     // Dlg::Ctor, making GetReturnAddress() different from the vanilla SoD
     // call site even though this is still the same dialog.
-    if (IsCurrentCreatureDialogBuild() && ctx->dlg == reinterpret_cast<H3CreatureInfoDlg *>(dlg) &&
-        width == 298 && height == 311)
+    if (ctx != nullptr && ctx->dlg == reinterpret_cast<H3CreatureInfoDlg *>(dlg) &&
+        width == NATIVE_DLG_WIDTH && height == NATIVE_DLG_HEIGHT)
     {
         width = DLG_WIDTH;
         height = DLG_HEIGHT;
@@ -207,11 +265,11 @@ H3Dlg *__stdcall CreatureDlg_DlgCtor(HiHook *hook, H3Dlg *dlg, int x, int y, int
 H3DlgPcx *__stdcall CreatureDlg_PcxCtor(HiHook *hook, H3DlgPcx *item, int x, int y, int width, int height, int id,
                                         LPCSTR pcxName, int flags)
 {
-    auto *ctx = CurrentBuildContext();
-    if (IsCurrentCreatureDialogBuild())
+    auto *ctx = ActiveBuildContext();
+    if (ctx != nullptr)
     {
-        const bool isBackground = id == 200 && x == 0 && y == 0 && width == 298 && height == 311 &&
-                                  SameResource(pcxName, "crstkpu.pcx");
+        const bool isBackground = id == DLG_BACKGROUND_ID && x == 0 && y == 0 && width == NATIVE_DLG_WIDTH && height == NATIVE_DLG_HEIGHT &&
+                                  SameResource(pcxName, NATIVE_BACKGROUND_PCX);
         if (isBackground)
         {
             // Same rule as for Dlg::Ctor: active creature-info build context +
@@ -221,26 +279,26 @@ H3DlgPcx *__stdcall CreatureDlg_PcxCtor(HiHook *hook, H3DlgPcx *item, int x, int
             height = DLG_HEIGHT;
             pcxName = DIALOG_BACKGROUND_PCX;
         }
-        else if (id == 225) // OK frame
+        else if (id == DLG_OK_FRAME_ID) // OK frame
         {
-            x = OK_BUTTON_X - 1;
-            y = BUTTON_Y - 1;
-            width = 48;
-            height = 34;
-            pcxName = "box46x32.pcx";
+            x = OK_BUTTON_X - BUTTON_FRAME_BORDER;
+            y = BUTTON_Y - BUTTON_FRAME_BORDER;
+            width = BUTTON_FRAME_WIDTH;
+            height = BUTTON_FRAME_HEIGHT;
+            pcxName = BUTTON_FRAME_PCX;
         }
-        else if (x == 74 && y == 236 && width == 48 && height == 34) // upgrade/cast frame
+        else if (NATIVE_UPGRADE_FRAME_RECT.Matches(x, y, width, height)) // upgrade/cast frame
         {
             // Exact coordinates are part of the native helper signature.
             // The PCX name is deliberately not checked so a previous hook in
             // the chain cannot prevent the relocation.
-            x = (ctx->kind == CreatureDialogKind::Battle) ? 125 : 232;
-            y = BUTTON_Y - 1;
+            x = (ctx->kind == CreatureDialogKind::Battle) ? CAST_BUTTON_X - BUTTON_FRAME_BORDER : UPGRADE_BUTTON_X - BUTTON_FRAME_BORDER;
+            y = BUTTON_Y - BUTTON_FRAME_BORDER;
         }
-        else if (x == 19 && y == 236 && width == 48 && height == 34) // dismiss frame
+        else if (NATIVE_DISMISS_FRAME_RECT.Matches(x, y, width, height)) // dismiss frame
         {
-            x = 126;
-            y = BUTTON_Y - 1;
+            x = CAST_BUTTON_X;
+            y = BUTTON_Y - BUTTON_FRAME_BORDER;
         }
     }
 
@@ -251,22 +309,26 @@ H3DlgText *__stdcall CreatureDlg_TextCtor(HiHook *hook, H3DlgText *item, int x, 
                                           LPCSTR text, LPCSTR font, int color, int itemId, int align, int bkColor,
                                           int unused)
 {
-    auto *ctx = CurrentBuildContext();
-    if (IsCurrentCreatureDialogBuild())
+    auto *ctx = ActiveBuildContext();
+    if (ctx != nullptr)
     {
         const DWORD ret = static_cast<DWORD>(hook->GetReturnAddress());
-        const bool battleGenerated = ctx->kind == CreatureDialogKind::Battle && IsBattleGeneratedReturnAddress(ret);
-
-        if (itemId == 203 && x == 20 && y == 21 && width == 258 && height == 19 &&
-            (ret == 0x5F39BF || ret == 0x5F4129 || ret == 0x5F47A5 || battleGenerated))
+        switch (itemId)
         {
-            x = (DLG_WIDTH - width) / 2;
-        }
-        else if (itemId == -1 && x == 20 && y == 232 && width == 192 && height == 41 &&
-                 (ret == 0x5F3E59 || ret == 0x5F4484 || ret == 0x5F489F || battleGenerated))
-        {
-            ReadDescriptionRect(x, y, width, height);
-            align = GetPluginSettings().descriptionAlignment;
+        case DLG_NAME_ID:
+            if (NATIVE_NAME_RECT.Matches(x, y, width, height) && IsKnownConstructorCall(ret, native::NAME_CALLS, ctx))
+                x = (DLG_WIDTH - width) / 2;
+            break;
+        case DLG_DESCRIPTION_ID:
+            if (NATIVE_DESCRIPTION_RECT.Matches(x, y, width, height) &&
+                IsKnownConstructorCall(ret, native::DESCRIPTION_CALLS, ctx))
+            {
+                ReadDescriptionRect(x, y, width, height);
+                align = GetPluginSettings().descriptionAlignment;
+            }
+            break;
+        default:
+            break;
         }
     }
 
@@ -278,16 +340,15 @@ H3DlgTextPcx *__stdcall CreatureDlg_TextPcxCtor(HiHook *hook, H3DlgTextPcx *item
                                                 int height, LPCSTR text, LPCSTR font, LPCSTR pcxName, int color,
                                                 int itemId, int align, int unused)
 {
-    auto *ctx = CurrentBuildContext();
-    if (IsCurrentCreatureDialogBuild() && itemId == 224 && x == 7 && y == 285 && width == 284 && height == 19 &&
-        SameResource(pcxName, "varback.pcx"))
+    auto *ctx = ActiveBuildContext();
+    if (ctx != nullptr && itemId == DLG_HINT_ID && NATIVE_HINT_RECT.Matches(x, y, width, height) &&
+        SameResource(pcxName, NATIVE_HINT_PCX))
     {
         const DWORD ret = static_cast<DWORD>(hook->GetReturnAddress());
-        const bool knownCall = ret == 0x5F3CF2 || ret == 0x5F44E1 || ret == 0x5F48FC;
-        if (knownCall || (ctx->kind == CreatureDialogKind::Battle && IsBattleGeneratedReturnAddress(ret)))
+        if (IsKnownConstructorCall(ret, native::HINT_CALLS, ctx))
         {
-            y = DLG_HEIGHT - height - 7;
-            width = DLG_WIDTH - 14;
+            y = DLG_HEIGHT - height - HINT_MARGIN;
+            width = DLG_WIDTH - HINT_MARGIN * 2;
             pcxName = DIALOG_HINT_BAR_PCX;
         }
     }
@@ -299,17 +360,16 @@ H3DlgTextPcx *__stdcall CreatureDlg_TextPcxCtor(HiHook *hook, H3DlgTextPcx *item
 H3DlgDef *__stdcall CreatureDlg_DefCtor(HiHook *hook, H3DlgDef *item, int x, int y, int width, int height, int itemId,
                                         LPCSTR defName, int frame, int group, int mirror, int closeDialog, int flags)
 {
-    auto *ctx = CurrentBuildContext();
-    const bool isMorale = itemId == 219 && x == 23 && y == 189 && width == 42 && height == 38;
-    const bool isLuck = itemId == 220 && x == 77 && y == 189 && width == 42 && height == 38;
-    if (IsCurrentCreatureDialogBuild() && (isMorale || isLuck))
+    auto *ctx = ActiveBuildContext();
+    const bool isMorale = itemId == DLG_MORALE_ID && NATIVE_MORALE_RECT.Matches(x, y, width, height);
+    const bool isLuck = itemId == DLG_LUCK_ID && NATIVE_LUCK_RECT.Matches(x, y, width, height);
+    if (ctx != nullptr && (isMorale || isLuck))
     {
         const DWORD ret = static_cast<DWORD>(hook->GetReturnAddress());
-        const bool knownCall = ret == 0x5F3AE7 || ret == 0x5F3C27 || ret == 0x5F429C || ret == 0x5F437F;
-        if (knownCall || (ctx->kind == CreatureDialogKind::Battle && IsBattleGeneratedReturnAddress(ret)))
+        if (IsKnownConstructorCall(ret, native::MORALE_LUCK_CALLS, ctx))
         {
-            x = itemId == 219 ? 24 : 78;
-            y = DLG_HEIGHT - height - 46;
+            x = itemId == DLG_MORALE_ID ? MORALE_X : LUCK_X;
+            y = DLG_HEIGHT - height - MORALE_LUCK_BOTTOM_MARGIN;
         }
     }
     return THISCALL_12(H3DlgDef *, hook->GetDefaultFunc(), item, x, y, width, height, itemId, defName, frame, group,
@@ -320,33 +380,20 @@ H3DlgDefButton *__stdcall CreatureDlg_DefButtonCtor(HiHook *hook, H3DlgDefButton
                                                     int height, int itemId, LPCSTR defName, int frame, int clickFrame,
                                                     int closeDialog, int hotKey, int flags)
 {
-    if (IsCurrentCreatureDialogBuild())
+    auto *ctx = ActiveBuildContext();
+    if (ctx)
     {
         // Item ids are unique inside H3CreatureInfoDlg. Once the build scope
         // proves the parent dialog, do not depend on original coordinates or
         // resource names: an earlier HiHook in the chain may already have
         // changed those arguments.
-        if (itemId == 30722)
+        if (GetDialogButtonX(itemId, x))
         {
-            x = OK_BUTTON_X;
             y = BUTTON_Y;
             width = BUTTON_WIDTH;
             height = BUTTON_HEIGHT;
-            defName = OK_BUTTON_DEF;
-        }
-        else if (itemId == 300)
-        {
-            x = 233;
-            y = BUTTON_Y;
-            width = BUTTON_WIDTH;
-            height = BUTTON_HEIGHT;
-        }
-        else if (itemId == 30723)
-        {
-            x = 127;
-            y = BUTTON_Y;
-            width = BUTTON_WIDTH;
-            height = BUTTON_HEIGHT;
+            if (itemId == DLG_OK_ID)
+                defName = OK_BUTTON_DEF;
         }
     }
 
@@ -358,10 +405,10 @@ H3DlgCustomButton *__stdcall CreatureDlg_CustomButtonCtor(HiHook *hook, H3DlgCus
                                                           int width, int height, int itemId, LPCSTR defName,
                                                           H3DlgButton_proc callback, int frame, int clickFrame)
 {
-    auto *ctx = CurrentBuildContext();
-    if (IsCurrentCreatureDialogBuild() && ctx->kind == CreatureDialogKind::Battle && itemId == 301)
+    auto *ctx = ActiveBuildContext();
+    if (ctx != nullptr && ctx->kind == CreatureDialogKind::Battle && itemId == DLG_CAST_ID)
     {
-        x = 126;
+        x = CAST_BUTTON_X;
         y = BUTTON_Y;
         width = BUTTON_WIDTH;
         height = BUTTON_HEIGHT;
@@ -380,73 +427,53 @@ int __stdcall H3CreatureInfoDlg_Dtor(HiHook *hook, H3CreatureInfoDlg *dlg)
 
 BOOL ShowStackActiveSpells(H3CombatCreature *stack, bool isRMC, H3DlgItem *clickedItem)
 {
-    if (!stack)
+    const auto spells = CollectActiveSpells(stack);
+    if (!spells.count)
         return FALSE;
-    const int arr_size = sizeof(stack->activeSpellDuration) / sizeof(INT32);
-    int activeSpellsNum = 0;
-    for (int i = 0; i < arr_size; ++i)
-        activeSpellsNum += stack->activeSpellDuration[i] != 0;
-    if (!activeSpellsNum)
-        return FALSE;
-
-    int columns = static_cast<int>(floor(sqrt(activeSpellsNum)));
-    int rows = activeSpellsNum / columns;
-    if (activeSpellsNum % columns)
-        ++rows;
+    int columns = static_cast<int>(sqrt(spells.count));
+    int rows = (spells.count + columns - 1) / columns;
     if (rows > columns)
     {
         --rows;
         ++columns;
     }
-
-    H3DefLoader def("spellint.def");
-    const int defWidth = def->widthDEF;
-    const int defHeight = def->heightDEF;
-    const int width = (defWidth + 5) * columns + 35;
-    const int height = (defHeight + 5) * rows + 35;
-    H3Dlg *dlg = new H3Dlg(width, height);
-
-    int x = 20;
-    int y = 20;
-    int counter = 0;
-    for (INT32 i = 0; i < arr_size; ++i)
+    H3DefLoader def(NH3Dlg::Assets::SPELL_SMALL);
+    if (!def.Get() || def->widthDEF <= 0 || def->heightDEF <= 0)
+        return FALSE;
+    const int width = (def->widthDEF + SPELL_POPUP_GAP) * columns + SPELL_POPUP_SIZE_PADDING;
+    const int height = (def->heightDEF + SPELL_POPUP_GAP) * rows + SPELL_POPUP_SIZE_PADDING;
+    H3Dlg popup(width, height);
+    for (int slot = 0; slot < spells.count; ++slot)
     {
-        const int duration = stack->activeSpellDuration[i];
-        if (!duration)
-            continue;
-
-        H3DlgDef *spell = H3DlgDef::Create(x, y, def->GetName(), i + 1);
-        dlg->AddItem(spell);
-        libc::sprintf(h3_TextBuffer, "x%d", duration);
-        H3DlgText *text = H3DlgText::Create(x, y + 25, defWidth, 14, h3_TextBuffer, NH3Dlg::Text::TINY, 1, 0,
-                                            eTextAlignment::MIDDLE_RIGHT);
-        if (i != NH3Spells::eSpell::BERSERK && i != NH3Spells::eSpell::DISRUPTING_RAY && i != NH3Spells::eSpell::BIND)
-            dlg->AddItem(text);
-
-        if (++counter == columns)
+        const int spellId = spells.ids[slot];
+        const int x = SPELL_POPUP_MARGIN + (slot % columns) * (def->widthDEF + SPELL_POPUP_GAP);
+        const int y = SPELL_POPUP_MARGIN + (slot / columns) * (def->heightDEF + SPELL_POPUP_GAP);
+        if (auto *icon = H3DlgDef::Create(x, y, def->GetName(), spellId + SPELL_DEF_FRAME_OFFSET))
         {
-            counter = 0;
-            x = 20;
-            y += defHeight + 5;
+            SetCreatureSpellHints(icon, stack, spellId);
+            popup.AddItem(icon);
         }
-        else
-            x += defWidth + 5;
+        if (HasVisibleSpellDuration(spellId))
+        {
+            char duration[SPELL_DURATION_BUFFER_SIZE];
+            std::snprintf(duration, sizeof(duration), "x%d", stack->activeSpellDuration[spellId]);
+            if (auto *text = H3DlgText::Create(x, y + SPELL_POPUP_DURATION_Y, def->widthDEF,
+                                               SPELL_POPUP_DURATION_HEIGHT, duration, NH3Dlg::Text::TINY,
+                                               eTextColor::WHITE, DLG_SPELL_DURATION_FIRST_ID + slot,
+                                               eTextAlignment::MIDDLE_RIGHT))
+                popup.AddItem(text);
+        }
     }
-
     if (isRMC)
-        dlg->PlaceAtMouse();
+        popup.PlaceAtMouse();
     else if (clickedItem)
     {
-        const int xPos = clickedItem->GetAbsoluteX();
-        const int yPos = clickedItem->GetAbsoluteY();
-        IntAt(reinterpret_cast<int>(dlg) + 0x18) = Clamp(0, xPos, H3GameWidth::Get() - width - 200);
-        IntAt(reinterpret_cast<int>(dlg) + 0x1C) = Clamp(0, yPos, H3GameHeight::Get() - height - 48);
+        popup.SetX(Clamp(0, clickedItem->GetAbsoluteX(), std::max(0, H3GameWidth::Get() - width - SPELL_POPUP_RIGHT_MARGIN)));
+        popup.SetY(Clamp(0, clickedItem->GetAbsoluteY(), std::max(0, H3GameHeight::Get() - height - SPELL_POPUP_BOTTOM_MARGIN)));
     }
-    dlg->RMB_Show();
-    delete dlg;
-    return FALSE;
+    popup.RMB_Show();
+    return TRUE;
 }
-
 _LHF_(Dlg_CreatureInfo_RmcProc)
 {
     if (!GetPluginSettings().showBattleDialog)
@@ -454,12 +481,13 @@ _LHF_(Dlg_CreatureInfo_RmcProc)
 
     H3Msg *msg = reinterpret_cast<H3Msg *>(c->esi);
     const int itemId = msg->itemId;
-    auto *creatureDlgStack = *reinterpret_cast<H3CombatCreature **>(0x2860280);
-    if (((itemId > 220 && itemId < 224) || (itemId >= 3000 && itemId < 3003)) &&
+    auto *creatureDlgStack = *reinterpret_cast<H3CombatCreature **>(native::CURRENT_CREATURE_STACK);
+    if (((itemId >= DLG_NATIVE_SPELL_FIRST_ID && itemId <= DLG_NATIVE_SPELL_LAST_ID) ||
+         (itemId >= DLG_NATIVE_SPELL_TEXT_FIRST_ID && itemId <= DLG_NATIVE_SPELL_TEXT_LAST_ID)) &&
         msg->subtype == eMsgSubtype::RBUTTON_DOWN && creatureDlgStack && creatureDlgStack->activeSpellNumber)
     {
         ShowStackActiveSpells(creatureDlgStack, true, nullptr);
-        msg->itemId = -1;
+        msg->itemId = DLG_DESCRIPTION_ID;
     }
     return EXEC_DEFAULT;
 }
@@ -472,43 +500,51 @@ int __stdcall H3CreatureInfoDlg_Proc(HiHook *hook, H3CreatureInfoDlg *dlg, H3Msg
     case eMsgCommand::MOUSE_OVER:
     {
         auto *item = dlg->ItemAtPosition(msg);
-        auto *hint = dlg->GetTextPcx(224);
-        if (item && hint && item->GetHint())
+        if (!item || !item->GetHint())
+            return result;
+        auto *hint = dlg->GetTextPcx(DLG_HINT_ID);
+        if (!hint)
+            return result;
+        const char *previous = hint->GetH3String().String();
+        if (!previous || libc::strcmp(previous, item->GetHint()))
         {
-            const char *text = item->GetHint();
-            const char *previous = hint->GetH3String().String();
-            if (!previous || libc::strcmp(previous, text))
-            {
-                hint->SetText(text);
-                hint->Draw();
-                hint->Refresh();
-            }
+            hint->SetText(item->GetHint());
+            hint->Draw();
+            hint->Refresh();
         }
-        return result;
+        break;
     }
     case eMsgCommand::MOUSE_BUTTON:
     {
-        auto *item = dlg->GetH3DlgItem(msg->itemId);
-        //if (item && IsExperienceSkillItem(msg->itemId) && msg->subtype == eMsgSubtype::RBUTTON_DOWN)
-        //{
-        //    if (item->GetRightClickHint())
-        //        H3Messagebox::RMB(item->GetRightClickHint());
-        //    return result;
-        //}
-
-        if (item && (msg->itemId == WOG_CREATURE_EXP_BUTTON_ID || msg->itemId == DLG_SPELLS_BTTN_ID))
+        switch (msg->subtype)
         {
-            if (msg->subtype == eMsgSubtype::LBUTTON_CLICK || msg->subtype == eMsgSubtype::RBUTTON_DOWN)
-            {
-                const BOOL previousRmc = main_isRMC;
-                main_isRMC = msg->subtype == eMsgSubtype::RBUTTON_DOWN;
-                if (msg->itemId == WOG_CREATURE_EXP_BUTTON_ID)
-                    CDECL_0(signed int, 0x7645BB);
-                else
-                    ShowStackActiveSpells(*reinterpret_cast<H3CombatCreature **>(0x2860280), main_isRMC, item);
-                main_isRMC = previousRmc;
-            }
+        case eMsgSubtype::LBUTTON_CLICK:
+        case eMsgSubtype::RBUTTON_DOWN:
+            break;
+        default:
             return result;
+        }
+        switch (msg->itemId)
+        {
+        case WOG_CREATURE_EXP_BUTTON_ID:
+            if (!dlg->GetH3DlgItem(WOG_CREATURE_EXP_BUTTON_ID))
+                return result;
+            {
+                RightClickDialogScope scope(msg->subtype == eMsgSubtype::RBUTTON_DOWN);
+                CDECL_0(signed int, native::SHOW_EXPERIENCE_DIALOG);
+            }
+            if (auto *handler = GetDialogHandler(dlg))
+                handler->RefreshCreatureArtifact();
+            break;
+        case DLG_SPELLS_BTTN_ID:
+            if (auto *item = dlg->GetH3DlgItem(DLG_SPELLS_BTTN_ID))
+            {
+                RightClickDialogScope scope(msg->subtype == eMsgSubtype::RBUTTON_DOWN);
+                ShowStackActiveSpells(*reinterpret_cast<H3CombatCreature **>(native::CURRENT_CREATURE_STACK), main_isRMC, item);
+            }
+            break;
+        default:
+            break;
         }
         break;
     }
@@ -517,7 +553,6 @@ int __stdcall H3CreatureInfoDlg_Proc(HiHook *hook, H3CreatureInfoDlg *dlg, H3Msg
     }
     return result;
 }
-
 H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BattleCtor(HiHook *hook, H3CreatureInfoDlg *dlg, H3CombatCreature *mon,
                                                           int x, int y, int z)
 {
@@ -533,8 +568,8 @@ H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_BattleCtor(HiHook *hook, H3Creatu
     GetDialogDrawBounds(drawWidth, drawHeight);
     const int maxX = std::max(0, drawWidth - DLG_WIDTH - DLG_SHADOW_SIZE);
     const int maxY = std::max(0, drawHeight - DLG_HEIGHT - DLG_SHADOW_SIZE);
-    x = Clamp(0, x - 30, maxX);
-    y = Clamp(0, y - 30, maxY);
+    x = Clamp(0, x - BATTLE_DIALOG_POSITION_OFFSET, maxX);
+    y = Clamp(0, y - BATTLE_DIALOG_POSITION_OFFSET, maxY);
     H3CreatureInfoDlg *result = nullptr;
     {
         CreatureDialogBuildScope scope(CreatureDialogKind::Battle, dlg);
@@ -570,8 +605,8 @@ H3CreatureInfoDlg *__stdcall H3CreatureInfoDlg_NotBattleCtor(HiHook *hook, H3Cre
     if (!result)
         return result;
 
-    if (P_AdventureMgr && P_AdventureMgr->dlg && result->GetY() + DLG_HEIGHT + 145 > P_AdventureMgr->dlg->GetHeight())
-        result->SetY(P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT - 145);
+    if (P_AdventureMgr && P_AdventureMgr->dlg && result->GetY() + DLG_HEIGHT + ADVENTURE_DIALOG_BOTTOM_MARGIN > P_AdventureMgr->dlg->GetHeight())
+        result->SetY(P_AdventureMgr->dlg->GetHeight() - DLG_HEIGHT - ADVENTURE_DIALOG_BOTTOM_MARGIN);
 
     const H3Hero *heroPtr = reinterpret_cast<const H3Hero *>(hero);
     auto *handler = new CreatureDlgHandler(result, nullptr, army, slotId, heroPtr, ResolveAdventureDialogColor(heroPtr));
@@ -604,7 +639,7 @@ _LHF_(Wnd_BeforeExpoDlgShow)
     {
         H3Dlg *wndDlg = reinterpret_cast<H3Dlg *>(c->esi);
         wndDlg->RMB_Show();
-        c->return_address = h->GetAddress() + 21;
+        c->return_address = h->GetAddress() + EXPERIENCE_RMB_HOOK_SKIP;
         main_isRMC = false;
         return NO_EXEC_DEFAULT;
     }
@@ -617,7 +652,7 @@ _LHF_(Before_WndNPC_DLG)
     {
         H3Dlg *wndDlg = reinterpret_cast<H3Dlg *>(c->esi);
         wndDlg->RMB_Show();
-        c->return_address = h->GetAddress() + 0x20;
+        c->return_address = h->GetAddress() + COMMANDER_RMB_HOOK_SKIP;
         main_isRMC = false;
         return NO_EXEC_DEFAULT;
     }
@@ -628,36 +663,36 @@ _LHF_(Before_WndNPC_DLG)
 
 void Dlg_CreatureSpellInfo_HooksInit(PatcherInstance *pi)
 {
-    pi->WriteLoHook(0x5F4C5D, Dlg_CreatureInfo_RmcProc);
+    pi->WriteLoHook(native::CREATURE_RMB_PROC, Dlg_CreatureInfo_RmcProc);
 }
 
 void Dlg_CreatureInfo_HooksInit(PatcherInstance *pi)
 {
     // High-level runtime hooks for the three creature-info entry points.
-    pi->WriteHiHook(0x5F45B0, THISCALL_, H3CreatureInfoDlg_BuyCtor);
-    pi->WriteHiHook(0x5F3EF0, THISCALL_, H3CreatureInfoDlg_NotBattleCtor);
-    pi->WriteHiHook(0x764B38, THISCALL_, H3CreatureInfoDlg_BattleCtor);
-    pi->WriteHiHook(0x5F4C00, THISCALL_, H3CreatureInfoDlg_Proc);
-    pi->WriteHiHook(0x5F4980, THISCALL_, H3CreatureInfoDlg_Dtor);
+    pi->WriteHiHook(native::BUY_CTOR, THISCALL_, H3CreatureInfoDlg_BuyCtor);
+    pi->WriteHiHook(native::ARMY_CTOR, THISCALL_, H3CreatureInfoDlg_NotBattleCtor);
+    pi->WriteHiHook(native::BATTLE_CTOR, THISCALL_, H3CreatureInfoDlg_BattleCtor);
+    pi->WriteHiHook(native::CREATURE_PROC, THISCALL_, H3CreatureInfoDlg_Proc);
+    pi->WriteHiHook(native::CREATURE_DTOR, THISCALL_, H3CreatureInfoDlg_Dtor);
 
     // Replace constructor arguments only while one of the creature-info
     // constructors is on the call stack. Unique item ids/signatures are used
     // where possible; return addresses remain only for ambiguous native items.
-    pi->WriteHiHook(0x41AFA0, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_DlgCtor);
-    pi->WriteHiHook(0x44FFA0, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_PcxCtor);
-    pi->WriteHiHook(0x5BC6A0, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_TextCtor);
-    pi->WriteHiHook(0x5BCB70, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_TextPcxCtor);
-    pi->WriteHiHook(0x4EA800, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_DefCtor);
-    pi->WriteHiHook(0x455BD0, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_DefButtonCtor);
-    pi->WriteHiHook(0x456A10, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_CustomButtonCtor);
+    pi->WriteHiHook(native::DLG_CTOR, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_DlgCtor);
+    pi->WriteHiHook(native::PCX_CTOR, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_PcxCtor);
+    pi->WriteHiHook(native::TEXT_CTOR, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_TextCtor);
+    pi->WriteHiHook(native::TEXT_PCX_CTOR, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_TextPcxCtor);
+    pi->WriteHiHook(native::DEF_CTOR, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_DefCtor);
+    pi->WriteHiHook(native::BUTTON_CTOR, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_DefButtonCtor);
+    pi->WriteHiHook(native::CUSTOM_BUTTON_CTOR, SPLICE_, EXTENDED_, THISCALL_, CreatureDlg_CustomButtonCtor);
 
     H3DLL wndPlugin("wog native dialogs.era");
     if (wndPlugin.dataSize)
     {
-        int pluginHookAddress = wndPlugin.NeedleSearch<6>({0x0F, 0x8C, 0xC8, 0xFE, 0xFF, 0xFF}, 6);
+        int pluginHookAddress = wndPlugin.NeedleSearch<6>({0x0F, 0x8C, 0xC8, 0xFE, 0xFF, 0xFF}, EXPERIENCE_SHOW_PATTERN_OFFSET);
         if (pluginHookAddress)
             pi->WriteLoHook(pluginHookAddress, Wnd_BeforeExpoDlgShow);
-        pluginHookAddress = wndPlugin.NeedleSearch<3>({0x3D, 0x68, 0x02}, 15);
+        pluginHookAddress = wndPlugin.NeedleSearch<3>({0x3D, 0x68, 0x02}, COMMANDER_SHOW_PATTERN_OFFSET);
         if (pluginHookAddress)
             pi->WriteLoHook(pluginHookAddress, Before_WndNPC_DLG);
     }

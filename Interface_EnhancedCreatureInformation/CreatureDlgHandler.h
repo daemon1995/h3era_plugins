@@ -1,16 +1,18 @@
 #pragma once
 #include "pch.h"
+#include "CreatureDlgLayout.h"
 
 #include <string>
 #include <vector>
 
 class CreatureDlgHandler
 {
-    struct CreatureSkill
+    struct SkillIcon
     {
+        const char *defName = nullptr;
         int frame = -1;
-        std::string text;
-        std::string hint;
+        const char *text = nullptr;
+        const char *hint = nullptr;
         H3LoadedPcx16 *pcx16 = nullptr;
     };
 
@@ -28,10 +30,10 @@ class CreatureDlgHandler
     const H3Hero *hero = nullptr;
     int playerColor = -1;
 
-    int descriptionX = 24;
-    int descriptionY = 189;
-    int descriptionWidth = 250;
-    int descriptionHeight = 55;
+    int descriptionX = creatureInfo::DESCRIPTION_DEFAULT_X;
+    int descriptionY = creatureInfo::DESCRIPTION_DEFAULT_Y;
+    int descriptionWidth = creatureInfo::DESCRIPTION_DEFAULT_WIDTH;
+    int descriptionHeight = creatureInfo::DESCRIPTION_DEFAULT_HEIGHT;
     int commanderPanelHeight = 0;
 
     int viewportX = 0;
@@ -39,12 +41,17 @@ class CreatureDlgHandler
     int viewportWidth = 0;
     int viewportHeight = 0;
     int maxScrollTick = 0;
+    int currentScrollTick = 0;
 
     // Pixel offset for every logical row. A skill-icon row and a text row
     // both consume exactly one scrollbar tick.
     std::vector<int> scrollRowOffsets;
-    std::vector<CreatureSkill> creatureSkills;
+    std::vector<SkillIcon> creatureSkills;
     std::vector<ScrolledItem> scrolledItems;
+    std::vector<H3DlgPcx16 *> skillItems;
+    std::vector<H3DlgText *> descriptionLineItems;
+    H3DlgScrollbar *skillsScrollbar = nullptr;
+    std::vector<char> skillPopupBuffer;
 
     void ApplyDialogAppearance();
     void HideDefaultBattleSpellItems();
@@ -53,6 +60,7 @@ class CreatureDlgHandler
     BOOL BuildDescriptionArea();
     BOOL BuildExperienceSkillsPanel(H3DlgText *description, const std::string &descriptionText);
     void ReleaseUnownedSkillImages();
+    void ResetExperienceSkillsPanel();
 
   public:
     CreatureDlgHandler(H3CreatureInfoDlg *dlg, H3CombatCreature *stack = nullptr, H3Army *army = nullptr,
@@ -60,9 +68,10 @@ class CreatureDlgHandler
     ~CreatureDlgHandler();
 
     void ScrollTo(int scrollTick);
+    void RefreshCreatureArtifact();
     BOOL AlignItems();
     BOOL AddExperienceButton();
-    BOOL AddSpellEfects();
+    BOOL AddSpellEffects();
     BOOL AddCommanderSkills();
     BOOL CreateCreatureSkillsList();
 };

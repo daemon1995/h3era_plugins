@@ -8,8 +8,35 @@ using namespace h3;
 namespace
 {
 constexpr int DIALOG_WIDTH = 500;
-constexpr int DIALOG_HEIGHT = 318;
+constexpr int DIALOG_HEIGHT = 348;
 constexpr int FIRST_CHECKBOX_ID = 100;
+enum class SettingRow : int
+{
+    Battle, Army, Recruitment, CreatureSkills, InactiveSkills, CommanderSkills, BattlePanel, Count
+};
+constexpr int CHECKBOX_COUNT = static_cast<int>(SettingRow::Count);
+constexpr int LABEL_ID_OFFSET = 100;
+constexpr int LABEL_HEIGHT = 24;
+constexpr int TITLE_X = 24;
+constexpr int TITLE_Y = 18;
+constexpr int TITLE_HEIGHT = 24;
+constexpr DWORD CURRENT_PLAYER_COLOR_ADDRESS = 0x69CCF4;
+struct CheckboxSpec
+{
+    bool creatureInfo::PluginSettings::*field;
+    LPCSTR label;
+    LPCSTR hint;
+};
+constexpr CheckboxSpec CHECKBOXES[] = {
+    {&creatureInfo::PluginSettings::showBattleDialog, "eci.settings.battle_dialog", "eci.settings.battle_dialog_hint"},
+    {&creatureInfo::PluginSettings::showArmyDialog, "eci.settings.army_dialog", "eci.settings.army_dialog_hint"},
+    {&creatureInfo::PluginSettings::showRecruitmentDialog, "eci.settings.recruitment_dialog", "eci.settings.recruitment_dialog_hint"},
+    {&creatureInfo::PluginSettings::showCreatureSkills, "eci.settings.creature_skills", "eci.settings.creature_skills_hint"},
+    {&creatureInfo::PluginSettings::showInactiveCreatureSkills, "eci.settings.inactive_creature_skills", "eci.settings.inactive_creature_skills_hint"},
+    {&creatureInfo::PluginSettings::showCommanderSkills, "eci.settings.commander_skills", "eci.settings.commander_skills_hint"},
+    {&creatureInfo::PluginSettings::showExpandedBattleMonsterPanel, "eci.settings.battle_panel", "eci.settings.battle_panel_hint"}
+};
+static_assert(sizeof(CHECKBOXES) / sizeof(CHECKBOXES[0]) == CHECKBOX_COUNT, "Missing checkbox description");
 constexpr int CHECKBOX_X = 34;
 constexpr int LABEL_X = 70;
 constexpr int LABEL_WIDTH = 390;
@@ -19,29 +46,22 @@ constexpr int CHECKBOX_START_Y = 55;
 } // namespace
 
 PluginSettingsDlg::PluginSettingsDlg()
-    : H3Dlg(DIALOG_WIDTH, DIALOG_HEIGHT, -1, -1, false, true, P_Game ? P_Game->GetPlayerID() : IntAt(0x69CCF4)),
+    : H3Dlg(DIALOG_WIDTH, DIALOG_HEIGHT, -1, -1, false, true, P_Game ? P_Game->GetPlayerID() : IntAt(CURRENT_PLAYER_COLOR_ADDRESS)),
       draft(creatureInfo::GetPluginSettings())
 {
-    auto title = H3DlgText::Create(24, 18, DIALOG_WIDTH - 48, 24, Era::tr("eci.settings.title"), NH3Dlg::Text::BIG,
+    auto title = H3DlgText::Create(TITLE_X, TITLE_Y, DIALOG_WIDTH - TITLE_X * 2, TITLE_HEIGHT, Era::tr("eci.settings.title"), NH3Dlg::Text::BIG,
                                    eTextColor::WHITE, -1, eTextAlignment::MIDDLE_CENTER);
     if (title)
         AddItem(title);
 
-    AddCheckbox(FIRST_CHECKBOX_ID + 0, CHECKBOX_START_Y, "eci.settings.battle_dialog",
-                "eci.settings.battle_dialog_hint", draft.showBattleDialog);
-    AddCheckbox(FIRST_CHECKBOX_ID + 1, CHECKBOX_START_Y + CHECKBOX_ROW_HEIGHT, "eci.settings.army_dialog",
-                "eci.settings.army_dialog_hint", draft.showArmyDialog);
-    AddCheckbox(FIRST_CHECKBOX_ID + 2, CHECKBOX_START_Y + CHECKBOX_ROW_HEIGHT * 2, "eci.settings.recruitment_dialog",
-                "eci.settings.recruitment_dialog_hint", draft.showRecruitmentDialog);
-    AddCheckbox(FIRST_CHECKBOX_ID + 3, CHECKBOX_START_Y + CHECKBOX_ROW_HEIGHT * 3, "eci.settings.creature_skills",
-                "eci.settings.creature_skills_hint", draft.showCreatureSkills);
-    AddCheckbox(FIRST_CHECKBOX_ID + 4, CHECKBOX_START_Y + CHECKBOX_ROW_HEIGHT * 4, "eci.settings.commander_skills",
-                "eci.settings.commander_skills_hint", draft.showCommanderSkills);
-    AddCheckbox(FIRST_CHECKBOX_ID + 5, CHECKBOX_START_Y + CHECKBOX_ROW_HEIGHT * 5, "eci.settings.battle_panel",
-                "eci.settings.battle_panel_hint", draft.showExpandedBattleMonsterPanel);
-
-    CreateOKButton();     //(DIALOG_WIDTH - 74, DIALOG_HEIGHT - 47);
-    CreateCancelButton(); //(24, DIALOG_HEIGHT - 47);
+    for (int row = 0; row < CHECKBOX_COUNT; ++row)
+    {
+        const auto &spec = CHECKBOXES[row];
+        AddCheckbox(FIRST_CHECKBOX_ID + row, CHECKBOX_START_Y + row * CHECKBOX_ROW_HEIGHT,
+                    spec.label, spec.hint, draft.*spec.field);
+    }
+    CreateOKButton();
+    CreateCancelButton();
 }
 
 void PluginSettingsDlg::AddCheckbox(int id, int y, LPCSTR labelKey, LPCSTR hintKey, bool checked)
@@ -54,15 +74,15 @@ void PluginSettingsDlg::AddCheckbox(int id, int y, LPCSTR labelKey, LPCSTR hintK
         AddItem(checkbox);
     }
 
-    auto label = H3DlgText::Create(LABEL_X, y, LABEL_WIDTH, 24, Era::tr(labelKey), NH3Dlg::Text::MEDIUM,
-                                   eTextColor::REGULAR, id + 100, eTextAlignment::MIDDLE_LEFT);
+    auto label = H3DlgText::Create(LABEL_X, y, LABEL_WIDTH, LABEL_HEIGHT, Era::tr(labelKey), NH3Dlg::Text::MEDIUM,
+                                   eTextColor::REGULAR, id + LABEL_ID_OFFSET, eTextAlignment::MIDDLE_LEFT);
     if (label)
         AddItem(label);
 }
 
 BOOL PluginSettingsDlg::OnLeftClick(INT itemId, H3Msg &msg)
 {
-    if (itemId >= FIRST_CHECKBOX_ID && itemId < FIRST_CHECKBOX_ID + 6)
+    if (itemId >= FIRST_CHECKBOX_ID && itemId < FIRST_CHECKBOX_ID + CHECKBOX_COUNT)
     {
         if (auto checkbox = GetDefButton(itemId))
         {
@@ -76,21 +96,21 @@ BOOL PluginSettingsDlg::OnLeftClick(INT itemId, H3Msg &msg)
     return H3Dlg::OnLeftClick(itemId, msg);
 }
 
+bool PluginSettingsDlg::IsCheckboxChecked(int id, bool fallback)
+{
+    const auto checkbox = GetDefButton(id);
+    return checkbox ? checkbox->GetFrame() != 0 : fallback;
+}
+
 VOID PluginSettingsDlg::OnOK()
 {
     auto &settings = creatureInfo::GetPluginSettings();
     settings = draft;
-    const auto isChecked = [this](int id, bool fallback) {
-        const auto checkbox = GetDefButton(id);
-        return checkbox ? checkbox->GetFrame() != 0 : fallback;
-    };
-    settings.showBattleDialog = isChecked(FIRST_CHECKBOX_ID + 0, draft.showBattleDialog);
-    settings.showArmyDialog = isChecked(FIRST_CHECKBOX_ID + 1, draft.showArmyDialog);
-    settings.showRecruitmentDialog = isChecked(FIRST_CHECKBOX_ID + 2, draft.showRecruitmentDialog);
-    settings.showCreatureSkills = isChecked(FIRST_CHECKBOX_ID + 3, draft.showCreatureSkills);
-    settings.showCommanderSkills = isChecked(FIRST_CHECKBOX_ID + 4, draft.showCommanderSkills);
-    settings.showExpandedBattleMonsterPanel = isChecked(FIRST_CHECKBOX_ID + 5, draft.showExpandedBattleMonsterPanel);
-
+    for (int row = 0; row < CHECKBOX_COUNT; ++row)
+    {
+        const auto field = CHECKBOXES[row].field;
+        settings.*field = IsCheckboxChecked(FIRST_CHECKBOX_ID + row, draft.*field);
+    }
     if (!creatureInfo::SavePluginSettings(settings))
         H3Messagebox::Show(Era::tr("eci.settings.save_failed"));
 }

@@ -52,6 +52,7 @@ void LoadPluginSettings() noexcept
     settings.showArmyDialog = ReadInt("Display", "ArmyDialog", 1) != 0;
     settings.showRecruitmentDialog = ReadInt("Display", "RecruitmentDialog", 1) != 0;
     settings.showCreatureSkills = ReadInt("Display", "CreatureSkills", 1) != 0;
+    settings.showInactiveCreatureSkills = ReadInt("Display", "InactiveCreatureSkills", 1) != 0;
     settings.showCommanderSkills = ReadInt("Display", "CommanderSkills", 1) != 0;
     settings.showExpandedBattleMonsterPanel = ReadInt("Display", "ExpandedBattleMonsterPanel", 1) != 0;
 
@@ -72,6 +73,7 @@ BOOL SavePluginSettings(const PluginSettings &value) noexcept
     success = WriteInt("Display", "ArmyDialog", value.showArmyDialog ? 1 : 0) && success;
     success = WriteInt("Display", "RecruitmentDialog", value.showRecruitmentDialog ? 1 : 0) && success;
     success = WriteInt("Display", "CreatureSkills", value.showCreatureSkills ? 1 : 0) && success;
+    success = WriteInt("Display", "InactiveCreatureSkills", value.showInactiveCreatureSkills ? 1 : 0) && success;
     success = WriteInt("Display", "CommanderSkills", value.showCommanderSkills ? 1 : 0) && success;
     success = WriteInt("Display", "ExpandedBattleMonsterPanel", value.showExpandedBattleMonsterPanel ? 1 : 0) && success;
 

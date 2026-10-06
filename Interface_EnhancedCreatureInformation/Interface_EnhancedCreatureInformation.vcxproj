@@ -18,11 +18,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
-    <ClInclude Include="CommanderSkillList.h" />
     <ClInclude Include="MonPreview.h" />
     <ClInclude Include="CreatureDlgHandler.h" />
     <ClInclude Include="CreatureDlgHooks.h" />
     <ClInclude Include="CreatureDlgLayout.h" />
+    <ClInclude Include="CreatureSpellEffects.h" />
     <ClInclude Include="PluginSettings.h" />
     <ClInclude Include="PluginSettingsDlg.h" />
   </ItemGroup>
@@ -32,7 +32,7 @@
     <ClCompile Include="MonPreview.cpp" />
     <ClCompile Include="CreatureDlgHandler.cpp" />
     <ClCompile Include="CreatureDlgHooks.cpp" />
-    <ClCompile Include="CommanderSkills.cpp" />
+    <ClCompile Include="CreatureSkillIcons.cpp" />
     <ClCompile Include="PluginSettings.cpp" />
     <ClCompile Include="PluginSettingsDlg.cpp" />
     <ClCompile Include="dllmain.cpp" />
