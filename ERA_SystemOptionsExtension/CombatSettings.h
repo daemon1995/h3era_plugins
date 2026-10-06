@@ -31,6 +31,8 @@ class CombatSettings : public IGamePatch
     static _ERH_(OnBeforeBattleUniversal_Quit);
     static _ERH_(OnAfterBattleOrFastQuit);
     static int __stdcall CombatManager_ProcessMessage(HiHook *hook, H3CombatManager *combatManager, H3Msg *msg);
+    static int __stdcall CombatManager_DrawFizzleAtStackSummon(HiHook *hook, H3WindowManager *windowManager, int x,
+                                                               int y, int width, int height, int drawTime);
     static _LHF_(CombatManager_AutoCombatButton);
     static _LHF_(CombatManager_EndBattle);
     static void FinishBattleInstantly() noexcept;

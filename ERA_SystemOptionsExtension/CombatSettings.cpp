@@ -134,6 +134,20 @@ int __stdcall CombatSettings::CombatManager_ProcessMessage(HiHook *hook, H3Comba
     return THISCALL_2(int, hook->GetDefaultFunc(), combatManager, msg);
 }
 
+int __stdcall CombatSettings::CombatManager_DrawFizzleAtStackSummon(HiHook *hook, H3WindowManager *windowManager, int x,
+                                                                    int y, int width, int height, int drawTime)
+{
+    auto &config = OriginalConfig::Get();
+    constexpr int maxSpeedIndex = static_cast<int>(std::size(battleSpeedCoef)) - 1;
+    const int speedIndex = Clamp(0, config.animationSpeed, maxSpeedIndex);
+    if (battleSpeedCoef[speedIndex] < 1.0f)
+    {
+        drawTime = static_cast<int>(static_cast<float>(drawTime) * 1.5f * battleSpeedCoef[speedIndex]);
+    }
+
+    return THISCALL_6(int, hook->GetDefaultFunc(), windowManager, x, y, width, height, drawTime);
+}
+
 _LHF_(CombatSettings::CombatManager_AutoCombatButton)
 {
     const auto combatManager = reinterpret_cast<H3CombatManager *>(c->ebx);
@@ -186,6 +200,8 @@ void CombatSettings::CreatePatches() noexcept
     _pi->WriteDword(0x5A6813 + 3, pBSpeed); // BattleStack_0x5A6670
     _pi->WriteDword(0x5A7FE2 + 3, pBSpeed); // BattleStack_CastSpellEarthquake
     _pi->WriteDword(0x5A8148 + 3, pBSpeed); // BattleStack_CastSpellEarthquake
+
+    _pi->WriteHiHook(0x479BED, CALL_, EXTENDED_, THISCALL_, CombatManager_DrawFizzleAtStackSummon);
 
     _pi->WriteDword(0x4023D3 + 6, speedsCount - 1); // set gosolo speed as 9
 
