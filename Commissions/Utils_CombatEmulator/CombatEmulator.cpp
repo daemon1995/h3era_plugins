@@ -107,6 +107,20 @@ eHeroError ValidateHero(H3Hero *hero)
 
     return HERO_NO_ERROR;
 }
+
+static H3Town *FindTownForHero(const H3Hero *hero)
+{
+    if (!P_Game || !hero)
+        return nullptr;
+
+    for (auto &town : P_Game->towns)
+    {
+        if (town.garrisonHero == hero->id || town.visitingHero == hero->id)
+            return &town;
+    }
+    return nullptr;
+}
+
 INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const BOOL blockRunning,
                                 const int specialTerrain)
 {
@@ -118,6 +132,12 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL b
     }
 
     if (specialTerrain < -1 || specialTerrain > 9)
+        return -2;
+
+    // This API receives only two hero armies and cannot safely reproduce a
+    // town battle (town guards and garrison state are additional inputs).
+    // Reject that case instead of reporting a misleading field-battle result.
+    if (FindTownForHero(_defHero))
         return -2;
 
     // copy original NPC
@@ -133,22 +153,26 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL b
 
     // init passed arguments
 
-    const BOOL hasDefenderPosition = _defHero->x >= 0 && _defHero->x <= 0x3FF && _defHero->y >= 0 &&
-                                     _defHero->y <= 0x3FF && _defHero->z >= 0 && _defHero->z <= 1;
-    const UINT pos = hasDefenderPosition ? H3Position::Pack(_defHero->x, _defHero->y, _defHero->z) : 0;
+    const int battleX = _defHero->x;
+    const int battleY = _defHero->y;
+    const int battleZ = _defHero->z;
+    const BOOL hasDefenderPosition = battleX >= 0 && battleX <= 0x3FF && battleY >= 0 && battleY <= 0x3FF &&
+                                     battleZ >= 0 && battleZ <= 1;
+    // StartBattle needs the real map position: falling back to (0, 0, 0) can
+    // silently select different terrain and a different deterministic seed.
+    if (!hasDefenderPosition)
+        return -2;
+
+    const UINT pos = H3Position::Pack(battleX, battleY, battleZ);
     auto atkHero = &pseudoCmb.heroCopies[0]; // create hero copies to avoid modifying original heroes during combat
     CopyHero(atkHero, _attHero);
     constexpr H3Town *const town = nullptr;
     auto defHero = &pseudoCmb.heroCopies[1];
     CopyHero(defHero, _defHero);
 
-    int seed = -1; // generate seed
-
-    if (hasDefenderPosition)
-    {
-        seed = 0x3C907 * _defHero->x + 0x4386D * _defHero->y + 0x4BB5F * _defHero->z + 0x25EA7;
-        THISCALL_1(void, 0x50C7B0, seed);
-    }
+    // Use a stable battle seed without reseeding the game's global RNG. The
+    // battle setup may also derive its battlefield seed from `pos`.
+    const int seed = 0x3C907 * battleX + 0x4386D * battleY + 0x4BB5F * battleZ + 0x25EA7;
 
     constexpr BOOL combatIsLocal = TRUE;
     constexpr BOOL isBank = FALSE;
@@ -206,6 +230,11 @@ char __stdcall CombatEmulator::GameMgr_CreateSaveGameFile(HiHook *h, H3Game *gam
 void __stdcall CombatMgr_ChooseSpecialTerrain(HiHook *h, H3CombatManager *cmb)
 {
     if (!pseudoCmb.inCombat)
+        return THISCALL_1(void, h->GetDefaultFunc(), cmb);
+
+    // -1 means "use the game's normal terrain selection". Forcing -1 into
+    // the manager disabled terrain effects instead of preserving map rules.
+    if (pseudoCmb.specialTerrain < 0)
         return THISCALL_1(void, h->GetDefaultFunc(), cmb);
 
     cmb->specialTerrain = pseudoCmb.specialTerrain;
