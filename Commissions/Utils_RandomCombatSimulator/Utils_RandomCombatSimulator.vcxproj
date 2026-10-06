@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{892EA49F-91D7-4C5B-B4E4-029F67F270A2}</ProjectGuid>
+    <RootNamespace>UtilsRandomCombatSimulator</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <!-- Microsoft.Cpp.Default.props automatically imports Commissions/Directory.Build.props. -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <PluginModName>Random Combat Simulator</PluginModName>
+    <PluginOutDir>$(LocalGamePath)\Mods\$(PluginModName)\eraplugins\</PluginOutDir>
+    <LanguageStandard>stdcpp17</LanguageStandard>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup>
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="CombatParameters.h" />
+    <ClInclude Include="EquipmentSelector.h" />
+    <ClInclude Include="MenuLaunchRequest.h" />
+    <ClInclude Include="RandomCombatSimulator.h" />
+    <ClCompile Include="..\..\headers\Era\era.cpp" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="RandomCombatSimulator.cpp" />
+    <None Include="README.md" />
+    <None Include="validation\MenuLaunchRequestTest.cpp" />
+    <None Include="validation\CombatParametersTest.cpp" />
+    <ModFile Include="mod\**\*" />
+    <None Include="@(ModFile)" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="DeploySimulatorModFiles" AfterTargets="Build">
+    <Copy SourceFiles="@(ModFile)" DestinationFiles="@(ModFile->'$(OutDir)..\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

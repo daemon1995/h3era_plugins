@@ -107,7 +107,7 @@ void StretchBackground(H3LoadedPcx16 *destination, H3LoadedPcx16 *source, int wi
 // MainLoop has just composed the original 800x600 menu background at this
 // point. Publish its wide copy now; the quick-start scenario constructor may
 // alter the draw buffer afterwards, but its Run() (and thus screen redraw) is
-// skipped by quickStart::StartSelectedMap.
+// skipped by Utils_RandomCombatSimulator::StartSelectedMap.
 _LHF_(ExpandMainMenuBackground)
 {
     H3LoadedPcx16 *drawBuffer = P_WindowManager->GetDrawBuffer();
@@ -138,150 +138,6 @@ _LHF_(ExpandMainMenuBackground)
 }
 
 } // namespace widerMenu
-namespace quickStart
-{
-// Both features are independent. Put the required map in the game's Maps directory.
-constexpr bool START_MAP_FROM_MAIN_MENU = true;
-constexpr LPCSTR MAP_FILE_NAME = "Arrogance.h3m";
-constexpr bool START_BATTLE_ON_GAME_ENTER = true;
-
-constexpr int MAIN_MENU_NEW_GAME = Era::EGameMenuTarget::PAGE_NEW_GAME;
-constexpr int NEW_GAME_SINGLE_SCENARIO = 100;
-constexpr int DIALOG_OK = 30722;
-constexpr DWORD MAIN_MENU_JUMP_TO = 0x00697728;
-constexpr DWORD SELECT_SCENARIO_START_GAME = 0x0058BFB0;
-constexpr DWORD ADVENTURE_MANAGER_START_BATTLE = 0x75ADD9;
-
-bool autoStartMapPending = START_MAP_FROM_MAIN_MENU;
-bool battleStartPending = false;
-bool battleStartedForCurrentMap = false;
-
-LPCSTR FileNamePart(LPCSTR path)
-{
-    LPCSTR result = path;
-    if (!path)
-        return h3_NullString;
-
-    for (LPCSTR cursor = path; *cursor; ++cursor)
-    {
-        if (*cursor == '\\' || *cursor == '/')
-            result = cursor + 1;
-    }
-    return result;
-}
-
-// This is the New Game / Campaign / Tutorial screen. Selecting item 100
-// follows the game's normal single-scenario path without showing the screen.
-void __stdcall ChooseSingleScenario(HiHook *hook, H3BaseDlg *dlg)
-{
-    if (autoStartMapPending)
-    {
-        P_WindowManager->resultItemID = NEW_GAME_SINGLE_SCENARIO;
-        return;
-    }
-
-    THISCALL_1(void, hook->GetDefaultFunc(), dlg);
-}
-
-// The scenario dialog constructor has already enumerated Maps and initialized
-// all player settings. Select the requested map and invoke the same routine as
-// the dialog's Begin button (0x58BFB0).
-void __stdcall StartSelectedMap(HiHook *hook, H3SelectScenarioDialog *dlg, int runMode)
-{
-    if (autoStartMapPending)
-    {
-        for (UINT i = 0; i < dlg->currentMapsList.Size(); ++i)
-        {
-            LPCSTR fileName = dlg->currentMapsList[i].playersInfo.filename;
-            if (libc::strcmpi(FileNamePart(fileName), MAP_FILE_NAME) == 0)
-            {
-                dlg->UpdateForSelectedScenario(i, FALSE);
-
-                if (THISCALL_1(char, SELECT_SCENARIO_START_GAME, dlg))
-                {
-                    autoStartMapPending = false;
-                    P_WindowManager->resultItemID = DIALOG_OK;
-                    // Do not call H3SelectScenarioDialog::Run below. Its dialog
-                    // loop reaches H3BaseDlg::Redraw at 0x602E54; returning here
-                    // keeps the prepared dialog strictly in the draw buffer.
-                    return;
-                }
-                break;
-            }
-        }
-
-        // Missing/invalid map: return to the regular scenario dialog so the
-        // user can choose a map instead of being left in a broken menu state.
-        autoStartMapPending = false;
-    }
-
-    THISCALL_2(void, hook->GetDefaultFunc(), dlg, runMode);
-}
-
-H3Hero *FindAttackingHero()
-{
-    H3Player *player = P_Game->GetPlayer();
-    if (!player)
-        return nullptr;
-
-    const int heroId = player->heroIDs[3];
-    H3Hero *hero = nullptr;
-    if (heroId < 0 || heroId >= 156)
-        hero = P_Game->GetHero(heroId);
-    if (hero)
-        return hero;
-
-    hero = player->GetActiveHero();
-    if (hero)
-        return hero;
-
-    for (int i = 0; i < 8; ++i)
-    {
-        const int heroId = player->heroIDs[i];
-        if (heroId < 0 || heroId >= 156)
-            continue;
-
-        hero = P_Game->GetHero(heroId);
-        if (hero)
-            return hero;
-    }
-    return nullptr;
-}
-
-bool StartBattleAtMapBeginning()
-{
-    if (!START_BATTLE_ON_GAME_ENTER || battleStartedForCurrentMap)
-        return true;
-
-    H3Hero *attacker = FindAttackingHero();
-    H3AdventureManager *advManager = P_AdventureManager->Get();
-    if (!attacker || !advManager || !attacker->army.HasCreatures())
-        return false;
-
-    battleStartedForCurrentMap = true;
-
-    H3Army defenders;
-    defenders.ClearAndGive(rand() % NH3Creatures::CHAOS_HYDRA, rand() % 0x0FFF);
-    THISCALL_11(int, ADVENTURE_MANAGER_START_BATTLE, advManager, attacker->mixedPosition.Mixed(), attacker,
-                &attacker->army, -1, nullptr, nullptr, &defenders, -1, TRUE, FALSE);
-    return true;
-}
-
-// OnGameEnter is emitted before the executive manager makes the adventure
-// manager active. Starting a battle there leaves both managers running. The
-// first map-screen message is late enough: CallManager can now disable the
-// adventure manager, run combat exclusively and restore the map afterwards.
-int __stdcall StartPendingBattle(HiHook *hook, H3AdventureManager *advManager, H3Msg *msg)
-{
-    if (battleStartPending && advManager->status == H3Manager::ACTIVE && P_ExecutiveMgr->active_mgr == advManager)
-    {
-        if (StartBattleAtMapBeginning())
-            battleStartPending = false;
-    }
-
-    return THISCALL_2(int, hook->GetDefaultFunc(), advManager, msg);
-}
-} // namespace quickStart
 
 void ShowCreatureTableDialog();
 
@@ -464,17 +320,6 @@ void InitNewFont()
         // fontPtr = H3Font::Load(fontName);
     }
 }
-_ERH_(OnGameEnter)
-{
-    quickStart::battleStartedForCurrentMap = false;
-    quickStart::battleStartPending = quickStart::START_BATTLE_ON_GAME_ENTER;
-}
-
-_ERH_(OnGameLeave)
-{
-    quickStart::battleStartPending = false;
-    quickStart::battleStartedForCurrentMap = false;
-}
 
 _LHF_(HooksInit)
 {
@@ -485,23 +330,6 @@ _LHF_(HooksInit)
         InitNewFont();
         return EXEC_DEFAULT;
     }
-
-    if (quickStart::START_MAP_FROM_MAIN_MENU && 0)
-    {
-        IntAt(0x04CA645 + 6) = 1;
-        IntAt(0x04CA37F + 6) = 1;
-        _PI->WriteJmp(0x04ED933, 0x04ED9D5);
-        _PI->WriteJmp(0x04ED9E0, 0x04EDAD2);
-
-        _PI->WriteHiHook(0x004D5B20, THISCALL_, quickStart::ChooseSingleScenario);
-        _PI->WriteHiHook(0x00584EC0, THISCALL_, quickStart::StartSelectedMap);
-
-        // MainLoop consumes this value and enters its normal NEW_GAME branch.
-        IntAt(quickStart::MAIN_MENU_JUMP_TO) = Era::EGameMenuTarget::PAGE_NEW_GAME;
-    }
-
-    if (quickStart::START_BATTLE_ON_GAME_ENTER && 0)
-        _PI->WriteHiHook(0x00408710, THISCALL_, quickStart::StartPendingBattle);
 
     if (widerMenu::ENABLE_WIDER_MAIN_MENU && 0)
     {
@@ -611,8 +439,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         _PI = globalPatcher->CreateInstance(dllText::instanceName);
         Era::ConnectEra(hModule, dllText::instanceName);
         _REH_(OnAfterWog);
-        _REH_(OnGameEnter);
-        _REH_(OnGameLeave);
         //  EraJSTest();
 
         _PI->WriteLoHook(0x4EEAF2, HooksInit);
