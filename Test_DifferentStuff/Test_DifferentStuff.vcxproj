@@ -20,12 +20,14 @@
   <ItemGroup>
     <ClInclude Include="CombatEmulator.h" />
     <ClInclude Include="CombatHooks.h" />
+    <ClInclude Include="BattleRedrawTrace.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="TestDlg.h" />
     <ClInclude Include="TTFontToFont.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="BattleRedrawTrace.cpp" />
     <ClCompile Include="TestDlg.cpp" />
     <ClCompile Include="TTFontToFont.cpp" />
   </ItemGroup>

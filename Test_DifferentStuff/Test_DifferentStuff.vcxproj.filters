@@ -24,6 +24,9 @@
     <ClInclude Include="CombatHooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BattleRedrawTrace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="CombatEmulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -33,6 +36,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BattleRedrawTrace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TestDlg.cpp">

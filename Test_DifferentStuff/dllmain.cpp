@@ -4,6 +4,7 @@
 #define ERA_MODLIST
 #define _WOG_
 #include "..\headers\Era\era.cpp"
+#include "BattleRedrawTrace.h"
 #include "TestDlg.h"
 #include "framework.h"
 
@@ -323,6 +324,8 @@ void InitNewFont()
 
 _LHF_(HooksInit)
 {
+
+    InstallBattleRedrawTrace(_PI);
 
     // load new font
     if (0)
