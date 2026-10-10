@@ -41,6 +41,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_DifferentStuff", "Test
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_BasePlugin", "Test_BasePlugin\Test_BasePlugin.vcxproj", "{A1B2C3D4-E5F6-47A8-9B0C-1234567890CD}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_RandomMapGeneratorFromSources", "Test_RandomMapGeneratorFromSources\Test_RandomMapGeneratorFromSources.vcxproj", "{6D1D13E8-0C92-4E6E-A5D4-87A81F74C195}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapToDbgmap", "tools\MapToDbgmap\MapToDbgmap.vcxproj", "{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_SpellsDescription", "Interface_SpellsDescription\Interface_SpellsDescription.vcxproj", "{60495B57-B79A-4944-8547-0FC9576E8F12}"
@@ -137,6 +139,10 @@ Global
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890CD}.Debug|x86.Build.0 = Debug|Win32
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890CD}.Release|x86.ActiveCfg = Release|Win32
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890CD}.Release|x86.Build.0 = Release|Win32
+		{6D1D13E8-0C92-4E6E-A5D4-87A81F74C195}.Debug|x86.ActiveCfg = Debug|Win32
+		{6D1D13E8-0C92-4E6E-A5D4-87A81F74C195}.Debug|x86.Build.0 = Debug|Win32
+		{6D1D13E8-0C92-4E6E-A5D4-87A81F74C195}.Release|x86.ActiveCfg = Release|Win32
+		{6D1D13E8-0C92-4E6E-A5D4-87A81F74C195}.Release|x86.Build.0 = Release|Win32
 		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Debug|x86.ActiveCfg = Release|Win32
 		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.ActiveCfg = Release|Win32
 		{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}.Release|x86.Build.0 = Release|Win32
