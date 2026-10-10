@@ -1,4 +1,5 @@
 #include "SystemOptionsDlg.h"
+#include "BattleSave.h"
 #include "SoundSettings.h"
 
 #pragma comment(linker, "/EXPORT:RegisterErmCallbackButton=_RegisterErmCallbackButton@16")
@@ -428,6 +429,15 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         itemId += radioNums;
         auto radioBox = page->CreateSetting<RadioBoxSetting>(radioInfo);
         radioBox->value.isBlocked = isTutorial || callType == eDlgCallSource::COMBAT;
+        SettingsInfo battleSaveInfo{extraConfig.battleSave.keyName,
+                                    {rCheckboxX, rCheckboxY + baseSettingHeight * (radioNums + 2)},
+                                    itemId++,
+                                    &extraConfig.battleSave.value,
+                                    ERA_OPT(map, battleSave, name),
+                                    ERA_OPT(map, battleSave, hint),
+                                    !battleSave::IsAvailable(),
+                                    &extraConfig.battleSave};
+        page->CreateSetting<CheckBoxSetting>(battleSaveInfo);
         m_pages.emplace_back(page);
     }
 
@@ -827,6 +837,7 @@ SystemOptionsDlg::~SystemOptionsDlg()
         }
     }
     extraConfig.SaveIfDirty(TRUE);
+    CDECL_0(LONG, 0x0050C370); // LONG __cdecl j_WriteRegistry()
     for (auto *page : m_pages)
         delete page;
 

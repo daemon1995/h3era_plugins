@@ -20,15 +20,14 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
         eQuickCombatType_QuickCombatWithoutAutoSpells = 2,
         eQuickCombatType_Ask = 3
     };
-    LPCSTR varNames[] = {"battle_humanOnly", "battle_isNetwork", "battle_aiOnly"};
+    const auto combatManager = P_CombatManager->Get();
+    if (!combatManager)
+        return;
 
-    for (auto &varName : varNames)
-    {
-        if (Era::GetAssocVarIntValue(varName))
-        {
-            return;
-        }
-    }
+    const bool sidesHaveSameHumanStatus = bool(combatManager->isHuman[0]) == bool(combatManager->isHuman[1]);
+    const bool isNetworkBattle = IntAt(0x69959C) != 0; // o_NetworkGame
+    if (sidesHaveSameHumanStatus || isNetworkBattle)
+        return;
 
     auto &config = OriginalConfig::Get();
     if (P_AutoSolo)
@@ -115,20 +114,25 @@ void CombatSettings::FinishBattleInstantly() noexcept
 
 int __stdcall CombatSettings::CombatManager_ProcessMessage(HiHook *hook, H3CombatManager *combatManager, H3Msg *msg)
 {
-    if (msg && msg->IsKeyDown() && msg->GetKey() == eVKey::H3VK_Q &&
-        bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
-    {
-        bool translated = false;
-        LPCSTR question = EraJS::read("era.opt.combat.autoQuick.question", translated);
-        if (!translated)
-            question = EraJS::read("wnd.combat.finish_question", translated);
-        if (!translated)
-            question = "Finish with Quick Combat?";
 
-        if (H3Messagebox::Choice(question))
+    if (msg && msg->IsKeyDown() && bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
+    {
+        if (msg->GetKey() == eVKey::H3VK_L)
         {
-            FinishBattleInstantly();
-            return TRUE;
+            // Match the battle hotkey behavior: Ctrl+L skips confirmation, L asks first.
+            if (msg->CtrlPressed() || H3Messagebox::Choice(P_GeneralText->GetText(69)))
+                Era::FastQuitToGameMenu(Era::EGameMenuTarget::PAGE_LOAD_GAME);
+            return TRUE; // prevent the game's default handling, even if the dialog was declined
+        }
+
+        if (msg->GetKey() == eVKey::H3VK_Q)
+        {
+            LPCSTR question = EraJS::read("era.opt.combat.autoQuick.question");
+            if (H3Messagebox::Choice(question))
+            {
+                FinishBattleInstantly();
+                return TRUE;
+            }
         }
     }
     return THISCALL_2(int, hook->GetDefaultFunc(), combatManager, msg);
@@ -208,7 +212,7 @@ void CombatSettings::CreatePatches() noexcept
     _pi->WriteByte(0x50B556 + 2, speedsCount - 1); // NormalizeRegistry ( if ( BattleSpeed < 0 || BattleSpeed > 2->9 ))
 
     // Q and the optional instant auto-combat button share WND's quick finish.
-    _pi->WriteHiHook(0x473F55, CALL_, EXTENDED_, THISCALL_, CombatManager_ProcessMessage);
+    _pi->WriteHiHook(0x473A00, SPLICE_, EXTENDED_, THISCALL_, CombatManager_ProcessMessage);
     _pi->WriteLoHook(0x47478A, CombatManager_AutoCombatButton);
     _pi->WriteLoHook(0x476DA5, CombatManager_EndBattle);
 

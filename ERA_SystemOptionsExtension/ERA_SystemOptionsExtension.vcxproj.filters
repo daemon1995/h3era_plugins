@@ -26,6 +26,9 @@
     <ClInclude Include="CombatSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BattleSave.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="QuickCombatState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -64,8 +67,16 @@
     <ClCompile Include="MapScroller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BattleSave.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ConfigManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BattleSave.LICENSE" />
+    <None Include="BattleSave.tests.cpp" />
+    <None Include="run-battlesave-tests.cmd" />
   </ItemGroup>
 </Project>

@@ -18,6 +18,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClInclude Include="BattleSave.h" />
     <ClInclude Include="CombatCreatureHealthBar.h" />
     <ClInclude Include="CombatSettings.h" />
     <ClInclude Include="QuickCombatState.h" />
@@ -31,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="BattleSave.cpp" />
     <ClCompile Include="CombatCreatureHealthBar.cpp" />
     <ClCompile Include="CombatSettings.cpp" />
     <ClCompile Include="ConfigManager.cpp" />
@@ -38,6 +40,11 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MapScroller.cpp" />
     <ClCompile Include="SystemOptionsDlg.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BattleSave.LICENSE" />
+    <None Include="BattleSave.tests.cpp" />
+    <None Include="run-battlesave-tests.cmd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

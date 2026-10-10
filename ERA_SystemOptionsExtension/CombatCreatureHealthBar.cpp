@@ -3,6 +3,8 @@
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
+#include <cstdint>
+#include <cstring>
 #include <initializer_list>
 
 void __stdcall ShowHealthBarDlg()
@@ -21,6 +23,172 @@ constexpr float HP_LABEL_FILL = 0.4f;
 constexpr float HP_LABEL_LOSS = 0.975f;
 constexpr float HP_LABEL_SATURATION = 0.8f; // idk.mb set 1
 constexpr int HP_LABEL_MAX_OFFSET = 18;
+namespace
+{
+constexpr int COMBAT_SIDES = 2;
+constexpr int COMBAT_STACKS_PER_SIDE = 21;
+constexpr int COMBAT_STACK_COUNT = COMBAT_SIDES * COMBAT_STACKS_PER_SIDE;
+
+struct StackHealthSnapshot
+{
+    INT32 numberAlive;
+    INT32 healthLost;
+    INT32 maxHp;
+    std::int64_t totalHp;
+};
+
+struct PendingDamageSnapshot
+{
+    bool active;
+    StackHealthSnapshot current;
+};
+
+struct DamageAnimationContext
+{
+    H3CombatManager *manager;
+    bool ownsPending;
+    PendingDamageSnapshot snapshots[COMBAT_STACK_COUNT];
+    DamageAnimationContext *previous;
+};
+
+H3CombatManager *pendingDamageManager = nullptr;
+PendingDamageSnapshot pendingDamage[COMBAT_STACK_COUNT] = {};
+DamageAnimationContext *activeDamageAnimation = nullptr;
+
+std::int64_t TotalHitPoints(INT32 numberAlive, INT32 healthLost, INT32 maxHp) noexcept
+{
+    return static_cast<std::int64_t>(numberAlive) * maxHp - healthLost;
+}
+
+StackHealthSnapshot CaptureStackHealth(const H3CombatCreature *stack) noexcept
+{
+    const INT32 maxHp = stack->MaxHitPoints();
+    return {stack->numberAlive, stack->healthLost, maxHp,
+            TotalHitPoints(stack->numberAlive, stack->healthLost, maxHp)};
+}
+
+int FindStackIndex(const H3CombatManager *manager, const H3CombatCreature *stack) noexcept
+{
+    if (!manager || !stack)
+        return -1;
+
+    for (int side = 0; side < COMBAT_SIDES; ++side)
+    {
+        for (int index = 0; index < COMBAT_STACKS_PER_SIDE; ++index)
+        {
+            if (&manager->stacks[side][index] == stack)
+                return side * COMBAT_STACKS_PER_SIDE + index;
+        }
+    }
+    return -1;
+}
+
+const StackHealthSnapshot *FindDamageAnimationSnapshot(const H3CombatManager *manager,
+                                                       const H3CombatCreature *stack) noexcept
+{
+    const auto context = activeDamageAnimation;
+    if (!context || context->manager != manager || !stack)
+        return nullptr;
+
+    const int stackIndex = FindStackIndex(manager, stack);
+    if (stackIndex < 0 || !context->snapshots[stackIndex].active)
+        return nullptr;
+    return &context->snapshots[stackIndex].current;
+}
+
+int __stdcall BattleStack_DoPhysicalDamage(HiHook *hook, H3CombatCreature *stack, int damage)
+{
+    auto &settings = CombatHints::Get().settings;
+    H3CombatManager *manager = H3CombatManager::Get();
+    const int stackIndex = FindStackIndex(manager, stack);
+    const bool shouldTrack = settings.isEnabled && damage > 0 && stackIndex >= 0;
+    bool startedPending = false;
+    StackHealthSnapshot before = {};
+
+    if (shouldTrack)
+    {
+        before = CaptureStackHealth(stack);
+        if (pendingDamageManager != manager)
+        {
+            std::memset(pendingDamage, 0, sizeof(pendingDamage));
+            pendingDamageManager = manager;
+        }
+
+        if (!pendingDamage[stackIndex].active)
+        {
+            pendingDamage[stackIndex].current = before;
+            pendingDamage[stackIndex].active = true;
+            startedPending = true;
+        }
+    }
+
+    const int result = THISCALL_2(int, hook->GetDefaultFunc(), stack, damage);
+
+    if (shouldTrack)
+    {
+        const auto after = CaptureStackHealth(stack);
+        if (after.totalHp >= before.totalHp)
+        {
+            if (startedPending)
+                pendingDamage[stackIndex].active = false;
+        }
+        else
+        {
+            // DoPhysicalDamage is the hit event. Use the post-hit state for the
+            // redraw that follows it, including later hits in the same animation.
+            pendingDamage[stackIndex].current = after;
+            if (activeDamageAnimation && activeDamageAnimation->manager == manager &&
+                activeDamageAnimation->snapshots[stackIndex].active)
+            {
+                activeDamageAnimation->snapshots[stackIndex].current = after;
+            }
+        }
+    }
+    return result;
+}
+
+char __stdcall BattleMgr_DrawAction_Play(HiHook *hook, H3CombatManager *manager, int animationId,
+                                         int showCreatureDamaged)
+{
+    const bool isEnabled = CombatHints::Get().settings.isEnabled;
+    if (!manager || pendingDamageManager != manager)
+        return THISCALL_3(char, hook->GetDefaultFunc(), manager, animationId, showCreatureDamaged);
+    if (!isEnabled)
+    {
+        std::memset(pendingDamage, 0, sizeof(pendingDamage));
+        pendingDamageManager = nullptr;
+        return THISCALL_3(char, hook->GetDefaultFunc(), manager, animationId, showCreatureDamaged);
+    }
+
+    DamageAnimationContext context{};
+    context.manager = manager;
+    context.previous = activeDamageAnimation;
+    context.ownsPending = !context.previous || context.previous->manager != manager;
+    for (int index = 0; index < COMBAT_STACK_COUNT; ++index)
+    {
+        if (context.previous && context.previous->manager == manager && context.previous->snapshots[index].active)
+            context.snapshots[index] = context.previous->snapshots[index];
+        else
+            context.snapshots[index] = pendingDamage[index];
+    }
+
+    activeDamageAnimation = &context;
+    const char result = THISCALL_3(char, hook->GetDefaultFunc(), manager, animationId, showCreatureDamaged);
+    activeDamageAnimation = context.previous;
+
+    if (context.ownsPending)
+    {
+        for (int index = 0; index < COMBAT_STACK_COUNT; ++index)
+        {
+            if (!context.snapshots[index].active)
+                continue;
+
+            pendingDamage[index].active = false;
+        }
+    }
+    return result;
+}
+} // namespace
 CombatHints *CombatHints::instance = nullptr;
 CombatHints::CombatHints() : IGamePatch(globalPatcher->CreateInstance("EraPlugin.CombatHints.daemon_n"))
 {
@@ -42,6 +210,8 @@ void CombatHints::CreatePatches() noexcept
     {
 
         this->_pi->WriteLoHook(0x43E38B, BeforeBattleStackHintDraw);
+        this->_pi->WriteHiHook(0x443DB0, THISCALL_, BattleStack_DoPhysicalDamage);
+        this->_pi->WriteHiHook(0x468570, THISCALL_, BattleMgr_DrawAction_Play);
         //_PI->WriteLoHook(0x4682C0, BattleOptionsDlg);
         // blocked for new options dlg
         // this->_pi->WriteHiHook(0x4682C0, THISCALL_, BattleOptionsDlg_Show);
@@ -84,8 +254,13 @@ _LHF_(CombatHints::BeforeBattleStackHintDraw)
 {
     H3CombatCreature *stack = reinterpret_cast<H3CombatCreature *>(c->ebx);
     auto &settings = Get().settings;
+    const H3CombatManager *cmbMgr = H3CombatManager::Get();
+    const StackHealthSnapshot *actionSnapshot = FindDamageAnimationSnapshot(cmbMgr, stack);
+    const bool deferDamage = actionSnapshot && actionSnapshot->numberAlive > 0 && actionSnapshot->maxHp > 0 &&
+                             TotalHitPoints(stack->numberAlive, stack->healthLost, stack->MaxHitPoints()) <
+                                 actionSnapshot->totalHp;
 
-    if (stack && stack->numberAlive && settings.isEnabled)
+    if (stack && (stack->numberAlive || deferDamage) && settings.isEnabled)
     {
 
         // GetKeyState Call
@@ -107,11 +282,9 @@ _LHF_(CombatHints::BeforeBattleStackHintDraw)
 
             const int newLabelY = nativeLabelY + labelYOffset; // add border
 
-            const H3CombatManager *cmbMgr = H3CombatManager::Get();
-
             const BOOL labelDrawn =
                 THISCALL_4(BOOL, 0x495460, cmbMgr, cmbMgr->cmNumWinPcxLoaded, newLabelX, newLabelY); // draw label pcx
-            const int maxHp = stack->MaxHitPoints();
+            const int maxHp = deferDamage ? actionSnapshot->maxHp : stack->MaxHitPoints();
 
             // if origial hint was drawn this one will appear too
             if (labelDrawn && maxHp)
@@ -135,7 +308,8 @@ _LHF_(CombatHints::BeforeBattleStackHintDraw)
                     const int dlgX = cmbMgr->dlg->GetX();
                     const int dlgY = cmbMgr->dlg->GetY();
                     // count if it makes sense to draw health
-                    float fillPartF = static_cast<float>((maxHp - stack->healthLost)) * 28 / maxHp * 10;
+                    const int healthLost = deferDamage ? actionSnapshot->healthLost : stack->healthLost;
+                    float fillPartF = static_cast<float>((maxHp - healthLost)) * 28 / maxHp * 10;
                     bool hpRemainder = fillPartF > 4;
 
                     int drawWidth = static_cast<int>(fillPartF / 10 + hpRemainder);
