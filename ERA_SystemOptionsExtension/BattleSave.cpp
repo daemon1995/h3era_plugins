@@ -1,7 +1,7 @@
 // Based on igrik.BattleSave; adapted to the shared H3API and system options.
 // Original repository license: BattleSave.LICENSE.
-#include "framework.h"
 #include "BattleSave.h"
+#include "framework.h"
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -36,11 +36,10 @@ bool IsEnabled()
     return available && AdditionalConfig::Get().battleSave.value != 0;
 }
 
-static_assert(sizeof(H3Hero) == 0x492 && offsetof(H3Hero, maxMovement) == 0x49 &&
-              offsetof(H3Hero, dest_x) == 0x35 && offsetof(H3Hero, flags) == 0x105,
+static_assert(sizeof(H3Hero) == 0x492 && offsetof(H3Hero, maxMovement) == 0x49 && offsetof(H3Hero, dest_x) == 0x35 &&
+                  offsetof(H3Hero, flags) == 0x105,
               "Unexpected hero layout");
-static_assert(offsetof(H3Main, mainSetup) + offsetof(H3MainSetup, mapSize) == 0x1FC44,
-              "Unexpected map layout");
+static_assert(offsetof(H3Main, mainSetup) + offsetof(H3MainSetup, mapSize) == 0x1FC44, "Unexpected map layout");
 static_assert(offsetof(H3Main, mainSetup) + offsetof(H3MainSetup, hasUnderground) == 0x1FC48,
               "Unexpected underground flag layout");
 constexpr _ptr_ MOVE_HERO = 0x47FF00;
@@ -90,27 +89,21 @@ const char REPAIR_SECTION[] = "BattleSave.Repair.v1";
 const char DISCARD_SAVE_PATH[] = ".\\GAMES\\~BattleSave.failed.new";
 const char BATTLE_SAVE_NAME[] = "BATTLE!";
 
-const unsigned char MOVE_HERO_PROLOG[] =
-    {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x48, 0x53, 0x56, 0x57, 0x8B, 0xF9};
-const unsigned char DO_EVENT_PROLOG[] =
-    {0x55, 0x8B, 0xEC, 0xA1, 0xFC, 0xCC, 0x69, 0x00, 0x53, 0x56, 0x8B, 0xF1};
-const unsigned char DO_COMBAT_PROLOG[] =
-    {0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x68, 0x8F, 0xB9, 0x62, 0x00};
-const unsigned char GAME_SAVE_PROLOG[] =
-    {0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x68, 0x93, 0xC5, 0x62, 0x00};
-const unsigned char SAVE_PATH_INSTRUCTION[] =
-    {0x8D, 0x8D, 0xAC, 0xFB, 0xFF, 0xFF};
-const unsigned char SAVE_CLOSE_INSTRUCTION[] =
-    {0xFF, 0x15, 0x54, 0xA3, 0x63, 0x00};
-const unsigned char MARKED_SAVE_LOOKUP_INSTRUCTION[] =
-    {0x68, 0x8C, 0x33, 0x68, 0x00, 0x8B, 0xCB, 0xE8, 0xF9, 0xA2, 0x00, 0x00};
+const unsigned char MOVE_HERO_PROLOG[] = {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x48, 0x53, 0x56, 0x57, 0x8B, 0xF9};
+const unsigned char DO_EVENT_PROLOG[] = {0x55, 0x8B, 0xEC, 0xA1, 0xFC, 0xCC, 0x69, 0x00, 0x53, 0x56, 0x8B, 0xF1};
+const unsigned char DO_COMBAT_PROLOG[] = {0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x68, 0x8F, 0xB9, 0x62, 0x00};
+const unsigned char GAME_SAVE_PROLOG[] = {0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x68, 0x93, 0xC5, 0x62, 0x00};
+const unsigned char SAVE_PATH_INSTRUCTION[] = {0x8D, 0x8D, 0xAC, 0xFB, 0xFF, 0xFF};
+const unsigned char SAVE_CLOSE_INSTRUCTION[] = {0xFF, 0x15, 0x54, 0xA3, 0x63, 0x00};
+const unsigned char MARKED_SAVE_LOOKUP_INSTRUCTION[] = {0x68, 0x8C, 0x33, 0x68, 0x00, 0x8B,
+                                                        0xCB, 0xE8, 0xF9, 0xA2, 0x00, 0x00};
 
 struct RawExeVector
 {
-    void* allocator;
-    unsigned char* first;
-    unsigned char* last;
-    unsigned char* capacity;
+    void *allocator;
+    unsigned char *first;
+    unsigned char *last;
+    unsigned char *capacity;
 };
 
 enum MoveState
@@ -126,8 +119,8 @@ struct MovementTransaction
 {
     MoveState state;
     DWORD threadId;
-    H3MapItem* eventCell;
-    H3Hero* hero;
+    H3MapItem *eventCell;
+    H3Hero *hero;
     int heroId;
     int owner;
     int movementMax;
@@ -152,7 +145,7 @@ struct MovementChain
 {
     bool active;
     DWORD threadId;
-    H3Hero* hero;
+    H3Hero *hero;
     int heroId;
     int owner;
     short endX;
@@ -221,14 +214,14 @@ unsigned int g_eventDepth = 0;
 bool g_recoveryDone = false;
 unsigned char g_gzipBuffer[GZIP_BUFFER_SIZE];
 
-HiHook* g_moveHook = nullptr;
-HiHook* g_eventHook = nullptr;
-HiHook* g_combatHook = nullptr;
-HiHook* g_gameSaveHook = nullptr;
-LoHook* g_savePathHook = nullptr;
-LoHook* g_saveCloseHook = nullptr;
+HiHook *g_moveHook = nullptr;
+HiHook *g_eventHook = nullptr;
+HiHook *g_combatHook = nullptr;
+HiHook *g_gameSaveHook = nullptr;
+LoHook *g_savePathHook = nullptr;
+LoHook *g_saveCloseHook = nullptr;
 
-size_t BoundedLength(const char* text, size_t limit)
+size_t BoundedLength(const char *text, size_t limit)
 {
     if (!text)
         return limit;
@@ -239,7 +232,7 @@ size_t BoundedLength(const char* text, size_t limit)
     return length;
 }
 
-bool CopyString(char* destination, size_t destinationSize, const char* source)
+bool CopyString(char *destination, size_t destinationSize, const char *source)
 {
     const size_t length = BoundedLength(source, destinationSize);
     if (!destination || !destinationSize || length >= destinationSize)
@@ -249,12 +242,12 @@ bool CopyString(char* destination, size_t destinationSize, const char* source)
     return true;
 }
 
-bool BytesEqual(_ptr_ address, const unsigned char* expected, size_t size)
+bool BytesEqual(_ptr_ address, const unsigned char *expected, size_t size)
 {
     bool equal = false;
     __try
     {
-        equal = std::memcmp(reinterpret_cast<const void*>(address), expected, size) == 0;
+        equal = std::memcmp(reinterpret_cast<const void *>(address), expected, size) == 0;
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -268,14 +261,12 @@ void MarkBattleSaveForLoadDialog()
     // The stock dialog consumes this buffer only after the list is rebuilt.
     // Validate that the loaded code still pushes this exact buffer into the
     // native lookup routine before updating the optional UI state.
-    if (!BytesEqual(MARKED_SAVE_LOOKUP_SITE, MARKED_SAVE_LOOKUP_INSTRUCTION,
-                    sizeof(MARKED_SAVE_LOOKUP_INSTRUCTION)))
+    if (!BytesEqual(MARKED_SAVE_LOOKUP_SITE, MARKED_SAVE_LOOKUP_INSTRUCTION, sizeof(MARKED_SAVE_LOOKUP_INSTRUCTION)))
         return;
 
     __try
     {
-        CopyString(reinterpret_cast<char*>(MARKED_SAVEGAME_NAME),
-                   MARKED_SAVEGAME_NAME_CAPACITY, BATTLE_SAVE_NAME);
+        CopyString(reinterpret_cast<char *>(MARKED_SAVEGAME_NAME), MARKED_SAVEGAME_NAME_CAPACITY, BATTLE_SAVE_NAME);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -291,14 +282,12 @@ bool ValidatePe32Image()
     bool valid = false;
     __try
     {
-        const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(module);
-        const IMAGE_NT_HEADERS32* nt = reinterpret_cast<const IMAGE_NT_HEADERS32*>(
-            reinterpret_cast<const unsigned char*>(module) + dos->e_lfanew);
-        valid = dos->e_magic == IMAGE_DOS_SIGNATURE &&
-                nt->Signature == IMAGE_NT_SIGNATURE &&
+        const IMAGE_DOS_HEADER *dos = reinterpret_cast<const IMAGE_DOS_HEADER *>(module);
+        const IMAGE_NT_HEADERS32 *nt = reinterpret_cast<const IMAGE_NT_HEADERS32 *>(
+            reinterpret_cast<const unsigned char *>(module) + dos->e_lfanew);
+        valid = dos->e_magic == IMAGE_DOS_SIGNATURE && nt->Signature == IMAGE_NT_SIGNATURE &&
                 nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 &&
-                nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
-                nt->OptionalHeader.ImageBase == 0x400000 &&
+                nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC && nt->OptionalHeader.ImageBase == 0x400000 &&
                 nt->OptionalHeader.SizeOfImage >= 0x2500000;
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
@@ -308,12 +297,9 @@ bool ValidatePe32Image()
     return valid;
 }
 
-bool ValidateHiHookSite(_ptr_ address,
-                        const unsigned char* original,
-                        size_t originalSize,
-                        const char* allowedOwner)
+bool ValidateHiHookSite(_ptr_ address, const unsigned char *original, size_t originalSize, const char *allowedOwner)
 {
-    Patch* patch = globalPatcher->GetFirstPatchAt(address);
+    Patch *patch = globalPatcher->GetFirstPatchAt(address);
     if (!patch)
         return BytesEqual(address, original, originalSize);
 
@@ -322,7 +308,7 @@ bool ValidateHiHookSite(_ptr_ address,
         if (!patch->IsApplied() || patch->GetAddress() != address || patch->GetType() != HIHOOK_)
             return false;
 
-        const char* owner = patch->GetOwner();
+        const char *owner = patch->GetOwner();
         if (!allowedOwner || !owner || std::strcmp(owner, allowedOwner) != 0)
             return false;
     }
@@ -334,22 +320,20 @@ bool ValidateSaveSites()
     return globalPatcher->GetFirstPatchAt(SAVE_PATH_READY) == nullptr &&
            BytesEqual(SAVE_PATH_READY, SAVE_PATH_INSTRUCTION, sizeof(SAVE_PATH_INSTRUCTION)) &&
            globalPatcher->GetFirstPatchAt(SAVE_CLOSE_DONE) == nullptr &&
-           BytesEqual(SAVE_CLOSE_DONE, SAVE_CLOSE_INSTRUCTION,
-                      sizeof(SAVE_CLOSE_INSTRUCTION));
+           BytesEqual(SAVE_CLOSE_DONE, SAVE_CLOSE_INSTRUCTION, sizeof(SAVE_CLOSE_INSTRUCTION));
 }
 
-bool IsLocalHumanHero(H3Hero* hero)
+bool IsLocalHumanHero(H3Hero *hero)
 {
-    if (!hero || !H3Main::Get() || hero->id < 0 || hero->id >= MAX_HEROES ||
-        hero->owner < 0 || hero->owner >= MAX_PLAYERS)
+    if (!hero || !H3Main::Get() || hero->id < 0 || hero->id >= MAX_HEROES || hero->owner < 0 ||
+        hero->owner >= MAX_PLAYERS)
         return false;
 
-    H3Player* player = &H3Main::Get()->players[hero->owner];
-    return player && player->isLocal && player->isHuman &&
-           H3Main::Get()->GetPlayerID() == hero->owner;
+    H3Player *player = &H3Main::Get()->players[hero->owner];
+    return player && player->isLocal && player->isHuman && H3Main::Get()->GetPlayerID() == hero->owner;
 }
 
-bool ReadVectorCount(RawExeVector* vector, unsigned int itemSize, unsigned int& count)
+bool ReadVectorCount(RawExeVector *vector, unsigned int itemSize, unsigned int &count)
 {
     if (!vector || !itemSize)
         return false;
@@ -362,8 +346,8 @@ bool ReadVectorCount(RawExeVector* vector, unsigned int itemSize, unsigned int& 
             count = 0;
             valid = true;
         }
-        else if (vector->first && vector->last && vector->capacity &&
-                 vector->first <= vector->last && vector->last <= vector->capacity)
+        else if (vector->first && vector->last && vector->capacity && vector->first <= vector->last &&
+                 vector->last <= vector->capacity)
         {
             const size_t used = static_cast<size_t>(vector->last - vector->first);
             if (used % itemSize == 0)
@@ -380,49 +364,38 @@ bool ReadVectorCount(RawExeVector* vector, unsigned int itemSize, unsigned int& 
     return valid;
 }
 
-RawExeVector* RecordedEvents()
+RawExeVector *RecordedEvents()
 {
-    return reinterpret_cast<RawExeVector*>(reinterpret_cast<unsigned char*>(H3Main::Get()) +
-                                           RECORDED_EVENTS_OFFSET);
+    return reinterpret_cast<RawExeVector *>(reinterpret_cast<unsigned char *>(H3Main::Get()) + RECORDED_EVENTS_OFFSET);
 }
 
-RawExeVector* BoatPool()
+RawExeVector *BoatPool()
 {
-    return reinterpret_cast<RawExeVector*>(reinterpret_cast<unsigned char*>(H3Main::Get()) +
-                                           BOAT_POOL_OFFSET);
+    return reinterpret_cast<RawExeVector *>(reinterpret_cast<unsigned char *>(H3Main::Get()) + BOAT_POOL_OFFSET);
 }
 
-bool CaptureRecordedEventCount(unsigned int& count)
+bool CaptureRecordedEventCount(unsigned int &count)
 {
-    return H3Main::Get() && ReadVectorCount(RecordedEvents(), sizeof(void*), count);
+    return H3Main::Get() && ReadVectorCount(RecordedEvents(), sizeof(void *), count);
 }
 
-bool BuildOwnedPaths(const char* finalPath)
+bool BuildOwnedPaths(const char *finalPath)
 {
     if (!CopyString(g_file.finalPath, sizeof(g_file.finalPath), finalPath))
         return false;
 
-    const int stageResult = _snprintf_s(
-        g_file.stagePath,
-        sizeof(g_file.stagePath),
-        _TRUNCATE,
-        "%s.BattleSave.%lu.%u.new",
-        g_file.finalPath,
-        static_cast<unsigned long>(GetCurrentProcessId()),
-        ++g_fileSerial);
-    const int backupResult = _snprintf_s(
-        g_file.backupPath,
-        sizeof(g_file.backupPath),
-        _TRUNCATE,
-        "%s.BattleSave.old",
-        g_file.finalPath);
+    const int stageResult =
+        _snprintf_s(g_file.stagePath, sizeof(g_file.stagePath), _TRUNCATE, "%s.BattleSave.%lu.%u.new", g_file.finalPath,
+                    static_cast<unsigned long>(GetCurrentProcessId()), ++g_fileSerial);
+    const int backupResult =
+        _snprintf_s(g_file.backupPath, sizeof(g_file.backupPath), _TRUNCATE, "%s.BattleSave.old", g_file.finalPath);
 
     return stageResult >= 0 && backupResult >= 0 &&
            BoundedLength(g_file.stagePath, sizeof(g_file.stagePath)) < sizeof(g_file.stagePath) &&
            BoundedLength(g_file.backupPath, sizeof(g_file.backupPath)) < sizeof(g_file.backupPath);
 }
 
-bool ReadFileFingerprint(const char* path, unsigned __int64& size, FILETIME& writeTime)
+bool ReadFileFingerprint(const char *path, unsigned __int64 &size, FILETIME &writeTime)
 {
     WIN32_FILE_ATTRIBUTE_DATA data = {};
     if (!path || !GetFileAttributesExA(path, GetFileExInfoStandard, &data))
@@ -439,28 +412,25 @@ bool ReadFileFingerprint(const char* path, unsigned __int64& size, FILETIME& wri
     return true;
 }
 
-bool MatchesFileFingerprint(const char* path, unsigned __int64 expectedSize,
-                            const FILETIME& expectedWriteTime)
+bool MatchesFileFingerprint(const char *path, unsigned __int64 expectedSize, const FILETIME &expectedWriteTime)
 {
     unsigned __int64 actualSize = 0;
     FILETIME actualWriteTime = {};
-    return ReadFileFingerprint(path, actualSize, actualWriteTime) &&
-           actualSize == expectedSize &&
+    return ReadFileFingerprint(path, actualSize, actualWriteTime) && actualSize == expectedSize &&
            CompareFileTime(&actualWriteTime, &expectedWriteTime) == 0;
 }
 
-bool FileHasSize(const char* path, unsigned __int64 expectedSize)
+bool FileHasSize(const char *path, unsigned __int64 expectedSize)
 {
     unsigned __int64 actualSize = 0;
     FILETIME actualWriteTime = {};
-    return ReadFileFingerprint(path, actualSize, actualWriteTime) &&
-           actualSize == expectedSize;
+    return ReadFileFingerprint(path, actualSize, actualWriteTime) && actualSize == expectedSize;
 }
 
-bool QuickCheckSaveFile(const char* path)
+bool QuickCheckSaveFile(const char *path)
 {
-    HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE file =
+        CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE)
         return false;
 
@@ -471,20 +441,19 @@ bool QuickCheckSaveFile(const char* path)
     LARGE_INTEGER trailerOffset = {};
     trailerOffset.QuadPart = -8;
 
-    const bool valid = GetFileSizeEx(file, &size) != FALSE && size.QuadPart >= 18 &&
-                       ReadFile(file, header, sizeof(header), &bytesRead, nullptr) != FALSE &&
-                       bytesRead == sizeof(header) && header[0] == 0x1F && header[1] == 0x8B &&
-                       SetFilePointerEx(file, trailerOffset, nullptr, FILE_END) != FALSE &&
-                       ReadFile(file, trailer, sizeof(trailer), &bytesRead, nullptr) != FALSE &&
-                       bytesRead == sizeof(trailer);
+    const bool valid =
+        GetFileSizeEx(file, &size) != FALSE && size.QuadPart >= 18 &&
+        ReadFile(file, header, sizeof(header), &bytesRead, nullptr) != FALSE && bytesRead == sizeof(header) &&
+        header[0] == 0x1F && header[1] == 0x8B && SetFilePointerEx(file, trailerOffset, nullptr, FILE_END) != FALSE &&
+        ReadFile(file, trailer, sizeof(trailer), &bytesRead, nullptr) != FALSE && bytesRead == sizeof(trailer);
     CloseHandle(file);
     return valid;
 }
 
-bool ReadGzipStoredSize(const char* path, unsigned int& storedSize)
+bool ReadGzipStoredSize(const char *path, unsigned int &storedSize)
 {
-    HANDLE file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE file =
+        CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE)
         return false;
 
@@ -498,7 +467,7 @@ bool ReadGzipStoredSize(const char* path, unsigned int& storedSize)
     return success;
 }
 
-bool ValidateGzip(const char* path)
+bool ValidateGzip(const char *path)
 {
     unsigned int storedSize = 0;
     if (!QuickCheckSaveFile(path) || !ReadGzipStoredSize(path, storedSize))
@@ -518,8 +487,7 @@ bool ValidateGzip(const char* path)
         int readResult = 0;
         do
         {
-            readResult = THISCALL_3(int, GZ_READ,
-                                gzipObject, g_gzipBuffer, GZIP_BUFFER_SIZE);
+            readResult = THISCALL_3(int, GZ_READ, gzipObject, g_gzipBuffer, GZIP_BUFFER_SIZE);
             if (readResult > 0)
                 totalRead += static_cast<unsigned int>(readResult);
         } while (readResult > 0);
@@ -527,8 +495,8 @@ bool ValidateGzip(const char* path)
         // Legacy H3 saves consistently reach the declared ISIZE before zlib
         // reports their historical footer-CRC error.  Accept that exact
         // terminal shape, but reject every early read error/truncation.
-        completed = (readResult == 0 || readResult == GZ_READ_ERROR_CODE) &&
-                    static_cast<unsigned int>(totalRead) == storedSize;
+        completed =
+            (readResult == 0 || readResult == GZ_READ_ERROR_CODE) && static_cast<unsigned int>(totalRead) == storedSize;
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -550,7 +518,7 @@ bool ValidateGzip(const char* path)
     return completed && (closeResult == 0 || closeResult == Z_DATA_ERROR_CODE);
 }
 
-bool RestoreBackup(const char* finalPath, const char* backupPath)
+bool RestoreBackup(const char *finalPath, const char *backupPath)
 {
     if (!ValidateGzip(backupPath))
         return false;
@@ -565,7 +533,7 @@ bool RestoreBackup(const char* finalPath, const char* backupPath)
     return MoveFileExA(backupPath, finalPath, 0) != FALSE && ValidateGzip(finalPath);
 }
 
-void RecoverOneBackup(const char* backupPath)
+void RecoverOneBackup(const char *backupPath)
 {
     char finalPath[PHYSICAL_PATH_SIZE] = {};
     if (!CopyString(finalPath, sizeof(finalPath), backupPath))
@@ -574,8 +542,7 @@ void RecoverOneBackup(const char* backupPath)
     const char suffix[] = ".BattleSave.old";
     const size_t pathLength = std::strlen(finalPath);
     const size_t suffixLength = sizeof(suffix) - 1;
-    if (pathLength <= suffixLength ||
-        std::strcmp(finalPath + pathLength - suffixLength, suffix) != 0)
+    if (pathLength <= suffixLength || std::strcmp(finalPath + pathLength - suffixLength, suffix) != 0)
         return;
 
     finalPath[pathLength - suffixLength] = 0;
@@ -599,8 +566,7 @@ void RecoverOwnedFiles()
         do
         {
             char path[PHYSICAL_PATH_SIZE] = {};
-            if (_snprintf_s(path, sizeof(path), _TRUNCATE,
-                            ".\\GAMES\\%s", findData.cFileName) >= 0)
+            if (_snprintf_s(path, sizeof(path), _TRUNCATE, ".\\GAMES\\%s", findData.cFileName) >= 0)
                 RecoverOneBackup(path);
         } while (FindNextFileA(search, &findData));
         FindClose(search);
@@ -614,19 +580,17 @@ void RecoverOwnedFiles()
     {
         char stagePath[PHYSICAL_PATH_SIZE] = {};
         char finalPath[PHYSICAL_PATH_SIZE] = {};
-        if (_snprintf_s(stagePath, sizeof(stagePath), _TRUNCATE,
-                        ".\\GAMES\\%s", findData.cFileName) < 0 ||
+        if (_snprintf_s(stagePath, sizeof(stagePath), _TRUNCATE, ".\\GAMES\\%s", findData.cFileName) < 0 ||
             !CopyString(finalPath, sizeof(finalPath), stagePath))
             continue;
 
-        char* marker = std::strstr(finalPath, ".BattleSave.");
+        char *marker = std::strstr(finalPath, ".BattleSave.");
         if (!marker)
             continue;
         *marker = 0;
 
         char backupPath[PHYSICAL_PATH_SIZE] = {};
-        if (_snprintf_s(backupPath, sizeof(backupPath), _TRUNCATE,
-                        "%s.BattleSave.old", finalPath) < 0)
+        if (_snprintf_s(backupPath, sizeof(backupPath), _TRUNCATE, "%s.BattleSave.old", finalPath) < 0)
             continue;
 
         if (ValidateGzip(finalPath) || RestoreBackup(finalPath, backupPath))
@@ -639,8 +603,7 @@ void RecoverOwnedFiles()
 
 bool CommitStagedSave()
 {
-    if (!g_file.ready ||
-        !MatchesFileFingerprint(g_file.stagePath, g_file.readySize, g_file.readyWriteTime))
+    if (!g_file.ready || !MatchesFileFingerprint(g_file.stagePath, g_file.readySize, g_file.readyWriteTime))
         return false;
 
     const bool finalExists = GetFileAttributesA(g_file.finalPath) != INVALID_FILE_ATTRIBUTES;
@@ -648,12 +611,10 @@ bool CommitStagedSave()
 
     if (finalExists)
     {
-        if (GetFileAttributesA(g_file.backupPath) != INVALID_FILE_ATTRIBUTES &&
-            !DeleteFileA(g_file.backupPath))
+        if (GetFileAttributesA(g_file.backupPath) != INVALID_FILE_ATTRIBUTES && !DeleteFileA(g_file.backupPath))
             return false;
 
-        replaced = ReplaceFileA(g_file.finalPath, g_file.stagePath,
-                                g_file.backupPath, 0, nullptr, nullptr) != FALSE;
+        replaced = ReplaceFileA(g_file.finalPath, g_file.stagePath, g_file.backupPath, 0, nullptr, nullptr) != FALSE;
     }
     else
     {
@@ -696,26 +657,22 @@ bool CreateStagedBattleSave()
 
     __try
     {
-        saveResult = THISCALL_6(char, SAVE_GAME,
-                            H3Main::Get(), saveName, 1, 1, 1, 0);
+        saveResult = THISCALL_6(char, SAVE_GAME, H3Main::Get(), saveName, 1, 1, 1, 0);
     }
     __finally
     {
         g_file.armed = false;
     }
 
-    if (!saveResult || g_file.failed || !g_file.engineSaveCalled ||
-        !g_file.engineSaveSucceeded ||
-        !g_file.gzipCloseCalled || !g_file.gzipCloseSucceeded ||
-        !g_file.redirected || !g_file.finalPath[0] || !g_file.stagePath[0] ||
-        !ValidateGzip(g_file.stagePath))
+    if (!saveResult || g_file.failed || !g_file.engineSaveCalled || !g_file.engineSaveSucceeded ||
+        !g_file.gzipCloseCalled || !g_file.gzipCloseSucceeded || !g_file.redirected || !g_file.finalPath[0] ||
+        !g_file.stagePath[0] || !ValidateGzip(g_file.stagePath))
     {
         ClearFileTransaction(true);
         return false;
     }
 
-    g_file.ready = ReadFileFingerprint(g_file.stagePath, g_file.readySize,
-                                       g_file.readyWriteTime);
+    g_file.ready = ReadFileFingerprint(g_file.stagePath, g_file.readySize, g_file.readyWriteTime);
     if (!g_file.ready)
     {
         ClearFileTransaction(true);
@@ -738,9 +695,9 @@ void ResetMovementSequence()
     g_eventDepth = 0;
 }
 
-bool CaptureMovement(H3Hero* hero);
+bool CaptureMovement(H3Hero *hero);
 
-bool IsStableMovementAnchor(H3Hero* hero)
+bool IsStableMovementAnchor(H3Hero *hero)
 {
     if (!hero)
         return false;
@@ -750,14 +707,11 @@ bool IsStableMovementAnchor(H3Hero* hero)
     bool safe = false;
     __try
     {
-        const bool flightActive = g_move.flyCastPower != -1 ||
-            THISCALL_2(BOOL, HERO_WIELDS_ARTIFACT,
-                   hero, ARTIFACT_ANGEL_WINGS) != 0;
+        const bool flightActive =
+            g_move.flyCastPower != -1 || THISCALL_2(BOOL, HERO_WIELDS_ARTIFACT, hero, ARTIFACT_ANGEL_WINGS) != 0;
         const bool waterWalkActive = g_move.waterwalkCastPower != -1 ||
-            THISCALL_2(BOOL, HERO_WIELDS_ARTIFACT,
-                   hero, ARTIFACT_BOOTS_OF_LEVITATION) != 0;
-        safe = (!flightActive && !waterWalkActive) ||
-               THISCALL_1(BOOL8, HERO_CAN_LAND, hero) != 0;
+                                     THISCALL_2(BOOL, HERO_WIELDS_ARTIFACT, hero, ARTIFACT_BOOTS_OF_LEVITATION) != 0;
+        safe = (!flightActive && !waterWalkActive) || THISCALL_1(BOOL8, HERO_CAN_LAND, hero) != 0;
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -766,18 +720,15 @@ bool IsStableMovementAnchor(H3Hero* hero)
     return safe;
 }
 
-bool CanContinueFromAnchor(H3Hero* hero)
+bool CanContinueFromAnchor(H3Hero *hero)
 {
-    return hero && g_anchor.safeAnchor && g_chain.active &&
-           g_chain.threadId == GetCurrentThreadId() &&
-           g_chain.hero == hero && g_chain.heroId == hero->id &&
-           g_chain.owner == hero->owner &&
-           g_chain.endX == hero->x && g_chain.endY == hero->y &&
-           g_chain.endZ == hero->z && g_anchor.hero == hero &&
+    return hero && g_anchor.safeAnchor && g_chain.active && g_chain.threadId == GetCurrentThreadId() &&
+           g_chain.hero == hero && g_chain.heroId == hero->id && g_chain.owner == hero->owner &&
+           g_chain.endX == hero->x && g_chain.endY == hero->y && g_chain.endZ == hero->z && g_anchor.hero == hero &&
            g_anchor.heroId == hero->id && g_anchor.owner == hero->owner;
 }
 
-bool PrepareMovement(H3Hero* hero)
+bool PrepareMovement(H3Hero *hero)
 {
     if (!CaptureMovement(hero))
         return false;
@@ -804,7 +755,7 @@ bool PrepareMovement(H3Hero* hero)
     return true;
 }
 
-void ContinueMovementChain(H3Hero* hero)
+void ContinueMovementChain(H3Hero *hero)
 {
     std::memset(&g_chain, 0, sizeof(g_chain));
     if (!hero)
@@ -820,7 +771,7 @@ void ContinueMovementChain(H3Hero* hero)
     g_chain.endZ = hero->z;
 }
 
-bool GetCurrentMoveHero(H3Hero*& hero)
+bool GetCurrentMoveHero(H3Hero *&hero)
 {
     hero = nullptr;
     if (!H3Main::Get() || !ActivePlayer() || H3Main::Get()->GetPlayer() != ActivePlayer())
@@ -834,7 +785,7 @@ bool GetCurrentMoveHero(H3Hero*& hero)
     return hero->id == heroId && IsLocalHumanHero(hero);
 }
 
-bool CaptureBoatState(H3Hero* hero)
+bool CaptureBoatState(H3Hero *hero)
 {
     if (!hero || !H3Main::Get() || !g_move.inBoat)
         return !g_move.inBoat;
@@ -842,12 +793,9 @@ bool CaptureBoatState(H3Hero* hero)
     bool valid = false;
     __try
     {
-        NativeObject* boat = THISCALL_3(NativeObject*, GET_HERO_BOAT,
-                                H3Main::Get(), hero->id, TRUE);
-        valid = boat && boat->Field<BOOL8>(24) && boat->Field<BOOL8>(36) &&
-                boat->Field<int>(32) == hero->id &&
-                boat->Field<short>(0) == hero->x &&
-                boat->Field<short>(2) == hero->y &&
+        NativeObject *boat = THISCALL_3(NativeObject *, GET_HERO_BOAT, H3Main::Get(), hero->id, TRUE);
+        valid = boat && boat->Field<BOOL8>(24) && boat->Field<BOOL8>(36) && boat->Field<int>(32) == hero->id &&
+                boat->Field<short>(0) == hero->x && boat->Field<short>(2) == hero->y &&
                 boat->Field<short>(4) == hero->z;
         if (valid)
             std::memcpy(g_move.boatState, boat, sizeof(g_move.boatState));
@@ -859,7 +807,7 @@ bool CaptureBoatState(H3Hero* hero)
     return valid;
 }
 
-bool CaptureMovement(H3Hero* hero)
+bool CaptureMovement(H3Hero *hero)
 {
     if (!hero)
         return false;
@@ -889,42 +837,33 @@ bool CaptureMovement(H3Hero* hero)
     return true;
 }
 
-bool IsRepairRecordSane(const SaveRepairRecord& record)
+bool IsRepairRecordSane(const SaveRepairRecord &record)
 {
     return record.magic == REPAIR_MAGIC && record.version == REPAIR_VERSION &&
-           record.recordSize == sizeof(SaveRepairRecord) &&
-           (record.flags & REPAIR_ACTIVE) != 0 &&
-           record.heroId >= 0 && record.heroId < MAX_HEROES &&
-           record.owner >= 0 && record.owner < MAX_PLAYERS;
+           record.recordSize == sizeof(SaveRepairRecord) && (record.flags & REPAIR_ACTIVE) != 0 && record.heroId >= 0 &&
+           record.heroId < MAX_HEROES && record.owner >= 0 && record.owner < MAX_PLAYERS;
 }
 
-bool BuildRepairRecord(H3Hero* hero, SaveRepairRecord& record, bool& needed)
+bool BuildRepairRecord(H3Hero *hero, SaveRepairRecord &record, bool &needed)
 {
     needed = false;
     std::memset(&record, 0, sizeof(record));
-    if (!hero || hero != g_move.hero || hero->id != g_move.heroId ||
-        hero->owner != g_move.owner)
+    if (!hero || hero != g_move.hero || hero->id != g_move.heroId || hero->owner != g_move.owner)
         return false;
 
-    const short startX = *reinterpret_cast<const short*>(g_move.heroState + 0);
-    const short startY = *reinterpret_cast<const short*>(g_move.heroState + 2);
-    const short startZ = *reinterpret_cast<const short*>(g_move.heroState + 4);
+    const short startX = *reinterpret_cast<const short *>(g_move.heroState + 0);
+    const short startY = *reinterpret_cast<const short *>(g_move.heroState + 2);
+    const short startZ = *reinterpret_cast<const short *>(g_move.heroState + 4);
     const bool savedInBoat = (hero->flags & IN_BOAT_FLAG) != 0;
-    needed = hero->x != startX || hero->y != startY || hero->z != startZ ||
-             savedInBoat != g_move.inBoat ||
-             hero->maxMovement != g_move.movementMax ||
-             hero->movement != g_move.movementCurrent ||
-             hero->dest_x != g_move.targetX || hero->dest_y != g_move.targetY ||
-             hero->dest_z != g_move.targetZ ||
-             hero->flyPower != g_move.flyCastPower ||
-             hero->waterwalkPower != g_move.waterwalkCastPower ||
-             hero->flags != g_move.tempModFlags ||
-             HeroFacing(hero) != g_move.facing;
+    needed = hero->x != startX || hero->y != startY || hero->z != startZ || savedInBoat != g_move.inBoat ||
+             hero->maxMovement != g_move.movementMax || hero->movement != g_move.movementCurrent ||
+             hero->dest_x != g_move.targetX || hero->dest_y != g_move.targetY || hero->dest_z != g_move.targetZ ||
+             hero->flyPower != g_move.flyCastPower || hero->waterwalkPower != g_move.waterwalkCastPower ||
+             hero->flags != g_move.tempModFlags || HeroFacing(hero) != g_move.facing;
     if (!needed)
         return true;
 
-    if ((g_move.inBoat && (savedInBoat || !g_move.boatStateValid)) ||
-        (!g_move.inBoat && savedInBoat))
+    if ((g_move.inBoat && (savedInBoat || !g_move.boatStateValid)) || (!g_move.inBoat && savedInBoat))
         return false;
 
     record.magic = REPAIR_MAGIC;
@@ -955,10 +894,10 @@ bool BuildRepairRecord(H3Hero* hero, SaveRepairRecord& record, bool& needed)
     return true;
 }
 
-bool SaveConfirmedBattle(H3Hero* hero, bool movementScoped)
+bool SaveConfirmedBattle(H3Hero *hero, bool movementScoped)
 {
-    RawExeVector* vector = nullptr;
-    unsigned char* savedLast = nullptr;
+    RawExeVector *vector = nullptr;
+    unsigned char *savedLast = nullptr;
     bool shortenEvents = false;
     SaveRepairRecord repair = {};
     bool repairNeeded = false;
@@ -974,8 +913,7 @@ bool SaveConfirmedBattle(H3Hero* hero, bool movementScoped)
 
         vector = RecordedEvents();
         unsigned int currentCount = 0;
-        if (!ReadVectorCount(vector, sizeof(void*), currentCount) ||
-            g_move.eventCount > currentCount)
+        if (!ReadVectorCount(vector, sizeof(void *), currentCount) || g_move.eventCount > currentCount)
             return false;
         savedLast = vector->last;
         shortenEvents = true;
@@ -992,7 +930,7 @@ bool SaveConfirmedBattle(H3Hero* hero, bool movementScoped)
     __try
     {
         if (shortenEvents && vector->first)
-            vector->last = vector->first + g_move.eventCount * sizeof(void*);
+            vector->last = vector->first + g_move.eventCount * sizeof(void *);
         staged = CreateStagedBattleSave();
     }
     __finally
@@ -1027,39 +965,34 @@ bool IsMapCoordinateValid(int x, int y, int z)
     return x >= 0 && y >= 0 && z >= 0 && x < mapSize && y < mapSize && z < mapDepth;
 }
 
-bool BoatMatchesCapturedIdentity(NativeObject* boat, const SaveRepairRecord& record,
-                                 short startX, short startY, short startZ)
+bool BoatMatchesCapturedIdentity(NativeObject *boat, const SaveRepairRecord &record, short startX, short startY,
+                                 short startZ)
 {
-    return boat && boat->Field<BOOL8>(24) &&
-           boat->Field<unsigned char>(25) == record.boatState[25] &&
+    return boat && boat->Field<BOOL8>(24) && boat->Field<unsigned char>(25) == record.boatState[25] &&
            boat->Field<unsigned char>(26) == record.boatState[26] &&
-           boat->Field<unsigned char>(28) == record.boatState[28] &&
-           boat->Field<int>(32) == record.heroId &&
-           boat->Field<short>(0) == startX && boat->Field<short>(2) == startY &&
-           boat->Field<short>(4) == startZ;
+           boat->Field<unsigned char>(28) == record.boatState[28] && boat->Field<int>(32) == record.heroId &&
+           boat->Field<short>(0) == startX && boat->Field<short>(2) == startY && boat->Field<short>(4) == startZ;
 }
 
-NativeObject* FindCapturedBoat(const SaveRepairRecord& record,
-                           short startX, short startY, short startZ)
+NativeObject *FindCapturedBoat(const SaveRepairRecord &record, short startX, short startY, short startZ)
 {
     if (!H3Main::Get() || !record.boatState[24] || !record.boatState[36] ||
-        *reinterpret_cast<const int*>(record.boatState + 32) != record.heroId ||
-        *reinterpret_cast<const short*>(record.boatState + 0) != startX ||
-        *reinterpret_cast<const short*>(record.boatState + 2) != startY ||
-        *reinterpret_cast<const short*>(record.boatState + 4) != startZ)
+        *reinterpret_cast<const int *>(record.boatState + 32) != record.heroId ||
+        *reinterpret_cast<const short *>(record.boatState + 0) != startX ||
+        *reinterpret_cast<const short *>(record.boatState + 2) != startY ||
+        *reinterpret_cast<const short *>(record.boatState + 4) != startZ)
         return nullptr;
 
-    RawExeVector* pool = BoatPool();
+    RawExeVector *pool = BoatPool();
     unsigned int count = 0;
     if (!ReadVectorCount(pool, BOAT_RECORD_SIZE, count) || !pool->first)
         return nullptr;
 
-    NativeObject* match = nullptr;
+    NativeObject *match = nullptr;
     const unsigned int capturedIndex = record.boatState[25];
     if (capturedIndex < count)
     {
-        NativeObject* candidate = reinterpret_cast<NativeObject*>(
-            pool->first + capturedIndex * BOAT_RECORD_SIZE);
+        NativeObject *candidate = reinterpret_cast<NativeObject *>(pool->first + capturedIndex * BOAT_RECORD_SIZE);
         if (BoatMatchesCapturedIdentity(candidate, record, startX, startY, startZ))
             match = candidate;
     }
@@ -1069,7 +1002,7 @@ NativeObject* FindCapturedBoat(const SaveRepairRecord& record,
     // boat to the hero.
     for (unsigned int i = 0; i < count; ++i)
     {
-        NativeObject* candidate = reinterpret_cast<NativeObject*>(pool->first + i * BOAT_RECORD_SIZE);
+        NativeObject *candidate = reinterpret_cast<NativeObject *>(pool->first + i * BOAT_RECORD_SIZE);
         if (!BoatMatchesCapturedIdentity(candidate, record, startX, startY, startZ))
             continue;
         if (match && match != candidate)
@@ -1079,29 +1012,23 @@ NativeObject* FindCapturedBoat(const SaveRepairRecord& record,
     return match;
 }
 
-bool RepairPostconditionMatches(H3Hero* hero, NativeObject* boat,
-                                const SaveRepairRecord& record,
-                                short startX, short startY, short startZ,
-                                bool restoreBoat)
+bool RepairPostconditionMatches(H3Hero *hero, NativeObject *boat, const SaveRepairRecord &record, short startX,
+                                short startY, short startZ, bool restoreBoat)
 {
     if (!hero || hero->x != startX || hero->y != startY || hero->z != startZ ||
-        hero->maxMovement != record.movementMax ||
-        hero->movement != record.movementCurrent ||
-        hero->dest_x != record.targetX || hero->dest_y != record.targetY ||
-        hero->dest_z != record.targetZ ||
-        hero->flyPower != record.flyCastPower ||
-        hero->waterwalkPower != record.waterwalkCastPower ||
+        hero->maxMovement != record.movementMax || hero->movement != record.movementCurrent ||
+        hero->dest_x != record.targetX || hero->dest_y != record.targetY || hero->dest_z != record.targetZ ||
+        hero->flyPower != record.flyCastPower || hero->waterwalkPower != record.waterwalkCastPower ||
         hero->flags != record.tempModFlags || HeroFacing(hero) != record.facing)
         return false;
 
     if (!restoreBoat)
         return true;
 
-    return BoatMatchesCapturedIdentity(boat, record, startX, startY, startZ) &&
-           !boat->Field<BOOL8>(6) && boat->Field<BOOL8>(36) &&
-           std::memcmp(reinterpret_cast<unsigned char*>(boat) + BOAT_PAYLOAD_OFFSET,
-                       record.boatState + BOAT_PAYLOAD_OFFSET,
-                       BOAT_PAYLOAD_SIZE) == 0;
+    return BoatMatchesCapturedIdentity(boat, record, startX, startY, startZ) && !boat->Field<BOOL8>(6) &&
+           boat->Field<BOOL8>(36) &&
+           std::memcmp(reinterpret_cast<unsigned char *>(boat) + BOAT_PAYLOAD_OFFSET,
+                       record.boatState + BOAT_PAYLOAD_OFFSET, BOAT_PAYLOAD_SIZE) == 0;
 }
 
 bool ApplyPendingRepair()
@@ -1109,14 +1036,14 @@ bool ApplyPendingRepair()
     if (!g_pendingRepairActive || !IsRepairRecordSane(g_pendingRepair) || !H3Main::Get())
         return false;
 
-    SaveRepairRecord& record = g_pendingRepair;
-    H3Hero* hero = H3Main::Get()->GetHero(record.heroId);
+    SaveRepairRecord &record = g_pendingRepair;
+    H3Hero *hero = H3Main::Get()->GetHero(record.heroId);
     if (!hero || hero->id != record.heroId || hero->owner != record.owner)
         return false;
 
-    const short startX = *reinterpret_cast<const short*>(record.heroState + 0);
-    const short startY = *reinterpret_cast<const short*>(record.heroState + 2);
-    const short startZ = *reinterpret_cast<const short*>(record.heroState + 4);
+    const short startX = *reinterpret_cast<const short *>(record.heroState + 0);
+    const short startY = *reinterpret_cast<const short *>(record.heroState + 2);
+    const short startZ = *reinterpret_cast<const short *>(record.heroState + 4);
     if (!IsMapCoordinateValid(record.savedX, record.savedY, record.savedZ) ||
         !IsMapCoordinateValid(startX, startY, startZ))
         return false;
@@ -1124,10 +1051,9 @@ bool ApplyPendingRepair()
     const bool savedInBoat = (record.flags & REPAIR_SAVED_IN_BOAT) != 0;
     const bool preInBoat = (record.flags & REPAIR_PRE_IN_BOAT) != 0;
     const bool heroInBoat = (hero->flags & IN_BOAT_FLAG) != 0;
-    const bool atSavedState = hero->x == record.savedX && hero->y == record.savedY &&
-                              hero->z == record.savedZ && heroInBoat == savedInBoat;
-    const bool atAnchorState = hero->x == startX && hero->y == startY &&
-                               hero->z == startZ && heroInBoat == preInBoat;
+    const bool atSavedState =
+        hero->x == record.savedX && hero->y == record.savedY && hero->z == record.savedZ && heroInBoat == savedInBoat;
+    const bool atAnchorState = hero->x == startX && hero->y == startY && hero->z == startZ && heroInBoat == preInBoat;
     if (!atSavedState && !atAnchorState)
         return false;
 
@@ -1140,9 +1066,9 @@ bool ApplyPendingRepair()
     // the game's normal demobilization path at their repaired coordinates.
     const bool heroWasVisible = hero->isVisible != 0;
 
-    const bool restoreBoat = (record.flags & (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE)) ==
-                             (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE);
-    NativeObject* boat = nullptr;
+    const bool restoreBoat =
+        (record.flags & (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE)) == (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE);
+    NativeObject *boat = nullptr;
     if (restoreBoat)
     {
         __try
@@ -1159,7 +1085,6 @@ bool ApplyPendingRepair()
         if (!boat)
             return false;
     }
-
 
     if (RepairPostconditionMatches(hero, boat, record, startX, startY, startZ, restoreBoat))
         return true;
@@ -1178,7 +1103,7 @@ bool ApplyPendingRepair()
             hero->z = startZ;
             if (heroWasVisible)
                 hero->Show();
-            std::memcpy(reinterpret_cast<unsigned char*>(boat) + BOAT_PAYLOAD_OFFSET,
+            std::memcpy(reinterpret_cast<unsigned char *>(boat) + BOAT_PAYLOAD_OFFSET,
                         record.boatState + BOAT_PAYLOAD_OFFSET, BOAT_PAYLOAD_SIZE);
         }
         else
@@ -1199,8 +1124,7 @@ bool ApplyPendingRepair()
         hero->waterwalkPower = record.waterwalkCastPower;
         hero->flags = record.tempModFlags;
         HeroFacing(hero) = record.facing;
-        repaired = RepairPostconditionMatches(hero, boat, record,
-                                              startX, startY, startZ, restoreBoat);
+        repaired = RepairPostconditionMatches(hero, boat, record, startX, startY, startZ, restoreBoat);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -1209,18 +1133,17 @@ bool ApplyPendingRepair()
     return repaired;
 }
 
-int __stdcall Y_MoveHero(HiHook* hook, int This, int direction, BOOL8 standEnd,
-                         int triggerPoint, int noMove, BOOL8 computerMove,
-                         int foughtBattle, BOOL8 remoteMove)
+int __stdcall Y_MoveHero(HiHook *hook, int This, int direction, BOOL8 standEnd, int triggerPoint, int noMove,
+                         BOOL8 computerMove, int foughtBattle, BOOL8 remoteMove)
 {
     if (!IsEnabled())
     {
         ResetMovementSequence();
-        return THISCALL_8(int, hook->GetDefaultFunc(), This, direction, standEnd, triggerPoint, noMove,
-                          computerMove, foughtBattle, remoteMove);
+        return THISCALL_8(int, hook->GetDefaultFunc(), This, direction, standEnd, triggerPoint, noMove, computerMove,
+                          foughtBattle, remoteMove);
     }
 
-    H3MapItem* result = nullptr;
+    H3MapItem *result = nullptr;
     bool captured = false;
     bool defaultReturned = false;
     short stepStartX = 0;
@@ -1232,7 +1155,7 @@ int __stdcall Y_MoveHero(HiHook* hook, int This, int direction, BOOL8 standEnd,
     else
         ResetMovement();
 
-    H3Hero* hero = nullptr;
+    H3Hero *hero = nullptr;
     if (!computerMove && !remoteMove && GetCurrentMoveHero(hero))
     {
         stepStartX = hero->x;
@@ -1256,9 +1179,8 @@ int __stdcall Y_MoveHero(HiHook* hook, int This, int direction, BOOL8 standEnd,
 
     __try
     {
-        result = THISCALL_8(H3MapItem*, hook->GetDefaultFunc(),
-                        This, direction, standEnd, triggerPoint, noMove,
-                        computerMove, foughtBattle, remoteMove);
+        result = THISCALL_8(H3MapItem *, hook->GetDefaultFunc(), This, direction, standEnd, triggerPoint, noMove,
+                            computerMove, foughtBattle, remoteMove);
         defaultReturned = true;
     }
     __finally
@@ -1270,8 +1192,8 @@ int __stdcall Y_MoveHero(HiHook* hook, int This, int direction, BOOL8 standEnd,
             std::memset(&g_anchor, 0, sizeof(g_anchor));
             std::memset(&g_chain, 0, sizeof(g_chain));
         }
-        else if (captured && defaultReturned && !result && g_move.state == MOVE_ACTIVE &&
-                 hero && hero->id == g_move.heroId && hero->owner == g_move.owner &&
+        else if (captured && defaultReturned && !result && g_move.state == MOVE_ACTIVE && hero &&
+                 hero->id == g_move.heroId && hero->owner == g_move.owner &&
                  (hero->x != stepStartX || hero->y != stepStartY || hero->z != stepStartZ))
         {
             ContinueMovementChain(hero);
@@ -1285,14 +1207,12 @@ int __stdcall Y_MoveHero(HiHook* hook, int This, int direction, BOOL8 standEnd,
     return reinterpret_cast<int>(result);
 }
 
-void __stdcall Y_DoEvent(HiHook* hook, int This, H3MapItem* eventCell, int point)
+void __stdcall Y_DoEvent(HiHook *hook, int This, H3MapItem *eventCell, int point)
 {
     const DWORD threadId = GetCurrentThreadId();
-    const bool ownsTransaction = g_move.state == MOVE_EVENT_PENDING &&
-                                 g_move.threadId == threadId &&
-                                 g_move.eventCell == eventCell;
-    const bool nestedTransaction = g_move.state == MOVE_EVENT_ACTIVE &&
-                                   g_move.threadId == threadId;
+    const bool ownsTransaction =
+        g_move.state == MOVE_EVENT_PENDING && g_move.threadId == threadId && g_move.eventCell == eventCell;
+    const bool nestedTransaction = g_move.state == MOVE_EVENT_ACTIVE && g_move.threadId == threadId;
     const bool scopedTransaction = ownsTransaction || nestedTransaction;
 
     // A different event must not turn the pending movement into an unsafe
@@ -1316,21 +1236,17 @@ void __stdcall Y_DoEvent(HiHook* hook, int This, H3MapItem* eventCell, int point
     }
 }
 
-int __stdcall Y_DoCombat(HiHook* hook, int This, int point,
-                         H3Hero* leftHero, int leftArmy, int rightPlayer,
-                         int rightTown, int rightHero, int rightArmy,
-                         int seed, int finishHeroes, int alternateLayout)
+int __stdcall Y_DoCombat(HiHook *hook, int This, int point, H3Hero *leftHero, int leftArmy, int rightPlayer,
+                         int rightTown, int rightHero, int rightArmy, int seed, int finishHeroes, int alternateLayout)
 {
     if (IsEnabled() && IsLocalHumanHero(leftHero))
     {
         const bool synchronousMovement = g_move.state == MOVE_ACTIVE && g_eventDepth == 0;
         const bool matchingEventScope = g_move.state == MOVE_EVENT_ACTIVE && g_eventDepth == 1;
-        if ((synchronousMovement || matchingEventScope) &&
-            g_move.threadId == GetCurrentThreadId())
+        if ((synchronousMovement || matchingEventScope) && g_move.threadId == GetCurrentThreadId())
         {
-            const bool matchingHero = leftHero == g_move.hero &&
-                                      leftHero->id == g_move.heroId &&
-                                      leftHero->owner == g_move.owner;
+            const bool matchingHero =
+                leftHero == g_move.hero && leftHero->id == g_move.heroId && leftHero->owner == g_move.owner;
             if (matchingHero)
             {
                 SaveConfirmedBattle(leftHero, true);
@@ -1343,17 +1259,16 @@ int __stdcall Y_DoCombat(HiHook* hook, int This, int point,
         }
     }
 
-    return THISCALL_11(int, hook->GetDefaultFunc(),
-                   This, point, leftHero, leftArmy, rightPlayer, rightTown,
-                   rightHero, rightArmy, seed, finishHeroes, alternateLayout);
+    return THISCALL_11(int, hook->GetDefaultFunc(), This, point, leftHero, leftArmy, rightPlayer, rightTown, rightHero,
+                       rightArmy, seed, finishHeroes, alternateLayout);
 }
 
-int __stdcall Y_SavePathReady(LoHook*, HookContext* context)
+int __stdcall Y_SavePathReady(LoHook *, HookContext *context)
 {
     if (!g_file.armed || g_file.threadId != GetCurrentThreadId())
         return EXEC_DEFAULT;
 
-    char* enginePath = reinterpret_cast<char*>(context->ebp - ENGINE_SAVE_PATH_EBP_OFFSET);
+    char *enginePath = reinterpret_cast<char *>(context->ebp - ENGINE_SAVE_PATH_EBP_OFFSET);
 
     // A second path resolution means a save was re-entered while this battle
     // transaction was active. Redirect every additional writer to a disposable
@@ -1394,7 +1309,7 @@ int __stdcall Y_SavePathReady(LoHook*, HookContext* context)
     return EXEC_DEFAULT;
 }
 
-int __stdcall Y_GameSave(HiHook* hook, int This, NativeObject* gzipFile)
+int __stdcall Y_GameSave(HiHook *hook, int This, NativeObject *gzipFile)
 {
     const bool owned = g_file.armed && g_file.threadId == GetCurrentThreadId();
     int result = -1;
@@ -1419,7 +1334,7 @@ int __stdcall Y_GameSave(HiHook* hook, int This, NativeObject* gzipFile)
     return result;
 }
 
-int __stdcall Y_SaveCloseDone(LoHook*, HookContext* context)
+int __stdcall Y_SaveCloseDone(LoHook *, HookContext *context)
 {
     if (g_file.armed && g_file.threadId == GetCurrentThreadId())
     {
@@ -1429,7 +1344,7 @@ int __stdcall Y_SaveCloseDone(LoHook*, HookContext* context)
     return EXEC_DEFAULT;
 }
 
-void __stdcall OnSavegameWrite(Era::TEvent*)
+void __stdcall OnSavegameWrite(Era::TEvent *)
 {
     if (g_writeRepairActive && IsRepairRecordSane(g_writeRepair))
     {
@@ -1438,13 +1353,12 @@ void __stdcall OnSavegameWrite(Era::TEvent*)
     }
 }
 
-void __stdcall OnSavegameRead(Era::TEvent*)
+void __stdcall OnSavegameRead(Era::TEvent *)
 {
     std::memset(&g_pendingRepair, 0, sizeof(g_pendingRepair));
-    g_pendingRepairActive =
-        Era::ReadSavegameSection(sizeof(g_pendingRepair), &g_pendingRepair, REPAIR_SECTION) ==
-            sizeof(g_pendingRepair) &&
-        IsRepairRecordSane(g_pendingRepair);
+    g_pendingRepairActive = Era::ReadSavegameSection(sizeof(g_pendingRepair), &g_pendingRepair, REPAIR_SECTION) ==
+                                sizeof(g_pendingRepair) &&
+                            IsRepairRecordSane(g_pendingRepair);
 }
 
 void ResetRuntimeState(bool clearPendingRepair, bool recoverFiles)
@@ -1466,12 +1380,12 @@ void ResetRuntimeState(bool clearPendingRepair, bool recoverFiles)
     }
 }
 
-void __stdcall OnBeforeLoadGame(Era::TEvent*)
+void __stdcall OnBeforeLoadGame(Era::TEvent *)
 {
     ResetRuntimeState(true, true);
 }
 
-void __stdcall OnAfterLoadGame(Era::TEvent*)
+void __stdcall OnAfterLoadGame(Era::TEvent *)
 {
     ResetMovementSequence();
     ClearFileTransaction(true);
@@ -1481,7 +1395,7 @@ void __stdcall OnAfterLoadGame(Era::TEvent*)
     ApplyPendingRepair();
 }
 
-void __stdcall OnGameEnter(Era::TEvent*)
+void __stdcall OnGameEnter(Era::TEvent *)
 {
     ResetRuntimeState(false, true);
     if (g_pendingRepairActive)
@@ -1497,7 +1411,7 @@ void __stdcall OnGameEnter(Era::TEvent*)
     }
 }
 
-void __stdcall OnGameLeave(Era::TEvent*)
+void __stdcall OnGameLeave(Era::TEvent *)
 {
     ResetRuntimeState(true, false);
     g_recoveryDone = false;
@@ -1505,12 +1419,10 @@ void __stdcall OnGameLeave(Era::TEvent*)
 
 bool InstallHooks()
 {
-    if (!ValidatePe32Image() ||
-        !ValidateHiHookSite(MOVE_HERO, MOVE_HERO_PROLOG, sizeof(MOVE_HERO_PROLOG), nullptr) ||
+    if (!ValidatePe32Image() || !ValidateHiHookSite(MOVE_HERO, MOVE_HERO_PROLOG, sizeof(MOVE_HERO_PROLOG), nullptr) ||
         !ValidateHiHookSite(DO_EVENT, DO_EVENT_PROLOG, sizeof(DO_EVENT_PROLOG), nullptr) ||
         !ValidateHiHookSite(DO_COMBAT, DO_COMBAT_PROLOG, sizeof(DO_COMBAT_PROLOG), "HD.WoG") ||
-        !ValidateHiHookSite(GAME_SAVE, GAME_SAVE_PROLOG, sizeof(GAME_SAVE_PROLOG), "wzx_HW") ||
-        !ValidateSaveSites())
+        !ValidateHiHookSite(GAME_SAVE, GAME_SAVE_PROLOG, sizeof(GAME_SAVE_PROLOG), "wzx_HW") || !ValidateSaveSites())
         return false;
 
     g_savePathHook = modulePatcher->WriteLoHook(SAVE_PATH_READY, Y_SavePathReady);
@@ -1527,12 +1439,9 @@ bool InstallHooks()
     if (g_combatHook)
         g_combatHook->ApplyInsert(-1);
 
-    if (!g_savePathHook || !g_saveCloseHook || !g_moveHook || !g_eventHook || !g_gameSaveHook ||
-        !g_combatHook ||
-        !g_savePathHook->IsApplied() || !g_saveCloseHook->IsApplied() ||
-        !g_moveHook->IsApplied() ||
-        !g_eventHook->IsApplied() || !g_combatHook->IsApplied() ||
-        !g_gameSaveHook->IsApplied())
+    if (!g_savePathHook || !g_saveCloseHook || !g_moveHook || !g_eventHook || !g_gameSaveHook || !g_combatHook ||
+        !g_savePathHook->IsApplied() || !g_saveCloseHook->IsApplied() || !g_moveHook->IsApplied() ||
+        !g_eventHook->IsApplied() || !g_combatHook->IsApplied() || !g_gameSaveHook->IsApplied())
     {
         modulePatcher->UndoAll();
         return false;
@@ -1554,8 +1463,7 @@ bool StartPlugin()
     Era::RegisterHandler(OnGameLeave, "OnGameLeft");
     return true;
 }
-}
-
+} // namespace
 
 namespace battleSave
 {
