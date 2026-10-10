@@ -25,7 +25,7 @@ constexpr int ICON_BORDER_SIZE = 1;
 constexpr int FIRST_CREATURE_ARTIFACT_ID = 0x9C;
 constexpr int MIN_COMMANDER_ICON_SIZE = 12;
 constexpr int COMMANDER_ICON_SIZE_STEP = 2;
-constexpr int COMMANDER_MAX_COLUMNS = 8;
+constexpr int COMMANDER_MAX_COLUMNS = 8 + 1;
 constexpr int TEXT_LINE_GAP = 2;
 constexpr int MIN_TEXT_LINE_HEIGHT = 10;
 constexpr int MIN_SCROLLED_CONTENT_WIDTH = 32;
@@ -40,7 +40,8 @@ constexpr DWORD PREPARE_EXPERIENCE_INFO_FUNCTION = 0x71EF2B;
 constexpr DWORD EXPERIENCE_INFO_ADDRESS = 0x845880;
 constexpr DWORD EXPERIENCE_DIALOG_FLAGS_ADDRESS = 0x841940;
 constexpr DWORD TEMPORARY_COMMANDER_ADDRESS[] = {0x2861E70, 0x2861F98};
-constexpr int COMMANDER_COMBAT_SIDE_COUNT = sizeof(TEMPORARY_COMMANDER_ADDRESS) / sizeof(TEMPORARY_COMMANDER_ADDRESS[0]);
+constexpr int COMMANDER_COMBAT_SIDE_COUNT =
+    sizeof(TEMPORARY_COMMANDER_ADDRESS) / sizeof(TEMPORARY_COMMANDER_ADDRESS[0]);
 constexpr const char *COMMANDER_SKILL_DEF = "dlg_npc3.def";
 constexpr const char *CREATURE_ARTIFACT_DEF = "Artifact.def";
 
@@ -280,8 +281,7 @@ BOOL CreatureDlgHandler::AddCommanderSkills()
         return FALSE;
 
     const auto frames = CollectCommanderSkillFrames(npc->abilities.bits);
-    const auto layout =
-        CalculateCommanderPanelLayout(frames.count, descriptionWidth, CONTENT_BOTTOM - descriptionY);
+    const auto layout = CalculateCommanderPanelLayout(frames.count, descriptionWidth, CONTENT_BOTTOM - descriptionY);
     if (!layout.height)
         return FALSE;
 
@@ -343,8 +343,8 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
     {
         WoG::eExpType expType = WoG::CE_UNKNOWN;
         WoG::_CrExpo_::UniData expData = {};
-        if (CDECL_4(int, ARMY_EXPERIENCE_SOURCE_FUNCTION, army, armySlotIndex, &expType, &expData) && expType >= WoG::CE_FIRST &&
-            expType <= WoG::CE_LAST)
+        if (CDECL_4(int, ARMY_EXPERIENCE_SOURCE_FUNCTION, army, armySlotIndex, &expType, &expData) &&
+            expType >= WoG::CE_FIRST && expType <= WoG::CE_LAST)
             crExpo = WoG::_CrExpo_::Find(expType, expData);
     }
 
@@ -355,7 +355,8 @@ BOOL CreatureDlgHandler::CreateCreatureSkillsList()
     creatureCount = std::max(1, creatureCount);
 
     IntAt(EXPERIENCE_DIALOG_FLAGS_ADDRESS) = 0;
-    CDECL_5(void, PREPARE_EXPERIENCE_INFO_FUNCTION, creatureId, creatureCount, crExpo ? crExpo->experience : 0, crExpo, hero ? 1 : 0);
+    CDECL_5(void, PREPARE_EXPERIENCE_INFO_FUNCTION, creatureId, creatureCount, crExpo ? crExpo->experience : 0, crExpo,
+            hero ? 1 : 0);
     const auto &info = *reinterpret_cast<WoG::_CreatureExpo_ *>(EXPERIENCE_INFO_ADDRESS);
     SkillIconRenderer renderer(CREATURE_EXP_DEF);
     const bool activeOnly = !GetPluginSettings().showInactiveCreatureSkills && (stack || hasArmyExperienceSource);

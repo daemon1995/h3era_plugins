@@ -63,6 +63,20 @@ class PanelItemDrawOrder : public H3DlgItem
     static int GetDrawOrder(const H3DlgItem *item) { return item->*(&PanelItemDrawOrder::zOrder); }
 };
 
+void SetSpellSlotImage(H3DlgPcx16 *item, H3LoadedPcx16 *picture)
+{
+    auto *previous = item->GetPcx();
+    if (previous == picture)
+        return;
+
+    // SetPcx only stores a pointer. The native item destructor releases it.
+    if (picture)
+        picture->IncreaseReferences();
+    item->SetPcx(picture);
+    if (previous)
+        previous->Dereference();
+}
+
 void AddPanelBackground(H3CombatMonsterPanel *panel, H3DlgPcx *background)
 {
     auto &items = panel->GetItems();
@@ -223,38 +237,39 @@ void MonPreview::CreatePatches()
     if (m_isInited)
         return;
 
-    CreatePanelBackground();
-
     _pi->WriteHiHook(PANEL_CTOR_FUNCTION, THISCALL_, H3CombatMonsterPanel_Ctor);
     _pi->WriteHiHook(PANEL_PREPARE_FUNCTION, THISCALL_, H3CombatMonsterPanel_Prepare);
     _pi->WriteHiHook(PANEL_DTOR_FUNCTION, THISCALL_, H3CombatMonsterPanel_Dtor);
     _pi->WriteHiHook(PANEL_REDRAW_FUNCTION, THISCALL_, H3DlgBasePanel_Redraw);
 
-    Era::RegisterHandler(OnBeforeBattleUniversal, "OnBeforeBattleUniversal");
-    Era::RegisterHandler(OnAfterBattleUniversal, "OnAfterBattleUniversal");
+    // Combat_BattleReplay wraps WoG's StartBattle call at 0x75AEB0; WoG fires
+    // BA53 in 0x75ABB6 after that entire replay loop returns. Keep the cache
+    // across panel destruction/recreation and allocate only for a real panel.
+    Era::RegisterHandler(OnBattleFinishedOrGameLeave, "OnAfterBattleUniversal");
+    Era::RegisterHandler(OnBattleFinishedOrGameLeave, "OnBeforeFastQuitToGameMenu");
+    Era::RegisterHandler(OnBattleFinishedOrGameLeave, "OnGameLeave");
+    Era::RegisterHandler(OnBattleFinishedOrGameLeave, "OnBeforeLoadGame");
 
     m_isInited = true;
 }
 
-void __stdcall MonPreview::OnBeforeBattleUniversal(Era::TEvent *event)
+void __stdcall MonPreview::OnBattleFinishedOrGameLeave(Era::TEvent *event)
 {
-    auto &self = Get();
-
-    // A replay/restart can enter another before-battle phase without a paired
-    // after-battle callback. Always rebuild from a clean state.
-    self.DetachAllPanelSpellImages();
-    self.DestroySpellEffectResources();
-    self.CreateSpellEffectResources();
+    Get().ClearBattleResources();
 }
 
-void __stdcall MonPreview::OnAfterBattleUniversal(Era::TEvent *event)
+void MonPreview::ClearBattleResources()
 {
-    auto &self = Get();
-
-    // Slots hold raw pointers. Detach them first so H3DlgPcx16::~H3DlgPcx16
-    // cannot Dereference() a shared cache object after we release it here.
-    self.DetachAllPanelSpellImages();
-    self.DestroySpellEffectResources();
+    // Never dereference cached widget pointers here: an interrupted game can
+    // already have destroyed their dialogs. Live widgets keep their own refs
+    // until their native destructors run, even if the cache is released first.
+    activePanels.clear();
+    DestroySpellEffectResources();
+    if (extensionBackground)
+    {
+        extensionBackground->Dereference();
+        extensionBackground = nullptr;
+    }
 }
 
 void MonPreview::EnsureSpellEffectResources()
@@ -311,7 +326,7 @@ void MonPreview::DestroySpellEffectResources()
 {
     for (H3LoadedPcx16 *picture : resizedSpellPictures)
         if (picture)
-            picture->Destroy();
+            picture->Dereference();
 
     resizedSpellPictures.clear();
     spellIconWidth = 0;
@@ -345,31 +360,6 @@ void MonPreview::UnregisterPanel(H3CombatMonsterPanel *panel)
             return;
         }
 }
-void MonPreview::DetachPanelSpellImages(H3CombatMonsterPanel *panel)
-{
-    auto *items = FindPanelItems(panel);
-    if (!items)
-        return;
-    for (int slot = 0; slot < SPELL_SLOT_COUNT; ++slot)
-    {
-        if (auto *picture = items->spellPictures[slot])
-        {
-            picture->SetPcx(nullptr);
-            picture->HideDeactivate();
-        }
-        if (auto *duration = items->spellDurations[slot])
-        {
-            duration->SetText(h3_NullString);
-            duration->HideDeactivate();
-        }
-    }
-}
-void MonPreview::DetachAllPanelSpellImages()
-{
-    for (auto &items : activePanels)
-        DetachPanelSpellImages(items.panel);
-}
-
 void MonPreview::CreatePanelBackground()
 {
     H3PcxLoader original("CCrPop.pcx");
@@ -399,9 +389,6 @@ H3CombatMonsterPanel *__stdcall MonPreview::H3CombatMonsterPanel_Ctor(HiHook *ho
     if (result && type == EXPANDED_PANEL_TYPE && enabled)
     {
         auto &self = Get();
-        // Normally OnBeforeBattleUniversal has already prepared the shared
-        // frames. Keep this lazy fallback for custom battle entry paths.
-        self.EnsureSpellEffectResources();
         self.BuildExtendedPanel(result);
         self.RegisterPanel(result);
     }
@@ -411,7 +398,6 @@ H3CombatMonsterPanel *__stdcall MonPreview::H3CombatMonsterPanel_Ctor(HiHook *ho
 void __stdcall MonPreview::H3CombatMonsterPanel_Dtor(HiHook *hook, H3CombatMonsterPanel *panel)
 {
     auto &self = Get();
-    self.DetachPanelSpellImages(panel);
     self.UnregisterPanel(panel);
 
     THISCALL_1(void, hook->GetDefaultFunc(), panel);
@@ -421,6 +407,9 @@ void MonPreview::BuildExtendedPanel(H3CombatMonsterPanel *panel)
 {
     if (!panel)
         return;
+
+    if (!extensionBackground)
+        CreatePanelBackground();
 
     for (H3DlgItem *item : panel->GetItems())
     {
@@ -482,9 +471,8 @@ void MonPreview::BuildExtendedPanel(H3CombatMonsterPanel *panel)
     const int iconWidth = spellIconWidth > 0 ? spellIconWidth : DEFAULT_SPELL_ICON_SIZE;
     const int iconHeight = spellIconHeight > 0 ? spellIconHeight : DEFAULT_SPELL_ICON_SIZE;
 
-    // Exactly twelve persistent widget slots per panel. The widgets themselves
-    // own no image. Prepare() only points them at one of the shared battle
-    // cache frames, or nullptr for an empty slot.
+    // Exactly twelve persistent widget slots per panel. Each slot owns a
+    // reference to its shared frame, independent of the cache's lifetime.
     for (int slot = 0; slot < SPELL_SLOT_COUNT; ++slot)
     {
         const int x = SPELL_X + (slot % SPELL_COLUMNS) * SPELL_X_STEP;
@@ -499,7 +487,7 @@ void MonPreview::BuildExtendedPanel(H3CombatMonsterPanel *panel)
             // Keep every slot visible even when the current creature has no
             // effect assigned to it.
             H3LoadedPcx16 *emptyPicture = resizedSpellPictures.empty() ? nullptr : resizedSpellPictures[EMPTY_SPELL_FRAME];
-            picture->SetPcx(emptyPicture);
+            SetSpellSlotImage(picture, emptyPicture);
             if (emptyPicture)
                 picture->ShowActivate();
             else
@@ -633,7 +621,7 @@ void MonPreview::UpdateSpellSlots(const std::array<H3DlgPcx16 *, SPELL_SLOT_COUN
             spellPicture = resizedSpellPictures.empty() ? nullptr : resizedSpellPictures[EMPTY_SPELL_FRAME];
             picture->SetHints(h3_NullString, h3_NullString, TRUE);
         }
-        picture->SetPcx(spellPicture);
+        SetSpellSlotImage(picture, spellPicture);
         if (spellPicture)
             picture->ShowActivate();
         else

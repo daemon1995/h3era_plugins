@@ -53,9 +53,8 @@ class MonPreview : public IGamePatch
         std::array<H3DlgItem *, NATIVE_PREVIEW_SPELL_ITEMS> nativeSpellItems = {};
     };
 
-    // Shared read-only cache for the current battle. H3DlgPcx16::SetPcx()
-    // does not add a reference, therefore every panel slot must be detached
-    // before a panel is destroyed or before this cache is released.
+    // One cache reference per frame, plus one reference per attached widget.
+    // Recreated panels (including battle replay) reuse the same frames.
     std::vector<H3LoadedPcx16 *> resizedSpellPictures;
     std::vector<PanelItems> activePanels;
     int spellIconWidth = 0;
@@ -76,19 +75,17 @@ class MonPreview : public IGamePatch
     static void __stdcall H3DlgBasePanel_Redraw(HiHook *hook, H3DlgBasePanel *panel, BOOL8 redraw,
                                              int firstId, int lastId);
 
-    static void __stdcall OnBeforeBattleUniversal(Era::TEvent *event);
-    static void __stdcall OnAfterBattleUniversal(Era::TEvent *event);
+    static void __stdcall OnBattleFinishedOrGameLeave(Era::TEvent *event);
 
     void EnsureSpellEffectResources();
     void CreateSpellEffectResources();
     void DestroySpellEffectResources();
+    void ClearBattleResources();
 
     void RegisterPanel(H3CombatMonsterPanel *panel);
     void UnregisterPanel(H3CombatMonsterPanel *panel);
     static PanelItems CollectPanelItems(H3CombatMonsterPanel *panel);
     PanelItems *FindPanelItems(H3DlgBasePanel *panel);
-    void DetachPanelSpellImages(H3CombatMonsterPanel *panel);
-    void DetachAllPanelSpellImages();
 
     void CreatePanelBackground();
     void BuildExtendedPanel(H3CombatMonsterPanel *panel);

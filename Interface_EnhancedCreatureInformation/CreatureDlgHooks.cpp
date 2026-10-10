@@ -140,6 +140,16 @@ void DestroyDialogHandler(H3CreatureInfoDlg *dlg)
     g_dialogHandlers.erase(dlg);
 }
 
+void __stdcall OnCreatureDialogsGameLeave(Era::TEvent *event)
+{
+    // Handlers do not own dialog items. Discard their bookkeeping without
+    // touching dialogs that FastQuit/load may have already destroyed.
+    g_dialogHandlers.clear();
+    std::fill(std::begin(g_buildContexts), std::end(g_buildContexts), CreatureDialogBuildContext());
+    g_buildContextDepth = 0;
+    main_isRMC = false;
+}
+
 int CurrentPlayerColor()
 {
     if (P_Game)
@@ -668,6 +678,10 @@ void Dlg_CreatureSpellInfo_HooksInit(PatcherInstance *pi)
 
 void Dlg_CreatureInfo_HooksInit(PatcherInstance *pi)
 {
+    Era::RegisterHandler(OnCreatureDialogsGameLeave, "OnBeforeFastQuitToGameMenu");
+    Era::RegisterHandler(OnCreatureDialogsGameLeave, "OnGameLeave");
+    Era::RegisterHandler(OnCreatureDialogsGameLeave, "OnBeforeLoadGame");
+
     // High-level runtime hooks for the three creature-info entry points.
     pi->WriteHiHook(native::BUY_CTOR, THISCALL_, H3CreatureInfoDlg_BuyCtor);
     pi->WriteHiHook(native::ARMY_CTOR, THISCALL_, H3CreatureInfoDlg_NotBattleCtor);
