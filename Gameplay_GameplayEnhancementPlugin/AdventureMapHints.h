@@ -50,6 +50,7 @@ class AdventureMapHints : public IGamePatch
     Patch *blockAdventureHintDraw = nullptr;
     Patch *blockIgnoreHintBarFocus = nullptr;
     AdventureHintsSettings settings;
+    H3LoadedPcx16 *tempHintBuffer = nullptr;
     std::vector<DrawnHintInfo> drawnHintRects;
 
     BOOL altIsPressed = FALSE;
@@ -71,7 +72,7 @@ class AdventureMapHints : public IGamePatch
     static AdventureMapHints &Get();
 
     void CreatePatches() noexcept override;
-    virtual ~AdventureMapHints() {};
+    virtual ~AdventureMapHints();
 
   protected:
     static void __stdcall AdvMgr_TileObjectDraw(HiHook *h, H3AdventureManager *advMan, int mapX, int mapY, int mapZ,
