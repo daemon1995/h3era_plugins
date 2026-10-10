@@ -71,10 +71,11 @@ AdventureMapHints::AdventureMapHints(PatcherInstance *pi)
 
 {
     drawnHintRects.reserve(64);
-    m_mapView.left = 8;                                   // right panel
-    m_mapView.top = 8;                                    // bottom panel
-    m_mapView.right = H3GameWidth::Get() - (800 - 592);   // right panel
-    m_mapView.bottom = H3GameHeight::Get() - (600 - 544); // bottom panel
+    m_mapView.left = 8;
+    m_mapView.top = 8;
+    // MapScroller uses these dimensions at the (8, 8) viewport origin.
+    m_mapView.right = m_mapView.left + H3GameWidth::Get() - 208;
+    m_mapView.bottom = m_mapView.top + H3GameHeight::Get() - 56;
     CreatePatches();
 }
 
@@ -133,7 +134,6 @@ void GameManager_HidePlayersVisitedInfo(H3Main *game, const int playerID, H3Play
     game->visitedWitchHut.Set(playerID, withcHutData != 0);
     game->visitedShrines.Set(playerID, shrineData != 0);
     game->visitedTreeKnowledge.Set(playerID, treeOfKnoledgeData != 0);
-
 }
 namespace
 {
@@ -141,6 +141,7 @@ class ScopedVisitedInfo
 {
     H3Main *game;
     H3PlayersBitfield backup[32];
+
   public:
     ScopedVisitedInfo(H3Main *main, int player) : game(main)
     {
@@ -151,7 +152,7 @@ class ScopedVisitedInfo
         libc::memcpy(&game->visitedBuoy, backup, sizeof(backup));
     }
 };
-}
+} // namespace
 
 LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3MapItem *mapItem, const int mapX,
                                       const int mapY, const int mapZ) noexcept
@@ -191,7 +192,10 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
     {
         const char *name;
         int value;
-        ~RestoreFlag() { Era::SetAssocVarIntValue(name, value); }
+        ~RestoreFlag()
+        {
+            Era::SetAssocVarIntValue(name, value);
+        }
     } restoreFlag{flag, oldFlag};
     Era::SetAssocVarIntValue(flag, 1);
     THISCALL_4(void, 0x40B0B0, adv, mapItem, mapX, mapY);
@@ -202,8 +206,8 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
 {
 
     instance->needDrawHints = false;
-    m_mapView.right = H3GameWidth::Get() - 208;
-    m_mapView.bottom = H3GameHeight::Get() - 56;
+    m_mapView.right = m_mapView.left + H3GameWidth::Get() - 208;
+    m_mapView.bottom = m_mapView.top + H3GameHeight::Get() - 56;
     // if map isn't forcelly hidden
     if (IntAt(0x699588) == 0)
     {
@@ -215,8 +219,8 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
         {
             instance->playerID = P_Game->Get()->GetPlayerID();
             libc::sprintf(Era::z[0], ERM_VARIABLE_FORMAT, instance->playerID); // ;
-            instance->needDrawHints = instance->playerID >= 0 && instance->playerID < 8 &&
-                                      Era::GetAssocVarIntValue(Era::z[0]);
+            instance->needDrawHints =
+                instance->playerID >= 0 && instance->playerID < 8 && Era::GetAssocVarIntValue(Era::z[0]);
         }
     }
 
@@ -290,7 +294,7 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         }
                         if (!hintText.Empty())
                             hintText.SetLength(hintText.Length() - 1); // remove last symbol
-                        hintTextPtr = hintText.String();           // reset ptr
+                        hintTextPtr = hintText.String();               // reset ptr
                         textWidth = fnt->GetMaxLineWidth(hintTextPtr);
                     }
 
@@ -316,7 +320,6 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     const int pcxHeight = tempBuffer->height;
 
                     tempBuffer->DrawFrame(0, 0, pcxWidth, pcxHeight, 189, 149, 57);
-                    // resize tempBuffer to align text for screen borders
 
                     int objectWidth = 1 * TILE_WIDTH;
                     const int outOfWidthBorder = (pcxWidth - objectWidth) >> 1;
@@ -340,21 +343,25 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                     if (overlapsHintOnTheLeft)
                         destPcxY += ((mapX + mapY) & 1) ? HINT_STAGGER_Y : -HINT_STAGGER_Y;
 
-                    const int srcX = destPcxX < m_mapView.left ? m_mapView.left - destPcxX : 0;
-                    const int srcY = destPcxY < m_mapView.top ? m_mapView.top - destPcxY : 0;
-                    destPcxX += srcX;
-                    destPcxY += srcY;
-                    tempBuffer->width = (std::min<int>)(pcxWidth - srcX, m_mapView.right - destPcxX);
-                    tempBuffer->height = (std::min<int>)(pcxHeight - srcY, m_mapView.bottom - destPcxY);
+                    // Intersect the blit with the viewport without moving the hint.
+                    const int drawX = (std::max<int>)(destPcxX, m_mapView.left);
+                    const int drawY = (std::max<int>)(destPcxY, m_mapView.top);
+                    const int srcX = drawX - destPcxX;
+                    const int srcY = drawY - destPcxY;
+                    const int drawWidth = (std::min<int>)(pcxWidth - srcX, m_mapView.right - drawX);
+                    const int drawHeight = (std::min<int>)(pcxHeight - srcY, m_mapView.bottom - drawY);
 
                     // if need to draw any hint
-                    if (tempBuffer->height > 0 && tempBuffer->width > 0)
+                    if (drawHeight > 0 && drawWidth > 0)
                     {
                         // get general Window draw buffer to draw temp pcx with x/y offsets
                         auto drawBuffer = P_WindowManager->GetDrawBuffer();
-                        tempBuffer->DrawToPcx16(destPcxX, destPcxY, 1, drawBuffer, srcX, srcY);
+                        // DrawToPcx16's wrapper takes width/height from the source PCX.
+                        // Pass the clipped extent explicitly, keeping its actual dimensions and stride.
+                        THISCALL_12(void, 0x44DF80, tempBuffer, srcX, srcY, drawWidth, drawHeight, drawBuffer->buffer,
+                                    drawX, drawY, drawBuffer->width, drawBuffer->height, drawBuffer->scanlineSize, 1);
 
-                        int heightReserve = m_mapView.bottom - tempBuffer->height - destPcxY;
+                        int heightReserve = m_mapView.bottom - drawHeight - drawY;
                         UINT shadowWidth = 0;
 
                         UINT shadowHeight = 0;
@@ -362,21 +369,19 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                         if (heightReserve > 0)
                             shadowHeight = heightReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : heightReserve;
 
-                        int widthReserve = m_mapView.right - tempBuffer->width - destPcxX;
+                        int widthReserve = m_mapView.right - drawWidth - drawX;
                         if (widthReserve > 0)
                             shadowWidth = widthReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : widthReserve;
 
                         if (shadowWidth)
-                            drawBuffer->DrawShadow(destPcxX + tempBuffer->width, destPcxY, shadowWidth,
-                                                   tempBuffer->height + shadowHeight);
+                            drawBuffer->DrawShadow(drawX + drawWidth, drawY, shadowWidth, drawHeight + shadowHeight);
 
                         if (shadowHeight)
-                            drawBuffer->DrawShadow(destPcxX, destPcxY + tempBuffer->height,
-                                                   tempBuffer->width + (shadowHeight ? 0 : shadowWidth), shadowHeight);
+                            drawBuffer->DrawShadow(drawX, drawY + drawHeight,
+                                                   drawWidth + (shadowHeight ? 0 : shadowWidth), shadowHeight);
 
-                        const RECT drawnRect{destPcxX, destPcxY,
-                                             destPcxX + tempBuffer->width + static_cast<int>(shadowWidth),
-                                             destPcxY + tempBuffer->height + static_cast<int>(shadowHeight)};
+                        const RECT drawnRect{drawX, drawY, drawX + drawWidth + static_cast<int>(shadowWidth),
+                                             drawY + drawHeight + static_cast<int>(shadowHeight)};
                         instance->drawnHintRects.push_back({drawnRect, mapX});
                     }
 
@@ -461,10 +466,8 @@ int __stdcall AdventureMapHints::H3AdventureManager_ProcMapScreen(HiHook *h, H3A
                              msg->GetKey() == eVKey::H3VK_ALT;
     const BOOL previousAltState = instance->altIsPressed;
     // Key transitions are authoritative; other messages may omit modifier flags.
-    const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() &&
-                           (STDCALL_1(SHORT, PtrAt(0x63A294), VK_MENU) & 0x8000);
-    instance->altIsPressed = !editFocused &&
-                             (altKeyEvent ? msg->command == eMsgCommand::KEY_DOWN : keyIsHeld != 0);
+    const BOOL keyIsHeld = GetFocus() == H3Hwnd::Get() && (STDCALL_1(SHORT, PtrAt(0x63A294), VK_MENU) & 0x8000);
+    instance->altIsPressed = !editFocused && (altKeyEvent ? msg->command == eMsgCommand::KEY_DOWN : keyIsHeld != 0);
     if (!editFocused && (altKeyEvent || previousAltState != instance->altIsPressed))
         advMgr->UpdateHintMessage();
 
@@ -521,8 +524,7 @@ void __stdcall AdventureMapHints::H3AdventureManager_SetHint(HiHook *h, H3Advent
 
 bool AdventureMapHints::NeedDrawMapItem(const H3MapItem *mIt) const noexcept
 {
-    return mIt && mIt->objectType >= 0 &&
-           mIt->objectType < std::size(settings.drawObjectHint) &&
+    return mIt && mIt->objectType >= 0 && mIt->objectType < std::size(settings.drawObjectHint) &&
            settings.drawObjectHint[mIt->objectType].userValue;
 }
 
@@ -693,8 +695,8 @@ BOOL AdventureHintsSettings::save()
     Era::ClearIniCache(filePath);
     for (UINT i = 0; i < sizeof(drawObjectHint) / sizeof(drawObjectHint[0]); ++i)
     {
-        Era::WriteStrToIni(Era::IntToStr(i).c_str(), Era::IntToStr(drawObjectHint[i].userValue).c_str(),
-                           sectionName, filePath);
+        Era::WriteStrToIni(Era::IntToStr(i).c_str(), Era::IntToStr(drawObjectHint[i].userValue).c_str(), sectionName,
+                           filePath);
     }
     Era::WriteStrToIni("KeyCode", Era::IntToStr(vKey).c_str(), "ControlSettings", filePath);
 
