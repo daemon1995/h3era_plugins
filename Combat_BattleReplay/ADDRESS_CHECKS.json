@@ -1,0 +1,2086 @@
+{
+  "source": "C:\\Users\\dimon\\Documents\\ChatGPT\\EraPlugins\\export/functions_json",
+  "summary": {
+    "configuration": {
+      "continue_on_error": true,
+      "include_unnamed_functions": true,
+      "only_selected": false,
+      "output_dir": "C:\\h3-db\\export",
+      "selected_functions": [],
+      "show_progress": true
+    },
+    "counts": {
+      "enums": 37,
+      "exports": 1,
+      "functions": 7099,
+      "imports": 274,
+      "names": 13850,
+      "strings": 6735,
+      "structs": 526
+    },
+    "errors": [],
+    "export_date": "2026-08-07T01:11:02+03:00",
+    "ida_version": "8.3",
+    "input_file": "D:\\games\\HoMM 3 ERA\\h3era HD.exe",
+    "schema_version": "1.0"
+  },
+  "original_source_sha256": "DFD1D0EBE98F8A9E49B0D384CC217F3F5F84C05BE99249698EF795C4A97A6FEA",
+  "note": "Selected original IDA export instructions; WoG addresses excluded. See ANALYSIS.ru.md for interpretation.",
+  "functions": [
+    {
+      "ea": "0x4ACA60",
+      "name": "NetworkBattleInfo2Defender",
+      "signature": "signed int __thiscall(H3AdventureManager *AdvMgr, _DWORD *a2)",
+      "instructions": [
+        {
+          "bytes": "8B4DD0",
+          "ea": "0x4ACC13",
+          "text": "mov     ecx, [ebp+randomSeed]; ZPrPo"
+        },
+        {
+          "bytes": "8B55DC",
+          "ea": "0x4ACC16",
+          "text": "mov     edx, [ebp+dArmy]; int"
+        },
+        {
+          "bytes": "8B45E8",
+          "ea": "0x4ACC19",
+          "text": "mov     eax, [ebp+dHero]"
+        },
+        {
+          "bytes": "53",
+          "ea": "0x4ACC1C",
+          "text": "push    ebx; isBank"
+        },
+        {
+          "bytes": "53",
+          "ea": "0x4ACC1D",
+          "text": "push    ebx; a10"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4ACC1E",
+          "text": "push    ecx; seed"
+        },
+        {
+          "bytes": "8B4DEC",
+          "ea": "0x4ACC1F",
+          "text": "mov     ecx, [ebp+dTown]"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x4ACC22",
+          "text": "push    edx; defArmy"
+        },
+        {
+          "bytes": "8B55D4",
+          "ea": "0x4ACC23",
+          "text": "mov     edx, [ebp+playerID]; int"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x4ACC26",
+          "text": "push    eax; defHero"
+        },
+        {
+          "bytes": "8B45E0",
+          "ea": "0x4ACC27",
+          "text": "mov     eax, [ebp+aArmy]"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4ACC2A",
+          "text": "push    ecx; defTown"
+        },
+        {
+          "bytes": "8B4DE4",
+          "ea": "0x4ACC2B",
+          "text": "mov     ecx, [ebp+aHero]"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x4ACC2E",
+          "text": "push    edx; PlayerIndex"
+        },
+        {
+          "bytes": "8B55CC",
+          "ea": "0x4ACC2F",
+          "text": "mov     edx, [ebp+XYZ]; int"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x4ACC32",
+          "text": "push    eax; attArmy"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4ACC33",
+          "text": "push    ecx; attHero"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x4ACC34",
+          "text": "push    edx; PisMixed"
+        },
+        {
+          "bytes": "8BCE",
+          "ea": "0x4ACC35",
+          "text": "mov     ecx, esi; AdvMan"
+        },
+        {
+          "bytes": "E824050000",
+          "ea": "0x4ACC37",
+          "text": "call    AdvMgr__StartBattle; Call Procedure"
+        },
+        {
+          "bytes": "8B0D38956900",
+          "ea": "0x4ACC3C",
+          "text": "mov     ecx, o_Game; this"
+        },
+        {
+          "bytes": "57",
+          "ea": "0x4ACC42",
+          "text": "push    edi; PlayerIndex"
+        },
+        {
+          "bytes": "8845F3",
+          "ea": "0x4ACC43",
+          "text": "mov     [ebp+s], al"
+        },
+        {
+          "bytes": "E8B5190200",
+          "ea": "0x4ACC46",
+          "text": "call    Game__PlayerIsNotAI; Call Procedure"
+        },
+        {
+          "bytes": "84C0",
+          "ea": "0x4ACC4B",
+          "text": "test    al, al; Logical Compare"
+        },
+        {
+          "bytes": "753D",
+          "ea": "0x4ACC4D",
+          "text": "jnz     short loc_004ACC8C; Jump if Not Zero (ZF=0)"
+        },
+        {
+          "bytes": "A094776900",
+          "ea": "0x4ACC4F",
+          "text": "mov     al, BattleEnemySurrended"
+        },
+        {
+          "bytes": "8A0DF3856900",
+          "ea": "0x4ACC54",
+          "text": "mov     cl, BattleEnemyFled; ZPrPo"
+        },
+        {
+          "bytes": "0FBE55F3",
+          "ea": "0x4ACC5A",
+          "text": "movsx   edx, [ebp+s]; Move with Sign-Extend"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x4ACC5E",
+          "text": "push    eax; a12"
+        },
+        {
+          "bytes": "8B45C8",
+          "ea": "0x4ACC5F",
+          "text": "mov     eax, [ebp+a9]"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4ACC62",
+          "text": "push    ecx; a11"
+        },
+        {
+          "bytes": "8B4DD0",
+          "ea": "0x4ACC63",
+          "text": "mov     ecx, [ebp+randomSeed]"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x4ACC66",
+          "text": "push    edx; a10"
+        },
+        {
+          "bytes": "8B55DC",
+          "ea": "0x4ACC67",
+          "text": "mov     edx, [ebp+dArmy]"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x4ACC6A",
+          "text": "push    eax; a9"
+        },
+        {
+          "bytes": "8B45E8",
+          "ea": "0x4ACC6B",
+          "text": "mov     eax, [ebp+dHero]"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4ACC6E",
+          "text": "push    ecx; seed"
+        },
+        {
+          "bytes": "8B4DEC",
+          "ea": "0x4ACC6F",
+          "text": "mov     ecx, [ebp+dTown]"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x4ACC72",
+          "text": "push    edx; dArmy"
+        },
+        {
+          "bytes": "8B55D4",
+          "ea": "0x4ACC73",
+          "text": "mov     edx, [ebp+playerID]"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x4ACC76",
+          "text": "push    eax; dHero"
+        },
+        {
+          "bytes": "8B45E0",
+          "ea": "0x4ACC77",
+          "text": "mov     eax, [ebp+aArmy]"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4ACC7A",
+          "text": "push    ecx; town"
+        },
+        {
+          "bytes": "8B4DE4",
+          "ea": "0x4ACC7B",
+          "text": "mov     ecx, [ebp+aHero]"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x4ACC7E",
+          "text": "push    edx; aPlayerID"
+        },
+        {
+          "bytes": "8B55CC",
+          "ea": "0x4ACC7F",
+          "text": "mov     edx, [ebp+XYZ]"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x4ACC82",
+          "text": "push    eax; aArmy"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4ACC83",
+          "text": "push    ecx; aHero"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x4ACC84",
+          "text": "push    edx; XYZ"
+        },
+        {
+          "bytes": "8BCE",
+          "ea": "0x4ACC85",
+          "text": "mov     ecx, esi"
+        },
+        {
+          "bytes": "E8B41B0000",
+          "ea": "0x4ACC87",
+          "text": "call    BattleMgr_CopyTownsAndHeroesStruct; Call Procedure"
+        },
+        {
+          "bytes": "8B45E0",
+          "ea": "0x4ACC8C",
+          "text": "mov     eax, [ebp+aArmy]"
+        }
+      ]
+    },
+    {
+      "ea": "0x4AEBD0",
+      "name": "Get_OnlineEnemiesBattleInfo",
+      "signature": "H3Hero *__stdcall(_NetData_ *a1, int *a2, INT32 *a3, H3Hero **a4, H3Army **a5, int *a6, H3Town **a7, H3Hero **a8, H3Army **a9, eNetworkId *a10, _BYTE *a11, _BYTE *a12, _BYTE *a13)",
+      "instructions": [
+        {
+          "bytes": "6A38",
+          "ea": "0x4AECA8",
+          "text": "push    38h ; '8'; Size2Allocate"
+        },
+        {
+          "bytes": "E8E3871600",
+          "ea": "0x4AECAA",
+          "text": "call    new; Call Procedure"
+        },
+        {
+          "bytes": "83C404",
+          "ea": "0x4AECAF",
+          "text": "add     esp, 4; Add"
+        },
+        {
+          "bytes": "89452C",
+          "ea": "0x4AECB2",
+          "text": "mov     [ebp+arg_24], eax"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AECB5",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "C745FC00000000",
+          "ea": "0x4AECB7",
+          "text": "mov     [ebp+var_4], 0"
+        },
+        {
+          "bytes": "7409",
+          "ea": "0x4AECBE",
+          "text": "jz      short loc_004AECC9; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8BC8",
+          "ea": "0x4AECC0",
+          "text": "mov     ecx, eax; MonArr"
+        },
+        {
+          "bytes": "E889BAF9FF",
+          "ea": "0x4AECC2",
+          "text": "call    H3Army__Ctor; Call Procedure"
+        },
+        {
+          "bytes": "EB02",
+          "ea": "0x4AECC7",
+          "text": "jmp     short loc_004AECCB; Jump"
+        },
+        {
+          "bytes": "33C0",
+          "ea": "0x4AECC9",
+          "text": "xor     eax, eax; Logical Exclusive OR"
+        },
+        {
+          "bytes": "8906",
+          "ea": "0x4AECCB",
+          "text": "mov     [esi], eax"
+        },
+        {
+          "bytes": "8D733C",
+          "ea": "0x4AECCD",
+          "text": "lea     esi, [ebx+3Ch]; Load Effective Address"
+        },
+        {
+          "bytes": "B90E000000",
+          "ea": "0x4AECD0",
+          "text": "mov     ecx, 0Eh; MainStructPo"
+        },
+        {
+          "bytes": "8BF8",
+          "ea": "0x4AECD5",
+          "text": "mov     edi, eax"
+        },
+        {
+          "bytes": "F3A5",
+          "ea": "0x4AECD7",
+          "text": "rep movsd; Move Byte(s) from String to String"
+        },
+        {
+          "bytes": "6A38",
+          "ea": "0x4AECD9",
+          "text": "push    38h ; '8'; Size2Allocate"
+        },
+        {
+          "bytes": "C745FCFFFFFFFF",
+          "ea": "0x4AECDB",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "bytes": "E8AB871600",
+          "ea": "0x4AECE2",
+          "text": "call    new; Call Procedure"
+        },
+        {
+          "bytes": "83C404",
+          "ea": "0x4AECE7",
+          "text": "add     esp, 4; Add"
+        },
+        {
+          "bytes": "89452C",
+          "ea": "0x4AECEA",
+          "text": "mov     [ebp+arg_24], eax"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AECED",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "C745FC01000000",
+          "ea": "0x4AECEF",
+          "text": "mov     [ebp+var_4], 1"
+        },
+        {
+          "bytes": "7409",
+          "ea": "0x4AECF6",
+          "text": "jz      short loc_004AED01; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8BC8",
+          "ea": "0x4AECF8",
+          "text": "mov     ecx, eax; MonArr"
+        },
+        {
+          "bytes": "E851BAF9FF",
+          "ea": "0x4AECFA",
+          "text": "call    H3Army__Ctor; Call Procedure"
+        },
+        {
+          "bytes": "EB02",
+          "ea": "0x4AECFF",
+          "text": "jmp     short loc_004AED03; Jump"
+        },
+        {
+          "bytes": "33C0",
+          "ea": "0x4AED01",
+          "text": "xor     eax, eax; Logical Exclusive OR"
+        },
+        {
+          "bytes": "8B4D28",
+          "ea": "0x4AED03",
+          "text": "mov     ecx, [ebp+arg_20]; MainStructPo"
+        },
+        {
+          "bytes": "8BF8",
+          "ea": "0x4AED06",
+          "text": "mov     edi, eax"
+        },
+        {
+          "bytes": "8D7374",
+          "ea": "0x4AED08",
+          "text": "lea     esi, [ebx+74h]; Load Effective Address"
+        },
+        {
+          "bytes": "C745FCFFFFFFFF",
+          "ea": "0x4AED0B",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "bytes": "8901",
+          "ea": "0x4AED12",
+          "text": "mov     [ecx], eax"
+        },
+        {
+          "bytes": "8B4518",
+          "ea": "0x4AED14",
+          "text": "mov     eax, [ebp+arg_10]"
+        },
+        {
+          "bytes": "B90E000000",
+          "ea": "0x4AED17",
+          "text": "mov     ecx, 0Eh; MainStructPo"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AED1C",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "F3A5",
+          "ea": "0x4AED1E",
+          "text": "rep movsd; Move Byte(s) from String to String"
+        },
+        {
+          "bytes": "0F84CD010000",
+          "ea": "0x4AED20",
+          "text": "jz      loc_004AEEF3; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8B450C",
+          "ea": "0x4AEEF3",
+          "text": "mov     eax, [ebp+arg_4]"
+        },
+        {
+          "bytes": "8B08",
+          "ea": "0x4AEEF6",
+          "text": "mov     ecx, [eax]; MainStructPo"
+        },
+        {
+          "bytes": "890D8C776900",
+          "ea": "0x4AEEF8",
+          "text": "mov     dword_0069778C, ecx"
+        },
+        {
+          "bytes": "8B0D38956900",
+          "ea": "0x4AEEFE",
+          "text": "mov     ecx, o_Game; MainStructPo"
+        },
+        {
+          "bytes": "E8D7F70100",
+          "ea": "0x4AEF04",
+          "text": "call    Game__GetMyID_AsPlayer; ecx -> MainStructure"
+        },
+        {
+          "bytes": "A390776900",
+          "ea": "0x4AEF09",
+          "text": "mov     dword_00697790, eax"
+        },
+        {
+          "bytes": "8B451C",
+          "ea": "0x4AEF0E",
+          "text": "mov     eax, [ebp+arg_14]"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AEF11",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "7440",
+          "ea": "0x4AEF13",
+          "text": "jz      short loc_004AEF55; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "6892040000",
+          "ea": "0x4AEF15",
+          "text": "push    492h; Size2Allocate"
+        },
+        {
+          "bytes": "E873851600",
+          "ea": "0x4AEF1A",
+          "text": "call    new; Call Procedure"
+        },
+        {
+          "bytes": "83C404",
+          "ea": "0x4AEF1F",
+          "text": "add     esp, 4; Add"
+        },
+        {
+          "bytes": "894508",
+          "ea": "0x4AEF22",
+          "text": "mov     [ebp+arg_0], eax"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AEF25",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "C745FC03000000",
+          "ea": "0x4AEF27",
+          "text": "mov     [ebp+var_4], 3"
+        },
+        {
+          "bytes": "7409",
+          "ea": "0x4AEF2E",
+          "text": "jz      short loc_004AEF39; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8BC8",
+          "ea": "0x4AEF30",
+          "text": "mov     ecx, eax; int"
+        },
+        {
+          "bytes": "E829990200",
+          "ea": "0x4AEF32",
+          "text": "call    Hero__Ctor; Call Procedure"
+        },
+        {
+          "bytes": "EB02",
+          "ea": "0x4AEF37",
+          "text": "jmp     short loc_004AEF3B; Jump"
+        },
+        {
+          "bytes": "33C0",
+          "ea": "0x4AEF39",
+          "text": "xor     eax, eax; Logical Exclusive OR"
+        },
+        {
+          "bytes": "8B5514",
+          "ea": "0x4AEF3B",
+          "text": "mov     edx, [ebp+arg_C]; int"
+        },
+        {
+          "bytes": "8D8B18020000",
+          "ea": "0x4AEF3E",
+          "text": "lea     ecx, [ebx+218h]; Load Effective Address"
+        },
+        {
+          "bytes": "51",
+          "ea": "0x4AEF44",
+          "text": "push    ecx; SHero"
+        },
+        {
+          "bytes": "8BC8",
+          "ea": "0x4AEF45",
+          "text": "mov     ecx, eax; DHero"
+        },
+        {
+          "bytes": "C745FCFFFFFFFF",
+          "ea": "0x4AEF47",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "bytes": "8902",
+          "ea": "0x4AEF4E",
+          "text": "mov     [edx], eax"
+        },
+        {
+          "bytes": "E8BB74F5FF",
+          "ea": "0x4AEF50",
+          "text": "call    Hero_CopyHeroSettings; Call Procedure"
+        },
+        {
+          "bytes": "8B4510",
+          "ea": "0x4AEF55",
+          "text": "mov     eax, [ebp+arg_8]"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AEF58",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "7440",
+          "ea": "0x4AEF5A",
+          "text": "jz      short loc_004AEF9C; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "6892040000",
+          "ea": "0x4AEF5C",
+          "text": "push    492h; Size2Allocate"
+        },
+        {
+          "bytes": "E82C851600",
+          "ea": "0x4AEF61",
+          "text": "call    new; Call Procedure"
+        },
+        {
+          "bytes": "83C404",
+          "ea": "0x4AEF66",
+          "text": "add     esp, 4; Add"
+        },
+        {
+          "bytes": "894508",
+          "ea": "0x4AEF69",
+          "text": "mov     [ebp+arg_0], eax"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AEF6C",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "C745FC04000000",
+          "ea": "0x4AEF6E",
+          "text": "mov     [ebp+var_4], 4"
+        },
+        {
+          "bytes": "7409",
+          "ea": "0x4AEF75",
+          "text": "jz      short loc_004AEF80; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8BC8",
+          "ea": "0x4AEF77",
+          "text": "mov     ecx, eax; int"
+        },
+        {
+          "bytes": "E8E2980200",
+          "ea": "0x4AEF79",
+          "text": "call    Hero__Ctor; Call Procedure"
+        },
+        {
+          "bytes": "EB02",
+          "ea": "0x4AEF7E",
+          "text": "jmp     short loc_004AEF82; Jump"
+        },
+        {
+          "bytes": "33C0",
+          "ea": "0x4AEF80",
+          "text": "xor     eax, eax; Logical Exclusive OR"
+        },
+        {
+          "bytes": "8B5524",
+          "ea": "0x4AEF82",
+          "text": "mov     edx, [ebp+arg_1C]; int"
+        },
+        {
+          "bytes": "81C3AA060000",
+          "ea": "0x4AEF85",
+          "text": "add     ebx, 6AAh; Add"
+        },
+        {
+          "bytes": "53",
+          "ea": "0x4AEF8B",
+          "text": "push    ebx; SHero"
+        },
+        {
+          "bytes": "8BC8",
+          "ea": "0x4AEF8C",
+          "text": "mov     ecx, eax; DHero"
+        },
+        {
+          "bytes": "C745FCFFFFFFFF",
+          "ea": "0x4AEF8E",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "bytes": "8902",
+          "ea": "0x4AEF95",
+          "text": "mov     [edx], eax"
+        },
+        {
+          "bytes": "E87474F5FF",
+          "ea": "0x4AEF97",
+          "text": "call    Hero_CopyHeroSettings; Call Procedure"
+        },
+        {
+          "bytes": "8B4DF4",
+          "ea": "0x4AEF9C",
+          "text": "mov     ecx, [ebp+var_C]"
+        },
+        {
+          "bytes": "5F",
+          "ea": "0x4AEF9F",
+          "text": "pop     edi"
+        },
+        {
+          "bytes": "5E",
+          "ea": "0x4AEFA0",
+          "text": "pop     esi"
+        },
+        {
+          "bytes": "64890D00000000",
+          "ea": "0x4AEFA1",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "bytes": "5B",
+          "ea": "0x4AEFA8",
+          "text": "pop     ebx"
+        },
+        {
+          "bytes": "8BE5",
+          "ea": "0x4AEFA9",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "bytes": "5D",
+          "ea": "0x4AEFAB",
+          "text": "pop     ebp"
+        },
+        {
+          "bytes": "C23400",
+          "ea": "0x4AEFAC",
+          "text": "retn    34h ; '4'; Return Near from Procedure"
+        }
+      ]
+    },
+    {
+      "ea": "0x4635D0",
+      "name": "BattleMgr::PrepareBattlefield",
+      "signature": "void __thiscall(_BattleMgr_ *this, int XYZ, H3Hero *HeroA, H3Army *armyA, int owner_id_D, H3Town *TownD, H3Hero *heroD, H3Army *armyD, int x_pos, int y_pos, int seed, char isBank)",
+      "instructions": [
+        {
+          "bytes": "8B450C",
+          "ea": "0x463626",
+          "text": "mov     eax, [ebp+HeroA]"
+        },
+        {
+          "bytes": "33C9",
+          "ea": "0x463629",
+          "text": "xor     ecx, ecx; Logical Exclusive OR"
+        },
+        {
+          "bytes": "C6862F40010001",
+          "ea": "0x46362B",
+          "text": "mov     byte ptr [esi+1402Fh], 1"
+        },
+        {
+          "bytes": "3BC1",
+          "ea": "0x463632",
+          "text": "cmp     eax, ecx; Compare Two Operands"
+        },
+        {
+          "bytes": "8D9EA8540000",
+          "ea": "0x463634",
+          "text": "lea     ebx, [esi+54A8h]; Load Effective Address"
+        },
+        {
+          "bytes": "7408",
+          "ea": "0x46363A",
+          "text": "jz      short loc_00463644; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "0FBE5022",
+          "ea": "0x46363C",
+          "text": "movsx   edx, byte ptr [eax+22h]; Move with Sign-Extend"
+        },
+        {
+          "bytes": "8913",
+          "ea": "0x463640",
+          "text": "mov     [ebx], edx"
+        },
+        {
+          "bytes": "EB06",
+          "ea": "0x463642",
+          "text": "jmp     short loc_0046364A; Jump"
+        },
+        {
+          "bytes": "C703FFFFFFFF",
+          "ea": "0x463644",
+          "text": "mov     dword ptr [ebx], 0FFFFFFFFh"
+        },
+        {
+          "bytes": "8B5514",
+          "ea": "0x46364A",
+          "text": "mov     edx, [ebp+owner_id_D]; int"
+        },
+        {
+          "bytes": "8986CC530000",
+          "ea": "0x46364D",
+          "text": "mov     [esi+53CCh], eax"
+        },
+        {
+          "bytes": "8B4510",
+          "ea": "0x463653",
+          "text": "mov     eax, [ebp+armyA]"
+        },
+        {
+          "bytes": "8996AC540000",
+          "ea": "0x463656",
+          "text": "mov     [esi+54ACh], edx"
+        },
+        {
+          "bytes": "8B551C",
+          "ea": "0x46365C",
+          "text": "mov     edx, [ebp+heroD]; int"
+        },
+        {
+          "bytes": "8986C4540000",
+          "ea": "0x46365F",
+          "text": "mov     [esi+54C4h], eax"
+        },
+        {
+          "bytes": "8B4520",
+          "ea": "0x463665",
+          "text": "mov     eax, [ebp+armyD]"
+        },
+        {
+          "bytes": "8996D0530000",
+          "ea": "0x463668",
+          "text": "mov     [esi+53D0h], edx"
+        },
+        {
+          "bytes": "8986C8540000",
+          "ea": "0x46366E",
+          "text": "mov     [esi+54C8h], eax"
+        }
+      ]
+    },
+    {
+      "ea": "0x463DD0",
+      "name": "Battle_Make_AfterBattle_Army",
+      "signature": "int __thiscall(_BattleMgr_ *BM, int side)",
+      "instructions": [
+        {
+          "bytes": "55",
+          "ea": "0x463DD0",
+          "text": "push    ebp"
+        },
+        {
+          "bytes": "8BEC",
+          "ea": "0x463DD1",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "bytes": "8B4508",
+          "ea": "0x463DD3",
+          "text": "mov     eax, [ebp+side]"
+        },
+        {
+          "bytes": "56",
+          "ea": "0x463DD6",
+          "text": "push    esi"
+        },
+        {
+          "bytes": "33F6",
+          "ea": "0x463DD7",
+          "text": "xor     esi, esi; Logical Exclusive OR"
+        },
+        {
+          "bytes": "57",
+          "ea": "0x463DD9",
+          "text": "push    edi"
+        },
+        {
+          "bytes": "33D2",
+          "ea": "0x463DDA",
+          "text": "xor     edx, edx; Logical Exclusive OR"
+        },
+        {
+          "bytes": "8BBC81C4540000",
+          "ea": "0x463DDC",
+          "text": "mov     edi, [ecx+eax*4+54C4h]"
+        },
+        {
+          "bytes": "83C204",
+          "ea": "0x463DE3",
+          "text": "add     edx, 4; Add"
+        },
+        {
+          "bytes": "83FA1C",
+          "ea": "0x463DE6",
+          "text": "cmp     edx, 1Ch; Compare Two Operands"
+        },
+        {
+          "bytes": "C74417FCFFFFFFFF",
+          "ea": "0x463DE9",
+          "text": "mov     dword ptr [edi+edx-4], 0FFFFFFFFh"
+        },
+        {
+          "bytes": "8BBC81C4540000",
+          "ea": "0x463DF1",
+          "text": "mov     edi, [ecx+eax*4+54C4h]"
+        },
+        {
+          "bytes": "89741718",
+          "ea": "0x463DF8",
+          "text": "mov     [edi+edx+18h], esi"
+        },
+        {
+          "bytes": "7CDE",
+          "ea": "0x463DFC",
+          "text": "jl      short loc_00463DDC; Jump if Less (SF!=OF)"
+        },
+        {
+          "bytes": "8B9481BC540000",
+          "ea": "0x463DFE",
+          "text": "mov     edx, [ecx+eax*4+54BCh]"
+        },
+        {
+          "bytes": "897508",
+          "ea": "0x463E05",
+          "text": "mov     [ebp+side], esi"
+        },
+        {
+          "bytes": "3BD6",
+          "ea": "0x463E08",
+          "text": "cmp     edx, esi; Compare Two Operands"
+        },
+        {
+          "bytes": "0F8E94000000",
+          "ea": "0x463E0A",
+          "text": "jle     loc_00463EA4; Jump if Less or Equal (ZF=1 | SF!=OF)"
+        }
+      ]
+    },
+    {
+      "ea": "0x476DA0",
+      "name": "BattleMgr_SetWinner",
+      "signature": "void __thiscall(_BattleMgr_ *BM, int sideWinner)",
+      "instructions": [
+        {
+          "bytes": "E8F6CDFEFF",
+          "ea": "0x476FD5",
+          "text": "call    Battle_Make_AfterBattle_Army; Call Procedure"
+        },
+        {
+          "bytes": "E8EDCDFEFF",
+          "ea": "0x476FDE",
+          "text": "call    Battle_Make_AfterBattle_Army; Call Procedure"
+        },
+        {
+          "bytes": "E8078CFFFF",
+          "ea": "0x477214",
+          "text": "call    Dlg_BattleResults_Create; Call Procedure"
+        },
+        {
+          "bytes": "8B1564506900",
+          "ea": "0x477219",
+          "text": "mov     edx, WinBattleType; int"
+        },
+        {
+          "bytes": "8B0D14946900",
+          "ea": "0x47721F",
+          "text": "mov     ecx, o_SoundMgr; o_SoundMgr"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x477225",
+          "text": "push    1; loop"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x477227",
+          "text": "push    1; play_on_start"
+        },
+        {
+          "bytes": "8B0495A8016700",
+          "ea": "0x477229",
+          "text": "mov     eax, Sound_BattleResult[edx*4]"
+        },
+        {
+          "bytes": "C645FC01",
+          "ea": "0x477230",
+          "text": "mov     byte ptr [ebp+var_4], 1"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x477234",
+          "text": "push    eax; name"
+        },
+        {
+          "bytes": "E8763D1200",
+          "ea": "0x477235",
+          "text": "call    PlayMP3File3; Call Procedure"
+        },
+        {
+          "bytes": "8D8D7CFFFFFF",
+          "ea": "0x47723A",
+          "text": "lea     ecx, [ebp+dlg]; Load Effective Address"
+        },
+        {
+          "bytes": "E87BA4FFFF",
+          "ea": "0x477240",
+          "text": "call    Dlg_BattleResults_Run; Call Procedure"
+        },
+        {
+          "bytes": "8D8D7CFFFFFF",
+          "ea": "0x477245",
+          "text": "lea     ecx, [ebp+dlg]; Load Effective Address"
+        },
+        {
+          "bytes": "C645FC00",
+          "ea": "0x47724B",
+          "text": "mov     byte ptr [ebp+var_4], 0"
+        },
+        {
+          "bytes": "E86CA3FFFF",
+          "ea": "0x47724F",
+          "text": "call    Dlg_BattleResults_Destruct; Call Procedure"
+        },
+        {
+          "bytes": "8B8CBECC530000",
+          "ea": "0x477254",
+          "text": "mov     ecx, [esi+edi*4+53CCh]; Hero"
+        },
+        {
+          "bytes": "85C9",
+          "ea": "0x47725B",
+          "text": "test    ecx, ecx; Logical Compare"
+        },
+        {
+          "bytes": "0F84A0000000",
+          "ea": "0x47725D",
+          "text": "jz      loc_00477303; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8A8437A6540000",
+          "ea": "0x477263",
+          "text": "mov     al, [edi+esi+54A6h]"
+        },
+        {
+          "bytes": "33D2",
+          "ea": "0x47726A",
+          "text": "xor     edx, edx; int"
+        },
+        {
+          "bytes": "84C0",
+          "ea": "0x47726C",
+          "text": "test    al, al; Logical Compare"
+        },
+        {
+          "bytes": "8B45EC",
+          "ea": "0x47726E",
+          "text": "mov     eax, [ebp+exp_to_add]"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x477271",
+          "text": "push    1; showMessage"
+        },
+        {
+          "bytes": "0F94C2",
+          "ea": "0x477273",
+          "text": "setz    dl; int"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x477276",
+          "text": "push    edx; checkLevelUps"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x477277",
+          "text": "push    eax; EXP"
+        },
+        {
+          "bytes": "E8A3C30600",
+          "ea": "0x477278",
+          "text": "call    Hero__GiveExperience; Call Procedure"
+        },
+        {
+          "bytes": "53",
+          "ea": "0x47727D",
+          "text": "push    ebx"
+        },
+        {
+          "bytes": "57",
+          "ea": "0x47727E",
+          "text": "push    edi"
+        },
+        {
+          "bytes": "8BCE",
+          "ea": "0x47727F",
+          "text": "mov     ecx, esi"
+        },
+        {
+          "bytes": "E88AF6FFFF",
+          "ea": "0x477281",
+          "text": "call    BattleMgr__GiveEagleEyeSpells; Call Procedure"
+        },
+        {
+          "bytes": "8D8D7CFFFFFF",
+          "ea": "0x4772E9",
+          "text": "lea     ecx, [ebp+dlg]; Load Effective Address"
+        },
+        {
+          "bytes": "E8CCA3FFFF",
+          "ea": "0x4772EF",
+          "text": "call    Dlg_BattleResults_Run; Call Procedure"
+        },
+        {
+          "bytes": "8D8D7CFFFFFF",
+          "ea": "0x4772F4",
+          "text": "lea     ecx, [ebp+dlg]; Load Effective Address"
+        },
+        {
+          "bytes": "C645FC00",
+          "ea": "0x4772FA",
+          "text": "mov     byte ptr [ebp+var_4], 0"
+        },
+        {
+          "bytes": "E8BDA2FFFF",
+          "ea": "0x4772FE",
+          "text": "call    Dlg_BattleResults_Destruct; Call Procedure"
+        },
+        {
+          "bytes": "8B55CC",
+          "ea": "0x477303",
+          "text": "mov     edx, [ebp+artsVector.m_first]"
+        },
+        {
+          "bytes": "C705D477690000000000",
+          "ea": "0x477306",
+          "text": "mov     timeClick, 0"
+        },
+        {
+          "bytes": "52",
+          "ea": "0x477310",
+          "text": "push    edx; void *"
+        },
+        {
+          "bytes": "E8DA3D1900",
+          "ea": "0x477311",
+          "text": "call    MemFree; Call Procedure"
+        },
+        {
+          "bytes": "8B4DF4",
+          "ea": "0x477316",
+          "text": "mov     ecx, [ebp+var_C]"
+        },
+        {
+          "bytes": "83C404",
+          "ea": "0x477319",
+          "text": "add     esp, 4; Add"
+        }
+      ]
+    },
+    {
+      "ea": "0x417380",
+      "name": "AdvMgr_FullUpdate",
+      "signature": "void __thiscall(H3AdventureManager *this, char redraw, int a3)",
+      "instructions": [
+        {
+          "bytes": "8B4E44",
+          "ea": "0x4173E2",
+          "text": "mov     ecx, [esi+44h]; this"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x4173E5",
+          "text": "push    0; a3"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x4173E7",
+          "text": "push    0; isMultiplayer"
+        },
+        {
+          "bytes": "E872CBFEFF",
+          "ea": "0x4173E9",
+          "text": "call    H3AdventureMgrDlg__SetButtonsPlayerColor; Call Procedure"
+        },
+        {
+          "bytes": "8B4E44",
+          "ea": "0x4173EE",
+          "text": "mov     ecx, [esi+44h]; this"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x4173F1",
+          "text": "push    0; a4"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x4173F3",
+          "text": "push    0; a3"
+        },
+        {
+          "bytes": "6AFF",
+          "ea": "0x4173F5",
+          "text": "push    0FFFFFFFFh; a2"
+        },
+        {
+          "bytes": "E8E4BEFEFF",
+          "ea": "0x4173F7",
+          "text": "call    H3AdventureMgrDlg__RedrawHeroesSlots; Call Procedure"
+        },
+        {
+          "bytes": "8B4E44",
+          "ea": "0x4173FC",
+          "text": "mov     ecx, [esi+44h]; dlg"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x4173FF",
+          "text": "push    0; a4"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x417401",
+          "text": "push    0; a3"
+        },
+        {
+          "bytes": "6AFF",
+          "ea": "0x417403",
+          "text": "push    0FFFFFFFFh; a2"
+        },
+        {
+          "bytes": "E816C0FEFF",
+          "ea": "0x417405",
+          "text": "call    H3AdventureMgrDlg__RedrawTownSlots; Call Procedure"
+        },
+        {
+          "bytes": "8B4E44",
+          "ea": "0x41740A",
+          "text": "mov     ecx, [esi+44h]"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x41740D",
+          "text": "push    0"
+        },
+        {
+          "bytes": "E89CC5FEFF",
+          "ea": "0x41740F",
+          "text": "call    H3AdventureMgrDlg__RedrawQuestButton; Call Procedure"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x417414",
+          "text": "push    0"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x417416",
+          "text": "push    0"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x417418",
+          "text": "push    1"
+        },
+        {
+          "bytes": "8BCE",
+          "ea": "0x41741A",
+          "text": "mov     ecx, esi"
+        },
+        {
+          "bytes": "E81FE9FFFF",
+          "ea": "0x41741C",
+          "text": "call    AdvMgr_UpdateInfoPanel; Call Procedure"
+        },
+        {
+          "bytes": "8B4E44",
+          "ea": "0x417421",
+          "text": "mov     ecx, [esi+44h]"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x417424",
+          "text": "push    0"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x417426",
+          "text": "push    1"
+        },
+        {
+          "bytes": "E8D3CAFEFF",
+          "ea": "0x417428",
+          "text": "call    H3AdventureMgrDlg__RedrawResources; Call Procedure"
+        },
+        {
+          "bytes": "8B4E44",
+          "ea": "0x41742D",
+          "text": "mov     ecx, [esi+44h]"
+        }
+      ]
+    },
+    {
+      "ea": "0x4AD160",
+      "name": "AdvMgr::StartBattle",
+      "signature": "signed int __thiscall(H3AdventureManager *AdvMan, int PosMixed, H3Hero *attHero, H3Army *attArmy, int PlayerIndex, H3Town *defTown, H3Hero *defHero, H3Army *defArmy, int seed, signed int combatIsLocal, int isBank)",
+      "instructions": [
+        {
+          "bytes": "55",
+          "ea": "0x4AD160",
+          "text": "push    ebp"
+        },
+        {
+          "bytes": "8BEC",
+          "ea": "0x4AD161",
+          "text": "mov     ebp, esp"
+        },
+        {
+          "bytes": "6AFF",
+          "ea": "0x4AD163",
+          "text": "push    0FFFFFFFFh"
+        },
+        {
+          "bytes": "688FB96200",
+          "ea": "0x4AD165",
+          "text": "push    offset Battle_SEH"
+        },
+        {
+          "bytes": "64A100000000",
+          "ea": "0x4AD16A",
+          "text": "mov     eax, large fs:0"
+        },
+        {
+          "bytes": "50",
+          "ea": "0x4AD170",
+          "text": "push    eax"
+        },
+        {
+          "bytes": "64892500000000",
+          "ea": "0x4AD171",
+          "text": "mov     large fs:0, esp"
+        },
+        {
+          "bytes": "81EC4C0D0000",
+          "ea": "0x4AD178",
+          "text": "sub     esp, 0D4Ch; Integer Subtraction"
+        },
+        {
+          "bytes": "53",
+          "ea": "0x4AD17E",
+          "text": "push    ebx"
+        },
+        {
+          "bytes": "56",
+          "ea": "0x4AD17F",
+          "text": "push    esi"
+        },
+        {
+          "bytes": "57",
+          "ea": "0x4AD180",
+          "text": "push    edi"
+        },
+        {
+          "bytes": "8B7D0C",
+          "ea": "0x4AD181",
+          "text": "mov     edi, [ebp+this]"
+        },
+        {
+          "bytes": "85FF",
+          "ea": "0x4AD184",
+          "text": "test    edi, edi; Logical Compare"
+        },
+        {
+          "bytes": "894DE4",
+          "ea": "0x4AD186",
+          "text": "mov     [ebp+AdvMan], ecx"
+        },
+        {
+          "bytes": "7406",
+          "ea": "0x4AD189",
+          "text": "jz      short loc_004AD191; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "0FBE5F22",
+          "ea": "0x4AD18B",
+          "text": "movsx   ebx, byte ptr [edi+22h]; Move with Sign-Extend"
+        },
+        {
+          "bytes": "EB03",
+          "ea": "0x4AD18F",
+          "text": "jmp     short loc_004AD194; Jump"
+        },
+        {
+          "bytes": "83CBFF",
+          "ea": "0x4AD191",
+          "text": "or      ebx, 0FFFFFFFFh; Logical Inclusive OR"
+        },
+        {
+          "bytes": "B980D66900",
+          "ea": "0x4AD194",
+          "text": "mov     ecx, offset MPTimeStructure; timer"
+        },
+        {
+          "bytes": "895DE8",
+          "ea": "0x4AD199",
+          "text": "mov     [ebp+attack_playerID], ebx"
+        },
+        {
+          "bytes": "E8CFAF0A00",
+          "ea": "0x4AD19C",
+          "text": "call    HoldOnTimeAtBattleStart; Call Procedure"
+        },
+        {
+          "bytes": "A1F4CC6900",
+          "ea": "0x4AD3B6",
+          "text": "mov     eax, o_ActivePlayerID"
+        },
+        {
+          "bytes": "8B0D108A6900",
+          "ea": "0x4AD3BB",
+          "text": "mov     ecx, ?bShowIt@@3HA; int bShowIt"
+        },
+        {
+          "bytes": "8B5D1C",
+          "ea": "0x4AD3C1",
+          "text": "mov     ebx, [ebp+army]"
+        },
+        {
+          "bytes": "8945C4",
+          "ea": "0x4AD3C4",
+          "text": "mov     [ebp+var_3C], eax"
+        },
+        {
+          "bytes": "8B45E8",
+          "ea": "0x4AD3C7",
+          "text": "mov     eax, [ebp+attack_playerID]"
+        },
+        {
+          "bytes": "C7059095690001000000",
+          "ea": "0x4AD3CA",
+          "text": "mov     dword_00699590, 1"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x4AD3D4",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "894DD0",
+          "ea": "0x4AD3D6",
+          "text": "mov     [ebp+var_30], ecx"
+        },
+        {
+          "bytes": "E8E8290000",
+          "ea": "0x4ADFE3",
+          "text": "call    o_ExecMgr_CallManager; Call Procedure"
+        },
+        {
+          "bytes": "8B0DB0926900",
+          "ea": "0x4ADFE8",
+          "text": "mov     ecx, o_MouseMgr; this"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x4ADFEE",
+          "text": "push    1; type"
+        },
+        {
+          "bytes": "6A00",
+          "ea": "0x4ADFF0",
+          "text": "push    0; cadre"
+        },
+        {
+          "bytes": "E8A9EE0500",
+          "ea": "0x4ADFF2",
+          "text": "call    MouseMgr__SetCursor; Call Procedure"
+        },
+        {
+          "bytes": "8B0DB0926900",
+          "ea": "0x4ADFF7",
+          "text": "mov     ecx, o_MouseMgr"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x4ADFFD",
+          "text": "push    1"
+        },
+        {
+          "bytes": "E8ACF70500",
+          "ea": "0x4ADFFF",
+          "text": "call    MouseMgr__TurnMouseON; Call Procedure"
+        },
+        {
+          "bytes": "85FF",
+          "ea": "0x4AE004",
+          "text": "test    edi, edi; Logical Compare"
+        },
+        {
+          "bytes": "C7059895690000000000",
+          "ea": "0x4AE006",
+          "text": "mov     ?gAdvDisposeLevel@@3HA, 0; int gAdvDisposeLevel"
+        },
+        {
+          "bytes": "7407",
+          "ea": "0x4AE010",
+          "text": "jz      short loc_004AE019; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8BCF",
+          "ea": "0x4AE012",
+          "text": "mov     ecx, edi; this"
+        },
+        {
+          "bytes": "E877C90200",
+          "ea": "0x4AE014",
+          "text": "call    Hero__CheckLevelUps; Call Procedure"
+        },
+        {
+          "bytes": "8B4DD0",
+          "ea": "0x4AE58D",
+          "text": "mov     ecx, [ebp+var_30]; timer"
+        },
+        {
+          "bytes": "8B55C4",
+          "ea": "0x4AE590",
+          "text": "mov     edx, [ebp+var_3C]"
+        },
+        {
+          "bytes": "890D108A6900",
+          "ea": "0x4AE593",
+          "text": "mov     ?bShowIt@@3HA, ecx; int bShowIt"
+        },
+        {
+          "bytes": "8B0DFCCC6900",
+          "ea": "0x4AE599",
+          "text": "mov     ecx, o_ActivePlayer; PlayerStructPo"
+        },
+        {
+          "bytes": "8915F4CC6900",
+          "ea": "0x4AE59F",
+          "text": "mov     o_ActivePlayerID, edx"
+        },
+        {
+          "bytes": "E8B6C40000",
+          "ea": "0x4AE5A5",
+          "text": "call    Player_IsHuman; Call Procedure"
+        },
+        {
+          "bytes": "8B0DB0926900",
+          "ea": "0x4AE5FD",
+          "text": "mov     ecx, o_MouseMgr; timer"
+        },
+        {
+          "bytes": "6A01",
+          "ea": "0x4AE603",
+          "text": "push    1"
+        },
+        {
+          "bytes": "C7059095690000000000",
+          "ea": "0x4AE605",
+          "text": "mov     dword_00699590, 0"
+        },
+        {
+          "bytes": "E89CF10500",
+          "ea": "0x4AE60F",
+          "text": "call    MouseMgr__TurnMouseON; Call Procedure"
+        },
+        {
+          "bytes": "33C9",
+          "ea": "0x4AE614",
+          "text": "xor     ecx, ecx; a1"
+        },
+        {
+          "bytes": "E8554D0400",
+          "ea": "0x4AE616",
+          "text": "call    WinLoseGame; Call Procedure"
+        },
+        {
+          "bytes": "A120946900",
+          "ea": "0x4AE61B",
+          "text": "mov     eax, o_BattleMgr"
+        },
+        {
+          "bytes": "B980D66900",
+          "ea": "0x4AE620",
+          "text": "mov     ecx, offset MPTimeStructure; timer"
+        },
+        {
+          "bytes": "C745FCFFFFFFFF",
+          "ea": "0x4AE625",
+          "text": "mov     [ebp+var_4], 0FFFFFFFFh"
+        },
+        {
+          "bytes": "8BB0483D0100",
+          "ea": "0x4AE62C",
+          "text": "mov     esi, [eax+13D48h]"
+        },
+        {
+          "bytes": "E8599B0A00",
+          "ea": "0x4AE632",
+          "text": "call    ContinueTimeAfterBattle; Call Procedure"
+        },
+        {
+          "bytes": "A059126900",
+          "ea": "0x4AE637",
+          "text": "mov     al, GoAutoSolo"
+        },
+        {
+          "bytes": "8B4DF4",
+          "ea": "0x4AE67C",
+          "text": "mov     ecx, [ebp+var_C]"
+        },
+        {
+          "bytes": "8BC6",
+          "ea": "0x4AE67F",
+          "text": "mov     eax, esi"
+        },
+        {
+          "bytes": "5F",
+          "ea": "0x4AE681",
+          "text": "pop     edi"
+        },
+        {
+          "bytes": "5E",
+          "ea": "0x4AE682",
+          "text": "pop     esi"
+        },
+        {
+          "bytes": "5B",
+          "ea": "0x4AE683",
+          "text": "pop     ebx"
+        },
+        {
+          "bytes": "64890D00000000",
+          "ea": "0x4AE684",
+          "text": "mov     large fs:0, ecx"
+        },
+        {
+          "bytes": "8BE5",
+          "ea": "0x4AE68B",
+          "text": "mov     esp, ebp"
+        },
+        {
+          "bytes": "5D",
+          "ea": "0x4AE68D",
+          "text": "pop     ebp"
+        },
+        {
+          "bytes": "C22800",
+          "ea": "0x4AE68E",
+          "text": "retn    28h ; '('; Return Near from Procedure"
+        }
+      ]
+    },
+    {
+      "ea": "0x4716E0",
+      "name": "Dlg_BattleResults_Proc",
+      "signature": "int __thiscall(_MouseStr_ *this)",
+      "instructions": [
+        {
+          "bytes": "53",
+          "ea": "0x4716E0",
+          "text": "push    ebx"
+        },
+        {
+          "bytes": "56",
+          "ea": "0x4716E1",
+          "text": "push    esi"
+        },
+        {
+          "bytes": "57",
+          "ea": "0x4716E2",
+          "text": "push    edi"
+        },
+        {
+          "bytes": "8BF1",
+          "ea": "0x4716E3",
+          "text": "mov     esi, ecx"
+        },
+        {
+          "bytes": "32DB",
+          "ea": "0x4716E5",
+          "text": "xor     bl, bl; Logical Exclusive OR"
+        },
+        {
+          "bytes": "E834C40700",
+          "ea": "0x4716E7",
+          "text": "call    H3BaseDlg__Redraw; Call Procedure"
+        },
+        {
+          "bytes": "8B06",
+          "ea": "0x4716EC",
+          "text": "mov     eax, [esi]"
+        },
+        {
+          "bytes": "83F801",
+          "ea": "0x4716EE",
+          "text": "cmp     eax, 1; Compare Two Operands"
+        },
+        {
+          "bytes": "7418",
+          "ea": "0x4716F1",
+          "text": "jz      short loc_0047170B; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "3D00020000",
+          "ea": "0x4716F3",
+          "text": "cmp     eax, 200h; Compare Two Operands"
+        },
+        {
+          "bytes": "7511",
+          "ea": "0x4716F8",
+          "text": "jnz     short loc_0047170B; Jump if Not Zero (ZF=0)"
+        },
+        {
+          "bytes": "837E040D",
+          "ea": "0x4716FA",
+          "text": "cmp     dword ptr [esi+4], 0Dh; Compare Two Operands"
+        },
+        {
+          "bytes": "750B",
+          "ea": "0x4716FE",
+          "text": "jnz     short loc_0047170B; Jump if Not Zero (ZF=0)"
+        },
+        {
+          "bytes": "817E0802780000",
+          "ea": "0x471700",
+          "text": "cmp     dword ptr [esi+8], 7802h; Compare Two Operands"
+        },
+        {
+          "bytes": "7502",
+          "ea": "0x471707",
+          "text": "jnz     short loc_0047170B; Jump if Not Zero (ZF=0)"
+        },
+        {
+          "bytes": "B301",
+          "ea": "0x471709",
+          "text": "mov     bl, 1"
+        },
+        {
+          "bytes": "8B3DD4776900",
+          "ea": "0x47170B",
+          "text": "mov     edi, timeClick"
+        },
+        {
+          "bytes": "85FF",
+          "ea": "0x471711",
+          "text": "test    edi, edi; Logical Compare"
+        },
+        {
+          "bytes": "7612",
+          "ea": "0x471713",
+          "text": "jbe     short loc_00471727; Jump if Below or Equal (CF=1 | ZF=1)"
+        },
+        {
+          "bytes": "E856720800",
+          "ea": "0x471715",
+          "text": "call    timeGetTime; Call Procedure"
+        },
+        {
+          "bytes": "2BC7",
+          "ea": "0x47171A",
+          "text": "sub     eax, edi; Integer Subtraction"
+        },
+        {
+          "bytes": "7809",
+          "ea": "0x47171C",
+          "text": "js      short loc_00471727; Jump if Sign (SF=1)"
+        },
+        {
+          "bytes": "C7460802780000",
+          "ea": "0x47171E",
+          "text": "mov     dword ptr [esi+8], 7802h"
+        },
+        {
+          "bytes": "EB04",
+          "ea": "0x471725",
+          "text": "jmp     short loc_0047172B; Jump"
+        },
+        {
+          "bytes": "84DB",
+          "ea": "0x471727",
+          "text": "test    bl, bl; Logical Compare"
+        },
+        {
+          "bytes": "7430",
+          "ea": "0x471729",
+          "text": "jz      short loc_0047175B; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8B4608",
+          "ea": "0x47172B",
+          "text": "mov     eax, [esi+8]"
+        },
+        {
+          "bytes": "C70600020000",
+          "ea": "0x47172E",
+          "text": "mov     dword ptr [esi], 200h"
+        },
+        {
+          "bytes": "8B0DD0926900",
+          "ea": "0x471734",
+          "text": "mov     ecx, o_WndMgr"
+        },
+        {
+          "bytes": "5F",
+          "ea": "0x47173A",
+          "text": "pop     edi"
+        },
+        {
+          "bytes": "894138",
+          "ea": "0x47173B",
+          "text": "mov     [ecx+38h], eax"
+        },
+        {
+          "bytes": "B80A000000",
+          "ea": "0x47173E",
+          "text": "mov     eax, 0Ah"
+        },
+        {
+          "bytes": "894608",
+          "ea": "0x471743",
+          "text": "mov     [esi+8], eax"
+        },
+        {
+          "bytes": "894604",
+          "ea": "0x471746",
+          "text": "mov     [esi+4], eax"
+        },
+        {
+          "bytes": "5E",
+          "ea": "0x471749",
+          "text": "pop     esi"
+        },
+        {
+          "bytes": "C705D477690000000000",
+          "ea": "0x47174A",
+          "text": "mov     timeClick, 0"
+        },
+        {
+          "bytes": "B802000000",
+          "ea": "0x471754",
+          "text": "mov     eax, 2"
+        },
+        {
+          "bytes": "5B",
+          "ea": "0x471759",
+          "text": "pop     ebx"
+        },
+        {
+          "bytes": "C3",
+          "ea": "0x47175A",
+          "text": "retn; Return Near from Procedure"
+        },
+        {
+          "bytes": "5F",
+          "ea": "0x47175B",
+          "text": "pop     edi"
+        },
+        {
+          "bytes": "5E",
+          "ea": "0x47175C",
+          "text": "pop     esi"
+        },
+        {
+          "bytes": "B801000000",
+          "ea": "0x47175D",
+          "text": "mov     eax, 1"
+        },
+        {
+          "bytes": "5B",
+          "ea": "0x471762",
+          "text": "pop     ebx"
+        },
+        {
+          "bytes": "C3",
+          "ea": "0x471763",
+          "text": "retn; Return Near from Procedure"
+        }
+      ]
+    },
+    {
+      "ea": "0x558170",
+      "name": "HoldOnTimeAtBattleStart",
+      "signature": "int __thiscall(_TurnTimeStruct_ *this)",
+      "instructions": [
+        {
+          "bytes": "56",
+          "ea": "0x558170",
+          "text": "push    esi"
+        },
+        {
+          "bytes": "8BF1",
+          "ea": "0x558171",
+          "text": "mov     esi, ecx"
+        },
+        {
+          "bytes": "8B4604",
+          "ea": "0x558173",
+          "text": "mov     eax, [esi+_TurnTimeStruct_.StartTimeMain]"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x558176",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "7408",
+          "ea": "0x558178",
+          "text": "jz      short loc_00558182; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "E8F107FAFF",
+          "ea": "0x55817A",
+          "text": "call    timeGetTime; Call Procedure"
+        },
+        {
+          "bytes": "894610",
+          "ea": "0x55817F",
+          "text": "mov     [esi+_TurnTimeStruct_.BattleStartTime], eax"
+        },
+        {
+          "bytes": "5E",
+          "ea": "0x558182",
+          "text": "pop     esi"
+        },
+        {
+          "bytes": "C3",
+          "ea": "0x558183",
+          "text": "retn; Return Near from Procedure"
+        }
+      ]
+    },
+    {
+      "ea": "0x558190",
+      "name": "ContinueTimeAfterBattle",
+      "signature": "void __thiscall(_TurnTimeStruct_ *this)",
+      "instructions": [
+        {
+          "bytes": "56",
+          "ea": "0x558190",
+          "text": "push    esi"
+        },
+        {
+          "bytes": "8BF1",
+          "ea": "0x558191",
+          "text": "mov     esi, ecx"
+        },
+        {
+          "bytes": "57",
+          "ea": "0x558193",
+          "text": "push    edi"
+        },
+        {
+          "bytes": "8B7E10",
+          "ea": "0x558194",
+          "text": "mov     edi, [esi+_TurnTimeStruct_.BattleStartTime]"
+        },
+        {
+          "bytes": "85FF",
+          "ea": "0x558197",
+          "text": "test    edi, edi; Logical Compare"
+        },
+        {
+          "bytes": "7423",
+          "ea": "0x558199",
+          "text": "jz      short loc_005581BE; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "8B4604",
+          "ea": "0x55819B",
+          "text": "mov     eax, [esi+_TurnTimeStruct_.StartTimeMain]"
+        },
+        {
+          "bytes": "85C0",
+          "ea": "0x55819E",
+          "text": "test    eax, eax; Logical Compare"
+        },
+        {
+          "bytes": "741C",
+          "ea": "0x5581A0",
+          "text": "jz      short loc_005581BE; Jump if Zero (ZF=1)"
+        },
+        {
+          "bytes": "E8C907FAFF",
+          "ea": "0x5581A2",
+          "text": "call    timeGetTime; Call Procedure"
+        },
+        {
+          "bytes": "8B5604",
+          "ea": "0x5581A7",
+          "text": "mov     edx, [esi+_TurnTimeStruct_.StartTimeMain]"
+        },
+        {
+          "bytes": "8B0E",
+          "ea": "0x5581AA",
+          "text": "mov     ecx, [esi+_TurnTimeStruct_.LastShownTime]"
+        },
+        {
+          "bytes": "2BC7",
+          "ea": "0x5581AC",
+          "text": "sub     eax, edi; Integer Subtraction"
+        },
+        {
+          "bytes": "C7461000000000",
+          "ea": "0x5581AE",
+          "text": "mov     [esi+_TurnTimeStruct_.BattleStartTime], 0"
+        },
+        {
+          "bytes": "03D0",
+          "ea": "0x5581B5",
+          "text": "add     edx, eax; Add"
+        },
+        {
+          "bytes": "03C8",
+          "ea": "0x5581B7",
+          "text": "add     ecx, eax; Add"
+        },
+        {
+          "bytes": "895604",
+          "ea": "0x5581B9",
+          "text": "mov     [esi+_TurnTimeStruct_.StartTimeMain], edx"
+        },
+        {
+          "bytes": "890E",
+          "ea": "0x5581BC",
+          "text": "mov     [esi+_TurnTimeStruct_.LastShownTime], ecx"
+        },
+        {
+          "bytes": "5F",
+          "ea": "0x5581BE",
+          "text": "pop     edi"
+        },
+        {
+          "bytes": "5E",
+          "ea": "0x5581BF",
+          "text": "pop     esi"
+        },
+        {
+          "bytes": "C3",
+          "ea": "0x5581C0",
+          "text": "retn; Return Near from Procedure"
+        }
+      ]
+    }
+  ]
+}
