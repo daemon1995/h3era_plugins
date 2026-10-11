@@ -1421,10 +1421,8 @@ bool InstallHooks()
 {
     if (!ValidatePe32Image() || !ValidateHiHookSite(MOVE_HERO, MOVE_HERO_PROLOG, sizeof(MOVE_HERO_PROLOG), nullptr) ||
         !ValidateHiHookSite(DO_EVENT, DO_EVENT_PROLOG, sizeof(DO_EVENT_PROLOG), nullptr) ||
-        !ValidateHiHookSite(DO_COMBAT, DO_COMBAT_PROLOG, sizeof(DO_COMBAT_PROLOG), "HD.WoG") ||
-        !ValidateHiHookSite(GAME_SAVE, GAME_SAVE_PROLOG, sizeof(GAME_SAVE_PROLOG), "wzx_HW") || !ValidateSaveSites())
+        !ValidateHiHookSite(DO_COMBAT, DO_COMBAT_PROLOG, sizeof(DO_COMBAT_PROLOG), "HD.WoG") || !ValidateSaveSites())
         return false;
-
     g_savePathHook = modulePatcher->WriteLoHook(SAVE_PATH_READY, Y_SavePathReady);
     g_saveCloseHook = modulePatcher->WriteLoHook(SAVE_CLOSE_DONE, Y_SaveCloseDone);
     g_moveHook = modulePatcher->WriteHiHook(MOVE_HERO, SPLICE_, EXTENDED_, THISCALL_, Y_MoveHero);
