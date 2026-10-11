@@ -18,12 +18,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
-    <ClInclude Include="LeadershipHooks.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="LeadershipDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="..\..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

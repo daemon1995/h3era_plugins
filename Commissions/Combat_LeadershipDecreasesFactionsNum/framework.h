@@ -5,5 +5,5 @@
 // Файлы заголовков Windows
 #include <windows.h>
 
-#include "..\headers\header.h"
+#include "..\..\headers\header.h"
 //#include "CombatHooks.h"
