@@ -21,7 +21,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID)
         Era::ConnectEra(hModule, moduleName);
 
         // Initialize after the game has loaded its text and combat resources.
-        //_PI->WriteLoHook(0x4EEAC0, LoHook_InitTxtFiles);
+        _PI->WriteLoHook(0x4EEAC0, LoHook_InitTxtFiles);
     }
     return TRUE;
 }
