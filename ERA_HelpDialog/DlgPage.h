@@ -59,6 +59,9 @@ class DlgPage
     void SetScrollableTextVisible(H3DlgScrollableText *scrollableText, BOOL state) const noexcept;
 
   public:
+    static constexpr LPCSTR CATEGORY_BUTTON_DEF = "erab1.def";
+    static constexpr LPCSTR PAGE_BUTTON_DEF = "erab2.def";
+
     virtual ~DlgPage() = default;
 
     virtual void SetVisible(BOOL state) noexcept;

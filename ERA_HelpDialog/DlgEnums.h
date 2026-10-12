@@ -20,7 +20,8 @@ enum eButton
     SPELLS,
     LAST = SPELLS,
     SEARCH = 110,
-    SEARCH_CLEAR = 111
+    SEARCH_CLEAR = 111,
+    ACTIVE_MOD = 112
 };
 } // namespace buttons
 

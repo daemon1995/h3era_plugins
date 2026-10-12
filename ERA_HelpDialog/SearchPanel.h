@@ -8,7 +8,7 @@ struct SearchEntry
 {
     main::eHelpPage page = main::eHelpPage::MODS;
     int objectId = -1, modId = -1, category = 0, hotkeyContext = 0, hotkeyId = -1;
-    std::string hotkeyQuery, label, searchable;
+    std::string label, searchable;
 };
 
 class SearchPanel final : public main::DlgSection, private main::DlgPage
@@ -18,6 +18,8 @@ class SearchPanel final : public main::DlgSection, private main::DlgPage
     std::vector<H3DlgCaptionButton *> scopes, rows;
     H3DlgText *countText = nullptr;
     H3DlgScrollbar *scroll = nullptr;
+    H3DlgFrame *hoverFrame = nullptr;
+    int hoveredRow = -1;
     std::string query;
     int firstIndex = 0, selectedIndex = 0, selection = -1;
     bool backRequested = false, selectionPopup = false;
@@ -25,6 +27,7 @@ class SearchPanel final : public main::DlgSection, private main::DlgPage
     static SearchPanel *visiblePanel;
     void Rebuild();
     void Accept();
+    bool UpdateHoverFrame() noexcept;
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 
   public:

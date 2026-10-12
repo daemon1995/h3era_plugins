@@ -3,6 +3,7 @@
 #include "HelpDialogDependencies.h"
 #include "HelpLogic.h"
 #include "DlgEnums.h"
+#include "DlgPage.h"
 
 #include <string>
 
@@ -69,10 +70,11 @@ inline void ShowDetailsDialog(H3Dlg &dialog, bool popup)
     }
 }
 
-inline H3DlgCaptionButton *Button(H3Dlg *dialog, int x, int y, int width, int height, int id, LPCSTR text)
+inline H3DlgCaptionButton *Button(H3Dlg *dialog, int x, int y, int width, int height, int id, LPCSTR text,
+                                  LPCSTR defName = "OVBUTN3.def")
 {
-    auto *button = H3DlgCaptionButton::Create(x, y, width, height, id, "OVBUTN3.def", text, NH3Dlg::Text::SMALL, 0, 0,
-                                              false, 0, eTextColor::REGULAR);
+    auto *button = H3DlgCaptionButton::Create(x, y, width, height, id, defName, text, NH3Dlg::Text::SMALL, 0, 0, false,
+                                              0, eTextColor::REGULAR);
     if (button)
     {
         button->SetClickFrame(1);
@@ -80,6 +82,21 @@ inline H3DlgCaptionButton *Button(H3Dlg *dialog, int x, int y, int width, int he
             dialog->AddItem(button);
     }
     return button;
+}
+
+inline H3DlgCaptionButton *CategoryButton(int x, int y, int id, LPCSTR text)
+{
+    auto *button = H3DlgCaptionButton::Create(x, y, id, main::DlgPage::CATEGORY_BUTTON_DEF, text, NH3Dlg::Text::SMALL,
+                                              0, 0, false, 0, eTextColor::REGULAR);
+    if (button)
+        button->SetClickFrame(1);
+    return button;
+}
+
+inline int CategoryButtonStep()
+{
+    H3DefLoader def(main::DlgPage::CATEGORY_BUTTON_DEF);
+    return def.Get() && def->heightDEF > 0 ? def->heightDEF + 4 : 28;
 }
 
 inline LPCSTR PageName(main::eHelpPage page)

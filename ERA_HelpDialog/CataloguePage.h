@@ -22,7 +22,6 @@ class CatalogueSection final : public DlgSection, private DlgPage
     std::vector<H3LoadedPcx *> portraitCache;
     H3DlgScrollbar *categoryScroll = nullptr;
     H3DlgScrollbar *contentScroll = nullptr;
-    H3DlgEdit *queryEdit = nullptr;
     H3DlgText *countText = nullptr;
     H3DlgText *emptyText = nullptr;
     H3DlgCaptionButton *sortButton = nullptr;
@@ -30,6 +29,7 @@ class CatalogueSection final : public DlgSection, private DlgPage
     int x, y, width, height;
     int categoryRows = 1;
     int categoryFirst = 0;
+    int searchFocusedId = -1;
     int columns = 1;
     int rows = 1;
     static CatalogueSection *visibleSection;
@@ -42,7 +42,6 @@ class CatalogueSection final : public DlgSection, private DlgPage
     static void __fastcall ContentScrollProc(INT32 tick, H3BaseDlg *dlg);
 
   public:
-    void ReleaseInputFocus(int keepItemId = -1) noexcept override;
     CatalogueSection(int categoriesX, int categoriesY, int categoriesWidth, int categoriesHeight, int contentX,
                      int contentWidth, H3Dlg *dialog, const helpdlg::Catalogue &catalogue);
     ~CatalogueSection() override;
@@ -52,7 +51,7 @@ class CatalogueSection final : public DlgSection, private DlgPage
     {
         return filter;
     }
-    void FocusObject(int objectId, bool openDetails = true);
+    void FocusObject(int objectId, bool openDetails = true, bool fromSearch = false);
     void SetVisible(BOOL state) noexcept override;
     void UpdateMousePosition(const H3Msg &msg) noexcept override;
     BOOL ProcessMessage(H3Msg &msg) override;

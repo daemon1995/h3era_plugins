@@ -5,15 +5,25 @@ namespace main
 HeaderPage::HeaderPage(int x, int y, int width, int height, H3Dlg *parent) : DlgPage(parent)
 {
     AddFrame(x, y, width, height);
-    const eHelpPage pages[] = {eHelpPage::MODS,      eHelpPage::HOTKEYS, eHelpPage::CREATURES,
-                               eHelpPage::ARTIFACTS, eHelpPage::HEROES,  eHelpPage::SECONDARY_SKILLS,
-                               eHelpPage::SPELLS,    eHelpPage::TOWNS};
-    const int cellWidth = (width - 12) / 4;
-    for (int index = 0; index < 8; ++index)
+    const int modWidth = (width - 12) / 4;
+    auto *mods = helpdlg::Button(nullptr, x + 6, y + 4, modWidth - 4, helpdlg::kPageButtonHeight, buttons::MODLIST,
+                                 helpdlg::PageName(eHelpPage::MODS), PAGE_BUTTON_DEF);
+    AddItem(mods);
+    activeModButton = helpdlg::Button(nullptr, x + 6, y + 4 + helpdlg::kModDropdownRowHeight, modWidth - 4,
+                                      helpdlg::kPageButtonHeight, buttons::ACTIVE_MOD, "", PAGE_BUTTON_DEF);
+    AddItem(activeModButton);
+    const eHelpPage pages[] = {eHelpPage::HOTKEYS, eHelpPage::CREATURES,        eHelpPage::ARTIFACTS,
+                               eHelpPage::HEROES,  eHelpPage::SECONDARY_SKILLS, eHelpPage::SPELLS};
+    const int tableX = x + 6 + modWidth;
+    const int tableWidth = width - 12 - modWidth;
+    const int cellWidth = tableWidth / 3;
+    AddFrame(tableX - 2, y + 2, tableWidth, 56);
+    for (int index = 0; index < 6; ++index)
     {
-        auto *button =
-            helpdlg::Button(nullptr, x + 6 + (index % 4) * cellWidth, y + 4 + (index / 4) * 27, cellWidth - 4, 25,
-                            static_cast<int>(pages[index]), helpdlg::PageName(pages[index]));
+        auto *button = helpdlg::Button(nullptr, tableX + (index % 3) * cellWidth,
+                                       y + 4 + (index / 3) * helpdlg::kModDropdownRowHeight, cellWidth - 4,
+                                       helpdlg::kPageButtonHeight, static_cast<int>(pages[index]),
+                                       helpdlg::PageName(pages[index]), PAGE_BUTTON_DEF);
         AddItem(button);
         tabs.push_back(button);
     }
@@ -36,11 +46,27 @@ HeaderPage::HeaderPage(int x, int y, int width, int height, H3Dlg *parent) : Dlg
     AddItem(helpdlg::Button(nullptr, x + width - 104, y + 59, 98, 21, buttons::HELP,
                             helpdlg::Text("help.ui.guide", "User guide")));
 }
-void HeaderPage::SetActiveButton(int id) noexcept
+void HeaderPage::SetActiveButton(int id, LPCSTR modName) noexcept
 {
     for (auto *button : tabs)
         if (button)
-            button->SetFrame(button->GetID() == id ? 1 : 0);
+        {
+            const bool state = button->GetID() == id;
+            button->SendCommand(6 - (state), 4096);
+        }
+    if (activeModButton)
+    {
+        const bool state = id == buttons::MODLIST && modName && *modName;
+        if (state)
+        {
+            activeModButton->SetText(modName);
+            activeModButton->SetHints(modName, nullptr, false);
+            activeModButton->ShowActivate();
+            activeModButton->SendCommand(6 - (state), 4096);
+        }
+        else
+            activeModButton->HideDeactivate();
+    }
     RedrawDialog();
 }
 

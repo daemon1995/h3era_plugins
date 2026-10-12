@@ -13,6 +13,7 @@ class ModListDlg : public H3Dlg
     H3DlgScrollbar *scrollBar = nullptr;
     ModInformation *resultMod = nullptr;
     int firstIndex = 0;
+    int activeIndex = -1;
     int selectedIndex = 0;
     int visibleCount = 1;
     static ModListDlg *instance;

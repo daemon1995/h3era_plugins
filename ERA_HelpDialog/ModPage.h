@@ -28,6 +28,7 @@ class ModCategoriesPage final : public DlgPage
     const ModInformation *activeMod = nullptr;
     int firstIndex = 0;
     int visibleCount = 1;
+    int categoryStep = 28;
     static ModCategoriesPage *instance;
 
   public:

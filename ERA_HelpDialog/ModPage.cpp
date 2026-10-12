@@ -20,7 +20,8 @@ ModCategoriesPage::ModCategoriesPage(const int x, const int y, const int width, 
 {
     instance = this;
     AddFrame(pageX, pageY, pageWidth, pageHeight);
-    visibleCount = std::max(1, (pageHeight - 8) / 34);
+    categoryStep = helpdlg::CategoryButtonStep();
+    visibleCount = std::max(1, (pageHeight - 8) / categoryStep);
 }
 
 void ModCategoriesPage::SetMod(const ModInformation *mod)
@@ -59,15 +60,8 @@ void ModCategoriesPage::CreateForMod(const ModInformation *mod)
     {
         Category *category = mod->categories[index];
         const LPCSTR categoryName = category && !category->name.Empty() ? category->name.String() : "Category";
-        auto *button = H3DlgCaptionButton::Create(pageX + 4, pageY + 4 + index * 34, modpage::CATEGORY_FIRST + index,
-                                                  "OVBUTN3.def", categoryName, NH3Dlg::Text::SMALL, 0, 0, false,
-                                                  static_cast<eVKey>(0), eTextColor::REGULAR);
-        if (button)
-        {
-            button->SetWidth(pageWidth - 26);
-            button->SetHeight(30);
-            button->SetClickFrame(1);
-        }
+        auto *button = helpdlg::CategoryButton(pageX + 6, pageY + 4 + index * categoryStep,
+                                               modpage::CATEGORY_FIRST + index, categoryName);
         AddItem(button);
         buttons.emplace_back(button);
     }
@@ -99,7 +93,10 @@ void ModCategoriesPage::SetActiveCategory(const int index)
     for (size_t i = 0; i < buttons.size(); ++i)
     {
         if (buttons[i])
-            buttons[i]->SetFrame(static_cast<int>(i) == index ? 1 : 0);
+        {
+            const bool state = static_cast<int>(i) == index;
+            buttons[i]->SendCommand(6 - (state), 4096);
+        }
     }
     RedrawItems(firstIndex);
 }
@@ -135,7 +132,7 @@ void ModCategoriesPage::RedrawItems(const int requestedFirstIndex)
         const int row = static_cast<int>(i) - firstIndex;
         if (button && isVisible && static_cast<int>(i) < itemCount && row >= 0 && row < visibleCount)
         {
-            button->SetY(pageY + 4 + row * 34);
+            button->SetY(pageY + 4 + row * categoryStep);
             button->ShowActivate();
         }
         else if (button)
@@ -341,7 +338,7 @@ void ModContentPage::UpdateScrollbarActivation(const H3Msg &msg) noexcept
 
 BOOL ModContentPage::ProcessMessage(H3Msg &msg)
 {
-    if (!isVisible || !msg.IsLeftClick())
+    if (!isVisible || !msg.IsLeftDown())
         return FALSE;
     for (const auto &action : actions)
         if (action.first == msg.itemId)

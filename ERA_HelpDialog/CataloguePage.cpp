@@ -8,7 +8,6 @@ namespace
 {
 constexpr int kCategoryScroll = 40;
 constexpr int kContentScroll = 41;
-constexpr int kQuery = 42;
 constexpr int kReset = 43;
 constexpr int kSort = 44;
 constexpr int kFacetFirst = 50;
@@ -29,28 +28,21 @@ CatalogueSection::CatalogueSection(int categoriesX, int categoriesY, int categor
     AddFrame(categoriesX, y, categoriesWidth, height);
     AddFrame(x, y, width, height);
 
-    categoryRows = std::min(std::max(1, (height - 12) / 28), static_cast<int>(catalogue.categories.size()));
+    const int categoryStep = helpdlg::CategoryButtonStep();
+    categoryRows = std::min(std::max(1, (height - 12) / categoryStep), static_cast<int>(catalogue.categories.size()));
     for (int row = 0; row < categoryRows; ++row)
     {
-        auto *button =
-            helpdlg::Button(nullptr, categoriesX + 6, y + 6 + row * 28, categoriesWidth - 32, 26, idBase + row, "");
+        auto *button = helpdlg::CategoryButton(categoriesX + 6, y + 6 + row * categoryStep, idBase + row, "");
         AddItem(button);
         categoryButtons.push_back(button);
     }
-    categoryScroll = H3DlgScrollbar::Create(categoriesX + categoriesWidth - 22, y + 6, 16, categoryRows * 28,
+    categoryScroll = H3DlgScrollbar::Create(categoriesX + categoriesWidth - 22, y + 6, 16, categoryRows * categoryStep,
                                             idBase + kCategoryScroll, 2, CategoryScrollProc, false, 1, true);
     AddItem(categoryScroll);
 
-    AddItem(H3DlgText::Create(x + 8, y + 6, 48, 22, helpdlg::Text("help.ui.filter", "Filter:"), NH3Dlg::Text::SMALL,
-                              eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT));
-    queryEdit = H3DlgEdit::Create(x + 58, y + 6, width - 304, 22, 128, "", NH3Dlg::Text::SMALL, eTextColor::REGULAR,
-                                  eTextAlignment::MIDDLE_LEFT, nullptr, idBase + kQuery, true, 2, 2);
-    AddItem(queryEdit);
-    if (queryEdit)
-        queryEdit->SetHints(helpdlg::Text("help.ui.filter_hint", "Filter titles only."), nullptr, false);
-    sortButton = helpdlg::Button(nullptr, x + width - 238, y + 6, 126, 22, idBase + kSort, "");
+    sortButton = helpdlg::Button(nullptr, x + 8, y + 6, 126, 22, idBase + kSort, "");
     AddItem(sortButton);
-    AddItem(helpdlg::Button(nullptr, x + width - 108, y + 6, 100, 22, idBase + kReset,
+    AddItem(helpdlg::Button(nullptr, x + 138, y + 6, 100, 22, idBase + kReset,
                             helpdlg::Text("help.ui.reset_filters", "Reset filters")));
 
     const int facetColumns = std::max(1, std::min(static_cast<int>(catalogue.facets.size()), (width - 12) / 154));
@@ -195,8 +187,7 @@ void CatalogueSection::SetFilter(const helpdlg::CatalogueFilter &state)
     for (size_t facet = 0; facet < catalogue.facets.size(); ++facet)
         filter.facets[facet] =
             helpdlg::Bound(filter.facets[facet], 0, static_cast<int>(catalogue.facets[facet].options.size()) - 1);
-    if (queryEdit)
-        queryEdit->SetText(filter.query.c_str());
+    searchFocusedId = -1;
     activeSubtype = filter.category;
     categoryFirst = helpdlg::Bound(filter.category - categoryRows + 1, 0,
                                    static_cast<int>(catalogue.categories.size()) - categoryRows);
@@ -205,6 +196,7 @@ void CatalogueSection::SetFilter(const helpdlg::CatalogueFilter &state)
 
 void CatalogueSection::SetSubtype(int subtype)
 {
+    searchFocusedId = -1;
     filter.category = helpdlg::Bound(subtype, 0, static_cast<int>(catalogue.categories.size()) - 1);
     activeSubtype = filter.category;
     categoryFirst = helpdlg::Bound(filter.category - categoryRows + 1, 0,
@@ -267,6 +259,8 @@ void CatalogueSection::RefreshCategories()
         if (!button)
             continue;
         const int category = categoryFirst + static_cast<int>(row);
+        const bool state = filter.category == category;
+        button->SendCommand(6 - (state), 4096);
         if (isVisible && category < static_cast<int>(catalogue.categories.size()))
         {
             auto preview = filter;
@@ -275,7 +269,6 @@ void CatalogueSection::RefreshCategories()
             for (const auto &entry : catalogue.entries)
                 count += helpdlg::MatchesFilter(entry.filter, preview) ? 1 : 0;
             button->SetText((catalogue.categories[category] + " (" + std::to_string(count) + ")").c_str());
-            button->SetFrame(filter.category == category ? 1 : 0);
             button->ShowActivate();
         }
         else
@@ -297,7 +290,7 @@ void CatalogueSection::Redraw()
         const bool visible = isVisible && index < static_cast<int>(filtered.size());
         if (selection)
         {
-            if (visible && catalogue.entries[filtered[index]].id == filter.selectedId)
+            if (visible && catalogue.entries[filtered[index]].id == searchFocusedId)
                 selection->Show();
             else
                 selection->HideDeactivate();
@@ -309,7 +302,7 @@ void CatalogueSection::Redraw()
             if (button)
             {
                 button->SetText(entry.name.c_str());
-                button->SetFrame(entry.id == filter.selectedId ? 1 : 0);
+                button->SetFrame(0);
                 const std::string hint =
                     entry.name + " - " +
                     helpdlg::Text("help.ui.object_hint", "Left: open details. Right: hold for preview.");
@@ -399,15 +392,13 @@ bool CatalogueSection::RefreshBanMarkers()
     return changed;
 }
 
-void CatalogueSection::FocusObject(int objectId, bool openDetails)
+void CatalogueSection::FocusObject(int objectId, bool openDetails, bool fromSearch)
 {
     for (size_t index = 0; index < catalogue.entries.size(); ++index)
         if (catalogue.entries[index].id == objectId)
         {
             filter = helpdlg::CatalogueFilter{};
-            filter.selectedId = objectId;
-            if (queryEdit)
-                queryEdit->SetText("");
+            searchFocusedId = fromSearch ? objectId : -1;
             activeSubtype = 0;
             Rebuild();
             const auto position = std::find(filtered.begin(), filtered.end(), static_cast<int>(index));
@@ -430,8 +421,6 @@ void CatalogueSection::SetVisible(BOOL state) noexcept
     }
     else if (visibleSection == this)
         visibleSection = nullptr;
-    if (!state && queryEdit && queryEdit->IsFocused())
-        queryEdit->SetFocus(FALSE);
 }
 
 void CatalogueSection::UpdateMousePosition(const H3Msg &msg) noexcept
@@ -466,30 +455,23 @@ BOOL CatalogueSection::ProcessMessage(H3Msg &msg)
     // Re-read live state while this page is open, including script changes.
     if (RefreshBanMarkers())
         RedrawDialog();
-    const std::string query = queryEdit ? helpdlg::Safe(queryEdit->GetText()) : "";
-    if (query != filter.query)
-    {
-        filter.query = query;
-        Rebuild();
-    }
-    if (!msg.IsLeftClick() && !msg.IsRightClick())
+    if (!msg.IsLeftDown() && !msg.IsLeftClick() && !msg.IsRightClick())
         return FALSE;
     const int item = msg.itemId - idBase;
     if (item >= kObjectFirst && item < kObjectFirst + static_cast<int>(objectButtons.size()))
     {
+        if (msg.IsLeftClick())
+            return TRUE;
         const int index = filter.firstRow * columns + item - kObjectFirst;
         if (index < static_cast<int>(filtered.size()))
         {
             const auto &entry = catalogue.entries[filtered[index]];
-            if (!msg.IsRightClick())
-            {
-                filter.selectedId = entry.id;
-                Redraw();
-            }
             helpdlg::ShowObjectDetails(entry, msg.IsRightClick() != FALSE);
         }
         return TRUE;
     }
+    if (!msg.IsLeftClick() && !msg.IsRightClick())
+        return FALSE;
     if (item >= kFacetFirst && item < kFacetFirst + static_cast<int>(catalogue.facets.size()))
     {
         const int facet = item - kFacetFirst;
@@ -544,11 +526,5 @@ void __fastcall CatalogueSection::ContentScrollProc(INT32 tick, H3BaseDlg *)
         visibleSection->filter.firstRow = tick;
         visibleSection->Redraw();
     }
-}
-void CatalogueSection::ReleaseInputFocus(int keepItemId) noexcept
-{
-    auto *edit = queryEdit;
-    if (edit && edit->IsFocused() && edit->GetID() != keepItemId)
-        edit->SetFocus(FALSE);
 }
 } // namespace main

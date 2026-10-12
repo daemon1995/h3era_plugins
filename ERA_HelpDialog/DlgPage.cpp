@@ -131,6 +131,7 @@ void DlgPage::AddFrame(const int x, const int y, const int width, const int heig
     // the active page item list so it cannot intercept button clicks.
     dialog->AddItem(frame);
     decorations.emplace_back(frame);
+    frame->Disable();
     frame->HideDeactivate();
 }
 
@@ -146,7 +147,10 @@ void DlgPage::SetVisible(const BOOL state) noexcept
     {
         if (decoration)
         {
-            state ? decoration->Show() : decoration->HideDeactivate();
+            if (state)
+                decoration->Show()->DeActivate();
+            else
+                decoration->HideDeactivate();
         }
     }
     for (auto *item : items)

@@ -530,7 +530,7 @@
         },
         {
           "name": "Browsing objects",
-          "content": "Left click a portrait or name for details. Hold the right mouse button for a popup preview."
+          "content": "Press the left mouse button on a portrait or name for details. Creatures open the original game dialog. Hold the right mouse button for a popup preview. Only objects reached from global search have a selection frame."
         },
         {
           "name": "Combining filters",
@@ -558,11 +558,11 @@
         },
         {
           "name": "Secondary skills",
-          "content": "All 28 skills fit at 800x600. Browse skill groups and compare Basic, Advanced and Expert effects."
+          "content": "Browse all 28 skills by group and compare Basic, Advanced and Expert effects."
         },
         {
           "name": "Town reference",
-          "content": "Town names, creature rosters and hero classes come from the game."
+          "content": "Town names, creature rosters and hero classes come from the game. Towns are available through global search and integrations; there is no Towns button in the header."
         },
         {
           "name": "Global search",
@@ -570,15 +570,15 @@
         },
         {
           "name": "Following search results",
-          "content": "Left click a result to go to and highlight it. Hold the right mouse button for a popup preview. Up/Down and Enter navigate too. Clear or Escape returns to browsing."
+          "content": "Move the pointer over a result to outline its row. Press the left mouse button on a result to go to and highlight it. Hold the right mouse button for a popup preview. Up/Down and Enter navigate too. Clear or Escape returns to browsing."
         },
         {
           "name": "Hotkey reference",
-          "content": "Hotkeys are grouped by where they work. Filter by context, mod or text."
+          "content": "Hotkeys are grouped by where they work. Choose a context on the left or find a binding in global Search. A search result scrolls to the binding in its context."
         },
         {
           "name": "Window state",
-          "content": "Filters and the selected mod are preserved when resizing and reopening."
+          "content": "Filters and the selected mod are preserved when resizing and reopening. The open mod's name appears below Mods as a selected page. Mods stays available to choose another mod; the open mod is disabled in that list."
         },
         {
           "name": "Writing a mod document",

@@ -10,7 +10,6 @@ namespace
 {
 constexpr int kFirstItemId = 600;
 constexpr int kRowHeight = helpdlg::kModDropdownRowHeight;
-constexpr int kMargin = helpdlg::kModDropdownMargin;
 } // namespace
 
 ModListDlg *ModListDlg::instance = nullptr;
@@ -20,16 +19,11 @@ ModListDlg::ModListDlg(const helpdlg::ModDropdownLayout &layout, const std::vect
     : H3Dlg(layout.width, layout.height, layout.x, layout.y, false, false), mods(mods), visibleCount(layout.rows)
 {
     instance = this;
-    // A dropdown uses a thin border instead of the full dialog's ornate frame.
+    flags &= ~16; // Draw the dropdown without a dialog shadow.
     helpdlg::AddSafeBackground(*this, false, false);
-    if (auto *border = H3DlgFrame::Create(0, 0, widthDlg, heightDlg, -1, H3RGB565(H3RGB888::Highlight())))
-    {
-        AddItem(border);
-        border->DeActivate();
-    }
     const auto selected = std::find(mods.begin(), mods.end(), selectedMod);
     if (selected != mods.end())
-        selectedIndex = static_cast<int>(selected - mods.begin());
+        activeIndex = selectedIndex = static_cast<int>(selected - mods.begin());
     firstIndex = helpdlg::Bound(selectedIndex - visibleCount + 1, 0, static_cast<int>(mods.size()) - visibleCount);
     CreateDlgItems();
 }
@@ -42,21 +36,18 @@ ModListDlg::~ModListDlg()
 
 void ModListDlg::CreateDlgItems()
 {
-    const int listHeight = visibleCount * kRowHeight;
     const int count = static_cast<int>(mods.size());
-    const bool scrolling = count > visibleCount;
     for (int row = 0; row < visibleCount; ++row)
     {
-        auto *button =
-            helpdlg::Button(this, kMargin, kMargin + row * kRowHeight, widthDlg - kMargin * 2 - (scrolling ? 18 : 0),
-                            kRowHeight - 2, kFirstItemId + row, "");
+        auto *button = helpdlg::Button(this, 0, row * kRowHeight, widthDlg, helpdlg::kPageButtonHeight,
+                                       kFirstItemId + row, "", main::DlgPage::PAGE_BUTTON_DEF);
         buttons.emplace_back(button);
     }
     const int maxFirst = std::max(0, count - visibleCount);
     if (maxFirst > 0)
     {
-        scrollBar = H3DlgScrollbar::Create(widthDlg - kMargin - 16, kMargin, 16, listHeight, kFirstItemId - 1,
-                                           maxFirst + 1, ScrollProc, false, 1, true);
+        scrollBar = H3DlgScrollbar::Create(widthDlg - 16, 0, 16, heightDlg, kFirstItemId - 1, maxFirst + 1, ScrollProc,
+                                           false, 1, true);
         AddItem(scrollBar);
     }
     RedrawItems(firstIndex);
@@ -76,8 +67,11 @@ void ModListDlg::RedrawItems(const int requestedFirstIndex)
             const LPCSTR name = mod && !mod->name.Empty() ? mod->name.String() : "Unknown mod";
             button->SetText(name);
             button->SetHints(name, nullptr, false);
-            button->SetFrame(index == selectedIndex ? 1 : 0);
+            const bool state = index == activeIndex;
+            // Keyboard focus does not change which mod is already open.
+            button->SetFrame(index == selectedIndex && !state ? 1 : 0);
             button->ShowActivate();
+            button->SendCommand(6 - (state), 4096);
         }
         else if (button)
             button->HideDeactivate();
@@ -104,6 +98,8 @@ BOOL ModListDlg::DialogProc(H3Msg &msg)
         }
         if (key == eVKey::H3VK_ENTER)
         {
+            if (selectedIndex == activeIndex)
+                return FALSE;
             if (selectedIndex >= 0 && selectedIndex < static_cast<int>(mods.size()))
                 resultMod = mods[selectedIndex];
             Stop();
@@ -112,10 +108,17 @@ BOOL ModListDlg::DialogProc(H3Msg &msg)
         if (key == eVKey::H3VK_UP || key == eVKey::H3VK_DOWN || key == eVKey::H3VK_HOME || key == eVKey::H3VK_END)
         {
             const int last = static_cast<int>(mods.size()) - 1;
-            selectedIndex = helpdlg::Bound(key == eVKey::H3VK_HOME  ? 0
+            int nextIndex = helpdlg::Bound(key == eVKey::H3VK_HOME  ? 0
                                            : key == eVKey::H3VK_END ? last
                                                                     : selectedIndex + (key == eVKey::H3VK_UP ? -1 : 1),
                                            0, last);
+            if (nextIndex == activeIndex)
+            {
+                const int direction = key == eVKey::H3VK_HOME || key == eVKey::H3VK_DOWN ? 1 : -1;
+                const int alternative = nextIndex + direction;
+                nextIndex = alternative >= 0 && alternative <= last ? alternative : selectedIndex;
+            }
+            selectedIndex = nextIndex;
             if (selectedIndex < firstIndex)
                 firstIndex = selectedIndex;
             else if (selectedIndex >= firstIndex + visibleCount)
@@ -132,6 +135,8 @@ BOOL ModListDlg::DialogProc(H3Msg &msg)
     const int row = msg.itemId - kFirstItemId;
     if (msg.IsLeftClick() && row >= 0 && row < visibleCount && firstIndex + row < static_cast<int>(mods.size()))
     {
+        if (firstIndex + row == activeIndex)
+            return FALSE;
         resultMod = mods[firstIndex + row];
         Stop();
         return FALSE;

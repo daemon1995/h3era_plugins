@@ -24,6 +24,36 @@ struct HeroClassData
 #pragma pack(pop)
 static_assert(sizeof(HeroClassData) == 0x40, "Native hero class layout changed");
 
+bool ShowNativeCreatureDialog(int creatureId)
+{
+    if (creatureId < 0 || creatureId >= static_cast<int>(H3CreatureCount::Get()) || !P_WindowManager)
+        return false;
+    const int savedResult = P_WindowManager->resultItemID;
+    // H3CreatureInfoDlg is an abstract native type. Its storage is constructed
+    // and destroyed by the game, without running any C++ base constructors.
+
+    H3CreatureInfoDlg *dlg = H3ObjectAllocator<H3CreatureInfoDlg>().allocate(1);
+    
+     auto *dialog = THISCALL_5(H3CreatureInfoDlg *, 0x764AD6, dlg, static_cast<eCreature>(creatureId), 0, 0,
+               static_cast<DWORD>(1)); // Include the OK button.
+    if (!dialog)
+        return false;
+    struct DialogScope
+    {
+        H3CreatureInfoDlg *dialog;
+        int savedResult;
+        ~DialogScope()
+        {
+            P_WindowManager->resultItemID = savedResult;
+            THISCALL_2(int, 0x5F3EC0, dialog, TRUE); // DELETE DIALOG (Dtor + Memory free)
+        }
+    } scope{dialog, savedResult};
+    dialog->SetX(std::max(0, (H3GameWidth::Get() - dialog->GetWidth()) / 2));
+    dialog->SetY(std::max(0, (H3GameHeight::Get() - dialog->GetHeight()) / 2));
+    THISCALL_1(int, 0x5FFA20, dialog);
+    return true;
+}
+
 std::string Number(int value)
 {
     return std::to_string(value);
@@ -624,6 +654,8 @@ bool IsObjectBanned(main::eHelpPage page, int id)
 
 bool ShowObjectDetails(const CatalogueEntry &entry, bool popup)
 {
+    if (entry.page == main::eHelpPage::CREATURES && !popup)
+        return ShowNativeCreatureDialog(entry.id);
     if (!entry.masteryRows.empty())
         return ShowMasteryDialog(entry, popup);
     if (entry.compactDetails)

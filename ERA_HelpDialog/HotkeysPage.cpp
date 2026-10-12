@@ -14,21 +14,15 @@ HotkeysSection::HotkeysSection(int cx, int cy, int cw, int ch, int x, int y, int
 {
     AddFrame(cx, cy, cw, ch);
     AddFrame(x, y, w, h);
+    const int categoryStep = helpdlg::CategoryButtonStep();
     for (int index = 0; index < 8; ++index)
     {
         const LPCSTR label = index == 0 ? helpdlg::Text("help.ui.all", "All") : helpdlg::ContextName(kContexts[index]);
-        auto *button = helpdlg::Button(nullptr, cx + 6, cy + 6 + index * 32, cw - 12, 28, 26000 + index, label);
+        auto *button = helpdlg::CategoryButton(cx + 6, cy + 6 + index * categoryStep, 26000 + index, label);
         AddItem(button);
         contexts.push_back(button);
     }
-    AddItem(H3DlgText::Create(x + 8, y + 6, 48, 22, helpdlg::Text("help.ui.filter", "Filter:"), NH3Dlg::Text::SMALL,
-                              eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT));
-    queryEdit = H3DlgEdit::Create(x + 58, y + 6, w - 66, 22, 128, "", NH3Dlg::Text::SMALL, eTextColor::REGULAR,
-                                  eTextAlignment::MIDDLE_LEFT, nullptr, 26011, true, 2, 2);
-    AddItem(queryEdit);
-    if (queryEdit)
-        queryEdit->SetHints(helpdlg::Text("help.ui.filter_hint", "Filter titles only."), nullptr, false);
-    text = H3DlgScrollableText::Create("", x + 10, y + 30, w - 30, h - 38, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
+    text = H3DlgScrollableText::Create("", x + 10, y + 8, w - 30, h - 16, NH3Dlg::Text::MEDIUM, eTextColor::REGULAR,
                                        false);
     AddScrollableText(text);
     Rebuild();
@@ -36,8 +30,6 @@ HotkeysSection::HotkeysSection(int cx, int cy, int cw, int ch, int x, int y, int
 void HotkeysSection::SetVisible(BOOL state) noexcept
 {
     DlgPage::SetVisible(state);
-    if (!state && queryEdit && queryEdit->IsFocused())
-        queryEdit->SetFocus(FALSE);
 }
 void HotkeysSection::SetSubtype(int subtype)
 {
@@ -48,30 +40,30 @@ helpdlg::HotkeyFilter HotkeysSection::Filter() const
 {
     helpdlg::HotkeyFilter filter;
     filter.context = activeSubtype;
-    filter.query = query;
     filter.firstRow = TextScrollPosition(text);
     return filter;
 }
 void HotkeysSection::SetFilter(const helpdlg::HotkeyFilter &filter)
 {
     activeSubtype = helpdlg::Bound(filter.context, 0, 7);
-    query = filter.query;
-    if (queryEdit)
-        queryEdit->SetText(query.c_str());
     Rebuild();
     SetTextScrollPosition(text, filter.firstRow);
 }
-void HotkeysSection::FocusHotkey(LPCSTR folder, int context, const std::string &search)
+void HotkeysSection::FocusHotkey(LPCSTR folder, int context, int hotkeyId)
 {
-    helpdlg::HotkeyFilter filter;
-    filter.query = search + " " + helpdlg::Safe(folder);
     if (context == hkcategories::NONE)
         context = hkcategories::OTHER_DLG;
     const auto position = std::find(std::begin(kContexts), std::end(kContexts), context);
-    filter.context = position == std::end(kContexts) ? 0 : static_cast<int>(position - std::begin(kContexts));
-    SetFilter(filter);
+    activeSubtype = position == std::end(kContexts) ? 0 : static_cast<int>(position - std::begin(kContexts));
+    for (auto *mod : mods)
+        if (mod && mod->hotkeysCategory && helpdlg::Safe(mod->path.String()) == helpdlg::Safe(folder))
+        {
+            Rebuild(static_cast<int>(mod->id), hotkeyId);
+            return;
+        }
+    Rebuild();
 }
-void HotkeysSection::Rebuild()
+void HotkeysSection::Rebuild(int focusModId, int focusHotkeyId)
 {
     std::vector<helpdlg::HotkeyLine> entries;
     for (auto *mod : mods)
@@ -84,12 +76,14 @@ void HotkeysSection::Rebuild()
             const int context = helpdlg::HotkeyContext(key.type);
             if (activeSubtype && context != kContexts[activeSubtype])
                 continue;
-            if (helpdlg::MatchesWords(source + " " + key.keys.String() + " " + key.name.String(), query))
-                entries.push_back({context, source, helpdlg::Safe(key.keys.String()), helpdlg::Safe(key.name.String()),
-                                   static_cast<int>(mod->id), key.id, helpdlg::Safe(key.description.String())});
+            entries.push_back({context, source, helpdlg::Safe(key.keys.String()), helpdlg::Safe(key.name.String()),
+                               static_cast<int>(mod->id), key.id, helpdlg::Safe(key.description.String())});
         }
     }
-    std::string output = helpdlg::GroupHotkeys(entries, helpdlg::ContextName);
+    helpdlg::HotkeyFocus focus;
+    focus.sourceId = focusModId;
+    focus.id = focusHotkeyId;
+    std::string output = helpdlg::GroupHotkeys(entries, helpdlg::ContextName, &focus);
     if (entries.empty())
         output += helpdlg::Text("help.ui.no_hotkeys", "No matching hotkeys.");
     if (output != rendered.String())
@@ -97,21 +91,25 @@ void HotkeysSection::Rebuild()
         rendered = output.c_str();
         SetScrollableText(text, rendered.String());
     }
+    if (text && focus.offset != std::string::npos)
+    {
+        H3BinaryLoader<H3Font> font(NH3Dlg::Text::MEDIUM);
+        if (font.Get())
+            SetTextScrollPosition(
+                text, font->GetLinesCountInText(output.substr(0, focus.offset).c_str(), text->GetWidth() - 24) - 1);
+    }
     for (size_t index = 0; index < contexts.size(); ++index)
         if (contexts[index])
-            contexts[index]->SetFrame(index == static_cast<size_t>(activeSubtype) ? 1 : 0);
+        {
+            const bool state = index == static_cast<size_t>(activeSubtype);
+            contexts[index]->SendCommand(6 - (state), 4096);
+        }
     RedrawDialog();
 }
 void HotkeysSection::UpdateMousePosition(const H3Msg &) noexcept {}
 BOOL HotkeysSection::ProcessMessage(H3Msg &msg)
 {
     FlushTextScrollPositions();
-    const std::string current = queryEdit ? helpdlg::Safe(queryEdit->GetText()) : "";
-    if (current != query)
-    {
-        query = current;
-        Rebuild();
-    }
     if (msg.IsLeftClick() && msg.itemId >= 26000 && msg.itemId < 26008)
     {
         SetSubtype(msg.itemId - 26000);
@@ -122,12 +120,6 @@ BOOL HotkeysSection::ProcessMessage(H3Msg &msg)
 void HotkeysSection::Redraw()
 {
     RedrawDialog();
-}
-void HotkeysSection::ReleaseInputFocus(int keepItemId) noexcept
-{
-    auto *edit = queryEdit;
-    if (edit && edit->IsFocused() && edit->GetID() != keepItemId)
-        edit->SetFocus(FALSE);
 }
 } // namespace main
 

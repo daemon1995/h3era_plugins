@@ -57,7 +57,6 @@ struct HotkeyFilter
 {
     int context = 0;
     int firstRow = 0;
-    std::string query;
 };
 
 inline int Bound(int value, int low, int high)
@@ -214,8 +213,9 @@ struct CatalogueGrid
     int cellWidth, cellHeight, columns, rows;
 };
 
-constexpr int kModDropdownRowHeight = 28;
-constexpr int kModDropdownMargin = 4;
+constexpr int kPageButtonHeight = 25;
+constexpr int kPageButtonGap = 2;
+constexpr int kModDropdownRowHeight = kPageButtonHeight + kPageButtonGap;
 struct ModDropdownLayout
 {
     int x, y, width, height, rows;
@@ -226,12 +226,12 @@ inline ModDropdownLayout FitModDropdown(int x, int y, int buttonWidth, int butto
 {
     ModDropdownLayout layout;
     layout.width = Bound(buttonWidth, 1, std::max(1, screenWidth));
-    const int availableRows = std::max(1, (screenHeight - 2 * kModDropdownMargin) / kModDropdownRowHeight);
+    const int availableRows = std::max(1, (screenHeight + kPageButtonGap) / kModDropdownRowHeight);
     layout.rows = Bound(count, 1, std::min(10, availableRows));
-    layout.height = layout.rows * kModDropdownRowHeight + 2 * kModDropdownMargin;
+    layout.height = layout.rows * kModDropdownRowHeight - kPageButtonGap;
     layout.x = Bound(x, 0, screenWidth - layout.width);
-    const int below = y + buttonHeight;
-    const int preferredY = below + layout.height <= screenHeight ? below : y - layout.height;
+    const int below = y + buttonHeight + kPageButtonGap;
+    const int preferredY = below + layout.height <= screenHeight ? below : y - layout.height - kPageButtonGap;
     layout.y = Bound(preferredY, 0, screenHeight - layout.height);
     return layout;
 }
@@ -387,8 +387,16 @@ struct HotkeyLine
     int sourceId = 0, id = 0;
     std::string description;
 };
-inline std::string GroupHotkeys(std::vector<HotkeyLine> entries, const std::function<std::string(int)> &contextName)
+struct HotkeyFocus
 {
+    int sourceId = -1, id = -1;
+    size_t offset = std::string::npos;
+};
+inline std::string GroupHotkeys(std::vector<HotkeyLine> entries, const std::function<std::string(int)> &contextName,
+                                HotkeyFocus *focus = nullptr)
+{
+    if (focus)
+        focus->offset = std::string::npos;
     for (auto &entry : entries)
         entry.context = HotkeyContext(entry.context);
     std::stable_sort(entries.begin(), entries.end(), [](const HotkeyLine &a, const HotkeyLine &b) {
@@ -407,6 +415,8 @@ inline std::string GroupHotkeys(std::vector<HotkeyLine> entries, const std::func
             output += "{" + contextName(entry.context) + "}\n";
             previous = entry.context;
         }
+        if (focus && entry.sourceId == focus->sourceId && entry.id == focus->id)
+            focus->offset = output.size();
         output += "[" + entry.keys + "] " + entry.name;
         if (!entry.source.empty())
             output += " (" + entry.source + ")";
@@ -457,8 +467,6 @@ struct CatalogueFilter
     int facets[4] = {};
     int sort = 1; // ID order. Zero retains the explicit name-sort option.
     int firstRow = 0;
-    int selectedId = -1;
-    std::string query;
 };
 
 struct FilterRecord
@@ -479,6 +487,6 @@ inline bool MatchesFilter(const FilterRecord &record, const CatalogueFilter &fil
     for (int index = 0; index < 4; ++index)
         if (filter.facets[index] && filter.facets[index] != record.facets[index])
             return false;
-    return MatchesWords(record.searchable, filter.query);
+    return true;
 }
 } // namespace helpdlg

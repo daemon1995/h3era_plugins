@@ -26,7 +26,7 @@ class MainDlg : public H3Dlg
     bool modsLoaded = false;
     eHelpPage initialPage, activePage;
     int initialSubtype = 0, activeSubtype = 0;
-    int bodyY = 100, bodyHeight = 0, contentX = 232, contentWidth = 0;
+    int bodyY = 100, bodyHeight = 0, categoriesWidth = 220, contentX = 232, contentWidth = 0;
     int pendingObject = -1;
     std::string searchQuery;
 

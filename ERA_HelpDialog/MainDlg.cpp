@@ -64,7 +64,6 @@ void LoadSession()
     session.modFolder = ReadIni("LastMod");
     session.hotkeys.context = ReadInt("HotkeyContext");
     session.hotkeys.firstRow = ReadInt("HotkeyRow");
-    session.hotkeys.query = ReadIni("HotkeyQuery");
     const bool migrateSort = ReadInt("SortSchema") < 1;
     for (auto page : kPages)
     {
@@ -74,8 +73,6 @@ void LoadSession()
         filter.levels = static_cast<unsigned>(ReadInt(H3String::Format("%s.Levels", prefix.String()).String()));
         filter.sort = migrateSort ? 1 : ReadInt(H3String::Format("%s.Sort", prefix.String()).String(), 1);
         filter.firstRow = ReadInt(H3String::Format("%s.Row", prefix.String()).String());
-        filter.selectedId = ReadInt(H3String::Format("%s.Selected", prefix.String()).String(), -1);
-        filter.query = ReadIni(H3String::Format("%s.Query", prefix.String()).String());
         for (int facet = 0; facet < 4; ++facet)
             filter.facets[facet] = ReadInt(H3String::Format("%s.Facet%d", prefix.String(), facet).String());
     }
@@ -89,6 +86,10 @@ MainDlg::MainDlg(int width, int height, int x, int y, eHelpPage page, int subtyp
     instance = this;
     LoadSession();
     bodyHeight = height - bodyY - 56;
+    H3DefLoader categoryDef(DlgPage::CATEGORY_BUTTON_DEF);
+    if (categoryDef.Get() && categoryDef->widthDEF > 0)
+        categoriesWidth = categoryDef->widthDEF + 32;
+    contentX = 8 + categoriesWidth + 4;
     contentWidth = width - contentX - 8;
     header = new HeaderPage(8, 8, width - 16, 84, this);
     auto *ok = helpdlg::CloseButtonRight(*this);
@@ -129,8 +130,8 @@ CatalogueSection *MainDlg::EnsureCatalogueSection(eHelpPage page)
     auto found = catalogueSections.find(page);
     if (found != catalogueSections.end())
         return found->second;
-    auto *section =
-        new CatalogueSection(8, bodyY, 220, bodyHeight, contentX, contentWidth, this, EnsureCatalogue(page));
+    auto *section = new CatalogueSection(8, bodyY, categoriesWidth, bodyHeight, contentX, contentWidth, this,
+                                         EnsureCatalogue(page));
     section->SetFilter(session.filters[page]);
     catalogueSections.emplace(page, section);
     return section;
@@ -194,7 +195,10 @@ void MainDlg::ShowSection(DlgSection *section)
         section->Redraw();
         activeSubtype = section->Subtype();
     }
-    header->SetActiveButton(section == searchPanel ? buttons::SEARCH : static_cast<int>(activePage));
+    const LPCSTR modName = section == modSection && activeMod
+                              ? (activeMod->name.Empty() ? activeMod->path.String() : activeMod->name.String())
+                              : nullptr;
+    header->SetActiveButton(section == searchPanel ? buttons::SEARCH : static_cast<int>(activePage), modName);
     if (P_WindowManager->lastDlg == this)
         Redraw();
 }
@@ -220,7 +224,8 @@ void MainDlg::ShowMod(ModInformation *mod, int subtype)
     activeMod = mod;
     session.modFolder = mod->path.String();
     if (!modSection)
-        modSection = new ModSection(8, bodyY, 220, bodyHeight, contentX, bodyY, contentWidth, bodyHeight, this);
+        modSection =
+            new ModSection(8, bodyY, categoriesWidth, bodyHeight, contentX, bodyY, contentWidth, bodyHeight, this);
     modSection->SetMod(mod);
     const int category = subtype >= 0 ? subtype : session.modCategories[session.modFolder];
     modSection->SetSubtype(category);
@@ -256,8 +261,8 @@ BOOL MainDlg::ShowPage(eHelpPage page, int subtype)
         EnsureModsLoaded();
         if (!hotkeysSection)
         {
-            hotkeysSection =
-                new HotkeysSection(8, bodyY, 220, bodyHeight, contentX, bodyY, contentWidth, bodyHeight, this, mods);
+            hotkeysSection = new HotkeysSection(8, bodyY, categoriesWidth, bodyHeight, contentX, bodyY, contentWidth,
+                                                bodyHeight, this, mods);
             hotkeysSection->SetFilter(session.hotkeys);
         }
         if (subtype >= 0)
@@ -332,14 +337,14 @@ void MainDlg::Search()
                     entry.page = eHelpPage::HOTKEYS;
                     entry.hotkeyContext = key.type;
                     entry.hotkeyId = key.id;
-                    entry.hotkeyQuery = std::string(key.keys.String()) + " " + key.name.String();
                     entry.label =
                         std::string(mod->name.String()) + " / [" + key.keys.String() + "] " + key.name.String();
                     entry.searchable = entry.label;
                     entries.push_back(entry);
                 }
         }
-    searchPanel = new helpdlg::SearchPanel(8, bodyY, 220, bodyHeight, contentX, contentWidth, this, std::move(entries));
+    searchPanel = new helpdlg::SearchPanel(8, bodyY, categoriesWidth, bodyHeight, contentX, contentWidth, this,
+                                           std::move(entries));
     searchPanel->SetQuery(header->Query());
     ShowSection(searchPanel);
     header->FocusSearch();
@@ -364,7 +369,7 @@ void MainDlg::NavigateSearch(const helpdlg::SearchEntry &target)
                 if (target.page == eHelpPage::HOTKEYS)
                 {
                     ShowPage(eHelpPage::HOTKEYS);
-                    hotkeysSection->FocusHotkey(mod->path.String(), target.hotkeyContext, target.hotkeyQuery);
+                    hotkeysSection->FocusHotkey(mod->path.String(), target.hotkeyContext, target.hotkeyId);
                     Redraw();
                 }
                 else
@@ -375,7 +380,7 @@ void MainDlg::NavigateSearch(const helpdlg::SearchEntry &target)
     else
     {
         ShowPage(target.page, 0);
-        EnsureCatalogueSection(target.page)->FocusObject(target.objectId, false);
+        EnsureCatalogueSection(target.page)->FocusObject(target.objectId, false, true);
     }
 }
 
@@ -521,10 +526,6 @@ void MainDlg::ExecuteAction(LPCSTR command)
 void MainDlg::ReleaseInputFocus(int keepItemId)
 {
     header->ReleaseInputFocus(keepItemId);
-    for (auto &entry : catalogueSections)
-        entry.second->ReleaseInputFocus(keepItemId);
-    if (hotkeysSection)
-        hotkeysSection->ReleaseInputFocus(keepItemId);
 }
 BOOL MainDlg::DialogProc(H3Msg &msg)
 {
@@ -587,13 +588,15 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
                 ShowPage(eHelpPage::MODS);
                 return FALSE;
             }
-            auto *button = GetH3DlgItem(buttons::MODLIST);
+            auto *button = GetCaptionButton(buttons::MODLIST);
             if (!button)
                 return FALSE;
-            const auto layout = helpdlg::FitModDropdown(
-                GetX() + button->GetX(), GetY() + button->GetY(), button->GetWidth(), button->GetHeight(),
-                static_cast<int>(mods.size()), H3GameWidth::Get(), H3GameHeight::Get());
-            list::ModListDlg picker(layout, mods, activeMod);
+            const auto *def = button->GetDef();
+            const int buttonWidth = def && def->widthDEF > 0 ? static_cast<int>(def->widthDEF) : button->GetWidth();
+            const auto layout = helpdlg::FitModDropdown(GetX() + button->GetX(), GetY() + button->GetY(), buttonWidth,
+                                                        button->GetHeight(), static_cast<int>(mods.size()),
+                                                        H3GameWidth::Get(), H3GameHeight::Get());
+            list::ModListDlg picker(layout, mods, activeSection == modSection ? activeMod : nullptr);
             picker.Start();
             if (picker.ResultMod())
                 ShowMod(picker.ResultMod(), -1);
@@ -643,7 +646,6 @@ void MainDlg::StoreState()
     WriteIni("SortSchema", "1");
     WriteIni("HotkeyContext", std::to_string(session.hotkeys.context));
     WriteIni("HotkeyRow", std::to_string(session.hotkeys.firstRow));
-    WriteIni("HotkeyQuery", session.hotkeys.query);
     for (const auto &entry : session.filters)
     {
         const auto &filter = entry.second;
@@ -652,8 +654,6 @@ void MainDlg::StoreState()
         WriteIni(H3String::Format("%s.Levels", prefix.String()).String(), std::to_string(filter.levels));
         WriteIni(H3String::Format("%s.Sort", prefix.String()).String(), std::to_string(filter.sort));
         WriteIni(H3String::Format("%s.Row", prefix.String()).String(), std::to_string(filter.firstRow));
-        WriteIni(H3String::Format("%s.Selected", prefix.String()).String(), std::to_string(filter.selectedId));
-        WriteIni(H3String::Format("%s.Query", prefix.String()).String(), filter.query);
         for (int facet = 0; facet < 4; ++facet)
             WriteIni(H3String::Format("%s.Facet%d", prefix.String(), facet).String(),
                      std::to_string(filter.facets[facet]));

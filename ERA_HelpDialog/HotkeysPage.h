@@ -9,14 +9,11 @@ class HotkeysSection final : public DlgSection, private DlgPage
 {
     const std::vector<ModInformation *> &mods;
     std::vector<H3DlgCaptionButton *> contexts;
-    H3DlgEdit *queryEdit = nullptr;
     H3DlgScrollableText *text = nullptr;
     H3String rendered;
-    std::string query;
-    void Rebuild();
+    void Rebuild(int focusModId = -1, int focusHotkeyId = -1);
 
   public:
-    void ReleaseInputFocus(int keepItemId = -1) noexcept override;
     HotkeysSection(int categoriesX, int categoriesY, int categoriesWidth, int categoriesHeight, int contentX,
                    int contentY, int contentWidth, int contentHeight, H3Dlg *dialog,
                    const std::vector<ModInformation *> &mods);
@@ -27,7 +24,7 @@ class HotkeysSection final : public DlgSection, private DlgPage
     void Redraw() override;
     helpdlg::HotkeyFilter Filter() const;
     void SetFilter(const helpdlg::HotkeyFilter &filter);
-    void FocusHotkey(LPCSTR folder, int context, const std::string &query);
+    void FocusHotkey(LPCSTR folder, int context, int hotkeyId);
 };
 } // namespace main
 

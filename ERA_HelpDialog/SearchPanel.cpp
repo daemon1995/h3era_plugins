@@ -30,10 +30,11 @@ SearchPanel::SearchPanel(int cx, int top, int cw, int h, int left, int w, H3Dlg 
     });
     AddFrame(cx, y, cw, height);
     AddFrame(x, y, width, height);
+    const int categoryStep = CategoryButtonStep();
     for (int index = 0; index < 9; ++index)
     {
-        auto *button = Button(nullptr, cx + 6, y + 6 + index * 30, cw - 12, 28, kScopeFirst + index,
-                              index ? PageName(kPages[index - 1]) : Text("help.ui.all", "All"));
+        auto *button = CategoryButton(cx + 6, y + 6 + index * categoryStep, kScopeFirst + index,
+                                      index ? PageName(kPages[index - 1]) : Text("help.ui.all", "All"));
         AddItem(button);
         scopes.push_back(button);
     }
@@ -50,6 +51,13 @@ SearchPanel::SearchPanel(int cx, int top, int cw, int h, int left, int w, H3Dlg 
                              nullptr, false);
         AddItem(button);
         rows.push_back(button);
+    }
+    hoverFrame = H3DlgFrame::Create(x + 7, y + 39, width - 32, 34, -1, H3RGB565(H3RGB888::Highlight()));
+    if (hoverFrame)
+    {
+        dialog->AddItem(hoverFrame);
+        hoverFrame->Disable();
+        hoverFrame->HideDeactivate();
     }
     scroll = H3DlgScrollbar::Create(x + width - 22, y + 40, 16, rowCount * 34, kScroll, 2, ScrollProc, false, 1, true);
     AddItem(scroll);
@@ -77,6 +85,8 @@ void SearchPanel::SetVisible(BOOL state) noexcept
     }
     else
     {
+        hoveredRow = -1;
+        UpdateHoverFrame();
         if (visiblePanel == this)
             visiblePanel = nullptr;
     }
@@ -107,6 +117,7 @@ void SearchPanel::Redraw()
         {
             button->SetText(entries[matches[index]].label.c_str());
             button->SetFrame(index == selectedIndex ? 1 : 0);
+            button->Enable();
             button->ShowActivate();
         }
         else
@@ -114,10 +125,14 @@ void SearchPanel::Redraw()
     }
     for (size_t index = 0; index < scopes.size(); ++index)
         if (scopes[index])
-            scopes[index]->SetFrame(index == static_cast<size_t>(activeSubtype) ? 1 : 0);
+        {
+            const bool state = index == static_cast<size_t>(activeSubtype);
+            scopes[index]->SendCommand(6 - (state), 4096);
+        }
     if (countText)
         countText->SetText(
             H3String::Format("%d %s", static_cast<int>(matches.size()), Text("help.ui.results", "results")).String());
+    UpdateHoverFrame();
     RedrawDialog();
 }
 void SearchPanel::Accept()
@@ -130,6 +145,8 @@ void SearchPanel::Accept()
 }
 BOOL SearchPanel::ProcessMessage(H3Msg &msg)
 {
+    if (hoverFrame)
+        hoverFrame->DeActivate();
     if (!isVisible)
         return FALSE;
     if (msg.IsKeyPress())
@@ -157,10 +174,11 @@ BOOL SearchPanel::ProcessMessage(H3Msg &msg)
             return TRUE;
         }
     }
-    if (!msg.IsLeftClick() && !msg.IsRightClick())
+    if (!msg.IsLeftDown() && !msg.IsLeftClick() && !msg.IsRightClick())
         return FALSE;
     const int row = msg.itemId - kRowFirst;
-    if (row >= 0 && row < static_cast<int>(rows.size()) && firstIndex + row < static_cast<int>(matches.size()))
+    if (row >= 0 && row < static_cast<int>(rows.size()) && firstIndex + row < static_cast<int>(matches.size()) &&
+        rows[row] && rows[row]->IsVisible() && rows[row]->IsActive() && rows[row]->IsEnabled())
     {
         if (msg.IsRightClick())
         {
@@ -191,13 +209,47 @@ BOOL SearchPanel::ProcessMessage(H3Msg &msg)
 }
 void SearchPanel::UpdateMousePosition(const H3Msg &msg) noexcept
 {
-    if (!scroll || !scroll->IsVisible() || !msg.IsMouseOver())
+    if (hoverFrame)
+        hoverFrame->DeActivate();
+    if (!isVisible || !msg.IsMouseOver())
         return;
-    const int mx = msg.GetX() - dialog->GetX(), my = msg.GetY() - dialog->GetY();
-    if (mx >= x && mx < x + width && my >= y + 40 && my < y + height)
+    const auto *item = msg.ItemAtPosition(dialog);
+    hoveredRow = item ? static_cast<int>(item->GetID()) - kRowFirst : -1;
+    if (UpdateHoverFrame())
+        RedrawDialog();
+    if (!scroll || !scroll->IsVisible())
+        return;
+    const int mouseX = msg.GetX() - dialog->GetX();
+    const int mouseY = msg.GetY() - dialog->GetY();
+    if (mouseX >= x && mouseX < x + width && mouseY >= y + 40 && mouseY < y + height)
         scroll->Activate();
     else
         scroll->DeActivate();
+}
+
+bool SearchPanel::UpdateHoverFrame() noexcept
+{
+    if (!hoverFrame)
+        return false;
+    hoverFrame->DeActivate();
+    auto *hovered = isVisible && hoveredRow >= 0 && hoveredRow < static_cast<int>(rows.size()) &&
+                            firstIndex + hoveredRow < static_cast<int>(matches.size())
+                        ? rows[hoveredRow]
+                        : nullptr;
+    if (!hovered)
+    {
+        const bool changed = hoverFrame->IsVisible() != FALSE;
+        hoverFrame->HideDeactivate();
+        return changed;
+    }
+    const int frameX = hovered->GetX() - 1, frameY = hovered->GetY() - 1;
+    const bool changed = !hoverFrame->IsVisible() || hoverFrame->GetX() != frameX || hoverFrame->GetY() != frameY;
+    hoverFrame->SetX(frameX);
+    hoverFrame->SetY(frameY);
+    hoverFrame->SetWidth(hovered->GetWidth() + 2);
+    hoverFrame->SetHeight(hovered->GetHeight() + 2);
+    hoverFrame->Show()->DeActivate();
+    return changed;
 }
 void __fastcall SearchPanel::ScrollProc(INT32 tick, H3BaseDlg *)
 {
