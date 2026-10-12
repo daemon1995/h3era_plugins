@@ -77,6 +77,8 @@
   <ItemGroup>
     <None Include="BattleSave.LICENSE" />
     <None Include="BattleSave.tests.cpp" />
+    <None Include="CombatSettings.tests.cpp" />
     <None Include="run-battlesave-tests.cmd" />
+    <None Include="run-combat-settings-tests.cmd" />
   </ItemGroup>
 </Project>

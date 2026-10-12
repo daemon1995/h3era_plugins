@@ -1,4 +1,5 @@
 #include "CombatSettings.h"
+#include <algorithm>
 #include <cstring>
 namespace cmbsttngs
 {
@@ -10,7 +11,15 @@ CombatSettings::CombatSettings() : IGamePatch(globalPatcher->CreateInstance("Era
     CreatePatches();
 }
 
-_ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
+_ERH_(CombatSettings::OnBeforeBattleUniversal)
+{
+    const auto attacker = ValueAt<H3Hero *>(0x2860248);
+    ConfigureBattle(OriginalConfig::Get(), P_Game->Get(), attacker ? attacker->owner : -1,
+                    IntAt(0x2846BC0), P_AutoSolo, IntAt(0x69959C) != 0);
+}
+
+void CombatSettings::ConfigureBattle(OriginalConfig &config, const H3Main *main, const int attackerPlayerId,
+                                     const int defenderPlayerId, const bool autoSolo, const bool networkGame)
 {
 
     enum eQuickCombatType : int
@@ -20,55 +29,51 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
         eQuickCombatType_QuickCombatWithoutAutoSpells = 2,
         eQuickCombatType_Ask = 3
     };
-    const auto combatManager = P_CombatManager->Get();
-    if (!combatManager)
-        return;
 
-    const bool sidesHaveSameHumanStatus = bool(combatManager->isHuman[0]) == bool(combatManager->isHuman[1]);
-    const bool isNetworkBattle = IntAt(0x69959C) != 0; // o_NetworkGame
-    if (sidesHaveSameHumanStatus || isNetworkBattle)
-        return;
+    const auto &extraConfig = AdditionalConfig::Get().quickCombatType;
+    // The selected mode is authoritative; the native flag can be temporary.
+    quickCombatInfo.SetPersistentQuickCombat(config.quickCombat, extraConfig.value > 0);
 
-    auto &config = OriginalConfig::Get();
-    if (P_AutoSolo)
+    if (autoSolo)
     {
         quickCombatInfo.SetQuickCombat(config.quickCombat, TRUE);
         return;
     }
 
-    auto &extraConfig = AdditionalConfig::Get().quickCombatType;
-    int quickCombatType = Clamp(0, extraConfig.value, extraConfig.maxValue);
+    if (!main)
+        return;
 
-    if (config.quickCombat && !quickCombatType)
+    if (main->inTutorial)
     {
-        quickCombatType = eQuickCombatType_QuickCombatWithoutAutoSpells - bool(config.autoSpells);
-    }
-    else if (!config.quickCombat && quickCombatType)
-    {
-        quickCombatType = eQuickCombatType_Off;
+        quickCombatInfo.SetQuickCombat(config.quickCombat, FALSE);
+        return;
     }
 
+    const int playerCount = static_cast<int>(std::size(main->players));
+    if (attackerPlayerId < -1 || attackerPlayerId >= playerCount ||
+        defenderPlayerId < -1 || defenderPlayerId >= playerCount)
+        return;
+
+    const bool humanAttacker = attackerPlayerId >= 0 && main->players[attackerPlayerId].isHuman;
+    const bool humanDefender = defenderPlayerId >= 0 && main->players[defenderPlayerId].isHuman;
+    if (humanAttacker && humanDefender)
+    {
+        quickCombatInfo.SetQuickCombat(config.quickCombat, FALSE);
+        return;
+    }
+    if (!humanAttacker && !humanDefender)
+        return;
+
+    const int humanPlayerId = humanAttacker ? attackerPlayerId : defenderPlayerId;
+    if (networkGame && !main->players[humanPlayerId].isLocal)
+        return;
+
+    int quickCombatType = std::clamp(extraConfig.value, int(eQuickCombatType_Off), int(eQuickCombatType_Ask));
     if (quickCombatType == eQuickCombatType_Ask)
     {
-        LPCSTR keys[] = {"era.opt.map.quickCombat.menu", "era.opt.map.quickCombatManual.menu",
-                         "era.opt.map.quickCombatMana.menu", "era.opt.map.quickCombatManaFree.menu"};
-        Era::TErmZVar storedZ[4];
-        const int storedV1 = Era::v[1];
-        const int storedY1 = Era::y[1];
-        for (size_t i = 0; i < 4; i++)
-        {
-            std::memcpy(storedZ[i], Era::z[i + 1], sizeof(storedZ[i]));
-            std::strncpy(Era::z[i + 1], EraJS::read(keys[i]), sizeof(Era::z[i + 1]) - 1);
-            Era::z[i + 1][sizeof(Era::z[i + 1]) - 1] = '\0';
-        }
-        Era::y[1] = 1 << quickCombatInfo.lastSelection;
-        Era::ExecErmCmd("IF:G1/1/y1/1/2/3/4");
-        quickCombatType = Clamp(1, Era::v[1], 3) - 1;
-        Era::v[1] = storedV1;
-        Era::y[1] = storedY1;
-        for (size_t i = 0; i < 4; i++)
-            std::memcpy(Era::z[i + 1], storedZ[i], sizeof(storedZ[i]));
-        quickCombatInfo.lastSelection = quickCombatType;
+        quickCombatType = AskQuickCombatType();
+        if (quickCombatType < 0)
+            return; // A menu callback abandoned this game context.
     }
 
     switch (quickCombatType)
@@ -90,18 +95,130 @@ _ERH_(CombatSettings::OnBeforeBattleUniversal_Quit)
     }
 }
 
-// restore quick combat settings after battle or before FastQuit discards the game
-_ERH_(CombatSettings::OnAfterBattleOrFastQuit)
+int CombatSettings::AskQuickCombatType()
+{
+    LPCSTR keys[] = {"era.opt.map.quickCombat.menu", "era.opt.map.quickCombatManual.menu",
+                     "era.opt.map.quickCombatMana.menu", "era.opt.map.quickCombatManaFree.menu"};
+    Era::TErmZVar storedZ[4];
+    const int storedV1 = Era::v[1];
+    const int storedY1 = Era::y[1];
+    const auto generation = quickCombatInfo.generation;
+    for (size_t i = 0; i < std::size(keys); ++i)
+        std::memcpy(storedZ[i], Era::z[i + 1], sizeof(storedZ[i]));
+
+    int selectionMask = 0;
+    __try
+    {
+        for (size_t i = 0; i < std::size(keys); ++i)
+        {
+            const auto text = EraJS::read(keys[i]);
+            std::strncpy(Era::z[i + 1], text ? text : keys[i], sizeof(Era::z[i + 1]) - 1);
+            Era::z[i + 1][sizeof(Era::z[i + 1]) - 1] = '\0';
+        }
+        Era::v[1] = 0; // A cancelled menu must not consume the caller's old v1.
+        Era::y[1] = 1 << std::clamp(quickCombatInfo.lastSelection, 0, 2);
+        Era::ExecErmCmd("IF:G1/1/y1/1/2/3/4");
+        selectionMask = Era::v[1];
+    }
+    __finally
+    {
+        // A loaded game owns its ERM variables; an old frame must not edit them.
+        if (generation == quickCombatInfo.generation)
+        {
+            Era::v[1] = storedV1;
+            Era::y[1] = storedY1;
+            for (size_t i = 0; i < std::size(keys); ++i)
+                std::memcpy(Era::z[i + 1], storedZ[i], sizeof(storedZ[i]));
+        }
+    }
+    if (generation != quickCombatInfo.generation)
+        return -1;
+    // IF:G returns one bit per item, including in radio mode. Decode the
+    // selected bit; the third item returns 4, not its ordinal number 3.
+    switch (selectionMask)
+    {
+    case 1 << 0:
+        quickCombatInfo.lastSelection = 0;
+        break;
+    case 1 << 1:
+        quickCombatInfo.lastSelection = 1;
+        break;
+    case 1 << 2:
+        quickCombatInfo.lastSelection = 2;
+        break;
+    default:
+        return 0; // Cancel or invalid output: enter manual combat.
+    }
+    return quickCombatInfo.lastSelection;
+}
+
+_ERH_(CombatSettings::OnAfterBattle)
 {
     RestoreQuickCombatOptions();
 }
 
+_ERH_(CombatSettings::OnGameContextChanged)
+{
+    ResetGameContext(OriginalConfig::Get());
+}
+
+void CombatSettings::ResetGameContext(OriginalConfig &config) noexcept
+{
+    ++quickCombatInfo.generation;
+    RestoreQuickCombatOptions(config);
+}
+
 void CombatSettings::RestoreQuickCombatOptions() noexcept
 {
-    auto &config = OriginalConfig::Get();
+    RestoreQuickCombatOptions(OriginalConfig::Get());
+}
+
+void CombatSettings::RestoreQuickCombatOptions(OriginalConfig &config) noexcept
+{
     // Restore only fields temporarily overridden for this battle. A user can
     // change an untouched option in the manual battle's settings dialog.
     quickCombatInfo.Restore(config.quickCombat, config.autoSpells);
+    quickCombatInfo.SetPersistentQuickCombat(config.quickCombat, AdditionalConfig::Get().quickCombatType.value > 0);
+}
+
+int __stdcall CombatSettings::AdventureManager_Battle(HiHook *hook, H3AdventureManager *manager, int point,
+                                                       H3Hero *attacker, H3Army *attackerArmy, int defenderOwner,
+                                                       H3Town *town, H3Hero *defender, H3Army *defenderArmy,
+                                                       int seed, int combatIsLocal, int isBank)
+{
+    // Include pre-battle events: they can cancel the attack after selecting a
+    // mode, without ever firing OnAfterBattle.
+    RestoreQuickCombatOptions();
+    const auto generation = quickCombatInfo.generation;
+    int result = 0;
+    __try
+    {
+        result = THISCALL_11(int, hook->GetDefaultFunc(), manager, point, attacker, attackerArmy, defenderOwner,
+                             town, defender, defenderArmy, seed, combatIsLocal, isBank);
+    }
+    __finally
+    {
+        if (generation == quickCombatInfo.generation)
+            RestoreQuickCombatOptions();
+    }
+    return result;
+}
+
+LONG __stdcall CombatSettings::WriteGameSettings(HiHook *hook)
+{
+    auto &config = OriginalConfig::Get();
+    ApplyQuickCombatType(AdditionalConfig::Get().quickCombatType, AdditionalConfig::EOptionChangeSource::InitialLoad);
+    quickCombatInfo.BeginSettingsWrite(config.quickCombat, config.autoSpells);
+    LONG result = 0;
+    __try
+    {
+        result = CDECL_0(LONG, hook->GetDefaultFunc());
+    }
+    __finally
+    {
+        quickCombatInfo.EndSettingsWrite(config.quickCombat, config.autoSpells);
+    }
+    return result;
 }
 
 void CombatSettings::FinishBattleInstantly() noexcept
@@ -115,9 +232,10 @@ void CombatSettings::FinishBattleInstantly() noexcept
 int __stdcall CombatSettings::CombatManager_ProcessMessage(HiHook *hook, H3CombatManager *combatManager, H3Msg *msg)
 {
 
-    if (msg && msg->IsKeyDown() && bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
+    if (combatManager && msg && msg->IsKeyDown() &&
+        bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
     {
-        if (msg->GetKey() == eVKey::H3VK_L)
+        if (msg->GetKey() == eVKey::H3VK_L && !IntAt(0x69959C))
         {
             // Match the battle hotkey behavior: Ctrl+L skips confirmation, L asks first.
             if (msg->CtrlPressed() || H3Messagebox::Choice(P_GeneralText->GetText(69)))
@@ -217,9 +335,18 @@ void CombatSettings::CreatePatches() noexcept
     _pi->WriteLoHook(0x476DA5, CombatManager_EndBattle);
 
     // combat type selection
-    _REH_(OnBeforeBattleUniversal_Quit);
-    Era::RegisterHandler(OnAfterBattleOrFastQuit, "OnAfterBattle");
-    Era::RegisterHandler(OnAfterBattleOrFastQuit, "OnBeforeFastQuitToGameMenu");
+    _pi->WriteHiHook(0x75ADD9, SPLICE_, EXTENDED_, THISCALL_, AdventureManager_Battle);
+    // ERA redirects both native write entry points to this same procedure.
+    const _ptr_ writeSettings = ByteAt(0x50C370) == 0xE9 ? 0x50C375 + IntAt(0x50C371) : 0x50C370;
+    _pi->WriteHiHook(writeSettings, SPLICE_, EXTENDED_, CDECL_, WriteGameSettings);
+    _REH_(OnBeforeBattleUniversal);
+    _REH_(OnAfterBattle);
+    Era::RegisterHandler(OnGameContextChanged, "OnBeforeFastQuitToGameMenu");
+    Era::RegisterHandler(OnGameContextChanged, "OnBeforeLoadGame");
+    Era::RegisterHandler(OnGameContextChanged, "OnAfterLoadGame");
+    Era::RegisterHandler(OnGameContextChanged, "OnGameLeave");
+    Era::RegisterHandler(OnGameContextChanged, "OnGameLeft");
+    Era::RegisterHandler(OnGameContextChanged, "OnGameEnter");
 }
 
 CombatSettings &CombatSettings::Get()
@@ -232,7 +359,12 @@ CombatSettings &CombatSettings::Get()
 void CombatSettings::ApplyQuickCombatType(const AdditionalConfig::ConfigEntry &entry,
                                           const AdditionalConfig::EOptionChangeSource source) noexcept
 {
-    OriginalConfig::Get().quickCombat = entry.value != 0;
+    quickCombatInfo.SetPersistentQuickCombat(OriginalConfig::Get().quickCombat, entry.value > 0);
+}
+
+int CombatSettings::PersistentQuickCombat() noexcept
+{
+    return AdditionalConfig::Get().quickCombatType.value > 0;
 }
 
 int CombatSettings::PersistentAutoSpells() noexcept

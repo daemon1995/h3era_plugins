@@ -198,6 +198,8 @@ UINT AdditionalConfig::Revision() noexcept
 }
 int AdditionalConfig::ReadNativeValue(const int *valuePtr) noexcept
 {
+    if (valuePtr == &OriginalConfig::Get().quickCombat)
+        return cmbsttngs::CombatSettings::PersistentQuickCombat();
     if (valuePtr == &OriginalConfig::Get().autoSpells)
         return cmbsttngs::CombatSettings::PersistentAutoSpells();
     return valuePtr ? *valuePtr : 0;

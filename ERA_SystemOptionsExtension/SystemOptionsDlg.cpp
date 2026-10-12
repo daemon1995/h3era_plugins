@@ -149,16 +149,6 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
     AdditionalConfig &extraConfig = AdditionalConfig::Get();
     const int callType = dlgCallSource;
 
-    if (callType != eDlgCallSource::COMBAT)
-    {
-        if (!!quickCombatSettingState != !!extraConfig.quickCombatType.value)
-        {
-            const int quickCombatType = quickCombatSettingState ? (config.autoSpells ? 1 : 2) : 0;
-            if (extraConfig.quickCombatType.SetValue(quickCombatType, AdditionalConfig::EOptionChangeSource::Dialog))
-                settingsChanged = TRUE;
-        }
-    }
-
     constexpr int baseSettingHeight = ISetting::BASE_SETTINGS_Y_OFFSET;
     constexpr int leftStartX = DLG_LEFT_PART_X_MARGIN;
     constexpr int rightStartX = DLG_RIGHT_PART_X_MARGIN;
@@ -706,7 +696,7 @@ void SystemOptionsDlg::CreateImportedSettingsPanel(SettingsPage *page, const int
 BOOL SystemOptionsDlg::SettingsChanged() const noexcept
 {
     if (settingsChanged || initialRevision != AdditionalConfig::Revision() ||
-        quickCombatSettingState != OriginalConfig::Get().quickCombat)
+        quickCombatSettingState != AdditionalConfig::ReadNativeValue(&OriginalConfig::Get().quickCombat))
         return TRUE;
     for (const auto *page : m_pages)
         for (const auto *setting : page->settings)
@@ -823,7 +813,7 @@ SystemOptionsDlg::~SystemOptionsDlg()
     OriginalConfig &config = OriginalConfig::Get();
     AdditionalConfig &extraConfig = AdditionalConfig::Get();
 
-    const int newQuickCombatState = config.quickCombat;
+    const int newQuickCombatState = AdditionalConfig::ReadNativeValue(&config.quickCombat);
     if (settingsChanged || quickCombatSettingState != newQuickCombatState)
     {
         config.blackoutComputer = config.enemySpeed == 5;

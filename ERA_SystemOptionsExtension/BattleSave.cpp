@@ -45,6 +45,14 @@ static_assert(offsetof(H3Main, mainSetup) + offsetof(H3MainSetup, hasUnderground
 constexpr _ptr_ MOVE_HERO = 0x47FF00;
 constexpr _ptr_ DO_EVENT = 0x4AA710;
 constexpr _ptr_ DO_COMBAT = 0x4AD160;
+constexpr _ptr_ COMBAT_ENTER = 0x4AD181;
+constexpr _ptr_ COMBAT_THEORETICAL_EXIT = 0x4AD378;
+constexpr _ptr_ COMBAT_EXIT = 0x4AE67C;
+constexpr _ptr_ ERA_PRE_BATTLE = 0x75A5EF;
+constexpr _ptr_ ERA_CALL_SEQUENCE = 0x75AE24;
+constexpr _ptr_ ERA_ATTACKER = 0x02860248;
+constexpr _ptr_ ERA_BATTLE_POINT = 0x028468EC;
+constexpr _ptr_ ERA_BATTLE_ALLOWED = 0x028460F4;
 constexpr _ptr_ GAME_SAVE = 0x4BE0B0;
 constexpr _ptr_ SAVE_PATH_READY = 0x4BED76;
 constexpr _ptr_ SAVE_CLOSE_DONE = 0x4BEDA9;
@@ -57,7 +65,7 @@ constexpr _ptr_ GZ_CTOR = 0x4D6EB0;
 constexpr _ptr_ GZ_CLOSE = 0x4D6FC0;
 constexpr _ptr_ GZ_READ = 0x4D6FE0;
 constexpr _ptr_ MARKED_SAVEGAME_NAME = 0x68338C;
-constexpr _ptr_ MARKED_SAVE_LOOKUP_SITE = 0x5833AB;
+constexpr _ptr_ LAST_SAVEGAME_NAME = 0x69FC88;
 
 constexpr int MAX_HEROES = 156;
 constexpr int MAX_PLAYERS = 8;
@@ -73,6 +81,7 @@ constexpr int OBJECT_HERO = 34;
 constexpr int ARTIFACT_ANGEL_WINGS = 72;
 constexpr int ARTIFACT_BOOTS_OF_LEVITATION = 90;
 constexpr unsigned int IN_BOAT_FLAG = 0x00040000;
+constexpr unsigned int POINT_COORDINATE_MASK = 0x3FFF03FF;
 constexpr _ptr_ BOAT_POOL_OFFSET = 0x4E3B8;
 constexpr _ptr_ RECORDED_EVENTS_OFFSET = 0x4E7AC;
 constexpr unsigned int BOAT_RECORD_SIZE = 40;
@@ -92,11 +101,13 @@ const char BATTLE_SAVE_NAME[] = "BATTLE!";
 const unsigned char MOVE_HERO_PROLOG[] = {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x48, 0x53, 0x56, 0x57, 0x8B, 0xF9};
 const unsigned char DO_EVENT_PROLOG[] = {0x55, 0x8B, 0xEC, 0xA1, 0xFC, 0xCC, 0x69, 0x00, 0x53, 0x56, 0x8B, 0xF1};
 const unsigned char DO_COMBAT_PROLOG[] = {0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x68, 0x8F, 0xB9, 0x62, 0x00};
-const unsigned char GAME_SAVE_PROLOG[] = {0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x68, 0x93, 0xC5, 0x62, 0x00};
+const unsigned char COMBAT_ENTER_INSTRUCTIONS[] = {0x8B, 0x7D, 0x0C, 0x85, 0xFF};
+const unsigned char COMBAT_THEORETICAL_EXIT_INSTRUCTIONS[] = {0x8B, 0x45, 0x28, 0x5F, 0x5E};
+const unsigned char COMBAT_EXIT_INSTRUCTIONS[] = {0x8B, 0x4D, 0xF4, 0x8B, 0xC6};
+const unsigned char ERA_PRE_BATTLE_PROLOG[] = {0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x18, 0x53, 0x56, 0x57};
+const unsigned char ERA_CALL_SEQUENCE_BYTES[] = {0xE8, 0xB4, 0xFE, 0xFF, 0xFF, 0xE8, 0xC1, 0xF7, 0xFF, 0xFF};
 const unsigned char SAVE_PATH_INSTRUCTION[] = {0x8D, 0x8D, 0xAC, 0xFB, 0xFF, 0xFF};
 const unsigned char SAVE_CLOSE_INSTRUCTION[] = {0xFF, 0x15, 0x54, 0xA3, 0x63, 0x00};
-const unsigned char MARKED_SAVE_LOOKUP_INSTRUCTION[] = {0x68, 0x8C, 0x33, 0x68, 0x00, 0x8B,
-                                                        0xCB, 0xE8, 0xF9, 0xA2, 0x00, 0x00};
 
 struct RawExeVector
 {
@@ -192,7 +203,6 @@ struct FileTransaction
     bool gzipCloseSucceeded;
     bool failed;
     DWORD threadId;
-    unsigned int serial;
     unsigned __int64 readySize;
     FILETIME readyWriteTime;
     char finalPath[PHYSICAL_PATH_SIZE];
@@ -200,10 +210,22 @@ struct FileTransaction
     char backupPath[PHYSICAL_PATH_SIZE];
 };
 
+struct BattleCandidate
+{
+    bool pending;
+    bool bound;
+    DWORD threadId;
+    H3Hero *hero;
+    int heroId;
+    int owner;
+    unsigned int point;
+};
+
 MovementTransaction g_move = {};
 MovementTransaction g_anchor = {};
 MovementChain g_chain = {};
 FileTransaction g_file = {};
+BattleCandidate g_candidate = {};
 SaveRepairRecord g_writeRepair = {};
 SaveRepairRecord g_pendingRepair = {};
 bool g_writeRepairActive = false;
@@ -211,15 +233,12 @@ bool g_writeRepairEmitted = false;
 bool g_pendingRepairActive = false;
 unsigned int g_fileSerial = 0;
 unsigned int g_eventDepth = 0;
+unsigned int g_preBattleDepth = 0;
+unsigned int g_combatDepth = 0;
 bool g_recoveryDone = false;
 unsigned char g_gzipBuffer[GZIP_BUFFER_SIZE];
 
-HiHook *g_moveHook = nullptr;
-HiHook *g_eventHook = nullptr;
-HiHook *g_combatHook = nullptr;
-HiHook *g_gameSaveHook = nullptr;
 LoHook *g_savePathHook = nullptr;
-LoHook *g_saveCloseHook = nullptr;
 
 size_t BoundedLength(const char *text, size_t limit)
 {
@@ -256,17 +275,40 @@ bool BytesEqual(_ptr_ address, const unsigned char *expected, size_t size)
     return equal;
 }
 
-void MarkBattleSaveForLoadDialog()
+struct SaveSelectionBuffers
 {
-    // The stock dialog consumes this buffer only after the list is rebuilt.
-    // Validate that the loaded code still pushes this exact buffer into the
-    // native lookup routine before updating the optional UI state.
-    if (!BytesEqual(MARKED_SAVE_LOOKUP_SITE, MARKED_SAVE_LOOKUP_INSTRUCTION, sizeof(MARKED_SAVE_LOOKUP_INSTRUCTION)))
+    char *markedName;
+    char *logicalName;
+};
+
+SaveSelectionBuffers NativeSaveSelection()
+{
+    return {reinterpret_cast<char *>(MARKED_SAVEGAME_NAME), reinterpret_cast<char *>(LAST_SAVEGAME_NAME)};
+}
+
+void MarkBattleSaveForLoadDialog(const char *finalPath, const SaveSelectionBuffers &selection)
+{
+    const size_t pathLength = BoundedLength(finalPath, PHYSICAL_PATH_SIZE);
+    if (!pathLength || pathLength >= PHYSICAL_PATH_SIZE)
         return;
 
+    const char *fileName = finalPath;
+    for (const char *cursor = finalPath; *cursor; ++cursor)
+        if (*cursor == '\\' || *cursor == '/')
+            fileName = cursor + 1;
+    const size_t nameLength = BoundedLength(fileName, MARKED_SAVEGAME_NAME_CAPACITY);
+    if (!nameLength || nameLength >= MARKED_SAVEGAME_NAME_CAPACITY)
+        return;
+
+    // Native manual saving updates both fields: the save/edit buffer contains
+    // the logical name, while the load selection includes the actual extension.
+    // ERA and HD use these same globals even when they replace the stock dialog.
+    // Installation already validates the executable; dialog instruction bytes
+    // are not a prerequisite for updating its save-selection state.
     __try
     {
-        CopyString(reinterpret_cast<char *>(MARKED_SAVEGAME_NAME), MARKED_SAVEGAME_NAME_CAPACITY, BATTLE_SAVE_NAME);
+        CopyString(selection.logicalName, LOGICAL_NAME_SIZE, BATTLE_SAVE_NAME);
+        CopyString(selection.markedName, MARKED_SAVEGAME_NAME_CAPACITY, fileName);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -315,22 +357,21 @@ bool ValidateHiHookSite(_ptr_ address, const unsigned char *original, size_t ori
     return true;
 }
 
-bool ValidateSaveSites()
+bool ValidateLoHookSite(_ptr_ address, const unsigned char *original, size_t originalSize)
 {
-    return globalPatcher->GetFirstPatchAt(SAVE_PATH_READY) == nullptr &&
-           BytesEqual(SAVE_PATH_READY, SAVE_PATH_INSTRUCTION, sizeof(SAVE_PATH_INSTRUCTION)) &&
-           globalPatcher->GetFirstPatchAt(SAVE_CLOSE_DONE) == nullptr &&
-           BytesEqual(SAVE_CLOSE_DONE, SAVE_CLOSE_INSTRUCTION, sizeof(SAVE_CLOSE_INSTRUCTION));
+    return globalPatcher->GetFirstPatchAt(address) == nullptr && BytesEqual(address, original, originalSize);
 }
 
 bool IsLocalHumanHero(H3Hero *hero)
 {
-    if (!hero || !H3Main::Get() || hero->id < 0 || hero->id >= MAX_HEROES || hero->owner < 0 ||
-        hero->owner >= MAX_PLAYERS)
+    if (!hero || hero->owner < 0 || hero->owner >= MAX_PLAYERS)
+        return false;
+    H3Main *main = H3Main::Get();
+    if (!main)
         return false;
 
-    H3Player *player = &H3Main::Get()->players[hero->owner];
-    return player && player->isLocal && player->isHuman && H3Main::Get()->GetPlayerID() == hero->owner;
+    const H3Player &player = main->players[hero->owner];
+    return player.isLocal && player.isHuman && main->GetPlayerID() == hero->owner;
 }
 
 bool ReadVectorCount(RawExeVector *vector, unsigned int itemSize, unsigned int &count)
@@ -601,7 +642,7 @@ void RecoverOwnedFiles()
     FindClose(search);
 }
 
-bool CommitStagedSave()
+bool CommitStagedSave(const SaveSelectionBuffers &selection = NativeSaveSelection())
 {
     if (!g_file.ready || !MatchesFileFingerprint(g_file.stagePath, g_file.readySize, g_file.readyWriteTime))
         return false;
@@ -622,7 +663,10 @@ bool CommitStagedSave()
     }
 
     if (replaced && FileHasSize(g_file.finalPath, g_file.readySize))
+    {
+        MarkBattleSaveForLoadDialog(g_file.finalPath, selection);
         return true;
+    }
 
     RestoreBackup(g_file.finalPath, g_file.backupPath);
     return false;
@@ -635,9 +679,36 @@ void ClearFileTransaction(bool deleteStage)
     if (deleteStage)
         DeleteFileA(DISCARD_SAVE_PATH);
 
-    const unsigned int serial = g_file.serial;
     std::memset(&g_file, 0, sizeof(g_file));
-    g_file.serial = serial;
+}
+
+void DiscardStagedBattle()
+{
+    std::memset(&g_candidate, 0, sizeof(g_candidate));
+    if (g_file.armed)
+    {
+        // A reentrant battle must fail the active save without erasing the
+        // path/thread information its remaining serializer hooks still need.
+        g_file.failed = true;
+        return;
+    }
+    ClearFileTransaction(true);
+}
+
+void FinishPreBattleCandidate(bool returned, bool staged, bool battleAllowed)
+{
+    if (IsEnabled() && returned && staged && g_candidate.bound && battleAllowed && g_file.ready && !g_file.failed)
+        g_candidate.pending = true;
+    else
+        DiscardStagedBattle();
+}
+
+bool MatchesBattleCandidate(H3Hero *hero, int point)
+{
+    return IsEnabled() && g_candidate.pending && g_preBattleDepth == 0 && g_combatDepth == 0 &&
+           g_candidate.threadId == GetCurrentThreadId() && hero && hero == g_candidate.hero &&
+           hero->id == g_candidate.heroId && hero->owner == g_candidate.owner &&
+           ((g_candidate.point ^ static_cast<unsigned int>(point)) & POINT_COORDINATE_MASK) == 0;
 }
 
 bool CreateStagedBattleSave()
@@ -649,7 +720,6 @@ bool CreateStagedBattleSave()
     ClearFileTransaction(false);
     g_file.armed = true;
     g_file.threadId = GetCurrentThreadId();
-    g_file.serial = ++g_fileSerial;
 
     char saveName[LOGICAL_NAME_SIZE] = {};
     std::memcpy(saveName, BATTLE_SAVE_NAME, sizeof(BATTLE_SAVE_NAME));
@@ -894,7 +964,7 @@ bool BuildRepairRecord(H3Hero *hero, SaveRepairRecord &record, bool &needed)
     return true;
 }
 
-bool SaveConfirmedBattle(H3Hero *hero, bool movementScoped)
+bool StageBattleCandidate(H3Hero *hero, bool movementScoped)
 {
     RawExeVector *vector = nullptr;
     unsigned char *savedLast = nullptr;
@@ -949,20 +1019,23 @@ bool SaveConfirmedBattle(H3Hero *hero, bool movementScoped)
         return false;
     }
 
-    const bool committed = CommitStagedSave();
-    if (committed)
-        MarkBattleSaveForLoadDialog();
-    ClearFileTransaction(true);
-    return committed;
+    // Keep the validated file until the matching DoCombat confirms that the
+    // original pre-battle handlers allowed this exact battle to proceed.
+    return true;
+}
+
+bool IsMapCoordinateValid(const H3Main *main, int x, int y, int z)
+{
+    if (!main)
+        return false;
+    const int mapSize = static_cast<int>(main->mainSetup.mapSize);
+    const int mapDepth = static_cast<int>(1 + !!main->mainSetup.hasUnderground);
+    return x >= 0 && y >= 0 && z >= 0 && x < mapSize && y < mapSize && z < mapDepth;
 }
 
 bool IsMapCoordinateValid(int x, int y, int z)
 {
-    if (!H3Main::Get())
-        return false;
-    const int mapSize = static_cast<int>(H3Main::Get()->mainSetup.mapSize);
-    const int mapDepth = static_cast<int>(1 + !!H3Main::Get()->mainSetup.hasUnderground);
-    return x >= 0 && y >= 0 && z >= 0 && x < mapSize && y < mapSize && z < mapDepth;
+    return IsMapCoordinateValid(H3Main::Get(), x, y, z);
 }
 
 bool BoatMatchesCapturedIdentity(NativeObject *boat, const SaveRepairRecord &record, short startX, short startY,
@@ -1136,6 +1209,9 @@ bool ApplyPendingRepair()
 int __stdcall Y_MoveHero(HiHook *hook, int This, int direction, BOOL8 standEnd, int triggerPoint, int noMove,
                          BOOL8 computerMove, int foughtBattle, BOOL8 remoteMove)
 {
+    if (g_candidate.pending || g_preBattleDepth != 0)
+        DiscardStagedBattle();
+
     if (!IsEnabled())
     {
         ResetMovementSequence();
@@ -1232,35 +1308,105 @@ void __stdcall Y_DoEvent(HiHook *hook, int This, H3MapItem *eventCell, int point
         if (scopedTransaction && g_eventDepth)
             --g_eventDepth;
         if (ownsTransaction)
+        {
+            if (g_candidate.pending)
+                DiscardStagedBattle();
             ResetMovementSequence();
+        }
     }
 }
 
-int __stdcall Y_DoCombat(HiHook *hook, int This, int point, H3Hero *leftHero, int leftArmy, int rightPlayer,
-                         int rightTown, int rightHero, int rightArmy, int seed, int finishHeroes, int alternateLayout)
+void __stdcall Y_PreBattle(HiHook *hook)
 {
-    if (IsEnabled() && IsLocalHumanHero(leftHero))
+    const bool outermost = g_preBattleDepth++ == 0;
+    bool returned = false;
+    bool staged = false;
+    DiscardStagedBattle();
+
+    __try
     {
-        const bool synchronousMovement = g_move.state == MOVE_ACTIVE && g_eventDepth == 0;
-        const bool matchingEventScope = g_move.state == MOVE_EVENT_ACTIVE && g_eventDepth == 1;
-        if ((synchronousMovement || matchingEventScope) && g_move.threadId == GetCurrentThreadId())
+        if (IsEnabled() && outermost && g_combatDepth == 0 && !g_file.armed)
         {
-            const bool matchingHero =
-                leftHero == g_move.hero && leftHero->id == g_move.heroId && leftHero->owner == g_move.owner;
-            if (matchingHero)
+            H3Hero *hero = *reinterpret_cast<H3Hero **>(ERA_ATTACKER);
+            if (IsLocalHumanHero(hero))
             {
-                SaveConfirmedBattle(leftHero, true);
-                g_move.state = MOVE_COMBAT_HANDLED;
+                g_candidate.bound = true;
+                g_candidate.hero = hero;
+                g_candidate.heroId = hero->id;
+                g_candidate.owner = hero->owner;
+                g_candidate.point = *reinterpret_cast<unsigned int *>(ERA_BATTLE_POINT);
+                g_candidate.threadId = GetCurrentThreadId();
+
+                const bool synchronousMovement = g_move.state == MOVE_ACTIVE && g_eventDepth == 0;
+                const bool matchingEventScope = g_move.state == MOVE_EVENT_ACTIVE && g_eventDepth == 1;
+                if ((synchronousMovement || matchingEventScope) && g_move.threadId == g_candidate.threadId)
+                {
+                    const bool matchingHero =
+                        hero == g_move.hero && hero->id == g_move.heroId && hero->owner == g_move.owner;
+                    if (matchingHero)
+                    {
+                        staged = StageBattleCandidate(hero, true);
+                        g_move.state = MOVE_COMBAT_HANDLED;
+                    }
+                }
+                else if (g_move.state == MOVE_IDLE)
+                {
+                    staged = StageBattleCandidate(hero, false);
+                }
             }
         }
-        else if (g_move.state == MOVE_IDLE)
+
+        // This ERA/WoG routine has no arguments. Serialize before its ERM
+        // handlers run, but leave BATTLE! untouched until DoCombat confirms it.
+        CDECL_0(void, hook->GetDefaultFunc());
+        returned = true;
+    }
+    __finally
+    {
+        --g_preBattleDepth;
+        if (outermost)
         {
-            SaveConfirmedBattle(leftHero, false);
+            const bool battleAllowed = returned && staged && *reinterpret_cast<int *>(ERA_BATTLE_ALLOWED) != 0;
+            FinishPreBattleCandidate(returned, staged, battleAllowed);
         }
     }
+}
 
-    return THISCALL_11(int, hook->GetDefaultFunc(), This, point, leftHero, leftArmy, rightPlayer, rightTown, rightHero,
-                       rightArmy, seed, finishHeroes, alternateLayout);
+void BeginCombat(bool matches, const SaveSelectionBuffers &selection = NativeSaveSelection())
+{
+    // The native function has already accepted this combat. Guard nested
+    // battles before committing, without forwarding the whole native call.
+    ++g_combatDepth;
+    g_candidate.pending = false;
+    g_candidate.bound = false;
+    __try
+    {
+        if (matches)
+            CommitStagedSave(selection);
+    }
+    __finally
+    {
+        DiscardStagedBattle();
+    }
+}
+
+int __stdcall Y_CombatEnter(LoHook *, HookContext *context)
+{
+    // Inside the original prologue, EBP still identifies its ten stack
+    // arguments. HD.WoG and other outer wrappers have already called through.
+    const int point = *reinterpret_cast<int *>(context->ebp + 8);
+    H3Hero *hero = *reinterpret_cast<H3Hero **>(context->ebp + 0xC);
+    BeginCombat(MatchesBattleCandidate(hero, point) && IsLocalHumanHero(hero));
+    return EXEC_DEFAULT;
+}
+
+int __stdcall Y_CombatExit(LoHook *, HookContext *)
+{
+    // Both native returns pass here. Loading or leaving the game can already
+    // have cleared the depth when a combat is abandoned through FastQuit.
+    if (g_combatDepth)
+        --g_combatDepth;
+    return EXEC_DEFAULT;
 }
 
 int __stdcall Y_SavePathReady(LoHook *, HookContext *context)
@@ -1363,8 +1509,9 @@ void __stdcall OnSavegameRead(Era::TEvent *)
 
 void ResetRuntimeState(bool clearPendingRepair, bool recoverFiles)
 {
+    g_combatDepth = 0;
     ResetMovementSequence();
-    ClearFileTransaction(true);
+    DiscardStagedBattle();
     g_writeRepairActive = false;
     g_writeRepairEmitted = false;
     std::memset(&g_writeRepair, 0, sizeof(g_writeRepair));
@@ -1387,8 +1534,9 @@ void __stdcall OnBeforeLoadGame(Era::TEvent *)
 
 void __stdcall OnAfterLoadGame(Era::TEvent *)
 {
+    g_combatDepth = 0;
     ResetMovementSequence();
-    ClearFileTransaction(true);
+    DiscardStagedBattle();
     // This pass is provisional. FastQuit reuses advManager and later load
     // handlers can still mobilize the selected hero or change boat display
     // state, so keep the marker through OnGameEnter and verify it there again.
@@ -1421,28 +1569,37 @@ bool InstallHooks()
 {
     if (!ValidatePe32Image() || !ValidateHiHookSite(MOVE_HERO, MOVE_HERO_PROLOG, sizeof(MOVE_HERO_PROLOG), nullptr) ||
         !ValidateHiHookSite(DO_EVENT, DO_EVENT_PROLOG, sizeof(DO_EVENT_PROLOG), nullptr) ||
-        !ValidateHiHookSite(DO_COMBAT, DO_COMBAT_PROLOG, sizeof(DO_COMBAT_PROLOG), "HD.WoG") || !ValidateSaveSites())
+        !ValidateHiHookSite(DO_COMBAT, DO_COMBAT_PROLOG, sizeof(DO_COMBAT_PROLOG), "HD.WoG") ||
+        !ValidateHiHookSite(ERA_PRE_BATTLE, ERA_PRE_BATTLE_PROLOG, sizeof(ERA_PRE_BATTLE_PROLOG), nullptr) ||
+        !BytesEqual(ERA_CALL_SEQUENCE, ERA_CALL_SEQUENCE_BYTES, sizeof(ERA_CALL_SEQUENCE_BYTES)) ||
+        !ValidateLoHookSite(COMBAT_ENTER, COMBAT_ENTER_INSTRUCTIONS, sizeof(COMBAT_ENTER_INSTRUCTIONS)) ||
+        !ValidateLoHookSite(COMBAT_THEORETICAL_EXIT, COMBAT_THEORETICAL_EXIT_INSTRUCTIONS,
+                            sizeof(COMBAT_THEORETICAL_EXIT_INSTRUCTIONS)) ||
+        !ValidateLoHookSite(COMBAT_EXIT, COMBAT_EXIT_INSTRUCTIONS, sizeof(COMBAT_EXIT_INSTRUCTIONS)) ||
+        !ValidateLoHookSite(SAVE_PATH_READY, SAVE_PATH_INSTRUCTION, sizeof(SAVE_PATH_INSTRUCTION)) ||
+        !ValidateLoHookSite(SAVE_CLOSE_DONE, SAVE_CLOSE_INSTRUCTION, sizeof(SAVE_CLOSE_INSTRUCTION)))
         return false;
     g_savePathHook = modulePatcher->WriteLoHook(SAVE_PATH_READY, Y_SavePathReady);
-    g_saveCloseHook = modulePatcher->WriteLoHook(SAVE_CLOSE_DONE, Y_SaveCloseDone);
-    g_moveHook = modulePatcher->WriteHiHook(MOVE_HERO, SPLICE_, EXTENDED_, THISCALL_, Y_MoveHero);
-    g_eventHook = modulePatcher->WriteHiHook(DO_EVENT, SPLICE_, EXTENDED_, THISCALL_, Y_DoEvent);
-    g_gameSaveHook = modulePatcher->WriteHiHook(GAME_SAVE, SPLICE_, EXTENDED_, THISCALL_, Y_GameSave);
-    g_combatHook = modulePatcher->CreateHiHook(DO_COMBAT, SPLICE_, EXTENDED_, THISCALL_, Y_DoCombat);
+    Patch *hooks[] = {
+        g_savePathHook,
+        modulePatcher->WriteLoHook(SAVE_CLOSE_DONE, Y_SaveCloseDone),
+        modulePatcher->WriteHiHook(MOVE_HERO, SPLICE_, EXTENDED_, THISCALL_, Y_MoveHero),
+        modulePatcher->WriteHiHook(DO_EVENT, SPLICE_, EXTENDED_, THISCALL_, Y_DoEvent),
+        modulePatcher->WriteHiHook(GAME_SAVE, SPLICE_, EXTENDED_, THISCALL_, Y_GameSave),
+        modulePatcher->WriteHiHook(ERA_PRE_BATTLE, SPLICE_, EXTENDED_, CDECL_, Y_PreBattle),
+        modulePatcher->WriteLoHook(COMBAT_ENTER, Y_CombatEnter),
+        modulePatcher->WriteLoHook(COMBAT_THEORETICAL_EXIT, Y_CombatExit),
+        modulePatcher->WriteLoHook(COMBAT_EXIT, Y_CombatExit),
+    };
 
-    // Apply last in the chain so an already installed HD.WoG wrapper executes
-    // first, matching the safe order when HD.WoG is loaded after BattleSave.
-    // ApplyInsert returns the resulting zero-based chain position, so position
-    // zero is success and must not be interpreted as a Boolean failure.
-    if (g_combatHook)
-        g_combatHook->ApplyInsert(-1);
-
-    if (!g_savePathHook || !g_saveCloseHook || !g_moveHook || !g_eventHook || !g_gameSaveHook || !g_combatHook ||
-        !g_savePathHook->IsApplied() || !g_saveCloseHook->IsApplied() || !g_moveHook->IsApplied() ||
-        !g_eventHook->IsApplied() || !g_combatHook->IsApplied() || !g_gameSaveHook->IsApplied())
+    for (Patch *hook : hooks)
     {
-        modulePatcher->UndoAll();
-        return false;
+        if (!hook || !hook->IsApplied())
+        {
+            modulePatcher->UndoAll();
+            g_savePathHook = nullptr;
+            return false;
+        }
     }
     return true;
 }

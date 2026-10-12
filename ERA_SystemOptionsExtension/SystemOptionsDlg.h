@@ -210,7 +210,7 @@ class SystemOptionsDlg : public H3Dlg
     BOOL isInCombat = false;
     BOOL settingsChanged = false;
     const UINT initialRevision = AdditionalConfig::Revision();
-    const BOOL quickCombatSettingState = OriginalConfig::Get().quickCombat;
+    const BOOL quickCombatSettingState = AdditionalConfig::ReadNativeValue(&OriginalConfig::Get().quickCombat);
     eDlgCallSource dlgCallSource = UNKNOWN;
     SettingsPage *m_currentPage = nullptr;
     std::vector<SettingsPage *> m_pages;
