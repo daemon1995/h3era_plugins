@@ -1,9 +1,9 @@
 // Run the production battle logic against isolated game data. No game
 // process, dialogs, registry writer, or fixed-address game function is invoked.
 #include "CombatSettings.cpp"
+#include <climits>
 #include <cstdio>
 #include <cstdlib>
-#include <climits>
 
 Patcher *globalPatcher = nullptr;
 namespace Era
@@ -17,12 +17,21 @@ TErmZVar *z = testZ;
 decltype(ExecErmCmd) ExecErmCmd = nullptr;
 decltype(RegisterHandler) RegisterHandler = nullptr;
 decltype(FastQuitToGameMenu) FastQuitToGameMenu = nullptr;
-static_str tr(const char *key) { return const_cast<char *>(key); }
+static_str tr(const char *key)
+{
+    return const_cast<char *>(key);
 }
+} // namespace Era
 
-#define CHECK(condition) do { if (!(condition)) { \
-    std::fprintf(stderr, "Line %d: %s\n", __LINE__, #condition); std::exit(1); \
-} } while (0)
+#define CHECK(condition)                                                                                               \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (!(condition))                                                                                              \
+        {                                                                                                              \
+            std::fprintf(stderr, "Line %d: %s\n", __LINE__, #condition);                                               \
+            std::exit(1);                                                                                              \
+        }                                                                                                              \
+    } while (0)
 
 OriginalConfig testConfig = {};
 H3Main *testMain = nullptr;
@@ -38,8 +47,14 @@ struct CombatTestAccess : cmbsttngs::CombatSettings
     {
         ConfigureBattle(testConfig, testMain, attackerPlayerId, defenderPlayerId, autoSolo, networkGame);
     }
-    static void AfterBattle() { RestoreQuickCombatOptions(testConfig); }
-    static void ContextChanged() { ResetGameContext(testConfig); }
+    static void AfterBattle()
+    {
+        RestoreQuickCombatOptions(testConfig);
+    }
+    static void ContextChanged()
+    {
+        ResetGameContext(testConfig);
+    }
 };
 
 int menuResult = 1;
@@ -106,7 +121,7 @@ void TestState()
     QuickCombatState state;
     int q = 0, s = 1;
     state.SetQuickCombat(q, 0); // Manual battle reserves only quick combat.
-    s = 0; // An untouched setting changed in the battle dialog must survive.
+    s = 0;                      // An untouched setting changed in the battle dialog must survive.
     state.FinishInstantly(q, s);
     state.SetPersistentAutoSpells(s, 1);
     state.RestoreInstantFinish(q, s);
@@ -120,7 +135,8 @@ void TestState()
     state.SetPersistentAutoSpells(s, 0);
     CHECK(q == 1 && s == 0);
     state.Restore(q, s); // Loading while a settings writer is on the stack.
-    q = 0; s = 1;
+    q = 0;
+    s = 1;
     state.EndSettingsWrite(q, s);
     CHECK(q == 0 && s == 1); // The old writer cannot resurrect its overrides.
 
@@ -147,10 +163,8 @@ void TestMenuState()
         int mask;
         int selectedIndex;
         int initialMask;
-    } results[] = {
-        {1, 0, 1}, {2, 1, 1}, {4, 2, 2}, {1, 0, 4}, {4, 2, 1},
-        {0, 0, 4}, {-1, 0, 4}, {3, 0, 4}, {5, 0, 4}, {6, 0, 4}, {7, 0, 4}, {8, 0, 4}, {INT_MAX, 0, 4}
-    };
+    } results[] = {{1, 0, 1}, {2, 1, 1}, {4, 2, 2}, {1, 0, 4}, {4, 2, 1}, {0, 0, 4},      {-1, 0, 4},
+                   {3, 0, 4}, {5, 0, 4}, {6, 0, 4}, {7, 0, 4}, {8, 0, 4}, {INT_MAX, 0, 4}};
     for (const auto &result : results)
     {
         menuResult = result.mask;
@@ -162,9 +176,14 @@ void TestMenuState()
     expectedMenuInitialMask = 0;
     menuThrows = true;
     bool caught = false;
-    __try { CombatTestAccess::AskQuickCombatType(); }
+    __try
+    {
+        CombatTestAccess::AskQuickCombatType();
+    }
     __except (GetExceptionCode() == 0xE0000001 ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
-    { caught = true; }
+    {
+        caught = true;
+    }
     menuThrows = false;
     CHECK(caught && Era::v[1] == 12345 && Era::y[1] == 54321);
     CHECK(!std::memcmp(before, Era::z, sizeof(before)));

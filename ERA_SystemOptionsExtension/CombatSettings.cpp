@@ -14,8 +14,8 @@ CombatSettings::CombatSettings() : IGamePatch(globalPatcher->CreateInstance("Era
 _ERH_(CombatSettings::OnBeforeBattleUniversal)
 {
     const auto attacker = ValueAt<H3Hero *>(0x2860248);
-    ConfigureBattle(OriginalConfig::Get(), P_Game->Get(), attacker ? attacker->owner : -1,
-                    IntAt(0x2846BC0), P_AutoSolo, IntAt(0x69959C) != 0);
+    ConfigureBattle(OriginalConfig::Get(), P_Game->Get(), attacker ? attacker->owner : -1, IntAt(0x2846BC0), P_AutoSolo,
+                    IntAt(0x69959C) != 0);
 }
 
 void CombatSettings::ConfigureBattle(OriginalConfig &config, const H3Main *main, const int attackerPlayerId,
@@ -50,8 +50,8 @@ void CombatSettings::ConfigureBattle(OriginalConfig &config, const H3Main *main,
     }
 
     const int playerCount = static_cast<int>(std::size(main->players));
-    if (attackerPlayerId < -1 || attackerPlayerId >= playerCount ||
-        defenderPlayerId < -1 || defenderPlayerId >= playerCount)
+    if (attackerPlayerId < -1 || attackerPlayerId >= playerCount || defenderPlayerId < -1 ||
+        defenderPlayerId >= playerCount)
         return;
 
     const bool humanAttacker = attackerPlayerId >= 0 && main->players[attackerPlayerId].isHuman;
@@ -182,9 +182,9 @@ void CombatSettings::RestoreQuickCombatOptions(OriginalConfig &config) noexcept
 }
 
 int __stdcall CombatSettings::AdventureManager_Battle(HiHook *hook, H3AdventureManager *manager, int point,
-                                                       H3Hero *attacker, H3Army *attackerArmy, int defenderOwner,
-                                                       H3Town *town, H3Hero *defender, H3Army *defenderArmy,
-                                                       int seed, int combatIsLocal, int isBank)
+                                                      H3Hero *attacker, H3Army *attackerArmy, int defenderOwner,
+                                                      H3Town *town, H3Hero *defender, H3Army *defenderArmy, int seed,
+                                                      int combatIsLocal, int isBank)
 {
     // Include pre-battle events: they can cancel the attack after selecting a
     // mode, without ever firing OnAfterBattle.
@@ -193,8 +193,8 @@ int __stdcall CombatSettings::AdventureManager_Battle(HiHook *hook, H3AdventureM
     int result = 0;
     __try
     {
-        result = THISCALL_11(int, hook->GetDefaultFunc(), manager, point, attacker, attackerArmy, defenderOwner,
-                             town, defender, defenderArmy, seed, combatIsLocal, isBank);
+        result = THISCALL_11(int, hook->GetDefaultFunc(), manager, point, attacker, attackerArmy, defenderOwner, town,
+                             defender, defenderArmy, seed, combatIsLocal, isBank);
     }
     __finally
     {
@@ -232,8 +232,7 @@ void CombatSettings::FinishBattleInstantly() noexcept
 int __stdcall CombatSettings::CombatManager_ProcessMessage(HiHook *hook, H3CombatManager *combatManager, H3Msg *msg)
 {
 
-    if (combatManager && msg && msg->IsKeyDown() &&
-        bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
+    if (combatManager && msg && msg->IsKeyDown() && bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
     {
         if (msg->GetKey() == eVKey::H3VK_L && !IntAt(0x69959C))
         {

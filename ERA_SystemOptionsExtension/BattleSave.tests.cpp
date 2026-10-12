@@ -4,21 +4,27 @@
 #include <cstdlib>
 
 // Hook/lifecycle entry points are linked but never invoked outside the game.
-Patcher* globalPatcher = nullptr;
+Patcher *globalPatcher = nullptr;
 namespace Era
 {
 decltype(RegisterHandler) RegisterHandler = nullptr;
 decltype(WriteSavegameSection) WriteSavegameSection = nullptr;
 decltype(ReadSavegameSection) ReadSavegameSection = nullptr;
-}
+} // namespace Era
 
-#define CHECK(condition) do { if (!(condition)) { \
-    std::fprintf(stderr, "Line %d: %s\n", __LINE__, #condition); std::exit(1); \
-} } while (0)
+#define CHECK(condition)                                                                                               \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (!(condition))                                                                                              \
+        {                                                                                                              \
+            std::fprintf(stderr, "Line %d: %s\n", __LINE__, #condition);                                               \
+            std::exit(1);                                                                                              \
+        }                                                                                                              \
+    } while (0)
 
 void TestMapLevels()
 {
-    auto main = static_cast<H3Main*>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Main)));
+    auto main = static_cast<H3Main *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Main)));
     CHECK(main);
     main->mainSetup.mapSize = 36;
     main->mainSetup.hasUnderground = false;
@@ -37,7 +43,7 @@ void TestMapLevels()
 
 void TestRepairRecord()
 {
-    auto hero = static_cast<H3Hero*>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
+    auto hero = static_cast<H3Hero *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
     CHECK(hero);
     hero->id = 12;
     hero->owner = 2;
@@ -60,7 +66,7 @@ void TestRepairRecord()
     CHECK(BuildRepairRecord(hero, record, needed) && needed);
     CHECK(IsRepairRecordSane(record));
     CHECK(record.savedX == 10 && record.movementCurrent == 1500);
-    CHECK(*reinterpret_cast<short*>(record.heroState) == 8);
+    CHECK(*reinterpret_cast<short *>(record.heroState) == 8);
     record.owner = 8;
     CHECK(!IsRepairRecordSane(record));
     hero->flags = IN_BOAT_FLAG; // An unproven embark transition must be refused.
@@ -70,23 +76,22 @@ void TestRepairRecord()
     CHECK(!BuildRepairRecord(hero, record, needed));
     g_move.boatStateValid = true;
     CHECK(BuildRepairRecord(hero, record, needed));
-    CHECK((record.flags & (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE)) ==
-                          (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE));
+    CHECK((record.flags & (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE)) == (REPAIR_PRE_IN_BOAT | REPAIR_BOAT_STATE));
     HeapFree(GetProcessHeap(), 0, hero);
     ResetMovementSequence();
 }
 
-void WriteTestFile(const char* path, const char* contents)
+void WriteTestFile(const char *path, const char *contents)
 {
-    FILE* file = nullptr;
+    FILE *file = nullptr;
     CHECK(fopen_s(&file, path, "wb") == 0);
     CHECK(std::fwrite(contents, 1, std::strlen(contents), file) == std::strlen(contents));
     CHECK(std::fclose(file) == 0);
 }
 
-bool Contains(const char* path, const char* expected)
+bool Contains(const char *path, const char *expected)
 {
-    FILE* file = nullptr;
+    FILE *file = nullptr;
     if (fopen_s(&file, path, "rb") != 0)
         return false;
     char buffer[64] = {};
@@ -95,7 +100,7 @@ bool Contains(const char* path, const char* expected)
     return size == std::strlen(expected) && !std::memcmp(buffer, expected, size);
 }
 
-void Stage(const char* finalPath, const char* contents)
+void Stage(const char *finalPath, const char *contents)
 {
     ClearFileTransaction(true);
     CHECK(BuildOwnedPaths(finalPath));
@@ -108,10 +113,10 @@ void TestFileReplacement()
 {
     char path[MAX_PATH] = {};
     CHECK(GetModuleFileNameA(nullptr, path, MAX_PATH));
-    char* name = std::strrchr(path, '\\');
+    char *name = std::strrchr(path, '\\');
     CHECK(name);
-    CHECK(_snprintf_s(name + 1, MAX_PATH - (name + 1 - path), _TRUNCATE,
-                      "BattleSave-check-%lu.gm1", GetCurrentProcessId()) >= 0);
+    CHECK(_snprintf_s(name + 1, MAX_PATH - (name + 1 - path), _TRUNCATE, "BattleSave-check-%lu.gm1",
+                      GetCurrentProcessId()) >= 0);
     char marked[MARKED_SAVEGAME_NAME_CAPACITY] = {};
     char lastName[LOGICAL_NAME_SIZE] = {};
     const SaveSelectionBuffers selection = {marked, lastName};
@@ -175,8 +180,8 @@ void TestVectorAndToggle()
 
 void TestBattleCandidateIdentity()
 {
-    auto hero = static_cast<H3Hero*>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
-    auto other = static_cast<H3Hero*>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
+    auto hero = static_cast<H3Hero *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
+    auto other = static_cast<H3Hero *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
     CHECK(hero && other);
     hero->id = other->id = 12;
     hero->owner = other->owner = 2;
@@ -232,10 +237,10 @@ void TestPreBattleCandidateLifecycle()
 {
     char path[MAX_PATH] = {};
     CHECK(GetModuleFileNameA(nullptr, path, MAX_PATH));
-    char* name = std::strrchr(path, '\\');
+    char *name = std::strrchr(path, '\\');
     CHECK(name);
-    CHECK(_snprintf_s(name + 1, MAX_PATH - (name + 1 - path), _TRUNCATE,
-                      "BattleSave-candidate-check-%lu.gm1", GetCurrentProcessId()) >= 0);
+    CHECK(_snprintf_s(name + 1, MAX_PATH - (name + 1 - path), _TRUNCATE, "BattleSave-candidate-check-%lu.gm1",
+                      GetCurrentProcessId()) >= 0);
     WriteTestFile(path, "previous battle");
     available = true;
     AdditionalConfig::Get().battleSave.value = 1;
@@ -317,12 +322,12 @@ void TestCombatLifecycle()
     CHECK(GetModuleFileNameA(nullptr, path, MAX_PATH));
     char *name = std::strrchr(path, '\\');
     CHECK(name);
-    CHECK(_snprintf_s(name + 1, MAX_PATH - (name + 1 - path), _TRUNCATE,
-                      "BattleSave-combat-check-%lu.gm1", GetCurrentProcessId()) >= 0);
+    CHECK(_snprintf_s(name + 1, MAX_PATH - (name + 1 - path), _TRUNCATE, "BattleSave-combat-check-%lu.gm1",
+                      GetCurrentProcessId()) >= 0);
     char marked[MARKED_SAVEGAME_NAME_CAPACITY] = {};
     char lastName[LOGICAL_NAME_SIZE] = {};
     const SaveSelectionBuffers selection = {marked, lastName};
-    auto hero = static_cast<H3Hero*>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
+    auto hero = static_cast<H3Hero *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Hero)));
     CHECK(hero);
     hero->id = 12;
     hero->owner = 2;

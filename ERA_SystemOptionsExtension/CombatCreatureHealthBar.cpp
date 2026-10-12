@@ -2,8 +2,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <initializer_list>
 
@@ -63,8 +63,7 @@ std::int64_t TotalHitPoints(INT32 numberAlive, INT32 healthLost, INT32 maxHp) no
 StackHealthSnapshot CaptureStackHealth(const H3CombatCreature *stack) noexcept
 {
     const INT32 maxHp = stack->MaxHitPoints();
-    return {stack->numberAlive, stack->healthLost, maxHp,
-            TotalHitPoints(stack->numberAlive, stack->healthLost, maxHp)};
+    return {stack->numberAlive, stack->healthLost, maxHp, TotalHitPoints(stack->numberAlive, stack->healthLost, maxHp)};
 }
 
 int FindStackIndex(const H3CombatManager *manager, const H3CombatCreature *stack) noexcept
@@ -256,9 +255,9 @@ _LHF_(CombatHints::BeforeBattleStackHintDraw)
     auto &settings = Get().settings;
     const H3CombatManager *cmbMgr = H3CombatManager::Get();
     const StackHealthSnapshot *actionSnapshot = FindDamageAnimationSnapshot(cmbMgr, stack);
-    const bool deferDamage = actionSnapshot && actionSnapshot->numberAlive > 0 && actionSnapshot->maxHp > 0 &&
-                             TotalHitPoints(stack->numberAlive, stack->healthLost, stack->MaxHitPoints()) <
-                                 actionSnapshot->totalHp;
+    const bool deferDamage =
+        actionSnapshot && actionSnapshot->numberAlive > 0 && actionSnapshot->maxHp > 0 &&
+        TotalHitPoints(stack->numberAlive, stack->healthLost, stack->MaxHitPoints()) < actionSnapshot->totalHp;
 
     if (stack && (stack->numberAlive || deferDamage) && settings.isEnabled)
     {
