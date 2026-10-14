@@ -71,8 +71,8 @@ BOOL ArtifactHints::CreateCombinePartsString(const H3Artifact *artifact, const H
                         overflowText = H3String::Format(" (%d)", storedCount);
                     }
 
-                    piecesText += H3String::Format("\n%s%s%s{~}", textColor,
-                                                   P_ArtifactSetup[comboPartId].name, overflowText.String());
+                    piecesText += H3String::Format("\n%s%s%s{~}", textColor, P_ArtifactSetup[comboPartId].name,
+                                                   overflowText.String());
                 }
 
                 // create header line
@@ -97,6 +97,7 @@ class ArtifactHints::HeightScope
     int first;
     int second;
     bool changed;
+
   public:
     explicit HeightScope(int additional)
         : first(IntAt(0x04F65D4 + 2)), second(IntAt(0x04F662F + 1)), changed(additional != 0)
@@ -116,11 +117,14 @@ class ArtifactHints::HeightScope
             changed = false;
         }
     }
-    ~HeightScope() { Restore(); }
+    ~HeightScope()
+    {
+        Restore();
+    }
 };
 
 BOOL ArtifactHints::CreateStatsString(const H3Artifact *artifact, const H3Hero *hero, const int slot,
-                                     H3String *result) noexcept
+                                      H3String *result) noexcept
 {
     if (!artifact || !result || artifact->id < 0 || artifact->id >= IntAt(0x717020))
         return FALSE;
@@ -156,8 +160,7 @@ BOOL ArtifactHints::CreateStatsString(const H3Artifact *artifact, const H3Hero *
                 {
                     LPCSTR format = statsDifference > 0 ? settings.increaseFormat : settings.decreaseFormat;
                     const H3String difference = H3String::Format(format, statsDifference);
-                    statsText[i] = H3String::Format(COMPARED_STATS_FORMAT, artifactStats.stats[i],
-                                                    difference.String());
+                    statsText[i] = H3String::Format(COMPARED_STATS_FORMAT, artifactStats.stats[i], difference.String());
                 }
                 else
                 {
@@ -174,8 +177,8 @@ BOOL ArtifactHints::CreateStatsString(const H3Artifact *artifact, const H3Hero *
     return false;
 }
 
-void __stdcall ArtifactHints::SwapMgr_InteractArtifactSlot(HiHook *h, H3SwapManager *mgr, const int side,
-                                                            int slotIndex, int a4) noexcept
+void __stdcall ArtifactHints::SwapMgr_InteractArtifactSlot(HiHook *h, H3SwapManager *mgr, const int side, int slotIndex,
+                                                           int a4) noexcept
 {
     DescriptionContext selected{mgr && side >= 0 && side < 2 ? mgr->hero[side] : nullptr,
                                 h->GetAddress() == 0x5AF920 ? slotIndex : -1};
@@ -210,16 +213,15 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
     instance->settings.Load();
     Message message;
     H3String extra;
-    const H3String comboKey = H3String::Format(COMBINATIONS_ERM_VARIABLE_FORMAT, player);
-    if (hero && Era::GetAssocVarIntValue(comboKey.String()) && !instance->isUniteComboArtifactCall &&
+    if (hero && Era::GetAssocVarIntValue(COMBINATIONS_ERM_VARIABLE_NAME) && !instance->isUniteComboArtifactCall &&
         instance->CreateCombinePartsString(artifact, hero, &extra))
     {
         *result += doubleEndl + extra;
         message.additionalHeight = 300;
     }
     extra.Erase();
-    const H3String statsKey = H3String::Format(PRIMARY_SKILLS_ERM_VARIABLE_FORMAT, player);
-    if (instance->settings.enabled && Era::GetAssocVarIntValue(statsKey.String()) && instance->CreateStatsString(artifact, hero, slot, &extra))
+    if (instance->settings.enabled && Era::GetAssocVarIntValue(PRIMARY_SKILLS_ERM_VARIABLE_NAME) &&
+        instance->CreateStatsString(artifact, hero, slot, &extra))
     {
         message.text = instance->settings;
         if (message.text.addAsExtraObject)
@@ -252,7 +254,7 @@ int __stdcall ArtifactHints::UniteComboArtifacts(HiHook *h, const H3Hero *hero, 
 }
 
 void __stdcall ArtifactHints::ShowMessageBox(HiHook *h, LPCSTR text, int type, int x, int y, int pic1, int value1,
-                                            int pic2, int value2, int pic3, int value3, int pic4, int value4)
+                                             int pic2, int value2, int pic3, int value3, int pic4, int value4)
 {
     Message message;
     if (text && !instance->pendingMessage.description.Empty() &&
@@ -274,8 +276,8 @@ int __stdcall ArtifactHints::BuildMultiPicDlg(HiHook *h, H3Game *game)
     {
         constexpr int offset = 18;
         const int y = message->text.placeBelowText ? dlg->GetHeight() - 25 - offset : offset;
-        dlg->CreateText(offset, y, dlg->GetWidth() - 2 * offset, 20, message->widget.String(),
-                        message->text.fontName, eTextColor::REGULAR, -1);
+        dlg->CreateText(offset, y, dlg->GetWidth() - 2 * offset, 20, message->widget.String(), message->text.fontName,
+                        eTextColor::REGULAR, -1);
         message->widget.Erase();
     }
     // Layout is complete; restore before modal callbacks can create another window.
@@ -287,7 +289,8 @@ int __stdcall ArtifactHints::BuildMultiPicDlg(HiHook *h, H3Game *game)
 int __stdcall ArtifactHints::ShowDescription(const ArtifactDescriptionApi::Request *request)
 {
     if (!request || request->size < sizeof(*request) || request->version != ArtifactDescriptionApi::VERSION ||
-        !request->hero || !request->artifact || request->slot < -1 || request->slot >= 19 || !instance->active || !instance->m_isEnabled)
+        !request->hero || !request->artifact || request->slot < -1 || request->slot >= 19 || !instance->active ||
+        !instance->m_isEnabled)
         return 0;
     auto artifact = static_cast<const H3Artifact *>(request->artifact);
     if (artifact->Empty() || artifact->id >= IntAt(0x717020))
@@ -298,7 +301,8 @@ int __stdcall ArtifactHints::ShowDescription(const ArtifactDescriptionApi::Reque
     H3String description;
     THISCALL_2(H3String *, 0x4DB650, artifact, &description);
     const H3PictureCategories picture = artifact->GetId() == eArtifact::SPELL_SCROLL
-        ? H3PictureCategories::Spell(artifact->ScrollSpell()) : H3PictureCategories::Artifact(artifact->GetId());
+                                            ? H3PictureCategories::Spell(artifact->ScrollSpell())
+                                            : H3PictureCategories::Artifact(artifact->GetId());
     H3Messagebox::RMB(description.String(), picture);
     return 1;
 }
@@ -332,7 +336,7 @@ void CollectStats(int id, INT (&stats)[4], std::vector<int> &ancestors)
         ancestors.pop_back();
     }
 }
-}
+} // namespace
 
 StatBytes::StatBytes(const H3Artifact &art) : StatBytes()
 {

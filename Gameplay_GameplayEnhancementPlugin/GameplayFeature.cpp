@@ -1,4 +1,5 @@
 #include "GameplayFeature.h"
+#include "LevelUpAutoSkip.h"
 #include "ModuleSupport.h"
 #include <memory>
 namespace features
@@ -30,7 +31,7 @@ _LHF_(WoG_AfterTownbuildingDemolishQuestion)
     return EXEC_DEFAULT;
 }
 
-}
+} // namespace
 
 GameplayFeature::GameplayFeature() : IGamePatch("EraPlugin.GameplayTweaks.daemon_n")
 {
@@ -46,8 +47,8 @@ H3DlgDefButton *__stdcall H3DlgDefButton__Ctor(HiHook *h, H3DlgDefButton *bttn, 
                                          DefName, cadre, pressCadre, CloseDialog, HotKey, Flags);
 
     // check base conditions as std "OK_BTTN_ID" and not H3TownDlg's defName ("tsbtns.def")
-    if (result && (ItemInd == eControlId::OK || ItemInd == 30722 || HotKey == eVKey::H3VK_ENTER) &&
-        DefName && libc::strcmpi(DefName, reinterpret_cast<char *>(IntAt(0x05C5A08 + 1)))    // skip town dlg
+    if (result && (ItemInd == eControlId::OK || ItemInd == 30722 || HotKey == eVKey::H3VK_ENTER) && DefName &&
+        libc::strcmpi(DefName, reinterpret_cast<char *>(IntAt(0x05C5A08 + 1)))    // skip town dlg
         && libc::strcmpi(DefName, reinterpret_cast<char *>(IntAt(0x046BC7C + 1))) // skip combat dlg
     )
     {
@@ -237,6 +238,7 @@ void GameplayFeature::CreatePatches() noexcept
 {
     if (!m_isInited)
     {
+        // InstallLevelUpAutoSkip(_pi);
         auto transient = globalPatcher->CreateInstance("EraPlugin.GameplayTweaks.Transient.daemon_n");
         demolishButtonPatch = transient->CreateDwordPatch(0x04F738A + 1, (int)demoBttn);
         // The register-based call at 0x70C19C returns to 0x70C1A1 on every native exit.

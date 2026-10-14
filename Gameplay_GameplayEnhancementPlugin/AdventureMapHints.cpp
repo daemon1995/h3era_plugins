@@ -192,8 +192,8 @@ LPCSTR AdventureMapHints::GetHintText(const H3AdventureManager *adv, const H3Map
     gem::ScopedPatch ignoreFocus(blockIgnoreHintBarFocus);
     ScopedVisitedInfo visitedInfo(game, player);
     gem::ScopedValue<BOOL> creating(isCustomHintCreation, TRUE);
-    const char *flag = "GameplayEnhancementsPlugin_AdventureMapHints_AtHint";
-    const int oldFlag = Era::GetAssocVarIntValue(flag);
+    const char *flag = ERM_FLAG_NAME;
+    const int oldFlag = Era::GetAssocVarIntValue(ERM_FLAG_NAME);
     struct RestoreFlag
     {
         const char *name;
@@ -224,9 +224,7 @@ _LHF_(AdventureMapHints::AdvMgr_BeforeObjectsDraw)
         if (keyIsHeld)
         {
             instance->playerID = P_Game->Get()->GetPlayerID();
-            libc::sprintf(Era::z[0], ERM_VARIABLE_FORMAT, instance->playerID); // ;
-            instance->needDrawHints =
-                instance->playerID >= 0 && instance->playerID < 8 && Era::GetAssocVarIntValue(Era::z[0]);
+            instance->needDrawHints = Era::GetAssocVarIntValue(ERM_OPTION_NAME);
         }
     }
 

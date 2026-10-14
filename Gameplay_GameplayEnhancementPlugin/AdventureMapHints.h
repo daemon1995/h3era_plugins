@@ -41,7 +41,8 @@ class AdventureMapHints : public IGamePatch
         int mapX;
     };
 
-    static constexpr LPCSTR ERM_VARIABLE_FORMAT = "gem_adventure_map_object_hints_option_%d";
+    static constexpr LPCSTR ERM_OPTION_NAME = "gem_adventureMapObjectHints";
+    static constexpr LPCSTR ERM_FLAG_NAME = "GameplayEnhancementsPlugin_AdventureMapHints_AtHint";
 
     static RECT m_mapView;
     static AdventureMapHints *instance;

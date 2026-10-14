@@ -91,8 +91,7 @@ int __stdcall ExtendedResourcesInfo::KingdomOverviewDlgProc(HiHook *h, H3BaseDlg
 
     // Let the native handler manage ordinary hints and mouse state before overriding our zone.
     const int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, msg);
-    if (hintZone && msg->command == eMsgCommand::MOUSE_OVER &&
-        IsMouseOverItem(msg->GetX(), msg->GetY(), hintZone))
+    if (hintZone && msg->command == eMsgCommand::MOUSE_OVER && IsMouseOverItem(msg->GetX(), msg->GetY(), hintZone))
     {
         if (auto *bar = dlg->GetText(37))
         {
@@ -118,7 +117,8 @@ BOOL ExtendedResourcesInfo::ShowMithrilRMCHint(const H3Msg *msg, H3DlgItem *hint
 
         int height = 0;
         FASTCALL_3(void, 0x4F6930, hintText, &width, &height);
-        FASTCALL_12(void, 0x4F6C00, hintText, 4, H3GameWidth::Get() - 208 - width, (H3GameHeight::Get() - height) / 2 - 10, -1, 0, -1, 0, -1, 0, -1, 0);
+        FASTCALL_12(void, 0x4F6C00, hintText, 4, H3GameWidth::Get() - 208 - width,
+                    (H3GameHeight::Get() - height) / 2 - 10, -1, 0, -1, 0, -1, 0, -1, 0);
     }
     else if (msg->itemId == 1008 && msg->GetX() < hintZone->GetAbsoluteX())
         result = true; // prevent extra hint for the date hint
@@ -203,8 +203,8 @@ H3DlgItem *ExtendedResourcesInfo::BuildMithril(HookContext *c, ResourceBarInfo &
 {
 
     H3ResourceBarPanel *panel = reinterpret_cast<H3ResourceBarPanel *>(c->eax);
-    if (!panel || !barInfo.createMithril || !panel->resourceText[eResource::GOLD] ||
-        !panel->resourceText[5] || !panel->resourceText[0] || !panel->resourceOverlay[0])
+    if (!panel || !barInfo.createMithril || !panel->resourceText[eResource::GOLD] || !panel->resourceText[5] ||
+        !panel->resourceText[0] || !panel->resourceOverlay[0])
         return nullptr;
 
     auto *goldTextItem = panel->resourceText[eResource::GOLD];
@@ -394,8 +394,7 @@ void ExtendedResourcesInfo::CreatePatches()
     const BOOL enoughSpaceForCustomResBar = gameWidth >= 808 && gameHeight >= 608;
 
     resourceBarPatchInfos.reserve(5);
-    const auto addBar = [this](DWORD address, const ResourceBarInfo &info)
-    {
+    const auto addBar = [this](DWORD address, const ResourceBarInfo &info) {
         resourceBarPatchInfos.emplace(address, info);
         _pi->WriteLoHook(address, AfterDlgResBarCreate);
     };

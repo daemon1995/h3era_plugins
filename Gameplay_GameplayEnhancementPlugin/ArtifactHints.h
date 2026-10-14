@@ -53,8 +53,8 @@ class ArtifactHints : public IGamePatch
     HeightScope *currentHeight = nullptr;
     HintsText settings;
 
-    static constexpr LPCSTR PRIMARY_SKILLS_ERM_VARIABLE_FORMAT = "gem_artifact_hints_primary_skills_%d";
-    static constexpr LPCSTR COMBINATIONS_ERM_VARIABLE_FORMAT = "gem_artifact_hints_combinations_%d";
+    static constexpr LPCSTR PRIMARY_SKILLS_ERM_VARIABLE_NAME = "gem_artifact_hints_primary_skills";
+    static constexpr LPCSTR COMBINATIONS_ERM_VARIABLE_NAME = "gem_artifact_hints_combinations";
 
     static constexpr LPCSTR COMPARED_STATS_FORMAT = "%d %s";
     static constexpr LPCSTR STATS_FORMAT = "%d";

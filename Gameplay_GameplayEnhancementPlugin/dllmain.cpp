@@ -3,11 +3,11 @@
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 
-#include "GraphicsEnhancements.h"
-#include "GameplayFeature.h"
-#include "MithrilDisplay.h"
-#include "ArtifactHints.h"
 #include "AdventureMapHints.h"
+#include "ArtifactHints.h"
+#include "GameplayFeature.h"
+#include "GraphicsEnhancements.h"
+#include "MithrilDisplay.h"
 #include "ModuleSupport.h"
 #include "PluginVersion.h"
 

@@ -63,6 +63,8 @@ bld/
 **/tools/
 **/analysis/
 **/mod/
+**/verification/
+**/lang/
 
 # Переводы описаний заклинаний хранятся только в установленном моде
 /Interface_SpellsDescription/lang/

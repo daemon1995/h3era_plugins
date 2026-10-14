@@ -73,12 +73,10 @@ H3LoadedDef *GraphicsEnhancements::Hero_GetMapItemDef(const H3Hero *hero) noexce
 
     H3LoadedDef *result = nullptr;
     // first set hero def by id
-    if (hero->id >= 0 && hero->id < MAX_UNIQUE_HEROES &&
-        (result = instance->uniqueHeroDefs[hero->id]))
+    if (hero->id >= 0 && hero->id < MAX_UNIQUE_HEROES && (result = instance->uniqueHeroDefs[hero->id]))
         return result;
     // if empty set hero def by class
-    if (hero->isFemale >= 0 && hero->isFemale < 2 && hero->hero_class >= 0 &&
-        hero->hero_class < MAX_UNIQUE_CLASSES &&
+    if (hero->isFemale >= 0 && hero->isFemale < 2 && hero->hero_class >= 0 && hero->hero_class < MAX_UNIQUE_CLASSES &&
         (result = instance->heroClassDefs[hero->isFemale][hero->hero_class]))
         return result;
     return result;
@@ -98,8 +96,9 @@ void ReplaceHeroDef(H3LoadedDef *&stored, LPCSTR name) noexcept
 
 int PlayerTownId(const H3Player *player, int index) noexcept
 {
-    return player && index >= 0 && index < player->townsCount &&
-                   index < static_cast<int>(std::size(player->towns)) ? player->towns[index] : -1;
+    return player && index >= 0 && index < player->townsCount && index < static_cast<int>(std::size(player->towns))
+               ? player->towns[index]
+               : -1;
 }
 } // namespace
 
@@ -486,8 +485,8 @@ void __stdcall KingdomOverviewDlg_CreateAndRedrawItems(HiHook *h, H3Game *game, 
         const auto originalDlgDef = dlg->GetH3DlgItem(itemId);
         const int index = firstItemIdDrawn + i;
         const int townId = PlayerTownId(player, index);
-        if (!isTownsView || !originalDlgDef || !originalDlgDef->IsVisible() ||
-            townId < 0 || townId >= static_cast<int>(game->towns.Size()))
+        if (!isTownsView || !originalDlgDef || !originalDlgDef->IsVisible() || townId < 0 ||
+            townId >= static_cast<int>(game->towns.Size()))
         {
             if (buildingIndicatorButton)
                 buildingIndicatorButton->HideDeactivate();
