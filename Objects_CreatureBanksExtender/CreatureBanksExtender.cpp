@@ -528,8 +528,8 @@ _LHF_(CreatureBanksExtender::CrBank_BeforeSetupFromState)
     return EXEC_DEFAULT;
 }
 
-// place creature bank with script/ plugin /else
-int __stdcall CreatureBanksExtender::WoG_PlaceObject(HiHook *h, const int x, const int y, const int z,
+// Place an object via WoG. CDECL_ requires the callback to use __cdecl as well.
+int __cdecl CreatureBanksExtender::WoG_PlaceObject(HiHook *h, const int x, const int y, const int z,
                                                      const int objType, const int objSubtype, const int objType2,
                                                      const int objSubtype2, const DWORD a8)
 {

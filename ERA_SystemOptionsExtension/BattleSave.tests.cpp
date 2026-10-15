@@ -1,7 +1,24 @@
 // Exercise the production implementation. Unused game hooks are discarded by
 // /Gy /OPT:REF; these checks never call the game's fixed-address functions.
-#include "BattleSave.cpp"
+#include "framework.h"
 #include <cstdlib>
+#include <cstdio>
+
+HANDLE WINAPI ForbiddenFindFirst(LPCSTR, LPWIN32_FIND_DATAA)
+{
+    std::fputs("FAIL: recovery entered VFS directory enumeration.\n", stderr);
+    std::exit(1);
+}
+BOOL WINAPI ForbiddenFindNext(HANDLE, LPWIN32_FIND_DATAA)
+{
+    std::fputs("FAIL: recovery continued VFS directory enumeration.\n", stderr);
+    std::exit(1);
+}
+#define FindFirstFileA ForbiddenFindFirst
+#define FindNextFileA ForbiddenFindNext
+#include "BattleSave.cpp"
+#undef FindFirstFileA
+#undef FindNextFileA
 
 // Hook/lifecycle entry points are linked but never invoked outside the game.
 Patcher *globalPatcher = nullptr;
@@ -381,8 +398,40 @@ void TestCombatLifecycle()
     HeapFree(GetProcessHeap(), 0, hero);
 }
 
-int main()
+void TestOwnedRecoveryWithoutEnumeration()
 {
+    char temporary[MAX_PATH] = {}, root[MAX_PATH] = {};
+    CHECK(GetTempPathA(MAX_PATH, temporary));
+    CHECK(_snprintf_s(root, sizeof(root), _TRUNCATE, "%sBattleSave-recovery-%lu",
+                      temporary, GetCurrentProcessId()) >= 0);
+    CHECK(CreateDirectoryA(root, nullptr));
+    const char *names[] = {"BATTLE!.GM2.BattleSave.old", "OTHER.GM2.BattleSave.old", "OTHER.GM2.BattleSave.999.new"};
+    char paths[3][MAX_PATH] = {};
+    for (int i = 0; i < 3; ++i)
+    {
+        CHECK(_snprintf_s(paths[i], sizeof(paths[i]), _TRUNCATE, "%s\\%s", root, names[i]) >= 0);
+        WriteTestFile(paths[i], "incomplete or foreign save");
+    }
+    g_recoveryDone = false;
+    RecoverOwnedFiles(root);
+    CHECK(g_recoveryDone);
+    for (int i = 0; i < 3; ++i)
+    {
+        CHECK(Contains(paths[i], "incomplete or foreign save"));
+        CHECK(DeleteFileA(paths[i]));
+    }
+    CHECK(RemoveDirectoryA(root));
+    g_recoveryDone = false;
+}
+
+int main(int argc, char **argv)
+{
+    if (argc == 2 && std::strcmp(argv[1], "--recovery-only") == 0)
+    {
+        TestOwnedRecoveryWithoutEnumeration();
+        std::puts("BattleSave: recovery avoids directory enumeration and preserves unknown/incomplete saves.");
+        return 0;
+    }
     TestMapLevels();
     TestRepairRecord();
     TestFileReplacement();

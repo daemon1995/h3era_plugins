@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "API_ErmFunctions", "API_ErmFunctions\API_ErmFunctions.vcxproj", "{759B4B20-9192-4C5F-B17A-2D7687E71E31}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Artifacts_AddingNewFeatures", "Artifacts_AddingNewFeatures\Artifacts_AddingNewFeatures.vcxproj", "{D8E5282D-5A18-4757-8342-7E9759F5A3F3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Assembly_MainPlugin", "Assembly_MainPlugin\Assembly_MainPlugin.vcxproj", "{FF90A4AC-6B9F-4E22-AE7D-03B35FD0043E}"
@@ -49,12 +51,22 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_SpellsDescription
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_BattleReplay", "Combat_BattleReplay\Combat_BattleReplay.vcxproj", "{F49C272B-B415-47C2-91A9-55D82616C03B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_SimultaneusTurn", "ERA_SimultaneusTurn\ERA_SimultaneusTurn.vcxproj", "{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}.Debug|x86.ActiveCfg = Debug|Win32
+		{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}.Debug|x86.Build.0 = Debug|Win32
+		{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}.Release|x86.ActiveCfg = Release|Win32
+		{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}.Release|x86.Build.0 = Release|Win32
+		{759B4B20-9192-4C5F-B17A-2D7687E71E31}.Debug|x86.ActiveCfg = Debug|Win32
+		{759B4B20-9192-4C5F-B17A-2D7687E71E31}.Debug|x86.Build.0 = Debug|Win32
+		{759B4B20-9192-4C5F-B17A-2D7687E71E31}.Release|x86.ActiveCfg = Release|Win32
+		{759B4B20-9192-4C5F-B17A-2D7687E71E31}.Release|x86.Build.0 = Release|Win32
 		{F49C272B-B415-47C2-91A9-55D82616C03B}.Debug|x86.ActiveCfg = Debug|Win32
 		{F49C272B-B415-47C2-91A9-55D82616C03B}.Debug|x86.Build.0 = Debug|Win32
 		{F49C272B-B415-47C2-91A9-55D82616C03B}.Release|x86.ActiveCfg = Release|Win32

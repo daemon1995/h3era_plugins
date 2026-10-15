@@ -593,53 +593,32 @@ void RecoverOneBackup(const char *backupPath)
         RestoreBackup(finalPath, backupPath);
 }
 
-void RecoverOwnedFiles()
+void RecoverOwnedFiles(const char *gamesDirectory = ".\\GAMES")
 {
     if (g_recoveryDone)
         return;
     g_recoveryDone = true;
-    DeleteFileA(DISCARD_SAVE_PATH);
-
-    WIN32_FIND_DATAA findData = {};
-    HANDLE search = FindFirstFileA(".\\GAMES\\*.BattleSave.old", &findData);
-    if (search != INVALID_HANDLE_VALUE)
+    // VFS NtQueryDirectoryFile can invert the search/tree locks against its
+    // watcher. A live network-load dump showed both threads waiting for each
+    // other here. BattleSave writes a fixed name and native suffixes, so no
+    // directory enumeration is needed to recover its published backup.
+    char path[PHYSICAL_PATH_SIZE] = {};
+    if (_snprintf_s(path, sizeof(path), _TRUNCATE, "%s\\~BattleSave.failed.new", gamesDirectory) >= 0)
+        DeleteFileA(path);
+    for (int suffix = 0; suffix <= 10; ++suffix)
     {
-        do
-        {
-            char path[PHYSICAL_PATH_SIZE] = {};
-            if (_snprintf_s(path, sizeof(path), _TRUNCATE, ".\\GAMES\\%s", findData.cFileName) >= 0)
-                RecoverOneBackup(path);
-        } while (FindNextFileA(search, &findData));
-        FindClose(search);
+        char extension[8] = {};
+        if (suffix <= 8)
+            _snprintf_s(extension, sizeof(extension), _TRUNCATE, "GM%d", suffix);
+        else
+            CopyString(extension, sizeof(extension), suffix == 9 ? "CGM" : "TGM");
+        if (_snprintf_s(path, sizeof(path), _TRUNCATE, "%s\\%s.%s.BattleSave.old",
+                        gamesDirectory, BATTLE_SAVE_NAME, extension) >= 0)
+            RecoverOneBackup(path);
     }
-
-    search = FindFirstFileA(".\\GAMES\\*.BattleSave.*.new", &findData);
-    if (search == INVALID_HANDLE_VALUE)
-        return;
-
-    do
-    {
-        char stagePath[PHYSICAL_PATH_SIZE] = {};
-        char finalPath[PHYSICAL_PATH_SIZE] = {};
-        if (_snprintf_s(stagePath, sizeof(stagePath), _TRUNCATE, ".\\GAMES\\%s", findData.cFileName) < 0 ||
-            !CopyString(finalPath, sizeof(finalPath), stagePath))
-            continue;
-
-        char *marker = std::strstr(finalPath, ".BattleSave.");
-        if (!marker)
-            continue;
-        *marker = 0;
-
-        char backupPath[PHYSICAL_PATH_SIZE] = {};
-        if (_snprintf_s(backupPath, sizeof(backupPath), _TRUNCATE, "%s.BattleSave.old", finalPath) < 0)
-            continue;
-
-        if (ValidateGzip(finalPath) || RestoreBackup(finalPath, backupPath))
-            DeleteFileA(stagePath);
-        else if (!ValidateGzip(stagePath))
-            DeleteFileA(stagePath);
-    } while (FindNextFileA(search, &findData));
-    FindClose(search);
+    // The current process removes its known staging file when discarding a
+    // transaction. Unknown .new files from old processes remain unpublished;
+    // finding them by wildcard is unsafe while the VFS watcher is running.
 }
 
 bool CommitStagedSave(const SaveSelectionBuffers &selection = NativeSaveSelection())

@@ -49,7 +49,7 @@ class CreatureBanksExtender : public extender::ObjectExtender
   private:
     static _LHF_(CrBank_BeforeSetupFromState);
 
-    static int __stdcall WoG_PlaceObject(HiHook *h, const int x, const int y, const int z, const int objType,
+    static int __cdecl WoG_PlaceObject(HiHook *h, const int x, const int y, const int z, const int objType,
                                          const int objSubtype, const int objType2, const int objSubtype2,
                                          const DWORD a8);
     static void __stdcall CrBank_AddToGameList(HiHook *h, H3Vector<H3CreatureBank> *creatureBanks,
