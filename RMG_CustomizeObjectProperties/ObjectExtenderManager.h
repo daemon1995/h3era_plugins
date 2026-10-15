@@ -73,52 +73,50 @@ struct ObjectExtenderRegistrator
 struct ObjectCounter
 {
     int types[h3::limits::OBJECTS] = {};
-    int *subtypes[h3::limits::OBJECTS] = {};
-    INT16 *maxSubtypes = nullptr;
+    std::vector<int> subtypes[h3::limits::OBJECTS];
 
   public:
-    ObjectCounter(INT16 *maxSubtypes) : maxSubtypes(maxSubtypes)
+    explicit ObjectCounter(const INT16 *maxSubtypes)
     {
         for (int i = 0; i < h3::limits::OBJECTS; ++i)
         {
             types[i] = 0;
             if (maxSubtypes[i] >= 0)
             {
-                subtypes[i] = new int[maxSubtypes[i] + 1]();
-            }
-            else
-            {
-                subtypes[i] = nullptr;
+                subtypes[i].resize(maxSubtypes[i] + 1, 0);
             }
         }
     }
-    ~ObjectCounter()
-    {
-        for (int i = 0; i < h3::limits::OBJECTS; ++i)
-        {
-            delete[] subtypes[i];
-        }
-    }
-
   public:
     inline size_t Type(const H3MapItem *mapItem) const
     {
-        return types[mapItem->objectType];
+        return mapItem && mapItem->objectType >= 0 && mapItem->objectType < h3::limits::OBJECTS
+                   ? types[mapItem->objectType] : 0;
     }
     inline size_t Subtype(const H3MapItem *mapItem) const
     {
-        return subtypes[mapItem->objectType][mapItem->objectSubtype];
+        if (!mapItem || mapItem->objectType < 0 || mapItem->objectType >= h3::limits::OBJECTS ||
+            mapItem->objectSubtype < 0)
+            return 0;
+        const auto &counts = subtypes[mapItem->objectType];
+        const size_t subtype = mapItem->objectSubtype;
+        return subtype < counts.size() ? counts[subtype] : 0;
     }
     void Increment(const H3MapItem *mapItem)
     {
+        if (!mapItem)
+            return;
         int type = mapItem->objectType;
         int subtype = mapItem->objectSubtype;
         if (type >= 0 && type < h3::limits::OBJECTS)
         {
             ++types[type];
-            if (subtype >= 0 && subtype <= maxSubtypes[type] && subtypes[type])
+            if (subtype >= 0)
             {
-                ++subtypes[type][subtype];
+                auto &counts = subtypes[type];
+                if (static_cast<size_t>(subtype) >= counts.size())
+                    counts.resize(subtype + 1, 0);
+                ++counts[subtype];
             }
         }
     }
@@ -147,6 +145,9 @@ class ObjectExtenderManager : public IGamePatch
     // std::map<DWORD, ObjectExtender *> extendersMap;
     std::vector<RMGObjectProperties> additionalRmgObjects;
     INT16 lastObjectSubtypes[h3::limits::OBJECTS] = {};
+    // Dispatch also supports identities declared by plugins but absent from objects.txt.
+    // Keep these bounds separate from graphics prototypes and RMG settings.
+    INT16 lastDispatchObjectSubtypes[h3::limits::OBJECTS] = {};
 
     ObjectExtender *typeRelatedExtenders[h3::limits::OBJECTS]{};
     ObjectExtender **subTypeRelatedExtenders[h3::limits::OBJECTS]{{}};
@@ -167,23 +168,33 @@ class ObjectExtenderManager : public IGamePatch
         const std::vector<ObjectExtenderRegistrator::RegisteredExtenderInfo> &registeredExtenders);
     void AssignExtendersToObjectSubtypes();
 
-    inline ObjectExtender *findExtender(const int type, const UINT subtype)
+    inline ObjectExtender *findExtender(const int type, const int subtype)
     {
-        return subtype <= lastObjectSubtypes[type] ? subTypeRelatedExtenders[type][subtype] : nullptr;
+        if (type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
+            return nullptr;
+        if (subTypeRelatedExtenders[type] && subtype <= lastDispatchObjectSubtypes[type])
+        {
+            if (auto *extender = subTypeRelatedExtenders[type][subtype])
+                return extender;
+        }
+        return typeRelatedExtenders[type];
     }
     inline static ObjectExtender *FindExtender(const int type, const int subtype) noexcept
     {
-        return instance->findExtender(type, subtype);
+        return instance ? instance->findExtender(type, subtype) : nullptr;
     }
     inline static ObjectExtender *FindExtender(const H3MapItem *mapItem) noexcept
     {
-        return instance->findExtender(mapItem->objectType, mapItem->objectSubtype);
+        return mapItem ? FindExtender(mapItem->objectType, mapItem->objectSubtype) : nullptr;
     }
     inline int GetAIScoutingValue(const H3MapItem *mapItem) const noexcept
     {
+        if (!mapItem)
+            return -1;
         int type = mapItem->objectType;
         int subtype = mapItem->objectSubtype;
-        if (subtype <= lastObjectSubtypes[type])
+        if (type >= 0 && type < h3::limits::OBJECTS && subtype >= 0 &&
+            subTypeRelatedAiScoutingValues[type] && subtype <= lastDispatchObjectSubtypes[type])
         {
             return subTypeRelatedAiScoutingValues[type][subtype];
         }

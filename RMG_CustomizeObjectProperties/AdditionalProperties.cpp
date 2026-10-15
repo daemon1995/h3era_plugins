@@ -64,25 +64,16 @@ void AdditionalProperties::LoadCommonProperties() noexcept
     for (size_t objType = 0; objType < h3::limits::OBJECTS; objType++)
     { // iterate all the objects types entries
 
-        /**
-        // probably will be used later for extended object types
-        size_t maxSubtype;
+        size_t maxSubtype = extendersManager::limits::COMMON;
         switch (objType)
         {
-        case eObject::ARTIFACT:
         case eObject::CREATURE_GENERATOR1:
-        case eObject::MONSTER:
-            maxSubtype = limits::EXTENDED;
+        case eObject::CREATURE_GENERATOR4:
+            maxSubtype = extendersManager::limits::EXTENDED;
             break;
-
         default:
-            maxSubtype = limits::COMMON;
             break;
         }
-        */
-
-        const size_t maxSubtype = objType == eObject::CREATURE_GENERATOR1 ? extendersManager ::limits::EXTENDED
-                                                                          : extendersManager ::limits::COMMON;
         for (size_t objSubtype = 0; objSubtype < maxSubtype; objSubtype++)
         {
             size_t propertyIdCounter = 0;

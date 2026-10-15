@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="ObjectExtenders\DwellingsExtender.cpp">
+      <Filter>Extenders</Filter>
+    </ClCompile>
     <ClCompile Include="AtomicIniSave.cpp">
       <Filter>source files</Filter>
     </ClCompile>
@@ -44,6 +47,12 @@
   <ItemGroup>
     <ClInclude Include="RMGObjectsEditor.h">
       <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\DwellingSetup.h">
+      <Filter>Extenders</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectExtenders\DwellingsExtender.h">
+      <Filter>Extenders</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>headers</Filter>

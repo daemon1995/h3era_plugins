@@ -3,6 +3,7 @@
 #include "pch.h"
 
 #include "RMG_SettingsDlg.h"
+#include "ObjectExtenders/DwellingsExtender.h"
 
 
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
@@ -548,15 +549,6 @@ RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
 void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRandomMapGenerator *rmgStruct)
 {
 
-    // check WoG Dwellings
-    const int dwellingsNumber = IntAt(0x0539C76 + 1);
-
-    // if value is 80 (SoD value)
-    if (dwellingsNumber == 80)
-    {
-        IntAt(0x0539C76 + 1) = 101;
-    }
-
     // call default function to create rmg gen list first
     THISCALL_1(void, h->GetDefaultFunc(), rmgStruct);
 
@@ -804,71 +796,6 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
     }
 
     return EXEC_DEFAULT;
-}
-
-int __stdcall RMG__RMGDwellingObject_AtGettingValue(HiHook *h, const H3RmgObjectGenerator *objGen,
-                                                    const H3RmgZoneGenerator *zoneGen,
-                                                    const H3RmgRandomMapGenerator *rmg)
-{
-
-    if (objGen->type == eObject::CREATURE_GENERATOR4)
-    {
-        const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
-
-        // const int creatureValue = RMGObjectInfo::CurrentObjectInfo(objGen->type, objGen->subtype).value;
-        int resultValue = -1;
-        const int totalTownsCount = rmg->townsCount;
-        for (size_t i = 0; i < 4; i++)
-        {
-            const int creatureType = DwordAt(dwellings4Ptr + (i << 2) + 16 * objGen->subtype);
-
-            if (creatureType != eCreature::UNDEFINED)
-            {
-                const auto &info = P_CreatureInformation[creatureType];
-                const int creatureTown = info.town;
-                if (creatureTown != zoneGen->townType2 && i == 0)
-                {
-                    return resultValue; // -1
-                }
-
-                if (const int aiValue = info.aiValue)
-                {
-                    int dwellingSlotValue = aiValue * info.grow;
-
-                    if (totalTownsCount && creatureTown != eTown::NEUTRAL)
-                    {
-                        if (const int totalCreatureTypeTowns = rmg->townsCountByType[creatureTown])
-                        {
-                            dwellingSlotValue += dwellingSlotValue * totalCreatureTypeTowns / totalTownsCount;
-                        }
-                        resultValue += dwellingSlotValue + (totalTownsCount * aiValue >> 1);
-                    }
-
-                    if (creatureTown == eTown::NEUTRAL)
-                    {
-                        resultValue += dwellingSlotValue;
-                    }
-                }
-            }
-        }
-
-        return resultValue >> 2;
-    }
-
-    // type 17
-
-    const DWORD dwellingsPtr = DwordAt(0x534CE7 + 3);
-    const int creatureType = DwordAt(dwellingsPtr + 4 * objGen->subtype);
-
-    const int storedCreatureAIValue = P_CreatureInformation[creatureType].aiValue;
-
-    P_CreatureInformation[creatureType].aiValue = RMGObjectInfo::CurrentObjectInfo(objGen->type, objGen->subtype).value;
-
-    const int objectValue = THISCALL_3(int, h->GetDefaultFunc(), objGen, zoneGen, rmg);
-
-    P_CreatureInformation[creatureType].aiValue = storedCreatureAIValue;
-
-    return objectValue;
 }
 
 void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomMapGenerator *rmg,
@@ -1119,7 +1046,6 @@ void RMGObjectsEditor::CreatePatches()
 
         // hook is used to block object generation
         _pi->WriteLoHook(0x54676B, RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck);
-        _pi->WriteHiHook(0x0534CE0, THISCALL_, RMG__RMGDwellingObject_AtGettingValue);
 
         _pi->WriteHiHook(0x05353C0, THISCALL_, RMG__RMGObjGenScroll__CreateObject);
         _pi->WriteHiHook(0x0534870, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // monster
@@ -1534,39 +1460,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         }
     }
 
-    // dwellings value calculation
-    const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
-    const int MAX_MON_ID = IntAt(0x4A1657);
-
-    for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR1])
-    {
-        if (dwellingObjInfo.value != UNDEFINED)
-            continue;
-
-        const int dwellingCreatureType = DwordAt(dwellings1Ptr + (dwellingObjInfo.subtype << 2));
-        if (dwellingCreatureType < MAX_MON_ID)
-        {
-            dwellingObjInfo.value = P_CreatureInformation[dwellingCreatureType].aiValue;
-        }
-    }
-
-    const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
-
-    for (auto &dwellingObjInfo : defaultRMGObjectsInfoByType[eObject::CREATURE_GENERATOR4])
-    {
-        if (dwellingObjInfo.value != UNDEFINED)
-            continue;
-
-        dwellingObjInfo.value = 0; // creatureAIValue;
-        for (size_t i = 0; i < 4; i++)
-        {
-            const int dwellingCreatureType = DwordAt(dwellings4Ptr + (i << 2) + dwellingObjInfo.subtype * 16);
-            if (dwellingCreatureType != eCreature::UNDEFINED)
-            {
-                dwellingObjInfo.value += P_CreatureInformation[dwellingCreatureType].aiValue;
-            }
-        }
-    }
+    dwellings::DwellingsExtender::Get().InitDefaultRmgValues();
 }
 
 void RMGObjectInfo::LoadUserProperties()
@@ -1629,10 +1523,8 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
             result = P_TentColors[subtype];
             break;
         case eObject::CREATURE_GENERATOR1:
-            result = P_DwellingNames1[subtype];
-            break;
         case eObject::CREATURE_GENERATOR4:
-            result = P_DwellingNames4[subtype];
+            result = dwellings::DwellingsExtender::Get().GetObjectName(type, subtype);
             break;
         case eObject::HERO:
             result = P_HeroInfo[subtype].name;

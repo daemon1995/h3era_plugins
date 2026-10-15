@@ -227,13 +227,26 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
 
     libc::memset(typeRelatedExtenders, 0, sizeof(typeRelatedExtenders));
 
+    libc::memcpy(lastDispatchObjectSubtypes, lastObjectSubtypes, sizeof(lastDispatchObjectSubtypes));
+    for (const auto &registeredObject : registeredObjectInfos)
+    {
+        const auto &identity = registeredObject.object.uniqueObjectType;
+        if (identity.type >= 0 && identity.type < h3::limits::OBJECTS &&
+            identity.subtype > lastDispatchObjectSubtypes[identity.type])
+            lastDispatchObjectSubtypes[identity.type] = identity.subtype;
+    }
+
     // initialize subtype arrays to nullptr
     for (size_t type = 0; type < h3::limits::OBJECTS; type++)
     {
-        const size_t subtypesAmount = lastObjectSubtypes[type] + 1;
-        subTypeRelatedExtenders[type] = new ObjectExtender *[subtypesAmount]();
-        subTypeRelatedAiScoutingValues[type] = new INT[subtypesAmount]();
-        libc::memset(subTypeRelatedAiScoutingValues[type], -1, sizeof(INT) * subtypesAmount);
+        const size_t subtypesAmount = lastDispatchObjectSubtypes[type] >= 0
+                                         ? lastDispatchObjectSubtypes[type] + 1 : 0;
+        delete[] subTypeRelatedExtenders[type];
+        delete[] subTypeRelatedAiScoutingValues[type];
+        subTypeRelatedExtenders[type] = subtypesAmount ? new ObjectExtender *[subtypesAmount]() : nullptr;
+        subTypeRelatedAiScoutingValues[type] = subtypesAmount ? new INT[subtypesAmount] : nullptr;
+        if (subtypesAmount)
+            libc::memset(subTypeRelatedAiScoutingValues[type], -1, sizeof(INT) * subtypesAmount);
     }
 
     for (const auto &registeredObject : registeredObjectInfos)
@@ -243,11 +256,12 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
         const int type = object->uniqueObjectType.type;
         if (type >= 0 && type < h3::limits::OBJECTS)
         {
-            const size_t subtypesAmount = lastObjectSubtypes[type] + 1;
+            const size_t subtypesAmount = lastDispatchObjectSubtypes[type] >= 0
+                                             ? lastDispatchObjectSubtypes[type] + 1 : 0;
             const int subtype = object->uniqueObjectType.subtype;
             if (subtype < 0)
                 typeRelatedExtenders[type] = ext;
-            else if (subtype < subtypesAmount)
+            else if (static_cast<size_t>(subtype) < subtypesAmount)
             {
                 subTypeRelatedExtenders[type][subtype] = ext;
                 subTypeRelatedAiScoutingValues[type][subtype] = object->aiScoutingWeight;
@@ -260,7 +274,8 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
         // if assigned type extender exists and subtype array allocated
         if (typeRelatedExtenders[type])
         {
-            const size_t maxSubtype = lastObjectSubtypes[type] + 1;
+            const size_t maxSubtype = lastDispatchObjectSubtypes[type] >= 0
+                                         ? lastDispatchObjectSubtypes[type] + 1 : 0;
             // iterate through subtype array and fill in gaps
             for (size_t subtype = 0; subtype < maxSubtype; subtype++)
             {
@@ -308,6 +323,8 @@ int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL 
 
     const int interactPlayerId = IntAt(0x6977DC); // P_MePlayerID *(INT32 *)0x6977DC
     BOOL hintIsSet = false;
+
+
 
     if (auto extender = FindExtender(mapItem))
     {
@@ -371,7 +388,7 @@ _LHF_(ObjectExtenderManager::AIHero_GetScoutingWeight)
 void __stdcall ObjectExtenderManager::Game__SetObjectsInitialParams(HiHook *h, H3Game *game)
 {
     monoliths::ExtendedMonoliths::Get().ResetForNewMap();
-    instance->objectCounter = new ObjectCounter(instance->lastObjectSubtypes);
+    instance->objectCounter = new ObjectCounter(instance->lastDispatchObjectSubtypes);
     THISCALL_1(void, h->GetDefaultFunc(), game);
     delete instance->objectCounter;
 }
@@ -541,10 +558,6 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
         {
             switch (info.type)
             {
-            case eObject::CREATURE_GENERATOR4:
-                objGen = ObjectExtender::CreateDefaultH3RmgObjectGenerator(info);
-                objGen->vTable = reinterpret_cast<H3RmgObjectGenerator::VTable *>(0x0640BC8);
-                break;
             case eObject::FREELANCERS_GUILD:
                 objGen = ObjectExtender::CreateDefaultH3RmgObjectGenerator(info);
                 break;
@@ -597,63 +610,6 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
     {
         stringResult += DLG_HORIZONTAL_GAP + tempStr;
     }
-    if (info.type == eObject::CREATURE_GENERATOR1)
-    {
-
-        const DWORD dwellings1Ptr = DwordAt(0x534CE7 + 3);
-        const int MAX_MON_ID = IntAt(0x4A1657);
-
-        const int dwellingCreatureType = DwordAt(dwellings1Ptr + (info.subtype << 2));
-
-        if (dwellingCreatureType >= 0 && dwellingCreatureType < MAX_MON_ID)
-        {
-            const auto &info = P_CreatureInformation[dwellingCreatureType];
-            tempStr = H3String::Format("%d {~>%s:0:%d valign=bottom}", info.grow, NH3Dlg::Assets::CREATURE_SMALL,
-                                       dwellingCreatureType + 2);
-
-            const int townId = info.town;
-            if (townId != eTown::NEUTRAL)
-            {
-                tempStr = H3String::Format("{~>%s:0:%d valign=bottom}", NH3Dlg::Assets::TOWN_SMALL, townId * 2 + 2) +
-                          " " + tempStr;
-            }
-
-            stringResult += DLG_HORIZONTAL_GAP + tempStr;
-        }
-    }
-    else if (info.type == eObject::CREATURE_GENERATOR4)
-    {
-        const DWORD dwellings4Ptr = DwordAt(0x04B85B5 + 2);
-
-        tempStr = h3_NullString;
-        for (size_t i = 0; i < 4; i++)
-        {
-            const int dwellingCreatureType = DwordAt(dwellings4Ptr + (i << 2) + info.subtype * 16);
-
-            if (dwellingCreatureType != eCreature::UNDEFINED)
-            {
-                const auto &info = P_CreatureInformation[dwellingCreatureType];
-
-                tempStr += H3String::Format("%d {~>%s:0:%d valign=bottom}", info.grow, NH3Dlg::Assets::CREATURE_SMALL,
-                                            dwellingCreatureType + 2);
-            }
-        }
-        if (!tempStr.Empty())
-        {
-            const int dwellingCreatureType = DwordAt(dwellings4Ptr + info.subtype * 16);
-
-            const int townId = P_CreatureInformation[dwellingCreatureType].town;
-            if (townId != eTown::NEUTRAL)
-            {
-                tempStr = H3String::Format("{~>%s:0:%d valign=bottom}", NH3Dlg::Assets::TOWN_SMALL, townId * 2 + 2) +
-                          " " + tempStr;
-            }
-
-            stringResult += DLG_HORIZONTAL_GAP + tempStr;
-        }
-    }
-
-    auto &extenders = instance->objectExtenders;
     if (auto extemder = instance->FindExtender(info.type, info.subtype))
     {
         return extemder->RMGDlg_ShowCustomObjectHint(*attributes, stringResult);
@@ -763,7 +719,8 @@ void ObjectExtenderManager::DebugObjectExtenderList()
 
         // if (instance->typeRelatedExtenders[i])
         {
-            const size_t maxSubtype = instance->lastObjectSubtypes[i] + 1;
+            const size_t maxSubtype = instance->lastDispatchObjectSubtypes[i] >= 0
+                                         ? instance->lastDispatchObjectSubtypes[i] + 1 : 0;
             //  iterate through subtype array and fill in gaps
             for (size_t subtype = 0; subtype < maxSubtype; subtype++)
             {

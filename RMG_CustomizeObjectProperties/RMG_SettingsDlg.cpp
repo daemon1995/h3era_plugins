@@ -2044,6 +2044,7 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
         return extender::ePagePrison;
 
     case eObject::PYRAMID:
+    case extender::ERA_OBJECT_TYPE:
         if (objectSubtype > 0)
             return extender::ePageWogObject;
         return extender::ePageLearning;

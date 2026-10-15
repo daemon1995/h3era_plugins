@@ -76,6 +76,17 @@ with this header.
 
 Registration must finish before the host plugin completes its `objects.txt` loading stage.
 
+The dispatch tables include both loaded graphics subtypes and all explicit `AddUniqueObjectInfo()` declarations,
+including those added in `AfterLoadingObjectsTxtProc()`. A declaration such as `141/51` therefore receives callbacks
+even when the highest graphics subtype for type 141 is zero. This does not create a graphics prototype: placing or
+generating a new object still requires its DEF/properties configuration. A subtype `-1` fallback also handles map
+subtypes beyond the loaded graphics range. Declarations added after initialization do not rebuild the dispatch tables.
+
+`Verification/run-object-dispatch.cmd` compiles the actual assignment, lookup, scouting and counter method bodies
+against minimal game types. It checks missing prototypes, shared owners for `63/51` and `141/51`, subtype fallbacks,
+subtypes above 255, invalid identities and rebuilding the tables. Run it from an x86 Developer Command Prompt;
+set `OBJECT_DISPATCH_PYTHON` to a Python executable if `python` is not on PATH.
+
 ## Callbacks
 
 Override any of these `ObjectExtender` methods:

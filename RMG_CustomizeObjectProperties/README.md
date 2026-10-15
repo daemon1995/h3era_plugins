@@ -32,6 +32,9 @@ The project currently compiles extenders for spell markets, universities, creatu
 
 Two-way monolith subtypes 8 and above use separate teleport networks, including native pathfinding and ERA savegame support. See [extended monoliths](ExtendedMonoliths.md) for configuration and in-game checks.
 
+Creature dwellings of types 17 and 20 can be added and initialized through JSON, including subtypes above 255.
+See [the dwelling extender](DwellingsExtender.md) and [example configuration](examples/dwellings.json).
+
 ## Object loop sounds
 
 `RMG.objectGeneration.<type>.sound.loop` sets a loop sound for all subtypes of an object type. A more specific `RMG.objectGeneration.<type>.<subtype>.sound.loop` entry takes priority. An empty string explicitly disables the loop sound; without either entry, the game uses its native sound selection. WAV names refer to resources available to the game.

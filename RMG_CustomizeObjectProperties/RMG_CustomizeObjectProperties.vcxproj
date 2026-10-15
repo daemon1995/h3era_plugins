@@ -23,6 +23,8 @@
     <ClInclude Include="MonolithGroupRegistry.h" />
     <ClInclude Include="MonolithSaveData.h" />
     <ClInclude Include="ObjectExtenderManager.h" />
+    <ClInclude Include="ObjectExtenders\DwellingSetup.h" />
+    <ClInclude Include="ObjectExtenders\DwellingsExtender.h" />
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h" />
     <ClInclude Include="ObjectExtenders\UniversityExtender.h" />
     <ClInclude Include="SoundManager.h" />
@@ -42,6 +44,7 @@
     <ClCompile Include="ExtendedMonoliths.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ObjectExtenderManager.cpp" />
+    <ClCompile Include="ObjectExtenders\DwellingsExtender.cpp" />
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp" />
     <ClCompile Include="ObjectExtenders\UniversityExtender.cpp" />
     <ClCompile Include="SoundManager.cpp" />
