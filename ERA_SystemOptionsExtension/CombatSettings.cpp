@@ -229,9 +229,31 @@ void CombatSettings::FinishBattleInstantly() noexcept
     quickCombatInfo.FinishInstantly(config.quickCombat, config.autoSpells);
 }
 
+bool CombatSettings::CanFinishBattleInstantly(const H3CombatManager *combat, const H3Main *main) noexcept
+{
+    if (!combat || !main || bool(combat->isHuman[0]) == bool(combat->isHuman[1]))
+        return false;
+    const int attacker = combat->heroOwner[0], defender = combat->heroOwner[1];
+    const int players = static_cast<int>(std::size(main->players));
+    if (attacker < -1 || attacker >= players || defender < -1 || defender >= players)
+        return false;
+    // In network combat isHuman[] can describe local control. The remote
+    // human still owns a human player, including a town/garrison without a hero.
+    const bool humanAttacker = attacker >= 0 && main->players[attacker].isHuman;
+    const bool humanDefender = defender >= 0 && main->players[defender].isHuman;
+    return humanAttacker != humanDefender;
+}
+
 int __stdcall CombatSettings::CombatManager_ProcessMessage(HiHook *hook, H3CombatManager *combatManager, H3Msg *msg)
 {
-
+    if (combatManager && msg && (msg->IsKeyDown() || msg->command == eMsgCommand::KEY_UP) &&
+        msg->GetKey() == eVKey::H3VK_Q)
+    {
+        if (msg->IsKeyDown() && CanFinishBattleInstantly(combatManager, P_Game->Get()) &&
+            H3Messagebox::Choice(EraJS::read("era.opt.combat.autoQuick.question")))
+            FinishBattleInstantly();
+        return TRUE; // also consume denied/cancelled Q; no fallback quick-battle window
+    }
     if (combatManager && msg && msg->IsKeyDown() && bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
     {
         if (msg->GetKey() == eVKey::H3VK_L && !IntAt(0x69959C))
@@ -242,15 +264,6 @@ int __stdcall CombatSettings::CombatManager_ProcessMessage(HiHook *hook, H3Comba
             return TRUE; // prevent the game's default handling, even if the dialog was declined
         }
 
-        if (msg->GetKey() == eVKey::H3VK_Q)
-        {
-            LPCSTR question = EraJS::read("era.opt.combat.autoQuick.question");
-            if (H3Messagebox::Choice(question))
-            {
-                FinishBattleInstantly();
-                return TRUE;
-            }
-        }
     }
     return THISCALL_2(int, hook->GetDefaultFunc(), combatManager, msg);
 }
@@ -273,7 +286,7 @@ _LHF_(CombatSettings::CombatManager_AutoCombatButton)
 {
     const auto combatManager = reinterpret_cast<H3CombatManager *>(c->ebx);
     if (AdditionalConfig::Get().quickAutoResolve.value && !combatManager->autoCombat &&
-        bool(combatManager->isHuman[0]) != bool(combatManager->isHuman[1]))
+        CanFinishBattleInstantly(combatManager, P_Game->Get()))
     {
         FinishBattleInstantly();
         // The game has accepted button 2004 (or its A hotkey). Return TRUE

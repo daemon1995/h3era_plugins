@@ -43,6 +43,7 @@ bool networkGame = false;
 struct CombatTestAccess : cmbsttngs::CombatSettings
 {
     using CombatSettings::AskQuickCombatType;
+    using CombatSettings::CanFinishBattleInstantly;
     static void BeforeBattle()
     {
         ConfigureBattle(testConfig, testMain, attackerPlayerId, defenderPlayerId, autoSolo, networkGame);
@@ -302,8 +303,41 @@ void TestBattleSelection(H3Main *main)
     testMain = main;
 }
 
-int main()
+void TestPvpQuickFinish()
 {
+    auto main = static_cast<H3Main *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Main)));
+    auto combat = static_cast<H3CombatManager *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3CombatManager)));
+    CHECK(main && combat);
+    main->players[0].isHuman = main->players[1].isHuman = true;
+    combat->heroOwner[0] = 0; combat->heroOwner[1] = 1;
+    combat->isHuman[0] = true; combat->isHuman[1] = false;
+    CHECK(!CombatTestAccess::CanFinishBattleInstantly(combat, main)); // red's network view
+    combat->isHuman[0] = false; combat->isHuman[1] = true;
+    CHECK(!CombatTestAccess::CanFinishBattleInstantly(combat, main)); // blue's view
+    combat->isHuman[0] = true;
+    CHECK(!CombatTestAccess::CanFinishBattleInstantly(combat, main)); // hot seat
+    combat->isHuman[1] = false;
+    main->players[1].isHuman = false;
+    CHECK(CombatTestAccess::CanFinishBattleInstantly(combat, main));
+    combat->heroOwner[1] = -1; // neutral army
+    CHECK(CombatTestAccess::CanFinishBattleInstantly(combat, main));
+    combat->heroOwner[1] = 8;
+    CHECK(!CombatTestAccess::CanFinishBattleInstantly(combat, main));
+    combat->heroOwner[1] = 1;
+    main->players[0].isHuman = false;
+    CHECK(!CombatTestAccess::CanFinishBattleInstantly(combat, main)); // AI/AI cannot quick finish
+    CHECK(!CombatTestAccess::CanFinishBattleInstantly(nullptr, main));
+    HeapFree(GetProcessHeap(), 0, combat); HeapFree(GetProcessHeap(), 0, main);
+}
+
+int main(int argc, char **argv)
+{
+    if (argc == 2 && std::strcmp(argv[1], "--pvp-only") == 0)
+    {
+        TestPvpQuickFinish();
+        std::puts("PASS: PvP quick finish blocked in both network views and hot seat; AI/neutral allowed.");
+        return 0;
+    }
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     SetUnhandledExceptionFilter([](EXCEPTION_POINTERS *exception) -> LONG {
         std::fprintf(stderr, "Unhandled exception %08lX at %p\n", exception->ExceptionRecord->ExceptionCode,
@@ -317,6 +351,7 @@ int main()
     Era::ExecErmCmd = TestMenu;
     TestMenuState();
     TestBattleSelection(main);
+    TestPvpQuickFinish();
     HeapFree(GetProcessHeap(), 0, main);
     std::puts("Combat settings regression checks passed.");
 }

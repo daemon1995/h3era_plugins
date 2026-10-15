@@ -47,6 +47,7 @@ class CombatSettings : public IGamePatch
     static _LHF_(CombatManager_AutoCombatButton);
     static _LHF_(CombatManager_EndBattle);
     static void FinishBattleInstantly() noexcept;
+    static bool CanFinishBattleInstantly(const H3CombatManager *combat, const H3Main *main) noexcept;
     static void RestoreQuickCombatOptions() noexcept;
     static void RestoreQuickCombatOptions(OriginalConfig &config) noexcept;
 
