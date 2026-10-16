@@ -57,6 +57,7 @@ _[Bb]uild/
 [Oo]bj/
 [Ll]og/
 bld/
+Dist
 
 # Локальные тесты и их вспомогательные файлы
 **/tests/
@@ -64,13 +65,9 @@ bld/
 **/analysis/
 **/mod/
 **/verification/
+
+# Переводы и настройки из json-файлов
 **/lang/
-
-# Переводы описаний заклинаний хранятся только в установленном моде
-/Interface_SpellsDescription/lang/
-
-# Тексты системных настроек хранятся в lang установленного мода
-/ERA_SystemOptionsExtension/lang/
 
 # Файлы сборки Visual Studio
 *.ilk
