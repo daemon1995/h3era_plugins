@@ -151,6 +151,74 @@ void TestState()
     CHECK(q == 0 && s == 1);
 }
 
+void TestReplayState()
+{
+    using cmbsttngs::QuickCombatState;
+    for (int quick = 0; quick < 2; ++quick)
+        for (int spells = 0; spells < 2; ++spells)
+            for (int battleType = 0; battleType <= 2; ++battleType)
+                for (int finish = 0; finish < 2; ++finish)
+                {
+                    QuickCombatState state;
+                    int q = quick, s = spells;
+                    state.SetQuickCombat(q, battleType != 0);
+                    if (battleType)
+                        state.SetAutoSpells(s, battleType == 1);
+                    if (finish)
+                        state.FinishInstantly(q, s);
+
+                    for (int replay = 0; replay < 3; ++replay)
+                    {
+                        q = 0; // BattleReplay disables the native flag before its event.
+                        state.BeginReplay(q, s);
+                        CHECK(q == 0 && s == spells);
+                        CHECK(state.PersistentQuickCombat(q) == quick);
+                        CHECK(state.PersistentAutoSpells(s) == spells);
+
+                        // Match WriteGameSettings: synchronize the configured mode,
+                        // expose it to the native writer, then resume the replay.
+                        state.SetPersistentQuickCombat(q, quick);
+                        state.BeginSettingsWrite(q, s);
+                        CHECK(q == quick && s == spells);
+                        state.BeginSettingsWrite(q, s);
+                        state.EndSettingsWrite(q, s);
+                        CHECK(q == quick && s == spells);
+                        state.EndSettingsWrite(q, s);
+                        CHECK(q == 0 && s == spells);
+
+                        // Q/A must still work in a replay and return to manual mode.
+                        state.FinishInstantly(q, s);
+                        CHECK(q == 1 && s == 0);
+                        state.RestoreInstantFinish(q, s);
+                        CHECK(q == 0 && s == spells);
+                    }
+                    state.SetPersistentAutoSpells(s, !spells);
+                    state.BeginReplay(q, s);
+                    CHECK(q == 0 && s == !spells);
+                    state.Restore(q, s); // Accepted result, cancellation or load.
+                    CHECK(q == quick && s == !spells);
+                    state.BeginSettingsWrite(q, s);
+                    state.EndSettingsWrite(q, s);
+                    CHECK(q == quick && s == !spells);
+                }
+
+    QuickCombatState state;
+    int q = 1, s = 1;
+    state.SetQuickCombat(q, 1);
+    state.SetAutoSpells(s, 0);
+    state.BeginSettingsWrite(q, s);
+    q = 0;
+    state.BeginReplay(q, s); // A replay started inside a settings callback.
+    state.EndSettingsWrite(q, s);
+    CHECK(q == 0 && s == 1);
+    state.BeginSettingsWrite(q, s);
+    state.Restore(q, s); // Loading abandons a replay while a writer is active.
+    q = 0;
+    s = 0;
+    state.EndSettingsWrite(q, s);
+    CHECK(q == 0 && s == 0);
+}
+
 void TestMenuState()
 {
     Era::v[1] = 12345;
@@ -345,6 +413,7 @@ int main(int argc, char **argv)
         return EXCEPTION_EXECUTE_HANDLER;
     });
     TestState();
+    TestReplayState();
     auto main = static_cast<H3Main *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(H3Main)));
     CHECK(main);
     testMain = main;

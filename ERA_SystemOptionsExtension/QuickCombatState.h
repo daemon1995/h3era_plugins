@@ -152,6 +152,15 @@ struct QuickCombatState
         instantFinish = false;
     }
 
+    void BeginReplay(int &quickCombatOption, int &autoSpellsOption) noexcept
+    {
+        // BattleReplay clears the native flag directly. Replace our previous
+        // attempt's overrides too, or a settings write will resume quick combat
+        // inside the visible replay (including while targeting a spell).
+        Restore(quickCombatOption, autoSpellsOption);
+        SetQuickCombat(quickCombatOption, 0);
+    }
+
     void RestoreInstantFinish(int &quickCombatOption, int &autoSpellsOption) noexcept
     {
         if (instantFinish)

@@ -157,6 +157,12 @@ _ERH_(CombatSettings::OnAfterBattle)
     RestoreQuickCombatOptions();
 }
 
+_ERH_(CombatSettings::OnBattleReplay)
+{
+    auto &config = OriginalConfig::Get();
+    quickCombatInfo.BeginReplay(config.quickCombat, config.autoSpells);
+}
+
 _ERH_(CombatSettings::OnGameContextChanged)
 {
     ResetGameContext(OriginalConfig::Get());
@@ -353,6 +359,7 @@ void CombatSettings::CreatePatches() noexcept
     _pi->WriteHiHook(writeSettings, SPLICE_, EXTENDED_, CDECL_, WriteGameSettings);
     _REH_(OnBeforeBattleUniversal);
     _REH_(OnAfterBattle);
+    _REH_(OnBattleReplay);
     Era::RegisterHandler(OnGameContextChanged, "OnBeforeFastQuitToGameMenu");
     Era::RegisterHandler(OnGameContextChanged, "OnBeforeLoadGame");
     Era::RegisterHandler(OnGameContextChanged, "OnAfterLoadGame");

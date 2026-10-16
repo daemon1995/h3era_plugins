@@ -31,6 +31,7 @@ class CombatSettings : public IGamePatch
   protected:
     static _ERH_(OnBeforeBattleUniversal);
     static _ERH_(OnAfterBattle);
+    static _ERH_(OnBattleReplay);
     static _ERH_(OnGameContextChanged);
     static void ConfigureBattle(OriginalConfig &config, const H3Main *main, int attackerPlayerId, int defenderPlayerId,
                                 bool autoSolo, bool networkGame);
