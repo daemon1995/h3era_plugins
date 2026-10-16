@@ -5,6 +5,7 @@
 #include "SpellDescriptionText.h"
 #include "SpellDescriptionTranslations.h"
 #include "SpellDescriptionOverlay.h"
+#include "SpellDescriptionPreview.h"
 
 #include <algorithm>
 #include <cstdarg>
@@ -40,6 +41,7 @@ constexpr int COMMANDER_LAST = 191;
 
 bool initialized = false;
 bool previewInProgress = false;
+bool previewMr1Enabled = false;
 bool queryInProgress = false;
 
 INT32 *ErmAddress(DWORD address)
@@ -67,7 +69,7 @@ class ScopedAssocValue
 
 class ScopedSpellPreview
 {
-    Detail::ScopedValues<bool, 1> recursion;
+    Detail::ScopedValues<bool, 2> recursion;
     Detail::ScopedValues<eCombatAction, 1> action;
     Detail::ScopedValues<INT32, 4> parameters;
     Detail::ScopedValues<INT32, 8> mr;
@@ -76,15 +78,19 @@ class ScopedSpellPreview
 
   public:
     ScopedSpellPreview(H3CombatManager *combat, int spellId, int hex, int casterSide, int casterKind)
-        : recursion({&previewInProgress}), action({&combat->action}),
+        : recursion({&previewInProgress, &previewMr1Enabled}), action({&combat->action}),
           parameters(
               {&combat->actionParameter, &combat->actionTarget, &combat->actionParameter2, &combat->currentActiveSide}),
           // Resolve relocated WoG globals; preserve MR0/MR1 and MR2 scratch.
           mr({ErmAddress(0x2860214), ErmAddress(0x286021C), ErmAddress(0x2846898), ErmAddress(0x283282C),
               ErmAddress(0x2846884), ErmAddress(0x2860254), ErmAddress(0x2846870), ErmAddress(0x2860258)}),
-          side("battle_current_side", casterSide), preview("era.opt.spells.preview", 1)
+          side("battle_current_side", casterSide), preview(Preview::FLAG, 1)
     {
         previewInProgress = true;
+        // Read once per preview, not once per target or MR event.
+        bool found = false;
+        const auto setting = EraJS::read(Preview::MR1_SETTING, found);
+        previewMr1Enabled = found && Preview::Mr1Enabled(setting);
         combat->action = casterKind == 1 ? eCombatAction::MONSTER_SPELL : eCombatAction::CAST_SPELL;
         combat->actionParameter = spellId;
         combat->actionTarget = hex;
@@ -92,6 +98,18 @@ class ScopedSpellPreview
         combat->currentActiveSide = casterSide;
     }
 };
+
+_LHF_(FilterPreviewMr1)
+{
+    (void)h;
+    if (!previewInProgress || previewMr1Enabled)
+        return EXEC_DEFAULT;
+    // WoG 0x75D964: push 1; call 0x74D39B; add esp, 4.
+    // Skip all three instructions BEFORE pushing the argument. The corrected
+    // damage, native resistance/experience and later spell protection survive.
+    c->return_address = 0x75D96E;
+    return NO_EXEC_DEFAULT;
+}
 
 bool FormatV(char *output, size_t capacity, LPCSTR format, va_list arguments)
 {
@@ -233,7 +251,7 @@ int ReducedDamage(H3CombatManager *combat, H3CombatCreature *target, int spellId
 {
     // Hero bonuses are already included. The native function sets EDI to
     // target and enters WoG's 0x75D88D wrapper via its 0x5A7C3B call site:
-    // MR0 -> standard/commander resistance -> experience -> MR1 -> protection.
+    // MR0 -> standard/commander resistance -> experience -> optional MR1 -> protection.
     // Applying the internal reductions again would double the resistance.
     return combat->CalculateSpellDamageOnTarget(damage, spellId, nullptr, target->GetOwner(), target, FALSE);
 }
@@ -948,6 +966,7 @@ void Install(PatcherInstance *pi)
         return;
     installed = true;
     initialized = true;
+    pi->WriteLoHook(0x75D964, FilterPreviewMr1);
     Overlay::Install(pi);
     Era::RegisterHandler(ResetSacrificeTarget, "OnSetupBattleField");
     Era::RegisterHandler(ResetSacrificeTarget, "OnAfterBattleUniversal");

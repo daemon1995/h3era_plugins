@@ -5,5 +5,5 @@ ZVSE2
 ; x2=2 is the duration phase in both the book (x3=0) and battle (x3=1).
 ; x12 is the final round count; x16 is the expiry mode (1 = rounds).
 ; Example only, deliberately disabled:
-; !?FU(OnQuerySpellDescription)&x1=1/x2=2/x11=11;
-; !!VRx12&x16=1:+2;
+*?FU(OnQuerySpellDescription)&x1=1/x2=2/x11=11;
+*!VRx12&x16=1:+2;

@@ -53,6 +53,9 @@
     <ClInclude Include="SpellDescriptionTranslations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SpellDescriptionPreview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="SpellDescriptionErm.h">
       <Filter>Header Files</Filter>
     </ClInclude>

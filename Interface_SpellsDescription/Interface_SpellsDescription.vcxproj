@@ -27,6 +27,7 @@
     <ClInclude Include="SpellDescriptionDuration.h" />
     <ClInclude Include="SpellDescriptionText.h" />
     <ClInclude Include="SpellDescriptionTranslations.h" />
+    <ClInclude Include="SpellDescriptionPreview.h" />
     <ClInclude Include="SpellDescriptionErm.h" />
     <ClInclude Include="SpellDescriptionHintApi.h" />
   </ItemGroup>

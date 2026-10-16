@@ -12,7 +12,7 @@ enum class Text
     BookDamage, BookCure, BookHypnotize, BookMine, BookRecovery, BookFirstDamage, BookSummon,
     Demons, Archangel, AreaDamage, ChainDamage, ChainTarget, ResistanceCondition, ChainIndex,
     DurationRounds, DurationBattle, DurationNextAttack, DurationNextTurn,
-    BattleDurationTarget, BattleDurationArea, BookDuration, Count
+    BattleDurationTarget, BattleDurationArea, BookDuration, Mr1PreviewDescription, Count
 };
 
 struct Definition
@@ -51,6 +51,7 @@ constexpr Definition TEXTS[] = {
     {ERA_SPELL_TEXT(battle, durationTarget), "sss"},
     {ERA_SPELL_TEXT(battle, durationArea), "ss"},
     {ERA_SPELL_TEXT(book, duration), "s"},
+    {ERA_SPELL_TEXT(settings, enableMr1PreviewDescription), ""},
 };
 #undef ERA_SPELL_TEXT
 

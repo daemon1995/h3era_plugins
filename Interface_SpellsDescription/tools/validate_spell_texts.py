@@ -72,12 +72,24 @@ def main():
     if len(expected) != len(definitions):
         raise ValueError("Duplicate spell text definition")
 
+    preview_source = (PLUGIN / "SpellDescriptionPreview.h").read_text(encoding="utf-8-sig")
+    setting_match = re.search(r'MR1_SETTING\[\]\s*=\s*"([^"]+)"', preview_source)
+    if not setting_match:
+        raise ValueError("No MR1 preview setting key found")
+    setting_key = setting_match.group(1)
+
     languages = {}
     for language, relative in (("en", Path()), ("ru", Path("ru"))):
         directory = args.game_dir / "Mods" / "WoG" / "lang" / relative
         target = directory / "interface_spells_description.json"
         fragment = read_json(target)
         translations = flatten(fragment)
+        if language == "en":
+            if setting_key not in translations or type(translations[setting_key]) is not bool:
+                raise ValueError(f"{language}: {setting_key} must be a JSON boolean")
+            translations.pop(setting_key)
+        elif setting_key in translations:
+            raise ValueError(f"{language}: runtime settings belong in the base JSON, not a language override")
         if translations.keys() != expected.keys():
             missing = sorted(expected.keys() - translations.keys())
             extra = sorted(translations.keys() - expected.keys())
