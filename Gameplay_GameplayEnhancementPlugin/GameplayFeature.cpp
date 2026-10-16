@@ -238,7 +238,7 @@ void GameplayFeature::CreatePatches() noexcept
 {
     if (!m_isInited)
     {
-        // InstallLevelUpAutoSkip(_pi);
+        InstallLevelUpAutoSkip(_pi);
         auto transient = globalPatcher->CreateInstance("EraPlugin.GameplayTweaks.Transient.daemon_n");
         demolishButtonPatch = transient->CreateDwordPatch(0x04F738A + 1, (int)demoBttn);
         // The register-based call at 0x70C19C returns to 0x70C1A1 on every native exit.
