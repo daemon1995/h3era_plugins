@@ -1,16 +1,16 @@
 #include "CombatEmulator.h"
 
 CombatEmulator *CombatEmulator::instance = nullptr;
-#pragma comment(linker, "/EXPORT:StartCombatEmulator=_StartCombatEmulator@20")
+#pragma comment(linker, "/EXPORT:StartCombatEmulator=_StartCombatEmulator@32")
 #pragma comment(linker, "/EXPORT:ApplyBlockingPatches=_ApplyBlockingPatches@12")
 #pragma comment(linker, "/EXPORT:UndoBlockingPatches=_UndoBlockingPatches@0")
 
-INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const BOOL blockRunning,
-                                const int specialTerrain);
-DllExport INT __stdcall StartCombatEmulator(H3Hero *attHero, H3Hero *defHero, const BOOL blockMagic,
-                                            const BOOL blockRunning, const int specialTerrain)
+INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const int x, const int y, const int z,
+                                const BOOL blockMagic, const BOOL blockRunning, const int specialTerrain);
+DllExport INT __stdcall StartCombatEmulator(H3Hero *attHero, H3Hero *defHero, const int x, const int y, const int z,
+                                            const BOOL blockMagic, const BOOL blockRunning, const int specialTerrain)
 {
-    return StartPseudoCombat(attHero, defHero, blockMagic, blockRunning, specialTerrain);
+    return StartPseudoCombat(attHero, defHero, x, y, z, blockMagic, blockRunning, specialTerrain);
 }
 
 DllExport BOOL __stdcall ApplyBlockingPatches(const BOOL blockCombatResultDlg, const BOOL blockMagic,
@@ -121,8 +121,8 @@ static H3Town *FindTownForHero(const H3Hero *hero)
     return nullptr;
 }
 
-INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL blockMagic, const BOOL blockRunning,
-                                const int specialTerrain)
+INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const int x, const int y, const int z,
+                                const BOOL blockMagic, const BOOL blockRunning, const int specialTerrain)
 {
     if (!CombatEmulator::instance || pseudoCmb.inCombat || ValidateHero(_attHero) != HERO_NO_ERROR ||
         ValidateHero(_defHero) != HERO_NO_ERROR)
@@ -153,11 +153,11 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL b
 
     // init passed arguments
 
-    const int battleX = _defHero->x;
-    const int battleY = _defHero->y;
-    const int battleZ = _defHero->z;
-    const BOOL hasDefenderPosition = battleX >= 0 && battleX <= 0x3FF && battleY >= 0 && battleY <= 0x3FF &&
-                                     battleZ >= 0 && battleZ <= 1;
+    const int battleX = x; // _defHero->x;
+    const int battleY = y; //_defHero->y;
+    const int battleZ = z; //_defHero->z;
+    const BOOL hasDefenderPosition =
+        battleX >= 0 && battleX <= 0x3FF && battleY >= 0 && battleY <= 0x3FF && battleZ >= 0 && battleZ <= 1;
     // StartBattle needs the real map position: falling back to (0, 0, 0) can
     // silently select different terrain and a different deterministic seed.
     if (!hasDefenderPosition)
@@ -190,6 +190,7 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const BOOL b
     pseudoCmb.inCombat = false;
     IntAt(0x06987CC) = isQuick; // restore original quick combat setting
     UndoBlockingPatches();
+    IntAt(0x0699590) = 0; // reset combat flag
     pseudoCmb.specialTerrain = -1;
 
     // restore original NPC data to prevent side effects on the rest of the game
