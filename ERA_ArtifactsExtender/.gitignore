@@ -1,0 +1,7 @@
+# Keep the reproducible checks for this extender despite repository-wide local-test ignores.
+!tests/
+!tests/ArtifactTests.cpp
+!tests/RunTests.cmd
+!tests/alpha.png
+!tools/
+!tools/verify_executable.py

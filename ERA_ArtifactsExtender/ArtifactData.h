@@ -1,36 +1,30 @@
 #pragma once
+#include <array>
+#include <string>
 
 namespace artifacts
 {
+constexpr int CAPACITY = 1024;
+constexpr int NATIVE_MAP_ARTIFACTS = 144;
+// Unchanged until the separate combination-mask migration.
+constexpr int NATIVE_COMBINATION_BITS = 160;
+constexpr int NATIVE_COMBINATIONS = 32;
 
-class ArtifactData
+void Log(const char *format, ...);
+
+struct ArtifactData
 {
-    // used to read json keys
-    static char jsonKeyNameBuffer[512];
+    bool declared = false;
+    std::string legacyKey;
+    std::string image;
+    std::string mapDef;
+    int imageFrame = 0;
+    std::array<bool, 4> primaryChanged{};
+    int aiValue = 0;
+    bool hasAiValue = false;
 
-    // initial data to clamp
-    eArtifact id = eArtifact::NONE;
-
-    // original setup copy -- default ctor is in H3API
-    H3ArtifactSetup setup;
-
-    // 
-    char primarySkillBonuses[4] = {};
-
-  public:
-    ArtifactData(LPCSTR modName, const int arrayIndex);
-    eArtifact getId() const
-    {
-        return id;
-    }
-    const H3ArtifactSetup &getSetup() const
-    {
-        return setup;
-    }
-    const char *getPrimarySkillBonuses() const
-    {
-        return primarySkillBonuses;
-    }
+    static bool HasDefinition(const std::string &key);
+    void Apply(H3ArtifactSetup &setup, signed char *primary, LPCSTR &event, int id);
+    void ReloadText(H3ArtifactSetup &setup, LPCSTR &event, bool name, bool description, int id) const;
 };
-
 } // namespace artifacts

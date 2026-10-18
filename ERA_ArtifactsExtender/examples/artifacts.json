@@ -1,0 +1,28 @@
+{
+  "era": {
+    "artifacts": {
+      "7": {
+        "cost": 1500
+      },
+      "171": {
+        "name": "Traveler Seal",
+        "description": "Adds +2 Attack and +2 Defence.",
+        "event": "You have found the Traveler Seal.",
+        "cost": 4000,
+        "position": 7,
+        "type": 4,
+        "disabled": 0,
+        "primary": {
+          "attack": 2,
+          "defence": 2,
+          "spellPower": 0,
+          "knowledge": 0
+        },
+        "image": "newseal.pcx",
+        "ai": {
+          "value": 800
+        }
+      }
+    }
+  }
+}

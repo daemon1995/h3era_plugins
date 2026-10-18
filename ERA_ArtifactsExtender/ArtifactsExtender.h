@@ -1,70 +1,44 @@
 #pragma once
+#include "ArtifactTablesManager.h"
+#include "ArtifactImages.h"
 
 namespace artifacts
 {
-constexpr int TEST_ART_ID = 171; //
-constexpr int ARTIFACTS_OBJECT_TYPE = eObject::ARTIFACT;
-class ArtifactsExtender : public IGamePatch
+class ArtifactsExtender
 {
+    ArtifactTablesManager tables;
+    ArtifactImages images;
+    std::array<ArtifactData, CAPACITY> definitions;
+    std::array<unsigned char, CAPACITY> mapDisabled{};
+    std::array<unsigned char, CAPACITY> mapUsed{};
+    H3MainSetup *loadedObjectSetup = nullptr;
+    bool ready = false;
 
-    static ArtifactsExtender *instance;
+    void Discover();
+    void AfterTextLoaded();
+    void AddMapObjects(H3MainSetup *setup);
+    void ResetExtraState();
+    bool IsDisabled(H3Main *main, int id) const;
+    unsigned char &Used(H3Main *main, int id);
 
-    struct ArtifactsNumber
-    {
-        DWORD base = 0;
-        DWORD added = 0;
-        DWORD current = 0;
-        static constexpr DWORD max = 1024;
-    } static artifactsNumber;
-    // static DWORD baseArtifactsNumber;
-    // static DWORD newArtifactsNumber;
-    // static DWORD newArtifactsNumber;
-    //  new artifacts setups
+    static int __stdcall AfterReadAllTxtFiles(HiHook *hook);
+    static H3LoadedDef *__stdcall LoadDef(HiHook *hook, LPCSTR name);
+    static int __stdcall RandomArtifact(HiHook *hook, H3Main *main, int level);
+    static int __stdcall ArtDisabled(HiHook *hook, int id);
+    static void __stdcall SetArtDisabled(HiHook *hook, int id, int disabled);
+    static int __stdcall AIValue(HiHook *hook, H3Hero *hero, int mode, int id, int subtype, int context);
+    static _LHF_(MarkMapArtifactUsed);
+    static _LHF_(DisableQuestArtifact);
+    static int __stdcall LoadMap(HiHook *hook, H3Main *main, int file);
+    static void __stdcall LoadObjects(HiHook *hook, H3MainSetup *setup);
+    static _ERH_(OnBeforeLoadGame);
 
-    static H3ArtifactSetup *artifactSetups;
-    static H3ArtifactSetup *wogArtifactSetupsToSwapNames;
+    static _ERH_(OnSavegameWrite);
+    static _ERH_(OnSavegameRead);
+    static _ERH_(OnAfterReloadLanguageData);
 
-    struct ArtifactsTextZVars
-    {
-
-        DWORD artNameZvar = 0;
-        DWORD artDescriptionZvar = 0;
-    } static *artifactsTextZVars;
-
-    static DWORD *primarySkillsBonusTable;
-    static DWORD primarySkillsBonusTableAddr;
-
-    //    static DWORD primarySkillsBonusTableAddr;
-
-    // new art event text
-    static LPCSTR *eventTable;
-    //    static
-
-  public:
-  private:
-    ArtifactsExtender();
-
-    virtual ~ArtifactsExtender();
-
-  protected:
-    void AfterLoadingObjectsTxtProc();
-
-  protected:
-    virtual void CreatePatches() override;
-    const int LoadNewArtifactsFromJson();
-
-    void ReplaceArtifactSetupsTable();
-    void ReplacePrimarySkillsBonusTable();
-    void ReplaceArtEventText();
-    void ReplaceCombinationArtifactsTable();
-    void ReplaceAIValuesTable();
-    void LoadArtifactPropertiesFromJson();
-    //  private:
   public:
     static ArtifactsExtender &Get();
-    static _ERH_(OnAfterWog);
-    static _LHF_(LoadArtTraits);
-    static void __stdcall H3GameMainSetup__LoadObjects(HiHook *h, H3MainSetup *setup);
+    void Init();
 };
-
 } // namespace artifacts

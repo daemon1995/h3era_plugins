@@ -25,8 +25,16 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ArtifactData.h" />
+    <ClInclude Include="ArtifactImages.h" />
+    <ClInclude Include="ArtifactImageAlgorithms.h" />
+    <ClInclude Include="ArtifactSave.h" />
     <ClInclude Include="ArtifactsExtender.h" />
     <ClInclude Include="ArtifactTablesManager.h" />
     <ClInclude Include="framework.h" />
@@ -35,9 +43,16 @@
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="ArtifactData.cpp" />
+    <ClCompile Include="ArtifactImages.cpp" />
     <ClCompile Include="ArtifactsExtender.cpp" />
     <ClCompile Include="ArtifactTablesManager.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="RESEARCH.md" />
+    <None Include="COMBINATIONS_PLAN.md" />
+    <None Include="examples\artifacts.json" />
+  </ItemGroup>
 </Project>
