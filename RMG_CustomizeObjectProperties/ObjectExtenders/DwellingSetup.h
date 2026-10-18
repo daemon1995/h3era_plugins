@@ -1,22 +1,15 @@
 #pragma once
-#include <array>
+#include "../../headers/Objects/DwellingConfig.h"
 #include <cstdint>
 
 namespace dwellings
 {
-using CreatureSlots = std::array<int, 4>;
-constexpr CreatureSlots EMPTY_CREATURES{{-1, -1, -1, -1}};
 struct SavedDwelling
 {
     std::uint32_t position;
     CreatureSlots creatures;
 };
 static_assert(sizeof(SavedDwelling) == 20, "Dwelling saves require four 32-bit creature IDs.");
-
-inline bool IsCreature(int creature, int creatureCount) noexcept
-{
-    return creature >= 0 && creature < creatureCount;
-}
 
 inline bool HasCreatures(const CreatureSlots &creatures, int slotCount, int creatureCount) noexcept
 {

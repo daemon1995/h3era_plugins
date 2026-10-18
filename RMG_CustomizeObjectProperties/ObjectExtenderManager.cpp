@@ -610,6 +610,9 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
     {
         stringResult += DLG_HORIZONTAL_GAP + tempStr;
     }
+    if (LPCSTR description = info.GetDescription())
+        if (*description)
+            stringResult += DLG_HORIZONTAL_GAP + H3String(description);
     if (auto extemder = instance->FindExtender(info.type, info.subtype))
     {
         return extemder->RMGDlg_ShowCustomObjectHint(*attributes, stringResult);

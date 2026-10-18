@@ -1,5 +1,6 @@
 #include "DwellingsExtender.h"
 #include "../../headers/Era/GameJsonTables.hpp"
+#include "../../headers/Era/ObjectText.hpp"
 
 namespace dwellings
 {
@@ -17,6 +18,7 @@ int ReadInt(int type, int subtype, LPCSTR field, bool &found)
 {
     return EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.%s", type, subtype, field).String(), found);
 }
+
 } // namespace
 
 DwellingsExtender::DwellingsExtender()
@@ -129,11 +131,9 @@ void DwellingsExtender::ReloadNames()
             // Preserve a refreshed native translation supplied by another text handler.
             if (table->names[subtype] != table->publishedNames[subtype])
                 table->originalNames[subtype] = table->names[subtype];
-            bool found = false;
-            LPCSTR name = EraJS::read(H3String::Format("RMG.objectGeneration.%d.%d.name", table->type,
-                                                       int(subtype)).String(), found);
+            LPCSTR name = EraJS::ReadObjectName(table->type, static_cast<int>(subtype));
             table->names[subtype] = table->originalNames[subtype];
-            if (found)
+            if (name)
                 table->names[subtype] = name;
             table->publishedNames[subtype] = table->names[subtype];
         }
@@ -144,13 +144,9 @@ void DwellingsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
     if (m_isInited)
         return;
     // Dwellings.dll replaces this instruction with a JMP and owns the same tables/hooks.
-    // Refuse that incompatible layout before interpreting its jump bytes as capacities.
+    // Leave the other extender in charge, without a dialog or overlapping hooks.
     if (ByteAt(0x521A7F) != 0x83 || ByteAt(0x521A80) != 0xF8)
-    {
-        MessageBoxA(nullptr, PROJECT_NAME ": Cannot initialize JSON dwellings: the kingdom overview code "
-                    "has already been replaced by another dwelling extender.", "Dwelling extender", MB_OK | MB_ICONERROR);
         return;
-    }
     single.type = eObject::CREATURE_GENERATOR1;
     single.slotCount = 1;
     // CMP EAX,imm8: the immediate is one byte, not a DWORD.
@@ -506,7 +502,7 @@ void DwellingsExtender::CreatePatches()
     _pi->WriteDword(0x5032BC, int(single.names.size()) - 1);
     _pi->WriteDword(0x5032C8, creatures1 + (single.names.size() - 1) * sizeof(int));
 
-    // Preserve the host's WoG compatibility adjustment before it creates native generators.
+    // Preserve WoG's native generator count before the host creates generators.
     if (IntAt(0x539C77) == 80)
         _pi->WriteDword(0x539C77, 101);
     _pi->WriteHiHook(0x534CE0, THISCALL_, Rmg_GetDwellingValue);

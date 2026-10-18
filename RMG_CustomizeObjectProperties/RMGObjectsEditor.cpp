@@ -4,6 +4,7 @@
 
 #include "RMG_SettingsDlg.h"
 #include "ObjectExtenders/DwellingsExtender.h"
+#include "../headers/Era/ObjectText.hpp"
 
 
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
@@ -1270,6 +1271,10 @@ LPCSTR RMGObjectInfo::GetName() const noexcept
 {
     return GetObjectName(type, subtype);
 }
+LPCSTR RMGObjectInfo::GetDescription() const noexcept
+{
+    return GetObjectDescription(type, subtype);
+}
 BOOL RMGObjectInfo::WriteToINI(LPCSTR iniPath) const noexcept
 {
     BOOL success = true;
@@ -1502,12 +1507,8 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
     {
         return H3CreatureBankSetup::Get()[creatureBankId].name.String();
     }
-    bool readSucces = false;
-
-    libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_NAME_JSON_KEY_FORMAT, type, subtype);
-    LPCSTR jsonString = EraJS::read(h3_TextBuffer, readSucces);
-
-    if (readSucces)
+    LPCSTR jsonString = EraJS::ReadObjectName(type, subtype);
+    if (jsonString)
     {
         result = jsonString;
     }
@@ -1572,16 +1573,8 @@ LPCSTR RMGObjectInfo::GetObjectDescription(const H3MapItem *mapItem)
 }
 LPCSTR RMGObjectInfo::GetObjectDescription(const INT32 type, const INT32 subtype)
 {
-    LPCSTR result = h3_NullString;
-    bool readSucces = false;
-
-    libc::sprintf(h3_TextBuffer, OBJECT_SUBTYPE_DESC_JSON_KEY_FORMAT, type, subtype);
-    LPCSTR jsonString = EraJS::read(h3_TextBuffer, readSucces);
-
-    if (readSucces)
-    {
-        result = jsonString;
-    }
+    if (LPCSTR description = EraJS::ReadObjectDescription(type, subtype))
+        return description;
     return h3_NullString;
 }
 static inline int *create3DArray(int X, int Y, int Z)

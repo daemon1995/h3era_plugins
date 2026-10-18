@@ -18,6 +18,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClInclude Include="..\headers\Objects\DwellingConfig.h" />
+    <ClInclude Include="..\headers\Era\ObjectText.hpp" />
     <ClInclude Include="AdditionalProperties.h" />
     <ClInclude Include="ExtendedMonoliths.h" />
     <ClInclude Include="MonolithGroupRegistry.h" />
