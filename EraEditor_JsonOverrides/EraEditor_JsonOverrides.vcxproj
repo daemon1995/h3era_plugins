@@ -32,6 +32,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="..\headers\Era\ObjectText.hpp" />
     <ClInclude Include="TextHandlers\ArtifactHandler.h" />
     <ClInclude Include="TextHandlers\MapObjectHandler.h" />
     <ClInclude Include="TextHandlers\TownHandler.h" />

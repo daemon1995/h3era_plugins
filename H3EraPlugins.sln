@@ -51,7 +51,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_SpellsDescription
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_BattleReplay", "Combat_BattleReplay\Combat_BattleReplay.vcxproj", "{F49C272B-B415-47C2-91A9-55D82616C03B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Combat_BattleHeroes", "Combat_BattleHeroes\Combat_BattleHeroes.vcxproj", "{4F86115D-57BA-45FE-8AB7-41A8A7621D46}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_SimultaneusTurn", "ERA_SimultaneusTurn\ERA_SimultaneusTurn.vcxproj", "{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EraEditor_ObjectsExtender", "EraEditor_ObjectsExtender\EraEditor_ObjectsExtender.vcxproj", "{7A653309-A087-46DE-BC8C-9675E0D63531}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +63,14 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7A653309-A087-46DE-BC8C-9675E0D63531}.Debug|x86.ActiveCfg = Debug|Win32
+		{7A653309-A087-46DE-BC8C-9675E0D63531}.Debug|x86.Build.0 = Debug|Win32
+		{7A653309-A087-46DE-BC8C-9675E0D63531}.Release|x86.ActiveCfg = Release|Win32
+		{7A653309-A087-46DE-BC8C-9675E0D63531}.Release|x86.Build.0 = Release|Win32
+		{4F86115D-57BA-45FE-8AB7-41A8A7621D46}.Debug|x86.ActiveCfg = Debug|Win32
+		{4F86115D-57BA-45FE-8AB7-41A8A7621D46}.Debug|x86.Build.0 = Debug|Win32
+		{4F86115D-57BA-45FE-8AB7-41A8A7621D46}.Release|x86.ActiveCfg = Release|Win32
+		{4F86115D-57BA-45FE-8AB7-41A8A7621D46}.Release|x86.Build.0 = Release|Win32
 		{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}.Debug|x86.ActiveCfg = Debug|Win32
 		{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}.Debug|x86.Build.0 = Debug|Win32
 		{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}.Release|x86.ActiveCfg = Release|Win32

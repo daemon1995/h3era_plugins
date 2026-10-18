@@ -1,4 +1,5 @@
 #include "MapObjectHandler.h"
+#include "../../headers/Era/ObjectText.hpp"
 
 static void __stdcall Load_Objnames_TXT(HiHook *h)
 {
@@ -15,8 +16,9 @@ static void __stdcall Load_CrBanks_TXT(HiHook *h)
     const DWORD base = reinterpret_cast<DWORD>(names);
     if (!names || end < base || (end - base) % sizeof(LPCSTR)) return;
     const size_t count = (end - base) / sizeof(LPCSTR);
-    EraJS::ReadIndexedText(names, count, MapObjectHandler::formats::CREATURE_BANKS,
-                           static_cast<int>(eObject::CREATURE_BANK));
+    for (size_t i = 0; i < count; ++i)
+        if (LPCSTR name = EraJS::ReadObjectName(eObject::CREATURE_BANK, static_cast<int>(i)))
+            names[i] = name;
 }
 void MapObjectHandler::Init()
 {

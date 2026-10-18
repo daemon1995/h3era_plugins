@@ -190,8 +190,8 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     constexpr int scrollbarWidth = 16;
     constexpr int arrowHeight = 16;
 
-    const int backgroundX = gameWidth - backgroundWidth >> 1;
-    const int backgroundY = gameHeight - backgroundHeight >> 1;
+    const int backgroundX = (gameWidth - backgroundWidth) >> 1;
+    const int backgroundY = (gameHeight - backgroundHeight) >> 1;
 
     const int frameOffset = (gameWidth < frameGameWidth) || (gameHeight < frameGameHeight) ? 0 : frameWidth;
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files"><UniqueIdentifier>{6B4B29FD-7BC6-4807-81AB-64368EA3B0BB}</UniqueIdentifier></Filter>
+    <Filter Include="Header Files"><UniqueIdentifier>{77F3F59A-7EAB-459A-89EE-7571462E3704}</UniqueIdentifier></Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ObjectDefinitions.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ObjectText.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="..\headers\Era\eramap.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="dllmain.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="ObjectExtenders\DwellingsExtender.cpp"><Filter>Source Files</Filter></ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ObjectDefinitions.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ObjectText.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="..\headers\Era\ObjectText.hpp"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="framework.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ObjectProperties.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="ObjectExtenders\DwellingsExtender.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="..\headers\Objects\DwellingConfig.h"><Filter>Header Files</Filter></ClInclude>
+  </ItemGroup>
+</Project>

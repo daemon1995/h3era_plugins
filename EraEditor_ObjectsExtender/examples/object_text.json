@@ -1,0 +1,30 @@
+{
+  "RMG": {
+    "objectGeneration": {
+      "16": {
+        "256": {
+          "name": "New creature bank",
+          "description": "A guarded bank added by the creature-bank extender."
+        }
+      },
+      "104": {
+        "1": {
+          "name": "Special university",
+          "description": "Teaches the skills configured for this university."
+        }
+      },
+      "144": {
+        "6": {
+          "name": "Gazebo",
+          "description": "Offers experience in exchange for gold."
+        }
+      },
+      "142": {
+        "0": {
+          "name": "Wood warehouse",
+          "description": "A warehouse configured by the HotA object extender."
+        }
+      }
+    }
+  }
+}

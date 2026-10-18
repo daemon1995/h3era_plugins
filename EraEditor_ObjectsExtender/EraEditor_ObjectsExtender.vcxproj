@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7A653309-A087-46DE-BC8C-9675E0D63531}</ProjectGuid>
+    <RootNamespace>EraEditor_ObjectsExtender</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup>
+    <PluginOutDir Condition="'$(PluginOutDir)' == '$(LocalGamePath)\Mods\$(PluginModName)\eraplugins\'">$(LocalGamePath)\Mods\$(PluginModName)\EraEditor\</PluginOutDir>
+    <PluginTargetExt Condition="'$(PluginTargetExt)' == '.era'">.dll</PluginTargetExt>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup><LocalDebuggerCommand>$(LocalGamePath)\h3wmaped.exe</LocalDebuggerCommand></PropertyGroup>
+  <ItemDefinitionGroup><ClCompile><LanguageStandard>stdcpp17</LanguageStandard></ClCompile></ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="ObjectDefinitions.h" />
+    <ClInclude Include="ObjectText.h" />
+    <ClInclude Include="..\headers\Era\ObjectText.hpp" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="ObjectProperties.h" />
+    <ClInclude Include="ObjectExtenders\DwellingsExtender.h" />
+    <ClInclude Include="..\headers\Objects\DwellingConfig.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ObjectDefinitions.cpp" />
+    <ClCompile Include="ObjectText.cpp" />
+    <ClCompile Include="..\headers\Era\eramap.cpp" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ObjectExtenders\DwellingsExtender.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="examples\object_text.json" />
+    <None Include="..\RMG_CustomizeObjectProperties\examples\dwellings.json" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

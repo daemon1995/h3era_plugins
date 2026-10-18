@@ -97,6 +97,7 @@ Shared MSBuild settings are inherited automatically by projects below the reposi
 - [Solution best practices](SOLUTION_BEST_PRACTICES.md)
 - [RMG_CustomizeObjectProperties documentation](RMG_CustomizeObjectProperties/README.md)
 - [RMG object extender API quick start](RMG_CustomizeObjectProperties/QUICK_START.md)
+- [Map editor object extender and dwelling configuration](EraEditor_ObjectsExtender/README.md)
 
 The `.vscode` directory contains helper tasks, but some older per-project tasks and local paths are machine-specific. Visual Studio and the solution files are the documented primary build path.
 
