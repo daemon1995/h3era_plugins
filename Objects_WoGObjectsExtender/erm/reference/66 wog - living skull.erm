@@ -1,0 +1,718 @@
+ZVSE2
+
+**   Living Skull Script Version 1.5 created by Timothy E. Pulver
+**   Requires WoG version 3.58 or later using ERM version 2.7 or later.
+**   Updated: June 23, 2004
+**   Updated: Sep 2022 by Archer30
+
+** This script makes all "Living Skulls" on a map function as artifact locating
+** devices. When a hero visits the skull, he or she may request a search for
+** an unclaimed artifact of a given type (e.g., Angel Wings, Golden Bow,
+** Titan's Gladius). To specify a type, the player types the name of the artifact
+** into an input box. Each search costs 100 gold pieces. If the artifact is
+** found on the map, the player will be told and given the option to learn the
+** exact location for the cost of a few resources and to see it revealed for
+** an additional 1000 gold.
+
+** The "Living Skull" is a new WoG object that can be found in the WoG
+** Heroes map editor in the Town Objects section. It's near the bottom of the
+** object list on the right-hand side, just below the black tower. It appears as
+** a skull with a single eye.
+
+** To install this script in a map, simply copy & paste the code into a global
+** (timed) event. Copy the entire code, from ZVSE to the end. Make sure
+** that you disable ALL colours from receiving the event and/or change
+** the event day to something like 500 or later to avoid the ERM script
+** popping up as if it were a regular event message. The title of the event
+** is unimportant, but I would suggest something like "Living Skull".
+** And of course, you'll also need to put one or more "Living Skulls" on
+** your map for the heroes to visit. Happy relic hunting! :-)
+
+** Version 1.2 adds support for Commander artifacts.
+** Version 1.3 shows the location of an artifact for free to the first hero
+** visiting each week but only allows 3 searches per turn. In addition, it will
+** even fetch a found artifact in exchange for Mithril.
+** Version 1.4 adds substring checking to make it easier for a player to enter
+** the correct name.
+** Version 1.5 adds support for the new artifacts.
+** Note: uses script00.erm for date/colour values.
+
+Flags used in this script: 1, 21, 27
+Variables used: v1-v4, v24-v34, v76, v94, v95, z1, z22-z44,z454
+PO Numbers used: N, O, V0
+Function variables used: x16, x1-x3, y1-y8
+Trigger variables used: y-1..y-12
+Extended Dialogue Box numbers used: 20-21
+
+** PO:O - store last visited player colour
+** PO:N - store search counter: 3 searches/day
+** PO:V0 - store last day used
+
+Variables that MUST be preserved outside this script: z454
+
+----------------------------------------------------------------------------------------
+
+!#UN:P12/?v1; [Check if script is enabled: v1]
+
+ [Set up hint text for Living Skulls]
+!#VRz454&v1=1:S^%T(wog.12.objName)^;
+!#HT(OBJ_NEW_WOG_OBJECTS)/50&v1=1:T454;
+
+----------------------------------------------------------------------------------------
+
+ [Living Skull is trigger]
+!?OB(OBJ_NEW_WOG_OBJECTS)/50;
+
+!!UN:P12/?y-1; [Check if script is enabled: y-1]
+!!FU&y-1=0:E; [Exit if script isn't enabled]
+
+ [Set it so that AI thinks Skull (Pyramid) is already visited and won't visit again]
+!!HE-1:O?v1; [Visiting player's colour]
+!!PM998:V0 Pv1/1;
+
+ [Living Skull script continues only for a human player, not AI]
+!!FU&-1000:E;
+
+ [Disable object - only important to avoid bug with change view command]
+!!OB998:S;
+
+ [Refresh object's hint text]
+!!OB998:H454;
+
+ [Initialize v30 to -1 (no artifact) and Flag 21 to 0]
+!!VRv30:S(NO_ART);
+!!IF:V21/0;
+
+ [Store hero's name in z26]
+!!HE-1:B0/?z26;
+
+ [Read values for: last visited player PO:O (y-2), last visited day PO:V0 (y-3)]
+ [and search count PO:N (y-4)]
+!!PO998:O?y-2 V0/?y-3 N?y-4;
+
+ [Reset search count to 0 if it's a new day or new player]
+!!VRy-4&i^timerDay^>y-3:S0;
+!!VRy-4&i^timerOwner^<>y-2:S0;
+
+--------------------------------------------------
+
+ [Free search for first visitor each week]
+
+!!VRy-11:Si^timerDay^; [Current day: y-11]
+!!VRy-11:-1; [Subtract 1 from current day: y-11]
+!!VRy-11::7; [Divide by 7 to get week (starting at 0): y-11]
+!!VRy-11:*7 +1; [Determine most recent "Monday": y-11]
+
+!!VRy-12:Sy-3 -1; [Subtract 1 from last day visited: y-12]
+!!VRy-12::7; [Divide by 7 to get week (starting at 0): y-12]
+!!VRy-12:*7 +1; [Determine most recent "Monday" for last day visited: y-12]
+
+ [Check if most recent "Monday" is after previously visited "Monday": set y-5 to 1 if yes]
+!!VRy-5:S0;
+!!VRy-5|y-11>y-12/y-3=0:S1;
+
+!!PO998&y-5=1:V0/i^timerDay^; [Set new last day visited]
+!!FU(WOG_12_ShowRandomArtifact)&y-5=1:P; [Call Function to show a random artifact on the map]
+
+!!FU&y-5=1:E; [Exit after "free search"]
+
+--------------------------------------------------
+
+ [If 3 searches already done today, display this and exit]
+!!if&y-4>=3;
+  !!SN:T^wog.12.greeting^/?z29/^hero^/z26;
+  !!VR(message:z):S^{%Z454}
+
+%Z29
+
+%T(wog.12.search.tired)^;
+  !!IF:M(message);
+  !!FU:E;
+!!en;
+
+; Get max artifact ID of the game
+; Note: executing this function changes z1, that's why it has to done here
+!!FU(GetMaxArtifactId):P?y30;
+; max art ID plus 1 for Pandora's Box
+!!VRy33:Sy30 +1;
+
+ [Set up extended dialogue box number 20]
+!!SN:T^wog.12.greeting^/?z29/^hero^/z26;
+!!SN:T^wog.12.inputHint^/?z40/^maxArtifact^/y33;
+!!IF:D20/29/40/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^;
+
+ [Call dialogue box number 20]
+!!IF:E1/20;
+
+ [Check if z1 has an empty string (no input) - check result stored in Flag 27]
+!!VRz1:H27;
+!!FU|-27/v1<0:E;                        [End function if nothing input or cancel]
+
+ [Artifact type is stored in v27 - default is standard artifact (type 5)]
+!!VRv27:S(OBJ_ARTIFACT);
+
+; Check if the first chracter of the input is a number
+!!VRy31:S(NO_ART);
+!!FU(WOG_CheckIfZ1FirstCharIsNum):P?y32;
+!!VRy31&y32:Vz1;
+!!VRy31|y31<(NO_ART)/y31>y33:S(NO_ART);
+
+; If input was a valid artifact number
+!!if&y31<>(NO_ART);
+  !!if&y31=y33;
+    !!VRv27:S(OBJ_PANDORAS_BOX);
+  !!el&y31=(ART_SPELL_SCROLL);
+    !!VRv27:S(OBJ_SPELL_SCROLL);
+  !!el;
+    !!VRv30:Sy31;
+    !!SN:H^art^/v30/0/?z23;
+  !!en;
+; If input was a name or invalid artifact number
+!!el;
+   [Set alternate names for several artifact types]
+  !!VRz30:S^%T(wog.12.aliases.grail)^; !!VRz31:S^%T(wog.12.aliases.grailFull)^;
+  !!VRz32:S^%T(wog.12.aliases.scroll)^; !!VRz33:S^%T(wog.12.aliases.scrollFull)^;  !!VRz39:S^%T(wog.12.aliases.spell)^;
+  !!VRz34:S^%T(wog.12.aliases.spellbook)^; !!VRz35:S^%T(wog.12.aliases.spellbookFull)^;
+  !!VRz36:S^%T(wog.12.aliases.pandora)^; !!VRz37:S^%T(wog.12.aliases.pandoraPlain)^;  !!VRz38:S^%T(wog.12.aliases.pandoraShort)^;
+  !!VRz1&z1=z30:Sz31;  !!VRz1&z1=z32:Sz33;  !!VRz1&z1=z34:Sz35;
+
+   [Check for Pandora's Box entry and if true, set artifact type (v27) to 6]
+  !!VRv27|z1=z36/z1=z37/z1=z38:S(OBJ_PANDORAS_BOX);
+  !!IF:V1/0; [Initialize Flag 1 to False]
+
+  !!if&v27<>(OBJ_PANDORAS_BOX);
+    !!VRz36:Uz1; [Check for substring match 1]
+
+    !!if&-1;
+      !!VRz37:Uz1; [Check for substring match 2]
+      !!VRz38:Uz1; [Check for substring match 3]
+    !!en;
+  !!en;
+
+  !!VRv27&1:S(OBJ_PANDORAS_BOX); [Set v27 to 6 if it's a substring match]
+
+   [Check for Spell Scroll entry and if true, set artifact type (v27) to 93]
+  !!VRv27|z1=z32/z1=z33/z1=z39:S(OBJ_SPELL_SCROLL);
+
+   [Function finds artifact name entered, if valid - artifact number is stored in v30]
+  !!DO(WOG_12_FindArtifactByName)/(ART_FIRST)/y30/1:P;
+
+   [If artifact is The Grail, change name to "Grail" for text display purposes]
+  !!VRz23&z23=z31:Sz30;
+!!en;
+
+  [Set z23 to "Pandora's Box" and v30 to -2]
+!!if&v27=(OBJ_PANDORAS_BOX);
+  !!VRz23:S^%T(wog.12.pandoraName)^;
+  !!VRv30:S-2;
+  [Set z23 to "Spell Scroll"]
+!!el&v27=(OBJ_SPELL_SCROLL);
+  !!VRz23:S^%T(wog.12.aliases.scrollFull)^;
+!!en;
+
+ [If artifact is a scroll, get spell desired by player]
+!!if&v27=(OBJ_SPELL_SCROLL);
+   [Set up extended dialogue box number 21]
+  !!VRz29:S^%T(wog.12.scroll.title)^;
+  !!SN:T^wog.12.scroll.question^/?z40/^hero^/z26;
+  !!IF:D21/29/40/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^;
+
+   [Call dialogue box number 21]
+  !!IF:E1/21;
+
+   [Check if z1 has an empty string (no input) - check result stored in Flag 27]
+  !!VRz1:H27;
+  !!FU|-27/v1<0:E;                        [End function if nothing input or cancel]
+
+   [Set v30 to -1]
+  !!VRv30:S(NO_ART);
+
+  ; Check if the first chracter of the input is a number
+  !!VRy34:Vz1;
+  !!FU(WOG_CheckIfZ1FirstCharIsNum):P?y35;
+
+  ; If input was a nunber
+  !!if&y35/y34>=(SPELL_FIRST)/y34<=(SPELL_LAST_WOG);
+    !!VRv30:Sy34;
+    !!VRv34:Sy34;
+    ; Set z23 to Scroll of "spell name"
+    !!SN:H^spell^/v30/(SPELL_TEXT_NAME)/?z23;
+    !!VR(spellName:z):Sz23;
+    !!SN:T^wog.12.scroll.name^/?z23/^spell^/(spellName);
+  ; If input was a name
+   [Function finds spell name entered, if valid - spell number is stored in v30 and v34]
+   [and Scroll of "spell name" is stored in z23]
+  !!el;
+    !!DO(WOG_12_FindSpellByName)/(SPELL_FIRST)/(SPELL_LAST_WOG)/1:P;
+  !!en;
+ [If artifact wasn't found but could be a scroll name, call Function]
+; Execute only when input was not a number
+!!el&v27=(OBJ_ARTIFACT)/v30=(NO_ART)/y32<>(TRUE);
+  !!DO(WOG_12_FindSpellByName)/(SPELL_FIRST)/(SPELL_LAST_WOG)/1:P;
+!!en;
+
+ [Ask for a search with a common template and the appropriate target]
+!!if&v30>=(ART_FIRST);
+  !!if&v27=(OBJ_ARTIFACT);
+    !!SN:T^wog.12.search.target.artifact^/?(target:z)/^artifact^/z23;
+  !!el&v27=(OBJ_SPELL_SCROLL);
+    !!SN:T^wog.12.search.target.scroll^/?(target)/^artifact^/z23;
+  !!en;
+  !!SN:T^wog.12.search.offer^/?(message:z)/^artifact^/z23/^target^/(target);
+  !!IF&v27=(OBJ_ARTIFACT):Q1/(PIC_TYPE_ART)/v30/(MSG_TYPE_QUESTION)/(message);
+  !!IF&v27=(OBJ_SPELL_SCROLL):Q1/(PIC_TYPE_SPELL)/v34/(MSG_TYPE_QUESTION)/(message);
+!!en;
+!!if&v27=(OBJ_PANDORAS_BOX);
+  !!SN:T^wog.12.search.target.pandora^/?(target)/^artifact^/z23;
+  !!SN:T^wog.12.search.offer^/?(message:z)/^artifact^/z23/^target^/(target);
+  !!IF:Q(MSG_TYPE_MES)/(message);
+!!en;
+
+ [If player declines to pay for the search, display this message and set Flag 21 to true]
+!!if&-1;
+  !!IF&v30<>(NO_ART):M1/^%T(wog.12.search.declined)^;
+  !!IF:V21/1;
+!!en;
+
+ [Check if player has enough gold]
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/>=100;
+
+ [If player doesn't have enough gold but wished to search, display this message]
+!!IF&-21/-1/v30>=(ART_FIRST):M1/^%T(wog.12.search.noGold)^;
+
+ [If artifact requested wasn't a valid artifact, display this message]
+!!if&v30=(NO_ART)/v27<>(OBJ_PANDORAS_BOX);
+  !!SN:T^wog.12.search.unknown^/?(message:z)/^input^/z1;
+  !!IF:M1/(message);
+!!en;
+
+--------------------------------------------
+
+ [Exit script if artifact isn't valid or search isn't paid for]
+!!FU|21/-1/v30=(NO_ART):E;
+
+ [Subtract 100 gold from player and display thank you message]
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/d-100;
+!!SN:T^wog.12.search.paid^/?(message:z)/^hero^/z26;
+!!IF:Q1/(RES_GOLD)/-100100/(MSG_TYPE_MES)/(message);
+
+ [Calls function to search for the requested artifact]
+!!FU(WOG_12_FindRequestedArtifact):P;
+
+ [Increase daily search count by 1, set player's colour and current date]
+!!VRy-4:+1; [Search count]
+!!HE(CURRENT_HERO):P?y-6/?y-7/?y-8; [Hero's location]
+!!POy-6/y-7/y-8:Oi^timerOwner^ Ny-4 V0/i^timerDay^;
+
+----------------------------------------------------------------------------------------
+
+ [Start of Function - find artifact name entered]
+ [If valid, stores artifact number in v30]
+!?FU(WOG_12_FindArtifactByName);
+
+ [Looks up name of artifact number x16 (loop) and stores it in variable z22]
+!!SN:H^art^/x16/0/?z22;
+
+ [Sets v30 to x16 if artifact name entered by player (z1) is the same as artifact name
+  for artifact number x16 (loop)]
+!!VRv30&z1=z22/x16<>144/x16<>145:Sx16;
+
+ [Check for substring match: Flag 1=True if match found]
+!!IF:V1/0; [Initialize Flag 1 to False]
+!!VRz22:Uz1; [See if user's input is a substring of z22]
+!!VRz1&-1:Uz22; [See if z22 is a substring of user's input]
+!!VRv30&1/x16<>144/x16<>145:Sx16;
+
+ [Sets z23 to true artifact name (proper capitalisation, etc.) if an artifact
+  match or substring match is found]
+!!VRz23&z1=z22/x16<>144/x16<>145:Sz22;
+!!VRz23&1/x16<>144/x16<>145:Sz22;
+
+ [Exit loop if a match or substring match is found]
+!!VRx16&z1=z22/x16<>144/x16<>145:S999;
+!!VRx16&1/x16<>144/x16<>145:S999;
+
+----------------------------------------------------------------------------------------
+
+ [Start of Function - search for requested artifact]
+!?FU(WOG_12_FindRequestedArtifact);
+
+ [Set v29 (number of artifacts found) to 0]
+!!VRv29:S0;
+
+ [If v27 = 6 (Pandora's Box) or 93 (Spell Scroll), set v30 to -1]
+!!VRv30|v27=6/v27=93:S-1;
+
+ [Search for artifact - store number found in v29]
+!!UN:Uv27/v30/?v29;
+
+ [Store location of first artifact (if any) in v31/v32/v33]
+!!UN&v29>0:Uv27/v30/1/31;
+
+ [If scroll is searched for and any are on map, Function checks for requested spell]
+!!VRv24:S0;
+!!DO(WOG_12_FindRequestedSpell)/1/v29/1&v27=93/v29>0:P;
+
+ [If scroll searched for but requested spell not found, set v29 to 0]
+!!VRv29&v27=93/v24=0:S0;
+
+ [Store "on the surface", "underground" or "nowhere to be found" in z24, depending on
+  the value of v29 and v33]
+!!VRz24&v29>0/v33=0:S^%T(wog.12.layer.surface)^;
+!!VRz24&v29>0/v33=1:S^%T(wog.12.layer.underground)^;
+!!VRz24&v29=0:S^%T(wog.12.layer.missing)^;
+
+ [Select grammar once; load each fragment when it is needed]
+!!VR(grammarKey:z):S^wog.12.grammar.singular^;
+!!if&v27=(OBJ_ARTIFACT);
+  !!if|v30=32/v30=41/v30=47/v30=56/v30=59/v30=62/v30=70/v30=72/v30=90/v30=98/v30=125;
+    !!VR(grammarKey):S^wog.12.grammar.plural^;
+  !!en;
+!!en;
+!!SN:T^%(grammarKey).verb^/?z43;
+
+ [If artifact has super long name, set it in gold colour properly]
+!!VRz23&v27=5/v30=36:S^%T(wog.12.artifacts.36.highlighted)^; [Helm of Heavenly Enlightenment]
+!!VRz23&v27=5/v30=61:S^%T(wog.12.artifacts.61.highlighted)^; [Bowstring of the Unicorn's Mane]
+!!VRz23&v27=5/v30=158:S^%T(wog.12.artifacts.158.highlighted)^; [Barbarian Lord's Axe of Ferocity]
+
+ [Display message indicating if it's on the surface, underground or nowhere to be found]
+!!SN:T^wog.12.found^/?(message:z)/^artifact^/z23/^verb^/z43/^layer^/z24;
+!!IF:M1/(message);
+
+ [If artifact has super long name (e.g., Helm of Heavenly Enlightenment),]
+ [restore it's white colour]
+!!VRz23&v27=5/v30=36:S^%T(wog.12.artifacts.36.plain)^;
+!!VRz23&v27=5/v30=61:S^%T(wog.12.artifacts.61.plain)^;
+
+--------------------------------------------
+
+ [Exit Function if artifact wasn't located (v29<=0)]
+!!FU&v29<=0:E;
+
+ [Generate random precious resource (v76) as fee for exact location]
+!!VRv76:S0 R7;
+!!VRv76&v76=0:S1;
+!!VRv76&v76=2:S3;
+!!VRv76&v76=6:S4;
+!!VRv76&v76=7:S5;
+!!SN:T^wog.12.resources.%V76^/?z41;
+
+ [Display dialogue box asking if player will pay 2 of this precious resource]
+!!SN:T^wog.12.locate.offer^/?(message:z)/^resource^/z41/^artifact^/z23;
+!!IF:Q1/v76/2/2/(message);
+
+!!if&-1;
+  !!SN:T^wog.12.locate.declined^/?(message:z)/^artifact^/z23;
+  !!IF:M1/(message);
+!!en;
+
+--------------------------------------------
+
+ [Exit Function if player doesn't agree to pay resource fee]
+!!FU&-1:E;
+
+ [Check player's current amount of resource (v76) - store amount in v77]
+!!OW:R(CURRENT_PLAYER)/v76/?v77;
+
+ [If player doesn't have enough to pay the fee, display message]
+!!if&v77<2;
+  !!SN:T^wog.12.locate.noResources^/?(message:z)/^resource^/z41;
+  !!IF:Q1/v76/2/1/(message);
+!!en;
+
+--------------------------------------------
+
+ [Exit Function if player doesn't have enough of the required resource (v77)]
+!!FU&v77<2:E;
+
+ [Reduce player's resource number v76 by 2 and display thank you message]
+!!OW:R(CURRENT_PLAYER)/v76/d-2;
+!!IF:Q1/v76/-100002/1/^%T(wog.12.locate.paid)^;
+
+ [Build distances for the North/South and East/West axes]
+!#VA(offsets[2]:y);
+!!VR(offsets[0]):Sv999 -v32;
+!!VR(offsets[1]):Sv31 -v998;
+!!VRv25:S0;
+!!VRv26:S0;
+!!VR(directionKey:z):S^wog.12.direction.^;
+!!VR(distanceText:z):S^^;
+!!re (axis:y)/0/(offsets[SIZE])/1/-1;
+  !!VR(steps:y):S(offsets[axis]);
+  !!co&(steps)=0;
+  !!if&(axis)=0;
+    !!if&(steps)>0;
+      !!VR(axisName:z):S^north^;
+    !!el;
+      !!VR(axisName):S^south^;
+    !!en;
+  !!el;
+    !!if&(steps)>0;
+      !!VR(axisName):S^east^;
+    !!el;
+      !!VR(axisName):S^west^;
+    !!en;
+  !!en;
+  !!VR(directionKey):+(axisName);
+  !!SN:T^wog.12.axis.%(axisName)^/?(axisText:z);
+  !!VR(steps)&(steps)<0:*-1;
+  !!if&(axis)=0;
+    !!VRv25:S(steps);
+  !!el;
+    !!VRv26:S(steps);
+  !!en;
+  !!VR(textKey:z):S^wog.12.paces.many^;
+  !!VR(lastTwo:y):S(steps) %100;
+  !!VR(lastOne:y):S(steps) %10;
+  !!if&(steps)=1;
+    !!VR(textKey):S^wog.12.paces.one^;
+  !!el|(lastTwo)<11/(lastTwo)>14;
+    !!if&(lastOne)=1;
+      !!VR(textKey):S^wog.12.paces.endingOne^;
+    !!el&(lastOne)>=2/(lastOne)<=4;
+      !!VR(textKey):S^wog.12.paces.few^;
+    !!en;
+  !!en;
+  !!SN:T(textKey)/?(unitText:z);
+  !!SN:T^wog.12.distance^/?(partText:z)/^count^/(steps)/^unit^/(unitText)/^axis^/(axisText);
+  !!VR(distanceText)&(distanceText)<>^^:+^%T(wog.12.distanceJoin)^;
+  !!VR(distanceText):+(partText);
+!!en;
+
+ [Preserve the special formatting of long artifact names]
+!!VRz23&v27=5/v30=36:S^%T(wog.12.artifacts.36.highlighted)^;
+!!VRz23&v27=5/v30=61:S^%T(wog.12.artifacts.61.highlighted)^;
+
+ [Show one location message for any direction]
+!!if&(distanceText)<>^^;
+  !!SN:T(directionKey)/?(directionText:z);
+  !!SN:T^%(grammarKey).subject^/?z42;
+  !!SN:T^wog.12.location^/?(message:z)/^artifact^/z23/^verb^/z43/^direction^/(directionText)/^layer^/z24/^subject^/z42/^distance^/(distanceText);
+  !!IF:M1/(message);
+!!en;
+
+ [If artifact has super long name (e.g., Helm of Heavenly Enlightenment),]
+ [restore its white colour]
+!!VRz23&v27=5/v30=36:S^%T(wog.12.artifacts.36.plain)^;
+!!VRz23&v27=5/v30=61:S^%T(wog.12.artifacts.61.plain)^;
+
+--------------------------------------------
+
+ [Display dialogue box asking if player will pay 1000 gold to see the artifact]
+!!SN:T^%(grammarKey).pronoun^/?z44;
+!!SN:T^wog.12.reveal.offer^/?(message:z)/^artifact^/z23/^pronoun^/z44;
+!!IF:Q1/6/1000/2/(message);
+
+!!if&-1;
+  !!SN:T^wog.12.reveal.declined^/?(message:z)/^artifact^/z23;
+  !!IF:M1/(message);
+!!en;
+
+--------------------------------------------
+
+ [Exit Function if player doesn't agree to pay fee of 1000 gold]
+!!FU&-1:E;
+
+ [Check player's current amount of gold - store amount in v77]
+!!OW:R(CURRENT_PLAYER)/6/?v77;
+
+ [If player doesn't have enough to pay the fee, display message]
+!!if&v77<1000;
+  !!SN:T^wog.12.reveal.noGold^/?(message:z)/^hero^/z26;
+  !!IF:Q1/6/1000/1/(message);
+!!en;
+
+--------------------------------------------
+
+ [Exit Function if player doesn't have enough gold]
+!!FU&v77<1000:E;
+
+ [Reduce player's gold by 1000 and display thank you message]
+!!OW:R(CURRENT_PLAYER)/6/d-1000;
+!!SN:T^wog.12.reveal.paid^/?(message:z)/^hero^/z26/^artifact^/z23;
+!!IF:Q1/6/-101000/1/(message);
+
+ [Check current player]
+!!OW:C?v28;
+
+ [Open shroud around artifact and move view to that position (4 seconds)]
+!!UN:R5/1/1; [Change mouse cursor to "wait" hourglass symbol]
+!!UN:R7/0/1; [Show mouse cursor and disable changing]
+!!UN:Sv31/v32/v33/v28/1;
+!!UN:Lv31/v32/v33/2000;
+!!UN:R7/0/0; [Show mouse cursor and enable changing]
+!!UN:R5/0/0; [Restore default cursor]
+
+ [Ask if the hero wishes the Artifact (v27=5) brought to him/her for Mithril]
+!!FU(WOG_12_AskIfBroughtArtifact):Pv31/v32/v33;
+
+----------------------------------------------------------------------------------------
+
+ [Start of Function - find spell name entered]
+ [If valid, stores spell number in v30]
+!?FU(WOG_12_FindSpellByName);
+
+ [Looks up name of spell scroll number x16 (loop) and stores it in variable z22]
+!!UN:N1/22/x16;
+
+!!SN:T^wog.12.scroll.name^/?z25/^spell^/z22; [Add "scroll of" to spell name: z25]
+
+!!IF:V1/0; [Initialize Flag 1 to False]
+
+ [Check for exact match: Flag 1=True if match]
+!!IF|z1=z22/z1=z25:V1/1;
+
+ [Assign spelled out name for "protection from" spells (instead of "prot.")]
+!!if&-1;
+  !!VR(firstWord:z):M2/z22/0;
+  !!VR(secondWord:z):M2/z22/1;
+  !!VR(thirdWord:z):M2/z22/2;
+  !!SN:T^wog.12.protection.abbreviated^/?(abbreviated:z);
+  !!if&(firstWord)=(abbreviated);
+    !!SN:T^wog.12.protection.full^/?(fullWord:z);
+    !!VRz22:S^%(fullWord) %(secondWord) %(thirdWord)^;
+  !!en;
+  !!SN:T^wog.12.scroll.name^/?z25/^spell^/z22; [Add "scroll of" to spell name: z25]
+
+   [Check for substring match]
+  !!VRz22:Uz1; [See if user's input is a substring of spell name: Flag 1=True if yes]
+  !!VRz25:Uz1; [See if user's input is a substring of spell name: Flag 1=True if yes]
+
+  !!FU:E; [Exit if no match found]
+!!en;
+
+ [Sets v30 and v34 to x16 if spell name entered by player (z1) is the same as spell name]
+ [for spell number x16 (loop)]
+!!VRv30:Sx16;
+!!VRv34:Sx16;
+
+ [Make sure artifact type (v27) is set to scroll if there's a match]
+!!VRv27:S93;
+
+ [Sets z23 to true spell name (proper capitalisation, etc.) if a spell match is found]
+!!VRz23:Sz22;
+
+ [Sets z23 to Scroll of "spell name"]
+!!VR(spellName:z):Sz23;
+!!SN:T^wog.12.scroll.name^/?z23/^spell^/(spellName);
+
+!!VRx16:S999; [Exit loop if a match is found]
+
+----------------------------------------------------------------------------------------
+
+ [Start of Function - searches for requested Spell Scroll among any scrolls found]
+!?FU(WOG_12_FindRequestedSpell);
+
+ [Get coordinates of current Spell Scroll at x16 loop]
+!!UN:U93/-1/x16/31;
+
+ [Store control number of Spell Scroll in y1 variable]
+!!OB31:C?y1;
+
+ [If requested spell found, set v24 to 99]
+!!VRv24&y1=v34:S99;
+
+ [If requested spell found, exit function loop]
+!!VRx16&y1=v34:Sv29;
+
+----------------------------------------------------------------------------------------
+
+ [Start of Function - show a random artifact on the map to first visitor each week]
+
+!?FU(WOG_12_ShowRandomArtifact);
+!!UN:U(OBJ_ARTIFACT)/(ANY_OBJ)/?y1; [Number of artifacts on map: y1]
+
+!!if&y1<1;
+  !!VRy-5:S0; [Set y-5 to 0 if no artifacts: y-5]
+  !!FU:E; [Exit if no artifacts on the map]
+!!en;
+
+!!VRy3:R0/1/y1; [Random artifact on map: y3]
+!!UN:U(OBJ_ARTIFACT)/(ANY_OBJ)/y3/2; [Store coordinates in v2/v3/v4]
+!!VRv27:S(OBJ_ARTIFACT); [Artifact type: 5]
+!!OB2:U?v30; [Artifact #: v30]
+
+!!SN:H^art^/v30/0/?z23; [Artifact name: z23]
+
+!!SN:T^wog.12.freeVision^/?(message:z)/^hero^/z26;
+!!IF:Q1/8/v30/1/(message); [Display message]
+
+ [Open shroud around artifact and move view to that position with 3 second delay]
+!!UN:R5/1/1; [Change mouse cursor to "wait" hourglass symbol]
+!!UN:R7/0/1; [Show mouse cursor and disable changing]
+!!UN:Sv2/v3/v4/i^timerOwner^/1;
+!!UN:Lv2/v3/v4/2000;
+!!UN:R7/0/0; [Show mouse cursor and enable changing]
+!!UN:R5/0/0; [Restore default cursor]
+
+ [Ask if the hero wishes the Artifact (v27=5) brought to him/her for Mithril]
+!!FU(WOG_12_AskIfBroughtArtifact):Pv2/v3/v4;
+
+----------------------------------------------------------------------------------------
+
+ [Ask if the hero wishes the Artifact (v27=5) brought to him/her for Mithril]
+ [x1/x2/x3 = artifact's location]
+
+!?FU(WOG_12_AskIfBroughtArtifact);
+
+ [Artifact # is v30]
+ [Doesn't apply to Pandora's Box (v27=6), War Machines, Spell Books or The Grail]
+ [Spell Scrolls are (v27=93) and cost 6 Mithril]
+
+ [Check Artifact Class: y1]
+
+ [Set Mithril cost: y2]
+!!VRy2:S0;
+
+!!if&v27=(OBJ_ARTIFACT)/v30>=(ART_CENTAUR_AXE);
+  !!UN:Av30/3/?y1;
+
+  ; Show msg and end the function if the artifact level is special or relic
+  !!if|y1=(ART_LEVEL_SPECIAL)/y1=(ART_LEVEL_RELIC);
+    !!IF:Q1/(PIC_TYPE_ART)/v30/(MSG_TYPE_MES)/^%T(wog.12.cantBring)^;
+  !!el;
+    !!VRy2:Sy1 *3;                      [Mithril cost = class cost: y2]
+  !!en;
+!!el&v27=(OBJ_SPELL_SCROLL);
+  !!VRy2:S6;[Spell scroll: 6 Mithril: y2]
+!!en;
+
+!!FU&y2=0:E;                            [Exit if not a regular Artifact or Scroll]
+
+ [Display dialogue asking if player will pay the Mithril for the Artifact]
+!!SN:T^wog.12.bring.offer^/?(message:z)/^mithril^/y2/^artifact^/z23;
+!!IF:Q1/7/y2/2/(message);
+
+!!FU&-1:E; [Exit if player doesn't agree to pay the Mithril]
+
+!!OW:R(CURRENT_PLAYER)/7/?y3; [Check player's current Mithril: y3]
+
+ [If player doesn't have enough Mithril, display this and exit]
+!!if&y3<y2;
+  !!SN:T^wog.12.bring.noMithril^/?(message:z)/^hero^/z26;
+  !!IF:Q1/7/y2/1/(message);
+!!en;
+!!FU&y3<y2:E;
+
+ [Reduce player's Mithril]
+!!VRy8:Sy3 -y2;
+!!OW:R(CURRENT_PLAYER)/7/y8;
+
+ [If player paid the Mithril, remove Artifact from map and equip on hero]
+ [Replace artifact with Mithril paid]
+!!UN:Ox1/x2/x3/1; [Remove Artifact]
+!!UN:Ix1/x2/x3/79/7; [Place Mithril on map]
+!!ARx1/x2/x3:Vy2; [Set correct amount of Mithril]
+!!HE-1&v27=5:A4/v30; [Equip artifact on hero]
+!!VRy4&v27=93:S1001 +v34; [Scroll artifact number: y4]
+!!HE-1&v27=93:A4/y4; [Equip spell scroll on hero]
+!!if|v27=5/v27=93;
+  !!SN:T^wog.12.bring.paid^/?(message:z)/^hero^/z26;
+  !!IF&v27=5:Q1/8/v30/1/(message);
+  !!IF&v27=93:Q1/9/v34/1/(message);
+!!en;
+!!HE-1:P?y5/?y6/?y7; [Hero's location: y5/y6/y7]
+!!UN:Ly5/y6/y7/0; [Move view back to hero]
+
+** End of Script **

@@ -1,0 +1,1465 @@
+ZVSE2
+
+********************************************************************************
+** The Artificer upgrades artifacts a hero has equiped                        **
+** The Artificer can upgrade artifacts twice a day,                           **
+** but the second upgrade will cost twice.                                    **
+** Ban checks match the legacy script; see Artificer.md.                      **
+** The Artificer has correction of prices for boosted and enchanted artifacts.**
+********************************************************************************
+** List of upgradeable artifacts:
+** Centaur Axe => Blackshard of the Dead Knight => Greater Gnoll's Flail => Ogre's Club of Havoc => Sword of Hellfire => Titan's Gladius
+** Shield of the Dwarven Lords => Shield of the Yawning Dead => Buckler of the Gnoll King => Targ of the Rampaging Ogre => Shield of the Damned => Sentinel's Shield
+** Helm of the Alabaster Unicorn => Skull Helmet => Helm of Chaos => Crown of the Supreme Magi => Hellstorm Helmet => Thunder Helmet
+** Breastplate of Petrified Wood => Rib Cage => Scales of the Greater Basilisk => Tunic of the Cyclops King => Breastplate of Brimstone => Titan's Cuirass
+** Armor of Wonder => Sandals of the Saint => Celestial Necklace of Bliss => Lion's Shield of Courage => Sword of Judgement => Helm of Heavenly Enlightenment
+** Quiet Eye of the Dragon => Red Dragon Flame Tongue => Dragon Scale Shield => Dragon Scale Armor
+** Dragonbone Greaves =>  Dragon Wing Tabard => Necklace of Dragonteeth => Crown of Dragontooth
+** Still Eye of the Dragon => Pendant of Courage
+** Amulet of the Undertaker => Vampire's Cowl => Dead Man's Boots
+** Garniture of Interference => Surcoat of Counterpoise => Boots of Polarity
+** Bow of Elven Cherrywood => Bowstring of the Unicorn's Mane => Angel Feather Arrows
+** Bird of Perception => Stoic Watchman => Emblem of Cognizance
+** Statesman's Medal => Diplomat's Ring => Ambassador's Sash
+** Ring of the Wayfarer => Cape of Velocity
+** Equestrian's Gloves => Boots of Speed
+** Necklace of Ocean Guidance => Sea Captain's Hat
+** Charm of Mana => Talisman of Mana => Mystic Orb of Mana
+** Collar of Conjuring => Ring of Conjuring => Cape of Conjuring
+** Recanter's Cloak => Orb of Inhibition
+** Ring of Vitality => Vial of Lifeblood
+** Ring of Life => Vial of Lifeblood
+** Necklace of Swiftness => Cape of Velocity
+** Endless Purse of Gold => Endless Bag of Gold => Endless Sack of Gold
+** Legs of Legion => Loins of Legion => Torso of Legion => Arms of Legion => Head of Legion
+********************************************************************************
+** Ring of Vitality <=> Ring of Life
+** Clover of Fortune <=> Cards of Prophecy <=> Ladybird of Luck
+** Badge of Courage <=> Crest of Valor <=> Glyph of Gallantry
+** Speculum <=> Spyglass
+** Spirit of Oppression <=> Hourglass of the Evil Hour
+** Orb of the Firmament <=> Orb of Silt <=> Orb of Tempestuous Fire <=> Orb of Driving Rain
+** Tome of Fire Magic <=> Tome of Air Magic <=> Tome of Water Magic <=> Tome of Earth Magic
+** Everflowing Crystal Cloak <=> Ring of Infinite Gems <=> Everpouring Vial of Mercury <=> Eversmoking Ring of Sulfur
+** Inexhaustible Cart of Ore <=> Inexhaustible Cart of Lumber
+** Pendant of Life <=> Pendant of Death
+********************************************************************************
+** Quiet Eye of the Dragon + Still Eye of the Dragon => Dragon Eye Ring
+** Clover of Fortune + Cards of Prophecy + Ladybird of Luck + Badge of Courage + Crest of Valor + Glyph of Gallantry => Pendant of Courage
+** Orb of the Firmament + Orb of Silt + Orb of Tempestuous Fire + Orb of Driving Rain => Orb of Vulnerability
+********************************************************************************
+; ERM2 adaptation: recipe/price functions have explicit parameters and no dialog globals.
+; Named WOG_Artificer_* functions replace private numeric FU IDs.
+; v156..v164, v4101..v4136 and z28..z44/z160..z164 remain a compatibility adapter for IF:G/HT and AI.
+; Menu and page navigation are iterative. Historical AI quirks are documented in Artificer.md.
+; This is a replacement for script 52, not a second script to load alongside it.
+
+!?FU(OnAfterErmInstructions);
+!!UN:P26/?(artificer:y);                  [Check if script is enabled: v1]
+
+** set hints **
+!!if&(artificer);
+  !!SN:T^wog.26.hint^/?z160/^name^/^%T(wog.26.objName)^/^fatigue^/^%T(wog.26.fatigue.0)^;
+  !!SN:T^wog.26.hint^/?z163/^name^/^%T(wog.26.objName)^/^fatigue^/^%T(wog.26.fatigue.1)^;
+  !!SN:T^wog.26.hint^/?z164/^name^/^%T(wog.26.objName)^/^fatigue^/^%T(wog.26.fatigue.2)^;
+  !!HT(OBJ_NEW_WOG_OBJECTS)/52:P1/160;
+  !!HT(OBJ_NEW_WOG_OBJECTS)/52:P2/163;
+  !!HT(OBJ_NEW_WOG_OBJECTS)/52:P3/164;
+!!en;
+
+; Check if Enhanced Artifacts are enabled
+!!UN:P102/?i^wog_102_enabled^;          [Check if Enhanced Artifacts I is enabled in WoGify Options]
+!!UN:P71/?i^wog_71_enabled^;            [Check if Enhanced Artifacts II is enabled in WoGify Options]
+
+!?FU(OnEveryDay)&i^timerOnce^;
+!!UN:P26/?y-1;                          [Check if script is enabled: y-1]
+!!FU&y-1<>1:E;                          [exit if disabled]
+
+!!UN:U(OBJ_NEW_WOG_OBJECTS)/52/?y-2;                       [y-2 = quantity of (OBJ_NEW_WOG_OBJECTS)/52]
+!!DO(WOG_Artificer_ResetDailyVisits)/1/y-2/1&y-2>=1:P;               [reset visits]
+
+*!* OBJECT TRIGGER *!*
+!?OB(OBJ_NEW_WOG_OBJECTS)/52;
+!!UN:P26/?y-1;                          [Check if script is enabled: y-1]
+!!FU&y-1<>1:E;                          [Exit if script isn't enabled]
+
+ [Fix AI behaviours]
+!!if&-(ERM_FLAG_IS_HUMAN);
+  !!OB998:S;                              [disable pyramid feature]
+  !!PM998:V(FALSE);
+!!en;
+
+!!PM998:Pi^timerOwner^/(TRUE);
+
+!!VRv157:Sv998;
+!!VRv158:Sv999;
+!!VRv159:Sv1000;
+!!PO157:N?v160;
+
+!!FU(WOG_Artificer_ShowMainMenu):P;
+!!FU(WOG_Artificer_RunServices):P;
+
+*!* FU(WOG_Artificer_ShowMainMenu) MAIN FUNCTION *!******************************************************
+!?FU(WOG_Artificer_ShowMainMenu);
+
+!!VRv4118:S2048;
+
+** questions of artificer **
+; If Mithril is enabled, show the dialogue for exchanging resources, otherwise hide it
+!!if&(ERM_FLAG_IS_HUMAN);
+  !!if|v160=1/v160=2;
+    !!if&v160=1;
+      !!SN:T^wog.26.greeting.first^/?z2/^name^/^%T(wog.26.objName)^;
+    !!en;
+    !!if&v160=2;
+      !!SN:T^wog.26.greeting.second^/?z2/^name^/^%T(wog.26.objName)^;
+    !!en;
+    !!UN:P36/?v1;                       [Check if Mithril script is enabled: v1]
+
+    !!if&v1;
+      !!IF:G1/4118/2048/z2/^%T(wog.26.menu.upgrade)^/^%T(wog.26.menu.change)^/^%T(wog.26.menu.combine)^/^%T(wog.26.menu.help)^/^%T(wog.26.menu.sell)^///////^%T(wog.26.menu.leave)^;
+    !!el;
+      !!IF:G1/4118/2048/z2/^%T(wog.26.menu.upgrade)^/^%T(wog.26.menu.change)^/^%T(wog.26.menu.combine)^/^%T(wog.26.menu.help)^////////^%T(wog.26.menu.leave)^;
+    !!en;
+
+    !!FU&v4118=2048:E; it should exit here when return, but it runs once more (?)[not for me, with this version--JV]
+
+    !!if&v4118=16;
+      !!FU(WOG_Artificer_ChooseBackpackSale):P;
+    !!en;
+  !!el&v160=3;
+    !!SN:T^wog.26.tired^/?(message:z)/^name^/^%T(wog.26.objName)^;
+    !!IF:M1/(message);
+  !!en;
+** AI = Upgrade **
+!!el;
+  !!VRv4118:S1;
+!!en;
+
+
+!?FU(WOG_Artificer_ChooseBackpackSale);
+!!VR(counter:y):S0;
+!!FU(NewIntArray):P?(slotList:y) P?(picList:y);
+
+!!re i/(ART_SLOT_BACKPACK_FIRST)/(ART_SLOT_BACKPACK_LAST);
+  !!HE(CURRENT_HERO):A1/?(art:y)/i;
+
+  !!if&(art)>(NO_ART)/(art)<(ART_META_SPELLBOOK);
+    !!VR(counter):+1;
+    !!FU(Array_Push):P(slotList)/i P(picList)/(PIC_TYPE_ART)/(art);
+  !!en;
+
+  !!br&(counter)=8;                     [max for 8 artifacts]
+!!en;
+
+!!if&(counter)=0;
+  !!IF:M1/^%T(wog.26.sell.noArtifacts)^; ^You have no artifacts in your backpack, so unless there's something you want to unequip, I guess we won't be doing business today. No hard feelings though - come back anytime!^
+!!el;
+  !!FU(PrepareMultiPicDialog):P(picList);
+  !!IF:N(MSG_TYPE_CHOOSE_PIC_OR_CANCEL)/^%T(wog.26.sell.chooseArtifact)^/?(choice:y);
+
+  !!if&(choice)>-1;
+    !!SN:M(slotList)/(choice)/?(slot:y);
+    !!FU(WOG_Artificer_SellBackpackSlot):P(slot);
+  !!en;
+!!en;
+
+!?FU(WOG_Artificer_SellBackpackSlot);
+!#VA(slot:x);
+
+!!HE(CURRENT_HERO):A1/?y2/(slot);
+!!FU(WOG_Artificer_GetSalePrice):Py2/?y6/?y5;
+!!UN:N0/z1/y2;
+!!SN:T^wog.26.sell.chooseCurrency^/?(message:z)/^first^/z1;
+!!IF:Q1/7/y5/6/y6/8/y2/10/(message); ^What do you want for the %Z1, Mithril or Gold?^;I get this once more after leaving the object [I don't--JV]
+
+!!if&v1=1;
+  !!SN:T^wog.26.sell.mithril^/?(message:z)/^first^/z1/^mithril^/y5;
+  !!IF:Q1/8/y2/7/y5/2/(message);       ^Confirm selling the %Z1 for {%Y5} mithril?^
+  !!HE(CURRENT_HERO)&1:A3/y2/1/0;
+  !!OW&1:R(CURRENT_PLAYER)/(RES_MITHRIL)/dy5;
+!!el&v1=2;
+  !!SN:T^wog.26.sell.gold^/?(message:z)/^first^/z1/^gold^/y6;
+  !!IF:Q1/8/y2/6/y6/2/(message);       ^Confirm selling the %Z1 for {%Y6} Gold?^;
+  !!HE(CURRENT_HERO)&1:A3/y2/1/0;
+  !!OW&1:R(CURRENT_PLAYER)/(RES_GOLD)/dy6;
+!!en;
+
+!!UN:R2;
+
+
+**!** FU(WOG_Artificer_Upgrade) to upgrade artifact **!*********************************************
+!?FU(WOG_Artificer_Upgrade);
+
+!!re (index:y)/0/13;
+  !!VR(slot:y):S(index);
+  !!VR(slot)&(index)=13:S18;
+  !!VR(artifactVar:y):S4101+(index);
+  !!HE(CURRENT_HERO):A1/?v(artifactVar)/(slot);
+!!en;
+
+!!re (index:y)/0/13;
+  !!VR(slot:y):S(index);
+  !!VR(slot)&(index)=13:S18;
+  !!VR(artifactVar:y):S4101+(index);
+  !!VR(eligibleVar:y):S4121+(index);
+  !!FU(WOG_Artificer_GetSlotEligibility):Pv(artifactVar)/(slot)/1/0/?v(eligibleVar);
+!!en;
+
+** z31-z44 = names of appropriate artifacts **
+!!UN&v4121=1/1000:N0/31/v4101;   [get name of head]
+!!UN&v4122=1/1000:N0/32/v4102;   [get name of shoulders]
+!!UN&v4123=1/1000:N0/33/v4103;   [get name of neck]
+!!UN&v4124=1/1000:N0/34/v4104;   [get name of right hand]
+!!UN&v4125=1/1000:N0/35/v4105;   [get name of left hand]
+!!UN&v4126=1/1000:N0/36/v4106;   [get name of torso]
+!!UN&v4127=1/1000:N0/37/v4107;   [get name of right ring]
+!!UN&v4128=1/1000:N0/38/v4108;   [get name of left ring]
+!!UN&v4129=1/1000:N0/39/v4109;   [get name of feet]
+!!UN&v4130=1/1000:N0/40/v4110;  [get name of misc. slot 1]
+!!UN&v4131=1/1000:N0/41/v4111;  [get name of misc. slot 2]
+!!UN&v4132=1/1000:N0/42/v4112;  [get name of misc. slot 3]
+!!UN&v4133=1/1000:N0/43/v4113;  [get name of misc. slot 4]
+!!UN&v4134=1/1000:N0/44/v4114;  [get name of misc. slot 5]
+
+** add slot name to artifact name **
+!!VRz31&v4121=1/1000:+^%T(wog.26.head)^;
+!!VRz32&v4122=1/1000:+^%T(wog.26.shoulders)^;
+!!VRz33&v4123=1/1000:+^%T(wog.26.neck)^;
+!!VRz34&v4124=1/1000:+^%T(wog.26.rightHand)^;
+!!VRz35&v4125=1/1000:+^%T(wog.26.leftHand)^;
+!!VRz36&v4126=1/1000:+^%T(wog.26.torso)^;
+!!VRz37&v4127=1/1000:+^%T(wog.26.rightRing)^;
+!!VRz38&v4128=1/1000:+^%T(wog.26.leftRing)^;
+!!VRz39&v4129=1/1000:+^%T(wog.26.feet)^;
+!!if&v4130=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/1;
+  !!VRz40:+(message);
+!!en;
+!!if&v4131=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/2;
+  !!VRz41:+(message);
+!!en;
+!!if&v4132=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/3;
+  !!VRz42:+(message);
+!!en;
+!!if&v4133=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/4;
+  !!VRz43:+(message);
+!!en;
+!!if&v4134=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/5;
+  !!VRz44:+(message);
+!!en;
+
+!!VRz30:S^%T(wog.26.cancel)^;      [z30 = text of canceling]
+
+!!VRv4119:S0+v4121+v4122+v4123+v4124+v4125+v4126+v4127+v4128+v4129+v4130+v4131+v4132+v4133+v4134;  [v4119 = count of upgradeable artifacts]
+
+** Hero wears no artifact
+!!if&v4119=0/1000;
+  !!SN:T^wog.26.noArtifacts^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:M1/(message);
+!!en;
+
+!!VRv4118&v4119=0:S16;     [v4118 = 16]
+
+!!FU&v4119=0:E;
+
+!!VRv156:S31;          [v156 = index of z var]
+!!DO(WOG_Artificer_CompactDialog)/1/14/1:P;      [set up dialog]
+
+** message if hero wears one artifact
+!!if&v4119=1;
+  !!SN:T^wog.26.selectArtifact^/?z29/^name^/^%T(wog.26.objName)^/^count^/v4119/^action^/^%T(wog.26.action.upgrade)^;
+!!en;  [z29 = title, z30 = cancel]
+!!IF&1000/v4119=1:G1/162/2048/29/31/32/33/34/35/36/37/38/39/40/41/30;
+
+** message if hero wears 2-11 artifacts
+!!if&v4119>1;
+  !!SN:T^wog.26.selectArtifact^/?z29/^name^/^%T(wog.26.objName)^/^count^/v4119/^action^/^%T(wog.26.action.upgrade)^;
+!!en;  [z29 = title, z30 = cancel]
+!!IF&1000/v4119>1/v4119<12:G1/162/2048/29/31/32/33/34/35/36/37/38/39/40/41/30;
+
+!!VRv163:S0;                    [v163 = 0 - default numerical value of answer]
+!!DO(WOG_Artificer_DecodeChoice)/1/12/1&1000/v4119<12:P; [get v163]
+
+** message if hero wears 12-14 artifacts
+!!VRv4117:S0;    [initialization for FU(WOG_Artificer_ChooseEquipmentPage)]
+!!FU(WOG_Artificer_ChooseEquipmentPage)&1000/v4119>11:P1;
+
+!!VRv4118&v163=12:S16;
+!!FU&v163=12/1000:E;            [exit if cancel has been chosen from previous dialogs]
+
+!!VRv163&v4117=1:+10;           [correction if 11th-14th artifact was chosen]
+
+!!FU(WOG_Artificer_OfferUpgrade)&1000:P;
+
+* <AI  *
+!!if&-1000;
+  !!VRv4115:S0;
+  !!VRv4116:S0;
+  !!VRv4117:S0;
+  !!VRv4135:S0;  [initialization for FU(WOG_Artificer_OfferUpgrade)]
+
+  !!DO(WOG_Artificer_OfferUpgrade)/1/14/1&v160<3:P;
+
+  !!VRv4135&v4115>0:Sv4115;
+  !!FU(WOG_Artificer_ApplyUpgrade)&v4115>0:Pv4116/v4136/v4117;
+
+  !!VRv4118:S2048;
+!!en;
+* AI/> *
+
+
+; Note that for human players we have FU:P171, yet for AI players we do DO:P171
+!?FU(WOG_Artificer_OfferUpgrade);
+
+*** <AI  ***
+!!if&-1000;
+  !!VRx15:S4120+x16;
+
+  !!if&vx15=1;
+    !!VRv163:Sx16;                      [choose artifact]
+  !!el;
+    !!FU:E;                             [exit if not upgradeable]
+  !!en;
+!!en;
+*** AI/> ***
+
+** var initialization **
+!!VRv156:S1;           [initialization for FU(WOG_Artificer_ResolveSelectedArtifact)]
+!!DO(WOG_Artificer_ResolveSelectedArtifact)/1/14/1:P;      [get artifact number in v4020]
+
+** var initialization **
+!!VRx1:Sv4120;
+!!FU(WOG_Artificer_GetUpgradeInfo):Px1/i^wog_102_enabled^/i^wog_71_enabled^/?x2/?v4135/?y2;
+!!FU&x2=(NO_ART):E;
+!!VRy3:S0;
+!!VRy3&y2>0:S(RES_MITHRIL);
+!!UN:N0/161/x1 N0/162/x2;
+
+!!VRv4135:*v160;                               [double price if it is the second visit]
+!!VRy2&y3<>0:*v160;
+!!VRy-42:S0-v4135-100000;
+
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/?y11;                            [y11 = current gold]
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/?y12;                      [y12 = current secondary resource]
+
+!!IF:V160/0;
+
+!!VRv4118:S2048;                                 [v4118 = 2048]
+
+!!if&1000/y3=0;
+  !!SN:T^wog.26.price.gold^/?(price:z)/^gold^/v4135;
+  !!SN:T^wog.26.offer^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price)/^action^/^%T(wog.26.action.upgrade)^/^from^/z161/^to^/z162;
+  !!IF:Q160/8/x1/6/y-42/8/x2/2/(message);
+!!en;  [question for upgrade]
+!!if&1000/y3>0;
+  !!SN:T^wog.26.price.both^/?(price:z)/^gold^/v4135/^mithril^/y2;
+  !!SN:T^wog.26.offer^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price)/^action^/^%T(wog.26.action.upgrade)^/^from^/z161/^to^/z162;
+  !!IF:Q160/8/x1/6/y-42/8/x2/2/(message);
+!!en;  [question for upgrade with secondary resource]
+
+*** <AI  ***
+!!if&-1000;
+  !!IF&y11>v4135:V160/1;                     [if AI have enough money he agrees]
+  !!UN:J2/?v1;                               [v1 = difficulty level]
+  !!VRv1:F1/(INT_MAX);                       [easy and normal have standard price]
+  !!VRv4135::v1;                             [divide price on difficulty level (1-4) for AI]
+  !!VRy2:S0;                                 [AI don't need mithril]
+  !!VRy12&y12<y2:Sy2;
+!!en;
+*** AI/> ***
+
+!!VRv4118&-160/v4119=1:S16;                      [v4118 = 16]
+!!VRv4118&-160/v4119>1:S1;                       [v4118 = 1]
+
+!!FU&-160:E;                                     [exit if cancel pressed]
+
+!!if&1000/y11<v4135/y12>=y2;
+  !!SN:T^wog.26.price.gold^/?(price:z)/^gold^/v4135;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/36/v4135/1/(message);
+!!en;              [message if not enough money]
+!!if&1000/y12<y2/y3>0/y11>=v4135;
+  !!SN:T^wog.26.price.mithril^/?(price:z)/^mithril^/y2;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/y3/y2/1/(message);
+!!en;            [message if not enough secondary resource]
+!!if&1000/y12<y2/y3>0/y11<v4135;
+  !!SN:T^wog.26.price.both^/?(price:z)/^gold^/v4135/^mithril^/y2;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/36/v4135/y3/y2/1/(message);
+!!en;    [message if not enough resources]
+
+!!VRv4118&y11<v4135/v4119=1:S16;                          [v4118 = 16]
+!!VRv4118&y12<y2/v4119=1:S16;                             [v4118 = 16]
+!!VRv4118&y11<v4135/v4119>1:S1;                           [v4118 = 1]
+!!VRv4118&y12<y2/v4119>1:S1;                              [v4118 = 1]
+
+!!FU|y11<v4135/y12<y2:E;                          [exit if not enough money]
+
+!!FU(WOG_Artificer_ApplyUpgrade)&1000:Px1/x2/y2;
+
+* <AI  *
+!!if&-1000;
+  !!UN:Ax2/2/?x3;             [x3 = slot of x2 - upgraded art.]
+  !!UN:Ax1/2/?x9;             [x9 = slot of x1 - disupgraded art.]
+
+  !!VRx11&x3=x9:S1;
+
+  !!if&x11=0;
+    !!VRx3&x3>=1/x3<=6:-1;              [Convert UN:A slot number to HE:A slot number]
+
+    ; Warning: HE:A can return value bigger than 1000 if it is a scroll
+    ; There might be serious bugs in this section
+    !!HE(CURRENT_HERO):A1/?x4/x3;           [x4 = number of currently equiped artifact]
+    !!UN&x4>6/x4<(ART_META_SPELLBOOK):Ax4/1/?x6;        [x6 = cost of x4 - eqiped art.]
+
+    !!HE(CURRENT_HERO)&x3=7:A1/?x7/6;       [x7 = number of currently equiped artifact]
+    !!UN&x4>6/x4<(ART_META_SPELLBOOK)/x3=7:Ax4/1/?x8;   [x8 = cost of x7 - eqiped art.]
+    !!VRx4&x3=7/x8<x6:Sx7;       [change if worse ->]
+    !!VRx6&x3=7/x8<x6:Sx8;       [-> artifact finded]
+
+    !!if&x3=9;
+      !!HE(CURRENT_HERO):A1/?x7/10;      [x7 = number of currently equiped artifact]
+      !!UN&x7>6/x7<(ART_META_SPELLBOOK):Ax7/1/?x8;   [x8 = cost of x7 - eqiped art.]
+
+      !!if&x8<x6;
+        !!VRx4:Sx7;       [change if worse ->]
+        !!VRx6:Sx8;       [-> artifact finded]
+      !!en;
+
+      !!HE(CURRENT_HERO):A1/?x7/11;      [x7 = number of currently equiped artifact]
+      !!UN&x7>6/x7<(ART_META_SPELLBOOK):Ax7/1/?x8;   [x8 = cost of x7 - eqiped art.]
+
+      !!if&x8<x6;
+        !!VRx4:Sx7;       [change if worse ->]
+        !!VRx6:Sx8;       [-> artifact finded]
+      !!en;
+
+      !!HE(CURRENT_HERO):A1/?x7/12;      [x7 = number of currently equiped artifact]
+      !!UN&x7>6/x7<(ART_META_SPELLBOOK):Ax7/1/?x8;   [x8 = cost of x7 - eqiped art.]
+
+      !!if&x8<x6;
+        !!VRx4:Sx7;       [change if worse ->]
+        !!VRx6:Sx8;       [-> artifact finded]
+      !!en;
+
+      !!HE(CURRENT_HERO):A1/?x7/18;      [x7 = number of currently equiped artifact]
+      !!UN&x7>6/x7<(ART_META_SPELLBOOK):Ax7/1/?x8;   [x8 = cost of x7 - eqiped art.]
+
+      !!if&x8<x6;
+        !!VRx4:Sx7;       [change if worse ->]
+        !!VRx6:Sx8;       [-> artifact finded]
+      !!en;
+    !!en;
+  !!en;
+  ***
+
+  !!UN:Ax2/1/?x5;                   [x5 = cost of x2 - upgraded art.]
+  !!UN:Ax1/1/?x7;                   [x7 = cost of x1 - disupgraded art.]
+  !!VRx6&x1=35:-1500;               [correction for Sword of Judgement]
+  !!VRx6&x1=34:-1500;               [correction for Lion's Shield of Courage]
+  !!VRx6&x1=33:-1500;               [correction for Celestial Necklace of Bliss]
+  !!VRx6&x1=32:-1500;               [correction for Sandals of the Saint]
+  !!HE(CURRENT_HERO):B2/?x12; [x12 = hero class]
+  !!VRx5&x12=8/x2=108:S0; [Necro never upgrade to Pendant of courage]
+  !!VRx5&x12=9/x2=108:S0; [Necro never upgrade to Pendant of courage]
+
+  !!VRx6&x4<7/x11=0: S0;       [x6 = 0 if no art. eqiped]
+  !!VRx6&x11=1:Sx7;            [x6 = x7 if slots are equal]
+  !!VRx6&x1<>x4/x3<>x9:+x7;
+  * if cost of upgraded art. > cost of euiped art. and cost of upgrade more then previous then change upgraded art. *
+  !!VRv4117&x5>x6/v4135>v4115:Sx3;     [v4117 = slot of upgraded art.]
+  !!VRv4136&x5>x6/v4135>v4115:Sx2;     [v4136 = upgraded art.]
+  !!VRv4116&x5>x6/v4135>v4115:Sx1;     [v4116 = disupgraded art.]
+  !!VRv4115&x5>x6/v4135>v4115:Sv4135;  [v4115 = upgrade cost]
+!!en;
+* AI/> *
+
+!?FU(WOG_Artificer_ApplyUpgrade); [x1 = disupgraded art., x2 = upgraded art., x3 = cost of mithril]
+
+!!VRy3&x3>0:S7;                         [get mithril cost if present]
+!!VRy2&x3>0:Sx3;                        [get quantity of mithril if any]
+
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/?y11;                        [y11 = current gold]
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/?y12;                  [y12 = current secondary resource]
+
+!!FU(GetHeroPrimarySkillsWithoutArts):P(CURRENT_HERO)/?y44/?y45/?y46/?y47; [y44-y47 = primary skills without artifacts before changes]
+!!HE(CURRENT_HERO):F?y54/?y55/?y56/?y57;            [y54-y57 = primary skills with artifacts before changes]
+
+*** <AI  ***
+!!if&-1000;
+  !!UN:Ax2/2/?x6;              [x6 = slot of x2 - upgraded art.]
+  !!UN:Ax1/2/?x7;              [x7 = slot of x1 - disupgraded art.]
+  !!VRx4&x6=x7:S1;             [x4 = check var for equal slots]]
+  !!VRx4&x6<>x7:S0;
+  !!HE(CURRENT_HERO)&x4=0:A1/?x5/x3;           [x5 = equiped art.]
+  !!HE(CURRENT_HERO)&x5>6/x4=0:A3/x5/1/1;           [move equiped art. ->]
+  !!HE(CURRENT_HERO)&x5>6/x4=0:Ax5;                 [-> to backpack]
+!!en;
+*** AI/> ***
+
+!!HE(CURRENT_HERO):A3/x1/1/1;                      [remove old artifact]
+!!HE(CURRENT_HERO):A4/x2;                          [put new artifact]
+
+!!FU(GetHeroPrimarySkillsWithoutArts):P(CURRENT_HERO)/?y-44/?y-45/?y-46/?y-47; [y-44-y-47 = primary skills without artifacts after changes]
+!!HE(CURRENT_HERO):F?y-54/?y-55/?y-56/?y-57;        [y-54-y-57 = primary skills with artifacts after changes]
+
+!!VRy-44:-y44;                          [y-44 = attack bonus of disupgraded artifact]
+!!VRy-45:-y45;                          [y-45 = defence bonus of disupgraded artifact]
+!!VRy-46:-y46;                          [y-46 = magic power bonus of disupgraded artifact]
+!!VRy-47:-y47;                          [y-46 = knowledge bonus of disupgraded artifact]
+
+!!VRy-54:-y54;                          [y-54 = attack bonus of upgraded artifact]
+!!VRy-55:-y55;                          [y-55 = defence bonus of upgraded artifact]
+!!VRy-56:-y56;                          [y-56 = magic power bonus of upgraded artifact]
+!!VRy-57:-y57;                          [y-56 = knowledge bonus of upgraded artifact]
+
+!!VRy54:+y-54-y-44;                     [y54 = new attack skill]
+!!VRy55:+y-55-y-45;                     [y55 = new defence skill]
+!!VRy56:+y-56-y-46;                     [y56 = new magic power skill]
+!!VRy57:+y-57-y-47;                     [y57 = new knowlege skill]
+
+!!HE(CURRENT_HERO):Fy54/y55/y56/y57;                [set right skills]
+
+** substract movepoints **
+!!FU(WOG_Artificer_SpendMovement):P(CURRENT_HERO)/100;
+
+** substract money **
+!!VRy11:-v4135;
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/y11;
+!!VRy12&y3>0:-y2;
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/y12;
+
+** show success message **
+!!if&1000;
+  !!SN:T^wog.26.finished^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:Q1/8/x2/1/(message);
+!!en;
+
+** set visit var **
+!!FU(WOG_Artificer_RecordOrder):Pv157/v158/v159/v160/?v160;
+
+!!if&1000/v160<3;
+  !!SN:T^wog.26.anotherOffer^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:Q1/(message);
+!!en;
+!!FU&-1:E;
+
+!!VRv4118:S16;                              [v4118 = 16]
+********************************************************************************
+
+
+
+
+*!* FU(WOG_Artificer_DecodeChoice) to get numerical value of answer *!***********************************
+!?FU(WOG_Artificer_DecodeChoice);
+!!VRv163&v162>0:+1;
+!!VRv162&v162>0::2;
+********************************************************************************
+
+
+
+
+*!* FU(WOG_Artificer_ResetDailyVisits) to reset visits *!****************************************************
+!?FU(WOG_Artificer_ResetDailyVisits);
+!!UN:U(OBJ_NEW_WOG_OBJECTS)/52/x16/998;
+!!PO998:N1;
+!!PM998&i^timerWeekDay^=1:V1;           [Attract AI to go only once a week]
+********************************************************************************
+
+
+
+
+*!* FU(WOG_Artificer_CompactDialog) to set up dialog *!***************************************************
+!?FU(WOG_Artificer_CompactDialog);
+!!VRx1:Sx16+4120;               [x1 = index of v var which is 1 if artifact is upgradeable]
+!!VRx2:Sx16+30;                 [x2 = index of z var]
+!!VRzv156&vx1=1/v156<>x2:Szx2;
+!!VRzx2&vx1=1/v156<>x2:S^^;
+!!VRv156&vx1=1:+1;
+********************************************************************************
+
+
+
+
+*!* FU(WOG_Artificer_ResolveSelectedArtifact) to get number of chosen artifact *!***********************************
+!?FU(WOG_Artificer_ResolveSelectedArtifact);
+!!VRx1:Sx16+4120;                [x1 = index of v var which is 1 if artifact is upgradeable]
+!!VRx2:Sx16+4100;                [x2 = index of v var = artifact number]
+!!VRv4120&vx1=1/v156=v163:Svx2;  [v4020 = chosen artifact number]
+!!VRv156&vx1=1/1000:+1;
+!!VRv156&-1000:+1;
+********************************************************************************
+
+
+
+
+*!* FU(WOG_Artificer_ChooseEquipmentPage) to give a question if hero wears 12-14 artifacts *!*******************
+!?FU(WOG_Artificer_ChooseEquipmentPage);
+!#VA(page:x);
+!!re (cycle:y)/0/(INT_MAX);
+  !!VRz28&(page)=1:S^%T(wog.26.page.next)^;
+  !!VRz28&(page)=2:S^%T(wog.26.page.previous)^;
+  !!SN:T^wog.26.selectArtifact^/?z29/^name^/^%T(wog.26.objName)^/^count^/v4119/^action^/^%T(wog.26.action.upgrade)^;
+  !!IF&(page)=1:G1/162/2048/29/31/32/33/34/35/36/37/38/39/40/28/30;
+  !!IF&(page)=2:G1/162/2048/29/41/42/43/44/0/0/0/0/0/0/28/30;
+  !!VRv163:S0;
+  !!DO(WOG_Artificer_DecodeChoice)/1/12/1:P;
+  !!VRv4117:S(page)-1;
+  !!FU&v163<>11:E;
+  !!VR(page):S3-(page);
+!!en;
+
+!?FU(WOG_Artificer_RunServices);
+!!FU|v160>=3/v4118=2048:E;
+!!if&-1000;
+  ; Preserve the original AI sequence and heuristics in this ERM migration stage.
+  !!FU(WOG_Artificer_ResetDialogState):P;
+  !!FU(WOG_Artificer_Upgrade)&v160<3:P;
+  !!FU(WOG_Artificer_ResetDialogState):P;
+  !!FU(WOG_Artificer_Exchange)&v160<3:P;
+  !!FU(WOG_Artificer_ResetDialogState):P;
+  !!FU(WOG_Artificer_Exchange)&v160<3:P;
+  !!FU(WOG_Artificer_ResetDialogState):P;
+  !!FU(WOG_Artificer_Combine)&v160<3:P;
+  !!VRv4118:S2048;
+  !!FU:E;
+!!en;
+!!re (cycle:y)/0/(INT_MAX);
+  !!br|v160>=3/v4118=2048;
+  !!FU(WOG_Artificer_ResetDialogState):P;
+  !!VR(service:y):Sv4118;
+  !!FU(WOG_Artificer_Upgrade)&(service)=1:P;
+  !!FU(WOG_Artificer_Exchange)&(service)=2:P;
+  !!FU(WOG_Artificer_Combine)&(service)=4:P;
+  !!FU(WOG_Artificer_ShowHelp)&(service)=8:P;
+  !!FU(WOG_Artificer_ShowMainMenu)&(service)=16:P;
+!!en;
+
+!?FU(WOG_Artificer_Exchange);
+
+* get numbers of equiped artifacts *
+!!re (index:y)/0/13;
+  !!VR(slot:y):S(index);
+  !!VR(slot)&(index)=13:S18;
+  !!VR(artifactVar:y):S4101+(index);
+  !!HE(CURRENT_HERO):A1/?v(artifactVar)/(slot);
+!!en;
+
+*** <AI  ***
+!!if&-1000;
+  !!VRx1&v4107=94/v4108=94:S1;       [x1 = 1 -if have 2 equiped Ring of Vitality]
+  !!HE(CURRENT_HERO)&x1=1:A2/95/?x2/d;          [x2 > 0 -if have any Ring of Life]
+  !!HE(CURRENT_HERO)&x1=1:A3/94/1/1;            [remove second Ring of Vitality]
+  !!HE(CURRENT_HERO)&x1=1:A94;                  [put second Ring of Vitality to backpack]
+  !!HE(CURRENT_HERO)&x1=1/x2>0:A3/95/1/0;       [remove Ring of Life from backpack]
+  !!HE(CURRENT_HERO)&x1=1/x2>0:A4/95;           [equip Ring of Life]
+  !!VRx1:S0;
+  !!VRx1&v4107=95/v4108=95:S1;       [x1 = 1 -if have 2 equiped Ring of Life]
+  !!HE(CURRENT_HERO)&x1=1:A2/94/?x2/d;          [x2 > 0 -if have any Ring of Vitality]
+  !!HE(CURRENT_HERO)&x1=1:A3/95/1/1;            [remove second Ring of Life]
+  !!HE(CURRENT_HERO)&x1=1:A95;                  [put second Ring of Life to backpack]
+  !!HE(CURRENT_HERO)&x1=1/x2>0:A3/94/1/0;       [remove Ring of Vitality from backpack]
+  !!HE(CURRENT_HERO)&x1=1/x2>0:A4/94;           [equip Ring of Vitality]
+!!en;
+*** AI/> ***
+
+
+!!FU(WOG_Artificer_GetBannedTomesMask):P?(bannedTomes:y);
+
+!!re (index:y)/0/13;
+  !!VR(slot:y):S(index);
+  !!VR(slot)&(index)=13:S18;
+  !!VR(artifactVar:y):S4101+(index);
+  !!VR(eligibleVar:y):S4121+(index);
+  !!FU(WOG_Artificer_GetSlotEligibility):Pv(artifactVar)/(slot)/2/(bannedTomes)/?v(eligibleVar);
+!!en;
+
+** z31-z44 = names of appropriate artifacts **
+!!UN&v4122=1/1000:N0/32/v4102;   [get name of shoulders]
+!!UN&v4123=1/1000:N0/33/v4103;   [get name of neck]
+!!UN&v4127=1/1000:N0/37/v4107;   [get name of right ring]
+!!UN&v4128=1/1000:N0/38/v4108;   [get name of left ring]
+!!UN&v4130=1/1000:N0/40/v4110;  [get name of misc. slot 1]
+!!UN&v4131=1/1000:N0/41/v4111;  [get name of misc. slot 2]
+!!UN&v4132=1/1000:N0/42/v4112;  [get name of misc. slot 3]
+!!UN&v4133=1/1000:N0/43/v4113;  [get name of misc. slot 4]
+!!UN&v4134=1/1000:N0/44/v4114;  [get name of misc. slot 5]
+
+** add slot name to artifact name **
+!!VRz32&v4122=1/1000:+^%T(wog.26.shoulders)^;   [shoulders]
+!!VRz33&v4123=1/1000:+^%T(wog.26.neck)^;   [neck]
+!!VRz37&v4127=1/1000:+^%T(wog.26.rightRing)^;   [right ring]
+!!VRz38&v4128=1/1000:+^%T(wog.26.leftRing)^;   [left ring]
+!!if&v4130=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/1;
+  !!VRz40:+(message);
+!!en;   [misc. slot 1]
+!!if&v4131=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/2;
+  !!VRz41:+(message);
+!!en;   [misc. slot 2]
+!!if&v4132=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/3;
+  !!VRz42:+(message);
+!!en;   [misc. slot 3]
+!!if&v4133=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/4;
+  !!VRz43:+(message);
+!!en;   [misc. slot 4]
+!!if&v4134=1/1000;
+  !!SN:T^wog.26.slots.misc^/?(message:z)/^slot^/5;
+  !!VRz44:+(message);
+!!en;   [misc. slot 5]
+
+!!VRz30:S^%T(wog.26.cancel)^;      [z30 = text of canceling]
+
+!!VRv4119:S0+v4122+v4123+v4127+v4128+v4130+v4131+v4132+v4133+v4134;  [v4119 = count of changeable artifacts]
+
+** Hero wears no artifact
+!!if&v4119=0/1000;
+  !!SN:T^wog.26.noArtifacts^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:M1/(message);
+!!en;
+
+!!VRv4118&v4119=0:S16;     [v4118 = 16]
+
+!!FU&v4119=0:E;
+
+!!VRv156:S31;          [v156 = index of z var]
+!!DO(WOG_Artificer_CompactDialog)/1/14/1:P;      [set up dialog]
+
+** message if hero wears one artifact
+!!if&v4119=1;
+  !!SN:T^wog.26.selectArtifact^/?z29/^name^/^%T(wog.26.objName)^/^count^/v4119/^action^/^%T(wog.26.action.change)^;
+!!en;  ** z29 title question, z30 cancel **
+!!IF&1000/v4119=1:G1/162/2048/29/31/32/33/34/35/36/37/38/39/40/41/30;
+
+** message if hero wears 2-11 artifacts
+!!if&v4119>1;
+  !!SN:T^wog.26.selectArtifact^/?z29/^name^/^%T(wog.26.objName)^/^count^/v4119/^action^/^%T(wog.26.action.change)^;
+!!en;  ** z29 title question, z30 cancel **
+!!IF&1000/v4119>1/v4119<12:G1/162/2048/29/31/32/33/34/35/36/37/38/39/40/41/30;
+
+!!VRv163:S0;                    [v163 = 0 - numerical value of answer]
+!!DO(WOG_Artificer_DecodeChoice)/1/12/1&1000/v4119<12:P; [get v163]
+
+!!VRv4118&v163=12:S16;     [v4118 = 16]
+
+!!FU&v163=12:E;            [exit if cancel has been chosen from previous dialogs]
+
+!!FU(WOG_Artificer_OfferExchange)&1000:P;
+
+*** <AI  ***
+!!if&-1000;
+  !!DO(WOG_Artificer_OfferExchange)/1/14/1&v160<3:P;
+  !!VRv4135&v4115>0:Sv4115;
+  !!FU(WOG_Artificer_ApplyExchange)&v4116>0:Pv4116/v4136;
+
+  !!VRv4118:S2048;
+!!en;
+*** AI/> ***
+
+!?FU(WOG_Artificer_OfferExchange);
+
+*** <AI  ***
+!!if&-1000;
+  !!VRx15:S4120+x16;
+  !!VRv163&vx15=1:Sx16;  [choose artifact]
+  !!VRx13:Svx15;
+  !!FU&vx15<>1:E;        [exit if not changeable]
+!!en;
+*** AI/> ***
+
+** var initialization **
+!!VRv156:S1;               [initialization for FU(WOG_Artificer_ResolveSelectedArtifact)]
+!!DO(WOG_Artificer_ResolveSelectedArtifact)/1/14/1:P;          [get artifact number in v4020]
+
+** var initialization **
+!!VRx1:Sv4120;
+!!FU(WOG_Artificer_GetBannedTomesMask):P?(bannedTomes:y);
+!!FU(WOG_Artificer_GetExchangeInfo):Px1/i^wog_71_enabled^/(bannedTomes)/?x2/?x3/?x4/?v4135/?y2;
+!!FU&x2=0:E;
+!!FU&-1000/x1>108/x1<115:E;  [Preserve the AI resource-artifact restriction]
+!!UN:N0/161/x1 N0/162/x2;
+!!UN&x3<>0:N0/43/x3;
+!!UN&x4<>0:N0/44/x4;
+!!VRy3:S0;
+!!VRy3&y2>0:S(RES_MITHRIL);
+
+!!VRv4135&1000:*v160;                       [double price if it is the second visit (human only)]
+!!VRy2&1000/y3<>0:*v160;
+!!VRy-42:S0-v4135-100000;
+
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/?y11;                           [y11 = current gold]
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/?y12;                     [y12 = current secondary resource]
+
+!!IF:V160/0;                               [initialization]
+!!VRv162:S0;                               [initialization]
+
+!!VRv4118:S2048;                           [v4118 = 2048]
+
+!!VRx5:S1;
+!!VRx5&x3<>0:+1;
+!!VRx5&x4<>0:+1;                           [x5 = count of artifacts to change into]
+!!SN:T^wog.26.chooseReplacement^/?z29/^name^/^%T(wog.26.objName)^;                          [z29 = title]
+* questions *
+!!IF&1000/x5>1:G1/162/8/29/162/43/44/30;   [question to choose needed artifact]
+!!VRx2&v162=2:Sx3;                         [correction for chosen artifact]
+!!VRz162&v162=2:Sz43;                      [correction for chosen artifact]
+!!VRx2&v162=4:Sx4;                         [correction for chosen artifact]
+!!VRz162&v162=4:Sz44;                      [correction for chosen artifact]
+
+!!VRv4118&v162=8/v4119>1/1000:S2;               [v4118 = 2]
+!!VRv4118&v162=8/v4119=1/1000:S16;              [v4118 = 16]
+
+!!FU&v162=8:E;                                  [exit if cancel pressed]
+
+!!if&1000/y3=0;
+  !!SN:T^wog.26.price.gold^/?(price:z)/^gold^/v4135;
+  !!SN:T^wog.26.offer^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price)/^action^/^%T(wog.26.action.change)^/^from^/z161/^to^/z162;
+  !!IF:Q160/8/x1/6/y-42/8/x2/2/(message);
+!!en;  [question for upgrade without secondary resource]
+!!if&1000/y3>0;
+  !!SN:T^wog.26.price.both^/?(price:z)/^gold^/v4135/^mithril^/y2;
+  !!SN:T^wog.26.offer^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price)/^action^/^%T(wog.26.action.change)^/^from^/z161/^to^/z162;
+  !!IF:Q160/8/x1/6/y-42/8/x2/2/(message);
+!!en;  [question for upgrade with secondary resource]
+
+*** <AI  ***
+!!if&-1000;
+  !!IF&y11>v4135:V160/1;                     [if AI have enough money he agrees]
+  !!UN:J2/?v1;                               [v1 = difficulty level]
+  !!VRv1&v1=0:S1;                            [easy and normal have standard price]
+  !!VRv4135::v1;                             [divide price on difficulty level (1-4) for AI]
+  !!VRy2:S0;             [AI don't need mithril]
+  !!VRy12&y12<y2:Sy2;    [just for insuring]
+!!en;
+*** AI/> ***
+
+!!VRv4118&-160/v4119>1:S2;                 [v4118 = 2]
+!!VRv4118&-160/v4119=1:S16;                [v4118 = 16]
+
+!!FU&-160:E;                               [exit if cancel pressed]
+
+
+!!if&1000/y11<v4135/y12>=y2;
+  !!SN:T^wog.26.price.gold^/?(price:z)/^gold^/v4135;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/36/v4135/1/(message);
+!!en;              [message if not enough money]
+!!if&1000/y12<y2/y3>0/y11>=v4135;
+  !!SN:T^wog.26.price.mithril^/?(price:z)/^mithril^/y2;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/y3/y2/1/(message);
+!!en;            [message if not enough secondary resource]
+!!if&1000/y12<y2/y3>0/y11<v4135;
+  !!SN:T^wog.26.price.both^/?(price:z)/^gold^/v4135/^mithril^/y2;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/36/v4135/y3/y2/1/(message);
+!!en;    [message if not enough resources]
+
+!!VRv4118&y11<v4135/v4119=1/1000:S16;                             [v4118 = 16]
+!!VRv4118&y12<y2/v4119=1/1000:S16;                                [v4118 = 16]
+!!VRv4118&y11<v4135/v4119>1/1000:S2;                              [v4118 = 2]
+!!VRv4118&y12<y2/v4119>1/1000:S2;
+
+!!FU&y11<v4135/1000:E;                                  [exit if not enough money]
+!!FU&y12<y2/y3>0/1000:E;                                [exit if not enough mithril]
+
+!!FU(WOG_Artificer_ApplyExchange)&1000:Px1/x2/y2;
+
+*** <AI choses art. ***
+!!if&-1000;
+  !!HE(CURRENT_HERO):A2/x1/?x5/d;     [x5 = quantity of disupgraded art.]
+  !!FU&x5<2:E;             [exit if only one art.]
+
+  !!UN:Ax1/1/?x11;        [x11 = cost of x1 - disupgraded art.]
+  !!FU&x11<=v4115:E;       [exit if have the same art.]
+
+  !!HE(CURRENT_HERO)&x2<>85/x2<>84:A2/x2/?x5/d;        [x5 = quantity of x2 = 1st upgraded art.]
+  !!HE(CURRENT_HERO)&x3>0/x5>0/x3>0:A2/x3/?x6/d;       [x6 = quantity of x3 = 2nd upgraded art.]
+  !!VRx2&x3>0/x5>0/x3>0/x6=0:Sx3;           [x2 = x3]
+  !!HE(CURRENT_HERO)&x4>0/x4>0/x6>0:A2/x4/?x7/d;       [x7 = quantity of x4 = 3rd upgraded art.]
+  !!VRx2&x4>0/x4>0/x6>0/x7=0:Sx4;           [x2 = x3]
+
+  !!HE(CURRENT_HERO):B2/?x12; [x12 = hero class]
+  !!HE(CURRENT_HERO)&x1=85:A2/84/?x5/d;         [x5 = quantity of upgraded art.]
+  !!VRx2&x1=85/x5=0/x12=8:S85;       [x2 = upgraded art. (Necro changes Hourglass of the Evil Hour with Spirit of Oppression =>)]
+  !!VRx2&x1=85/x5=0/x12=9:S85;       [x2 = upgraded art. (=> if have more then one copy of Hourglass of the Evil Hour)]
+  !!VRx7&x1=85/x5>0:S1;              [x7 = 1]
+  !!VRx7&x1=85/x5>0:S1;              [x7 = 1]
+  !!VRx7&x1=84:S1;                   [x7 = 1 = don't change Spirit of Oppression]
+
+  !!FU&x3=0/x4=0/x5>0:E;             [exit if AI has all artifacts to change into]
+  !!FU&x3>0/x4=0/x6>0:E;             [exit if AI has all artifacts to change into]
+  !!FU&x3>0/x4>0/x7>0:E;             [exit if AI has all artifacts to change into]
+
+  !!VRv4115:Sx11;     [v4115 = cost of chosen artifact in Artraits]
+  !!VRv4116:Sx1;      [v4116 = disupgraded artifact]
+  !!VRv4136:Sx2;      [v4136 = upgraded art.]
+!!en;
+*** AI/> ***
+
+
+!?FU(WOG_Artificer_ApplyExchange);  [x1 = changeable art., x2 = art. to change into, x3 = cost of mithril]
+!!if&x3>0;
+  !!VRy3:S7;                         [get mithril cost if present]
+  !!VRy2:Sx3;                        [get quantity of mithril if any]
+!!en;
+
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/?y11;                        [y11 = current gold]
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/?y12;                  [y12 = current secondary resource]
+
+*** <AI  ***
+!!if&-1000;
+  !!HE(CURRENT_HERO):A2/x1/d/?x8;
+  !!HE(CURRENT_HERO)&x8>1:A3/x1/1/1;
+  !!HE(CURRENT_HERO)&x8=1:A3/x1/1/0;                [remove old artifact]
+!!en;
+*** AI/> ***
+
+!!HE(CURRENT_HERO)&1000:A3/x1/1/1;                 [remove old artifact]
+!!HE(CURRENT_HERO):A4/x2;                          [put new artifact]
+
+** substract movepoints **
+!!FU(WOG_Artificer_SpendMovement):P(CURRENT_HERO)/100;
+
+** substract money **
+!!VRy11:-v4135;
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/y11;
+!!VRy12&y3>0:-y2;
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/y12;
+
+** show success message **
+!!if&1000;
+  !!SN:T^wog.26.finished^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:Q1/8/x2/1/(message);
+!!en;
+
+** set visit var **
+!!FU(WOG_Artificer_RecordOrder):Pv157/v158/v159/v160/?v160;
+
+!!if&1000/v160<3/160;
+  !!SN:T^wog.26.anotherOffer^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:Q1/(message);
+!!en;
+!!FU&-1:E;
+
+!!VRv4118:S16;                          [v4118 = 16]
+********************************************************************************
+
+
+
+
+**!** FU(WOG_Artificer_Combine) to upgrade group of artifacts to one **!****************************
+!?FU(WOG_Artificer_Combine);
+; Bridge named recipe data to the unchanged legacy selection dialog.
+!#VA(parts[6]:y);
+!!VRv4101:C0/0/0/0/0/0/0/0/0/0/0/0;
+!!VRv4121:C0/0/0/0/0/0/0/0/0/0/0/0/0/0;
+!!VR(offset:y):S0;
+!!re (recipe:y)/1/3;
+  !!FU(WOG_Artificer_GetCombinationInfo):P(recipe)/i^wog_71_enabled^/?(target:y)/?(count:y)/?(parts[0])/?(parts[1])/?(parts[2])/?(parts[3])/?(parts[4])/?(parts[5])/?(gold:y)/?(mithril:y);
+  !!UN:A(target)/?(banned:y);
+  !!VR(present:y):S0;
+  !!if&(banned)=(FALSE);
+    !!re (part:y)/0/(count)/1/-1;
+      !!VR(artifactVar:y):S4101+(offset)+(part);
+      !!VR(eligibleVar:y):S4121+(offset)+(part);
+      !!HE(CURRENT_HERO):A2/(parts[part])/?v(artifactVar)/d;
+      !!VRv(eligibleVar)&v(artifactVar)>0:S1;
+      !!VR(present):+v(eligibleVar);
+    !!en;
+  !!en;
+  !!VRx(recipe):S(present);
+  !!VR(offset):+(count);
+!!en;
+
+*** <AI  ***
+!!if&-1000;
+  !!FU&x2<>6:E;                  [exit if hasn't all group]
+
+  !!HE(CURRENT_HERO):A1/?x15/2;
+  !!FU&x15>0:E;                  [exit if something equiped at neck slot]
+
+  !!OW:R(CURRENT_PLAYER)/(RES_GOLD)/?y11;               [y11 = current gold]
+  !!VRv4135:S2500;               [v4135 = price]
+  !!UN:J2/?v1;                   [v1 = difficulty level]
+  !!VRv1:F1/(INT_MAX);
+  !!VRv4135::v1;                 [divide price on difficulty level (1-4) for AI]
+  !!FU&v4135>y11:E;              [exit if not enough money]
+
+  !!HE(CURRENT_HERO):A3/46/1/0 A3/47/1/0 A3/48/1/0 A3/49/1/0 A3/50/1/0 A3/51/1/0;  [remove artifacts of group upgrade]
+  !!HE(CURRENT_HERO):A4/108;                [equip Pendant of Courage]
+  !!FU:E;
+!!en;
+*** AI/> ***
+
+** z31-z42 = names of appropriate artifacts **
+
+!!UN&x1=2:N0/1/37;   [get name of Quiet Eye of the Dragon]
+!!UN&x1=2:N0/2/45;   [get name of Still Eye of the Dragon]
+!!if&x1=2;
+  !!SN:T^wog.26.combinedName^/?z31/^first^/z1/^second^/z2;
+!!en;
+
+!!UN&x2=6:N0/1/46;   [get name of Clover of Fortune]
+!!UN&x2=6:N0/2/47;   [get name of Cards of Prophecy]
+!!UN&x2=6:N0/3/48;   [get name of Ladybird of Luck]
+!!UN&x2=6:N0/4/49;   [get name of Badge of Courage]
+!!UN&x2=6:N0/5/50;   [get name of Crest of Valor]
+!!UN&x2=6:N0/6/51;   [get name of Glyph of Gallantry]
+!!VRz32&x2=6:S^%Z1%T(wog.comma)%Z2%T(wog.comma)%Z3%T(wog.comma)%Z4...^;
+
+!!UN&x3=4:N0/1/79;   [get name of Orb of the Firmament]
+!!UN&x3=4:N0/2/80;   [get name of Orb of Silt]
+!!UN&x3=4:N0/3/81;   [get name of Orb of Tempestuous Fire]
+!!UN&x3=4:N0/4/82;   [get name of Orb of Driving Rain]
+!!VRz33&x3=4:S^%Z1%T(wog.comma)%Z2%T(wog.comma)%Z3%T(wog.comma)%Z4^;
+
+!!VRv4119:S0;            [v4119 = quantity of upgradeable groups of artifacts]
+!!VRv4119&x1>=2:+1;
+!!VRv4119&x2>=6:+1;
+!!VRv4119&x3>=4:+1;
+
+** Hero wears no groups of artifacts
+!!if&v4119=0/1000;
+  !!SN:T^wog.26.noArtifacts^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:M1/(message);
+!!en;
+
+!!VRv4118&v4119=0:S16;     [v4118 = 16]
+
+!!FU&v4119=0:E;
+
+** message if hero wears needed artifacts **
+!!VRz30&v4119>0:S^%T(wog.26.cancel)^;  [z30 = text of canceling]
+!!if&v4119>0;
+  !!SN:T^wog.26.chooseCombination^/?z29/^name^/^%T(wog.26.objName)^;
+!!en;  [z29 = title question]
+!!IF&1000/v4119>0/v4119<12:G1/162/2048/29/31/32/33/34/35/36/37/38/39/40/41/30;
+
+!!VRv163:S0;                    [v163 = 0 - numerical value of answer]
+!!DO(WOG_Artificer_DecodeChoice)/1/12/1&1000/v4119<12:P; [get v163]
+
+!!VRv4118&v163=12:S16;  [v4118 = 16]
+
+!!FU&v163=12/1000:E;    [exit if cancel has been chosen from previous dialogs]
+
+; Resolve the selected recipe using the same function as the availability scan.
+!!FU(WOG_Artificer_GetCombinationInfo):Pv163/i^wog_71_enabled^/?x10/?(partCount:y)/?x1/?x2/?x3/?x4/?x5/?x6/?v4135/?y2;
+!!VRy3:S0;
+!!VRy3&y2>0:S(RES_MITHRIL);
+
+* z161 = name of artifacts to change     *
+* z162 = name of artifact to change into *
+!!VRz161&v163=1: S^%Z31^;
+!!VRz161&v163=2: S^%Z32^;
+!!VRz161&v163=3: S^%Z33^;
+!!UN&v163=1:N0/162/153;
+!!UN&v163=2:N0/162/108;
+!!UN&v163=3:N0/162/93;
+
+!!VRv4135&1000:*v160;                     [double price if it is the second visit (human only)]
+!!VRy2&1000/y3<>0:*v160;
+!!VRy-1:S0-v4135-100000;
+!!VRy-2:S0-y2-100000;
+
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/?y11;                          [y11 = current gold]
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/?y12;                    [y12 = current secondary resource]
+
+!!IF:V160/0;
+
+!!VRv4118:S2048;                          [v4118 = 2048]
+
+!!if&1000/y3=0;
+  !!SN:T^wog.26.price.gold^/?(price:z)/^gold^/v4135;
+  !!SN:T^wog.26.offer^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price)/^action^/^%T(wog.26.action.change)^/^from^/z161/^to^/z162;
+  !!IF:Q160/6/y-1/8/x10/2/(message);
+!!en;        [question for upgrade without secondary resource]
+!!if&1000/y3>0;
+  !!SN:T^wog.26.price.both^/?(price:z)/^gold^/v4135/^mithril^/y2;
+  !!SN:T^wog.26.offer^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price)/^action^/^%T(wog.26.action.change)^/^from^/z161/^to^/z162;
+  !!IF:Q160/6/y-1/7/y-2/8/x10/2/(message);
+!!en;  [question for upgrade with secondary resource]
+
+!!VRv4118&-160/v4119>1:S4;                 [v4118 = 4]
+!!VRv4118&-160/v4119=1:S16;                [v4118 = 16]
+
+!!FU&-160:E;                               [exit if cancel pressed]
+
+!!if&1000/y11<v4135/y12>=y2;
+  !!SN:T^wog.26.price.gold^/?(price:z)/^gold^/v4135;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/36/v4135/1/(message);
+!!en;              [message if not enough money]
+!!if&1000/y12<y2/y3>0/y11>=v4135;
+  !!SN:T^wog.26.price.mithril^/?(price:z)/^mithril^/y2;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/y3/y2/1/(message);
+!!en;            [message if not enough secondary resource]
+!!if&1000/y12<y2/y3>0/y11<v4135;
+  !!SN:T^wog.26.price.both^/?(price:z)/^gold^/v4135/^mithril^/y2;
+  !!SN:T^wog.26.needResources^/?(message:z)/^name^/^%T(wog.26.objName)^/^price^/(price);
+  !!IF:Q1/36/v4135/y3/y2/1/(message);
+!!en;    [message if not enough resources]
+
+!!VRv4118&y11<v4135/v4119=1:S16;                             [v4118 = 16]
+!!VRv4118&y12<y2/v4119=1:S16;                             [v4118 = 16]
+!!VRv4118&y11<v4135/v4119>1:S4;                              [v4118 = 4]
+!!VRv4118&y12<y2/v4119>1:S4;                              [v4118 = 4]
+
+!!FU|y11<v4135/y12<y2:E;                                     [exit if not enough money]
+
+!!FU(GetHeroPrimarySkillsWithoutArts):P(CURRENT_HERO)/?y44/?y45/?y46/?y47; [y44-y47 = primary skills without artifacts before changes]
+!!HE(CURRENT_HERO):F?y54/?y55/?y56/?y57;            [y54-y57 = primary skills with artifacts before changes]
+
+!!HE(CURRENT_HERO):A3/x1/1/1;                       [remove old artifact]
+!!HE(CURRENT_HERO):A3/x2/1/1;                       [remove old artifact]
+!!HE(CURRENT_HERO)&x3<>0: A3/x3/1/1;                [remove old artifact]
+!!HE(CURRENT_HERO)&x4<>0: A3/x4/1/1;                [remove old artifact]
+!!HE(CURRENT_HERO)&x5<>0: A3/x5/1/1;                [remove old artifact]
+!!HE(CURRENT_HERO)&x6<>0: A3/x6/1/1;                [remove old artifact]
+
+!!FU(GetHeroPrimarySkillsWithoutArts):P(CURRENT_HERO)/?y-44/?y-45/?y-46/?y-47; [y-44-y-47 = primary skills without artifacts after changes]
+!!HE(CURRENT_HERO):F?y-54/?y-55/?y-56/?y-57;        [y-54-y-57 = primary skills with artifacts after changes]
+
+!!VRy-44:-y44;                          [y-44 = attack bonus of disupgraded artifact]
+!!VRy-45:-y45;                          [y-45 = defence bonus of disupgraded artifact]
+!!VRy-46:-y46;                          [y-46 = magic power bonus of disupgraded artifact]
+!!VRy-47:-y47;                          [y-46 = knowledge bonus of disupgraded artifact]
+
+!!VRy-54:-y54;                          [y-54 = attack bonus of upgraded artifact]
+!!VRy-55:-y55;                          [y-55 = defence bonus of upgraded artifact]
+!!VRy-56:-y56;                          [y-56 = magic power bonus of upgraded artifact]
+!!VRy-57:-y57;                          [y-56 = knowledge bonus of upgraded artifact]
+
+!!VRy54:+y-54-y-44;                     [y54 = new attack skill]
+!!VRy55:+y-55-y-45;                     [y55 = new defence skill]
+!!VRy56:+y-56-y-46;                     [y56 = new magic power skill]
+!!VRy57:+y-57-y-47;                     [y57 = new knowlege skill]
+
+!!HE(CURRENT_HERO):Fy54/y55/y56/y57;                [set right skills]
+
+!!HE(CURRENT_HERO):A4/x10;                          [put new artifact]
+
+** substract movepoints **
+!!FU(WOG_Artificer_SpendMovement):P(CURRENT_HERO)/100;
+
+** substract money **
+!!VRy11:-v4135;
+!!OW:R(CURRENT_PLAYER)/(RES_GOLD)/y11;
+!!VRy12&y3>0:-y2;
+!!OW&y3>0:R(CURRENT_PLAYER)/y3/y12;
+
+** show success message **
+!!if&1000;
+  !!SN:T^wog.26.finished^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:Q1/8/x10/1/(message);
+!!en;
+
+** set visit var **
+!!FU(WOG_Artificer_RecordOrder):Pv157/v158/v159/v160/?v160;
+
+!!if&1000/v160<3/160;
+  !!SN:T^wog.26.anotherOffer^/?(message:z)/^name^/^%T(wog.26.objName)^;
+  !!IF:Q1/(message);
+!!en;
+!!FU&-1:E;
+
+!!VRv4118:S16;                          [v4118 = 16]
+********************************************************************************
+
+
+
+
+*!* FU(WOG_Artificer_ShowHelp) to describe services *!***********************************************
+!?FU(WOG_Artificer_ShowHelp);
+
+!!VRv4118:S16;
+!!IF:M1/^%T(wog.26.help)^;
+********************************************************************************
+
+
+
+
+*!* FU(WOG_Artificer_ResetDialogState) to reset vars *!******************************************************
+!?FU(WOG_Artificer_ResetDialogState);
+
+!!if&-1000;
+  !!VRv4115:S0;  [initialization for FU(WOG_Artificer_OfferExchange)]
+  !!VRv4116:S0;  [initialization for FU(WOG_Artificer_OfferExchange)]
+  !!VRv4117:S0;  [initialization for FU(WOG_Artificer_OfferExchange)]
+  !!VRv4135:S0;  [initialization for FU(WOG_Artificer_OfferExchange)]
+!!en;
+
+!!VRv4121:S0;                             [4121 = head]
+!!VRv4122:S0;                             [4122 = shoulders]
+!!VRv4123:S0;                             [4123 = neck]
+!!VRv4124:S0;                             [4124 = right hand]
+!!VRv4125:S0;                             [4125 = left hand]
+!!VRv4126:S0;                             [4126 = torso]
+!!VRv4127:S0;                             [4127 = right ring]
+!!VRv4128:S0;                             [4128 = left ring]
+!!VRv4129:S0;                             [4129 = feet]
+!!VRv4130:S0;                             [4130 = misc. slot 1]
+!!VRv4131:S0;                             [4131 = misc. slot 2]
+!!VRv4132:S0;                             [4132 = misc. slot 3]
+!!VRv4133:S0;                             [4133 = misc. slot 4]
+!!VRv4134:S0;                             [4134 = misc. slot 5]
+** set names of upgradeable artifact to NULL **
+!!VRz31:S^^;
+!!VRz32:S^^;
+!!VRz33:S^^;
+!!VRz34:S^^;
+!!VRz35:S^^;
+!!VRz36:S^^;
+!!VRz37:S^^;
+!!VRz38:S^^;
+!!VRz39:S^^;
+!!VRz40:S^^;
+!!VRz41:S^^;
+!!VRz42:S^^;
+!!VRz43:S^^;
+!!VRz44:S^^;
+********************************************************************************
+
+
+; ERM 2 functions shared by the legacy dialog adapter below.
+; This file is appended to the standalone script; do not load it as another script.
+
+!?FU(WOG_Artificer_GetUpgradeInfo);
+; Pure recipe lookup. Returns NO_ART and zero costs for an unsupported source.
+!#VA(artifact:x) (boosted:x) (enchanted:x) (target:x) (gold:x) (mithril:x);
+!!VR(target):S(NO_ART);
+!!VR(gold):S0;
+!!VR(mithril):S0;
+; Four ordinary weapon/armor chains, each ending at its sixth item.
+!!if&(artifact)>=7/(artifact)<=29;
+  !!VR(chainOffset:y):S(artifact)-7 %6;
+  !!VR(target)&(chainOffset)<5:S(artifact)+1;
+!!en;
+!!VR(target)&(artifact)>=31/(artifact)<=35:S(artifact)+1;
+!!VR(target)&(artifact)>=37/(artifact)<=39:S(artifact)+1;
+!!VR(target)&(artifact)>=41/(artifact)<=43:S(artifact)+1;
+!!VR(target)&(artifact)>=54/(artifact)<=55:S(artifact)+1;
+!!VR(target)&(artifact)>=57/(artifact)<=58:S(artifact)+1;
+!!VR(target)&(artifact)>=60/(artifact)<=61:S(artifact)+1;
+!!VR(target)&(artifact)>=63/(artifact)<=64:S(artifact)+1;
+!!VR(target)&(artifact)>=66/(artifact)<=67:S(artifact)+1;
+!!VR(target)&(artifact)>=73/(artifact)<=74:S(artifact)+1;
+!!VR(target)&(artifact)>=76/(artifact)<=77:S(artifact)+1;
+!!VR(target)&(artifact)>=118/(artifact)<=121:S(artifact)+1;
+!!VR(target)&(artifact)=45:S108;
+!!VR(target)&(artifact)=69:S99;
+!!VR(target)&(artifact)=70:S98;
+!!VR(target)&(artifact)=71:S123;
+!!VR(target)&(artifact)=83:S126;
+!!VR(target)|(artifact)=94/(artifact)=95:S96;
+!!VR(target)&(artifact)=97:S99;
+!!VR(target)&(artifact)=116:S115;
+!!VR(target)&(artifact)=117:S116;
+!!FU&(target)=(NO_ART):E;
+
+!!VR(gold)|(artifact)=7/(artifact)=13/(artifact)=19/(artifact)=25/(artifact)=76/(artifact)=118:S1000;
+!!VR(gold)|(artifact)=8/(artifact)=14/(artifact)=20/(artifact)=26/(artifact)=54/(artifact)=57/(artifact)=60/(artifact)=63/(artifact)=66/(artifact)=73/(artifact)=119:S1500;
+!!VR(gold)|(artifact)=9/(artifact)=15/(artifact)=21/(artifact)=27/(artifact)=31/(artifact)=37/(artifact)=41/(artifact)=77/(artifact)=120:S2000;
+!!VR(gold)|(artifact)=10/(artifact)=16/(artifact)=22/(artifact)=28/(artifact)=117/(artifact)=121:S2500;
+!!VR(gold)|(artifact)=38/(artifact)=42/(artifact)=55/(artifact)=58/(artifact)=61/(artifact)=64/(artifact)=67/(artifact)=74/(artifact)=116:S3000;
+!!VR(gold)|(artifact)=32/(artifact)=39/(artifact)=43/(artifact)=94/(artifact)=95:S4000;
+!!VR(gold)|(artifact)=45/(artifact)=71:S5000;
+!!VR(gold)&(artifact)=33:S6000;
+!!VR(gold)|(artifact)=11/(artifact)=17/(artifact)=23/(artifact)=29/(artifact)=70:S7500;
+!!VR(gold)|(artifact)=34/(artifact)=69/(artifact)=97:S8000;
+!!VR(gold)|(artifact)=35/(artifact)=83:S10000;
+
+!!VR(mithril)|(artifact)=11/(artifact)=17/(artifact)=23/(artifact)=29/(artifact)=45:S1;
+!!VR(mithril)&(artifact)=31:S2;
+!!VR(mithril)&(artifact)=70:S3;
+!!VR(mithril)&(artifact)=32:S4;
+!!VR(mithril)&(artifact)=83:S5;
+!!VR(mithril)&(artifact)=33:S6;
+!!VR(mithril)&(artifact)=34:S8;
+!!VR(mithril)&(artifact)=35:S10;
+!!VR(gold)&(artifact)=76/(enchanted)=1:S1500;
+!!VR(gold)&(artifact)=77/(enchanted)=1:S3000;
+!!VR(gold)&(artifact)=57/(boosted)=1:+1000;
+!!VR(gold)&(artifact)=58/(boosted)=1:+1000;
+
+!?FU(WOG_Artificer_GetBannedTomesMask);
+; Read bans at the point of use; v1 is also a dialog result and the AI difficulty scratch variable.
+!#VA(mask:x);
+!!VR(mask):S0;
+!!VR(bit:y):S1;
+!!re (artifact:y)/86/89;
+  !!UN:A(artifact)/?(banned:y);
+  !!VR(mask)&(banned)<>(FALSE):+(bit);
+  !!VR(bit):*2;
+!!en;
+
+!?FU(WOG_Artificer_GetExchangeInfo);
+; bannedTomes: bits 0..3 = Fire, Air, Water, Earth. Other historical ban checks are unchanged.
+!#VA(artifact:x) (enchanted:x) (bannedTomes:x);
+!#VA(first:x) (second:x) (third:x) (gold:x) (mithril:x);
+!#VA(group[4]:y);
+!!VR(group[0]):C-1/-1/-1/-1;
+!!VR(first):S0;
+!!VR(second):S0;
+!!VR(third):S0;
+!!VR(gold):S0;
+!!VR(mithril):S0;
+!!VR(group[0])&(artifact)>=46/(artifact)<=48:C46/47/48/-1;
+!!VR(group[0])&(artifact)>=49/(artifact)<=51:C49/50/51/-1;
+!!VR(group[0])|(artifact)=52/(artifact)=53:C52/53/-1/-1;
+!!VR(group[0])&(artifact)>=79/(artifact)<=82:C79/80/81/82;
+!!VR(group[0])|(artifact)=84/(artifact)=85:C84/85/-1/-1;
+!!VR(group[0])&(artifact)=86:C87/88/89/-1;
+!!VR(group[0])&(artifact)=87:C86/88/89/-1;
+!!VR(group[0])&(artifact)=88:C87/86/89/-1;
+!!VR(group[0])&(artifact)=89:C87/88/86/-1;
+!!VR(group[0])|(artifact)=94/(artifact)=95:C94/95/-1/-1;
+!!VR(group[0])|(artifact)=103/(artifact)=104:C103/104/-1/-1;
+!!VR(group[0])|(artifact)=112/(artifact)=114:C112/114/-1/-1;
+!!VR(group[0])|(artifact)=109/(artifact)=110/(artifact)=111/(artifact)=113:C109/110/111/113;
+
+!!VR(count:y):S0;
+!!re (index:y)/0/3;
+  !!VR(candidate:y):S(group[index]);
+  !!co|(candidate)<0/(candidate)=(artifact);
+  !!if&(candidate)>=86/(candidate)<=89;
+    !!VR(bit:y):S1;
+    !!VR(bit)&(candidate)=87:S2;
+    !!VR(bit)&(candidate)=88:S4;
+    !!VR(bit)&(candidate)=89:S8;
+    !!VR(banned:y):S(bannedTomes) &(bit);
+    !!co&(banned)<>0;
+  !!en;
+  !!VR(out:y):S(@first)+(count);
+  !!VRx(out):S(candidate);
+  !!VR(count):+1;
+!!en;
+!!FU&(count)=0:E;
+
+!!VR(gold)&(artifact)>=46/(artifact)<=53:S1000;
+!!VR(gold)|(artifact)=103/(artifact)=104:S1000;
+!!VR(gold)|(artifact)=84/(artifact)=85/(artifact)=112/(artifact)=114:S1500;
+!!VR(gold)&(artifact)>=79/(artifact)<=82:S2500;
+!!VR(gold)|(artifact)=94/(artifact)=95/(artifact)=109/(artifact)=110/(artifact)=111/(artifact)=113:S2500;
+!!VR(gold)&(artifact)>=86/(artifact)<=89:S10000;
+!!VR(mithril)&(artifact)>=79/(artifact)<=82:S1;
+!!VR(mithril)&(artifact)>=86/(artifact)<=89:S10;
+!!VR(mithril)|(artifact)=103/(artifact)=104:S1;
+!!if&(enchanted)=1;
+  !!VR(gold)|(artifact)=103/(artifact)=104:S7500;
+  !!VR(mithril)&(artifact)>=79/(artifact)<=82:S3;
+!!en;
+
+!?FU(WOG_Artificer_GetCombinationInfo);
+; Recipe ID 1..3. Six explicit component outputs also support an eventual C ABI.
+!#VA(recipe:x) (enchanted:x) (target:x) (count:x) (parts[6]:x) (gold:x) (mithril:x);
+!!VR(target):S(NO_ART);
+!!VR(count):S0;
+!!VR(parts[0]):C0/0/0/0/0/0;
+!!VR(gold):S0;
+!!VR(mithril):S0;
+!!if&(recipe)=1;
+  !!VR(target):S153;
+  !!VR(count):S2;
+  !!VR(parts[0]):C37/45;
+  !!VR(gold):S5000;
+  !!VR(gold)&(enchanted)=1:S7500;
+  !!VR(mithril):S5;
+!!el&(recipe)=2;
+  !!VR(target):S108;
+  !!VR(count):S6;
+  !!VR(parts[0]):C46/47/48/49/50/51;
+  !!VR(gold):S2500;
+!!el&(recipe)=3;
+  !!VR(target):S93;
+  !!VR(count):S4;
+  !!VR(parts[0]):C79/80/81/82;
+  !!VR(gold):S10000;
+  !!VR(mithril):S10;
+!!en;
+
+!?FU(WOG_Artificer_GetSlotEligibility);
+; Legacy equipment list index 0..12 or 18, with recipe lookup shared across both services.
+!#VA(artifact:x) (slot:x) (service:x) (bannedTomes:x) (eligible:x);
+!!VR(eligible):S(FALSE);
+!!FU|(artifact)<7/(artifact)>=(ART_META_SPELLBOOK):E;
+!!FU&(slot)>12/(slot)<>18:E;
+!!FU&(slot)<0:E;
+!!if&(service)=1;
+  !!FU(WOG_Artificer_GetUpgradeInfo):P(artifact)/i^wog_102_enabled^/i^wog_71_enabled^/?(target:y)/?(gold:y)/?(mithril:y);
+  !!FU&(target)=(NO_ART):E;
+  ; Preserve the slot restrictions of the original script, including miscellaneous slots.
+  !!VR(eligible)&(slot)=0/(artifact)>=19/(artifact)<=23:S(TRUE);
+  !!VR(eligible)&(slot)=1/(artifact)=42:S(TRUE);
+  !!VR(eligible)&(slot)=1/(artifact)=55:S(TRUE);
+  !!VR(eligible)&(slot)=1/(artifact)=58:S(TRUE);
+  !!VR(eligible)&(slot)=1/(artifact)=83:S(TRUE);
+  !!if&(slot)=2;
+    !!VR(eligible)|(artifact)=33/(artifact)=43/(artifact)=54/(artifact)=57/(artifact)=66/(artifact)=71/(artifact)=76/(artifact)=97:S(TRUE);
+  !!en;
+  !!VR(eligible)&(slot)=3/(artifact)>=7/(artifact)<=11:S(TRUE);
+  !!VR(eligible)&(slot)=3/(artifact)=35:S(TRUE);
+  !!VR(eligible)&(slot)=3/(artifact)=38:S(TRUE);
+  !!VR(eligible)&(slot)=4/(artifact)>=13/(artifact)<=17:S(TRUE);
+  !!VR(eligible)&(slot)=4/(artifact)=34:S(TRUE);
+  !!VR(eligible)&(slot)=4/(artifact)=39:S(TRUE);
+  !!VR(eligible)&(slot)=5/(artifact)>=25/(artifact)<=29:S(TRUE);
+  !!VR(eligible)&(slot)=5/(artifact)=31:S(TRUE);
+  !!if|(slot)=6/(slot)=7;
+    !!VR(eligible)|(artifact)=37/(artifact)=45/(artifact)=67/(artifact)=69/(artifact)=70/(artifact)=77/(artifact)=94/(artifact)=95:S(TRUE);
+  !!en;
+  !!VR(eligible)&(slot)=8/(artifact)=32:S(TRUE);
+  !!VR(eligible)&(slot)=8/(artifact)=41:S(TRUE);
+  !!if|(slot)>=9/(slot)=18;
+    !!VR(eligible)&(artifact)>=60/(artifact)<=64:S(TRUE);
+    !!VR(eligible)&(artifact)>=73/(artifact)<=74:S(TRUE);
+    !!VR(eligible)&(artifact)>=116/(artifact)<=121:S(TRUE);
+  !!en;
+  !!if|(artifact)=71/(artifact)=83;
+    !!UN:A(target)/?(banned:y);
+    !!VR(eligible)&(banned)<>(FALSE):S(FALSE);
+  !!en;
+!!el&(service)=2;
+  !!FU(WOG_Artificer_GetExchangeInfo):P(artifact)/i^wog_71_enabled^/(bannedTomes)/?(first:y)/?(second:y)/?(third:y)/?(gold:y)/?(mithril:y);
+  !!FU&(first)=0:E;
+  !!VR(eligible)&(slot)=1/(artifact)=109:S(TRUE);
+  !!VR(eligible)&(slot)=2/(artifact)>=103/(artifact)<=104:S(TRUE);
+  !!if|(slot)=6/(slot)=7;
+    !!VR(eligible)|(artifact)=94/(artifact)=95/(artifact)=110/(artifact)=113:S(TRUE);
+  !!en;
+  !!if|(slot)>=9/(slot)=18;
+    !!VR(eligible)&(artifact)>=46/(artifact)<=53:S(TRUE);
+    !!VR(eligible)&(artifact)>=79/(artifact)<=89:S(TRUE);
+    !!VR(eligible)|(artifact)=111/(artifact)=112/(artifact)=114:S(TRUE);
+  !!en;
+!!en;
+
+!?FU(WOG_Artificer_SpendMovement);
+!#VA(hero:x) (cost:x);
+!!HE(hero):W?(movement:y);
+!!VR(movement):-(cost) F0/(INT_MAX);
+!!HE(hero):W(movement);
+
+!?FU(WOG_Artificer_RecordOrder);
+!#VA(x:x) (y:x) (z:x) (oldFatigue:x) (fatigue:x);
+!!VR(fatigue):S(oldFatigue)+1 F1/3;
+!!PO(x)/(y)/(z):N(fatigue);
+
+!?FU(WOG_Artificer_GetSalePrice);
+!#VA(artifact:x) (gold:x) (mithril:x);
+!!VR(gold):S0;
+!!VR(mithril):S0;
+!!FU|(artifact)<0/(artifact)>=(ART_META_SPELLBOOK):E;
+!!UN:A(artifact)/1/?(value:y);
+!!VR(gold):S(value):4;
+!!VR(mithril):S(value):4000+1;

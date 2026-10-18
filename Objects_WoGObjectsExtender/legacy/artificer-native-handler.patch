@@ -1,0 +1,66 @@
+--- a/52 wog - artificer.erm
++++ b/52 wog - artificer.erm
+@@ -86,6 +86,13 @@
+ ********************************************************************************
+ 
+ !?FU(OnAfterErmInstructions);
++!!UN:P102/?i^wog_102_enabled^ P71/?i^wog_71_enabled^;
++; Native Artificer owns visits, hints and its saved setup when registered.
++!!VR(artificerSavedV1:y):Sv1;
++!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;
++!!VR(artificerNative:y):Sv1;
++!!VRv1:S(artificerSavedV1);
++!!FU&(artificerNative)=(TRUE):E;
+ !!UN:P26/?(artificer:y);                  [Check if script is enabled: v1]
+ 
+ ** set hints **
+@@ -103,6 +110,12 @@
+ !!UN:P71/?i^wog_71_enabled^;            [Check if Enhanced Artifacts II is enabled in WoGify Options]
+ 
+ !?FU(OnEveryDay)&i^timerOnce^;
++; Native Artificer owns visits, hints and its saved setup when registered.
++!!VR(artificerSavedV1:y):Sv1;
++!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;
++!!VR(artificerNative:y):Sv1;
++!!VRv1:S(artificerSavedV1);
++!!FU&(artificerNative)=(TRUE):E;
+ !!UN:P26/?y-1;                          [Check if script is enabled: y-1]
+ !!FU&y-1<>1:E;                          [exit if disabled]
+ 
+@@ -111,6 +124,12 @@
+ 
+ *!* OBJECT TRIGGER *!*
+ !?OB(OBJ_NEW_WOG_OBJECTS)/52;
++; Native Artificer owns visits, hints and its saved setup when registered.
++!!VR(artificerSavedV1:y):Sv1;
++!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;
++!!VR(artificerNative:y):Sv1;
++!!VRv1:S(artificerSavedV1);
++!!FU&(artificerNative)=(TRUE):E;
+ !!UN:P26/?y-1;                          [Check if script is enabled: y-1]
+ !!FU&y-1<>1:E;                          [Exit if script isn't enabled]
+ 
+--- a/78 wog - wogify.erm
++++ b/78 wog - wogify.erm
+@@ -612,6 +612,7 @@
+   !!VRvy10&y3=1:C63/57/3/-1/0/1/0; [adventure cave]
+ 
+   !!UN:P26/?y3; [check if Artificer script is enabled]
++  !!FU(WOG_NativeArtificer_AllowReplacement):Py3/?y3;
+   !!VRy3&y21=0:S0; [set y3 to 0 if Replace Objects isn't enabled]
+   !!VRy20&y3=1:+1; [add one to object counter]
+   !!VRy11&y3=1:Sy20 *7; [number to add to index variable]
+@@ -1917,3 +1918,13 @@
+   !!SN:P^pickup0%(random)^;
+   !!UN:Ov998/v999/v1000/1;
+ !!en;
++
++; Keep native Artificers out of legacy WoG replacement tables.
++!?FU(WOG_NativeArtificer_AllowReplacement);
++!#VA(enabled:x) (result:x);
++!!VR(result):S(enabled);
++!!VR(savedV1:y):Sv1;
++!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;
++!!VR(native:y):Sv1;
++!!VRv1:S(savedV1);
++!!VR(result)&(native)=(TRUE):S(FALSE);

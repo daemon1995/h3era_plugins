@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,12 +19,42 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Artificer.h" />
+    <ClInclude Include="ArtificerDialog.h" />
+    <ClInclude Include="ArtificerLogic.h" />
+    <ClInclude Include="MarketOfTime.h" />
+    <ClInclude Include="MarketOfTimeLogic.h" />
     <ClInclude Include="WoGObjectsExtender.h" />
+    <ClInclude Include="WoGObjectHandlers.h" />
+    <ClInclude Include="WoGObjectIds.h" />
+    <ClInclude Include="WoGObjectState.h" />
+    <ClInclude Include="WoGObjectUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Artificer.cpp" />
+    <ClCompile Include="ArtificerDialog.cpp" />
+    <ClCompile Include="MarketOfTime.cpp" />
     <ClCompile Include="WoGObjectsExtender.cpp" />
+    <ClCompile Include="WoGObjectIds.cpp" />
+    <ClCompile Include="WoGObjectState.cpp" />
+    <ClCompile Include="WoGObjectUtils.cpp" />
+    <ClCompile Include="WoGObjectBasic.cpp" />
+    <ClCompile Include="WoGObjectTrading.cpp" />
+    <ClCompile Include="WoGObjectSkull.cpp" />
+    <ClCompile Include="WoGObjectCombat.cpp" />
+    <ClCompile Include="WoGObjectEmerald.cpp" />
+    <ClCompile Include="WoGObjectHandlers.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="PORTING_NOTES.md" />
+    <None Include="Verification\verify-native-wog-objects.py" />
+    <None Include="Artificer.md" />
+    <None Include="Install-Artificer.ps1" />
+    <None Include="lang\wog_objects.json" />
+    <None Include="lang\ru\wog_objects.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

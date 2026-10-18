@@ -1,0 +1,31 @@
+[
+  {
+    "file": "52 wog - artificer.erm",
+    "edits": [
+      {
+        "before": "!?FU(OnAfterErmInstructions);\n",
+        "after": "!?FU(OnAfterErmInstructions);\n!!UN:P102/?i^wog_102_enabled^ P71/?i^wog_71_enabled^;\n; Native Artificer owns visits, hints and its saved setup when registered.\n!!VR(artificerSavedV1:y):Sv1;\n!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;\n!!VR(artificerNative:y):Sv1;\n!!VRv1:S(artificerSavedV1);\n!!FU&(artificerNative)=(TRUE):E;\n"
+      },
+      {
+        "before": "!?FU(OnEveryDay)&i^timerOnce^;\n",
+        "after": "!?FU(OnEveryDay)&i^timerOnce^;\n; Native Artificer owns visits, hints and its saved setup when registered.\n!!VR(artificerSavedV1:y):Sv1;\n!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;\n!!VR(artificerNative:y):Sv1;\n!!VRv1:S(artificerSavedV1);\n!!FU&(artificerNative)=(TRUE):E;\n"
+      },
+      {
+        "before": "!?OB(OBJ_NEW_WOG_OBJECTS)/52;\n",
+        "after": "!?OB(OBJ_NEW_WOG_OBJECTS)/52;\n; Native Artificer owns visits, hints and its saved setup when registered.\n!!VR(artificerSavedV1:y):Sv1;\n!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;\n!!VR(artificerNative:y):Sv1;\n!!VRv1:S(artificerSavedV1);\n!!FU&(artificerNative)=(TRUE):E;\n"
+      }
+    ]
+  },
+  {
+    "file": "78 wog - wogify.erm",
+    "edits": [
+      {
+        "before": "  !!UN:P26/?y3; [check if Artificer script is enabled]\n",
+        "after": "  !!UN:P26/?y3; [check if Artificer script is enabled]\n  !!FU(WOG_NativeArtificer_AllowReplacement):Py3/?y3;\n"
+      },
+      {
+        "append": "\n; Keep native Artificers out of legacy WoG replacement tables.\n!?FU(WOG_NativeArtificer_AllowReplacement);\n!#VA(enabled:x) (result:x);\n!!VR(result):S(enabled);\n!!VR(savedV1:y):Sv1;\n!!SN:F^GetEraRegistryIntValue^/^wog_objects.artificer.handlesLegacy^;\n!!VR(native:y):Sv1;\n!!VRv1:S(savedV1);\n!!VR(result)&(native)=(TRUE):S(FALSE);\n"
+      }
+    ]
+  }
+]

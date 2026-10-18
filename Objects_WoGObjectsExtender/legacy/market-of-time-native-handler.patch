@@ -1,0 +1,29 @@
+--- a/69 wog - market of time.erm
++++ b/69 wog - market of time.erm
+@@ -30,6 +30,13 @@
+ !#VA(isYellowSquare:x); boolean.
+ !#VA(isPassable:x);     boolean.
+ 
++; C++ handles the migrated object without replacing objects during map iteration.
++!!VR(savedV1:y):Sv1;
++!!SN:F^GetEraRegistryIntValue^/^wog_objects.marketOfTime.handlesLegacy^;
++!!VR(nativeHandler:y):Sv1;
++!!VRv1:S(savedV1);
++!!FU&(nativeHandler)=(TRUE):E;
++
+ ; check: is entry to the object
+ !!FU&(isYellowSquare)<>(TRUE):E;
+ 
+@@ -79,6 +86,12 @@
+ 
+ ; Normal Market of Time
+ !?OB(OBJ_NEW_WOG_OBJECTS)/(OBJ_OPT_MARKET_OF_TIME)&(ERM_FLAG_IS_HUMAN);
++; Skip this legacy visit only when its C++ handler is registered in this process.
++!!VR(savedV1:y):Sv1;
++!!SN:F^GetEraRegistryIntValue^/^wog_objects.marketOfTime.handlesLegacy^;
++!!VR(nativeHandler:y):Sv1;
++!!VRv1:S(savedV1);
++!!FU&(nativeHandler)=(TRUE):E;
+ !!FU(WOG_109_VisitMarketOfTime):P;
+ 
+ ; Market of Time in Titan's Winter
