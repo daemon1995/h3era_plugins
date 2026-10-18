@@ -1,0 +1,8 @@
+!tests/
+!tests/HelpLogicTests.cpp
+!tests/validate_translations.py
+!lang/
+lang/*
+!lang/era_help.json
+!lang/ru/
+!lang/ru/era_help.json

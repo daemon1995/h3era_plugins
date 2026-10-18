@@ -13,11 +13,13 @@ class PlaceholderSection;
 class MainDlg : public H3Dlg
 {
     static MainDlg *instance;
+    H3PcxLoader selectorBackground;
     HeaderPage *header = nullptr;
     ModSection *modSection = nullptr;
     HotkeysSection *hotkeysSection = nullptr;
     PlaceholderSection *placeholder = nullptr;
     helpdlg::SearchPanel *searchPanel = nullptr;
+    H3DlgCaptionButton *guideButton = nullptr;
     DlgSection *activeSection = nullptr;
     std::map<eHelpPage, helpdlg::Catalogue> catalogues;
     std::map<eHelpPage, CatalogueSection *> catalogueSections;
@@ -26,7 +28,8 @@ class MainDlg : public H3Dlg
     bool modsLoaded = false;
     eHelpPage initialPage, activePage;
     int initialSubtype = 0, activeSubtype = 0;
-    int bodyY = 100, bodyHeight = 0, categoriesWidth = 220, contentX = 232, contentWidth = 0;
+    int bodyY = 78, bodyHeight = 0, categoriesWidth = 220, contentX = 232, contentWidth = 0;
+    int bottomBarY = 0;
     int pendingObject = -1;
     std::string searchQuery;
 
@@ -45,6 +48,8 @@ class MainDlg : public H3Dlg
     void Search();
     void CloseSearch();
     void ReleaseInputFocus(int keepItemId = -1);
+    void SetSearchQuery(const std::string &query);
+    void RefreshSearchPlaceholders() noexcept;
     void NavigateSearch(const helpdlg::SearchEntry &target);
     void PreviewSearch(const helpdlg::SearchEntry &target);
     void ExecuteAction(LPCSTR action);
@@ -55,7 +60,7 @@ class MainDlg : public H3Dlg
     static constexpr LPCSTR iniPath = "ERA_HelpDialog.ini";
     static constexpr LPCSTR MAIN_MENU_WIDGET_NAME = "main_menu_help_dialogue_made_by_a_confused_person";
     MainDlg(int width, int height, int x = -1, int y = -1, eHelpPage page = eHelpPage::MODS, int subtype = 0);
-    ~MainDlg();
+    virtual ~MainDlg();
     BOOL ShowPage(eHelpPage page, int subtype = -1);
     void AssignWithCalledDlg(const H3Town *town = nullptr, eCreature creature = eCreature::UNDEFINED) noexcept;
     static BOOL DlgExists()

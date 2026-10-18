@@ -23,22 +23,24 @@ enum class eHelpObjectKind : unsigned char
     Link,
     ErmFunction
 };
+// Text pointers borrow permanent EraJS storage; the parsed document does not copy it.
 struct HelpObject
 {
     eHelpObjectKind kind = eHelpObjectKind::Text;
     int x = 0, y = 0, width = 0, height = 0, zOrder = 0, frame = 0;
-    H3String value;
-    H3String action;
+    LPCSTR value = h3_NullString;
+    LPCSTR action = h3_NullString;
     BOOL overlay = FALSE;
 };
 struct Content
 {
-    H3String text;
+    LPCSTR text = h3_NullString;
+    std::string generatedText; // Only generated plugin listings own their article text.
     std::vector<HelpObject> objects;
 };
 struct Category
 {
-    H3String name;
+    LPCSTR name = h3_NullString;
     Content *content = nullptr;
     virtual ~Category()
     {
@@ -48,7 +50,7 @@ struct Category
 struct HotKey
 {
     hkcategories::eType type = hkcategories::OTHER_DLG;
-    H3String keys, name, description;
+    LPCSTR keys = h3_NullString, name = h3_NullString, description = h3_NullString;
     int id = -1;
 };
 struct HotKeysCategory : Category
@@ -59,7 +61,8 @@ struct ModInformation
 {
     BOOL hasSomeInfo = FALSE;
     const UINT id;
-    H3String name, path;
+    LPCSTR name = h3_NullString;
+    H3String path;
     ModJsonDocument document;
     HotKeysCategory *hotkeysCategory = nullptr;
     std::vector<Category *> categories;

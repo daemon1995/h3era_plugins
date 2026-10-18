@@ -21,7 +21,13 @@ enum eButton
     LAST = SPELLS,
     SEARCH = 110,
     SEARCH_CLEAR = 111,
-    ACTIVE_MOD = 112
+    ACTIVE_MOD = 112, // kept for binary/source compatibility; no longer rendered
+    SEARCH_EDIT = 113,
+    SETTINGS = 114,
+    BOTTOM_SEARCH_EDIT = 115,
+    BOTTOM_SEARCH_CLEAR = 116,
+    BOTTOM_SEARCH = 117,
+    MODLIST_ARROW = 118
 };
 } // namespace buttons
 

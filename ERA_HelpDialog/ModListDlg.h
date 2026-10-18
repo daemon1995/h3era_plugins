@@ -9,18 +9,20 @@ namespace list
 class ModListDlg : public H3Dlg
 {
     const std::vector<ModInformation *> &mods;
-    std::vector<H3DlgCaptionButton *> buttons;
+    std::vector<H3DlgTextPcx *> buttons;
+    H3DlgFrame *hoverFrame = nullptr;
+    int hoverRow = -1;
     H3DlgScrollbar *scrollBar = nullptr;
     ModInformation *resultMod = nullptr;
     int firstIndex = 0;
-    int activeIndex = -1;
+    int disabledIndex = -1;
     int selectedIndex = 0;
     int visibleCount = 1;
     static ModListDlg *instance;
 
   public:
     ModListDlg(const helpdlg::ModDropdownLayout &layout, const std::vector<ModInformation *> &mods,
-               const ModInformation *selectedMod);
+               const ModInformation *selectedMod, bool selectedModIsOpen);
     virtual ~ModListDlg();
 
   protected:

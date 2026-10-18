@@ -8,7 +8,7 @@ struct SearchEntry
 {
     main::eHelpPage page = main::eHelpPage::MODS;
     int objectId = -1, modId = -1, category = 0, hotkeyContext = 0, hotkeyId = -1;
-    std::string label, searchable;
+    std::string label;
 };
 
 class SearchPanel final : public main::DlgSection, private main::DlgPage
@@ -33,7 +33,7 @@ class SearchPanel final : public main::DlgSection, private main::DlgPage
   public:
     SearchPanel(int categoryX, int y, int categoryWidth, int height, int contentX, int contentWidth, H3Dlg *dialog,
                 std::vector<SearchEntry> entries);
-    ~SearchPanel() override;
+    virtual ~SearchPanel() override;
     void SetQuery(const std::string &text);
     void SetVisible(BOOL state) noexcept override;
     void UpdateMousePosition(const H3Msg &msg) noexcept override;

@@ -34,21 +34,18 @@ SearchPanel::SearchPanel(int cx, int top, int cw, int h, int left, int w, H3Dlg 
     for (int index = 0; index < 9; ++index)
     {
         auto *button = CategoryButton(cx + 6, y + 6 + index * categoryStep, kScopeFirst + index,
-                                      index ? PageName(kPages[index - 1]) : Text("help.ui.all", "All"));
+                                      index ? PageName(kPages[index - 1]) : Text("help.ui.all"));
         AddItem(button);
         scopes.push_back(button);
     }
-    AddItem(Button(nullptr, x + width - 90, y + 6, 80, 28, kBack, Text("help.ui.back", "Back")));
-    countText = H3DlgText::Create(x + 8, y + 6, width - 106, 28, "", NH3Dlg::Text::SMALL, eTextColor::REGULAR, -1,
-                                  eTextAlignment::MIDDLE_LEFT);
+    AddItem(Button(nullptr, x + width - 90, y + 6, 80, 28, kBack, Text("help.ui.back")));
+    countText = H3DlgText::Create(x + 8, y + 6, width - 106, 28, h3_NullString, NH3Dlg::Text::SMALL,
+                                  eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
     AddItem(countText);
     const int rowCount = std::max(1, (height - 48) / 34);
     for (int row = 0; row < rowCount; ++row)
     {
-        auto *button = Button(nullptr, x + 8, y + 40 + row * 34, width - 34, 32, kRowFirst + row, "");
-        if (button)
-            button->SetHints(Text("help.ui.search_result_hint", "Left: go to and highlight. Right: hold for preview."),
-                             nullptr, false);
+        auto *button = Button(nullptr, x + 8, y + 40 + row * 34, width - 34, 32, kRowFirst + row, h3_NullString);
         AddItem(button);
         rows.push_back(button);
     }
@@ -96,7 +93,7 @@ void SearchPanel::Rebuild()
     matches.clear();
     for (size_t index = 0; index < entries.size(); ++index)
         if ((!activeSubtype || entries[index].page == kPages[activeSubtype - 1]) &&
-            MatchesWords(entries[index].searchable, query))
+            MatchesWords(entries[index].label, query))
             matches.push_back(static_cast<int>(index));
     firstIndex = selectedIndex = 0;
     selection = -1;
@@ -115,7 +112,13 @@ void SearchPanel::Redraw()
         const int index = firstIndex + static_cast<int>(row);
         if (isVisible && index < static_cast<int>(matches.size()))
         {
-            button->SetText(entries[matches[index]].label.c_str());
+            const auto &entry = entries[matches[index]];
+            button->SetText(entry.label.c_str());
+            button->SetHints(FormatText("help.formats.object_hint",
+                                        ObjectTitle(entry.label.c_str(), entry.objectId).c_str(),
+                                        Text("help.ui.search_result_hint"))
+                                 .c_str(),
+                             nullptr, true);
             button->SetFrame(index == selectedIndex ? 1 : 0);
             button->Enable();
             button->ShowActivate();
@@ -130,8 +133,7 @@ void SearchPanel::Redraw()
             scopes[index]->SendCommand(6 - (state), 4096);
         }
     if (countText)
-        countText->SetText(
-            H3String::Format("%d %s", static_cast<int>(matches.size()), Text("help.ui.results", "results")).String());
+        countText->SetText(FormatText("help.formats.results", static_cast<int>(matches.size())).c_str());
     UpdateHoverFrame();
     RedrawDialog();
 }

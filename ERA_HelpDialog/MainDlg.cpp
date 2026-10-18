@@ -64,17 +64,20 @@ void LoadSession()
     session.modFolder = ReadIni("LastMod");
     session.hotkeys.context = ReadInt("HotkeyContext");
     session.hotkeys.firstRow = ReadInt("HotkeyRow");
-    const bool migrateSort = ReadInt("SortSchema") < 1;
+    const int sortSchema = ReadInt("SortSchema");
+    const bool migrateFilters = ReadInt("FilterSchema") < 2;
     for (auto page : kPages)
     {
         auto &filter = session.filters[page];
         const H3String prefix = H3String::Format("Page.%d", static_cast<int>(page));
         filter.category = ReadInt(H3String::Format("%s.Category", prefix.String()).String());
         filter.levels = static_cast<unsigned>(ReadInt(H3String::Format("%s.Levels", prefix.String()).String()));
-        filter.sort = migrateSort ? 1 : ReadInt(H3String::Format("%s.Sort", prefix.String()).String(), 1);
+        filter.sort = helpdlg::InitialCatalogueSort(
+            sortSchema, ReadInt(H3String::Format("%s.Sort", prefix.String()).String(), helpdlg::kCatalogueIdSort));
         filter.firstRow = ReadInt(H3String::Format("%s.Row", prefix.String()).String());
         for (int facet = 0; facet < 4; ++facet)
-            filter.facets[facet] = ReadInt(H3String::Format("%s.Facet%d", prefix.String(), facet).String());
+            filter.facets[facet] =
+                migrateFilters ? 0 : ReadInt(H3String::Format("%s.Facet%d", prefix.String(), facet).String());
     }
 }
 } // namespace
@@ -82,23 +85,42 @@ void LoadSession()
 MainDlg::MainDlg(int width, int height, int x, int y, eHelpPage page, int subtype)
     : H3Dlg(width, height, x, y, false, false), initialPage(page), activePage(page), initialSubtype(subtype)
 {
+    selectorBackground.Set(helpdlg::CreateSelectorBackground(width));
     helpdlg::AddSafeBackground(*this);
     instance = this;
     LoadSession();
-    bodyHeight = height - bodyY - 56;
+
     H3DefLoader categoryDef(DlgPage::CATEGORY_BUTTON_DEF);
     if (categoryDef.Get() && categoryDef->widthDEF > 0)
         categoriesWidth = categoryDef->widthDEF + 32;
     contentX = 8 + categoriesWidth + 4;
     contentWidth = width - contentX - 8;
-    header = new HeaderPage(8, 8, width - 16, 84, this);
+
+    header = new HeaderPage(8, 8, width - 16, 64, categoriesWidth, this);
     auto *ok = helpdlg::CloseButtonRight(*this);
+    const int okX = ok ? ok->GetX() : width - 82;
+    const int okHeight = ok ? ok->GetHeight() : 32;
+    bottomBarY = ok ? ok->GetY() : height - 48;
+    bodyHeight = std::max(80, bottomBarY - bodyY - 6);
     if (ok)
     {
         ok->AddHotkey(eVKey::H3VK_ESCAPE);
         ok->AddHotkey(eVKey::H3VK_F1);
     }
-    hintBar = CreateHint(10, height - 42, width - 100, 30);
+
+    guideButton = helpdlg::CategoryButton(14, bottomBarY, buttons::HELP, helpdlg::Text("help.ui.guide"));
+    if (guideButton)
+    {
+        AddItem(guideButton);
+        guideButton->SetHints(helpdlg::Text("help.ui.guide_hint"), nullptr, false);
+    }
+
+    const int hintX = contentX;
+    const int hintWidth = std::max(100, okX - hintX - 6);
+    hintBar = CreateHint(hintX, bottomBarY, hintWidth, okHeight);
+    if (hintBar)
+        hintBar->Show();
+    RefreshSearchPlaceholders();
 }
 MainDlg::~MainDlg()
 {
@@ -192,12 +214,9 @@ void MainDlg::ShowSection(DlgSection *section)
     if (section)
     {
         section->SetVisible(TRUE);
-        section->Redraw();
         activeSubtype = section->Subtype();
     }
-    const LPCSTR modName = section == modSection && activeMod
-                              ? (activeMod->name.Empty() ? activeMod->path.String() : activeMod->name.String())
-                              : nullptr;
+    const LPCSTR modName = activeMod ? activeMod->name : nullptr;
     header->SetActiveButton(section == searchPanel ? buttons::SEARCH : static_cast<int>(activePage), modName);
     if (P_WindowManager->lastDlg == this)
         Redraw();
@@ -253,8 +272,7 @@ BOOL MainDlg::ShowPage(eHelpPage page, int subtype)
         if (EnsureModsLoaded())
             ShowMod(activeMod, subtype);
         else
-            ShowEmpty(page, helpdlg::Text("help.ui.no_mods",
-                                          "No mod help is available. Add help data to a language JSON file."));
+            ShowEmpty(page, helpdlg::Text("help.ui.no_mods"));
     }
     else
     {
@@ -301,11 +319,10 @@ void MainDlg::Search()
 {
     if (searchPanel)
     {
-        searchPanel->SetQuery(header->Query());
+        searchPanel->SetQuery(searchQuery);
         if (activeSection != searchPanel)
         {
             ShowSection(searchPanel);
-            header->FocusSearch();
         }
         return;
     }
@@ -317,7 +334,6 @@ void MainDlg::Search()
             entry.page = page;
             entry.objectId = object.id;
             entry.label = std::string(helpdlg::PageName(page)) + " / " + object.name;
-            entry.searchable = entry.label;
             entries.push_back(entry);
         }
     EnsureModsLoaded();
@@ -328,8 +344,7 @@ void MainDlg::Search()
             helpdlg::SearchEntry entry;
             entry.modId = mod->id;
             entry.category = static_cast<int>(category);
-            entry.label = std::string(mod->name.String()) + " / " + item->name.String();
-            entry.searchable = entry.label;
+            entry.label = std::string(mod->name) + " / " + item->name;
             entries.push_back(entry);
             if (item == mod->hotkeysCategory)
                 for (const auto &key : mod->hotkeysCategory->hotkeys)
@@ -337,23 +352,19 @@ void MainDlg::Search()
                     entry.page = eHelpPage::HOTKEYS;
                     entry.hotkeyContext = key.type;
                     entry.hotkeyId = key.id;
-                    entry.label =
-                        std::string(mod->name.String()) + " / [" + key.keys.String() + "] " + key.name.String();
-                    entry.searchable = entry.label;
+                    entry.label = std::string(mod->name) + " / [" + key.keys + "] " + key.name;
                     entries.push_back(entry);
                 }
         }
     searchPanel = new helpdlg::SearchPanel(8, bodyY, categoriesWidth, bodyHeight, contentX, contentWidth, this,
                                            std::move(entries));
-    searchPanel->SetQuery(header->Query());
+    searchPanel->SetQuery(searchQuery);
     ShowSection(searchPanel);
-    header->FocusSearch();
 }
 
 void MainDlg::CloseSearch()
 {
-    header->SetQuery("");
-    searchQuery.clear();
+    SetSearchQuery(h3_NullString);
     if (activeSection == searchPanel)
         ShowPage(activePage);
 }
@@ -402,8 +413,8 @@ void MainDlg::PreviewSearch(const helpdlg::SearchEntry &target)
         if (mod->id != static_cast<UINT>(target.modId))
             continue;
         helpdlg::CatalogueEntry preview{};
-        preview.name = target.label;
-        preview.summary = mod->name.String();
+        preview.name = target.label.c_str();
+        preview.summary = mod->name;
         if (target.page == eHelpPage::HOTKEYS)
         {
             if (!mod->hotkeysCategory)
@@ -411,7 +422,7 @@ void MainDlg::PreviewSearch(const helpdlg::SearchEntry &target)
             for (const auto &key : mod->hotkeysCategory->hotkeys)
                 if (key.id == target.hotkeyId)
                 {
-                    helpdlg::ShowHotkeyPreview(key, mod->name.String());
+                    helpdlg::ShowHotkeyPreview(key, mod->name);
                     return;
                 }
             return;
@@ -425,32 +436,30 @@ void MainDlg::PreviewSearch(const helpdlg::SearchEntry &target)
         {
             std::vector<helpdlg::HotkeyLine> keys;
             for (const auto &key : mod->hotkeysCategory->hotkeys)
-                keys.push_back({key.type, "", helpdlg::Safe(key.keys.String()), helpdlg::Safe(key.name.String()),
-                                static_cast<int>(mod->id), key.id, helpdlg::Safe(key.description.String())});
+                keys.push_back(
+                    {key.type, h3_NullString, key.keys, key.name, static_cast<int>(mod->id), key.id, key.description});
             preview.description = helpdlg::GroupHotkeys(keys, helpdlg::ContextName);
         }
         else if (category && category->content)
         {
-            preview.description = category->content->text.String();
+            preview.description = category->content->text;
             for (const auto &object : category->content->objects)
             {
                 if (object.kind == eHelpObjectKind::Text)
-                    preview.description += "\n\n" + helpdlg::Safe(object.value.String());
-                else if (object.kind == eHelpObjectKind::Image && !preview.def && preview.pcx.empty())
+                    preview.description += "\n\n" + helpdlg::Safe(object.value);
+                else if (object.kind == eHelpObjectKind::Image && !preview.def && !*preview.pcx)
                 {
-                    const std::string resource = helpdlg::Lower(object.value.String());
+                    const std::string resource = helpdlg::Lower(object.value);
                     if (resource.size() >= 4 && resource.substr(resource.size() - 4) == ".def")
                     {
-                        preview.def = object.value.String();
+                        preview.def = object.value;
                         preview.frame = object.frame;
                     }
                     else
-                        preview.pcx = object.value.String();
+                        preview.pcx = object.value;
                 }
             }
         }
-        if (preview.description.empty())
-            preview.description = helpdlg::Text("help.ui.empty_category", "No text in this category.");
         helpdlg::ShowObjectDetails(preview, true);
         return;
     }
@@ -458,7 +467,7 @@ void MainDlg::PreviewSearch(const helpdlg::SearchEntry &target)
 
 void MainDlg::ExecuteAction(LPCSTR command)
 {
-    const std::string action = command ? command : "";
+    const std::string action = command ? command : h3_NullString;
     if (action == "search")
     {
         ReleaseInputFocus();
@@ -519,32 +528,66 @@ void MainDlg::ExecuteAction(LPCSTR command)
             const int id = helpdlg::ParseInt(value, -1);
             if (id < 0)
                 return;
-            ShowObject(kPages[index], id);
+            helpdlg::CatalogueEntry entry;
+            if (helpdlg::TryBuildObjectEntry(kPages[index], id, entry, false))
+                helpdlg::ShowObjectDetails(entry);
             return;
         }
+}
+void MainDlg::SetSearchQuery(const std::string &query)
+{
+    searchQuery = query;
+    header->SetQuery(query);
+    RefreshSearchPlaceholders();
+}
+void MainDlg::RefreshSearchPlaceholders() noexcept
+{
+    header->RefreshSearchPlaceholder();
 }
 void MainDlg::ReleaseInputFocus(int keepItemId)
 {
     header->ReleaseInputFocus(keepItemId);
+    RefreshSearchPlaceholders();
 }
 BOOL MainDlg::DialogProc(H3Msg &msg)
 {
-    const std::string query = header->Query();
+    const LPCSTR query = header->Query();
     if (query != searchQuery)
     {
+        // Keep the native edit buffer and caret authoritative while typing.
         searchQuery = query;
-        if (!query.empty())
+        if (*query)
             Search();
         else if (activeSection == searchPanel)
             ShowPage(activePage);
     }
+    RefreshSearchPlaceholders();
+    // Native edits report typed characters as mouse-button notifications with their
+    // item ID. Its coordinates belong to the keyboard event, not a mouse click.
+    // The text is already updated; do not let this notification release focus
+    // or dispatch actions on the page beneath it.
+    if ((msg.IsLeftDown() || msg.IsLeftClick()) && msg.itemId == buttons::SEARCH_EDIT)
+        return FALSE;
     if (msg.IsLeftDown() || msg.IsLeftClick() || msg.IsRightClick())
-        ReleaseInputFocus(msg.itemId);
+    {
+        const int localX = msg.GetX() - GetX();
+        const int localY = msg.GetY() - GetY();
+        if (header->SearchContains(localX, localY))
+        {
+            // Explicit focus makes the placeholder disappear on the very first click,
+            // before the native edit control processes the message.
+            header->FocusSearch();
+            RefreshSearchPlaceholders();
+        }
+        else if (msg.itemId != buttons::SEARCH_CLEAR)
+            ReleaseInputFocus();
+    }
     if (msg.IsKeyPress() && msg.IsCtrlPressed() && msg.GetKey() == eVKey::H3VK_F)
     {
         ReleaseInputFocus();
         Search();
         header->FocusSearch();
+        RefreshSearchPlaceholders();
         return FALSE;
     }
     if (activeSection)
@@ -591,20 +634,37 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
             auto *button = GetCaptionButton(buttons::MODLIST);
             if (!button)
                 return FALSE;
-            const auto *def = button->GetDef();
-            const int buttonWidth = def && def->widthDEF > 0 ? static_cast<int>(def->widthDEF) : button->GetWidth();
-            const auto layout = helpdlg::FitModDropdown(GetX() + button->GetX(), GetY() + button->GetY(), buttonWidth,
+            const int dropdownWidth = std::max(button->GetWidth(), categoriesWidth - 8);
+            const auto layout = helpdlg::FitModDropdown(GetX() + button->GetX(), GetY() + button->GetY(), dropdownWidth,
                                                         button->GetHeight(), static_cast<int>(mods.size()),
                                                         H3GameWidth::Get(), H3GameHeight::Get());
-            list::ModListDlg picker(layout, mods, activeSection == modSection ? activeMod : nullptr);
+            list::ModListDlg picker(layout, mods, activeMod, modSection && activeSection == modSection);
             picker.Start();
             if (picker.ResultMod())
                 ShowMod(picker.ResultMod(), -1);
+            else
+            {
+                // Re-arm the selector after a cancelled dropdown as well; it is never
+                // a selected page tab and must remain clickable at all times.
+                const LPCSTR modName = activeMod ? activeMod->name : nullptr;
+                header->SetActiveButton(static_cast<int>(activePage), modName);
+                if (activeSection)
+                    activeSection->Redraw();
+            }
             return FALSE;
         }
         if (msg.itemId == buttons::SEARCH_CLEAR)
         {
             CloseSearch();
+            header->FocusSearch();
+            RefreshSearchPlaceholders();
+            return FALSE;
+        }
+        if (msg.itemId == buttons::SEARCH)
+        {
+            const std::string requested = header->Query();
+            SetSearchQuery(requested);
+            Search();
             return FALSE;
         }
         if (msg.itemId == buttons::HELP)
@@ -617,6 +677,12 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
         {
             resultItemId = buttons::RESIZE_DLG;
             Stop();
+            return FALSE;
+        }
+        if (msg.itemId == buttons::SETTINGS)
+        {
+            // Reserved for Help-dialog settings. Keeping the control live allows
+            // a settings page to be attached without changing the header layout.
             return FALSE;
         }
         const eHelpPage page = static_cast<eHelpPage>(msg.itemId);
@@ -643,7 +709,8 @@ void MainDlg::StoreState()
     if (hotkeysSection)
         session.hotkeys = hotkeysSection->Filter();
     WriteIni("LastMod", session.modFolder);
-    WriteIni("SortSchema", "1");
+    WriteIni("SortSchema", std::to_string(helpdlg::kCatalogueSortSchema));
+    WriteIni("FilterSchema", "2");
     WriteIni("HotkeyContext", std::to_string(session.hotkeys.context));
     WriteIni("HotkeyRow", std::to_string(session.hotkeys.firstRow));
     for (const auto &entry : session.filters)
@@ -707,9 +774,8 @@ BOOL MainDlg::ShowObject(eHelpPage page, int objectId)
         instance->EnsureCatalogueSection(page)->FocusObject(objectId);
         return TRUE;
     }
-    const auto data = helpdlg::BuildCatalogue(page);
-    if (std::none_of(data.entries.begin(), data.entries.end(),
-                     [objectId](const helpdlg::CatalogueEntry &entry) { return entry.id == objectId; }))
+    helpdlg::CatalogueEntry entry;
+    if (!helpdlg::TryBuildObjectEntry(page, objectId, entry, false))
         return FALSE;
     return RunMainDlg(page, 0, FALSE, objectId);
 }

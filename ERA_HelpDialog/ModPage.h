@@ -13,7 +13,8 @@ enum eItem
 {
     CATEGORY_FIRST = 16000,
     CATEGORY_SCROLLBAR = 15998,
-    CONTENT_SCROLLBAR = 15999
+    CONTENT_SCROLLBAR = 15999,
+    HOTKEY_CONTENT_SCROLLBAR = 15997
 };
 } // namespace modpage
 
@@ -26,6 +27,7 @@ class ModCategoriesPage final : public DlgPage
     std::vector<H3DlgCaptionButton *> buttons;
     H3DlgScrollbar *scrollBar = nullptr;
     const ModInformation *activeMod = nullptr;
+    int activeCategory = 0;
     int firstIndex = 0;
     int visibleCount = 1;
     int categoryStep = 28;
@@ -33,7 +35,7 @@ class ModCategoriesPage final : public DlgPage
 
   public:
     ModCategoriesPage(int x, int y, int width, int height, H3Dlg *dialog);
-    ~ModCategoriesPage() override;
+    virtual ~ModCategoriesPage() override;
 
     void SetMod(const ModInformation *mod);
     BOOL IsCategory(int itemId) const noexcept;
@@ -43,7 +45,6 @@ class ModCategoriesPage final : public DlgPage
     void Refresh();
 
   private:
-    void CreateForMod(const ModInformation *mod);
     void RedrawItems(int firstIndex);
     static void __fastcall ScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
@@ -55,24 +56,37 @@ class ModContentPage final : public DlgPage
     int pageWidth;
     int pageHeight;
     H3DlgScrollableText *textScroll = nullptr;
-    H3String renderedText;
+    struct HotkeyDisplayLine
+    {
+        bool heading = false;
+        std::string left, right;
+    };
+    std::vector<HotkeyDisplayLine> hotkeyLines;
+    std::vector<H3DlgText *> hotkeyHeadingRows, hotkeyKeyRows, hotkeyActionRows;
+    std::vector<H3DlgFrame *> hotkeySeparators;
+    H3DlgScrollbar *hotkeyScroll = nullptr;
+    int hotkeyFirstLine = 0;
+    int hotkeyVisibleRows = 1;
+    bool hotkeyMode = false;
+    bool hasArticleText = false;
+    static ModContentPage *hotkeyInstance;
     const ModInformation *activeMod = nullptr;
     int activeCategory = 0;
-    std::vector<H3DlgItem *> objectItems;
-    std::vector<std::pair<int, H3String>> actions;
     H3String pendingAction;
     const Category *renderedCategory = nullptr;
     struct ObjectControls
     {
         std::vector<H3DlgItem *> items;
-        std::vector<std::pair<int, H3String>> actions;
+        std::vector<std::pair<int, const HelpObject *>> actions;
     };
     std::map<const Category *, ObjectControls> objectCache;
+    ObjectControls *activeObjects = nullptr;
     std::map<const Category *, int> scrollPositions;
     int nextObjectId = 21000;
 
   public:
     ModContentPage(int x, int y, int width, int height, H3Dlg *dialog);
+    virtual ~ModContentPage() override;
 
     void SetMod(const ModInformation *mod);
     void SetCategory(int index);
@@ -87,6 +101,11 @@ class ModContentPage final : public DlgPage
   private:
     void RebuildText();
     void RebuildObjects(const Category *category);
+    void RebuildHotkeyRows();
+    void RenderHotkeyRows();
+    void SetTextModeVisible(BOOL state) noexcept;
+    void RefreshModeVisibility() noexcept;
+    static void __fastcall HotkeyScrollProc(INT32 tick, H3BaseDlg *dlg);
 };
 
 class ModSection final : public DlgSection
@@ -98,6 +117,7 @@ class ModSection final : public DlgSection
   public:
     ModSection(int categoriesX, int categoriesY, int categoriesWidth, int categoriesHeight, int contentX, int contentY,
                int contentWidth, int contentHeight, H3Dlg *dialog);
+    virtual ~ModSection() override = default;
 
     void SetMod(const ModInformation *mod);
     void SetSubtype(int subtype);

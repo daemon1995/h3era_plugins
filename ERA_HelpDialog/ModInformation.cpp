@@ -10,10 +10,10 @@ void ReadObjects(const ModJsonDocument &document, const H3String &category, Cont
     {
         const H3String prefix = H3String::Format("%s.objects.%d", category.String(), index);
         bool found = false;
-        const H3String kind = document.Read(H3String::Format("%s.kind", prefix.String()).String(), found);
+        const LPCSTR kind = document.Read(H3String::Format("%s.kind", prefix.String()).String(), found);
         if (!found)
             break;
-        const std::string type = helpdlg::Lower(kind.String());
+        const std::string type = helpdlg::Lower(kind);
         HelpObject object;
         if (type == "image")
             object.kind = eHelpObjectKind::Image;
@@ -26,7 +26,13 @@ void ReadObjects(const ModJsonDocument &document, const H3String &category, Cont
         else if (type != "text")
             continue;
         object.value = document.Read(H3String::Format("%s.value", prefix.String()).String());
-        object.action = document.Read(H3String::Format("%s.action", prefix.String()).String());
+        if (object.kind == eHelpObjectKind::Button || object.kind == eHelpObjectKind::Link ||
+            object.kind == eHelpObjectKind::ErmFunction)
+        {
+            const auto action = document.Read(H3String::Format("%s.action", prefix.String()).String(), found);
+            if (found)
+                object.action = action;
+        }
         object.x = document.ReadInt(H3String::Format("%s.x", prefix.String()).String());
         object.y = document.ReadInt(H3String::Format("%s.y", prefix.String()).String());
         object.width = document.ReadInt(H3String::Format("%s.width", prefix.String()).String());
@@ -50,18 +56,25 @@ Category *MakePluginsCategory(LPCSTR folder, const ModJsonDocument &document)
         const auto prefix = H3String::Format("plugins.%d", index);
         bool found = false;
         const auto file = document.Read(H3String::Format("%s.file", prefix.String()).String(), found);
-        if (!found || file.Empty())
+        if (!found || !*file)
         {
             ++missing;
             continue;
         }
         missing = 0;
-        notes.push_back({file.String(), document.Read(H3String::Format("%s.name", prefix.String()).String()).String(),
-                         document.Read(H3String::Format("%s.description", prefix.String()).String()).String()});
+        helpdlg::PluginNote note;
+        note.file = file;
+        const auto name = document.Read(H3String::Format("%s.name", prefix.String()).String(), found);
+        if (found)
+            note.name = name;
+        const auto description = document.Read(H3String::Format("%s.description", prefix.String()).String(), found);
+        if (found)
+            note.description = description;
+        notes.push_back(std::move(note));
     }
     char executable[MAX_PATH] = {};
     const DWORD length = GetModuleFileNameA(nullptr, executable, MAX_PATH);
-    const std::string modFolder = folder ? folder : "";
+    const std::string modFolder = folder ? folder : h3_NullString;
     std::string root(executable);
     const auto separator = root.find_last_of("/\\");
     if (length && length < MAX_PATH && separator != std::string::npos && !modFolder.empty() && modFolder != "." &&
@@ -76,36 +89,30 @@ Category *MakePluginsCategory(LPCSTR folder, const ModJsonDocument &document)
         return nullptr;
 
     auto *category = new Category();
-    category->name = helpdlg::Text("help.ui.plugins", "Plugins");
+    category->name = helpdlg::Text("help.ui.plugins");
     category->content = new Content();
-    auto &text = category->content->text;
-    text = helpdlg::Text("help.ui.plugins_intro", "Plugin and patch files supplied by this mod:");
-    text.Append("\n\n");
-    text.Append(helpdlg::GroupPluginFiles(files, notes).c_str());
+    auto &text = category->content->generatedText;
+    text = helpdlg::Text("help.ui.plugins_intro");
+    text += "\n\n";
+    text += helpdlg::GroupPluginFiles(files, notes);
+    category->content->text = text.c_str();
     return category;
 }
 } // namespace
 ModInformation::ModInformation(LPCSTR folder, UINT identifier, bool physicalMod)
-    : id(identifier), name(folder), path(folder), document(folder)
+    : id(identifier), path(folder), document(folder)
 {
-    const H3String title = document.Read("name");
-    if (!title.Empty())
-        name = title;
+    name = document.Read("name");
     std::vector<HotKey> hotkeys;
-    for (const auto &record : helpdlg::ReadHotkeyRecords([this](const std::string &key, bool &found) {
-             return std::string(document.Read(key.c_str(), found).String());
-         }))
-        hotkeys.push_back(HotKey{static_cast<hkcategories::eType>(record.context), record.keys.c_str(),
-                                 record.name.c_str(), record.description.c_str(), record.id});
+    for (const auto &record : helpdlg::ReadHotkeyRecords(
+             [this](const std::string &key, bool &found) { return document.Read(key.c_str(), found); }))
+        hotkeys.push_back(HotKey{static_cast<hkcategories::eType>(record.context), record.keys, record.name,
+                                 record.description, record.id});
     if (!hotkeys.empty())
     {
         hotkeysCategory = new HotKeysCategory();
         hotkeysCategory->hotkeys.swap(hotkeys);
         hotkeysCategory->name = document.Read("hotkeys.name");
-        if (hotkeysCategory->name.Empty())
-            hotkeysCategory->name = document.Read("categories.hotkeys.name");
-        if (hotkeysCategory->name.Empty())
-            hotkeysCategory->name = helpdlg::PageName(main::eHelpPage::HOTKEYS);
         hotkeysCategory->content = new Content();
         categories.push_back(hotkeysCategory);
     }
@@ -114,8 +121,8 @@ ModInformation::ModInformation(LPCSTR folder, UINT identifier, bool physicalMod)
     {
         const H3String prefix = H3String::Format("categories.%d", index);
         bool hasName = false, hasText = false, hasObjects = false;
-        H3String title = document.Read(H3String::Format("%s.name", prefix.String()).String(), hasName);
-        H3String text = document.Read(H3String::Format("%s.content", prefix.String()).String(), hasText);
+        LPCSTR title = document.Read(H3String::Format("%s.name", prefix.String()).String(), hasName);
+        LPCSTR text = document.Read(H3String::Format("%s.content", prefix.String()).String(), hasText);
         document.Read(H3String::Format("%s.objects.0.kind", prefix.String()).String(), hasObjects);
         if (!hasName && !hasText && !hasObjects)
         {
@@ -124,17 +131,19 @@ ModInformation::ModInformation(LPCSTR folder, UINT identifier, bool physicalMod)
         }
         missing = 0;
         auto *category = new Category();
-        category->name = title.Empty() ? H3String::Format("Category %d", index + 1) : title;
+        category->name = title;
         category->content = new Content();
-        category->content->text = text;
+        if (hasText)
+            category->content->text = text;
         ReadObjects(document, prefix, *category->content);
         categories.push_back(category);
     }
-    const H3String description = document.Read("description");
-    if (!description.Empty())
+    bool hasDescription = false;
+    const LPCSTR description = document.Read("description", hasDescription);
+    if (hasDescription && *description)
     {
         auto *overview = new Category();
-        overview->name = helpdlg::Text("help.ui.overview", "Overview");
+        overview->name = helpdlg::Text("help.ui.overview");
         overview->content = new Content();
         overview->content->text = description;
         categories.push_back(overview);

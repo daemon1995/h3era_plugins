@@ -3,10 +3,8 @@
 #include "HelpDialogDependencies.h"
 #include "HelpLogic.h"
 
-// Small adapter around EraJS used by all mod-help readers.  New documents
-// live under help.<mod-folder>, while help.mods.<mod-folder> remains a
-// backwards-compatible fallback for existing language files.  The supported
-// shape is intentionally flat and predictable:
+// All mod-help readers use one canonical key under help.<mod-folder>.
+// Missing translations retain the key returned by ERA. The supported shape is:
 //   help.<folder>.hotkeys[i] = { keys, name, description, type }
 //   help.<folder>.categories[i] = { name, content }
 // MainDlg can therefore defer mod discovery/parsing until a mod list or the
@@ -14,50 +12,33 @@
 // lazily when a mod is selected.
 class ModJsonDocument final
 {
-    H3String primaryRoot;
-    H3String legacyRoot;
+    H3String root;
 
     static H3String MakePath(const H3String &root, LPCSTR relative)
     {
-        return helpdlg::JsonPath(root.String(), relative ? relative : "").c_str();
-    }
-
-    static H3String ReadPath(const H3String &path, bool &success)
-    {
-        LPCSTR value = EraJS::read(path.String(), success);
-        return success && value ? value : h3_NullString;
+        return helpdlg::JsonPath(root.String(), relative).c_str();
     }
 
   public:
-    explicit ModJsonDocument(LPCSTR modFolderName) : primaryRoot("help."), legacyRoot("help.mods.")
+    explicit ModJsonDocument(LPCSTR modFolderName) : root("help.")
     {
-        primaryRoot.Append(modFolderName ? modFolderName : "");
-        legacyRoot.Append(modFolderName ? modFolderName : "");
+        root.Append(modFolderName);
     }
 
-    H3String Read(LPCSTR relative, bool &success) const
+    // ERA owns returned pointers permanently, including after later reads.
+    LPCSTR Read(LPCSTR relative, bool &success) const
     {
-        H3String value = ReadPath(MakePath(primaryRoot, relative), success);
-        if (success)
-            return value;
-
-        return ReadPath(MakePath(legacyRoot, relative), success);
+        return EraJS::read(MakePath(root, relative).String(), success);
     }
 
-    H3String Read(LPCSTR relative) const
+    LPCSTR Read(LPCSTR relative) const
     {
-        bool success = false;
-        return Read(relative, success);
+        return EraJS::read(MakePath(root, relative).String());
     }
 
     int ReadInt(LPCSTR relative, bool &success) const
     {
-        const H3String primaryPath = MakePath(primaryRoot, relative);
-        const int value = EraJS::readInt(primaryPath.String(), success);
-        if (success)
-            return value;
-
-        return EraJS::readInt(MakePath(legacyRoot, relative).String(), success);
+        return EraJS::readInt(MakePath(root, relative).String(), success);
     }
 
     int ReadInt(LPCSTR relative) const

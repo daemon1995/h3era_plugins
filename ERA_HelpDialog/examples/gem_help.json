@@ -3,110 +3,111 @@
     "game enhancement mod": {
       "name": "Game Enhancement Mod",
       "description": "GEM by daemon_n adds interface improvements, optional gameplay features, scripts, plugins and binary patches. Optional features depend on GEM settings and the installed build. This reference belongs to this mod and is listed only while it is active.",
-      "hotkeys": [
-        {
+      "hotkeys": {
+        "0": {
           "keys": "Alt",
           "type": "ADV_MAP",
           "name": "Object labels",
           "description": "Hold Alt to show supported map-object labels when adventure hints are enabled."
         },
-        {
+        "1": {
           "keys": "Alt+hover",
           "type": "ADV_MAP",
           "name": "Route movement cost",
           "description": "Show required and remaining movement points for the selected hero."
         },
-        {
+        "2": {
           "keys": "Alt+RMB",
           "type": "ADV_MAP",
           "name": "Separate map-object hint",
           "description": "Show the object hint in a message when supported by the hint script."
         },
-        {
+        "3": {
           "keys": "Ctrl+L",
           "type": "ADV_MAP",
           "name": "Load without confirmation",
           "description": "The included igrik script opens the load-game screen directly."
         },
-        {
+        "4": {
           "keys": "` / ~",
           "type": "TOWN",
           "name": "Additional town menu",
           "description": "Default key code 192; configurable in gem_settings.town_menu.dlg_run_bttn."
         },
-        {
+        "5": {
           "keys": "A+LMB",
           "type": "TOWN",
           "name": "Quick creature upgrade",
           "description": "Use on creature stacks or hero armies; requires fast upgrade stacks in town.dll."
         },
-        {
+        "6": {
           "keys": "A+hover",
           "type": "TOWN",
           "name": "Upgrade cost hint",
           "description": "Hold A over the supported town troop or hero item to preview the upgrade cost."
         },
-        {
+        "7": {
           "keys": "L",
           "type": "COMBAT",
           "name": "Load with confirmation",
           "description": "The included igrik script requests confirmation before opening the load-game screen."
         },
-        {
+        "8": {
           "keys": "Ctrl+L",
           "type": "COMBAT",
           "name": "Load without confirmation",
           "description": "Open the load-game screen directly."
         },
-        {
+        "9": {
           "keys": "Alt+W",
           "type": "COMBAT",
           "name": "Wait with all troops",
           "description": "Apply waiting to the local human army for this round. Disabled during Tactics; multiplayer battles may request confirmation."
         },
-        {
+        "10": {
           "keys": "Alt+D / Alt+Space",
           "type": "COMBAT",
           "name": "Defend with all troops",
           "description": "Apply defence to the local human army for this round. Disabled during Tactics; multiplayer battles may request confirmation."
         },
-        {
+        "11": {
           "keys": "Shift+LMB artifact slot",
           "type": "HERO",
           "name": "Quick artifact picker",
           "description": "List compatible artifacts from this hero's backpack for the clicked equipment slot. Requires Interface_ArtifactsQuickSwitching.era; can override HD Shift-click transfer."
         },
-        {
+        "12": {
           "keys": "MMB artifact slot",
           "type": "HERO",
           "name": "Quick artifact picker",
           "description": "Open the same equipment picker with the middle mouse button."
         },
-        {
+        "13": {
           "keys": "Shift+LMB artifact slot",
           "type": "OTHER",
           "name": "Meeting: Quick artifact picker",
           "description": "List compatible artifacts from this hero's backpack for the clicked equipment slot. Requires Interface_ArtifactsQuickSwitching.era; can override HD Shift-click transfer."
         },
-        {
+        "14": {
           "keys": "MMB artifact slot",
           "type": "OTHER",
           "name": "Meeting: Quick artifact picker",
           "description": "Open the same equipment picker with the middle mouse button."
         },
-        {
+        "15": {
           "keys": "Space",
           "type": "OTHER",
           "name": "Dialog: confirm",
           "description": "The gameplay features module adds Space to supported OK buttons."
         },
-        {
+        "16": {
           "keys": "NumPad digits",
           "type": "OTHER",
           "name": "Numeric input with Num Lock",
           "description": "The gameplay features module maps the numeric keypad to digits while Num Lock is on."
-        }
-      ],
+        },
+        "name": "GEM hotkeys"
+      },
       "categories": [
         {
           "name": "Interface and hints",

@@ -1,7 +1,8 @@
 ZVSE
 
-; Companion to the ERM action example in lang/era_help.json.
-; Install in an active mod's Data/s directory and restart the game.
+; Optional companion to examples/help_authoring.json.
+; Install in an active mod's Data/s directory, restart and start a map.
 ; Opening the help category does not call this function.
 !?FU(HelpDialog_Example);
-!!IF:M^ERA Help JSON example: this message was opened by an explicitly clicked ERM action.^;
+!!SN:T^help.examples.erm_message^/?(message:z);
+!!IF:M^(message)^;

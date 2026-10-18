@@ -9,16 +9,125 @@
 
 namespace helpdlg
 {
-inline LPCSTR Text(LPCSTR key, LPCSTR fallback)
+// ERA owns these strings permanently. Callers borrow them; only formatted text
+// needs its own storage.
+inline LPCSTR Text(LPCSTR key)
 {
-    bool success = false;
-    LPCSTR value = EraJS::read(key, success);
-    return success && value && *value ? value : fallback;
+    return EraJS::read(key);
+}
+
+inline LPCSTR Borrow(LPCSTR value) noexcept
+{
+    return value ? value : h3_NullString;
 }
 
 inline std::string Safe(LPCSTR value)
 {
-    return value ? value : "";
+    return Borrow(value);
+}
+
+template <typename... Args> inline std::string FormatText(LPCSTR key, Args... args)
+{
+    return H3String::Format(Text(key), args...).String();
+}
+
+inline std::string ObjectTitle(LPCSTR name, int id)
+{
+    return id < 0 ? Safe(name) : FormatText("help.formats.object_title", Borrow(name), id);
+}
+
+constexpr LPCSTR kSelectorPcx = "ERAHDSLT.PCX";
+constexpr int kSelectorArrowWidth = 22;
+
+inline H3LoadedPcx *CreateSelectorBackground(int width)
+{
+    auto *pcx = H3LoadedPcx::Create(kSelectorPcx, width, kPageButtonHeight);
+    if (!pcx)
+        return nullptr;
+    H3PcxLoader tile(NH3Dlg::Assets::DIBOXBACK);
+    for (int index = 0; index < 256; ++index)
+    {
+        const auto color = tile.Get() ? tile->palette888.color[index] : H3RGB888(35, 30, 24);
+        pcx->palette888.color[index] = H3RGB888(color.r / 2, color.g / 2, color.b / 2);
+    }
+    pcx->palette565.InitiateFromPalette888(pcx->palette888);
+    for (int y = 0; y < pcx->height; ++y)
+        for (int x = 0; x < pcx->width; ++x)
+            *pcx->GetPixelIndex(x, y) = tile.Get() && tile->buffer && tile->width > 0 && tile->height > 0
+                                            ? *tile->GetPixelIndex(x % tile->width, y % tile->height)
+                                            : 0;
+    // The dialog owns this reference. SelectorTextPcx explicitly releases the
+    // references obtained by native TextPcx constructors before this owner dies.
+    pcx->IncreaseReferences();
+    // This H3API version's AddToResourceManager inserts only the name and leaves
+    // m_item null. The native PCX loader dereferences it on a cache hit (0x55AA67).
+    // Insert the complete record, as ERA's TBinaryTreeNode.AddItem does.
+    H3ResourceItemData resource(pcx->GetName());
+    resource.m_item = pcx;
+    struct InsertResult
+    {
+        H3ResourceManager::Node *node;
+        BOOL8 inserted;
+    } result;
+    THISCALL_3(InsertResult &, 0x55DDF0, H3ResourceManager::Get(), &result, &resource);
+    return pcx;
+}
+
+struct SelectorTextPcx : H3DlgTextPcx
+{
+    void ReleaseBackground()
+    {
+        auto *pcx = loadedPcx;
+        loadedPcx = nullptr;
+        if (pcx)
+            pcx->Dereference();
+    }
+};
+
+inline H3DlgTextPcx *SelectorText(int x, int y, int width, int height, int id, LPCSTR text = h3_NullString)
+{
+    const auto *cached = H3ResourceManager::Get()->FindItem(kSelectorPcx);
+    if (!cached || !cached->data.m_item)
+        return nullptr;
+    auto *item = H3ObjectAllocator<SelectorTextPcx>().allocate(1);
+    if (item)
+        THISCALL_12(SelectorTextPcx *, 0x5BCB70, item, x, y, width, height, text, NH3Dlg::Text::SMALL, kSelectorPcx,
+                    eTextColor::REGULAR, id, eTextAlignment::MIDDLE_CENTER, 8);
+    return item;
+}
+
+inline void ReleaseSelectorText(H3DlgTextPcx *item)
+{
+    // The native TextPcx destructor only destroys its text; it borrows the PCX.
+    if (item)
+        static_cast<SelectorTextPcx *>(item)->ReleaseBackground();
+}
+
+inline H3DlgFrame *GoldFrame(H3Dlg &dialog, int x, int y, int width, int height)
+{
+    auto *frame = dialog.CreateFrame(x, y, width, height, -1, H3RGB565(H3RGB888::Highlight()));
+    if (frame)
+    {
+        frame->Disable();
+        frame->DeActivate();
+    }
+    return frame;
+}
+
+inline void PlaceSelectorFrame(H3DlgFrame *frame, const H3DlgItem *row)
+{
+    if (!frame)
+        return;
+    if (row && row->IsVisible())
+    {
+        frame->SetX(row->GetX());
+        frame->SetY(row->GetY());
+        frame->SetWidth(row->GetWidth());
+        frame->SetHeight(row->GetHeight());
+        frame->Show()->DeActivate();
+    }
+    else
+        frame->HideDeactivate();
 }
 
 inline bool AddSafeBackground(H3Dlg &dialog, bool statusBar = false, bool decorativeFrame = true)
@@ -84,6 +193,20 @@ inline H3DlgCaptionButton *Button(H3Dlg *dialog, int x, int y, int width, int he
     return button;
 }
 
+inline H3DlgItem *IconButton(H3Dlg *dialog, int x, int y, int width, int height, int id, LPCSTR defName,
+                             LPCSTR fallbackText = h3_NullString)
+{
+    H3DlgItem *item = nullptr;
+    H3DefLoader def(defName);
+    if (def.Get() && def->widthDEF > 0 && def->heightDEF > 0)
+        item = H3DlgDefButton::Create(x, y, width, height, id, defName, 0, 1, FALSE, 0);
+    if (!item)
+        item = Button(nullptr, x, y, width, height, id, fallbackText, "OVBUTN2.def");
+    if (item && dialog)
+        dialog->AddItem(item);
+    return item;
+}
+
 inline H3DlgCaptionButton *CategoryButton(int x, int y, int id, LPCSTR text)
 {
     auto *button = H3DlgCaptionButton::Create(x, y, id, main::DlgPage::CATEGORY_BUTTON_DEF, text, NH3Dlg::Text::SMALL,
@@ -96,7 +219,14 @@ inline H3DlgCaptionButton *CategoryButton(int x, int y, int id, LPCSTR text)
 inline int CategoryButtonStep()
 {
     H3DefLoader def(main::DlgPage::CATEGORY_BUTTON_DEF);
-    return def.Get() && def->heightDEF > 0 ? def->heightDEF + 4 : 28;
+    return def.Get() && def->heightDEF > 0 ? def->heightDEF + 4 : 40;
+}
+
+inline void SetCategoryState(H3DlgCaptionButton *button, bool selected)
+{
+    if (!button)
+        return;
+    button->SendCommand(6 - selected, 4096);
 }
 
 inline LPCSTR PageName(main::eHelpPage page)
@@ -104,32 +234,30 @@ inline LPCSTR PageName(main::eHelpPage page)
     switch (page)
     {
     case main::eHelpPage::MODS:
-        return Text("help.ui.mods", "Mods");
+        return Text("help.ui.mods");
     case main::eHelpPage::HOTKEYS:
-        return Text("help.ui.hotkeys", "Hotkeys");
+        return Text("help.ui.hotkeys");
     case main::eHelpPage::CREATURES:
-        return Text("help.ui.creatures", "Creatures");
+        return Text("help.ui.creatures");
     case main::eHelpPage::ARTIFACTS:
-        return Text("help.ui.artifacts", "Artifacts");
+        return Text("help.ui.artifacts");
     case main::eHelpPage::TOWNS:
-        return Text("help.ui.towns", "Towns");
+        return Text("help.ui.towns");
     case main::eHelpPage::HEROES:
-        return Text("help.ui.heroes", "Heroes");
+        return Text("help.ui.heroes");
     case main::eHelpPage::SECONDARY_SKILLS:
-        return Text("help.ui.skills", "Secondary skills");
+        return Text("help.ui.skills");
     case main::eHelpPage::SPELLS:
-        return Text("help.ui.spells", "Spells");
+        return Text("help.ui.spells");
     default:
-        return "Help";
+        return Text("help.ui.help");
     }
 }
 
 inline LPCSTR ContextName(int context)
 {
-    static LPCSTR names[] = {"Unspecified", "Adventure map", "Hero window", "Town window",
-                             "Battle",      "Main menu",     "Other"};
     if (context == -1)
-        return Text("help.contexts.everywhere", "Everywhere");
-    return Text(H3String::Format("help.contexts.%d", context).String(), names[Bound(context, 0, 6)]);
+        return Text("help.contexts.everywhere");
+    return Text(H3String::Format("help.contexts.%d", Bound(context, 0, 6)).String());
 }
 } // namespace helpdlg

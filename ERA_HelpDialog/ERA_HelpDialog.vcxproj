@@ -21,8 +21,12 @@
     <None Include="README.md" />
     <None Include=".clang-format" />
     <None Include="lang\era_help.json" />
+    <None Include="lang\ru\era_help.json" />
     <None Include="examples\HelpDialogExample.erm" />
     <None Include="examples\gem_help.json" />
+    <None Include="examples\help_authoring.json" />
+    <None Include="tests\HelpLogicTests.cpp" />
+    <None Include="tests\validate_translations.py" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DlgEnums.h" />

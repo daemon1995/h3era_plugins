@@ -8,6 +8,7 @@
   <ItemGroup>
     <None Include="README.md"><Filter>Documentation</Filter></None>
     <None Include="lang\era_help.json"><Filter>Documentation</Filter></None>
+    <None Include="lang\ru\era_help.json"><Filter>Documentation</Filter></None>
     <None Include="examples\HelpDialogExample.erm"><Filter>Documentation</Filter></None>
     <ClInclude Include="DlgEnums.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="HeaderPage.h"><Filter>Header Files</Filter></ClInclude>

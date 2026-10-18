@@ -27,8 +27,7 @@ _LHF_(InitializeHelp)
     initialized = true;
     _PI->WriteLoHook(0x4F8751, MainWindow_F1);
     _PI->WriteHiHook(0x530600, THISCALL_, TownInfoConstructor);
-    mainmenu::MenuWidgetInfo widget{main::MainDlg::MAIN_MENU_WIDGET_NAME,
-                                    helpdlg::Text("help.ui.menu_button", "Help and reference"),
+    mainmenu::MenuWidgetInfo widget{main::MainDlg::MAIN_MENU_WIDGET_NAME, helpdlg::Text("help.ui.menu_button"),
                                     mainmenu::eMenuFlags::ALL, main::MainDlg::MainMenuButtonProc};
     mainmenu::MainMenu_RegisterWidget(widget);
     helpDialogInitialized = true;

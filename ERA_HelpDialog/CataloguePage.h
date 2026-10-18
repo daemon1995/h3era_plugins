@@ -11,10 +11,15 @@ class CatalogueSection final : public DlgSection, private DlgPage
     helpdlg::CatalogueFilter filter;
     std::vector<int> filtered;
     std::vector<H3DlgCaptionButton *> categoryButtons;
-    std::vector<H3DlgCaptionButton *> facetButtons;
-    std::vector<H3DlgCaptionButton *> levelButtons;
-    std::vector<H3DlgCaptionButton *> objectButtons;
+    std::vector<H3DlgText *> facetLabels;
+    std::vector<H3DlgTextPcx *> facetButtons;
+    H3DlgText *sortLabel = nullptr;
+    std::vector<H3DlgText *> levelTexts;
+    std::vector<std::pair<H3DlgFrame *, H3DlgFrame *>> levelSelectionFrames;
+    std::vector<H3DlgText *> objectLabels;
+    std::vector<H3DlgFrame *> objectLabelFrames;
     std::vector<H3DlgDef *> defPortraits;
+    std::vector<H3DlgDef *> fallbackCreaturePortraits;
     std::vector<std::vector<H3DlgDef *>> spellUnderlays;
     std::vector<H3DlgPcx *> pcxPortraits;
     std::vector<H3DlgFrame *> selectionFrames;
@@ -24,7 +29,8 @@ class CatalogueSection final : public DlgSection, private DlgPage
     H3DlgScrollbar *contentScroll = nullptr;
     H3DlgText *countText = nullptr;
     H3DlgText *emptyText = nullptr;
-    H3DlgCaptionButton *sortButton = nullptr;
+    H3DlgTextPcx *sortButton = nullptr;
+    H3DlgItem *resetButton = nullptr;
     int idBase;
     int x, y, width, height;
     int categoryRows = 1;
@@ -37,14 +43,20 @@ class CatalogueSection final : public DlgSection, private DlgPage
     void Rebuild(bool resetScroll = true);
     void RefreshCategories();
     void RefreshControls();
+    void EnsureCategoryVisible(int category) noexcept;
     bool RefreshBanMarkers();
+    int FallbackCreature(int slot, const helpdlg::CatalogueEntry &entry) const noexcept;
+    int SortOptionCount() const noexcept;
+    LPCSTR SortOptionName(int option) const noexcept;
+    int ChooseOption(H3DlgTextPcx *anchor, const std::vector<LPCSTR> &options, int selected) const;
+    std::string CategoryCaption(int category, int count) const;
     static void __fastcall CategoryScrollProc(INT32 tick, H3BaseDlg *dlg);
     static void __fastcall ContentScrollProc(INT32 tick, H3BaseDlg *dlg);
 
   public:
     CatalogueSection(int categoriesX, int categoriesY, int categoriesWidth, int categoriesHeight, int contentX,
                      int contentWidth, H3Dlg *dialog, const helpdlg::Catalogue &catalogue);
-    ~CatalogueSection() override;
+    virtual ~CatalogueSection() override;
     void SetSubtype(int subtype);
     void SetFilter(const helpdlg::CatalogueFilter &state);
     const helpdlg::CatalogueFilter &Filter() const noexcept

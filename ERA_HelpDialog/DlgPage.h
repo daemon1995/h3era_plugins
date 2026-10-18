@@ -30,7 +30,6 @@ class DlgSection
     }
     virtual BOOL ProcessMessage(H3Msg &msg) = 0;
     virtual void Redraw() = 0;
-    virtual void ReleaseInputFocus(int keepItemId = -1) noexcept {}
 };
 
 // A page owns ordinary H3 dialog items registered in MainDlg. It is not an
@@ -59,7 +58,7 @@ class DlgPage
     void SetScrollableTextVisible(H3DlgScrollableText *scrollableText, BOOL state) const noexcept;
 
   public:
-    static constexpr LPCSTR CATEGORY_BUTTON_DEF = "erab1.def";
+    static constexpr LPCSTR CATEGORY_BUTTON_DEF = "erab3.def";
     static constexpr LPCSTR PAGE_BUTTON_DEF = "erab2.def";
 
     virtual ~DlgPage() = default;

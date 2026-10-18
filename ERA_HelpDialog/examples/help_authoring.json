@@ -1,0 +1,90 @@
+{
+  "help": {
+    "my mod": {
+      "name": "My Mod",
+      "description": "Optional overview of this mod.",
+      "hotkeys": {
+        "0": {
+          "keys": "Ctrl+H",
+          "name": "Example binding",
+          "description": "Document a key implemented by this mod. This record does not register it.",
+          "type": "ADV_MAP"
+        },
+        "name": "Hotkeys"
+      },
+      "categories": [
+        {
+          "name": "Rules",
+          "content": "Write the rules of this mod here."
+        },
+        {
+          "name": "Object example",
+          "content": "",
+          "objects": [
+            {
+              "kind": "text",
+              "value": "Click the button to open creature #0.",
+              "overlay": 1,
+              "x": 12,
+              "y": 12,
+              "width": 376,
+              "height": 42
+            },
+            {
+              "kind": "button",
+              "value": "Creature #0",
+              "action": "creatures:0",
+              "x": 12,
+              "y": 72,
+              "width": 180,
+              "height": 30
+            },
+            {
+              "kind": "image",
+              "value": "TwCrPort.def",
+              "frame": 2,
+              "x": 208,
+              "y": 64,
+              "width": 58,
+              "height": 64
+            }
+          ]
+        },
+        {
+          "name": "Optional ERM example",
+          "content": "",
+          "objects": [
+            {
+              "kind": "text",
+              "value": "Install HelpDialogExample.erm in this mod's Data/s folder, restart and start a map before clicking.",
+              "overlay": 1,
+              "x": 12,
+              "y": 12,
+              "width": 376,
+              "height": 80
+            },
+            {
+              "kind": "ErmFunction",
+              "value": "Call ERM example",
+              "action": "HelpDialog_Example",
+              "x": 12,
+              "y": 112,
+              "width": 180,
+              "height": 30
+            }
+          ]
+        }
+      ],
+      "plugins": [
+        {
+          "file": "EraPlugins/MyPlugin.era",
+          "name": "My plugin",
+          "description": "Metadata for a file that actually exists."
+        }
+      ]
+    },
+    "examples": {
+      "erm_message": "ERA Help: this JSON-localized message was opened by a clicked ERM function."
+    }
+  }
+}

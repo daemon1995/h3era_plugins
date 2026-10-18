@@ -12,6 +12,7 @@ class PlaceholderSection final : public DlgSection, private DlgPage
 
   public:
     PlaceholderSection(int x, int y, int width, int height, H3Dlg *dialog);
+    virtual ~PlaceholderSection() override = default;
 
     void SetTitle(LPCSTR title);
     void SetVisible(BOOL state) noexcept override;

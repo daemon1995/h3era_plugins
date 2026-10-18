@@ -67,7 +67,7 @@ void DlgPage::FlushTextScrollPositions() const noexcept
         // The native callback at 0x5BA350 draws through the canvas allocated
         // during item initialization. Calling it before that dereferences a
         // null PCX in ERA's drawing hook (the Hotkeys/WoG opening crash).
-        if (!helpdlg::CanRestoreTextScroll(isVisible != FALSE, dialog && P_WindowManager->lastDlg == dialog,
+        if (!helpdlg::CanRestoreTextScroll(isVisible && text->IsVisible(), dialog && P_WindowManager->lastDlg == dialog,
                                            text->GetPcx() != nullptr))
         {
             ++pending;

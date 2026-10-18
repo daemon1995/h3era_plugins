@@ -26,7 +26,7 @@ class AdjustableScrollbar : public H3DlgScrollbar
 // As in RMG_SettingsDlg, update the range only while scrolling is possible;
 // H3DlgScrollbar::SetButtonPosition divides by (tickCount - 1).
 inline INT32 UpdateScrollbar(H3DlgScrollbar *scrollBar, const INT32 maxTick, const INT32 requestedTick,
-                             const BOOL visible) noexcept
+                             const BOOL visible, const BOOL showDisabled = FALSE) noexcept
 {
     const INT32 safeMaxTick = std::max<INT32>(0, maxTick);
     const INT32 safeTick = std::max<INT32>(0, std::min(requestedTick, safeMaxTick));
@@ -46,6 +46,7 @@ inline INT32 UpdateScrollbar(H3DlgScrollbar *scrollBar, const INT32 maxTick, con
         if (visible)
         {
             scrollBar->SetButtonPosition();
+            scrollBar->UnShade();
             scrollBar->ShowActivate();
         }
         else
@@ -53,8 +54,21 @@ inline INT32 UpdateScrollbar(H3DlgScrollbar *scrollBar, const INT32 maxTick, con
     }
     else
     {
+        // The native implementation cannot represent a one-position range:
+        // SetButtonPosition() divides by (ticksCount - 1). Keep a harmless
+        // two-position geometry for a disabled category scrollbar instead.
+        if (showDisabled && scrollBar->GetTicksCount() != 2)
+            reinterpret_cast<AdjustableScrollbar *>(scrollBar)->SetTickCount(2);
         scrollBar->SetTick(0);
-        scrollBar->HideDeactivate();
+        if (visible && showDisabled)
+        {
+            scrollBar->SetButtonPosition();
+            scrollBar->Show();
+            scrollBar->Shade();
+            scrollBar->DeActivate();
+        }
+        else
+            scrollBar->HideDeactivate();
     }
 
     return safeTick;

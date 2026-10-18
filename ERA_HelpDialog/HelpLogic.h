@@ -12,6 +12,75 @@
 // Game-independent logic shared by the UI. No game addresses.
 namespace helpdlg
 {
+constexpr int kCatalogueIdSort = 1;
+constexpr int kCatalogueSortSchema = 2;
+
+inline int InitialCatalogueSort(int schema, int savedSort) noexcept
+{
+    return schema < kCatalogueSortSchema ? kCatalogueIdSort : savedSort;
+}
+
+inline bool HasCreatureData(const char *name, const char *combatDef) noexcept
+{
+    return name && *name && combatDef && *combatDef;
+}
+
+inline bool HasArtifactText(const char *name, const char *description) noexcept
+{
+    return name && *name && description && *description;
+}
+
+inline bool IsArtifactPlaceholder(int id) noexcept
+{
+    return id == 144 || id == 145;
+}
+
+// Raw frames use palette index zero for transparency. Compressed frames use
+// the game's decoder; two backgrounds preserve black and white icons. The
+// caller reuses one off-screen canvas for the whole DEF.
+template <class Def, class Canvas> bool DefFrameHasVisiblePixels(Def *def, int id, Canvas *canvas)
+{
+    if (!def || !def->groups || def->groupsCount <= 0 || !def->groups[0] || !def->palette565 || !canvas ||
+        !canvas->buffer || def->widthDEF <= 0 || def->heightDEF <= 0 || canvas->width < def->widthDEF ||
+        canvas->height < def->heightDEF)
+        return false;
+    const auto *group = def->groups[0];
+    if (!group->frames || id < 0 || id >= group->count)
+        return false;
+    const auto *frame = group->frames[id];
+    if (!frame || !frame->rawData || frame->rawDataSize <= 0 || frame->frameWidth <= 0 || frame->frameHeight <= 0)
+        return false;
+    if (frame->compressionType == 0)
+    {
+        // The generic native raw blitter paints index zero too. Inspect the
+        // indices directly so an entirely transparent raw frame stays empty.
+        const int stride = frame->width2;
+        if (stride < frame->frameWidth || frame->frameWidth > frame->rawDataSize ||
+            frame->frameHeight - 1 > (frame->rawDataSize - frame->frameWidth) / stride)
+            return false;
+        for (int y = 0; y < frame->frameHeight; ++y)
+            for (int x = 0; x < frame->frameWidth; ++x)
+                if (frame->rawData[y * stride + x])
+                    return true;
+        return false;
+    }
+    const unsigned char backgrounds[] = {0, 255};
+    for (auto color : backgrounds)
+    {
+        canvas->FillRectangle(0, 0, def->widthDEF, def->heightDEF, color, color, color);
+        const auto background = canvas->GetPixel(0, 0);
+        def->DrawToPcx16(0, id, canvas, 0, 0);
+        for (int y = 0; y < def->heightDEF; ++y)
+            for (int x = 0; x < def->widthDEF; ++x)
+            {
+                const auto pixel = canvas->GetPixel(x, y);
+                if (pixel.r != background.r || pixel.g != background.g || pixel.b != background.b)
+                    return true;
+            }
+    }
+    return false;
+}
+
 // Combination indices and artifact IDs are separate. Resolve through the
 // current setup table so modded combinations need no fixed ID offsets.
 template <typename Setup> inline int FindCombinationArtifactId(const Setup *setups, int count, int combination)
@@ -117,38 +186,35 @@ inline const char *SpellSchoolDef(int index)
 
 struct CardIcon
 {
-    std::string def, label;
+    const char *def = "";
+    std::string label;
     int frame = 0;
 };
 struct CardRow
 {
-    std::string label, value;
+    const char *label = "";
+    std::string value;
     bool detailsOnly = false;
     std::vector<CardIcon> icons;
 };
-inline std::vector<CardRow> VisibleCardRows(const std::vector<CardRow> &rows, bool popup)
+inline std::vector<const CardRow *> VisibleCardRows(const std::vector<CardRow> &rows, bool popup)
 {
-    std::vector<CardRow> visible;
+    std::vector<const CardRow *> visible;
     for (const auto &row : rows)
         if ((!row.icons.empty() ||
              std::any_of(row.value.begin(), row.value.end(), [](unsigned char c) { return !std::isspace(c); })) &&
             (!popup || !row.detailsOnly))
-            visible.push_back(row);
+            visible.push_back(&row);
     return visible;
 }
 
 struct MasteryRow
 {
-    std::string level, mana, effect;
+    const char *level = "";
+    std::string mana;
+    const char *effect = "";
     std::string strength;
 };
-inline std::string SpellStrength(int base, int coefficient)
-{
-    if (!coefficient)
-        return std::to_string(base);
-    return std::to_string(base) + (coefficient < 0 ? " - " : " + ") +
-           std::to_string(coefficient < 0 ? -static_cast<long long>(coefficient) : coefficient) + " x SP";
-}
 inline int SecondarySkillFrame(int skill, int level)
 {
     return skill >= 0 && skill < 28 && level >= 1 && level <= 3 ? 2 + skill * 3 + level : -1;
@@ -212,6 +278,7 @@ struct CatalogueGrid
 {
     int cellWidth, cellHeight, columns, rows;
 };
+constexpr int kCatalogueCaptionHeight = 22;
 
 constexpr int kPageButtonHeight = 25;
 constexpr int kPageButtonGap = 2;
@@ -236,13 +303,33 @@ inline ModDropdownLayout FitModDropdown(int x, int y, int buttonWidth, int butto
     return layout;
 }
 
-inline CatalogueGrid FitCatalogueGrid(int width, int height, int portraitWidth, int portraitHeight, bool compact)
+inline CatalogueGrid FitCatalogueGrid(int width, int height, int portraitWidth, int portraitHeight, bool compact,
+                                      int itemCount = 0)
 {
     CatalogueGrid grid;
-    grid.cellWidth = std::max(compact ? 74 : 96, portraitWidth + 12);
-    grid.cellHeight = std::max(compact ? 80 : 96, portraitHeight + 36);
-    grid.columns = std::max(1, (width - 34) / grid.cellWidth);
-    grid.rows = std::min(std::max(1, height / grid.cellHeight), std::max(1, 1800 / grid.columns));
+    const int availableWidth = std::max(1, width - 34);
+    const int nominalCellWidth = std::max(compact ? 74 : 96, portraitWidth + 12);
+    grid.cellWidth = nominalCellWidth;
+    // Keep captions compact enough for four catalogue rows at 800x600.
+    grid.cellHeight = std::max(compact ? 72 : 88, portraitHeight + kCatalogueCaptionHeight + 6);
+    grid.columns = std::max(1, availableWidth / nominalCellWidth);
+    if (compact && itemCount > 0)
+    {
+        // Secondary skills currently have 28 entries. Prefer enough columns
+        // to fit them in four rows whenever the available width allows it.
+        const int targetColumns = (itemCount + 3) / 4;
+        const int tightCellWidth = std::max(56, portraitWidth + 8);
+        const int tightCapacity = std::max(1, availableWidth / tightCellWidth);
+        const int compactColumns = std::min(targetColumns, tightCapacity);
+        if (compactColumns > grid.columns)
+        {
+            grid.columns = compactColumns;
+            grid.cellWidth = std::max(tightCellWidth, availableWidth / grid.columns);
+        }
+    }
+    const int heightCapacity = std::min(std::max(1, height / grid.cellHeight), std::max(1, 1800 / grid.columns));
+    const int rowsNeeded = itemCount > 0 ? (itemCount + grid.columns - 1) / grid.columns : heightCapacity;
+    grid.rows = std::max(1, std::min(heightCapacity, rowsNeeded));
     return grid;
 }
 
@@ -251,6 +338,20 @@ inline std::string Lower(std::string text)
     for (auto &character : text)
         character = static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
     return text;
+}
+
+inline int CompareNames(const char *left, const char *right) noexcept
+{
+    while (*left || *right)
+    {
+        const int a = std::tolower(static_cast<unsigned char>(*left));
+        const int b = std::tolower(static_cast<unsigned char>(*right));
+        if (a != b)
+            return a < b ? -1 : 1;
+        ++left;
+        ++right;
+    }
+    return 0;
 }
 
 inline std::string NormalizePluginPath(std::string path)
@@ -305,7 +406,7 @@ inline std::string GroupPluginFiles(const std::vector<std::string> &files, const
         std::stable_sort(group.begin(), group.end(), [](const std::string &a, const std::string &b) {
             return NormalizePluginPath(a) < NormalizePluginPath(b);
         });
-        output += (output.empty() ? "" : "\n\n") + std::string("{") + folder + ":}";
+        output += (output.empty() ? h3_NullString : "\n\n") + std::string("{") + folder + ":}";
         for (const auto &file : group)
         {
             output += "\n- " + file.substr(file.find_last_of("/\\") + 1);
@@ -377,15 +478,15 @@ struct HotkeyRecord
 {
     int context = 6;
     int id = -1;
-    std::string keys, name, description;
+    const char *keys = "", *name = "", *description = "";
 };
 
 struct HotkeyLine
 {
     int context;
-    std::string source, keys, name;
+    const char *source = "", *keys = "", *name = "";
     int sourceId = 0, id = 0;
-    std::string description;
+    const char *description = "";
 };
 struct HotkeyFocus
 {
@@ -417,16 +518,26 @@ inline std::string GroupHotkeys(std::vector<HotkeyLine> entries, const std::func
         }
         if (focus && entry.sourceId == focus->sourceId && entry.id == focus->id)
             focus->offset = output.size();
-        output += "[" + entry.keys + "] " + entry.name;
-        if (!entry.source.empty())
-            output += " (" + entry.source + ")";
-        if (!entry.description.empty())
-            output += "\n  " + entry.description;
+        output += "[";
+        output += entry.keys;
+        output += "] ";
+        output += entry.name;
+        if (*entry.source)
+        {
+            output += " (";
+            output += entry.source;
+            output += ")";
+        }
+        if (*entry.description)
+        {
+            output += "\n  ";
+            output += entry.description;
+        }
         output += "\n";
     }
     return output;
 }
-using ReadJsonField = std::function<std::string(const std::string &, bool &)>;
+using ReadJsonField = std::function<const char *(const std::string &, bool &)>;
 inline std::vector<HotkeyRecord> ReadHotkeyRecords(const ReadJsonField &read)
 {
     std::vector<HotkeyRecord> records;
@@ -437,10 +548,10 @@ inline std::vector<HotkeyRecord> ReadHotkeyRecords(const ReadJsonField &read)
         {
             const std::string prefix = base + "." + std::to_string(index);
             bool found = false;
-            std::string keys = read(prefix + ".keys", found);
+            const char *keys = read(prefix + ".keys", found);
             if (!found)
                 keys = read(prefix + ".key", found);
-            if (!found || keys.empty())
+            if (!found || !*keys)
             {
                 ++missing;
                 continue;
@@ -465,7 +576,7 @@ struct CatalogueFilter
     int category = 0;
     unsigned levels = 0; // zero means all; otherwise an independent set of levels
     int facets[4] = {};
-    int sort = 1; // ID order. Zero retains the explicit name-sort option.
+    int sort = kCatalogueIdSort; // Zero retains the explicit name-sort option.
     int firstRow = 0;
 };
 
@@ -474,7 +585,6 @@ struct FilterRecord
     std::vector<int> categories;
     int level = -1;
     int facets[4] = {};
-    std::string searchable;
 };
 
 inline bool MatchesFilter(const FilterRecord &record, const CatalogueFilter &filter)
