@@ -59,6 +59,8 @@ class SwitcherDlgPanel
     BOOL visible = false;
     BOOL panelShownByAlt = false;
     BOOL checkingAvailability = false;
+    BOOL checkingMovement = FALSE;
+    BOOL altCyclePressed = FALSE;
     BOOL actionsNeedRefresh = TRUE;
     BOOL buttonNeedsRedraw = FALSE;
     BOOL battlefieldNeedsRedraw = FALSE;
@@ -72,13 +74,22 @@ class SwitcherDlgPanel
                               const int firstItemId = BUTTON_ID);
     ~SwitcherDlgPanel();
 
-    eAction GetSelectedAction() const { return checkingAvailability ? eAction::NONE : selectedAction; }
+    eAction GetSelectedAction() const
+    {
+        return checkingMovement ? eAction::MOVE : checkingAvailability ? eAction::NONE : selectedAction;
+    }
 
   private:
     void Draw();
     void Refresh();
     BOOL SetVisible(BOOL show);
     void InitNewStackAttackType();
+    BOOL CanMoveToHex(H3CombatManager *manager, H3CombatCreature *stack, INT hex);
+    eAction NextAvailableAction() const;
+    BOOL HandleAltCycle(H3CombatManager *manager, H3Msg *msg);
+    // Optional legacy menu; the normal combat procedure uses HandleAltCycle.
+    BOOL HandleHeldAltMenu(H3CombatManager *manager, H3Msg *msg);
+    static BOOL IsAltHeld(const H3Msg *msg);
     void UpdateLayout();
     void SelectAction(size_t index, H3CombatManager *manager);
     void SelectAction(eAction action, H3CombatManager *manager);
@@ -103,6 +114,7 @@ class ActionSwitcher : public IGamePatch
     SwitcherDlgPanel *switcherDlgPanel = nullptr;
     std::vector<Patch *> interfaceChangePatches;
     HiHook *canShootHook = nullptr;
+    INT actionDeterminationCallback = 0;
 
     ActionSwitcher();
     void CreatePatches() noexcept final;
@@ -120,6 +132,8 @@ class ActionSwitcher : public IGamePatch
     BOOL SetPluginState(bool state) noexcept;
     BOOL IsEnabled() const { return state; }
     static BOOL CanShootNormally(const H3CombatCreature *stack);
+    BOOL SetActionDeterminationCallback(INT functionId);
+    void DetermineStackActions(H3CombatCreature *stack, std::vector<eAction> &actions);
     static ActionSwitcher &Get();
 };
 } // namespace switcher

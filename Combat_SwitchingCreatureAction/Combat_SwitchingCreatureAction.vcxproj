@@ -22,6 +22,7 @@
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="ActionSwitcher.cpp" />
+    <ClCompile Include="HeldAltMenu.cpp" />
     <ClCompile Include="aoe_attack.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>

@@ -1,0 +1,28 @@
+ZVSE2
+
+; Combat_SwitchingCreatureAction: register again on each new/loaded map.
+!?FU(OnStartOrLoad);
+!!SN:F^Combat_SwitchingCreatureAction:SetOnBattleStackActionDetermination^/(OnBattleStackActionDetermination);
+
+; x1: battle stack ID 0..41 (original side/slot, also during hypnosis).
+; x2: current owner hero ID; -1 if the stack has no hero.
+; x3: number of actions, 0..7; x4..x10: ordered action IDs.
+; IDs: 1 melee, 2 shoot, 3 cast, 4 walk, 5 return, 6 no return, 7 area shot.
+; Modify actionCount/actions to filter or reorder the available choices.
+; Unavailable IDs and duplicates are discarded by the plugin.
+!?FU(OnBattleStackActionDetermination);
+!#VA(stackId:x) (heroId:x) (actionCount:x) (actions[7]:x);
+!!VR(actionReport:z):S^Battle stack %(stackId), hero %(heroId), actions:^;
+!!if&(actionCount)>0;
+  !!VR(lastAction:y):S(actionCount) -1;
+  !!re i/0/(lastAction);
+    !!VR(actionId:y):S(actions[i]);
+    !!VR(actionReport):S^%(actionReport) %(actionId)^;
+  !!en;
+!!en;
+!!IF:L^%(actionReport)^;
+
+; Example: keep only melee, if it was present in the supplied list.
+*!VR(actionCount):S1;
+*!VR(actions[0]):S1;
+

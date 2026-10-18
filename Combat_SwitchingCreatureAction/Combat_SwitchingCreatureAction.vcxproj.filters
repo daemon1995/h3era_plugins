@@ -25,6 +25,9 @@
     <ClCompile Include="ActionSwitcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HeldAltMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="aoe_attack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

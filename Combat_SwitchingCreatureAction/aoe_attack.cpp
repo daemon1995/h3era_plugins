@@ -581,7 +581,7 @@ int __fastcall AreaShotDlgMainFunc(H3Msg* msg)
 
     // Изменились координаты курсора.
     case 4:
-        if (THISCALL_2(H3Msg*, 0x4EC710, P_InputManager->Get(), &last_msg)->command != 4)
+        if (THISCALL_2(H3Msg*, 0x4EC710, *reinterpret_cast<H3InputManager **>(0x699530), &last_msg)->command != 4)
         {
             // Текущий гекс.
             int hex_ix = P_CombatManager->SquareAtCoordinates(msg->subtype - P_CombatManager->dlg->GetX(), msg->itemId - P_CombatManager->dlg->GetY());
