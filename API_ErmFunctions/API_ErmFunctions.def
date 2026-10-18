@@ -1,0 +1,12 @@
+EXPORTS
+    Erm_SetObjectOwner
+    Erm_RegisterObjectType
+    Erm_GetObjectOwner
+    Erm_RegisterReplayEvent
+    Erm_RegisterReplayEventArgs
+    Erm_GetObjectReplacementApiVersion
+    Erm_GetObjectGeometry
+    Erm_FindObjectReplacement
+    Erm_ReplaceObject
+    Erm_ReadJsonInt
+    Erm_ReadJsonIntArray
