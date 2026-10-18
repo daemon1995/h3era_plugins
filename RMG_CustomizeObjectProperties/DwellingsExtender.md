@@ -22,6 +22,7 @@ Configure `RMG.objectGeneration.<17 or 20>.<subtype>`:
 | `creatures.0` | Creature ID for type 17; the first slot for type 20. |
 | `creatures.1` … `creatures.3` | Remaining slots for type 20. Arrays or objects with numeric keys work through ERA's flattened JSON keys. |
 | `name` | Name used by native hover, right-click, visit dialogs and the RMG settings dialog; refreshed on language reload. |
+| `description` | Shared object description in the RMG settings right-click information and in editor palette/map hints. |
 | `frame` | Zero-based icon within this dwelling type's block in `ZLAGPORT.DEF`. |
 | `value`, `density`, `map`, `zone` | Existing RMG value, generation density and limits. Supply value/density to create an added generator. |
 
@@ -34,6 +35,9 @@ weekly updates and recruitment use the game's existing dwelling implementation.
 For the same objects in the map editor, build
 [EraEditor_ObjectsExtender](../EraEditor_ObjectsExtender/README.md). Its default output folder is `EraEditor`,
 and it uses the same JSON example.
+The shared text reader also works for other object types. See the editor's
+[text example](../EraEditor_ObjectsExtender/examples/object_text.json) for banks, universities and HotA objects;
+their game behavior remains with the corresponding extenders.
 
 ## Kingdom overview graphics
 
@@ -79,4 +83,4 @@ is -1 while another slot is populated.
 Run `Verification\run.cmd` from an x86 Visual Studio Developer Command Prompt. It builds and runs the slot/save
 checks, including JSON numeric fields, slot/save validation and editor object definitions.
 `python Verification\NativeLayout.py "D:\games\HoMM 3 ERA\h3era.exe" "D:\games\HoMM 3 ERA\h3wmaped.exe"` checks
-the 15 game instruction spans, six editor patch spans, editor table operands and all six example definitions.
+the 15 game instruction spans, eight editor patch spans, editor string helpers/table operands and JSON examples.

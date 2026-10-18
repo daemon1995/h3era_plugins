@@ -87,6 +87,9 @@
     <ClInclude Include="..\headers\Objects\DwellingConfig.h">
       <Filter>headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\headers\Era\ObjectText.hpp">
+      <Filter>headers</Filter>
+    </ClInclude>
     <ClInclude Include="ObjectExtenderManager.h">
       <Filter>headers</Filter>
     </ClInclude>

@@ -543,6 +543,7 @@ RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
     if (instance == nullptr)
         instance = new RMGObjectsEditor();
 
+
     return *instance;
     // new RMGObjectsEditor();
 }
@@ -635,16 +636,6 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                     // add these objects w/o any restrictions
                 // case eObject::BORDERGUARD:
                 // case eObject::KEYMASTER:
-                case eObject::PRISON: {
-                    // Prisons have one generator subtype (62, 0). Exp selects
-                    // the variant; the editable value comes from generator->value.
-                    const auto &prisonInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen);
-                    if (prisonInfo.value != RMGObjectInfo::UNDEFINED)
-                        rmgObjGen->value = prisonInfo.value;
-                    editor.editedRMGObjectGenerators.Add(rmgObjGen);
-                    continue;
-                }
-
                 case eObject::SEER_HUT:
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
                     continue;
@@ -657,6 +648,7 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                     break;
                 }
 
+                // This also resolves each prison's settings by Exp, keeping its native subtype 0.
                 const RMGObjectInfo &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen);
                 // if object is enabled
                 if (rmgObjInfo.enabled)
