@@ -17,9 +17,6 @@
     <ClInclude Include="ModuleSupport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LevelUpAutoSkip.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ArtifactComparison.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -53,9 +50,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GameplayFeature.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LevelUpAutoSkip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\headers\Era\era.cpp">

@@ -25,7 +25,6 @@
   <ItemGroup>
     <ClInclude Include="..\headers\EraPluginsAPI\ArtifactDescriptionApi.h" />
     <ClInclude Include="ModuleSupport.h" />
-    <ClInclude Include="LevelUpAutoSkip.h" />
     <ClInclude Include="PluginVersion.h" />
     <ClInclude Include="ArtifactComparison.h" />
     <ClInclude Include="AdventureMapHints.h" />
@@ -41,7 +40,6 @@
     <ClCompile Include="AdventureMapHints.cpp" />
     <ClCompile Include="ArtifactHints.cpp" />
     <ClCompile Include="GameplayFeature.cpp" />
-    <ClCompile Include="LevelUpAutoSkip.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GraphicsEnhancements.cpp" />
     <ClCompile Include="MithrilDisplay.cpp" />
