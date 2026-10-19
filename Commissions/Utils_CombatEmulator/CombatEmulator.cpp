@@ -120,6 +120,40 @@ static H3Town *FindTownForHero(const H3Hero *hero)
     }
     return nullptr;
 }
+HANDLE systemOptionsPlugin = nullptr;
+static BOOL GetQuickCombatState()
+{
+
+    typedef int(__stdcall * TGetOptionValue)(const char *);
+
+    static TGetOptionValue GetOptionValue = nullptr;
+    if (!GetOptionValue)
+    {
+        auto dll = GetModuleHandleA("ERA_SystemOptionsExtension.era");
+        if (!dll)
+            return -1;
+        GetOptionValue = (TGetOptionValue)GetProcAddress(dll, "GetOptionValue");
+        if (!GetOptionValue)
+            return -1;
+    }
+    return GetOptionValue("Combat.QuickCombatType");
+}
+static BOOL SetQuickCombatState(const int state)
+{
+
+    typedef int(__stdcall * TSetOptionValue)(const char *, const int);
+    static TSetOptionValue SetOptionValue = nullptr;
+    if (!SetOptionValue)
+    {
+        auto dll = GetModuleHandleA("ERA_SystemOptionsExtension.era");
+        if (!dll)
+            return -1;
+        SetOptionValue = (TSetOptionValue)GetProcAddress(dll, "SetOptionValue");
+        if (!SetOptionValue)
+            return -1;
+    }
+    return SetOptionValue("Combat.QuickCombatType", state);
+}
 
 INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const int x, const int y, const int z,
                                 const BOOL blockMagic, const BOOL blockRunning, const int specialTerrain)
@@ -137,8 +171,8 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const int x,
     // This API receives only two hero armies and cannot safely reproduce a
     // town battle (town guards and garrison state are additional inputs).
     // Reject that case instead of reporting a misleading field-battle result.
-    if (FindTownForHero(_defHero))
-        return -2;
+    // if (FindTownForHero(_defHero))
+    //    return -2;
 
     // copy original NPC
     auto atkNpc = WoG::NPC::Get(_attHero->id);
@@ -179,16 +213,37 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const int x,
 
     // modify combat settings based on passed arguments
     ApplyBlockingPatches(TRUE, blockMagic, blockRunning);
+
+    const int quickCombatState = GetQuickCombatState();
+
     const BOOL isQuick = IntAt(0x06987CC); // isQuickCombatEnabled
-    IntAt(0x06987CC) = true;               // set combat quick
+    if (quickCombatState == -1)
+    {
+        IntAt(0x06987CC) = true; // set combat quick
+    }
+    else
+    {
+        SetQuickCombatState(1 + bool(blockMagic));
+    }
 
     P_AdventureManager->DemobilizeHero();
 
     pseudoCmb.inCombat = true; // set flag to indicate combat is active, so hooks can modify behavior accordingly
-    int result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), pos, atkHero, &atkHero->army, atkHero->owner,
-                             town, defHero, &defHero->army, seed, combatIsLocal, isBank);
+    const int enemyOwner =
+        _defHero->owner; // FIXED owner variable type (signed int should be passed to StartBattle, not signed char)
+    int result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), pos, atkHero, &atkHero->army, enemyOwner, town,
+                             defHero, &defHero->army, seed, combatIsLocal, isBank);
     pseudoCmb.inCombat = false;
-    IntAt(0x06987CC) = isQuick; // restore original quick combat setting
+
+    if (quickCombatState == -1)
+    {
+        IntAt(0x06987CC) = isQuick; // restore original quick combat setting
+    }
+    else
+    {
+        SetQuickCombatState(quickCombatState); // restore original quick combat setting
+    }
+
     UndoBlockingPatches();
     IntAt(0x0699590) = 0; // reset combat flag
     pseudoCmb.specialTerrain = -1;

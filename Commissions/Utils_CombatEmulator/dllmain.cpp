@@ -9,7 +9,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
-LPCSTR pluginVersion = "0.8.0";
+LPCSTR pluginVersion = "0.9.0";
 } // namespace dllText
 DllExport BOOL __stdcall GameModIsLoaded(LPCSTR modName)
 {
