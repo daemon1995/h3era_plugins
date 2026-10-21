@@ -1,0 +1,302 @@
+[
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\API_ErmFunctions\\API_ErmFunctions.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\API_ErmFunctions.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\API_ErmFunctions.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\API_ErmFunctions.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Artifacts_AddingNewFeatures\\Artifacts_AddingNewFeatures.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Artifacts_AddingNewFeatures.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Artifacts_AddingNewFeatures.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Artifacts_AddingNewFeatures.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Assembly_MainPlugin\\Assembly_MainPlugin.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Assembly_MainPlugin.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Assembly_MainPlugin.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Assembly_MainPlugin.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_BattleHeroes\\Combat_BattleHeroes.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Combat_BattleHeroes\\\\eraplugins\\\\Combat_BattleHeroes.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Combat_BattleHeroes\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Combat_BattleHeroes\\\\DebugMaps\\\\Combat_BattleHeroes.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Combat_BattleHeroes\\\\DebugMaps\\\\Combat_BattleHeroes.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_BattleReplay\\Combat_BattleReplay.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Combat_BattleReplay.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Combat_BattleReplay.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Combat_BattleReplay.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_SwitchingCreatureAction\\Combat_SwitchingCreatureAction.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Combat_SwitchingCreatureAction.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Combat_SwitchingCreatureAction.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Combat_SwitchingCreatureAction.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Adventure_CustomDigMessages\\Adventure_CustomDigMessages.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Adventure_CustomDigMessages.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Adventure_CustomDigMessages.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Adventure_CustomDigMessages.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\AIHeroes_ComboSecondarySkillsValues\\AIHeroes_ComboSecondarySkillsValues.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\AIHeroes_ComboSecondarySkillsValues.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\AIHeroes_ComboSecondarySkillsValues.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\AIHeroes_ComboSecondarySkillsValues.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Artifacts_ShimyCombatStatsPenalties\\Artifacts_ShimyCombatStatsPenalties.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Artifacts_ShimyCombatStatsPenalties.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Artifacts_ShimyCombatStatsPenalties.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Artifacts_ShimyCombatStatsPenalties.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\BloodDragon_HalvedVampirism\\BloodDragon_HalvedVampirism.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\BloodDragon_HalvedVampirism.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\BloodDragon_HalvedVampirism.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\BloodDragon_HalvedVampirism.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_BallisticsIncreasesShootingRange\\Combat_BallisticsIncreasesShootingRange.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_BallisticsIncreasesShootingRange.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_BallisticsIncreasesShootingRange.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_BallisticsIncreasesShootingRange.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_CreatureSpellSelector\\Combat_CreatureSpellSelector.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_CreatureSpellSelector.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_CreatureSpellSelector.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_CreatureSpellSelector.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_DoubledRangeAndObstaclePenalty\\Combat_DoubledRangeAndObstaclePenalty.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_DoubledRangeAndObstaclePenalty.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_DoubledRangeAndObstaclePenalty.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_DoubledRangeAndObstaclePenalty.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_HalvedAttackAndDefenceBonuses\\Combat_HalvedAttackAndDefenceBonuses.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_HalvedAttackAndDefenceBonuses.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_HalvedAttackAndDefenceBonuses.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_HalvedAttackAndDefenceBonuses.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_LeadershipDecreasesFactionsNum\\Combat_LeadershipDecreasesFactionsNum.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_LeadershipDecreasesFactionsNum.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_LeadershipDecreasesFactionsNum.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_LeadershipDecreasesFactionsNum.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_RangedRetaliation\\Combat_RangedRetaliation.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_RangedRetaliation.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_RangedRetaliation.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_RangedRetaliation.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_SiegeTweaker\\Combat_SiegeTweaker.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_SiegeTweaker.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_SiegeTweaker.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_SiegeTweaker.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_SimultaneousMeleeAttack\\Combat_SimultaneousMeleeAttack.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_SimultaneousMeleeAttack.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_SimultaneousMeleeAttack.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_SimultaneousMeleeAttack.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_StatusSpellCumulativeEffect\\Combat_StatusSpellCumulativeEffect.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Combat_StatusSpellCumulativeEffect.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_StatusSpellCumulativeEffect.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Combat_StatusSpellCumulativeEffect.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Gameplay_RemoveObstacleSpellRework\\Gameplay_RemoveObstacleSpellRework.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Gameplay_RemoveObstacleSpellRework.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Gameplay_RemoveObstacleSpellRework.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Gameplay_RemoveObstacleSpellRework.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_DrawAdventureMapTileEffects\\Graphics_DrawAdventureMapTileEffects.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Graphics_DrawAdventureMapTileEffects.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Graphics_DrawAdventureMapTileEffects.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Graphics_DrawAdventureMapTileEffects.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_LegendaryHeroes\\Graphics_LegendaryHeroes.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Legend_Heroes.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Legend_Heroes.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Legend_Heroes.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_MainMenuVideoPositioning\\Graphics_MainMenuVideoPositioning.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Graphics_MainMenuVideoPositioning.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Graphics_MainMenuVideoPositioning.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Graphics_MainMenuVideoPositioning.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_TimeZonesSwitching\\Graphics_TimeZonesSwitching.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Graphics_TimeZonesSwitching.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Graphics_TimeZonesSwitching.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Graphics_TimeZonesSwitching.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Heroes_ChangeStartingParameters\\Heroes_ChangeStartingParameters.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Heroes_ChangeStartingParameters.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Heroes_ChangeStartingParameters.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Heroes_ChangeStartingParameters.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Heroes_ExperienceSplit\\Heroes_ExperienceSplit.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Heroes_ExperienceSplit.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Heroes_ExperienceSplit.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Heroes_ExperienceSplit.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Heroes_SetUniqueCombatGraphics\\Heroes_SetUniqueCombatGraphics.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Heroes_SetUniqueCombatGraphics.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Heroes_SetUniqueCombatGraphics.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Heroes_SetUniqueCombatGraphics.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Objects_DynamicHeroTeleport\\Objects_DynamicHeroTeleport.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Objects_DynamicHeroTeleport.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Objects_DynamicHeroTeleport.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Objects_DynamicHeroTeleport.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\RMG_ZoneTerrainRules\\RMG_ZoneTerrainRules.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\RMG_ZoneTerrainRules.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\RMG_ZoneTerrainRules.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\RMG_ZoneTerrainRules.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\SecondarySkills_EditNecromancyValues\\SecondarySkills_EditNecromancyValues.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\SecondarySkills_EditNecromancyValues.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\SecondarySkills_EditNecromancyValues.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\SecondarySkills_EditNecromancyValues.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Test_BaseCommissionPlugin\\Test_BaseCommissionPlugin.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\Test_BaseCommissionPlugin.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Test_BaseCommissionPlugin.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Commissions\\\\DebugMaps\\\\Test_BaseCommissionPlugin.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Utils_CombatEmulator\\Utils_CombatEmulator.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\goldfish - Combat Emulator\\\\eraplugins\\\\Utils_CombatEmulator.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\goldfish - Combat Emulator\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\goldfish - Combat Emulator\\\\DebugMaps\\\\Utils_CombatEmulator.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\goldfish - Combat Emulator\\\\DebugMaps\\\\Utils_CombatEmulator.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Utils_RandomCombatSimulator\\Utils_RandomCombatSimulator.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Random Combat Simulator\\\\eraplugins\\\\Utils_RandomCombatSimulator.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Random Combat Simulator\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Random Combat Simulator\\\\DebugMaps\\\\Utils_RandomCombatSimulator.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Random Combat Simulator\\\\DebugMaps\\\\Utils_RandomCombatSimulator.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_ArtifactsExtender\\ERA_ArtifactsExtender.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_ArtifactsExtender.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_ArtifactsExtender.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_ArtifactsExtender.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_DwellingsExtender\\ERA_DwellingsExtender.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_DwellingsExtender.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_DwellingsExtender.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_DwellingsExtender.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_HelpDialog\\ERA_HelpDialog.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_HelpDialog.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_HelpDialog.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_HelpDialog.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_JsonOverrides\\ERA_JsonOverrides.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_JsonOverrides.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_JsonOverrides.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_JsonOverrides.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_LocaleManager\\ERA_LocaleManager.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_LocaleManager.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_LocaleManager.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_LocaleManager.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_OptionsMenu\\ERA_OptionsMenu.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_OptionsMenu.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_OptionsMenu.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_OptionsMenu.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_SimultaneusTurn\\ERA_SimultaneusTurn.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_SimultaneusTurn.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_SimultaneusTurn.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_SimultaneusTurn.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_SystemOptionsExtension\\ERA_SystemOptionsExtension.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\ERA_SystemOptionsExtension.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_SystemOptionsExtension.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\ERA_SystemOptionsExtension.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\EraEditor_JsonOverrides\\EraEditor_JsonOverrides.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\EraEditor\\\\EraEditor_JsonOverrides.dll\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\EraEditor\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\EraEditor_JsonOverrides.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\EraEditor_JsonOverrides.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\EraEditor_ObjectsExtender\\EraEditor_ObjectsExtender.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\EraEditor\\\\EraEditor_ObjectsExtender.dll\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\EraEditor\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\EraEditor_ObjectsExtender.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\EraEditor_ObjectsExtender.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Gameplay_GameplayEnhancementPlugin\\Gameplay_GameplayEnhancementPlugin.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Game Enhancement Mod\\\\eraplugins\\\\Gameplay_GameplayEnhancementPlugin.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Game Enhancement Mod\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Game Enhancement Mod\\\\DebugMaps\\\\Gameplay_GameplayEnhancementPlugin.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\Game Enhancement Mod\\\\DebugMaps\\\\Gameplay_GameplayEnhancementPlugin.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_AlignClassName\\Interface_AlignClassName.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Interface_AlignClassName.dll\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_AlignClassName.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_AlignClassName.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_ArtifactsQuickSwitching\\Interface_ArtifactsQuickSwitching.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Interface_ArtifactsQuickSwitching.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_ArtifactsQuickSwitching.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_ArtifactsQuickSwitching.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_EnhancedCreatureInformation\\Interface_EnhancedCreatureInformation.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Interface_EnhancedCreatureInformation.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_EnhancedCreatureInformation.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_EnhancedCreatureInformation.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_MainMenuAPI\\Interface_MainMenuAPI.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Interface_MainMenuAPI.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_MainMenuAPI.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_MainMenuAPI.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_MainMenuLogo\\Interface_MainMenuLogo.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Interface_MainMenuLogo.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_MainMenuLogo.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_MainMenuLogo.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_SpellsDescription\\Interface_SpellsDescription.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Interface_SpellsDescription.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_SpellsDescription.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Interface_SpellsDescription.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Objects_CommonHotaObjectsPack\\Objects_CommonHotaObjectsPack.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Objects_CommonHotaObjectsPack.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Objects_CommonHotaObjectsPack.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Objects_CommonHotaObjectsPack.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Objects_CreatureBanksExtender\\Objects_CreatureBanksExtender.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Objects_CreatureBanksExtender.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Objects_CreatureBanksExtender.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Objects_CreatureBanksExtender.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Objects_WoGObjectsExtender\\Objects_WoGObjectsExtender.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Objects_WoGObjectsExtender.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Objects_WoGObjectsExtender.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Objects_WoGObjectsExtender.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\RMG_CustomizeObjectProperties\\RMG_CustomizeObjectProperties.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\RMG_CustomizeObjectProperties.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\RMG_CustomizeObjectProperties.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\RMG_CustomizeObjectProperties.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Test_BasePlugin\\Test_BasePlugin.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Test_BasePlugin.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Test_BasePlugin.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Test_BasePlugin.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Test_DifferentStuff\\Test_DifferentStuff.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Test_DifferentStuff.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Test_DifferentStuff.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Test_DifferentStuff.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Test_RandomMapGeneratorFromSources\\Test_RandomMapGeneratorFromSources.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141_xp\",\n    \"WindowsTargetPlatformVersion\": \"7.0\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\Test_RandomMapGeneratorFromSources.era\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\eraplugins\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Test_RandomMapGeneratorFromSources.map\",\n    \"ReleaseDbgMapPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\Mods\\\\WoG\\\\DebugMaps\\\\Test_RandomMapGeneratorFromSources.dbgmap\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\MapToDbgmap\\MapToDbgmap.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v143\",\n    \"WindowsTargetPlatformVersion\": \"10.0\",\n    \"TargetPath\": \"C:\\\\dev\\\\homm3\\\\plugins\\\\daemon_n\\\\H3EraPlugins\\\\tools\\\\MapToDbgmap\\\\bin\\\\MapToDbgmap.exe\",\n    \"OutDir\": \"C:\\\\dev\\\\homm3\\\\plugins\\\\daemon_n\\\\H3EraPlugins\\\\tools\\\\MapToDbgmap\\\\bin\\\\\",\n    \"IntDir\": \"C:\\\\dev\\\\homm3\\\\plugins\\\\daemon_n\\\\H3EraPlugins\\\\tools\\\\MapToDbgmap\\\\obj\\\\\",\n    \"ReleaseMapPath\": \"\",\n    \"ReleaseDbgMapPath\": \"\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Combat_ControlRandomEvents\\Combat_ControlRandomEvents.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141\",\n    \"WindowsTargetPlatformVersion\": \"8.1\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\_HD3_Data\\\\Packs\\\\Combat_ControlRandomEvents\\\\Combat_ControlRandomEvents.dll\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\_HD3_Data\\\\Packs\\\\Combat_ControlRandomEvents\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"\",\n    \"ReleaseDbgMapPath\": \"\"\n  }\n}"
+  },
+  {
+    "project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Test_BasePlugin\\Test_BasePlugin.vcxproj",
+    "exitCode": 0,
+    "evaluation": "{\n  \"Properties\": {\n    \"PlatformToolset\": \"v141\",\n    \"WindowsTargetPlatformVersion\": \"8.1\",\n    \"TargetPath\": \"D:\\\\games\\\\HoMM 3 ERA\\\\_HD3_Data\\\\Packs\\\\Test_BasePlugin\\\\Test_BasePlugin.dll\",\n    \"OutDir\": \"D:\\\\games\\\\HoMM 3 ERA\\\\_HD3_Data\\\\Packs\\\\Test_BasePlugin\\\\\",\n    \"IntDir\": \"Release\\\\\",\n    \"ReleaseMapPath\": \"\",\n    \"ReleaseDbgMapPath\": \"\"\n  }\n}"
+  }
+]

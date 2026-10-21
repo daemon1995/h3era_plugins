@@ -1,0 +1,4 @@
+interface:
+  display_name: "Heroes III ERA: сборка и исследование"
+  short_description: "Сборка ERA/SoD, хуки и исследование функций HoMM3"
+  default_prompt: "Используй $homm3-era-workflow для работы с моим плагином: проверь настройки проекта и выполни необходимые изменения и проверку."

@@ -1,0 +1,7430 @@
+[
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\_build\\gbfe-step-back.targets",
+    "kind": ".targets",
+    "snapshot": true,
+    "settings": [
+      {
+        "tag": "OutDir",
+        "value": "$(GBFEStepBackBuildDir)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "OutputFile",
+        "value": "$(GBFEStepBackBuildDir)\\game bug fixes extended.dll",
+        "attributes": {}
+      },
+      {
+        "tag": "ProgramDatabaseFile",
+        "value": "$(GBFEStepBackBuildDir)\\game bug fixes extended.pdb",
+        "attributes": {}
+      },
+      {
+        "tag": "ImportLibrary",
+        "value": "$(GBFEStepBackBuildDir)\\game bug fixes extended.lib",
+        "attributes": {}
+      },
+      {
+        "tag": "MapFileName",
+        "value": "$(GBFEStepBackBuildDir)\\game bug fixes extended.map",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\API_ErmFunctions\\API_ErmFunctions.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{759B4B20-9192-4C5F-B17A-2D7687E71E31}",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ExceptionHandling",
+        "value": "Async",
+        "attributes": {}
+      },
+      {
+        "tag": "AdditionalOptions",
+        "value": "/utf-8 %(AdditionalOptions)",
+        "attributes": {}
+      },
+      {
+        "tag": "ModuleDefinitionFile",
+        "value": "API_ErmFunctions.def",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "MinSpace",
+        "attributes": {
+          "Condition": "'$(Configuration)' == 'Release'"
+        }
+      },
+      {
+        "tag": "FavorSizeOrSpeed",
+        "value": "Size",
+        "attributes": {
+          "Condition": "'$(Configuration)' == 'Release'"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Artifacts_AddingNewFeatures\\Artifacts_AddingNewFeatures.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{d8e5282d-5a18-4757-8342-7e9759f5a3f3}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Artifacts_AddingNewFeatures",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Assembly_MainPlugin\\Assembly_MainPlugin.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{FF90A4AC-6B9F-4E22-AE7D-03B35FD0043E}",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\build\\commander-skills-scrolling\\build-overrides.targets",
+    "kind": ".targets",
+    "snapshot": true,
+    "settings": [
+      {
+        "tag": "MapFileName",
+        "value": "$(OutDir)$(TargetName).map",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\build\\creature-skill-icons\\before-dialog-refactor\\Interface_EnhancedCreatureInformation.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": true,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{BD8EB49A-36B9-458C-906A-B8C950EFE4C0}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "EditsforHelgtla",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\build\\enhanced-creature-information\\Interface_EnhancedCreatureInformation.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": true,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{BD8EB49A-36B9-458C-906A-B8C950EFE4C0}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "EditsforHelgtla",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.after.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_BattleHeroes\\Combat_BattleHeroes.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{4F86115D-57BA-45FE-8AB7-41A8A7621D46}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_BattleHeroes",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "PluginModName",
+        "value": "Combat_BattleHeroes",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ExceptionHandling",
+        "value": "Sync",
+        "attributes": {}
+      },
+      {
+        "tag": "Target",
+        "value": "",
+        "attributes": {
+          "Name": "DeployBattleHeroesData",
+          "AfterTargets": "Build"
+        }
+      },
+      {
+        "tag": "Copy",
+        "value": "",
+        "attributes": {
+          "SourceFiles": "@(BattleHeroesLang)",
+          "DestinationFiles": "@(BattleHeroesLang->'$(LocalGamePath)\\Mods\\Combat_BattleHeroes\\Lang\\%(RecursiveDir)%(Filename)%(Extension)')",
+          "SkipUnchangedFiles": "true"
+        }
+      },
+      {
+        "tag": "Copy",
+        "value": "",
+        "attributes": {
+          "SourceFiles": "@(BattleHeroesResource)",
+          "DestinationFiles": "@(BattleHeroesResource->'$(LocalGamePath)\\Mods\\Combat_BattleHeroes\\Data\\%(RecursiveDir)%(Filename)%(Extension)')",
+          "SkipUnchangedFiles": "true"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_BattleHeroes\\Verification\\CardOverlayLayout.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{EABBA874-C7AD-447F-BC83-1EF222C8E724}",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "Application",
+        "attributes": {}
+      },
+      {
+        "tag": "PluginTargetExt",
+        "value": ".exe",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ExceptionHandling",
+        "value": "Sync",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Console",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_BattleHeroes\\Verification\\EraSettings.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{FBF20665-6525-42E1-AD21-F78E89CA346D}",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "Application",
+        "attributes": {}
+      },
+      {
+        "tag": "PluginTargetExt",
+        "value": ".exe",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ExceptionHandling",
+        "value": "Sync",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Console",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_BattleReplay\\Combat_BattleReplay.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{F49C272B-B415-47C2-91A9-55D82616C03B}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_BattleReplay",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ExceptionHandling",
+        "value": "Async",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Combat_SwitchingCreatureAction\\Combat_SwitchingCreatureAction.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{3bb04884-c58a-465e-b8c7-46a363b91ec2}",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Adventure_CustomDigMessages\\Adventure_CustomDigMessages.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{839571D7-805C-465E-AB25-2CFEA13C55F5}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Adventure_CustomDigMessages",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\AIHeroes_ComboSecondarySkillsValues\\AIHeroes_ComboSecondarySkillsValues.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{2B8BB498-7C67-45A6-8EBF-59A13603CF20}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "AIHeroesComboSecondarySkillsValues",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Artifacts_ShimyCombatStatsPenalties\\Artifacts_ShimyCombatStatsPenalties.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{D4E5F6A7-B8C9-49CA-9D0E-4567890123EF}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ArtifactsShimyCombatStatsPenalties",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\BloodDragon_HalvedVampirism\\BloodDragon_HalvedVampirism.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{C1D16FB1-E073-9082-FB12-5E6F708192A3}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "BloodDragon_HalvedVampirism",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_BallisticsIncreasesShootingRange\\Combat_BallisticsIncreasesShootingRange.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{EFB3A9C1-7D6E-4A22-8F1C-0B1E2D3C4A5B}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_BallisticsIncreasesShootingRange",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_CasterCreatureSpellSelector\\Combat_CasterCreatureSpellSelector.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{F2A3B4C5-D6E7-4890-91A2-B3C4D5E6F7A8}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "CombatCasterCreatureSpellSelector",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_CreatureSpellSelector\\Combat_CreatureSpellSelector.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{AE86C987-F280-4A48-813B-48F5485078BD}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "CombatCreatureSpellSelector",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_DoubledRangeAndObstaclePenalty\\Combat_DoubledRangeAndObstaclePenalty.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{9EAE3C8C-BD40-6D5F-C8F8-2B3C4D5E6F70}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_DoubledRangeAndObstaclePenalty",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_HalvedAttackAndDefenceBonuses\\Combat_HalvedAttackAndDefenceBonuses.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{B0C05EA0-DF62-8F71-EA01-4D5E6F708192}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_HalvedAttackAndDefenceBonuses",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_LeadershipDecreasesFactionsNum\\Combat_LeadershipDecreasesFactionsNum.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{F1E2D3C4-B5A6-47B8-9C0D-1E2F3A4B5C6D}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_LeadershipDecreasesFactionsNum",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_RangedRetaliation\\Combat_RangedRetaliation.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{8D9D2B7B-AC3F-5C4E-B9E7-1A2B3C4D5E6F}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_RangedRetaliation",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_SiegeTweaker\\Combat_SiegeTweaker.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{D4E5F6A7-B8C9-5DAB-AE1F-456789012F01}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "CombatSiegeTweaker",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_SimultaneousMeleeAttack\\Combat_SimultaneousMeleeAttack.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{7C8C1A6A-9B2E-4B3F-A8D6-0F1E2C3A4B5C}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Combat_SimultaneousMeleeAttack",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "WarningLevel",
+        "value": "Level1",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Combat_StatusSpellCumulativeEffect\\Combat_StatusSpellCumulativeEffect.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{E5F6A7B8-C9D0-49CB-9D0E-5678901234EF}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "CombatStatusSpellCumulativeEffect",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Commissions.sln",
+    "kind": ".sln",
+    "snapshot": false,
+    "projects": [
+      [
+        "Combat_SimultaneousMeleeAttack",
+        "Combat_SimultaneousMeleeAttack\\Combat_SimultaneousMeleeAttack.vcxproj"
+      ],
+      [
+        "Combat_RangedRetaliation",
+        "Combat_RangedRetaliation\\Combat_RangedRetaliation.vcxproj"
+      ],
+      [
+        "Combat_DoubledRangeAndObstaclePenalty",
+        "Combat_DoubledRangeAndObstaclePenalty\\Combat_DoubledRangeAndObstaclePenalty.vcxproj"
+      ],
+      [
+        "Combat_HalvedAttackAndDefenceBonuses",
+        "Combat_HalvedAttackAndDefenceBonuses\\Combat_HalvedAttackAndDefenceBonuses.vcxproj"
+      ],
+      [
+        "Combat_LeadershipDecreasesFactionsNum",
+        "Combat_LeadershipDecreasesFactionsNum\\Combat_LeadershipDecreasesFactionsNum.vcxproj"
+      ],
+      [
+        "BloodDragon_HalvedVampirism",
+        "BloodDragon_HalvedVampirism\\BloodDragon_HalvedVampirism.vcxproj"
+      ],
+      [
+        "Heroes_ChangeStartingParameters",
+        "Heroes_ChangeStartingParameters\\Heroes_ChangeStartingParameters.vcxproj"
+      ],
+      [
+        "Heroes_ExperienceSplit",
+        "Heroes_ExperienceSplit\\Heroes_ExperienceSplit.vcxproj"
+      ],
+      [
+        "Graphics_LegendaryHeroes",
+        "Graphics_LegendaryHeroes\\Graphics_LegendaryHeroes.vcxproj"
+      ],
+      [
+        "Graphics_TimeZonesSwitching",
+        "Graphics_TimeZonesSwitching\\Graphics_TimeZonesSwitching.vcxproj"
+      ],
+      [
+        "Combat_BallisticsIncreasesShootingRange",
+        "Combat_BallisticsIncreasesShootingRange\\Combat_BallisticsIncreasesShootingRange.vcxproj"
+      ],
+      [
+        "Gameplay_RemoveObstacleSpellRework",
+        "Gameplay_RemoveObstacleSpellRework\\Gameplay_RemoveObstacleSpellRework.vcxproj"
+      ],
+      [
+        "Test_BaseCommissionPlugin",
+        "Test_BaseCommissionPlugin\\Test_BaseCommissionPlugin.vcxproj"
+      ],
+      [
+        "Utils_CombatEmulator",
+        "Utils_CombatEmulator\\Utils_CombatEmulator.vcxproj"
+      ],
+      [
+        "Objects_DynamicHeroTeleport",
+        "Objects_DynamicHeroTeleport\\Objects_DynamicHeroTeleport.vcxproj"
+      ],
+      [
+        "RMG_ZoneTerrainRules",
+        "RMG_ZoneTerrainRules\\RMG_ZoneTerrainRules.vcxproj"
+      ],
+      [
+        "Graphics_MainMenuVideoPositioning",
+        "Graphics_MainMenuVideoPositioning\\Graphics_MainMenuVideoPositioning.vcxproj"
+      ],
+      [
+        "Graphics_DrawAdventureMapTileEffects",
+        "Graphics_DrawAdventureMapTileEffects\\\\Graphics_DrawAdventureMapTileEffects.vcxproj"
+      ],
+      [
+        "SecondarySkills_EditNecromancyValues",
+        "SecondarySkills_EditNecromancyValues\\SecondarySkills_EditNecromancyValues.vcxproj"
+      ],
+      [
+        "Heroes_SetUniqueCombatGraphics",
+        "Heroes_SetUniqueCombatGraphics\\Heroes_SetUniqueCombatGraphics.vcxproj"
+      ],
+      [
+        "Combat_SiegeTweaker",
+        "Combat_SiegeTweaker\\Combat_SiegeTweaker.vcxproj"
+      ],
+      [
+        "AIHeroes_ComboSecondarySkillsValues",
+        "AIHeroes_ComboSecondarySkillsValues\\AIHeroes_ComboSecondarySkillsValues.vcxproj"
+      ],
+      [
+        "Artifacts_ShimyCombatStatsPenalties",
+        "Artifacts_ShimyCombatStatsPenalties\\Artifacts_ShimyCombatStatsPenalties.vcxproj"
+      ],
+      [
+        "Combat_StatusSpellCumulativeEffect",
+        "Combat_StatusSpellCumulativeEffect\\Combat_StatusSpellCumulativeEffect.vcxproj"
+      ],
+      [
+        "Combat_CreatureSpellSelector",
+        "Combat_CreatureSpellSelector\\Combat_CreatureSpellSelector.vcxproj"
+      ],
+      [
+        "MapToDbgmap",
+        "..\\tools\\MapToDbgmap\\MapToDbgmap.vcxproj"
+      ],
+      [
+        "Utils_RandomCombatSimulator",
+        "Utils_RandomCombatSimulator\\Utils_RandomCombatSimulator.vcxproj"
+      ],
+      [
+        "Adventure_CustomDigMessages",
+        "Adventure_CustomDigMessages\\Adventure_CustomDigMessages.vcxproj"
+      ]
+    ],
+    "configurations": [
+      "Debug|x86",
+      "Release|x86"
+    ],
+    "missing_projects": []
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Directory.Build.props",
+    "kind": ".props",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "PluginModName",
+        "value": "Commissions",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(MSBuildThisFileDirectory)..\\Directory.Build.props"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Directory.Build.props.user",
+    "kind": ".user",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "PlatformToolset",
+        "value": "v141",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "8.1",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": ".era",
+        "attributes": {}
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGamePath",
+        "value": "D:\\games\\HoMM 3 ERA",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGameTestPath",
+        "value": "D:\\games\\HoMM 3 ERA test",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Gameplay_RemoveObstacleSpellRework\\Gameplay_RemoveObstacleSpellRework.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{78cd603d-b134-46fc-a397-a658f94aac26}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "GameplaySlayerSpellRework",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_DrawAdventureMapTileEffects\\Graphics_DrawAdventureMapTileEffects.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{D1E2F3A4-B5C6-4789-90D1-E2F3A4B5C6D7}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "GraphicsDrawAdventureMapTileEffects",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_LegendaryHeroes\\Graphics_LegendaryHeroes.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{C974D039-D3A0-4E86-A083-4EC87685E904}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "NewHeroDlgItems",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "TargetName",
+        "value": "Legend_Heroes",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_MainMenuVideoPositioning\\Graphics_MainMenuVideoPositioning.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{A8B9C0D1-E2F3-4567-89A0-B1C2D3E4F5A6}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "GraphicsMainMenuVideoPositioning",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Graphics_TimeZonesSwitching\\Graphics_TimeZonesSwitching.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{5e315790-65d3-4333-bb53-1635ac7c7b65}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "GraphicsTimeZonesSwitching",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Heroes_ChangeStartingParameters\\Heroes_ChangeStartingParameters.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{f310faa9-ac75-4c9a-814e-f371adc0c98c}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "heroesStartingParameters",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Heroes_ExperienceSplit\\Heroes_ExperienceSplit.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{7374708d-bd32-4484-8661-3276656318dd}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Hero_ExperienceSplit",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "FavorSizeOrSpeed",
+        "value": "Size",
+        "attributes": {}
+      },
+      {
+        "tag": "BufferSecurityCheck",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Heroes_SetUniqueCombatGraphics\\Heroes_SetUniqueCombatGraphics.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{B2C3D4E5-F6A7-48B9-9C0D-2345678901DE}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "HeroesSetUniqueCombatGraphics",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Objects_DynamicHeroTeleport\\Objects_DynamicHeroTeleport.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{10203040-5060-4708-90A0-B1C2D3E4F5A6}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ObjectsDynamicHeroTeleport",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\RMG_ZoneTerrainRules\\RMG_ZoneTerrainRules.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{383D8FF3-688D-4D25-A334-31C5B2D2C1CC}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "RMGZoneTerrainRules",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\SecondarySkills_EditNecromancyValues\\SecondarySkills_EditNecromancyValues.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{A9B8C7D6-E5F4-4321-9A8B-0C1D2E3F4A5B}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "SecondarySkills_EditNecromancyValues",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Test_BaseCommissionPlugin\\Test_BaseCommissionPlugin.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{C3D4E5F6-A7B8-49CA-9D0E-3456789012EF}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "TestBaseCommissionPlugin",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Utils_CombatEmulator\\Utils_CombatEmulator.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{E7F8A9B0-C1D2-43E5-6F7A-8B9C0D1E2F3A}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "UtilsCombatEmulator",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "PluginOutDir",
+        "value": "$(LocalGamePath)\\Mods\\goldfish - Combat Emulator\\eraplugins\\",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Commissions\\Utils_RandomCombatSimulator\\Utils_RandomCombatSimulator.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{892EA49F-91D7-4C5B-B4E4-029F67F270A2}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "UtilsRandomCombatSimulator",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "PluginModName",
+        "value": "Random Combat Simulator",
+        "attributes": {}
+      },
+      {
+        "tag": "PluginOutDir",
+        "value": "$(LocalGamePath)\\Mods\\$(PluginModName)\\eraplugins\\",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      },
+      {
+        "tag": "Target",
+        "value": "",
+        "attributes": {
+          "Name": "DeploySimulatorModFiles",
+          "AfterTargets": "Build"
+        }
+      },
+      {
+        "tag": "Copy",
+        "value": "",
+        "attributes": {
+          "SourceFiles": "@(ModFile)",
+          "DestinationFiles": "@(ModFile->'$(OutDir)..\\%(RecursiveDir)%(Filename)%(Extension)')",
+          "SkipUnchangedFiles": "true"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.after.props",
+    "kind": ".props",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "OutDir",
+        "value": "$(PluginOutDir)",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": "$(PluginTargetExt)",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalDebuggerCommand",
+        "value": "$(LocalGamePath)\\h3era hd.exe",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalDebuggerWorkingDirectory",
+        "value": "$(LocalGamePath)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreadedDebug",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "Disabled",
+        "attributes": {}
+      },
+      {
+        "tag": "InlineFunctionExpansion",
+        "value": "Disabled",
+        "attributes": {}
+      },
+      {
+        "tag": "OmitFramePointers",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "BufferSecurityCheck",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "BasicRuntimeChecks",
+        "value": "EnableFastChecks",
+        "attributes": {}
+      },
+      {
+        "tag": "DebugInformationFormat",
+        "value": "ProgramDatabase",
+        "attributes": {}
+      },
+      {
+        "tag": "PreprocessorDefinitions",
+        "value": "WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OptimizeReferences",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableCOMDATFolding",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreaded",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "MaxSpeed",
+        "attributes": {}
+      },
+      {
+        "tag": "InlineFunctionExpansion",
+        "value": "AnySuitable",
+        "attributes": {}
+      },
+      {
+        "tag": "FunctionLevelLinking",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "IntrinsicFunctions",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "FavorSizeOrSpeed",
+        "value": "Speed",
+        "attributes": {}
+      },
+      {
+        "tag": "DebugInformationFormat",
+        "value": "ProgramDatabase",
+        "attributes": {}
+      },
+      {
+        "tag": "PreprocessorDefinitions",
+        "value": "WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableCOMDATFolding",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OptimizeReferences",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateMapFile",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "MapFileName",
+        "value": "$(ReleaseMapPath)",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "WarningLevel",
+        "value": "$(WarningLevel)",
+        "attributes": {}
+      },
+      {
+        "tag": "TreatWarningAsError",
+        "value": "$(TreatWarningsAsErrors)",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "$(LanguageStandard)",
+        "attributes": {
+          "Condition": "'$(LanguageStandard)' != ''"
+        }
+      },
+      {
+        "tag": "MultiProcessorCompilation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "PrecompiledHeader",
+        "value": "NotUsing",
+        "attributes": {}
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "$(SDLCheck)",
+        "attributes": {}
+      },
+      {
+        "tag": "ConformanceMode",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "PreprocessorDefinitions",
+        "value": "PROJECT_NAME=\"$(ProjectName)\";_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)",
+        "attributes": {}
+      },
+      {
+        "tag": "AdditionalOptions",
+        "value": "/Zc:threadSafeInit- %(AdditionalOptions)",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableUAC",
+        "value": "false",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.after.targets",
+    "kind": ".targets",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "LinkTimeCodeGeneration",
+        "value": "UseLinkTimeCodeGeneration",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.props",
+    "kind": ".props",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectName",
+        "value": "$(MSBuildProjectName)",
+        "attributes": {
+          "Condition": "'$(ProjectName)' == ''"
+        }
+      },
+      {
+        "tag": "LocalGamePath",
+        "value": "D:\\games\\HoMM 3 ERA",
+        "attributes": {
+          "Condition": "'$(LocalGamePath)' == ''"
+        }
+      },
+      {
+        "tag": "LocalGameTestPath",
+        "value": "D:\\games\\HoMM 3 ERA test",
+        "attributes": {
+          "Condition": "'$(LocalGameTestPath)' == ''"
+        }
+      },
+      {
+        "tag": "PluginModName",
+        "value": "WoG",
+        "attributes": {
+          "Condition": "'$(PluginModName)' == ''"
+        }
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "DynamicLibrary",
+        "attributes": {
+          "Condition": "'$(ConfigurationType)' == ''"
+        }
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "v143",
+        "attributes": {
+          "Condition": "'$(PlatformToolset)' == ''"
+        }
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "10.0",
+        "attributes": {
+          "Condition": "'$(WindowsTargetPlatformVersion)' == ''"
+        }
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "NotSet",
+        "attributes": {
+          "Condition": "'$(CharacterSet)' == ''"
+        }
+      },
+      {
+        "tag": "UseOfMfc",
+        "value": "false",
+        "attributes": {
+          "Condition": "'$(UseOfMfc)' == ''"
+        }
+      },
+      {
+        "tag": "PluginOutDir",
+        "value": "$(OutDir)",
+        "attributes": {
+          "Condition": "'$(PluginOutDir)' == '' AND '$(OutDir)' != ''"
+        }
+      },
+      {
+        "tag": "PluginOutDir",
+        "value": "$(LocalGamePath)\\Mods\\$(PluginModName)\\eraplugins\\",
+        "attributes": {
+          "Condition": "'$(PluginOutDir)' == ''"
+        }
+      },
+      {
+        "tag": "PluginTargetExt",
+        "value": ".era",
+        "attributes": {
+          "Condition": "'$(PluginTargetExt)' == ''"
+        }
+      },
+      {
+        "tag": "TargetName",
+        "value": "$(ProjectName)",
+        "attributes": {
+          "Condition": "'$(TargetName)' == ''"
+        }
+      },
+      {
+        "tag": "WarningLevel",
+        "value": "Level3",
+        "attributes": {
+          "Condition": "'$(WarningLevel)' == ''"
+        }
+      },
+      {
+        "tag": "TreatWarningsAsErrors",
+        "value": "false",
+        "attributes": {
+          "Condition": "'$(TreatWarningsAsErrors)' == ''"
+        }
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "false",
+        "attributes": {
+          "Condition": "'$(SDLCheck)' == ''"
+        }
+      },
+      {
+        "tag": "ForceImportAfterCppProps",
+        "value": "$(MSBuildThisFileDirectory)Directory.Build.after.props",
+        "attributes": {}
+      },
+      {
+        "tag": "ForceImportAfterCppTargets",
+        "value": "$(MSBuildThisFileDirectory)Directory.Build.after.targets",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(MSBuildThisFileDirectory)Directory.Build.props.user",
+          "Condition": "Exists('$(MSBuildThisFileDirectory)Directory.Build.props.user')"
+        }
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "WholeProgramOptimization",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "WholeProgramOptimization",
+        "value": "true",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.props.template",
+    "kind": ".template",
+    "snapshot": false,
+    "settings": []
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.props.user",
+    "kind": ".user",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "PlatformToolset",
+        "value": "v141_xp",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": ".era",
+        "attributes": {}
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGamePath",
+        "value": "D:\\games\\HoMM 3 ERA",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGameTestPath",
+        "value": "D:\\games\\HoMM 3 ERA test",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.props.user.example",
+    "kind": ".example",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "LocalGamePath",
+        "value": "D:\\games\\HoMM 3 ERA",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGameTestPath",
+        "value": "D:\\games\\HoMM 3 ERA test",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "v143",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "10.0",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableClangTidyCodeAnalysis",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "RunCodeAnalysis",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "TreatWarningsAsErrors",
+        "value": "false",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Directory.Build.targets",
+    "kind": ".targets",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "DebugMapsDir",
+        "value": "$([System.IO.Path]::GetFullPath('$(OutDir)..\\DebugMaps\\'))",
+        "attributes": {}
+      },
+      {
+        "tag": "ReleaseMapPath",
+        "value": "$(DebugMapsDir)$(TargetName).map",
+        "attributes": {}
+      },
+      {
+        "tag": "ReleaseDbgMapPath",
+        "value": "$(DebugMapsDir)$(TargetName).dbgmap",
+        "attributes": {}
+      },
+      {
+        "tag": "MapToDbgmapExe",
+        "value": "$(MSBuildThisFileDirectory)tools\\MapToDbgmap\\bin\\MapToDbgmap.exe",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectReference",
+        "value": "",
+        "attributes": {
+          "Include": "$(MSBuildThisFileDirectory)tools\\MapToDbgmap\\MapToDbgmap.vcxproj"
+        }
+      },
+      {
+        "tag": "Project",
+        "value": "{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}",
+        "attributes": {}
+      },
+      {
+        "tag": "ReferenceOutputAssembly",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "GlobalPropertiesToRemove",
+        "value": "OutDir;IntDir;TargetName;TargetExt",
+        "attributes": {}
+      },
+      {
+        "tag": "Target",
+        "value": "",
+        "attributes": {
+          "Name": "PrepareReleaseDebugMapsDirectory",
+          "BeforeTargets": "Link",
+          "Condition": "'$(Configuration)' == 'Release' AND '$(MSBuildProjectName)' != 'MapToDbgmap'"
+        }
+      },
+      {
+        "tag": "Target",
+        "value": "",
+        "attributes": {
+          "Name": "CompileReleaseDbgMap",
+          "AfterTargets": "Link",
+          "Condition": "'$(Configuration)' == 'Release' AND '$(MSBuildProjectName)' != 'MapToDbgmap'"
+        }
+      },
+      {
+        "tag": "Exec",
+        "value": "",
+        "attributes": {
+          "Command": "\"$(MapToDbgmapExe)\" \"$(ReleaseMapPath)\" \"$(ReleaseDbgMapPath)\""
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_ArtifactsExtender\\ERA_ArtifactsExtender.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|x64"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "x64",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|x64"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "x64",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{42b5985c-5448-4d01-b607-ae2cb255d21f}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERAArtifactsExtender",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_DwellingsExtender\\ERA_DwellingsExtender.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{1D94A0B8-2B08-4351-A372-B2300BA49833}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERADwellingsExtender",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_HelpDialog\\ERA_HelpDialog.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{8047d165-9d1a-4d66-8e5b-e97afa665596}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERAHelpDialog",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_JsonOverrides\\ERA_JsonOverrides.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{E1A6B8D8-5F9C-4A09-B0E5-2F3D109B5678}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERA_JsonOverrides",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_LocaleManager\\ERA_LocaleManager.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{9cf6680a-4176-463d-86eb-1fb9f6955224}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERA_LocaleManager",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_OptionsMenu\\ERA_OptionsMenu.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{96374a46-2883-41e8-a242-c2195b772ef7}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERAOptionsMenu",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ExceptionHandling",
+        "value": "Sync",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_SimultaneusTurn\\ERA_SimultaneusTurn.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{B39B39DD-91E6-48D6-A3B2-558786C4E1DB}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERASimultaneusTurn",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\ERA_SystemOptionsExtension\\ERA_SystemOptionsExtension.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{F6A7B8C9-D0E1-42F3-A4B5-C6D7E8F90123}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ERA_SystemOptionsExtension",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {
+          "Condition": "'$(LanguageStandard)' == ''"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\EraEditor_JsonOverrides\\EraEditor_JsonOverrides.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "EraEditor_JsonOverrides",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "PluginOutDir",
+        "value": "$(LocalGamePath)\\Mods\\$(PluginModName)\\EraEditor\\",
+        "attributes": {
+          "Condition": "'$(PluginOutDir)' == '$(LocalGamePath)\\Mods\\$(PluginModName)\\eraplugins\\'"
+        }
+      },
+      {
+        "tag": "PluginTargetExt",
+        "value": ".dll",
+        "attributes": {
+          "Condition": "'$(PluginTargetExt)' == '.era'"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LocalDebuggerCommand",
+        "value": "$(LocalGamePath)\\h3wmaped.exe",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\EraEditor_ObjectsExtender\\EraEditor_ObjectsExtender.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{7A653309-A087-46DE-BC8C-9675E0D63531}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "EraEditor_ObjectsExtender",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "PluginOutDir",
+        "value": "$(LocalGamePath)\\Mods\\$(PluginModName)\\EraEditor\\",
+        "attributes": {
+          "Condition": "'$(PluginOutDir)' == '$(LocalGamePath)\\Mods\\$(PluginModName)\\eraplugins\\'"
+        }
+      },
+      {
+        "tag": "PluginTargetExt",
+        "value": ".dll",
+        "attributes": {
+          "Condition": "'$(PluginTargetExt)' == '.era'"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LocalDebuggerCommand",
+        "value": "$(LocalGamePath)\\h3wmaped.exe",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Gameplay_GameplayEnhancementPlugin\\Gameplay_GameplayEnhancementPlugin.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{c28b0929-25fa-4ec5-9650-0ea912bf2449}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "GameplayEnhancementsPlugin",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "PluginModName",
+        "value": "Game Enhancement Mod",
+        "attributes": {
+          "Condition": "'$(PluginModName)' == ''"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {
+          "Condition": "'$(LanguageStandard)' == ''"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ModuleDefinitionFile",
+        "value": "$(ProjectDir)GameplayEnhancement.def",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\H3EraPlugins.sln",
+    "kind": ".sln",
+    "snapshot": false,
+    "projects": [
+      [
+        "API_ErmFunctions",
+        "API_ErmFunctions\\API_ErmFunctions.vcxproj"
+      ],
+      [
+        "Artifacts_AddingNewFeatures",
+        "Artifacts_AddingNewFeatures\\Artifacts_AddingNewFeatures.vcxproj"
+      ],
+      [
+        "Assembly_MainPlugin",
+        "Assembly_MainPlugin\\Assembly_MainPlugin.vcxproj"
+      ],
+      [
+        "Combat_SwitchingCreatureAction",
+        "Combat_SwitchingCreatureAction\\Combat_SwitchingCreatureAction.vcxproj"
+      ],
+      [
+        "ERA_ArtifactsExtender",
+        "ERA_ArtifactsExtender\\ERA_ArtifactsExtender.vcxproj"
+      ],
+      [
+        "ERA_HelpDialog",
+        "ERA_HelpDialog\\ERA_HelpDialog.vcxproj"
+      ],
+      [
+        "ERA_JsonOverrides",
+        "ERA_JsonOverrides\\ERA_JsonOverrides.vcxproj"
+      ],
+      [
+        "ERA_LocaleManager",
+        "ERA_LocaleManager\\ERA_LocaleManager.vcxproj"
+      ],
+      [
+        "ERA_OptionsMenu",
+        "ERA_OptionsMenu\\ERA_OptionsMenu.vcxproj"
+      ],
+      [
+        "ERA_SystemOptionsExtension",
+        "ERA_SystemOptionsExtension\\ERA_SystemOptionsExtension.vcxproj"
+      ],
+      [
+        "EraEditor_JsonOverrides",
+        "EraEditor_JsonOverrides\\EraEditor_JsonOverrides.vcxproj"
+      ],
+      [
+        "Gameplay_GameplayEnhancementPlugin",
+        "Gameplay_GameplayEnhancementPlugin\\Gameplay_GameplayEnhancementPlugin.vcxproj"
+      ],
+      [
+        "Interface_AlignClassName",
+        "Interface_AlignClassName\\Interface_AlignClassName.vcxproj"
+      ],
+      [
+        "Interface_ArtifactsQuickSwitching",
+        "Interface_ArtifactsQuickSwitching\\Interface_ArtifactsQuickSwitching.vcxproj"
+      ],
+      [
+        "Interface_EnhancedCreatureInformation",
+        "Interface_EnhancedCreatureInformation\\Interface_EnhancedCreatureInformation.vcxproj"
+      ],
+      [
+        "Interface_MainMenuAPI",
+        "Interface_MainMenuAPI\\Interface_MainMenuAPI.vcxproj"
+      ],
+      [
+        "Interface_MainMenuLogo",
+        "Interface_MainMenuLogo\\Interface_MainMenuLogo.vcxproj"
+      ],
+      [
+        "RMG_CustomizeObjectProperties",
+        "RMG_CustomizeObjectProperties\\RMG_CustomizeObjectProperties.vcxproj"
+      ],
+      [
+        "Test_DifferentStuff",
+        "Test_DifferentStuff\\Test_DifferentStuff.vcxproj"
+      ],
+      [
+        "Test_BasePlugin",
+        "Test_BasePlugin\\Test_BasePlugin.vcxproj"
+      ],
+      [
+        "Test_RandomMapGeneratorFromSources",
+        "Test_RandomMapGeneratorFromSources\\Test_RandomMapGeneratorFromSources.vcxproj"
+      ],
+      [
+        "MapToDbgmap",
+        "tools\\MapToDbgmap\\MapToDbgmap.vcxproj"
+      ],
+      [
+        "Interface_SpellsDescription",
+        "Interface_SpellsDescription\\Interface_SpellsDescription.vcxproj"
+      ],
+      [
+        "Combat_BattleReplay",
+        "Combat_BattleReplay\\Combat_BattleReplay.vcxproj"
+      ],
+      [
+        "Combat_BattleHeroes",
+        "Combat_BattleHeroes\\Combat_BattleHeroes.vcxproj"
+      ],
+      [
+        "ERA_SimultaneusTurn",
+        "ERA_SimultaneusTurn\\ERA_SimultaneusTurn.vcxproj"
+      ],
+      [
+        "EraEditor_ObjectsExtender",
+        "EraEditor_ObjectsExtender\\EraEditor_ObjectsExtender.vcxproj"
+      ],
+      [
+        "ERA_DwellingsExtender",
+        "ERA_DwellingsExtender\\ERA_DwellingsExtender.vcxproj"
+      ]
+    ],
+    "configurations": [
+      "Debug|x86",
+      "Release|x86"
+    ],
+    "missing_projects": []
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\H3ObjectExtenders.sln",
+    "kind": ".sln",
+    "snapshot": false,
+    "projects": [
+      [
+        "RMG_CustomizeObjectProperties",
+        "RMG_CustomizeObjectProperties\\RMG_CustomizeObjectProperties.vcxproj"
+      ],
+      [
+        "Objects_CreatureBanksExtender",
+        "Objects_CreatureBanksExtender\\Objects_CreatureBanksExtender.vcxproj"
+      ],
+      [
+        "Objects_CommonHotaObjectsPack",
+        "Objects_CommonHotaObjectsPack\\Objects_CommonHotaObjectsPack.vcxproj"
+      ],
+      [
+        "Objects_WoGObjectsExtender",
+        "Objects_WoGObjectsExtender\\Objects_WoGObjectsExtender.vcxproj"
+      ],
+      [
+        "MapToDbgmap",
+        "tools\\MapToDbgmap\\MapToDbgmap.vcxproj"
+      ],
+      [
+        "EraEditor_ObjectsExtender",
+        "EraEditor_ObjectsExtender\\EraEditor_ObjectsExtender.vcxproj"
+      ]
+    ],
+    "configurations": [
+      "Debug|x86",
+      "Release|x86"
+    ],
+    "missing_projects": []
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_AlignClassName\\Interface_AlignClassName.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{59e32f0a-7b62-400e-980e-90ac1778d46c}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "HeroDlgAlignClassName",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "PluginTargetExt",
+        "value": ".dll",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_ArtifactsQuickSwitching\\Interface_ArtifactsQuickSwitching.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{8391B032-2486-4D14-A85F-719627EFA19A}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "HeroArtifactsDlg",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_EnhancedCreatureInformation\\Interface_EnhancedCreatureInformation.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{BD8EB49A-36B9-458C-906A-B8C950EFE4C0}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "EditsforHelgtla",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_MainMenuAPI\\Interface_MainMenuAPI.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "ModuleDefinitionFile",
+        "value": "Interface_MainMenuAPI.def",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_MainMenuLogo\\Interface_MainMenuLogo.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{880405f0-b8ef-49d0-8231-89e1b9ed2f64}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "NewMainMenuItems",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_SpellsDescription\\Interface_SpellsDescription.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{60495B57-B79A-4944-8547-0FC9576E8F12}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Interface_SpellsDescription",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Interface_SpellsDescription\\Release\\verification\\before-release-refactor\\Interface_SpellsDescription.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{60495B57-B79A-4944-8547-0FC9576E8F12}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Interface_SpellsDescription",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Objects_CommonHotaObjectsPack\\Objects_CommonHotaObjectsPack.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{D0B2C8E1-3A7A-4B0F-8D16-0E6E9D7F4A1C}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "Objects_CommonHotaObjectsPack",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Objects_CreatureBanksExtender\\Objects_CreatureBanksExtender.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{B2C3D4E5-F6A7-48B9-0C1D-2345678901DE}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ObjectsCreatureBanksExtender",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Objects_WoGObjectsExtender\\Objects_WoGObjectsExtender.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{C9A2F0E6-8D74-4B0A-8C21-9E76A2F3D4B1}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "ObjectsWoGObjectsExtender",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\RMG_CustomizeObjectProperties\\RMG_CustomizeObjectProperties.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{01700c95-8606-446e-aab8-96975f7b1761}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "RMGCustomizeObjectProperties",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Test_BasePlugin\\Test_BasePlugin.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{A1B2C3D4-E5F6-47A8-9B0C-1234567890CD}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "TestBasePlugin",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Test_DifferentStuff\\Test_DifferentStuff.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{c11651ec-412b-43a8-8f51-c4607a7689a3}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "DlgTests",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\Test_RandomMapGeneratorFromSources\\Test_RandomMapGeneratorFromSources.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{6D1D13E8-0C92-4E6E-A5D4-87A81F74C195}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "TestRandomMapGeneratorFromSources",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\debug-build\\isolated-output.targets",
+    "kind": ".targets",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "OutDir",
+        "value": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\debug-build\\bin\\",
+        "attributes": {}
+      },
+      {
+        "tag": "IntDir",
+        "value": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\debug-build\\obj\\",
+        "attributes": {}
+      },
+      {
+        "tag": "OutputFile",
+        "value": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\debug-build\\bin\\game bug fixes extended.dll",
+        "attributes": {}
+      },
+      {
+        "tag": "ImportLibrary",
+        "value": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\debug-build\\bin\\game bug fixes extended.lib",
+        "attributes": {}
+      },
+      {
+        "tag": "ProgramDatabaseFile",
+        "value": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\debug-build\\bin\\game bug fixes extended.pdb",
+        "attributes": {}
+      },
+      {
+        "tag": "MapFileName",
+        "value": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\debug-build\\bin\\game bug fixes extended.map",
+        "attributes": {}
+      },
+      {
+        "tag": "Target",
+        "value": "",
+        "attributes": {
+          "Name": "CheckIsolatedAudioBuild",
+          "BeforeTargets": "Link"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\BattleAudioResearch\\review-before-game bug fixes.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "VCProjectVersion",
+        "value": "17.0",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{D33DE757-143D-49A0-AF05-6FD14821E6FD}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "gamebugfixes",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "7.0",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "DynamicLibrary",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "v141_xp",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "Unicode",
+        "attributes": {}
+      },
+      {
+        "tag": "WholeProgramOptimization",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "DynamicLibrary",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "v141_xp",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "Unicode",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "_ProjectFileVersion",
+        "value": "17.0.34031.279",
+        "attributes": {}
+      },
+      {
+        "tag": "OutDir",
+        "value": "$(SolutionDir)$(Configuration)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "IntDir",
+        "value": "$(Configuration)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetName",
+        "value": "$(ProjectName) extended",
+        "attributes": {}
+      },
+      {
+        "tag": "IntDir",
+        "value": "$(Configuration)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetName",
+        "value": "$(ProjectName) extended",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "Disabled",
+        "attributes": {}
+      },
+      {
+        "tag": "PreprocessorDefinitions",
+        "value": "WIN32;_DEBUG;_WINDOWS;_USRDLL;GAMEBUGFIXES_EXPORTS;%(PreprocessorDefinitions)",
+        "attributes": {}
+      },
+      {
+        "tag": "MinimalRebuild",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "BasicRuntimeChecks",
+        "value": "EnableFastChecks",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreaded",
+        "attributes": {}
+      },
+      {
+        "tag": "StructMemberAlignment",
+        "value": "1Byte",
+        "attributes": {}
+      },
+      {
+        "tag": "WarningLevel",
+        "value": "Level3",
+        "attributes": {}
+      },
+      {
+        "tag": "DebugInformationFormat",
+        "value": "EditAndContinue",
+        "attributes": {}
+      },
+      {
+        "tag": "OutputFile",
+        "value": "$(OutDir)$(ProjectName) extended.dll",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateMapFile",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetMachine",
+        "value": "MachineX86",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "MaxSpeed",
+        "attributes": {}
+      },
+      {
+        "tag": "IntrinsicFunctions",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "PreprocessorDefinitions",
+        "value": "WIN32;NDEBUG;_WINDOWS;_USRDLL;GAMEBUGFIXES_EXPORTS;%(PreprocessorDefinitions);WINDOWS_IGNORE_PACKING_MISMATCH",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreaded",
+        "attributes": {}
+      },
+      {
+        "tag": "StructMemberAlignment",
+        "value": "1Byte",
+        "attributes": {}
+      },
+      {
+        "tag": "FunctionLevelLinking",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "WarningLevel",
+        "value": "Level3",
+        "attributes": {}
+      },
+      {
+        "tag": "DebugInformationFormat",
+        "value": "ProgramDatabase",
+        "attributes": {}
+      },
+      {
+        "tag": "OutputFile",
+        "value": "$(OutDir)$(ProjectName) extended.dll",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateMapFile",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "OptimizeReferences",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableCOMDATFolding",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetMachine",
+        "value": "MachineX86",
+        "attributes": {}
+      },
+      {
+        "tag": "MapFileName",
+        "value": "D:\\SW\\ExeMapCompiler\\$(ProjectName) extended.map",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3EraPlugins\\tools\\MapToDbgmap\\MapToDbgmap.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{A17759C5-065B-45BD-9D4D-F8BF4DC2F925}",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "MapToDbgmap",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "10.0",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "Application",
+        "attributes": {}
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "v143",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "Unicode",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "TargetName",
+        "value": "MapToDbgmap",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": ".exe",
+        "attributes": {}
+      },
+      {
+        "tag": "OutDir",
+        "value": "$(MSBuildThisFileDirectory)bin\\",
+        "attributes": {}
+      },
+      {
+        "tag": "IntDir",
+        "value": "$(MSBuildThisFileDirectory)obj\\",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "stdcpp17",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "MaxSpeed",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreaded",
+        "attributes": {}
+      },
+      {
+        "tag": "WarningLevel",
+        "value": "Level4",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Console",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Combat_ControlRandomEvents\\Combat_ControlRandomEvents.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "VCProjectVersion",
+        "value": "16.0",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{bba3a406-7ec9-4115-bbed-4581316a2184}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "CombatControlRandomEvents",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "$(WindowsTargetPlatformVersion)",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "DynamicLibrary",
+        "attributes": {}
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "$(PlatformToolset)",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "Unicode",
+        "attributes": {}
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "DynamicLibrary",
+        "attributes": {}
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "$(PlatformToolset)",
+        "attributes": {}
+      },
+      {
+        "tag": "WholeProgramOptimization",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "Unicode",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OutDir",
+        "value": "$(LocalGamePath)\\_HD3_Data\\Packs\\$(ProjectName)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": "$(TargetExt)",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "OutDir",
+        "value": "$(LocalGamePath)\\_HD3_Data\\Packs\\$(ProjectName)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": "$(TargetExt)",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableUAC",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableCOMDATFolding",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OptimizeReferences",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableUAC",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreaded",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Directory.Build.props",
+    "kind": ".props",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectName",
+        "value": "$(MSBuildProjectName)",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGamePath",
+        "value": "D:\\games\\HoMM 3 ERA",
+        "attributes": {
+          "Condition": "'$(LocalGamePath)' == ''"
+        }
+      },
+      {
+        "tag": "LocalGameTestPath",
+        "value": "D:\\games\\HoMM 3 ERA test",
+        "attributes": {
+          "Condition": "'$(LocalGameTestPath)' == ''"
+        }
+      },
+      {
+        "tag": "LocalToolsPath",
+        "value": "D:\\SW",
+        "attributes": {
+          "Condition": "'$(LocalToolsPath)' == ''"
+        }
+      },
+      {
+        "tag": "OutDir",
+        "value": "$(LocalGamePath)\\_HD3_Data\\Packs\\$(ProjectName)\\",
+        "attributes": {
+          "Condition": "'$(OutDir)'==''"
+        }
+      },
+      {
+        "tag": "WarningLevel",
+        "value": "Level3",
+        "attributes": {}
+      },
+      {
+        "tag": "TreatWarningsAsErrors",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LanguageStandard",
+        "value": "Default",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableUAC",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetName",
+        "value": "$(ProjectName)",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "Directory.Build.props.user",
+          "Condition": "Exists('Directory.Build.props.user')"
+        }
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "WholeProgramOptimization",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalDebuggerCommand",
+        "value": "$(LocalGamePath)\\SoD turbo HD.exe",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalDebuggerWorkingDirectory",
+        "value": "$(LocalGamePath)",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreadedDebug",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "Disabled",
+        "attributes": {}
+      },
+      {
+        "tag": "InlineFunctionExpansion",
+        "value": "Disabled",
+        "attributes": {}
+      },
+      {
+        "tag": "OmitFramePointers",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "BufferSecurityCheck",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "BasicRuntimeChecks",
+        "value": "EnableFastChecks",
+        "attributes": {}
+      },
+      {
+        "tag": "MultiProcessorCompilation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "DebugInformationFormat",
+        "value": "ProgramDatabase",
+        "attributes": {}
+      },
+      {
+        "tag": "PrecompiledHeader",
+        "value": "NotUsing",
+        "attributes": {}
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "MultiByte",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OptimizeReferences",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableCOMDATFolding",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "WholeProgramOptimization",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreaded",
+        "attributes": {}
+      },
+      {
+        "tag": "Optimization",
+        "value": "MaxSpeed",
+        "attributes": {}
+      },
+      {
+        "tag": "InlineFunctionExpansion",
+        "value": "AnySuitable",
+        "attributes": {}
+      },
+      {
+        "tag": "FunctionLevelLinking",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "IntrinsicFunctions",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "FavorSizeOrSpeed",
+        "value": "Speed",
+        "attributes": {}
+      },
+      {
+        "tag": "MultiProcessorCompilation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "PrecompiledHeader",
+        "value": "NotUsing",
+        "attributes": {}
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "MultiByte",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableCOMDATFolding",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OptimizeReferences",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateMapFile",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "MapFileName",
+        "value": "$(LocalGamePath)\\Tools\\ExeMapCompiler\\$(ProjectName).map",
+        "attributes": {}
+      },
+      {
+        "tag": "MapFileName",
+        "value": "$(LocalToolsPath)\\ExeMapCompiler\\$(ProjectName).map",
+        "attributes": {}
+      },
+      {
+        "tag": "PreprocessorDefinitions",
+        "value": "UNICODE=0;\n        _UNICODE=0;\n        PROJECT_NAME=\"$(ProjectName)\";\n        _CRT_SECURE_NO_WARNINGS;\n        %(PreprocessorDefinitions)",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Directory.Build.props.template",
+    "kind": ".template",
+    "snapshot": false,
+    "settings": []
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Directory.Build.props.user",
+    "kind": ".user",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "PlatformToolset",
+        "value": "v141",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "8.1",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": ".dll",
+        "attributes": {}
+      },
+      {
+        "tag": "SDLCheck",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGamePath",
+        "value": "D:\\games\\HoMM 3 ERA",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGameTestPath",
+        "value": "D:\\games\\HoMM 3 ERA test",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Directory.Build.props.user.example",
+    "kind": ".example",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "LocalGamePath",
+        "value": "D:\\games\\HoMM 3 ERA",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalGameTestPath",
+        "value": "D:\\games\\HoMM 3 ERA test",
+        "attributes": {}
+      },
+      {
+        "tag": "LocalToolsPath",
+        "value": "D:\\SW",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "v143",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "10.0",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableClangTidyCodeAnalysis",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "RunCodeAnalysis",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "TreatWarningsAsErrors",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "DebugInformationFormat",
+        "value": "ProgramDatabase",
+        "attributes": {}
+      }
+    ]
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\H3SodPlugins.sln",
+    "kind": ".sln",
+    "snapshot": false,
+    "projects": [
+      [
+        "Combat_ControlRandomEvents",
+        "Combat_ControlRandomEvents\\Combat_ControlRandomEvents.vcxproj"
+      ],
+      [
+        "Test_BasePlugin",
+        "Test_BasePlugin\\Test_BasePlugin.vcxproj"
+      ]
+    ],
+    "configurations": [
+      "Debug|x64",
+      "Debug|x86",
+      "Release|x64",
+      "Release|x86"
+    ],
+    "missing_projects": []
+  },
+  {
+    "path": "C:\\dev\\homm3\\plugins\\daemon_n\\H3SoDPlugins\\Test_BasePlugin\\Test_BasePlugin.vcxproj",
+    "kind": ".vcxproj",
+    "snapshot": false,
+    "settings": [
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Debug|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Debug",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectConfiguration",
+        "value": "",
+        "attributes": {
+          "Include": "Release|Win32"
+        }
+      },
+      {
+        "tag": "Configuration",
+        "value": "Release",
+        "attributes": {}
+      },
+      {
+        "tag": "Platform",
+        "value": "Win32",
+        "attributes": {}
+      },
+      {
+        "tag": "VCProjectVersion",
+        "value": "16.0",
+        "attributes": {}
+      },
+      {
+        "tag": "Keyword",
+        "value": "Win32Proj",
+        "attributes": {}
+      },
+      {
+        "tag": "ProjectGuid",
+        "value": "{A1B2C3D4-E5F6-47A8-9B0C-1234567890CD}",
+        "attributes": {}
+      },
+      {
+        "tag": "RootNamespace",
+        "value": "TestBasePlugin",
+        "attributes": {}
+      },
+      {
+        "tag": "WindowsTargetPlatformVersion",
+        "value": "$(WindowsTargetPlatformVersion)",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.Default.props"
+        }
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "DynamicLibrary",
+        "attributes": {}
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "$(PlatformToolset)",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "Unicode",
+        "attributes": {}
+      },
+      {
+        "tag": "ConfigurationType",
+        "value": "DynamicLibrary",
+        "attributes": {}
+      },
+      {
+        "tag": "UseDebugLibraries",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "PlatformToolset",
+        "value": "$(PlatformToolset)",
+        "attributes": {}
+      },
+      {
+        "tag": "WholeProgramOptimization",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "CharacterSet",
+        "value": "Unicode",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.props"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props",
+          "Condition": "exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')",
+          "Label": "LocalAppDataPlatform"
+        }
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OutDir",
+        "value": "$(LocalGamePath)\\_HD3_Data\\Packs\\$(ProjectName)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": "$(TargetExt)",
+        "attributes": {}
+      },
+      {
+        "tag": "LinkIncremental",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "OutDir",
+        "value": "$(LocalGamePath)\\_HD3_Data\\Packs\\$(ProjectName)\\",
+        "attributes": {}
+      },
+      {
+        "tag": "TargetExt",
+        "value": "$(TargetExt)",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableUAC",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "SubSystem",
+        "value": "Windows",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableCOMDATFolding",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "OptimizeReferences",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "GenerateDebugInformation",
+        "value": "true",
+        "attributes": {}
+      },
+      {
+        "tag": "EnableUAC",
+        "value": "false",
+        "attributes": {}
+      },
+      {
+        "tag": "RuntimeLibrary",
+        "value": "MultiThreaded",
+        "attributes": {}
+      },
+      {
+        "tag": "Import",
+        "value": "",
+        "attributes": {
+          "Project": "$(VCTargetsPath)\\Microsoft.Cpp.targets"
+        }
+      }
+    ]
+  }
+]
