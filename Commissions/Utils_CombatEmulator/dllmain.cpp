@@ -3,14 +3,24 @@
 #define ERA_MODLIST
 #include "CombatEmulator.h"
 #pragma comment(linker, "/EXPORT:GameModIsLoaded=_GameModIsLoaded@4")
+#pragma comment(linker, "/EXPORT:GetVersion=_GetPluginVersion@0")
 
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
-LPCSTR pluginVersion = "0.9.0";
+constexpr char pluginVersion[] = "0.9.2";
 } // namespace dllText
+
+// Export as GetVersion without colliding with WinAPI's GetVersion declaration.
+// The returned string uses the shared game text buffer.
+extern "C" PCHAR __stdcall GetPluginVersion() noexcept
+{
+    libc::sprintf(h3_TextBuffer, "%s", dllText::pluginVersion);
+    return h3_TextBuffer;
+}
+
 DllExport BOOL __stdcall GameModIsLoaded(LPCSTR modName)
 {
     if (!modName || libc::strcmp(modName, h3_NullString) == 0)

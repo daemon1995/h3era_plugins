@@ -5,6 +5,9 @@ class CombatEmulator
 {
 
     BOOL isInited = false;
+    BOOL blockingPatchesApplied = false;
+    INT32 mouseNoChangePointer = 0;
+    INT32 combatShowCursorShadow = 0;
     union {
         struct
         {
@@ -18,6 +21,9 @@ class CombatEmulator
 
   protected:
     void CreatePatches(PatcherInstance *_pi);
+    void RestoreMouseState();
+    static int __stdcall CombatMgr_SkipResults(LoHook *h, HookContext *c);
+    static void __stdcall MouseMgr_SetCursor(HiHook *h, H3MouseManager *mouse, const int frame, const int type);
 
   public:
     static CombatEmulator *instance;

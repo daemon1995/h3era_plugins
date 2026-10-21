@@ -211,6 +211,14 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const int x,
     constexpr BOOL combatIsLocal = TRUE;
     constexpr BOOL isBank = FALSE;
 
+    // The skipped StartBattle tail normally restores these adventure globals.
+    const int activePlayerId = IntAt(0x69CCF4);
+    const int adventureShown = IntAt(0x698A10);
+    const int combatActive = IntAt(0x699590);
+    const BYTE enemyFled = ByteAt(0x6985F3);
+    const BYTE enemySurrendered = ByteAt(0x697794);
+    const BOOL heroWasMobilized = P_AdventureManager->centeredHero;
+
     // modify combat settings based on passed arguments
     ApplyBlockingPatches(TRUE, blockMagic, blockRunning);
 
@@ -244,18 +252,39 @@ INT __stdcall StartPseudoCombat(H3Hero *_attHero, H3Hero *_defHero, const int x,
         SetQuickCombatState(quickCombatState); // restore original quick combat setting
     }
 
-    UndoBlockingPatches();
-    IntAt(0x0699590) = 0; // reset combat flag
-    pseudoCmb.specialTerrain = -1;
+    IntAt(0x69CCF4) = activePlayerId;
+    IntAt(0x698A10) = adventureShown;
+    IntAt(0x699590) = combatActive;
+    ByteAt(0x6985F3) = enemyFled;
+    ByteAt(0x697794) = enemySurrendered;
 
     // restore original NPC data to prevent side effects on the rest of the game
     *atkNpc = pseudoCmb.npcCopies[0];
     *defNpc = pseudoCmb.npcCopies[1];
+
+    UndoBlockingPatches();
+    pseudoCmb.specialTerrain = -1;
+
+    // Use the native post-combat arguments: H3API's MobilizeHero passes a
+    // final zero, which omits the route refresh and queued mouse movement.
+    if (heroWasMobilized)
+        THISCALL_4(void, 0x417540, P_AdventureManager->Get(), 0, 0, 1);
+    if (P_MouseManager && !IntAt(reinterpret_cast<ADDRESS>(P_MouseManager->Get()) + 0x38))
+        THISCALL_1(void, 0x4194D0, P_AdventureManager->Get());
+
     return result;
 }
 
 void CombatEmulator::BeforeCombatStart(const BOOL blockCombatResultDlg, const BOOL blockMagic, const BOOL blockRunning)
 {
+    if (!blockingPatchesApplied)
+    {
+        if (P_MouseManager)
+            mouseNoChangePointer = IntAt(reinterpret_cast<ADDRESS>(P_MouseManager->Get()) + 0x38);
+        combatShowCursorShadow = IntAt(0x698810);
+        blockingPatchesApplied = true;
+    }
+
     BOOL args[] = {blockCombatResultDlg, blockMagic, blockRunning};
     for (size_t i = 0; i < 3; i++)
     {
@@ -273,6 +302,38 @@ void CombatEmulator::AfterCombatEnd()
         if (patch)
             patch->Undo();
     }
+    RestoreMouseState();
+    blockingPatchesApplied = false;
+}
+
+void CombatEmulator::RestoreMouseState()
+{
+    if (!blockingPatchesApplied)
+        return;
+
+    if (P_MouseManager)
+        IntAt(reinterpret_cast<ADDRESS>(P_MouseManager->Get()) + 0x38) = mouseNoChangePointer;
+    IntAt(0x698810) = combatShowCursorShadow;
+}
+
+int __stdcall CombatEmulator::CombatMgr_SkipResults(LoHook *h, HookContext *c)
+{
+    // 0x476DA0 also clears bNoChangePointer at 0x477123. A hidden battle
+    // leaves it set by 0x462627, so restore it before returning to the map.
+    instance->RestoreMouseState();
+    c->return_address = 0x475D02;
+    return NO_EXEC_DEFAULT;
+}
+
+void __stdcall CombatEmulator::MouseMgr_SetCursor(HiHook *h, H3MouseManager *mouse, const int frame, const int type)
+{
+    // Stock SetCursor does nothing while bNoChangePointer is set. HD's hook
+    // still writes type/frame after that rejected call and can cache images
+    // from the old DEF. Reject the call before it enters the HD hook chain.
+    if (instance && instance->blockingPatchesApplied && IntAt(reinterpret_cast<ADDRESS>(mouse) + 0x38))
+        return;
+
+    THISCALL_3(void, h->GetDefaultFunc(), mouse, frame, type);
 }
 
 char __stdcall CombatEmulator::GameMgr_CreateSaveGameFile(HiHook *h, H3Game *gameMgr, LPCSTR saveName, const DWORD a3,
@@ -304,9 +365,9 @@ void CombatEmulator::CreatePatches(PatcherInstance *_pi)
 
     _pi->WriteHiHook(0x04BEB60, THISCALL_, GameMgr_CreateSaveGameFile);
     _pi->WriteHiHook(0x046381E, THISCALL_, CombatMgr_ChooseSpecialTerrain);
+    _pi->WriteHiHook(0x50CEA0, THISCALL_, MouseMgr_SetCursor);
 
-    patchToBlockDlgScreen = _pi->WriteJmp(0x0475CF4, 0x0475D02);
-    patchToBlockDlgScreen->Undo();
+    patchToBlockDlgScreen = _pi->CreateLoHook(0x475CF4, CombatMgr_SkipResults);
 
     patchToBlockAiMagic = _pi->WriteJmp(0x0422F4E, 0x04230BC);
     patchToBlockAiMagic->Undo();
