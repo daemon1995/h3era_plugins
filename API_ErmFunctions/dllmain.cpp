@@ -1,6 +1,8 @@
 #include "framework.h"
 #include "ObjectRendering.h"
 #include "ObjectReplacement.h"
+#include "GraphicsResources.h"
+#include "ConfigServices.h"
 #include <algorithm>
 #include <new>
 
@@ -329,6 +331,8 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
         if (!_PI)
             return FALSE;
         Era::ConnectEra(module, INSTANCE_NAME);
+        config_services::Initialize();
+        graphics_resources::RegisterEvents();
         Era::RegisterHandler(OnAfterWog, "OnAfterWoG");
         Era::RegisterHandler(ResetMap, "OnGameLeave");
         Era::RegisterHandler(ResetMap, "OnGameLeft");

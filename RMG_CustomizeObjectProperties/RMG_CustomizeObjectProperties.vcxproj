@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -19,14 +19,16 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
     <ClInclude Include="..\headers\Objects\DwellingConfig.h" />
+    <ClInclude Include="..\headers\Objects\RmgSettingsExport.h" />
     <ClInclude Include="..\headers\Era\ObjectText.hpp" />
+    <ClInclude Include="DwellingInfo.h" />
+    <ClInclude Include="..\headers\Era\GameDwellingInfo.hpp" />
+    <ClInclude Include="..\headers\Objects\DwellingInfoView.h" />
     <ClInclude Include="AdditionalProperties.h" />
     <ClInclude Include="ExtendedMonoliths.h" />
     <ClInclude Include="MonolithGroupRegistry.h" />
     <ClInclude Include="MonolithSaveData.h" />
     <ClInclude Include="ObjectExtenderManager.h" />
-    <ClInclude Include="ObjectExtenders\DwellingSetup.h" />
-    <ClInclude Include="ObjectExtenders\DwellingsExtender.h" />
     <ClInclude Include="ObjectExtenders\SpellMarketExtender.h" />
     <ClInclude Include="ObjectExtenders\UniversityExtender.h" />
     <ClInclude Include="SoundManager.h" />
@@ -39,14 +41,15 @@
     <ClInclude Include="RMG_SettingsDlg.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConfigExport.cpp"><LanguageStandard>stdcpp17</LanguageStandard></ClCompile>
     <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="DwellingInfo.cpp" />
     <ClCompile Include="AdditionalProperties.cpp" />
     <ClCompile Include="AtomicIniSave.cpp" />
     <ClCompile Include="ExtendedMonoliths.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ObjectExtenderManager.cpp" />
-    <ClCompile Include="ObjectExtenders\DwellingsExtender.cpp" />
     <ClCompile Include="ObjectExtenders\SpellMarketExtender.cpp" />
     <ClCompile Include="ObjectExtenders\UniversityExtender.cpp" />
     <ClCompile Include="SoundManager.cpp" />

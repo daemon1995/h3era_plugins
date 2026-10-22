@@ -1,10 +1,28 @@
-#include "ObjectDefinitions.h"
+﻿#include "ObjectDefinitions.h"
 #include "ObjectProperties.h"
+#include "ObjectExtenders/DwellingsExtender.h"
+#include "../headers/EraPluginsAPI/ObjectDefinitionsAPI.h"
+#include <array>
 #include "../headers/Era/eraModList.hpp"
 
 namespace editorObjects
 {
+namespace {
+std::vector<std::string> &Snapshot() { static auto *lines = new std::vector<std::string>; return *lines; }
+std::array<int, 232> originalLimits;
+std::array<int, OBJECT_TYPE_LIMIT> subtypeCounts{};
+bool captured = false;
+unsigned __stdcall DefinitionCount() { return unsigned(Snapshot().size()); }
+const char *__stdcall DefinitionAt(int index) { return index >= 0 && unsigned(index) < Snapshot().size() ? Snapshot()[index].c_str() : nullptr; }
+int __stdcall OriginalLimit(int type) { return captured && type >= 0 && type < 232 ? originalLimits[type] : -1; }
+}
+
 static_assert(OBJECT_TYPE_LIMIT == h3::limits::OBJECTS, "Object type limits must match the editor");
+
+int __stdcall ObjectDefinitions::SubtypeCount(int type)
+{
+    return IsObjectType(type) ? subtypeCounts[type] : 0;
+}
 
 const std::vector<std::string> &ObjectDefinitions::Properties()
 {
@@ -15,50 +33,8 @@ const std::vector<std::string> &ObjectDefinitions::Properties()
 
 std::vector<std::string> ObjectDefinitions::ReadProperties()
 {
-    std::vector<std::string> result;
-    char key[512];
-    bool found = false;
-    ObjectProperty property;
-    // Keep the same mod priority and flat/nested formats as the game plugin.
-    for (const auto &mod : modList::GetEraModList(modList::CASE_TO_LOWER))
-    {
-        for (int i = 0; ; ++i)
-        {
-            std::snprintf(key, sizeof(key), "RMG.%s.properties.%d", mod.c_str(), i);
-            LPCSTR line = EraJS::read(key, found);
-            if (!found)
-                break;
-            if (ParseObjectProperty(line, property))
-                result.emplace_back(line);
-        }
-        for (int group = 0; ; ++group)
-        {
-            int i = 0;
-            for (;; ++i)
-            {
-                std::snprintf(key, sizeof(key), "RMG.%s.properties.%d.%d", mod.c_str(), group, i);
-                LPCSTR line = EraJS::read(key, found);
-                if (!found)
-                    break;
-                if (ParseObjectProperty(line, property))
-                    result.emplace_back(line);
-            }
-            if (!i)
-                break;
-        }
-    }
-    for (int type = 0; type < OBJECT_TYPE_LIMIT; ++type)
-        for (int subtype = 0; subtype < dwellings::MIN_CAPACITY; ++subtype)
-            for (int i = 0; ; ++i)
-            {
-                std::snprintf(key, sizeof(key), "RMG.objectGeneration.%d.%d.properties.%d", type, subtype, i);
-                LPCSTR line = EraJS::read(key, found);
-                if (!found)
-                    break;
-                if (ParseObjectProperty(line, property) && property.type == type && property.subtype == subtype)
-                    result.emplace_back(line);
-            }
-    return result;
+    return object_config::CollectDefinitions([](const char *key) { return EraJS::read(key); },
+        modList::GetEraModList(modList::CASE_TO_LOWER));
 }
 
 H3TextFile *__stdcall ObjectDefinitions::LoadObjectPrototypes(HiHook *h, LPCSTR fileName)
@@ -67,8 +43,6 @@ H3TextFile *__stdcall ObjectDefinitions::LoadObjectPrototypes(HiHook *h, LPCSTR 
     if (!txt || _stricmp(fileName, "ZEObjts.txt") != 0)
         return txt;
     const auto &additions = Properties();
-    if (additions.empty())
-        return txt;
     // H3TextFile's vector is layout-compatible, but its game allocation helpers are not.
     struct NativeLines
     {
@@ -84,22 +58,40 @@ H3TextFile *__stdcall ObjectDefinitions::LoadObjectPrototypes(HiHook *h, LPCSTR 
     int count = 0;
     if (!ReadObjectCount(native.first[0], count) || size_t(count) >= size_t(native.last - native.first))
         return txt;
-    std::vector<std::string> lines(native.first, native.first + count + 1);
-    MergeObjectProperties(lines, additions);
-    auto *data = CDECL_1(LPCSTR *, 0x504A8E, lines.size() * sizeof(LPCSTR));
-    if (!data)
+    std::vector<std::string> lines;
+    if (!ReadObjectDefinitions(native.first, size_t(native.last - native.first), lines))
         return txt;
-    for (size_t i = 0; i < lines.size(); ++i)
-        data[i] = Eramap::ToStaticStr(lines[i].c_str());
-    CDECL_1(void, 0x504AB7, native.first);
-    native.first = data;
-    native.last = data + lines.size();
-    native.capacity = native.last;
+    if (!captured)
+    {
+        originalLimits.fill(-1);
+        ObjectProperty property;
+        for (size_t i = 1; i < lines.size(); ++i)
+            if (ParseObjectProperty(lines[i], property)) originalLimits[property.type] = (std::max)(originalLimits[property.type], property.subtype);
+        captured = true;
+    }
+    MergeObjectProperties(lines, additions);
+    if (!additions.empty() || lines.size() != size_t(count) + 1)
+    {
+        auto *data = CDECL_1(LPCSTR *, 0x504A8E, lines.size() * sizeof(LPCSTR));
+        if (!data)
+            return txt;
+        for (size_t i = 0; i < lines.size(); ++i)
+            data[i] = Eramap::ToStaticStr(lines[i].c_str());
+        CDECL_1(void, 0x504AB7, native.first);
+        native.first = data;
+        native.last = data + lines.size();
+        native.capacity = native.last;
+    }
+    Snapshot().assign(lines.begin() + 1, lines.end());
+    subtypeCounts = object_config::SubtypeCounts(Snapshot());
+    DwellingsExtender::DefinitionsLoaded();
     return txt;
 }
 
 void ObjectDefinitions::Init()
 {
+    static const era_objects::DefinitionsApi api{sizeof(api), 1, DefinitionCount, DefinitionAt, OriginalLimit, SubtypeCount};
+    era_services::Publish(era_objects::DEFINITIONS, &api);
     _PI->WriteHiHook(0x4909E2, CDECL_, LoadObjectPrototypes);
 }
 } // namespace editorObjects

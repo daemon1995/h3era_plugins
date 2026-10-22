@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "ObjectExtenders/DwellingsExtender.h"
 #define OBJECT_EXTENDER_DECLARATOR(className, nameSpaceName)                                                           \
     namespace nameSpaceName                                                                                            \
     {                                                                                                                  \
@@ -23,8 +22,7 @@ void InitObjectExtenders()
     auto &mgr = extendersManager::ObjectExtenderManager::Get();
     extender::ObjectExtender *extendersList[] = {OBJECT_EXTENDER_GETTER(ShrinesExtender, shrines),
                                                  OBJECT_EXTENDER_GETTER(SpellMarketExtender, spellMarket),
-                                                 OBJECT_EXTENDER_GETTER(UniversityExtender, university),
-                                                 &dwellings::DwellingsExtender::Get()
+                                                 OBJECT_EXTENDER_GETTER(UniversityExtender, university)
 
     };
 

@@ -4,6 +4,34 @@ An ERA plugin that extends random-map object configuration and behavior in Heroe
 
 Plugins can integrate with its object lifecycle through the public `ObjectExtender` API. See the [API quick start](QUICK_START.md).
 
+RMG remains the owner of the extender registry and dispatch. New C++ clients discover its versioned table in
+Patcher variable `ERA.Services.ObjectExtenders.v2`; legacy exported entry points remain available.
+Object-definition parsing/priority/merging is shared with the editor, while each host owns native loading and memory.
+RMG contributes its own definitions/settings to the generic configuration-export API; domain extenders contribute
+their data independently. See [configuration services](../API_ErmFunctions/CONFIG_SERVICES.md).
+
+## Object subtype count API
+
+`GetObjectSubtypeCount(int type)` is an exported `int __stdcall` function. It returns the final object-definition
+range for types 0–231: the largest loaded subtype plus one, including gaps. Multiple DEFs for the same subtype
+do not increase the size. The result is 0 before definitions load, for an absent type or an invalid type.
+Supported subtypes are 0–32767; counts are 0–32768. The definition loaders reject unsupported rows and ignore
+resource lines beyond the declared record count. This preserves the existing signed 16-bit extender ABI.
+Values are refreshed after each merge of the native definitions with RMG additions; language reloads do not change them.
+The result describes the definition range, not the capacity of another plugin's creature/name tables or RMG's virtual variants.
+
+New C++ clients use [ObjectDefinitionsAPI.h](../headers/EraPluginsAPI/ObjectDefinitionsAPI.h):
+
+```cpp
+const auto *api = era_services::Find<era_objects::DefinitionsApi>(era_objects::DEFINITIONS);
+const int count = api ? api->subtypeCount(17) : 0;
+// The definition range is [0, count); its maximum subtype is count - 1.
+```
+
+RMG and the map editor publish the same `DefinitionsApi` through `ERA.Services.ObjectDefinitions.v1`.
+DLL clients can resolve `GetObjectSubtypeCount` using the function type
+`EraJS::GetObjectSubtypeCount` in `headers/Era/JsonObjectExport.hpp`.
+
 ## Development setup
 
 From the repository root, create the local MSBuild settings file and edit the game paths:
@@ -32,8 +60,9 @@ The project currently compiles extenders for spell markets, universities, creatu
 
 Two-way monolith subtypes 8 and above use separate teleport networks, including native pathfinding and ERA savegame support. See [extended monoliths](ExtendedMonoliths.md) for configuration and in-game checks.
 
-Creature dwellings of types 17 and 20 can be added and initialized through JSON, including subtypes above 255.
-See [the dwelling extender](DwellingsExtender.md) and [example configuration](examples/dwellings.json).
+Creature dwellings of types 17 and 20 use the standalone [ERA_DwellingsExtender](../ERA_DwellingsExtender/README.md)
+for extended gameplay. RMG keeps independent read-only dwelling hints and generator integration, including when
+a different plugin owns the runtime tables. See [RMG dwelling information](DwellingsExtender.md).
 
 ## Object loop sounds
 

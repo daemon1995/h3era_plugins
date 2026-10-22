@@ -1,5 +1,5 @@
 #pragma once
-#include "../../headers/Objects/DwellingConfig.h"
+#include "../headers/Objects/DwellingConfig.h"
 #include <cstdint>
 
 namespace dwellings

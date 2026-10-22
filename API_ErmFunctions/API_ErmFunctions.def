@@ -1,4 +1,5 @@
 EXPORTS
+    Erm_GetGraphicsApi
     Erm_SetObjectOwner
     Erm_RegisterObjectType
     Erm_GetObjectOwner

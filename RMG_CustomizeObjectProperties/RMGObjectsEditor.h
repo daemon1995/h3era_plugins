@@ -77,6 +77,8 @@ struct PrisonVariantKey
     }
 };
 
+namespace EraJS { struct RmgExportOverridesInfo; }
+
 struct RMGObjectInfo : public extender::RMGObjectProperties
 {
     // used for thread safety in when read from ini/json
@@ -140,6 +142,8 @@ struct RMGObjectInfo : public extender::RMGObjectProperties
     static std::vector<RMGObjectInfo> (&CurrentObjectInfos())[limits::OBJECTS];
 
     static void InitFromRmgObjectGenerator(const H3RmgObjectGenerator *generator);
+    static void CaptureNativeExportDefaults(const H3RmgObjectGenerator *generator);
+    static BOOL GetExportOverrides(int type, int subtype, EraJS::RmgExportOverridesInfo *info);
     static void InitDefaultProperties(const ObjectLimitsInfo &limitInfo, const INT16 *maxSubtypes);
     static void LoadUserProperties();
     static LPCSTR GetObjectName(const INT32 type, const INT32 subtype);

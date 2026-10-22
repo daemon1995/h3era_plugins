@@ -87,3 +87,9 @@ Debug и Release собраны с локальным `v141_xp`, экспорт�
 Адреса сверены с локальным IDA-экспортом `h3era HD.exe`: `410B60` (флаг, `EDI=H3ObjectAttributes`, координаты `[EBP-44h]`), `412BA0` (мини-карта, `EBX=H3MapItem`, цвет `SI`), `4FF280` (вход DEF), `49D410` (undo/redo штатного журнала), `49D2A0` (очистка). Хуки: `410DCA`, `410F7C`, `412F33`, `49D4F8`, `49D50D`, `49D5A5`, `49D608`; HiHook: `49D410`, `49D2A0`. Начальные инструкции в 11 точках хуков/переходов дополнительно совпали с установленным `D:/games/HoMM 3 ERA/h3era HD.exe`. Требуется совместимая адресная база ERA/SoD. Визуальная проверка новой HD-совместимости в запущенной игре ещё нужна.
 
 Игровые проверки: новый объект без владельца → захват двумя разными игроками → нейтрализация; подтипы с разными настройками мини-карты; объект под героем и закрытый туманом; сохранение/загрузка; выход и новая карта тех же координат; два просмотра одного хода; события до первого/после последнего штатного действия; выход/загрузка из callback; передача хода в сети. При обычной перерисовке ERM-log не должен получать вызовов функций отрисовки option 879.
+
+## Shared services for RMG and dwellings
+
+[Graphics API](GRAPHICS.md) owns PCX/DEF frames and palette rendering used by the standalone dwelling plugin.
+[Configuration services](CONFIG_SERVICES.md) collect typed contributions from RMG and domain providers.
+Update API_ErmFunctions together with RMG_CustomizeObjectProperties and ERA_DwellingsExtender.

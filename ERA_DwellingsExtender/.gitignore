@@ -1,0 +1,8 @@
+build/
+Debug/
+Release/
+DebugMaps/
+!Verification/
+!Verification/*.cpp
+!Verification/*.ps1
+!Verification/*.cmd

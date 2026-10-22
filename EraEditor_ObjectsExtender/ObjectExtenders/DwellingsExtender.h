@@ -27,6 +27,7 @@ class DwellingsExtender
 
   public:
     static void Init();
+    static void DefinitionsLoaded();
 };
 } // namespace editorObjects
 

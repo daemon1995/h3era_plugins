@@ -1,3 +1,5 @@
+﻿void PublishObjectExtenderApi();
+void RegisterRmgConfigProvider();
 // dllmain.cpp : Определяет точку входа для приложения DLL.
 // #include "pch.h"
 #include "ExtendersInitializer.hpp"
@@ -94,6 +96,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
             //! Connect to the Era framework
             Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
+            RegisterRmgConfigProvider();
             Era::RegisterHandler(OnReportVersion, "OnReportVersion");
 
             //! Get the global patcher
@@ -101,6 +104,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             // Era::RegisterHandler(OnAdventureMapRightMouseClick, "OnAdventureMapRightMouseClick");
             //! Create an instance of the plugin
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
+            PublishObjectExtenderApi();
             _PI->WriteLoHook(0x4EDE42, CrBanksTxt_BeforeLoad);
         }
         break;

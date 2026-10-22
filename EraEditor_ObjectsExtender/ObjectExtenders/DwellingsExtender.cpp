@@ -1,7 +1,7 @@
 #include "DwellingsExtender.h"
-#include "../ObjectProperties.h"
-#include "../ObjectDefinitions.h"
 #include "../../headers/Era/ObjectText.hpp"
+#include "../ObjectDefinitions.h"
+#include "../ObjectProperties.h"
 
 namespace editorObjects
 {
@@ -51,11 +51,11 @@ void DwellingsExtender::LoadNames()
     // Restore full subtype indexing where the WoG editor replaced SIB operands with NOPs.
     // Do this after native TXT initialization so other editor plugins finish their startup patches first.
     if (ByteAt(0x43DF4C) == 0x8D)
-        _PI->WriteHexPatch(0x43DF4C, "8D 04 C1");       // LEA EAX,[ECX+EAX*8]
+        _PI->WriteHexPatch(0x43DF4C, "8D 04 C1"); // LEA EAX,[ECX+EAX*8]
     if (ByteAt(0x48CC50) == 0x8B)
-        _PI->WriteHexPatch(0x48CC50, "8B 74 F0 04");    // MOV ESI,[EAX+ESI*8+4]
+        _PI->WriteHexPatch(0x48CC50, "8B 74 F0 04"); // MOV ESI,[EAX+ESI*8+4]
     if (ByteAt(0x41D274) == 0x8B)
-        _PI->WriteHexPatch(0x41D274, "8B 54 CA 04");    // MOV EDX,[EDX+ECX*8+4]
+        _PI->WriteHexPatch(0x41D274, "8B 54 CA 04"); // MOV EDX,[EDX+ECX*8+4]
     if (ByteAt(0x41D29A) == 0x8B)
         _PI->WriteHexPatch(0x41D29A, "8B 54 CA 04");
 }
@@ -64,22 +64,8 @@ void DwellingsExtender::ReloadNames()
 {
     if (!namesLoaded)
         return;
-    size_t singleCount = (std::max)(size_t(dwellings::MIN_CAPACITY), nativeSingleCount);
-    size_t multipleCount = (std::max)(size_t(dwellings::MIN_CAPACITY), nativeMultipleCount);
-    ObjectProperty property;
-    for (const auto &line : ObjectDefinitions::Properties())
-        if (ParseObjectProperty(line, property))
-        {
-            switch (property.type)
-            {
-            case dwellings::SINGLE_TYPE:
-                singleCount = (std::max)(singleCount, size_t(property.subtype + 1));
-                break;
-            case dwellings::MULTIPLE_TYPE:
-                multipleCount = (std::max)(multipleCount, size_t(property.subtype + 1));
-                break;
-            }
-        }
+    const size_t singleCount = (std::max)(nativeSingleCount, size_t(ObjectDefinitions::SubtypeCount(dwellings::SINGLE_TYPE)));
+    const size_t multipleCount = (std::max)(nativeMultipleCount, size_t(ObjectDefinitions::SubtypeCount(dwellings::MULTIPLE_TYPE)));
     single.assign(singleCount, DwellingRecord{1, "Creature dwelling"});
     multiple.assign(multipleCount, DwellingRecord{1, "Creature dwelling"});
     for (const int type : {dwellings::SINGLE_TYPE, dwellings::MULTIPLE_TYPE})
@@ -122,6 +108,10 @@ void __stdcall DwellingsExtender::LoadNativeNames(HiHook *h)
     CDECL_0(void, h->GetDefaultFunc());
     Get().LoadNames();
 }
+void DwellingsExtender::DefinitionsLoaded()
+{
+    Get().ReloadNames();
+}
 void __stdcall DwellingsExtender::OnAfterReloadLanguageData(Eramap::TEvent *)
 {
     Get().ReloadNames();
@@ -132,4 +122,3 @@ void DwellingsExtender::Init()
     Eramap::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 }
 } // namespace editorObjects
-

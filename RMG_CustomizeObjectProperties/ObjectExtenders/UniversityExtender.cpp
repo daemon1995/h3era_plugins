@@ -13,7 +13,7 @@ void UniversityExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
 {
     // don't do anything if there are no added subtypes for this object type
     const int addedSubtypes = maxSubtypes[eObject::UNIVERSITY];
-    if (addedSubtypes == 0)
+    if (addedSubtypes <= 0)
     {
         return;
     }

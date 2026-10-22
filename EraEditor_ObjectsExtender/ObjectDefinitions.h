@@ -10,6 +10,7 @@ class ObjectDefinitions
 
   public:
     static const std::vector<std::string> &Properties();
+    static int __stdcall SubtypeCount(int type);
     static void Init();
 };
 } // namespace editorObjects

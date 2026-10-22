@@ -12,7 +12,6 @@ namespace extendersManager
 {
 namespace limits
 {
-constexpr int EXTENDED = 1024;
 constexpr int COMMON = 255;
 } // namespace limits
 

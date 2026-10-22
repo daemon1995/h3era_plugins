@@ -3,8 +3,10 @@
 #include "pch.h"
 
 #include "RMG_SettingsDlg.h"
-#include "ObjectExtenders/DwellingsExtender.h"
+#include "DwellingInfo.h"
 #include "../headers/Era/ObjectText.hpp"
+#include "../headers/Era/JsonObjectExport.hpp"
+#include "../headers/Objects/RmgSettingsExport.h"
 
 
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
@@ -15,6 +17,10 @@ std::vector<PrisonVariants::Record> PrisonVariants::records;
 
 namespace
 {
+rmgExport::Overrides globalExportOverrides;
+std::array<rmgExport::Overrides, h3::limits::OBJECTS> typeExportOverrides;
+std::array<std::vector<rmgExport::Overrides>, h3::limits::OBJECTS> subtypeExportOverrides;
+
 constexpr DWORD RMG_OBJ_GEN_PANDORA_MON_VTABLE = 0x00640B8C;
 constexpr DWORD RMG_OBJ_GEN_PANDORA_EXP_VTABLE = 0x00640B98;
 constexpr DWORD RMG_OBJ_GEN_PANDORA_GOLD_VTABLE = 0x00640BA4;
@@ -482,17 +488,40 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     }
     limitsInfo.mapTypesLimit[eObject::PRISON] = 100;
     limitsInfo.zoneTypeLimits[eObject::PRISON] = 5;
+    globalExportOverrides = {};
+    globalExportOverrides.inherited[rmgExport::MAP] = defaultLimit;
+    globalExportOverrides.inherited[rmgExport::ZONE] = defaultLimit;
+    for (int type = 0; type < H3_MAX_OBJECTS; ++type)
+    {
+        typeExportOverrides[type] = {};
+        typeExportOverrides[type].inherited = {{true, limitsInfo.mapTypesLimit[type],
+                                              limitsInfo.zoneTypeLimits[type], -1, -1}};
+    }
     // init global defaults for all objects
     bool readSucces = false;
     const int mapGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.map", readSucces);
     if (readSucces)
     {
+        globalExportOverrides.Set(rmgExport::MAP, mapGlobalLimitDefault);
+        for (auto &type : typeExportOverrides)
+        {
+            if (type.inherited[rmgExport::MAP] != mapGlobalLimitDefault)
+                globalExportOverrides.required |= 1U << rmgExport::MAP;
+            type.inherited[rmgExport::MAP] = mapGlobalLimitDefault;
+        }
         std::fill(std::begin(limitsInfo.mapTypesLimit), std::end(limitsInfo.mapTypesLimit), mapGlobalLimitDefault);
     }
 
     const int zoneGlobalLimitDefault = EraJS::readInt("RMG.objectGeneration.zone", readSucces);
     if (readSucces)
     {
+        globalExportOverrides.Set(rmgExport::ZONE, zoneGlobalLimitDefault);
+        for (auto &type : typeExportOverrides)
+        {
+            if (type.inherited[rmgExport::ZONE] != zoneGlobalLimitDefault)
+                globalExportOverrides.required |= 1U << rmgExport::ZONE;
+            type.inherited[rmgExport::ZONE] = zoneGlobalLimitDefault;
+        }
         std::fill(std::begin(limitsInfo.zoneTypeLimits), std::end(limitsInfo.zoneTypeLimits), zoneGlobalLimitDefault);
     }
 
@@ -562,6 +591,10 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
         auto &manager = extendersManager::ObjectExtenderManager::Get();
 
         const BOOL isPseudoGeneration = editor.isPseudoGeneration;
+
+        if (isPseudoGeneration)
+            for (const auto *generator : *rmgObjectsList)
+                RMGObjectInfo::CaptureNativeExportDefaults(generator);
 
         manager.AddObjectsToObjectGenList(rmgObjectsList, isPseudoGeneration);
 
@@ -1026,6 +1059,7 @@ _LHF_(RMG__AtQuestArtifactListSelectRandom)
 
 } // namespace fixes
 
+
 void RMGObjectsEditor::CreatePatches()
 {
 
@@ -1405,6 +1439,39 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator *gener
     rmgObjInfo.Clamp();
 }
 
+void RMGObjectInfo::CaptureNativeExportDefaults(const H3RmgObjectGenerator *generator)
+{
+    if (!generator || generator->type < 0 || generator->type >= h3::limits::OBJECTS) return;
+    const int type = generator->type;
+    int subtype = generator->subtype;
+    if (type == eObject::SPELL_SCROLL)
+        subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(generator)->spellLevel;
+    auto &records = subtypeExportOverrides[type];
+    if (subtype < 0 || size_t(subtype) >= records.size()) return;
+    // Dwellings keep automatic valuation as -1; their computed creature AI
+    // value is a display/runtime value, not a fixed JSON override.
+    const bool dwelling = type == eObject::CREATURE_GENERATOR1 || type == eObject::CREATURE_GENERATOR4;
+    records[subtype].CaptureNativeGenerator(dwelling ? -1 : generator->value, generator->density);
+}
+
+BOOL RMGObjectInfo::GetExportOverrides(int type, int subtype, EraJS::RmgExportOverridesInfo *info)
+{
+    if (!info || info->structSize < sizeof(*info)) return FALSE;
+    const rmgExport::Overrides *record = nullptr;
+    if (type == -1 && subtype == -1) record = &globalExportOverrides;
+    else if (type >= 0 && type < h3::limits::OBJECTS)
+    {
+        if (subtype == -1) record = &typeExportOverrides[type];
+        else if (subtype >= 0 && size_t(subtype) < subtypeExportOverrides[type].size())
+            record = &subtypeExportOverrides[type][subtype];
+    }
+    if (!record) return FALSE;
+    *info = EraJS::RmgExportOverridesInfo{};
+    info->fieldMask = record->DifferenceMask();
+    std::copy(record->configured.begin(), record->configured.end(), info->fields);
+    return TRUE;
+}
+
 void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, const INT16 *maxSubtypes)
 {
     RMGObjectInfo *objInfo = nullptr;
@@ -1414,6 +1481,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
     {
         const int subtypesAmount = maxSubtypes[objType] + 1;
         defaultRMGObjectsInfoByType[objType].resize(subtypesAmount);
+        subtypeExportOverrides[objType].assign(subtypesAmount, {});
 
         int typeData[DATA_SIZE] = {true, limitsInfo.mapTypesLimit[objType], limitsInfo.zoneTypeLimits[objType],
                                    UNDEFINED, UNDEFINED};
@@ -1428,6 +1496,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
             // and if succes
             if (readSucces)
             {
+                typeExportOverrides[objType].Set(static_cast<int>(keyIndex), data);
                 // put into temp types data array
                 typeData[keyIndex] = data;
             }
@@ -1442,6 +1511,8 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
             // assign IDs to the type and subtype
             objInfo->type = objType;
             objInfo->subtype = objSubtype;
+            auto &exportOverrides = subtypeExportOverrides[objType][objSubtype];
+            std::copy_n(typeData, DATA_SIZE, exportOverrides.inherited.begin());
 
             for (size_t keyIndex = 0; keyIndex < DATA_SIZE; keyIndex++)
             {
@@ -1450,6 +1521,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
 
                 // read default data from json for the exact subtype
                 const int subtypeData = EraJS::readInt(h3_TextBuffer, readSucces);
+                if (readSucces) exportOverrides.Set(static_cast<int>(keyIndex), subtypeData);
 
                 // set data according to struct offset
                 objInfo->data[keyIndex] = readSucces ? subtypeData : typeData[keyIndex];
@@ -1457,7 +1529,7 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
         }
     }
 
-    dwellings::DwellingsExtender::Get().InitDefaultRmgValues();
+    rmgDwellings::InitDefaultValues();
 }
 
 void RMGObjectInfo::LoadUserProperties()
@@ -1517,7 +1589,7 @@ LPCSTR RMGObjectInfo::GetObjectName(const INT32 type, const INT32 subtype)
             break;
         case eObject::CREATURE_GENERATOR1:
         case eObject::CREATURE_GENERATOR4:
-            result = dwellings::DwellingsExtender::Get().GetObjectName(type, subtype);
+            result = rmgDwellings::GetName(type, subtype);
             break;
         case eObject::HERO:
             result = P_HeroInfo[subtype].name;

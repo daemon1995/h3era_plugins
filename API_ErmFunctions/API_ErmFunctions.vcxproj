@@ -20,6 +20,11 @@
     <ClCompile Include="ObjectRendering.cpp" />
     <ClCompile Include="ObjectReplacement.cpp" />
     <ClCompile Include="JsonConfig.cpp" />
+    <ClCompile Include="GraphicsResources.cpp" />
+    <ClCompile Include="ConfigServices.cpp">
+      <Optimization Condition="'$(Configuration)' == 'Release'">MinSpace</Optimization>
+      <FavorSizeOrSpeed Condition="'$(Configuration)' == 'Release'">Size</FavorSizeOrSpeed>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
@@ -30,11 +35,22 @@
     <ClInclude Include="ObjectShapeCache.h" />
     <ClInclude Include="ObjectReplacement.h" />
     <ClInclude Include="JsonConfig.h" />
+    <ClInclude Include="GraphicsResources.h" />
+    <ClInclude Include="GraphicsPixels.h" />
+    <ClInclude Include="ConfigServices.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\RuntimeServices.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\ConfigExportAPI.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\ObjectDefinitionsAPI.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\GraphicsAPI.h" />
+    <ClInclude Include="..\headers\Config\ExportModel.h" />
+    <ClInclude Include="..\headers\Config\ExportSnapshot.h" />
     <ClInclude Include="..\headers\EraPluginsAPI\ErmFunctionsAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="API_ErmFunctions.def" />
     <None Include="README.md" />
+    <None Include="GRAPHICS.md" />
+    <None Include="CONFIG_SERVICES.md" />
     <None Include="HD_MINIMAP.md" />
     <None Include="OBJECT_REPLACEMENT.md" />
     <None Include="Verification\ObjectGeometry.tests.cpp" />

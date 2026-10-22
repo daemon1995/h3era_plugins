@@ -1,5 +1,6 @@
 #pragma once
 #include "eraJson.hpp"
+#include "../Objects/ObjectLimits.h"
 #include <cstdio>
 #include <string>
 
@@ -8,7 +9,7 @@ namespace EraJS
 // nullptr means missing; an explicitly empty translation is still an override.
 inline const char *ReadObjectText(int type, int subtype, const char *field) noexcept
 {
-    if (type < 0 || type >= 232 || subtype < 0 || subtype >= 65536 || !field)
+    if (!object_config::IsObjectType(type) || !object_config::IsObjectSubtype(subtype) || !field)
         return nullptr;
     char key[128];
     const int length = std::snprintf(key, sizeof(key), "RMG.objectGeneration.%d.%d.%s", type, subtype, field);

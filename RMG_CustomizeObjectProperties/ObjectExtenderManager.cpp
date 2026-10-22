@@ -1,18 +1,37 @@
-#pragma comment(linker, "/EXPORT:RegisterObjectExtenderEx=_RegisterObjectExtenderEx@4")
+﻿#pragma comment(linker, "/EXPORT:RegisterObjectExtenderEx=_RegisterObjectExtenderEx@4")
 #pragma comment(linker, "/EXPORT:GetResolvedObjectName=_GetResolvedObjectName@8")
 #pragma comment(linker, "/EXPORT:GetObjectName=_GetObjectName@8")
+#pragma comment(linker, "/EXPORT:RegisterObjectVisitObserver=_RegisterObjectVisitObserver@4")
 
 #include <thread>
 #include <unordered_set>
+#include <array>
+#include <cstdio>
 
 #include "pch.h"
 
 #include "SoundManager.h"
 #include "ExtendedMonoliths.h"
+#include "DwellingInfo.h"
+#include "../headers/Era/GameDwellingInfo.hpp"
+#include "../headers/Era/JsonObjectExport.hpp"
+#include "../headers/EraPluginsAPI/ObjectDefinitionsAPI.h"
+#include "../headers/Objects/ObjectDefinitions.h"
+
+#pragma comment(linker, "/EXPORT:GetRmgExportInfo=_GetRmgExportInfo@12")
+#pragma comment(linker, "/EXPORT:GetRmgExportOverrides=_GetRmgExportOverrides@12")
+#pragma comment(linker, "/EXPORT:GetOriginalObjectSubtypeLimit=_GetOriginalObjectSubtypeLimit@4")
+#pragma comment(linker, "/EXPORT:GetObjectSubtypeCount=_GetObjectSubtypeCount@4")
+#pragma comment(linker, "/EXPORT:GetObjectExportProperty=_GetObjectExportProperty@4")
 
 namespace
 {
 constexpr size_t MAX_REGISTERED_OBJECTS = 65536;
+std::vector<extender::TObjectVisitObserver> visitObservers;
+std::array<int, h3::limits::OBJECTS> originalObjectSubtypeLimits;
+bool originalObjectLimitsCaptured = false;
+std::vector<std::string> objectExportProperties;
+std::array<int, h3::limits::OBJECTS> objectSubtypeCounts{};
 
 bool IsReadableMemory(const void *memory, size_t size) noexcept
 {
@@ -52,7 +71,7 @@ bool CopyObjectInfo(const void *source, const size_t sourceSize, UniqueObjectInf
 
     result = UniqueObjectInfo{};
     std::memcpy(&result, source, bytesToCopy);
-    if (result.uniqueObjectType.type < 0 || result.uniqueObjectType.type >= h3::limits::OBJECTS)
+    if (!object_config::IsObjectType(result.uniqueObjectType.type) || result.uniqueObjectType.subtype < -1)
         return false;
     if (result.page < ePageUnknown || result.page > ePandoraBox)
         result.page = ePageUnknown;
@@ -99,10 +118,56 @@ bool DecodeObjectInfos(const ObjectExtenderObjectInfoView &view, std::vector<Uni
 }
 } // namespace
 
+DllExport int __stdcall GetOriginalObjectSubtypeLimit(int type)
+{
+    if (!originalObjectLimitsCaptured || type < 0 || type >= h3::limits::OBJECTS) return -1;
+    return originalObjectSubtypeLimits[type];
+}
+
+DllExport int __stdcall GetObjectSubtypeCount(int type)
+{
+    return type >= 0 && type < h3::limits::OBJECTS ? objectSubtypeCounts[type] : 0;
+}
+
+DllExport LPCSTR __stdcall GetObjectExportProperty(int index)
+{
+    return index >= 0 && size_t(index) < objectExportProperties.size() ? objectExportProperties[index].c_str() : nullptr;
+}
+
+DllExport BOOL __stdcall GetRmgExportInfo(int type, int subtype, EraJS::RmgExportInfo *info)
+{
+    if (!info || info->structSize < sizeof(*info) || type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
+        return FALSE;
+    const auto &records = RMGObjectInfo::defaultRMGObjectsInfoByType[type];
+    if (size_t(subtype) >= records.size()) return FALSE;
+    const auto &record = records[subtype];
+    if (record.type != type || record.subtype != subtype) return FALSE;
+    *info = EraJS::RmgExportInfo{};
+    info->enabled = record.enabled;
+    info->map = record.mapLimit;
+    info->zone = record.zoneLimit;
+    info->value = record.value;
+    info->density = record.density;
+    return TRUE;
+}
+
+DllExport BOOL __stdcall GetRmgExportOverrides(int type, int subtype, EraJS::RmgExportOverridesInfo *info)
+{
+    return RMGObjectInfo::GetExportOverrides(type, subtype, info);
+}
+
 DllExport LPCSTR __stdcall GetResolvedObjectName(const int objectType, const int objectSubtype)
 {
     return RMGObjectInfo::GetObjectName(objectType, objectSubtype);
 }
+DllExport BOOL __stdcall RegisterObjectVisitObserver(extender::TObjectVisitObserver observer)
+{
+    if (!observer) return FALSE;
+    if (std::find(visitObservers.begin(), visitObservers.end(), observer) == visitObservers.end())
+        visitObservers.push_back(observer);
+    return TRUE;
+}
+
 DllExport BOOL __stdcall RegisterObjectExtenderEx(const ObjectExtenderRegistration *registration)
 {
     return extendersManager::ObjectExtenderRegistrator::Get().AddExtender(registration);
@@ -131,10 +196,23 @@ _LHF_(ObjectExtenderManager::LoadObjectsTxt)
     // check if there are any object properties extenders
     H3TextFile *objectTxt = *reinterpret_cast<H3TextFile **>(c->ebp + 0x8);
 
-    if (const size_t addedProperties = instance->additionalProperties.InsertPropertiesIntoObjectsList(objectTxt))
+    if (!originalObjectLimitsCaptured && objectTxt)
     {
-        c->eax += addedProperties;
+        originalObjectSubtypeLimits.fill(-1);
+        std::vector<std::string> lines;
+        if (object_config::ReadObjectDefinitions(objectTxt->begin(), objectTxt->Size(), lines))
+        {
+            const auto counts = object_config::SubtypeCounts(lines);
+            for (int type = 0; type < h3::limits::OBJECTS; ++type)
+                originalObjectSubtypeLimits[type] = counts[type] - 1;
+            originalObjectLimitsCaptured = true;
+        }
     }
+
+    // Publish exactly the records passed to the native loader, excluding tails.
+    const int countDelta = instance->additionalProperties.InsertPropertiesIntoObjectsList(objectTxt, objectExportProperties);
+    c->eax = static_cast<int>(c->eax) + countDelta;
+    objectSubtypeCounts = object_config::SubtypeCounts(objectExportProperties);
 
     return EXEC_DEFAULT;
 }
@@ -419,6 +497,9 @@ _LHF_(ObjectExtenderManager::H3AdventureManager__ObjectVisit)
     const H3Position position = DwordAt(c->ebp + 0x10);
     const bool isHuman = DwordAt(c->ebp + 0x14);
 
+    for (const auto observer : visitObservers)
+        observer(currentHero, mapItem, position, isHuman);
+
     if (auto *objectExtender = FindExtender(mapItem))
     {
         H3Hero *currentHero = *reinterpret_cast<H3Hero **>(c->ebp + 0x8);
@@ -435,9 +516,9 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
 
     // get Additional Propertise  <-  R E W R I T E   L A T E R   W I T H   N L O H M A N
     auto &additionalProperties = instance->additionalProperties;
-    additionalProperties.LoadCommonProperties();
+    additionalProperties.LoadProperties();
     // load additional unique objects properties from each loaded mod json key
-    additionalProperties.LoadAdditionalPropertiesFromMods();
+
     // additionalProperties.DebugAddedProperties();
 
     // call native fucntion to load objects.txt (0x515038)
@@ -447,6 +528,9 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
     // DebugObjectList();
     // create max subtype value for all object gens
     auto &lastObjectSubtypes = instance->lastObjectSubtypes;
+    std::fill(std::begin(lastObjectSubtypes), std::end(lastObjectSubtypes), INT16(-1));
+    instance->additionalRmgObjects.clear();
+    objectSubtypeCounts.fill(0);
 
     std::vector<sound::SoundManager::ObjectSound> addedWavNames;
     lastObjectSubtypes[eObject::SPELL_SCROLL] = 7;
@@ -465,11 +549,13 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
         for (const auto &obj : objList[objType])
         {
             // each object gen of that type has higher subtype
-            if (obj.subtype >= lastObjectSubtypes[objType])
+            if (object_config::IsObjectSubtype(obj.subtype) && obj.subtype >= lastObjectSubtypes[objType])
             {
                 // assume that object t/s must be max limit array m_size
-                lastObjectSubtypes[objType] = obj.subtype;
+                lastObjectSubtypes[objType] = static_cast<INT16>(obj.subtype);
             }
+            if (object_config::IsObjectSubtype(obj.subtype))
+                objectSubtypeCounts[objType] = (std::max)(objectSubtypeCounts[objType], obj.subtype + 1);
         }
 
         // first check only object type value/density
@@ -488,7 +574,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
 
         auto &additionalRmgObjects = instance->additionalRmgObjects;
         // next check each object subtype value/density
-        for (size_t objSubtype = 0; objSubtype <= lastObjectSubtypes[objType]; objSubtype++)
+        for (int objSubtype = 0; objSubtype <= lastObjectSubtypes[objType]; objSubtype++)
         {
             const int objectSubtypeValue = READ_RMG_INT_JSON_FIELD_2(value, objType, objSubtype);
             const int objectSubtypeDensity = READ_RMG_INT_JSON_FIELD_2(density, objType, objSubtype);
@@ -524,6 +610,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
 
     auto &registrator = ObjectExtenderRegistrator::Get();
     registrator.allowRegistration = false;
+    EraJS::GameDwellings::Initialize(lastObjectSubtypes, h3::limits::OBJECTS);
     instance->InitializeObjectExtenders(registrator.registeredExtenders);
     // clear registered extenders from previous loads
     registrator.registeredExtenders.clear();
@@ -546,8 +633,6 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
         objectsSet.insert(RMGObjectSetable{INT16(rmgObj->type), INT16(rmgObj->subtype)});
     }
 
-    ObjectExtender *objectExtender = nullptr;
-    const BOOL extendersExist = !objectExtenders.empty();
     // iterate each added RMG INFO
     for (auto &info : additionalRmgObjects)
     {
@@ -562,12 +647,10 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
                 objGen = ObjectExtender::CreateDefaultH3RmgObjectGenerator(info);
                 break;
             default:
-                if (extendersExist)
-                {
-                    if (objectExtender = FindExtender(info.type, info.subtype))
-                        objGen = objectExtender->CreateRMGObjectGen(info, isPseudoGeneration);
-                }
-
+                if (auto *owner = FindExtender(info.type, info.subtype))
+                    objGen = owner->CreateRMGObjectGen(info, isPseudoGeneration);
+                else if (info.type == dwellings::SINGLE_TYPE || info.type == dwellings::MULTIPLE_TYPE)
+                    objGen = rmgDwellings::CreateGenerator(info);
                 break;
             }
             if (objGen)
@@ -613,11 +696,9 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
     if (LPCSTR description = info.GetDescription())
         if (*description)
             stringResult += DLG_HORIZONTAL_GAP + H3String(description);
-    if (auto extemder = instance->FindExtender(info.type, info.subtype))
-    {
-        return extemder->RMGDlg_ShowCustomObjectHint(*attributes, stringResult);
-    }
-    return 0;
+    if (auto *owner = instance->FindExtender(info.type, info.subtype))
+        if (owner->RMGDlg_ShowCustomObjectHint(*attributes, stringResult)) return TRUE;
+    return rmgDwellings::AppendHint(info.type, info.subtype, stringResult);
 }
 
 BOOL ObjectExtenderRegistrator::AddExtender(const ObjectExtenderRegistration *registration)
@@ -746,3 +827,13 @@ ObjectExtenderManager &ObjectExtenderManager::Get()
 }
 
 } // namespace extendersManager
+
+void PublishObjectExtenderApi()
+{
+    static const extender::DispatchApi api{sizeof(api), 2, ::RegisterObjectExtenderEx, ::GetObjectName, ::RegisterObjectVisitObserver};
+    era_services::Publish(extender::DISPATCH_SERVICE, &api);
+    static const era_objects::DefinitionsApi definitions{sizeof(definitions), 1,
+        []() -> unsigned { return static_cast<unsigned>(objectExportProperties.size()); },
+        ::GetObjectExportProperty, ::GetOriginalObjectSubtypeLimit, ::GetObjectSubtypeCount};
+    era_services::Publish(era_objects::DEFINITIONS, &definitions);
+}

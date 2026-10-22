@@ -1,6 +1,22 @@
 #include "DwellingsExtender.h"
-#include "../../headers/Era/GameJsonTables.hpp"
-#include "../../headers/Era/ObjectText.hpp"
+#include "../headers/Era/GameJsonTables.hpp"
+#include "../headers/Era/ObjectText.hpp"
+#include "../headers/EraPluginsAPI/ObjectDataAPI.h"
+
+#pragma comment(linker, "/EXPORT:GetDwellingExportInfo=_GetDwellingExportInfo@12")
+DllExport BOOL __stdcall GetDwellingExportInfo(int type, int subtype, EraJS::DwellingExportInfo *info)
+{
+    return dwellings::DwellingsExtender::Get().GetExportInfo(type, subtype, info);
+}
+
+#pragma comment(linker, "/EXPORT:InitializeDwellings=_InitializeDwellings@8")
+DllExport BOOL __stdcall InitializeDwellings(const INT16 *limits, unsigned count)
+{
+    if (!limits || count < h3::limits::OBJECTS) return FALSE;
+    auto &instance = dwellings::DwellingsExtender::Get();
+    instance.Initialize(limits);
+    return instance.IsActive();
+}
 
 namespace dwellings
 {
@@ -22,16 +38,36 @@ int ReadInt(int type, int subtype, LPCSTR field, bool &found)
 } // namespace
 
 DwellingsExtender::DwellingsExtender()
-    : ObjectExtender(globalPatcher->CreateInstance("EraPlugin.DwellingsExtender.daemon_n"))
+    : _pi(globalPatcher->CreateInstance("EraPlugin.DwellingsExtender.daemon_n"))
 {
-    AddUniqueObjectInfo(eObject::CREATURE_GENERATOR1, -1, -1, extender::ePageDwelling);
-    AddUniqueObjectInfo(eObject::CREATURE_GENERATOR4, -1, -1, extender::ePageDwelling);
 }
 
 DwellingsExtender &DwellingsExtender::Get()
 {
     static auto *instance = new DwellingsExtender;
     return *instance;
+}
+
+void DwellingsExtender::Install()
+{
+    if (installed) return;
+    installed = true;
+    static const era_objects::DwellingApi api{sizeof(api), 1, GetDwellingExportInfo, InitializeDwellings};
+    era_services::Publish(era_objects::DWELLINGS, &api);
+    _pi->WriteHiHook(0x4EE01C, THISCALL_, AfterLoadObjects);
+}
+
+void __stdcall DwellingsExtender::AfterLoadObjects(HiHook *h, const H3MainSetup *setup)
+{
+    // RMG merges its definitions while the default object loader runs.
+    THISCALL_1(void, h->GetDefaultFunc(), setup);
+    std::array<INT16, h3::limits::OBJECTS> limits;
+    limits.fill(-1);
+    for (int type : {SINGLE_TYPE, MULTIPLE_TYPE})
+        for (const auto &object : setup->objectLists[type])
+            if (object_config::IsObjectSubtype(object.subtype))
+                limits[type] = (std::max)(limits[type], static_cast<INT16>(object.subtype));
+    Get().Initialize(limits.data());
 }
 
 DwellingsExtender::Table *DwellingsExtender::FindTable(int type) noexcept
@@ -59,6 +95,31 @@ const int *DwellingsExtender::FindCreatures(int type, int subtype) const noexcep
     return &table->creatures[subtype * table->slotCount];
 }
 
+BOOL DwellingsExtender::GetExportInfo(int type, int subtype, EraJS::DwellingExportInfo *info) const noexcept
+{
+    const auto *table = FindTable(type);
+    if (!m_isInited || !info || info->structSize < offsetof(EraJS::DwellingExportInfo, image) || !table ||
+        subtype < 0 || size_t(subtype) >= table->names.size())
+        return FALSE;
+    EraJS::DwellingExportInfo result;
+    result.structSize = info->structSize;
+    result.slotCount = table->slotCount;
+    std::copy_n(&table->creatures[subtype * table->slotCount], table->slotCount, result.creatures);
+    result.frame = table->frames[subtype];
+    result.frameCount = table->frameCount;
+    result.name = table->names[subtype];
+    result.image = table->portraits[subtype].image.c_str();
+    result.imageFrame = table->portraits[subtype].imageFrame;
+    if (portraits.Ready())
+    {
+        result.overviewFrame = table->overviewFrames[subtype];
+        result.overviewFrameCount = portraits.layout.Count();
+    }
+    // Older locale-manager DLLs still receive exactly their original record.
+    libc::memcpy(info, &result, (std::min)(size_t(info->structSize), sizeof(result)));
+    return TRUE;
+}
+
 void DwellingsExtender::LoadTable(Table &table, int maxSubtype)
 {
     int nameCount = 0;
@@ -83,11 +144,12 @@ void DwellingsExtender::LoadTable(Table &table, int maxSubtype)
     default:
         return;
     }
-    const int size = (std::max)(extendersManager::limits::EXTENDED,
-                               (std::max)(table.originalCount, maxSubtype + 1));
+    // Preserve native entries and extend to the largest loaded object subtype.
+    const int size = (std::max)(table.originalCount, maxSubtype + 1);
     table.creatures.assign(size * table.slotCount, -1);
     table.names.assign(size, H3ObjectName::Get()[table.type]);
     table.frames.assign(size, 0);
+    table.portraits.resize(size);
 
     std::copy(originalCreatures, originalCreatures + table.originalCount * table.slotCount, table.creatures.begin());
     std::copy(originalNames, originalNames + nameCount, table.names.begin());
@@ -105,8 +167,7 @@ void DwellingsExtender::LoadTable(Table &table, int maxSubtype)
         CreatureSlots creatures = EMPTY_CREATURES;
         for (int slot = 0; slot < table.slotCount; ++slot)
             creatures[slot] = table.creatures[subtype * table.slotCount + slot];
-        if (subtype < table.originalCount || subtype <= maxSubtype)
-            ReadCreatures(creatures, table.slotCount, CreatureCount(), [&](int slot, int &creature) {
+        ReadCreatures(creatures, table.slotCount, CreatureCount(), [&](int slot, int &creature) {
                 creature = EraJS::readInt(H3String::Format("RMG.objectGeneration.%d.%d.creatures.%d",
                                                           table.type, subtype, slot).String(), found);
                 return found;
@@ -114,13 +175,46 @@ void DwellingsExtender::LoadTable(Table &table, int maxSubtype)
         for (int slot = 0; slot < table.slotCount; ++slot)
             table.creatures[subtype * table.slotCount + slot] = creatures[slot];
 
-        // Added subtypes can reuse an existing ZLAGPORT frame without replacing the DEF.
+        // This is a SOURCE frame within the type's original block, not the
+        // runtime ID used to group the kingdom overview.
         if (subtype < table.frameCount)
             table.frames[subtype] = subtype;
         const int frame = ReadInt(table.type, subtype, "frame", found);
         if (found && frame >= 0 && frame < table.frameCount)
             table.frames[subtype] = frame;
+        auto &portrait = table.portraits[subtype];
+        const char *image = EraJS::read(
+            H3String::Format("RMG.objectGeneration.%d.%d.image", table.type, subtype).String(), found);
+        if (found && image) portrait.image = image;
+        const int imageFrame = ReadInt(table.type, subtype, "imageFrame", found);
+        if (found && imageFrame >= 0 && imageFrame <= 65535) portrait.imageFrame = imageFrame;
     }
+}
+
+void DwellingsExtender::PreparePortraits(H3LoadedDef *resource)
+{
+    const int sourceSpecial = single.frameCount + multiple.frameCount;
+    const int prefix = portraits.UseResource(resource, (std::max)(originalSpecialFrame + 6, sourceSpecial + 6));
+    portraits.layout.Init(prefix);
+    for (auto *table : {&single, &multiple})
+    {
+        const int nativeOffset = table == &single ? 0 : single.nativeFrameCount;
+        const int sourceOffset = table == &single ? 0 : single.frameCount;
+        table->overviewFrames.resize(table->frames.size());
+        for (size_t subtype = 0; subtype < table->frames.size(); ++subtype)
+        {
+            auto &source = table->portraits[subtype];
+            source.frame = sourceOffset + table->frames[subtype];
+            const int nativeFrame = int(subtype) < table->nativeFrameCount ? nativeOffset + int(subtype) : -1;
+            table->overviewFrames[subtype] = portraits.layout.Add(table->type, int(subtype), nativeFrame, source);
+        }
+    }
+    // Legacy custom block counts describe an existing source DEF. Keep native
+    // special-object IDs stable while reading their pictures from that layout.
+    const int offsets[] = {0, 1, 2, 3, 5};
+    for (size_t i = 0; i < specialFrames.size(); ++i)
+        portraits.SetSpecialSource(specialFrames[i], sourceSpecial + offsets[i]);
+    portraits.Finish();
 }
 
 void DwellingsExtender::ReloadNames()
@@ -139,7 +233,7 @@ void DwellingsExtender::ReloadNames()
         }
 }
 
-void DwellingsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
+void DwellingsExtender::Initialize(const INT16 *maxSubtypes)
 {
     if (m_isInited)
         return;
@@ -151,57 +245,19 @@ void DwellingsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes)
     single.slotCount = 1;
     // CMP EAX,imm8: the immediate is one byte, not a DWORD.
     single.frameCount = ByteAt(0x521A81);
+    single.nativeFrameCount = single.frameCount;
     multiple.type = eObject::CREATURE_GENERATOR4;
     multiple.slotCount = 4;
     originalSpecialFrame = IntAt(0x520D1D);
     multiple.frameCount = originalSpecialFrame - single.frameCount;
+    multiple.nativeFrameCount = multiple.frameCount;
+    specialFrames = {{IntAt(0x520D1D), IntAt(0x520EFF), IntAt(0x520F58), IntAt(0x520CAA), IntAt(0x52103D)}};
     LoadTable(single, maxSubtypes[single.type]);
     LoadTable(multiple, maxSubtypes[multiple.type]);
     ReloadNames();
+    // Native DEF palettes need video channel masks, unavailable during object loading.
+    // Prepare portraits in Kingdom_LoadDef after the screen format is initialized.
     CreatePatches();
-}
-
-H3RmgObjectGenerator *DwellingsExtender::CreateRMGObjectGen(const RMGObjectProperties &info,
-                                                          BOOL) const noexcept
-{
-    const auto *table = FindTable(info.type);
-    const auto *creatureTypes = FindCreatures(info.type, info.subtype);
-    if (!creatureTypes)
-        return nullptr;
-    CreatureSlots creatures = EMPTY_CREATURES;
-    std::copy(creatureTypes, creatureTypes + table->slotCount, creatures.begin());
-    if (!HasCreatures(creatures, table->slotCount, CreatureCount()))
-        return nullptr;
-    auto *generator = CreateDefaultH3RmgObjectGenerator(info);
-    if (generator)
-        generator->vTable = reinterpret_cast<H3RmgObjectGenerator::VTable *>(0x640BC8);
-    return generator;
-}
-
-void DwellingsExtender::InitDefaultRmgValues() const noexcept
-{
-    if (!m_isInited)
-        return;
-    for (const auto *table : {&single, &multiple})
-        for (auto &info : RMGObjectInfo::defaultRMGObjectsInfoByType[table->type])
-        {
-            if (info.value != RMGObjectProperties::UNDEFINED)
-                continue;
-            const auto *creatures = FindCreatures(info.type, info.subtype);
-            if (!creatures)
-                continue;
-            int value = 0;
-            bool hasCreatures = false;
-            for (int slot = 0; slot < table->slotCount; ++slot)
-                if (IsCreature(creatures[slot], CreatureCount()))
-                {
-                    value += P_CreatureInformation[creatures[slot]].aiValue;
-                    hasCreatures = true;
-                }
-            // A single-slot dwelling without a creature keeps its undefined value.
-            if (hasCreatures || table->type == eObject::CREATURE_GENERATOR4)
-                info.value = value;
-        }
 }
 
 LPCSTR DwellingsExtender::GetObjectName(int type, int subtype) const noexcept
@@ -231,34 +287,6 @@ LPCSTR DwellingsExtender::GetObjectName(int type, int subtype) const noexcept
     return H3ObjectName::Get()[type];
 }
 
-BOOL DwellingsExtender::RMGDlg_ShowCustomObjectHint(const H3ObjectAttributes &attributes,
-                                                 H3String &defaultText) noexcept
-{
-    const auto *table = FindTable(attributes.type);
-    const auto *creatures = FindCreatures(attributes.type, attributes.subtype);
-    if (!creatures)
-        return FALSE;
-
-    H3String hint;
-    int town = eTown::NEUTRAL;
-    for (int slot = 0; slot < table->slotCount; ++slot)
-        if (IsCreature(creatures[slot], CreatureCount()))
-        {
-            const auto &info = P_CreatureInformation[creatures[slot]];
-            if (hint.Empty())
-                town = info.town;
-            hint += H3String::Format("%d {~>%s:0:%d valign=bottom}", info.grow,
-                                     NH3Dlg::Assets::CREATURE_SMALL, creatures[slot] + 2);
-        }
-    if (!hint.Empty())
-    {
-        if (town != eTown::NEUTRAL)
-            hint = H3String::Format("{~>%s:0:%d valign=bottom} ", NH3Dlg::Assets::TOWN_SMALL, town * 2 + 2) + hint;
-        defaultText += extendersManager::ObjectExtenderManager::DLG_HORIZONTAL_GAP + hint;
-    }
-    return TRUE;
-}
-
 int __stdcall DwellingsExtender::Rmg_GetDwellingValue(HiHook *h, const H3RmgObjectGenerator *generator,
                                                     const H3RmgZoneGenerator *zone,
                                                     const H3RmgRandomMapGenerator *rmg)
@@ -276,7 +304,11 @@ int __stdcall DwellingsExtender::Rmg_GetDwellingValue(HiHook *h, const H3RmgObje
             return -1;
         auto &aiValue = P_CreatureInformation[creature].aiValue;
         const int storedValue = aiValue;
-        aiValue = RMGObjectInfo::CurrentObjectInfo(generator->type, generator->subtype).value;
+        // RMG publishes its current settings into the generator itself.
+        // Native dwelling generators need not populate their generic value field.
+        // Only RMG's adapter publishes an override there; standalone keeps native AI.
+        if (GetModuleHandleA("RMG_CustomizeObjectProperties.era") && generator->value >= 0)
+            aiValue = generator->value;
         const int value = THISCALL_3(int, h->GetDefaultFunc(), generator, zone, rmg);
         aiValue = storedValue;
         return value;
@@ -406,10 +438,8 @@ _LHF_(DwellingsExtender::Kingdom_GetDwellingFrame)
     const auto *table = instance.FindTable(dwelling->type);
     const int subtype = SubtypeAtPosition(*dwelling);
     c->edx = 0;
-    if (table && subtype >= 0 && size_t(subtype) < table->frames.size())
-        c->edx = table->frames[subtype];
-    if (dwelling->type == eObject::CREATURE_GENERATOR4)
-        c->edx += instance.single.frameCount;
+    if (instance.portraits.Ready() && table && subtype >= 0 && size_t(subtype) < table->overviewFrames.size())
+        c->edx = table->overviewFrames[subtype];
     // A LoHook preserves TEST EAX,EAX at 520DB1, needed by the following JNZ.
     return NO_EXEC_DEFAULT;
 }
@@ -417,34 +447,31 @@ _LHF_(DwellingsExtender::Kingdom_GetDwellingHint)
 {
     const auto &instance = Get();
     const int frame = c->eax;
-    if (frame < instance.single.frameCount)
+    if (const auto *object = instance.portraits.layout.Find(frame))
     {
-        // Find the configured subtype whose icon represents this group.
-        for (size_t subtype = 0; subtype < instance.single.frames.size(); ++subtype)
-            if (instance.single.frames[subtype] == frame &&
-                IsCreature(instance.single.creatures[subtype], CreatureCount()))
-            {
-                c->eax = instance.single.creatures[subtype];
-                c->return_address = 0x521A8B;
-                return NO_EXEC_DEFAULT;
-            }
-    }
-    else if (frame < instance.single.frameCount + instance.multiple.frameCount)
-    {
-        c->edi = reinterpret_cast<int>(H3ObjectName::Get()[eObject::CREATURE_GENERATOR4]);
-        for (size_t subtype = 0; subtype < instance.multiple.frames.size(); ++subtype)
-            if (instance.multiple.frames[subtype] == frame - instance.single.frameCount)
-            {
-                c->edi = reinterpret_cast<int>(instance.multiple.names[subtype]);
-                break;
-            }
+        c->edi = reinterpret_cast<int>(instance.GetObjectName(object->type, object->subtype));
         c->return_address = 0x521C31;
         return NO_EXEC_DEFAULT;
     }
-    // Restore the vanilla relative special-frame index for the existing switch.
-    c->eax = frame - instance.single.frameCount - instance.multiple.frameCount + instance.originalSpecialFrame;
+    // The original switch still expects SoD's 82/83/84/85/87, even in WoG.
+    c->eax = VanillaSpecialHint(frame, instance.specialFrames);
     c->return_address = 0x521AC1;
     return NO_EXEC_DEFAULT;
+}
+
+H3LoadedDef *__stdcall DwellingsExtender::Kingdom_LoadDef(HiHook *h, LPCSTR name)
+{
+    auto *def = THISCALL_1(H3LoadedDef *, h->GetDefaultFunc(), name);
+    auto &instance = Get();
+    // The native constructor loads the atlas after the video channel masks are ready.
+    const char *overviewName = reinterpret_cast<const char *>(DwordAt(0x52025D));
+    if (def && instance.m_isInited && DwellingPortraits::IsResource(name) && !_stricmp(name, overviewName) &&
+        instance.portraits.GraphicsReady())
+    {
+        if (!instance.portraits.Ready()) instance.PreparePortraits(def);
+        else if (instance.portraits.UsesResource(name)) instance.portraits.Apply(def);
+    }
+    return def;
 }
 _LHF_(DwellingsExtender::Kingdom_CompareSpecialFrame)
 {
@@ -517,13 +544,12 @@ void DwellingsExtender::CreatePatches()
     _pi->WriteLoHook(0x413E9F, Adventure_GetDwellingClickName);
     _pi->WriteLoHook(0x520DB3, Kingdom_GetDwellingFrame);
     _pi->WriteLoHook(0x521A7F, Kingdom_GetDwellingHint);
+    _pi->WriteHiHook(0x55C9C0, THISCALL_, Kingdom_LoadDef);
+    // SoD overwrites the dwelling's type with 17 here. WoG already NOPs it;
+    // preserve type 20 on both paths before resolving the full map subtype.
+    _pi->WriteHexPatch(0x520DA0, "90 90 90");
 
-    const int specialFrame = single.frameCount + multiple.frameCount;
-    _pi->WriteDword(0x520D1D, specialFrame);
-    _pi->WriteDword(0x520EFF, specialFrame + 1);
-    _pi->WriteDword(0x520F58, specialFrame + 2);
-    _pi->WriteDword(0x520CAA, specialFrame + 3);
-    _pi->WriteDword(0x52103D, specialFrame + 5);
+    // Special-object IDs are never shifted when new dwelling portraits are added.
     for (const int address : {0x520CE9, 0x520ECF, 0x520F2C, 0x520C76, 0x520FF9})
         _pi->WriteLoHook(address, Kingdom_CompareSpecialFrame);
 
@@ -533,6 +559,8 @@ void DwellingsExtender::CreatePatches()
     Era::RegisterHandler(OnAfterLoadGame, "OnAfterLoadGame");
     Era::RegisterHandler(OnGameLeave, "OnGameLeave");
     m_isInited = TRUE;
+    static const era_services::Ownership owner;
+    era_services::Publish(era_services::DWELLING_OWNER, &owner);
 }
 
 void __stdcall DwellingsExtender::OnAfterReloadLanguageData(Era::TEvent *)

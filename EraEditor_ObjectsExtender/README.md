@@ -64,7 +64,7 @@ with your own graphics when authoring a mod.
 plugin merges these into the editor's active `ZEObjts.txt`, updates its count and replaces matching
 DEF/type/subtype entries without duplicating them. Existing flat and nested `RMG.<mod>.properties` lists are supported
 for all object types too. Per-subtype properties are discovered for IDs 0–1023; mod-level lists can add
-higher IDs up to the map format's 65535 limit.
+higher IDs up to 32767, matching the signed 16-bit object identities used by game extenders.
 
 Names use this priority:
 
@@ -77,11 +77,20 @@ prototype discovery is cached for the editor session. Names also refresh on lang
 
 ## Editor integration
 
+Definition parsing, priorities and merging use `headers/Objects/ObjectDefinitions.h`, shared with the game adapter.
+The editor publishes its final catalog through `ERA.Services.ObjectDefinitions.v1` in Patcher memory, using the same
+`DefinitionsApi` as the game. `subtypeCount(type)` returns the largest subtype in the merged `ZEObjts.txt` plus one,
+including gaps, or 0 before loading and for absent/invalid types. It keeps its own native hooks/allocator and does
+not load the game API DLL.
+
 The adapter reads current name-table operands after native TXT loading, including relocations installed by
 GrayFace/Unleashed. It publishes separate expandable eight-byte dwelling records for types 17 and 20 and
 restores full subtype indexing for map hints, palette hints and dwelling name wrappers. Existing records are
 also updated so GrayFace's own dwelling list sees configured names. No game-executable addresses or game
 allocation routines are used in editor hooks.
+
+Dwelling name tables contain `max(nativeCount, subtypeCount(type))` entries, without a fixed reserve.
+They are refreshed after the final `ZEObjts.txt` catalog is loaded and after native names are loaded, in either order.
 
 The custom GrayFace settings window keeps its own configured list length; this plugin expands the native
 palette and hint tables without changing `MapEdPatch/Options.ini` or that private list.

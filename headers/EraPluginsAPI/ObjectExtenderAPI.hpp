@@ -1,5 +1,7 @@
-#pragma once
+﻿#pragma once
 #include <type_traits>
+#include "RuntimeServices.h"
+#include "../Objects/ObjectLimits.h"
 
 using namespace h3;
 namespace extender
@@ -118,6 +120,18 @@ struct ObjectExtenderRegistration
 #pragma pack(pop)
 
 typedef int(__stdcall *TRegisterObjectExtenderEx)(const ObjectExtenderRegistration *);
+using TObjectVisitObserver = void(__stdcall *)(H3Hero *, H3MapItem *, H3Position, BOOL);
+using TRegisterObjectVisitObserver = BOOL(__stdcall *)(TObjectVisitObserver);
+constexpr const char *DISPATCH_SERVICE = "ERA.Services.ObjectExtenders.v2";
+struct DispatchApi
+{
+    unsigned structSize, version;
+    TRegisterObjectExtenderEx registerExtender;
+    TGetObjectName getName;
+    TRegisterObjectVisitObserver registerObserver;
+};
+inline const DispatchApi *GetDispatchApi();
+
 struct RMGObjectProperties
 {
     constexpr static int DATA_SIZE = 5;
@@ -173,17 +187,27 @@ static HMODULE GetRMGPluginModule()
 }
 inline const char *GetObjectName(const int type, const int subtype)
 {
-    if (HMODULE pl = GetRMGPluginModule())
-    {
-        static TGetObjectName f = TGetObjectName(GetProcAddress(pl, "GetObjectName"));
-        if (f)
-            return f(type, subtype);
-    }
-    return NULL;
+    const auto *api = GetDispatchApi();
+    return api && api->getName ? api->getName(type, subtype) : nullptr;
 }
+
 inline const char *GetObjectName(const H3MapItem *mapItem)
 {
     return GetObjectName(mapItem->objectType, mapItem->objectSubtype);
+}
+
+inline const DispatchApi *GetDispatchApi()
+{
+    if (const auto *api = era_services::Find<DispatchApi>(DISPATCH_SERVICE, 2)) return api;
+    // Preserve the existing explicit dependency bootstrap for extenders loaded
+    // before RMG. Discovery of all functions still uses the shared table.
+    GetRMGPluginModule();
+    return era_services::Find<DispatchApi>(DISPATCH_SERVICE, 2);
+}
+inline BOOL RegisterObjectVisitObserver(TObjectVisitObserver observer)
+{
+    const auto *api = GetDispatchApi();
+    return api && api->registerObserver && api->registerObserver(observer);
 }
 
 class ObjectExtender
@@ -305,13 +329,15 @@ class ObjectExtender
     void AddUniqueObjectInfo(const int type, const int subtype = -1, const int aiScouting = -1,
                              const eRmgDlgObjectPage page = ePageUnknown) noexcept
     {
+        if (!object_config::IsObjectType(type) || (subtype != -1 && !object_config::IsObjectSubtype(subtype)))
+            return;
         UniqueObjectInfo info{(INT16)type, (INT16)subtype, aiScouting};
         info.page = page;
         AddUniqueObjectInfo(info);
     }
     void AddUniqueObjectInfo(const UniqueObjectInfo &info) noexcept
     {
-        if (info.uniqueObjectType.type >= 0 && info.uniqueObjectType.type < 252)
+        if (object_config::IsObjectType(info.uniqueObjectType.type) && info.uniqueObjectType.subtype >= -1)
         {
             H3ObjectAllocator<UniqueObjectInfo> allocator;
             UniqueObjectInfo *storedInfo = allocator.allocate(1);
@@ -359,21 +385,14 @@ class ObjectExtender
     static inline int RegisterExtender(ObjectExtender *extender) noexcept
     {
 
-        if (HMODULE pl = GetRMGPluginModule())
+        if (const auto *api = GetDispatchApi())
         {
-            // The extended entry point describes the foreign vector explicitly.
-            // The host copies the records during this synchronous call, so the
-            // descriptor itself may live on the stack.
-            static TRegisterObjectExtenderEx registerEx =
-                TRegisterObjectExtenderEx(GetProcAddress(pl, "RegisterObjectExtenderEx"));
-            if (registerEx)
-            {
-                ObjectExtenderRegistration registration;
-                registration.extender = extender;
-                registration.objectInfosContext = extender;
-                registration.getObjectInfos = ProvideObjectInfos;
-                return registerEx(&registration);
-            }
+            if (!api->registerExtender) return FALSE;
+            ObjectExtenderRegistration registration;
+            registration.extender = extender;
+            registration.objectInfosContext = extender;
+            registration.getObjectInfos = ProvideObjectInfos;
+            return api->registerExtender(&registration);
         }
         return NULL;
     }
