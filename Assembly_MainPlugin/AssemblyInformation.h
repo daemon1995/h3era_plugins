@@ -20,6 +20,9 @@ class AssemblyInformation : public IGamePatch
     {
         int x = 0;
         int y = 0;
+        int fixedWidth = 0;
+        int fixedHeight = 0;
+        const char *fontName = NH3Dlg::Text::SMALL;
         const char *format = 0;
 
         H3String version = h3_NullString;
@@ -47,6 +50,7 @@ class AssemblyInformation : public IGamePatch
         void ReleaseImage() noexcept;
 
     } m_eraVersion;
+    Version m_assemblyTitle;
 
     struct LocalVersion : public Version
     {
@@ -102,7 +106,9 @@ class AssemblyInformation : public IGamePatch
   private:
     void LoadDataFromJson();
     void UpdateVersionBlink() noexcept;
-    void AlignVersionLabels() noexcept;
+    void PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept;
+    void LoadAssemblyLabelText();
+    static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
 
   public:
     void CreateDlgItems(H3BaseDlg *dlg);

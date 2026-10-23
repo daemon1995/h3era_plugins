@@ -34,4 +34,9 @@
     <ClInclude Include="..\headers\EraPluginsAPI\MainMenuCursor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ItemGroup>
+    <None Include="Data\assembly_version.json" />
+    <None Include="Data\ru\assembly_version.json" />
+    <None Include="README.md" />
+  </ItemGroup>
 </Project>

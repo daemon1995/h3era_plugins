@@ -87,7 +87,7 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
 {
     if (!parentDlg || !dlgItem)
         return false;
-    H3FontLoader font(NH3Dlg::Text::SMALL);
+    H3FontLoader font(fontName);
     constexpr int horizontalPadding = 5;
     constexpr int verticalPadding = 3;
     const int maxWidth = parentDlg->GetWidth();
@@ -98,8 +98,9 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     // Keep the right edge and never shrink the backing image: an asynchronous
     // version update must paint over the entire previous label.
     const int textWidth = Clamp(1, font->GetMaxLineWidth(text.String()), maxWidth - horizontalPadding * 2);
-    const int width = std::max(textWidth + horizontalPadding * 2, labelPcx ? labelPcx->width : 0);
-    const int height = std::min(font->height + verticalPadding * 2, maxHeight);
+    const int width = fixedWidth > 0 ? std::min(fixedWidth, maxWidth)
+                                     : std::max(textWidth + horizontalPadding * 2, labelPcx ? labelPcx->width : 0);
+    const int height = std::min(fixedHeight > 0 ? fixedHeight : font->height + verticalPadding * 2, maxHeight);
     const int right = labelPcx ? dlgItem->GetX() + dlgItem->GetWidth()
                               : Clamp(0, x, maxWidth - width) + width;
     const int top = labelPcx ? dlgItem->GetY() : y;
@@ -125,7 +126,7 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     if (drawText)
         font->TextDraw(labelPcx, text.String(), horizontalPadding, verticalPadding,
                        width - horizontalPadding * 2, height - verticalPadding * 2,
-                       eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
+                       eTextColor::HIGHLIGHT, eTextAlignment::MIDDLE_CENTER);
     return true;
 }
 
@@ -392,6 +393,7 @@ const char *AssemblyInformation::GetAssemblyVesrion()
 void AssemblyInformation::CheckOnlineVersion()
 {
     m_remoteVersion.GetJsonData("online_version");
+    LoadAssemblyLabelText();
 }
 
 const BOOL AssemblyInformation::CompareVersions()
@@ -405,22 +407,22 @@ const BOOL AssemblyInformation::CompareVersions()
     {
         versionBlinkLastUpdate = h3::GetTime();
         versionBlinkVisible = true;
-        if (isVisible && m_localVersion.dlgItem)
+        if (isVisible && m_remoteVersion.dlgItem)
         {
-            m_localVersion.UpdateImage();
-            m_localVersion.dlgItem->Show();
-            m_localVersion.dlgItem->Draw();
-            m_localVersion.dlgItem->Refresh();
+            m_remoteVersion.UpdateImage();
+            m_remoteVersion.dlgItem->Show();
+            m_remoteVersion.dlgItem->Draw();
+            m_remoteVersion.dlgItem->Refresh();
         }
     }
-    else if (wasHigher && !m_localVersion.remoteVersionIsHigher && isVisible && m_localVersion.dlgItem)
+    else if (wasHigher && !m_localVersion.remoteVersionIsHigher && isVisible && m_remoteVersion.dlgItem)
     {
-        // Do not leave the installed version hidden when blinking stops.
+        // Do not leave the latest version hidden when blinking stops.
         versionBlinkVisible = true;
-        m_localVersion.UpdateImage();
-        m_localVersion.dlgItem->Show();
-        m_localVersion.dlgItem->Draw();
-        m_localVersion.dlgItem->Refresh();
+        m_remoteVersion.UpdateImage();
+        m_remoteVersion.dlgItem->Show();
+        m_remoteVersion.dlgItem->Draw();
+        m_remoteVersion.dlgItem->Refresh();
     }
 
     return m_localVersion.remoteVersionIsHigher;
@@ -472,6 +474,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 
 {
     Get().isVisible = false;
+    Get().m_assemblyTitle.ReleaseImage();
     for (auto *version : Get().versions)
         version->ReleaseImage();
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
@@ -493,6 +496,10 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 // }
 void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 {
+    LoadAssemblyLabelText();
+    PrepareAssemblyLabels(dlg);
+    versionBlinkVisible = true;
+    versionBlinkLastUpdate = h3::GetTime();
     CompareVersions();
     // hide wnd version hint
     if (auto *it = dlg->GetH3DlgItem(545))
@@ -507,29 +514,67 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
             isVisible |= version->dlgItem != nullptr;
         }
     }
-    AlignVersionLabels();
+    if (m_assemblyTitle.show)
+        m_assemblyTitle.AddToDlg(dlg);
 }
 
-void AssemblyInformation::AlignVersionLabels() noexcept
+void AssemblyInformation::LoadAssemblyLabelText()
 {
-    auto *installed = m_localVersion.dlgItem;
-    auto *online = m_remoteVersion.dlgItem;
-    if (!installed || !online)
-        return;
+    m_eraVersion.format = mainmenu::config::Text("gem_plugin.main_menu.era_version.format", "ERA Engine v%s");
+    m_assemblyTitle.text = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.title", "Assembly version");
+    m_localVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.installed_format", "Installed: %s");
+    m_remoteVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.latest_format", "Latest: %s");
+    m_assemblyTitle.alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
+}
 
-    // Keep the configured placement, with a common right edge and a gap
-    // between the installed/online labels, including their frames.
-    const int right = std::max(installed->GetX() + installed->GetWidth(),
-                               online->GetX() + online->GetWidth());
-    installed->SetX(right - installed->GetWidth());
-    online->SetX(right - online->GetWidth());
-    constexpr int gap = 2;
-    if (installed->GetY() + installed->GetHeight() + gap > online->GetY())
+void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
+{
+    const int rows = (m_localVersion.show != FALSE) + (m_remoteVersion.show != FALSE);
+    m_assemblyTitle.show = rows != 0;
+    if (!rows || dlg->GetWidth() < 40 || dlg->GetHeight() < 40)
+        return;
+    const int width = Clamp(40, mainmenu::config::Int("gem_plugin.main_menu.assembly_version.width", 280), dlg->GetWidth());
+    const int titleWidth = Clamp(20, mainmenu::config::Int("gem_plugin.main_menu.assembly_version.title_width", 130), width - 20);
+    H3FontLoader titleFont(NH3Dlg::Text::MEDIUM);
+    const int minRowHeight = rows == 1 && titleFont.Get() ? titleFont->height + 6 : 12;
+    const int rowHeight = Clamp(minRowHeight, mainmenu::config::Int("gem_plugin.main_menu.assembly_version.row_height", 16), dlg->GetHeight() / rows);
+    const int height = rows * (rowHeight - 1) + 1;
+    const int requestedX = mainmenu::config::Int("gem_plugin.main_menu.assembly_version.x", -1);
+    const int requestedY = mainmenu::config::Int("gem_plugin.main_menu.assembly_version.y", -1);
+    const int left = Clamp(0, requestedX < 0 ? dlg->GetWidth() - width - 10 : requestedX, dlg->GetWidth() - width);
+    const int top = Clamp(0, requestedY < 0 ? dlg->GetHeight() - height - 2 : requestedY, dlg->GetHeight() - height);
+    m_assemblyTitle.x = left;
+    m_assemblyTitle.y = top;
+    m_assemblyTitle.fixedWidth = titleWidth;
+    m_assemblyTitle.fixedHeight = height;
+    m_assemblyTitle.fontName = NH3Dlg::Text::MEDIUM;
+    int row = 0;
+    for (auto *version : {static_cast<Version *>(&m_localVersion), static_cast<Version *>(&m_remoteVersion)})
     {
-        const int top = std::max(0, online->GetY() - installed->GetHeight() - gap);
-        installed->SetY(top);
-        online->SetY(std::min(top + installed->GetHeight() + gap,
-                             m_remoteVersion.parentDlg->GetHeight() - online->GetHeight()));
+        version->fontName = NH3Dlg::Text::SMALL;
+        version->fixedWidth = width - titleWidth + 1;
+        version->fixedHeight = rowHeight;
+        version->x = left + titleWidth - 1;
+        version->y = top + row * (rowHeight - 1);
+        if (version->show)
+            ++row;
+    }
+}
+
+void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent *e)
+{
+    auto &instance = Get();
+    instance.LoadAssemblyLabelText();
+    for (auto *version : {static_cast<Version *>(&instance.m_localVersion), static_cast<Version *>(&instance.m_remoteVersion), &instance.m_assemblyTitle})
+    {
+        if (!version->dlgItem)
+            continue;
+        if (version != &instance.m_assemblyTitle)
+            version->AdjustItemText();
+        const bool drawText = version != &instance.m_remoteVersion || instance.versionBlinkVisible;
+        version->UpdateImage(drawText);
+        version->dlgItem->Draw();
+        version->dlgItem->Refresh();
     }
 }
 
@@ -582,7 +627,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
             {
                 remoteVersion.AdjustItemText();
                 remoteVersion.UpdateImage();
-                instance.AlignVersionLabels();
+
                 it->Draw();
                 it->Refresh();
             }
@@ -590,6 +635,8 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
             remoteVersion.workDone = false;
         }
 
+        if (instance.m_assemblyTitle.dlgItem && instance.m_assemblyTitle.alwaysDraw)
+            instance.m_assemblyTitle.dlgItem->Draw();
         instance.UpdateVersionBlink();
     }
 
@@ -604,7 +651,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
 void AssemblyInformation::UpdateVersionBlink() noexcept
 {
-    if (!m_localVersion.remoteVersionIsHigher || !m_localVersion.dlgItem)
+    if (!m_localVersion.remoteVersionIsHigher || !m_remoteVersion.dlgItem)
         return;
 
     const DWORD currentTime = h3::GetTime();
@@ -616,9 +663,9 @@ void AssemblyInformation::UpdateVersionBlink() noexcept
     versionBlinkVisible = !versionBlinkVisible;
     // Blink only the text. Drawing the black backing image erases the old
     // glyphs while the frame, click target and item visibility stay stable.
-    m_localVersion.UpdateImage(versionBlinkVisible != FALSE);
-    m_localVersion.dlgItem->Draw();
-    m_localVersion.dlgItem->Refresh();
+    m_remoteVersion.UpdateImage(versionBlinkVisible != FALSE);
+    m_remoteVersion.dlgItem->Draw();
+    m_remoteVersion.dlgItem->Refresh();
 }
 
 H3DlgText *__stdcall H3DlgText__Ctor(HiHook *h, H3DlgText *_this, int xpos, int ypos, int xsize, int ysize,
@@ -685,6 +732,7 @@ void AssemblyInformation::CreatePatches() noexcept
         // Menu Dlg Proc
 
 
+        Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
         m_isEnabled = true;
     }
 }
