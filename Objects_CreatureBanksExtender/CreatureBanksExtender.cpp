@@ -1,10 +1,30 @@
 #include "CreatureBanksExtender.h"
+#include "../headers/EraPluginsAPI/RuntimeServices.h"
+
+#pragma comment(linker, "/EXPORT:GetBankExportInfo=_GetBankExportInfo@8")
+DllExport BOOL __stdcall GetBankExportInfo(int bank, EraJS::BankExportInfo *info)
+{
+    return cbanks::CreatureBanksExtender::GetExportInfo(bank, info);
+}
 
 namespace cbanks
 {
 
 CreatureBanksExtender *CreatureBanksExtender::instance = nullptr;
 CreatureBanksExtender::Current CreatureBanksExtender::currentCreatureBank = CreatureBanksExtender::Current{};
+
+BOOL CreatureBanksExtender::GetExportInfo(int bank, EraJS::BankExportInfo *info) noexcept
+{
+    if (!instance || !info || info->structSize < sizeof(*info) || bank < 0 ||
+        size_t(bank) >= instance->manager.setups.size()) return FALSE;
+    const auto &manager = instance->manager;
+    *info = EraJS::BankExportInfo{};
+    info->name = manager.setups[bank].name.String();
+    std::copy_n(manager.setups[bank].states, 4, info->states);
+    info->isBank = manager.isBankSettings[bank];
+    std::copy_n(manager.customPositions[bank].data(), 14, info->positions);
+    return TRUE;
+}
 
 static BOOL GetArmyMessage(const H3CreatureBank *creatureBank, H3String &customDescription,
                            const bool withoutBrackets = true) noexcept
@@ -1024,6 +1044,8 @@ void CreatureBanksExtender::CreatePatches()
         Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
 
         m_isInited = true;
+        static const era_services::Ownership owner;
+        era_services::Publish(era_services::BANK_OWNER, &owner);
     }
 }
 } // namespace cbanks

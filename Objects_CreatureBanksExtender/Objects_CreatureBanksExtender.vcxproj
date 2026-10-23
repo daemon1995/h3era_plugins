@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -23,6 +23,7 @@
     <ClInclude Include="framework.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConfigExport.cpp"><LanguageStandard>stdcpp17</LanguageStandard></ClCompile>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="CreatureBankManager.cpp" />
     <ClCompile Include="CreatureBanksExtender.cpp" />

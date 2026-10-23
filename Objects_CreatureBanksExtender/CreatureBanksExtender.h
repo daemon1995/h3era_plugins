@@ -3,6 +3,8 @@
 #include "CreatureBankManager.h"
 
 #include <array>
+#include "../headers/Era/JsonObjectExport.hpp"
+#include "../headers/EraPluginsAPI/ConfigExportAPI.h"
 
 namespace cbanks
 {
@@ -91,12 +93,14 @@ class CreatureBanksExtender : public extender::ObjectExtender
     //	static int __stdcall CretureBankSetups__Ctor(HiHook*h);
   public:
     UINT Size() const noexcept;
+    static int __stdcall CollectConfig(void *, const era_config::Sink *);
 
   public:
     static int GetCreatureBankIndex(const int objType, const int objSubtype) noexcept;
     static int GetCreatureBankIndex(const H3MapItem *mapItem) noexcept;
 
     static CreatureBanksExtender &Get();
+    static BOOL GetExportInfo(int bank, EraJS::BankExportInfo *info) noexcept;
 };
 
 } // namespace cbanks

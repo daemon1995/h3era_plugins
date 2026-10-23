@@ -1,3 +1,4 @@
+﻿void RegisterBankConfigProvider();
 // dllmain.cpp : Определяет точку входа для приложения DLL.
 #define _H3API_PLUGINS_
 #include "CreatureBanksExtender.h"
@@ -29,6 +30,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             globalPatcher = GetPatcher();
             _PI = globalPatcher->CreateInstance(dllText::instanceName);
             Era::ConnectEra(hModule, dllText::instanceName);
+            RegisterBankConfigProvider();
             // _PI->WriteLoHook(0x4EEAF2, HooksInit);
             cbanks::CreatureBanksExtender::Get();
         }
