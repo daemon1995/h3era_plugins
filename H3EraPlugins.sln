@@ -33,8 +33,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_EnhancedCreatureI
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_MainMenuAPI", "Interface_MainMenuAPI\Interface_MainMenuAPI.vcxproj", "{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_MainMenuLogo", "Interface_MainMenuLogo\Interface_MainMenuLogo.vcxproj", "{880405F0-B8EF-49D0-8231-89E1B9ED2F64}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RMG_CustomizeObjectProperties", "RMG_CustomizeObjectProperties\RMG_CustomizeObjectProperties.vcxproj", "{01700C95-8606-446E-AAB8-96975F7B1761}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_DifferentStuff", "Test_DifferentStuff\Test_DifferentStuff.vcxproj", "{C11651EC-412B-43A8-8F51-C4607A7689A3}"
@@ -153,10 +151,6 @@ Global
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}.Debug|x86.Build.0 = Debug|Win32
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}.Release|x86.ActiveCfg = Release|Win32
 		{A1B2C3D4-E5F6-47A8-9B0C-1234567890AB}.Release|x86.Build.0 = Release|Win32
-		{880405F0-B8EF-49D0-8231-89E1B9ED2F64}.Debug|x86.ActiveCfg = Debug|Win32
-		{880405F0-B8EF-49D0-8231-89E1B9ED2F64}.Debug|x86.Build.0 = Debug|Win32
-		{880405F0-B8EF-49D0-8231-89E1B9ED2F64}.Release|x86.ActiveCfg = Release|Win32
-		{880405F0-B8EF-49D0-8231-89E1B9ED2F64}.Release|x86.Build.0 = Release|Win32
 		{01700C95-8606-446E-AAB8-96975F7B1761}.Debug|x86.ActiveCfg = Debug|Win32
 		{01700C95-8606-446E-AAB8-96975F7B1761}.Debug|x86.Build.0 = Debug|Win32
 		{01700C95-8606-446E-AAB8-96975F7B1761}.Release|x86.ActiveCfg = Release|Win32

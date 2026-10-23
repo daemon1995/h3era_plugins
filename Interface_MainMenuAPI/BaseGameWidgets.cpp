@@ -80,33 +80,34 @@ void __stdcall BaseGameWidgets::OnAfterReloadLanguageData(Era::TEvent *e)
                                       BaseGameWidgets::WIDGET_NAME_WOG_OPTIONS, BaseGameWidgets::WIDGET_NAME_HIDE};
     constexpr LPCSTR buttonTexts[] = {BaseGameWidgets::WIDGET_TEXT_SYSTEM_OPTIONS,
                                       BaseGameWidgets::WIDGET_TEXT_WOG_OPTIONS, BaseGameWidgets::WIDGET_TEXT_HIDE};
+    constexpr LPCSTR fallbackTexts[] = {"{System Options}", "{WoG Options}", "{Hide buttons menu}"};
     constexpr int size = std::size(buttonNames);
     for (size_t i = 0; i < size; i++)
     {
-        MenuWidgetManager::Get().SetWidgetText(buttonNames[i], EraJS::read(buttonTexts[i]));
+        MenuWidgetManager::Get().SetWidgetText(buttonNames[i], mainmenu::config::Text(buttonTexts[i], fallbackTexts[i]));
     }
 }
 void BaseGameWidgets::RegisterWidgets()
 {
     using namespace mainmenu;
     int widgetsRegistred = 0;
-    if (EraJS::readInt("era.api.main_menu.widgets.hide.create"))
+    if (mainmenu::config::Enabled("era.main_menu.widgets.visibility_toggle.enabled", true))
     {
         const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::ALL | eMenuFlags::ON_TOP);
 
-        MenuWidgetInfo hideWidgets{WIDGET_NAME_HIDE, EraJS::read(WIDGET_TEXT_HIDE), flags, &HideButtonProc};
+        MenuWidgetInfo hideWidgets{WIDGET_NAME_HIDE, config::Text(WIDGET_TEXT_HIDE, "{Hide buttons menu}"), flags, &HideButtonProc};
         widgetsRegistred += MenuWidgetManager::Get().RegisterWidget(hideWidgets);
     }
 
-    if (EraJS::readInt("era.api.main_menu.widgets.system_options.create"))
+    if (mainmenu::config::Enabled("era.main_menu.widgets.system_options.enabled", false))
     {
-        MenuWidgetInfo systemOptionWidgets{WIDGET_NAME_SYSTEM_OPTIONS, EraJS::read(WIDGET_TEXT_SYSTEM_OPTIONS),
+        MenuWidgetInfo systemOptionWidgets{WIDGET_NAME_SYSTEM_OPTIONS, config::Text(WIDGET_TEXT_SYSTEM_OPTIONS, "{System Options}"),
                                            eMenuFlags::ALL, &SystemOptionsButtonProc};
         widgetsRegistred += MenuWidgetManager::Get().RegisterWidget(systemOptionWidgets);
     }
-    if (EraJS::readInt("era.api.main_menu.widgets.wog_options.create"))
+    if (mainmenu::config::Enabled("era.main_menu.widgets.wog_options.enabled", true))
     {
-        MenuWidgetInfo wogOptionWidgets{WIDGET_NAME_WOG_OPTIONS, EraJS::read(WIDGET_TEXT_WOG_OPTIONS), eMenuFlags::ALL,
+        MenuWidgetInfo wogOptionWidgets{WIDGET_NAME_WOG_OPTIONS, config::Text(WIDGET_TEXT_WOG_OPTIONS, "{WoG Options}"), eMenuFlags::ALL,
                                         &WoGOptionsButtonProc};
         widgetsRegistred += MenuWidgetManager::Get().RegisterWidget(wogOptionWidgets);
     }

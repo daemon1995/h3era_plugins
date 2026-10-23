@@ -1,0 +1,17 @@
+{
+  "era": {
+    "main_menu": {
+      "widgets": {
+        "system_options": {
+          "text": "{Системные опции}"
+        },
+        "wog_options": {
+          "text": "{Опции WoG}"
+        },
+        "visibility_toggle": {
+          "text": "{Скрыть меню кнопок}"
+        }
+      }
+    }
+  }
+}

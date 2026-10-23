@@ -16,21 +16,28 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ItemDefinitionGroup Condition="'$(Configuration)' == 'Release'">
+  <ItemDefinitionGroup>
     <Link>
       <ModuleDefinitionFile>Interface_MainMenuAPI.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
     <ClCompile Include="BaseGameWidgets.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MenuWidgetManager.cpp" />
+    <ClCompile Include="MainMenuGraphics.cpp" />
+    <ClCompile Include="MainMenuVideo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseGameWidgets.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MenuWidgetManager.h" />
+    <ClInclude Include="MainMenuGraphics.h" />
+    <ClInclude Include="MainMenuBackground.h" />
+    <ClInclude Include="MainMenuConfig.h" />
+    <ClInclude Include="MainMenuVideo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

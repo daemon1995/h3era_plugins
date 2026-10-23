@@ -5,5 +5,9 @@
 // Windows Header Files
 // add headers that you want to pre-compile here
 #include "../headers/header.h"
+#include "MainMenuConfig.h"
+#include "MainMenuBackground.h"
+#include "MainMenuGraphics.h"
+#include "MainMenuVideo.h"
 #include "BaseGameWidgets.h"
 #include "MenuWidgetManager.h"

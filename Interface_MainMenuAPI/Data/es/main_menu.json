@@ -1,0 +1,20 @@
+{
+  "era": {
+    "main_menu": {
+      "widgets": {
+        "system_options": {
+          "text": "{Opción de sistema}",
+          "enabled": false
+        },
+        "wog_options": {
+          "text": "{Opciones WoG}",
+          "enabled": true
+        },
+        "visibility_toggle": {
+          "enabled": true,
+          "text": "{Hide buttons menu}"
+        }
+      }
+    }
+  }
+}

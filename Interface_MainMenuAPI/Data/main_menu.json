@@ -1,0 +1,57 @@
+{
+  "era": {
+    "main_menu": {
+      "widgets": {
+        "system_options": {
+          "text": "{System Options}",
+          "enabled": false
+        },
+        "wog_options": {
+          "text": "{WoG Options}",
+          "enabled": true
+        },
+        "visibility_toggle": {
+          "enabled": true,
+          "text": "{Hide buttons menu}"
+        },
+        "frame": {
+          "enabled": true
+        }
+      },
+      "background": {
+        "enabled": true,
+        "width": 0,
+        "height": 0,
+        "frame": {
+          "enabled": false
+        }
+      },
+      "rendering": {
+        "redraw_always": false
+      },
+      "video": {
+        "position": {
+          "enabled": true,
+          "x": 0,
+          "y": 0
+        }
+      },
+      "logos": {
+        "main": {
+          "enabled": false,
+          "asset": "",
+          "x": 23,
+          "y": 23,
+          "item_id": 666
+        },
+        "scenario": {
+          "enabled": false,
+          "asset": "",
+          "x": 23,
+          "y": 23,
+          "item_id": 666
+        }
+      }
+    }
+  }
+}

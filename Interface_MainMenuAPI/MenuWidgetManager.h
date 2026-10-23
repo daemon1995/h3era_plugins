@@ -33,7 +33,7 @@ class MenuWidgetManager
     static constexpr int SCROLLBAR_ITEM_ID = 399;         // Starting ID for widgets
     static constexpr int START_WIDGET_ID = 400;           // Starting ID for widgets
     static constexpr int MAX_WIDGETS_WITH_HOTKEYS = 10;
-    BOOL isVisible = true;
+    BOOL isVisible = false;
     BOOL placedOutside = false;
     int widgetWidth = 174;
     int widgetHeight = 24;

@@ -17,9 +17,8 @@ void MenuWidgetManager::SetVisible(const BOOL visible, const BOOL forceRedraw)
         this->isVisible = visible;
         if (visible && !placedOutside && insideBackupScreenPcx)
         {
-            // making hd mod wrong main menu drawing offset fix
-            const int _x = framedBackground->GetX() + (H3GameWidth::Get() - 800) / 2;
-            const int _y = framedBackground->GetY() + (H3GameHeight::Get() - 600) / 2;
+            const int _x = framedBackground->GetAbsoluteX();
+            const int _y = framedBackground->GetAbsoluteY();
             insideBackupScreenPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
         }
 
@@ -141,6 +140,9 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     createdWidgets.insert(createdWidgets.end(), middleWidgets.begin(), middleWidgets.end());
     createdWidgets.insert(createdWidgets.end(), bottomWidgets.begin(), bottomWidgets.end());
 
+    if (createdWidgets.empty())
+        return;
+
     createdWidgets.shrink_to_fit();
     size_t currentMenuTypeWidgets = createdWidgets.size();
 
@@ -174,26 +176,27 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         std::swap(createdWidgets[hideWidgetInd], createdWidgets[0]);
     }
 
-    const int gameWidth = H3GameWidth::Get();
-    const int gameHeight = H3GameHeight::Get();
-
-    constexpr int backgroundWidth = 800;
-    constexpr int backgroundHeight = 600;
-    constexpr int minimalOutsideWidth = 1180;
+    const bool customBackground = menuList != mainmenu::eMenuFlags::CAMPAIGN &&
+                                  mainmenu::background::Enabled();
+    const auto layout = mainmenu::background::GetLayout(dlg, customBackground);
+    auto *screen = P_WindowManager->GetDrawBuffer();
+    const int gameWidth = screen->width;
+    const int gameHeight = screen->height;
+    const int backgroundWidth = layout.width;
+    const int backgroundHeight = layout.height;
     constexpr int minimalGreyHeight = 608;
     constexpr int frameWidth = 4;
     constexpr int scrollbarOffset = 0;
 
-    constexpr int frameGameWidth = backgroundWidth + frameWidth * 2;
-    constexpr int frameGameHeight = backgroundHeight + frameWidth * 2;
-
     constexpr int scrollbarWidth = 16;
     constexpr int arrowHeight = 16;
 
-    const int backgroundX = (gameWidth - backgroundWidth) >> 1;
-    const int backgroundY = (gameHeight - backgroundHeight) >> 1;
-
-    const int frameOffset = (gameWidth < frameGameWidth) || (gameHeight < frameGameHeight) ? 0 : frameWidth;
+    const int backgroundX = layout.x;
+    const int backgroundY = layout.y;
+    const int backgroundRight = backgroundX + backgroundWidth;
+    const int frameOffset = backgroundX >= frameWidth && backgroundY >= frameWidth &&
+                            backgroundRight + frameWidth <= gameWidth &&
+                            backgroundY + backgroundHeight + frameWidth <= gameHeight ? frameWidth : 0;
 
     // struct PanelStyle
     //{
@@ -225,7 +228,9 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     widgetHeight = def->heightDEF;
     //    widgetStartX = backgroundWidth + xFrameOffset;
 
-    placedOutside = gameWidth >= minimalOutsideWidth;
+    const int panelWidth = widgetWidth + frameWidth * 2;
+    const int outsideSpace = gameWidth - backgroundRight - frameOffset;
+    placedOutside = outsideSpace >= panelWidth;
 
     if (placedOutside && hideWidgetInd >= 0)
     {
@@ -234,20 +239,17 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         createdWidgets.pop_back();
     }
 
-    const BOOL framesInternal =
-        (gameWidth < backgroundWidth + frameWidth * 2) || (gameHeight < backgroundHeight + frameWidth * 2);
+    frameStartX = (placedOutside ? backgroundRight + frameOffset : backgroundX) - dlg->GetX();
+    frameStartY = backgroundY - dlg->GetY() - (placedOutside ? frameOffset : 0);
 
-    frameStartX = placedOutside ? backgroundWidth + frameOffset : 0;
-    frameStartY = placedOutside ? -frameOffset : 0; // backgroundY;
-
-    const int availableHeight = backgroundHeight - framesInternal * (frameOffset << 1);
+    const int availableHeight = backgroundHeight - frameWidth * 2;
 
     enum ScrollType
     {
         SLIDER,
         ARROWS
     };
-    const ScrollType scrollType = placedOutside && gameWidth <= minimalOutsideWidth + scrollbarWidth ? ARROWS : SLIDER;
+    const ScrollType scrollType = placedOutside && outsideSpace < panelWidth + scrollbarWidth ? ARROWS : SLIDER;
 
     BOOL createScrollbar = false;
     INT widgetsToDraw = currentMenuTypeWidgets;
@@ -276,6 +278,9 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         }
     }
 
+    if (widgetsToDraw < 1)
+        return;
+
     const int backgroundAreaHeight =
         widgetHeight * widgetsToDraw + widgetSpacing * (widgetsToDraw - 1) + (frameWidth << 1) + additionalHeight;
     const int backgroundAreaWidth = widgetWidth + additionalWidth + (frameWidth << 1);
@@ -292,9 +297,15 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
 
     // framedBackgroundPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), framedBackground->GetAbsoluteX(),
     //                                 framedBackground->GetAbsoluteY());
-    framedBackgroundPcx->SimpleFrameRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight);
+    if (mainmenu::config::Enabled("era.main_menu.widgets.frame.enabled", true))
+        framedBackgroundPcx->SimpleFrameRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight);
 
     framedBackground->SetPcx(framedBackgroundPcx);
+
+    // Capture the same background that Graphics will draw before our items.
+    // Otherwise hiding the panel can restore a stale HD frame over the canvas.
+    if (customBackground)
+        mainmenu::background::Draw(dlg);
 
     if (placedOutside)
     {
@@ -416,6 +427,12 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw)
         insideBackupScreenPcx = nullptr;
     }
 
+    if (outsideBackupScreenPcx)
+    {
+        outsideBackupScreenPcx->Destroy();
+        outsideBackupScreenPcx = nullptr;
+    }
+
     if (framedBackgroundPcx)
     {
         framedBackgroundPcx->Destroy();
@@ -445,7 +462,8 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw)
 
 void MenuWidgetManager::HandleEvent(H3Msg *msg)
 {
-
+    if (createdWidgets.empty())
+        return;
     if (isVisible)
     {
         if (msg->itemId >= topWidgetId && msg->itemId <= bottomWidgetId)

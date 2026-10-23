@@ -57,7 +57,7 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
         if (readSuccess && lenFromJson > 0)
             characterLength = lenFromJson;
 
-        alwaysDraw = EraJS::readInt("nmmi.menu_info.main.always_draw");
+        alwaysDraw = EraJS::readInt("era.main_menu.rendering.redraw_always");
 
         Era::ReadStrFromIni("ERA", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
         shellExecutePath = h3_TextBuffer;
@@ -709,7 +709,7 @@ void AssemblyInformation::LoadDataFromJson()
         m_eraVersion.GetJsonData("era_version");
         m_localVersion.GetJsonData("current_version");
         m_remoteVersion.GetJsonData("online_version");
-        alwaysDraw = EraJS::readInt("nmmi.menu_info.main.always_draw");
+        alwaysDraw = EraJS::readInt("era.main_menu.rendering.redraw_always");
 
         m_eraVersion.version = Era::GetEraVersion();
         if (m_eraVersion.show || m_localVersion.show || m_remoteVersion.show)
