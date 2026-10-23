@@ -3,6 +3,24 @@
 #include "../headers/Config/ExportProvider.h"
 #include <set>
 
+namespace
+{
+bool HasDwellingConfig(const std::string &key, int slotCount)
+{
+    for (const char *field : {"name", "description", "frame", "image", "imageFrame", "text.info", "text.hint",
+                              "text.visit", "text.visited", "text.cannotVisit", "text.victory", "text.plundered",
+                              "text.level"})
+        if (!EraJS::isEmpty((key + "." + field).c_str()))
+            return true;
+
+    // Sparse four-slot dwellings need not configure creatures.0; 0 and -1 are explicit values too.
+    for (int slot = 0; slot < slotCount; ++slot)
+        if (!EraJS::isEmpty((key + ".creatures." + std::to_string(slot)).c_str()))
+            return true;
+    return false;
+}
+}
+
 int __stdcall dwellings::DwellingsExtender::CollectConfig(void *, const era_config::Sink *sink)
 {
     try
@@ -19,10 +37,8 @@ int __stdcall dwellings::DwellingsExtender::CollectConfig(void *, const era_conf
             for (int id = 0; id < int(table->names.size()); ++id)
             {
                 const auto key = ObjectKey(table->type, id);
-                bool configured = false;
-                for (const char *field : {"name", "description", "creatures.0", "frame", "image"})
-                    configured |= !EraJS::isEmpty((key + "." + field).c_str());
-                if (id >= table->originalCount && !existing.count(id) && !configured) continue;
+                if (id >= table->originalCount && !existing.count(id) && !HasDwellingConfig(key, table->slotCount))
+                    continue;
                 EraJS::DwellingExportInfo info;
                 if (!self.GetExportInfo(table->type, id, &info)) continue;
                 Record record{category, Original(id, table->type == SINGLE_TYPE ? "dwellings1" : "dwellings4", 100)};
