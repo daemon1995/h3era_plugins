@@ -1,0 +1,31 @@
+﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
+#include "pch.h"
+
+Patcher *globalPatcher;
+PatcherInstance *_PI;
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+{
+    static BOOL plugin_On = 0;
+
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH:
+        if (!plugin_On)
+        {
+            plugin_On = 1;
+            globalPatcher = GetPatcher();
+            _PI = globalPatcher->CreateInstance("XXL");
+            Era::ConnectEra(hModule, "XXL");
+            MapSize_Init();
+            RandomMapOptions_Init();
+        }
+        break;
+
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}

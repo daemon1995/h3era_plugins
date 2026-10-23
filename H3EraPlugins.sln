@@ -23,8 +23,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_OptionsMenu", "ERA_Opti
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_SystemOptionsExtension", "ERA_SystemOptionsExtension\ERA_SystemOptionsExtension.vcxproj", "{F6A7B8C9-D0E1-42F3-A4B5-C6D7E8F90123}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EraEditor_JsonOverrides", "EraEditor_JsonOverrides\EraEditor_JsonOverrides.vcxproj", "{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gameplay_GameplayEnhancementPlugin", "Gameplay_GameplayEnhancementPlugin\Gameplay_GameplayEnhancementPlugin.vcxproj", "{C28B0929-25FA-4EC5-9650-0EA912BF2449}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Interface_AlignClassName", "Interface_AlignClassName\Interface_AlignClassName.vcxproj", "{59E32F0A-7B62-400E-980E-90AC1778D46C}"
@@ -59,12 +57,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EraEditor_ObjectsExtender",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_DwellingsExtender", "ERA_DwellingsExtender\ERA_DwellingsExtender.vcxproj", "{1D94A0B8-2B08-4351-A372-B2300BA49833}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XXL", "XXL\XXL.vcxproj", "{F83C9487-588D-4C87-8F84-159210B5C6EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F83C9487-588D-4C87-8F84-159210B5C6EE}.Debug|x86.ActiveCfg = Debug|Win32
+		{F83C9487-588D-4C87-8F84-159210B5C6EE}.Debug|x86.Build.0 = Debug|Win32
+		{F83C9487-588D-4C87-8F84-159210B5C6EE}.Release|x86.ActiveCfg = Release|Win32
+		{F83C9487-588D-4C87-8F84-159210B5C6EE}.Release|x86.Build.0 = Release|Win32
 		{1D94A0B8-2B08-4351-A372-B2300BA49833}.Debug|x86.ActiveCfg = Debug|Win32
 		{1D94A0B8-2B08-4351-A372-B2300BA49833}.Debug|x86.Build.0 = Debug|Win32
 		{1D94A0B8-2B08-4351-A372-B2300BA49833}.Release|x86.ActiveCfg = Release|Win32
@@ -129,10 +133,6 @@ Global
 		{F6A7B8C9-D0E1-42F3-A4B5-C6D7E8F90123}.Debug|x86.Build.0 = Debug|Win32
 		{F6A7B8C9-D0E1-42F3-A4B5-C6D7E8F90123}.Release|x86.ActiveCfg = Release|Win32
 		{F6A7B8C9-D0E1-42F3-A4B5-C6D7E8F90123}.Release|x86.Build.0 = Release|Win32
-		{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}.Debug|x86.ActiveCfg = Debug|Win32
-		{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}.Debug|x86.Build.0 = Debug|Win32
-		{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}.Release|x86.ActiveCfg = Release|Win32
-		{3E2F1A4B-5C6D-47E8-9F01-23456789ABCD}.Release|x86.Build.0 = Release|Win32
 		{C28B0929-25FA-4EC5-9650-0EA912BF2449}.Debug|x86.ActiveCfg = Debug|Win32
 		{C28B0929-25FA-4EC5-9650-0EA912BF2449}.Debug|x86.Build.0 = Debug|Win32
 		{C28B0929-25FA-4EC5-9650-0EA912BF2449}.Release|x86.ActiveCfg = Release|Win32
