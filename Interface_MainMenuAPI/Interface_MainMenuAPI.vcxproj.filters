@@ -45,6 +45,15 @@
     <ClCompile Include="MainMenuVideo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NotificationPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClInclude Include="NotificationPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\NotificationLinks.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="MainMenuGraphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>

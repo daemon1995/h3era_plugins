@@ -3,7 +3,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "2.1.1";
+const char *PLUGIN_VERSION = "2.2";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -32,9 +32,22 @@ int __stdcall DlgMainMenu_NewLoad_Dtor(HiHook *h, H3BaseDlg *dlg)
 int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 {
     MainMenuGraphics::DrawLogo(msg);
+    bool notificationCursor = false;
+    if (auto *panel = NotificationPanel::instance)
+    {
+        if (panel->parentDlg == msg->GetDlg())
+        {
+            if (msg->GetX())
+                P_MouseManager->DefaultCursor();
+            notificationCursor = panel->ProcessPanel(
+                msg, mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false));
+        }
+    }
     const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
     if (result != 2)
     {
+        if (notificationCursor)
+            P_MouseManager->SetCursor(3, 0);
         MenuWidgetManager::Get().HandleEvent(msg);
     }
     return result;
@@ -42,6 +55,14 @@ int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
 int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
+    if (auto *panel = NotificationPanel::instance)
+    {
+        if (panel->parentDlg == dlg)
+        {
+            panel->SetVisible(false);
+            delete panel;
+        }
+    }
     const int dlgJump = P_WindowManager->resultItemID;
 
     const BOOL forceRedraw =
@@ -101,9 +122,11 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
     {
         MenuWidgetManager::initialized = true;
         BaseGameWidgets::RegisterWidgets();
+        NotificationPanel::RegisterWidget();
     }
     MainMenuGraphics::CreateLogo(dlg);
     MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuFlags::MAIN);
+    NotificationPanel::Init(dlg, 20, 180, 500, 390);
     return result;
 }
 

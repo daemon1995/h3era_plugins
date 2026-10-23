@@ -2,6 +2,7 @@
 
 #include "framework.h"
 #include "VersionUtils.h"
+#include "../headers/EraPluginsAPI/NotificationLinks.hpp"
 #include "../Interface_MainMenuAPI/MainMenuConfig.h"
 // #include "webFunctions.cpp"
 
@@ -176,64 +177,12 @@ std::string GetFriendlyAppNameForExtensionA(const std::string &extension)
     }
     return h3_NullString;
 }
-void OpenExternalFile(const char *path, const char *msg = nullptr)
-{
-    if (!path)
-        return;
-
-    const bool isUrl = PathIsURLA(path);
-    // BOOL isOk = true;
-    if (msg)
-    {
-        std::string _msg = msg;
-        libc::sprintf(h3_TextBuffer, _msg.c_str(), path);
-    }
-    else
-    {
-        LPCSTR jsonKey = isUrl ? panelText::OPEN_URL : panelText::OPEN_FILE;
-        libc::sprintf(h3_TextBuffer, EraJS::read(jsonKey), path);
-    }
-
-    if (!isUrl && 0)
-    {
-        auto ext = PathFindExtensionA(path);
-        auto appPath = GetAppForExtension(ext);
-        auto friendlyAppName = GetFriendlyAppNameForExtensionA(ext);
-        libc::sprintf(h3_TextBuffer, "%s", friendlyAppName.c_str());
-    }
-
-    BOOL isOk = H3Messagebox::Choice(h3_TextBuffer);
-
-    if (!isOk)
-        return;
-
-    // call ShellExecuteA from exe to open github download page
-    INT_PTR intRes = STDCALL_6(INT_PTR, PtrAt(0x63A250), NULL, "open", path, NULL, NULL, SW_SHOWNORMAL);
-
-    /** https://learn.microsoft.com/ru-ru/windows/win32/api/shellapi/nf-shellapi-shellexecutea */
-    if (intRes <= 32)
-    {
-        LPSTR messageBuffer = nullptr;
-
-        // �������������� ��������� �� ������
-        size_t size = FormatMessageA(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
-            intRes, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
-
-        std::string message(messageBuffer, size);
-        H3Messagebox(message.c_str());
-
-        // ������������ ������
-        LocalFree(messageBuffer);
-    }
-}
-
 void AssemblyInformation::Version::ClickProcedure() const noexcept
 {
     if (!shellExecutePath.Empty())
     {
         P_SoundManager->ClickSound();
-        OpenExternalFile(shellExecutePath.String());
+        mainmenu::OpenNotificationLink(shellExecutePath.String());
     }
 }
 
@@ -459,11 +408,6 @@ int __stdcall AssemblyInformation::DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 
 {
-    if (auto notificationPanel = NotificationPanel::instance)
-    {
-        notificationPanel->SetVisible(false);
-        delete notificationPanel;
-    }
     Get().isVisible = false;
     for (auto *version : Get().versions)
         version->dlgItem = nullptr;
@@ -501,7 +445,6 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
         }
     }
 
-    NotificationPanel::Init(dlg, 20, 180, 500, 390);
 }
 
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
@@ -564,15 +507,6 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
         instance.UpdateVersionBlink();
     }
 
-    if (auto panel = NotificationPanel::instance)
-    {
-        if (panel->ProcessPanel(msg, instance.alwaysDraw))
-        {
-            setCustomCursor = true;
-            //  return 0;
-        }
-    }
-
     if (setCustomCursor)
     {
         P_MouseManager->SetCursor(3, 0);
@@ -605,21 +539,6 @@ void AssemblyInformation::UpdateVersionBlink() noexcept
     m_localVersion.dlgItem->Refresh();
 }
 
-void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent *e)
-{
-    if (auto panel = NotificationPanel::instance)
-    {
-        panel->ReloadLanguageData();
-    }
-    // Get().LoadDataFromJson();
-    // for (const auto it : Get().versions)
-    //{
-    //     if (it && it->show)
-    //     {
-    //         it->AdjustItemText();
-    //     }
-    // }
-}
 H3DlgText *__stdcall H3DlgText__Ctor(HiHook *h, H3DlgText *_this, int xpos, int ypos, int xsize, int ysize,
                                      const char *text, const char *font, int color, int itemId, int align, int bkcolor,
                                      int unused)
@@ -667,8 +586,6 @@ void AssemblyInformation::CreatePatches() noexcept
         _PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
         _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
 
-        Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
-
         if (0)
         {
         }
@@ -685,8 +602,6 @@ void AssemblyInformation::CreatePatches() noexcept
         // _PI->WriteHiHook(0x4D5B50, THISCALL_, DlgMainMenu_Proc); // Main Main
         // Menu Dlg Proc
 
-        //	Era::RegisterHandler(OnAfterReloadLanguageData,
-        //"OnAfterReloadLanguageData");
 
         m_isEnabled = true;
     }
@@ -710,8 +625,6 @@ void AssemblyInformation::LoadDataFromJson()
         m_eraVersion.GetJsonData("era_version");
         m_localVersion.GetJsonData("current_version");
         m_remoteVersion.GetJsonData("online_version");
-        alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
-
         m_eraVersion.version = Era::GetEraVersion();
         if (m_eraVersion.show || m_localVersion.show || m_remoteVersion.show)
             CreatePatches();

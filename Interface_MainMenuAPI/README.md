@@ -1,10 +1,23 @@
-# Interface_MainMenuAPI 2.1.1
+# Interface_MainMenuAPI 2.2
 
 One plugin owns main-menu background rendering, logos, video positioning and
 the button panel. It replaces Interface_MainMenuLogo,
 Interface_MainMenuGraphics and Graphics_MainMenuVideoPositioning. Keep only
 `Interface_MainMenuAPI.era` installed; the replaced `.era` files must be removed
 or disabled to avoid installing the same hooks twice.
+
+It also owns the JSON notification panel formerly in Assembly_MainPlugin.
+Use Assembly_MainPlugin 1.12.0 or newer with this version to avoid duplicate
+notification panels. Assembly continues to handle assembly versions and updates.
+
+Notifications retain `era.<lowercase mod folder>.notification.{name,text,url}`
+and numbered entries `notification.0` through `notification.4`. The single-message
+form takes precedence; numbered entries stop at the first missing text key.
+Panel captions retain `era.notifications.*`, and hidden-message history stays in
+`runtime/era/main_menu_notifications.ini`. Existing `era_notifications.json`
+translations and `ntf_*.def` resources remain in the mod's Lang/Data files.
+The panel works without Assembly and when all assembly version labels are disabled.
+Heroes Launcher detection moved with the panel; its call is commented out.
 
 The plugin remains in H3EraPlugins.sln and is also referenced by
 Commissions/Commissions.sln. Its default output mod remains WoG.

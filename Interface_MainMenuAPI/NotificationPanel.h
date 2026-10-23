@@ -11,6 +11,15 @@ constexpr LPCSTR ORDERED_MOD_NAME = "era.%s.notification.%d.name";
 constexpr LPCSTR ORDERED_MOD_TEXT = "era.%s.notification.%d.text";
 constexpr LPCSTR ORDERED_MOD_URL = "era.%s.notification.%d.url";
 } // namespace jsonFormat
+
+namespace panelText
+{
+constexpr LPCSTR HIDE_ONE = "era.notifications.panel.hide_one";
+constexpr LPCSTR HIDE_ALL = "era.notifications.panel.hide_all";
+constexpr LPCSTR TITLE = "era.notifications.panel.title";
+constexpr LPCSTR BUTTON_FORMAT = "era.notifications.panel.button";
+constexpr LPCSTR LAUNCHER_PATH = "era.notifications.panel.launcher_path";
+} // namespace panelText
 struct NotificationPanel
 {
     static constexpr LPCSTR PARENT_BUTTON_CALLER_NAME = "notification_panel_caller";
@@ -126,6 +135,7 @@ struct NotificationPanel
     H3DlgItem *AddItem(H3DlgItem *item, const bool isCommon = false) noexcept;
 
     void CreateModInfoList(std::vector<std::string> &modList) noexcept;
+    static void AddHeroesLauncherNotification(std::vector<std::string> &modList);
     void CreateModAreaFrame(const UINT x, const UINT y, const UINT width, const UINT height) noexcept;
     void CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3DlgPcx16 *modBackground) noexcept;
 
@@ -136,6 +146,8 @@ struct NotificationPanel
     void Retranslate(const BOOL redraw = false) noexcept;
 
   public:
+    static void RegisterWidget();
+    static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
     void SetVisible(const BOOL isVisible, const BOOL activateAllNotifications = false) noexcept;
     BOOL ProcessPanel(H3Msg *msg, const BOOL forceRedraw = false) noexcept;
     void ReloadLanguageData() noexcept;

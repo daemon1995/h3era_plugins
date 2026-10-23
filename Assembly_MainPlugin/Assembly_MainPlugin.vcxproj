@@ -21,7 +21,6 @@
     <ClCompile Include="AssemblyInformation.cpp" />
     <ClCompile Include="ModListScanner.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="NotificationPanel.cpp" />
     <ClCompile Include="UserNotification.cpp" />
     <ClCompile Include="WebFunctions.cpp" />
   </ItemGroup>
@@ -29,9 +28,9 @@
     <ClInclude Include="AssemblyInformation.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ModListScanner.h" />
-    <ClInclude Include="NotificationPanel.h" />
     <ClInclude Include="UserNotification.h" />
     <ClInclude Include="VersionUtils.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\NotificationLinks.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

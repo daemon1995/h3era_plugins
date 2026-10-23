@@ -33,9 +33,6 @@
     <ClCompile Include="..\headers\Era\era.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NotificationPanel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssemblyInformation.h">
@@ -50,7 +47,7 @@
     <ClInclude Include="VersionUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NotificationPanel.h">
+    <ClInclude Include="..\headers\EraPluginsAPI\NotificationLinks.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="framework.h">

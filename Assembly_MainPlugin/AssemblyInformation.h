@@ -81,7 +81,6 @@ class AssemblyInformation : public IGamePatch
     } m_remoteVersion;
 
     Version *versions[3];
-    BOOL alwaysDraw = false;
     BOOL isVisible = false;
     DWORD versionBlinkLastUpdate = 0;
     BOOL versionBlinkVisible = true;
@@ -93,8 +92,6 @@ class AssemblyInformation : public IGamePatch
     virtual void CreatePatches() noexcept final override;
 
   public:
-    static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
-
     static int __stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg);
     static int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg);
     static int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg);

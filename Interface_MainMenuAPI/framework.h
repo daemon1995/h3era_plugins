@@ -11,3 +11,4 @@
 #include "MainMenuVideo.h"
 #include "BaseGameWidgets.h"
 #include "MenuWidgetManager.h"
+#include "NotificationPanel.h"

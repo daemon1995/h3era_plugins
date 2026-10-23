@@ -29,6 +29,7 @@
     <ClCompile Include="MenuWidgetManager.cpp" />
     <ClCompile Include="MainMenuGraphics.cpp" />
     <ClCompile Include="MainMenuVideo.cpp" />
+    <ClCompile Include="NotificationPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseGameWidgets.h" />
@@ -38,6 +39,8 @@
     <ClInclude Include="MainMenuBackground.h" />
     <ClInclude Include="MainMenuConfig.h" />
     <ClInclude Include="MainMenuVideo.h" />
+    <ClInclude Include="NotificationPanel.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\NotificationLinks.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -1,4 +1,6 @@
 #include "NotificationPanel.h"
+#include "../headers/era/eraModList.hpp"
+#include "../headers/EraPluginsAPI/NotificationLinks.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -131,8 +133,23 @@ std::wstring GetAppDataPath()
 static H3DlgCaptionButton *GetNotificationPanelCallerWidget()
 {
     return reinterpret_cast<H3DlgCaptionButton *>(
-        mainmenu::MainMenu_GetDialogButton(NotificationPanel::PARENT_BUTTON_CALLER_NAME));
+        MenuWidgetManager::Get().GetWidgetByName(NotificationPanel::PARENT_BUTTON_CALLER_NAME));
 }
+
+void NotificationPanel::RegisterWidget()
+{
+    const auto flags = static_cast<mainmenu::eMenuFlags>(mainmenu::MAIN | mainmenu::AT_BOTTOM);
+    const mainmenu::MenuWidgetInfo info{PARENT_BUTTON_CALLER_NAME, h3_NullString, flags, OnPanelCallerClick};
+    MenuWidgetManager::Get().RegisterWidget(info);
+    Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
+}
+
+void __stdcall NotificationPanel::OnAfterReloadLanguageData(Era::TEvent *e)
+{
+    if (instance)
+        instance->ReloadLanguageData();
+}
+
 NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y, const int width,
                                      const int height) noexcept
     : x(x), y(y), width(width), height(height), isVisible(false), parentDlg(parent)
@@ -143,24 +160,7 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
 
     // �������� �� �������������� �������� � ������������
     // �������� ���� � AppData
-    bool readSucces = false;
-    std::string launcherFolder = EraJS::read(panelText::LAUNCHER_PATH, readSucces);
-    if (readSucces && !launcherFolder.empty())
-    {
-        // ��������� ������ ���� � �����
-        std::wstring appDataPath = GetAppDataPath();
-        if (!appDataPath.empty())
-        {
-
-            std::wstring targetFolder =
-                appDataPath + L"\\" + std::wstring(launcherFolder.begin(), launcherFolder.end());
-            // ��������� ������������� �����
-            if (!FolderExists(targetFolder))
-            {
-                modList.insert(modList.begin(), "heroes launcher");
-            }
-        }
-    }
+    // AddHeroesLauncherNotification(modList); // Temporarily disabled.
 
     CreateModInfoList(modList);
 
@@ -297,6 +297,28 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
         if (this->notificationsVisible)
         {
             SetVisible(true);
+        }
+    }
+}
+
+void NotificationPanel::AddHeroesLauncherNotification(std::vector<std::string> &modList)
+{
+    bool readSucces = false;
+    std::string launcherFolder = EraJS::read(panelText::LAUNCHER_PATH, readSucces);
+    if (readSucces && !launcherFolder.empty())
+    {
+        // ��������� ������ ���� � �����
+        std::wstring appDataPath = GetAppDataPath();
+        if (!appDataPath.empty())
+        {
+
+            std::wstring targetFolder =
+                appDataPath + L"\\" + std::wstring(launcherFolder.begin(), launcherFolder.end());
+            // ��������� ������������� �����
+            if (!FolderExists(targetFolder))
+            {
+                modList.insert(modList.begin(), "heroes launcher");
+            }
         }
     }
 }
@@ -567,8 +589,8 @@ void NotificationPanel::SetVisible(const BOOL visible, const BOOL activateAllNot
         currentModInfoIndex = currentModInfo->displayedIndex;
 
         // Account for HD Mod's main menu drawing offset.
-        const int _x = x + (H3GameWidth::Get() - 800) / 2;
-        const int _y = y + (H3GameHeight::Get() - 600) / 2;
+        const int _x = background->GetAbsoluteX();
+        const int _y = background->GetAbsoluteY();
         backupScreen->CopyRegion(P_WindowManager->GetDrawBuffer(), _x, _y);
     }
 
@@ -782,7 +804,6 @@ void NotificationPanel::SwitchModInfo(const int step) noexcept
         }
     }
 }
-void OpenExternalFile(const char *path, const char *msg = nullptr);
 
 int __fastcall NotificationPanel::OnPanelCallerClick(void *msg) noexcept
 {
@@ -874,7 +895,7 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
             if (result && msg->IsLeftDown())
             {
                 P_SoundManager->ClickSound();
-                OpenExternalFile(currentModInfo->externalLink);
+                mainmenu::OpenNotificationLink(currentModInfo->externalLink);
             }
         }
 
@@ -932,7 +953,7 @@ void NotificationPanel::ReloadLanguageData() noexcept
     {
         libc::sprintf(h3_TextBuffer, EraJS::read(panelText::BUTTON_FORMAT), notificationsTotal);
         parentCaller->SetText(h3_TextBuffer);
-        mainmenu::MainMenu_SetDialogButtonText(NotificationPanel::PARENT_BUTTON_CALLER_NAME, h3_TextBuffer);
+        MenuWidgetManager::Get().SetWidgetText(NotificationPanel::PARENT_BUTTON_CALLER_NAME, h3_TextBuffer);
     }
 
     const bool isVisibleBefore = isVisible;
@@ -974,5 +995,3 @@ NotificationPanel *NotificationPanel::Init(H3BaseDlg *parrent, const int x, cons
     instance = new NotificationPanel(parrent, x, y, width, height);
     return instance;
 }
-
-// Получение виджета notification_panel_caller через API Interface_MainMenuAPI

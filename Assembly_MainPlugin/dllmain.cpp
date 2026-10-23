@@ -4,7 +4,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.11.1";
+const char *PLUGIN_VERSION = "1.12.0";
 const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";
@@ -40,14 +40,6 @@ int __stdcall GameStart(LoHook *h, HookContext *c)
     AssemblyInformation::Get();
     // info->LoadDataFromJson();
     // UserNotification::Get();
-
-    // Динамически ищем функцию экспорта из Interface_MainMenuAPI
-
-    using namespace mainmenu;
-    const eMenuFlags flags = static_cast<eMenuFlags>(eMenuFlags::MAIN | eMenuFlags::AT_BOTTOM);
-    MenuWidgetInfo info{NotificationPanel::PARENT_BUTTON_CALLER_NAME, h3_NullString, flags,
-                        NotificationPanel::OnPanelCallerClick};
-    MainMenu_RegisterWidget(info);
 
     return EXEC_DEFAULT;
 
