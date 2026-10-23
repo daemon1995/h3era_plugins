@@ -5,6 +5,7 @@
 #include "../headers/EraPluginsAPI/NotificationLinks.hpp"
 #include "../headers/EraPluginsAPI/MainMenuCursor.h"
 #include "../Interface_MainMenuAPI/MainMenuConfig.h"
+#include "../Interface_MainMenuAPI/MainMenuBackground.h"
 // #include "webFunctions.cpp"
 
 #include "Shlwapi.h"
@@ -18,6 +19,22 @@ std::string PerformWinHTTPRequest(const wchar_t *api, const wchar_t *host, const
 // constexpr const char* BASE_JSON_KEY = "gem_plugin.main_menu";
 
 AssemblyInformation *AssemblyInformation::instance = nullptr;
+
+static mainmenu::background::Layout GetVersionLabelBounds(H3BaseDlg *dlg)
+{
+    const bool customBackground = GetModuleHandleA("Interface_MainMenuAPI.era") && mainmenu::background::Enabled();
+    auto bounds = mainmenu::background::GetLayout(dlg, customBackground);
+    if (bounds.custom)
+    {
+        // Anchor to the fitted picture itself, not its surrounding canvas,
+        // frame or the HD texture around it.
+        bounds.x = bounds.assetX;
+        bounds.y = bounds.assetY;
+        bounds.width = bounds.assetWidth;
+        bounds.height = bounds.assetHeight;
+    }
+    return bounds;
+}
 // @todo // add red color for different versions
 AssemblyInformation::AssemblyInformation(PatcherInstance *_pi)
     : IGamePatch(_pi), versions{&m_eraVersion, &m_localVersion, &m_remoteVersion}
@@ -84,11 +101,11 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     H3FontLoader font(fontName);
     constexpr int horizontalPadding = 5;
     constexpr int verticalPadding = 3;
-    auto *screen = H3WindowManager::Get()->GetDrawBuffer();
-    const int maxWidth = screen ? screen->width : parentDlg->GetWidth();
-    const int maxHeight = screen ? screen->height : parentDlg->GetHeight();
-    const int minX = -parentDlg->GetX();
-    const int minY = -parentDlg->GetY();
+    const auto bounds = GetVersionLabelBounds(parentDlg);
+    const int maxWidth = bounds.width;
+    const int maxHeight = bounds.height;
+    const int minX = bounds.x - parentDlg->GetX();
+    const int minY = bounds.y - parentDlg->GetY();
     if (!font.Get() || maxWidth <= horizontalPadding * 2 || maxHeight <= verticalPadding * 2)
         return false;
 
@@ -526,15 +543,17 @@ void AssemblyInformation::LoadAssemblyLabelText()
 
 void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
 {
-    auto *screen = H3WindowManager::Get()->GetDrawBuffer();
-    const int screenWidth = screen ? screen->width : dlg->GetWidth();
-    const int screenHeight = screen ? screen->height : dlg->GetHeight();
+    const auto bounds = GetVersionLabelBounds(dlg);
+    const int screenWidth = bounds.width;
+    const int screenHeight = bounds.height;
+    const int offsetX = bounds.x - dlg->GetX();
+    const int offsetY = bounds.y - dlg->GetY();
     constexpr int sideMargin = 10;
     constexpr int bottomMargin = 2;
     m_eraVersion.fixedWidth = std::min(160, screenWidth);
     m_eraVersion.fixedHeight = 16;
-    m_eraVersion.x = std::min(sideMargin, screenWidth - m_eraVersion.fixedWidth) - dlg->GetX();
-    m_eraVersion.y = screenHeight - m_eraVersion.fixedHeight - bottomMargin - dlg->GetY();
+    m_eraVersion.x = offsetX + std::min(sideMargin, screenWidth - m_eraVersion.fixedWidth);
+    m_eraVersion.y = offsetY + screenHeight - m_eraVersion.fixedHeight - bottomMargin;
     const int rows = (m_localVersion.show != FALSE) + (m_remoteVersion.show != FALSE);
     m_assemblyTitle.show = rows != 0;
     if (!rows || screenWidth < 40 || screenHeight < 40)
@@ -545,8 +564,8 @@ void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
     const int minRowHeight = rows == 1 && titleFont.Get() ? titleFont->height + 6 : 12;
     const int rowHeight = Clamp(minRowHeight, 16, screenHeight / rows);
     const int height = rows * (rowHeight - 1) + 1;
-    const int left = std::max(0, screenWidth - width - sideMargin) - dlg->GetX();
-    const int top = screenHeight - height - bottomMargin - dlg->GetY();
+    const int left = offsetX + std::max(0, screenWidth - width - sideMargin);
+    const int top = offsetY + screenHeight - height - bottomMargin;
     m_assemblyTitle.x = left;
     m_assemblyTitle.y = top;
     m_assemblyTitle.fixedWidth = titleWidth;

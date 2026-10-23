@@ -1,11 +1,13 @@
-# Assembly_MainPlugin 1.13.1
+# Assembly_MainPlugin 1.13.2
 
 Assembly versions use one compact runtime PCX16 block: a `medfont.fnt` title
 on the left and `smalfont.fnt` installed/latest rows on the right. The three
 items have distinct free IDs and share their thin frame edges. The ERA engine
-version is anchored at the bottom left of the game window; the assembly block
-is anchored at the bottom right. This uses the actual draw buffer, including
-when HD Mod centers the menu dialog inside a larger window.
+version is anchored at the bottom left of the menu picture; the assembly block
+is anchored at its bottom right. Both use MainMenuAPI's actual fitted image
+bounds, excluding the surrounding canvas, frame and HD texture. When its
+background renderer is disabled or MainMenuAPI is absent, the native menu
+dialog bounds are used.
 All labels retain the black background and
 gold text. Only the latest version blinks when it is newer than the installed
 version; its frame and click target remain visible.
