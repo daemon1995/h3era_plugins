@@ -46,6 +46,7 @@ class CombatSettings : public IGamePatch
     static int __stdcall CombatManager_DrawFizzleAtStackSummon(HiHook *hook, H3WindowManager *windowManager, int x,
                                                                int y, int width, int height, int drawTime);
     static _LHF_(CombatManager_AutoCombatButton);
+    static _LHF_(CombatManager_TryToCastAutoSpell);
     static _LHF_(CombatManager_EndBattle);
     static void FinishBattleInstantly() noexcept;
     static bool CanFinishBattleInstantly(const H3CombatManager *combat, const H3Main *main) noexcept;

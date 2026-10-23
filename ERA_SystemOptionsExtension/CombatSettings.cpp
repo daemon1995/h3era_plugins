@@ -303,6 +303,18 @@ _LHF_(CombatSettings::CombatManager_AutoCombatButton)
     return EXEC_DEFAULT;
 }
 
+_LHF_(CombatSettings::CombatManager_TryToCastAutoSpell)
+{
+    // The native human-player branch lets hidden battles bypass autoSpells.
+    // Honor the current battle's option here; AI players bypass this hook site.
+    if (!OriginalConfig::Get().autoSpells && !P_AutoSolo)
+    {
+        c->return_address = 0x4230BC;
+        return NO_EXEC_DEFAULT;
+    }
+    return EXEC_DEFAULT;
+}
+
 _LHF_(CombatSettings::CombatManager_EndBattle)
 {
     // WND restored its instant-finish override before the result dialog. Keep
@@ -351,6 +363,9 @@ void CombatSettings::CreatePatches() noexcept
     _pi->WriteHiHook(0x473A00, SPLICE_, EXTENDED_, THISCALL_, CombatManager_ProcessMessage);
     _pi->WriteLoHook(0x47478A, CombatManager_AutoCombatButton);
     _pi->WriteLoHook(0x476DA5, CombatManager_EndBattle);
+
+    // Apply autoSpells to human heroes in quick combat as well as visible auto-combat.
+    _pi->WriteLoHook(0x422FC2, CombatManager_TryToCastAutoSpell);
 
     // combat type selection
     _pi->WriteHiHook(0x75ADD9, SPLICE_, EXTENDED_, THISCALL_, AdventureManager_Battle);
