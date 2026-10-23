@@ -12,6 +12,8 @@ BOOL MenuWidgetManager::IsVisible() const noexcept
 
 void MenuWidgetManager::SetVisible(const BOOL visible, const BOOL forceRedraw)
 {
+    if (!framedBackground)
+        return;
     if (visible != this->isVisible)
     {
         this->isVisible = visible;
@@ -25,6 +27,8 @@ void MenuWidgetManager::SetVisible(const BOOL visible, const BOOL forceRedraw)
         framedBackground->SetPcx(visible         ? framedBackgroundPcx
                                  : placedOutside ? outsideBackupScreenPcx
                                                  : insideBackupScreenPcx);
+        if (visible)
+            framedBackground->Show();
         if (visible && forceRedraw)
         {
             framedBackground->Draw();

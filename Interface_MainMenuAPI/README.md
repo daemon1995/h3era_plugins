@@ -1,4 +1,4 @@
-# Interface_MainMenuAPI 2.1
+# Interface_MainMenuAPI 2.1.1
 
 One plugin owns main-menu background rendering, logos, video positioning and
 the button panel. It replaces Interface_MainMenuLogo,

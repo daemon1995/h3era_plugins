@@ -2,6 +2,7 @@
 
 #include "framework.h"
 #include "VersionUtils.h"
+#include "../Interface_MainMenuAPI/MainMenuConfig.h"
 // #include "webFunctions.cpp"
 
 #include "Shlwapi.h"
@@ -57,7 +58,7 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
         if (readSuccess && lenFromJson > 0)
             characterLength = lenFromJson;
 
-        alwaysDraw = EraJS::readInt("era.main_menu.rendering.redraw_always");
+        alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 
         Era::ReadStrFromIni("ERA", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
         shellExecutePath = h3_TextBuffer;
@@ -370,7 +371,7 @@ void AssemblyInformation::LocalVersion::GetJsonData(const char *jsonSubKey)
 
 EXTERN_C __declspec(dllexport) void GetAssemblyGameVersion(char *buffer)
 {
-    sprintf(buffer, AssemblyInformation::GetAssemblyVesrion());
+    sprintf(buffer, "%s", AssemblyInformation::GetAssemblyVesrion());
 }
 
 const char *AssemblyInformation::GetAssemblyVesrion()
@@ -658,12 +659,12 @@ void AssemblyInformation::CreatePatches() noexcept
 {
     if (!m_isEnabled)
     {
-        //_PI->WriteHiHook(0x04EF00C, THISCALL_, DlgMainMenu_Create);
+        _PI->WriteHiHook(0x04EF00C, THISCALL_, DlgMainMenu_Create);
         _PI->WriteHiHook(0x04EF247, THISCALL_, DlgMainMenu_Create);
 
         _PI->WriteHiHook(0x4FBDA0, THISCALL_, DlgMainMenu_Proc);
 
-        //_PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor);  // MAIN menu
+        _PI->WriteHiHook(0x4EF02B, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
         _PI->WriteHiHook(0x04EF267, THISCALL_, DlgMainMenu_Dtor); // MAIN menu
 
         Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
@@ -709,7 +710,7 @@ void AssemblyInformation::LoadDataFromJson()
         m_eraVersion.GetJsonData("era_version");
         m_localVersion.GetJsonData("current_version");
         m_remoteVersion.GetJsonData("online_version");
-        alwaysDraw = EraJS::readInt("era.main_menu.rendering.redraw_always");
+        alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 
         m_eraVersion.version = Era::GetEraVersion();
         if (m_eraVersion.show || m_localVersion.show || m_remoteVersion.show)
