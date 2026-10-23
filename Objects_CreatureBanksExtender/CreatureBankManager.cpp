@@ -1,4 +1,5 @@
 #include "CreatureBankManager.h"
+#include <algorithm>
 
 namespace defines
 {
@@ -26,7 +27,7 @@ namespace defines
     for (size_t i = 0; i < size; ++i)                                                                                  \
     {                                                                                                                  \
         libc::sprintf(h3_TextBuffer, field##Format, id, i);                                                            \
-        field[i] = eSpell(Era::GetAssocVarIntValue(h3_TextBuffer));                                                    \
+        field[i] = Era::GetAssocVarIntValue(h3_TextBuffer);                                                            \
         Era::SetAssocVarIntValue(h3_TextBuffer, 0);                                                                    \
     }
 // this function loads single items of the stuct from savegame and clears variable
@@ -52,9 +53,15 @@ inline int ReadJsonInt(LPCSTR format, const int arg, const int arg2, const int a
     return EraJS::readInt(H3String::Format(format, arg, arg2, arg3).String());
 }
 
+static int ValidateSpellId(const int spellId, const int spellCount) noexcept
+{
+    // Invalid IDs disable the reward instead of selecting another spell.
+    return spellId >= 0 && spellId < spellCount ? spellId : int(eSpell::NONE);
+}
+
 // inits creature custom bank from predefined setup at the map start
 
-INT CustomRewardSetupState::maxArtId = h3::limits::ARTIFACTS;
+INT CustomRewardSetupState::maxArtId = h3::limits::ARTIFACTS - 1;
 
 CustomRewardSetupState::CustomRewardSetupState(const INT creatureBankType, const UINT stateId) noexcept
     : stateId(stateId)
@@ -70,10 +77,12 @@ CustomRewardSetupState::CustomRewardSetupState(const INT creatureBankType, const
         this->customDefName = customDefName;
     }
 
-    mithrilAmount =
-        ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankType, stateId, MITHRIL_ID);
+    mithrilAmount = Clamp(
+        0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.resources.%d", creatureBankType, stateId, MITHRIL_ID),
+        INT32_MAX);
 
-    experience = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.experience", creatureBankType, stateId);
+    experience =
+        Clamp(0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.experience", creatureBankType, stateId), INT32_MAX);
     spellPoints =
         Clamp(0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.spellPoints", creatureBankType, stateId), 999);
 
@@ -85,9 +94,10 @@ CustomRewardSetupState::CustomRewardSetupState(const INT creatureBankType, const
     {
         morale = Clamp(-3, _morale, 3);
     }
-    revealRadius = ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.revealRadius", creatureBankType, stateId);
+    revealRadius = Clamp(0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.revealRadius", creatureBankType, stateId),
+                         INT32_MAX);
 
-    for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+    for (size_t i = 0; i < ARTIFACTS_AMOUNT; i++)
     {
         const int artId = EraJS::readInt(
             H3String::Format("RMG.objectGeneration.16.%d.states.%d.artifactIds.%d", creatureBankType, stateId, i)
@@ -97,17 +107,25 @@ CustomRewardSetupState::CustomRewardSetupState(const INT creatureBankType, const
         {
             artifactIds[i] = eArtifact(Clamp(eArtifact::NONE, artId, maxArtId));
         }
+    }
+    for (size_t i = 0; i < SKILLS_AMOUNT; i++)
+    {
         primarySkills[i] = Clamp(
             0, ReadJsonInt("RMG.objectGeneration.16.%d.states.%d.skills.primary.%d", creatureBankType, stateId, i),
-            INT8_MAX);
+            UINT8_MAX);
+    }
 
+    // Use the same patched spell count as reward generation.
+    const int spellCount = ValueAt<unsigned char>(0x4C170D);
+    for (size_t i = 0; i < SPELLS_AMOUNT; i++)
+    {
         const int spellId = EraJS::readInt(
             H3String::Format("RMG.objectGeneration.16.%d.states.%d.spells.%d.id", creatureBankType, stateId, i)
                 .String(),
             readSuccess);
         if (readSuccess)
         {
-            spellsRewards[i].spellId = eSpell(Clamp(eSpell::NONE, spellId, h3::limits::SPELLS));
+            spellsRewards[i].spellId = ValidateSpellId(spellId, spellCount);
         }
         else
         {
@@ -125,11 +143,11 @@ CustomRewardSetupState::CustomRewardSetupState(const INT creatureBankType, const
                 spellsRewards[i].generate = true;
                 if (spellSchool)
                 {
-                    spellsRewards[i].spellSchool = eSpellchool(Clamp(1, spellSchool, h3::eSpellchool::ALL));
+                    spellsRewards[i].spellSchool = eSpellchool(spellSchool & h3::eSpellchool::ALL);
                 }
                 if (spellLevels)
                 {
-                    spellsRewards[i].spellLevels = Clamp(2, spellLevels, spellsRewards[i].spellLevels);
+                    spellsRewards[i].spellLevels = spellLevels & spellsRewards[i].spellLevels;
                 }
                 if (spellFlags)
                 {
@@ -165,50 +183,47 @@ CustomCreatureBank::CustomCreatureBank(const CustomRewardSetupState &setupState,
 
 void CustomCreatureBank::GenerateSpells(const CustomRewardSetupState &setup)
 {
-    const auto &bannedInfo = P_Game->Get()->disabledSpells;
 
-    // init spells generation
-    std::unordered_set<int> spellsSet;
+    const unsigned char bannedSpellsArrayOffset = ValueAt<unsigned char>(0x4C16ED);
+    const auto *bannedInfo = reinterpret_cast<const unsigned char *>(P_Game->Get()) + bannedSpellsArrayOffset;
+    const unsigned char bannedInfoSize = ValueAt<unsigned char>(0x4C170D);
+
+    spells.fill(eSpell::NONE);
+    size_t spellsCount = 0;
+    // The byte-sized count cannot exceed 255; reuse a stack buffer for all reward slots.
+    std::array<int, UINT8_MAX> spellsToSelect;
     for (size_t i = 0; i < SPELLS_AMOUNT; i++)
     {
         const auto &data = setup.spellsRewards[i];
 
-        const eSpell spell = data.spellId;
+        const int spell = data.spellId;
         if (spell != eSpell::NONE)
         {
-            spellsSet.insert(spell);
+            if (std::find(spells.begin(), spells.begin() + spellsCount, spell) == spells.begin() + spellsCount)
+                spells[spellsCount++] = spell;
         }
         else if (data.generate)
         {
-            std::vector<UINT> spellsToSelect;
-            spellsToSelect.reserve(h3::limits::SPELLS);
-            INT spellId = 0;
-            do
+            size_t goodSpellsAmount = 0;
+            for (int spellId = 0; spellId < bannedInfoSize; ++spellId)
             {
                 const auto &spell = P_Spell[spellId];
                 // check if spell isn't added and isn't banned and has required flags
-                if (spellsSet.find(spellId) == spellsSet.end() && !bannedInfo[spellId] &&
-                    spell.flags & data.spellFlags && data.spellLevels & (1 << spell.level) &&
-                    data.spellSchool & spell.school)
+                if (!bannedInfo[spellId] && (spell.flags & data.spellFlags) &&
+                    (data.spellLevels & (1u << spell.level)) && (data.spellSchool & spell.school) &&
+                    std::find(spells.begin(), spells.begin() + spellsCount, spellId) == spells.begin() + spellsCount)
                 {
-                    spellsToSelect.emplace_back(spellId);
+                    spellsToSelect[goodSpellsAmount++] = spellId;
                 }
-            } while (++spellId < h3::limits::SPELLS);
+            }
 
-            // add spell to set if exist
-            if (const size_t goodSpellsAmount = spellsToSelect.size())
+            // Keep one random draw per generated reward, including a single available candidate.
+            if (goodSpellsAmount)
             {
-                spellsSet.insert(spellsToSelect[H3Random::RandBetween(0, goodSpellsAmount - 1)]);
+                spells[spellsCount++] = spellsToSelect[H3Random::RandBetween(0, goodSpellsAmount - 1)];
             }
         }
     }
-
-    volatile int i = 0;
-    for (const auto spell : spellsSet)
-    {
-        spells[i++] = eSpell(spell);
-    }
-    spellsSet.clear();
 }
 
 void CustomCreatureBank::WriteSaveData() const noexcept
@@ -254,6 +269,13 @@ CustomCreatureBank::CustomCreatureBank(const int creatureBankId)
 
     LOAD_INDEXED_FIELD(primarySkills, SKILLS_AMOUNT)
     LOAD_INDEXED_FIELD(spells, SPELLS_AMOUNT)
+
+    for (auto &skill : primarySkills)
+        skill = Clamp(0, static_cast<int>(skill), UINT8_MAX);
+
+    const int spellCount = ValueAt<unsigned char>(0x4C170D);
+    for (auto &spell : spells)
+        spell = ValidateSpellId(spell, spellCount);
 }
 
 void CreatureBankManager::Resize(const size_t size) noexcept
@@ -265,36 +287,7 @@ void CreatureBankManager::Resize(const size_t size) noexcept
     customPositions.resize(size);
     customRewardSetups.resize(size);
 
-    // init customRewardSetups for default banks properly
-    for (size_t creatureBankType = m_size; creatureBankType < size; ++creatureBankType)
-    {
-        for (size_t i = 0; i < STATES_AMOUNT; ++i)
-        {
-            customRewardSetups[creatureBankType][i] = CustomRewardSetupState(creatureBankType, i);
-        }
-    }
     m_size = size;
-}
-
-void CreatureBankManager::Reserve(const size_t size) noexcept
-{
-    monsterAwards.reserve(size);
-    monsterGuards.reserve(size);
-    setups.reserve(size);
-    isBankSettings.reserve(size);
-    customPositions.reserve(size);
-    customRewardSetups.reserve(size);
-}
-
-void CreatureBankManager::ShrinkToFit() noexcept
-{
-    monsterAwards.shrink_to_fit();
-    monsterGuards.shrink_to_fit();
-    setups.shrink_to_fit();
-    isBankSettings.shrink_to_fit();
-    customPositions.shrink_to_fit();
-    customRewardSetups.shrink_to_fit();
-    m_size = monsterAwards.size();
 }
 
 int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumber, const INT16 maxSubtype)
@@ -303,7 +296,7 @@ int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumbe
     int addedBanksNumber = 0;
 
     const int maxMonId = IntAt(0x4A1657) - 1;
-    CustomRewardSetupState::maxArtId = IntAt(0x49DD8E + 2) / 4;
+    CustomRewardSetupState::maxArtId = IntAt(0x49DD8E + 2) / 4 - 1;
 
     // init  default positions
     std::array<int, 14> defaultPositions{};
@@ -316,10 +309,9 @@ int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumbe
     CopyDefaultData(defaultBanksNumber, defaultPositions);
 
     bool trSuccess = false;
-    int guardianTypes[GUARDES_AMOUNT] = {-1, -1, -1, -1, -1};
 
     //  allocate space for new creature banks
-    for (INT16 cbId = 0; cbId < banksAmount; cbId++)
+    for (int cbId = 0; cbId < banksAmount; cbId++)
     {
         const int objectType = GetCreatureBankObjectType(cbId);
         const int objectSubtype = objectType == eObject::CREATURE_BANK ? cbId : 0;
@@ -447,15 +439,11 @@ int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumbe
             }
         }
 
-        // init custom rewards
-        std::array<CustomRewardSetupState, STATES_AMOUNT> customReward{[cbId]() {
-            std::array<CustomRewardSetupState, STATES_AMOUNT> arr;
-            for (size_t i = 0; i < STATES_AMOUNT; ++i)
-            {
-                arr[i] = CustomRewardSetupState(cbId, i);
-            }
-            return arr;
-        }()};
+        // Read each reward state once, directly into the manager's settings array.
+        for (size_t i = 0; i < STATES_AMOUNT; ++i)
+        {
+            customRewardSetups[cbId][i] = CustomRewardSetupState(cbId, i);
+        }
 
         // placement troops in combat
 
@@ -492,42 +480,42 @@ int CreatureBankManager::LoadCreatureBanksFromJson(const INT16 defaultBanksNumbe
             }
         }
 
-        setups[cbId] = setup;
-        customRewardSetups[cbId] = customReward;
         isBankSettings[cbId] = isBankSetting;
         customPositions[cbId] = positions;
 
         if (cbId >= defaultBanksNumber)
         {
-            libc::memcpy(monsterGuards[cbId].data(), &setup.states[0].guardians.type[0], sizeof(guardianTypes));
+            libc::memcpy(monsterGuards[cbId].data(), &setup.states[0].guardians.type[0], sizeof(int) * GUARDES_AMOUNT);
             // increase number of added banks
             addedBanksNumber++;
         }
         monsterAwards[cbId] = setup.states[0].creatureRewardType;
     }
-    // patch memory to use new arrays
+    // The game keeps these addresses: do not resize or shrink the arrays after publishing them.
     if (addedBanksNumber > 0)
     {
         ValueAt<int *>(0x47A4A8 + 3) = monsterAwards.data();
         ValueAt<int *>(0x47A4AF + 3) = monsterGuards[0].data();
     }
 
-    ShrinkToFit();
-
     return addedBanksNumber;
 }
 
 const CustomCreatureBank *CreatureBankManager::GetCustomCreatureBank(const H3MapItem *mapItem) const noexcept
 {
-    return mapItem->creatureBank.id >= customCreatureBanksVector.size()
+    return !mapItem || mapItem->creatureBank.id >= customCreatureBanksVector.size()
                ? nullptr
                : &customCreatureBanksVector[mapItem->creatureBank.id];
 }
 
 const CustomCreatureBank *CreatureBankManager::GetCustomCreatureBank(const H3CreatureBank *creatureBank) const noexcept
 {
-    const int creatureBankId = P_Game->creatureBanks.GetIndexOf(*creatureBank);
-    return creatureBank ? &customCreatureBanksVector[creatureBankId] : nullptr;
+    if (!creatureBank)
+        return nullptr;
+
+    // GetIndexOf only calculates an index; the custom array may not be populated yet.
+    const UINT creatureBankId = P_Game->creatureBanks.GetIndexOf(*creatureBank);
+    return creatureBankId >= customCreatureBanksVector.size() ? nullptr : &customCreatureBanksVector[creatureBankId];
 }
 void CreatureBankManager::CopyDefaultData(const size_t defaultBanksNumber, const std::array<int, 14> &defaultPositions)
 {

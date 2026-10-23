@@ -2,7 +2,6 @@
 #include "framework.h"
 
 #include <array>
-#include <unordered_set>
 constexpr UINT STATES_AMOUNT = 4;
 constexpr UINT GUARDES_AMOUNT = 5;
 constexpr UINT MITHRIL_ID = 7;
@@ -24,10 +23,10 @@ struct CustomRewardSetupState
     UINT revealRadius = 0;
     eArtifact artifactIds[ARTIFACTS_AMOUNT] = {eArtifact::NONE, eArtifact::NONE, eArtifact::NONE, eArtifact::NONE};
 
-    UINT8 primarySkills[SKILLS_AMOUNT] = {0, 0, 0, 0};
+    UINT primarySkills[SKILLS_AMOUNT] = {};
     struct SpellsReward
     {
-        eSpell spellId = eSpell::NONE;
+        int spellId = eSpell::NONE;
         eSpellchool spellSchool = eSpellchool::ALL;
         DWORD spellLevels = 0x3E;
         DWORD spellFlags = -1;
@@ -37,7 +36,9 @@ struct CustomRewardSetupState
     LPCSTR customDefName = nullptr;
 
   public:
-    CustomRewardSetupState(const INT creatureBankType = 0, const UINT stateId = 0) noexcept;
+    // Resizing the settings array must not read JSON.
+    CustomRewardSetupState() noexcept = default;
+    CustomRewardSetupState(const INT creatureBankType, const UINT stateId) noexcept;
 };
 
 struct CustomCreatureBank
@@ -49,10 +50,6 @@ struct CustomCreatureBank
     type name = defaultValue;                                                                                          \
     static constexpr LPCSTR name##Format = "RMG_CreatureBankId_%d_" #name;
 
-#define DECLARE_INDEXED_FIELD(type, name, size, defaultValue)                                                          \
-    type name[size] = {defaultValue, defaultValue, defaultValue, defaultValue};                                        \
-    static constexpr LPCSTR name##Format = "RMG_CreatureBankId_%d_" #name "_%d";
-
     DECLARE_FIELD(UINT, id, -1)
     DECLARE_FIELD(UINT, stateIndex, -1)
     DECLARE_FIELD(UINT, mithrilAmount, 0)
@@ -62,8 +59,14 @@ struct CustomCreatureBank
     DECLARE_FIELD(INT, morale, 0)
     DECLARE_FIELD(UINT, revealRadius, 0)
 
-    DECLARE_INDEXED_FIELD(UINT8, primarySkills, SKILLS_AMOUNT, 0)
-    DECLARE_INDEXED_FIELD(eSpell, spells, SPELLS_AMOUNT, eSpell::NONE)
+    UINT primarySkills[SKILLS_AMOUNT] = {};
+    static constexpr LPCSTR primarySkillsFormat = "RMG_CreatureBankId_%d_primarySkills_%d";
+    std::array<int, SPELLS_AMOUNT> spells = []() {
+        std::array<int, SPELLS_AMOUNT> result;
+        result.fill(eSpell::NONE);
+        return result;
+    }();
+    static constexpr LPCSTR spellsFormat = "RMG_CreatureBankId_%d_spells_%d";
 
   public:
     // used at initialization of the creature bank
@@ -104,8 +107,6 @@ struct CreatureBankManager
     void CopyDefaultData(const size_t defaultSize, const std::array<int, 14> &defaultPositions);
 
     void Resize(const size_t size) noexcept;
-    void Reserve(const size_t size) noexcept;
-    void ShrinkToFit() noexcept;
 
   public:
     int LoadCreatureBanksFromJson(const INT16 defaultBanksNumber, const INT16 maxSubtype);

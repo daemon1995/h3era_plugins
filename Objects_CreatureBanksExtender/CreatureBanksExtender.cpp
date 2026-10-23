@@ -174,9 +174,10 @@ _LHF_(CreatureBanksExtender::AIHero_GetCreatureBankItemWeight)
         const int maxSpellLevel = hero->secSkill[eSecondary::WISDOM] + 2;
         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
         {
-            const eSpell &spellId = customReward->spells[i];
+            const int spellId = customReward->spells[i];
 
-            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] || P_Spell[spellId].level > maxSpellLevel)
+            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
+                P_Spell[spellId].level > maxSpellLevel)
             {
                 continue;
             }
@@ -235,19 +236,23 @@ _LHF_(CreatureBanksExtender::CrBank_AfterCombatWon)
         for (size_t i = 0; i < SPELLS_AMOUNT; i++)
         {
 
-            const eSpell &spellId = customBank->spells[i];
-            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] || P_Spell[spellId].level > maxSpellLevel)
+            const int spellId = customBank->spells[i];
+            if (spellId == eSpell::NONE || hero->learnedSpells[spellId] ||
+                P_Spell[spellId].level > maxSpellLevel)
             {
                 continue;
             }
-            currentCreatureBank.spellsToLearn[i] = spellId;
+            currentCreatureBank.spellsToLearn[i] = eSpell(spellId);
             // learn spell
             h3functions::HeroLearnSpell(hero, spellId);
         }
     }
+    // The primary skill patch interprets the game's bytes as unsigned values.
+    auto *primarySkills = reinterpret_cast<UINT8 *>(hero->primarySkill);
     for (size_t i = 0; i < SKILLS_AMOUNT; i++)
     {
-        hero->primarySkill[i] += customBank->primarySkills[i];
+        const UINT skill = primarySkills[i];
+        primarySkills[i] = static_cast<UINT8>((std::min)(skill + customBank->primarySkills[i], UINT(252)));
     }
     if (const UINT radius = customBank->revealRadius)
     {
