@@ -38,12 +38,6 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
 
     if (show && readSuccess)
     {
-        sprintf(h3_TextBuffer, "%s.%s.x", BASE_JSON_KEY, jsonSubKey);
-        x = EraJS::readInt(h3_TextBuffer);
-
-        sprintf(h3_TextBuffer, "%s.%s.y", BASE_JSON_KEY, jsonSubKey);
-        y = EraJS::readInt(h3_TextBuffer);
-
         sprintf(h3_TextBuffer, "%s.%s.custom_text", BASE_JSON_KEY, jsonSubKey);
         text = EraJS::read(h3_TextBuffer, readSuccess);
 
@@ -90,8 +84,11 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     H3FontLoader font(fontName);
     constexpr int horizontalPadding = 5;
     constexpr int verticalPadding = 3;
-    const int maxWidth = parentDlg->GetWidth();
-    const int maxHeight = parentDlg->GetHeight();
+    auto *screen = H3WindowManager::Get()->GetDrawBuffer();
+    const int maxWidth = screen ? screen->width : parentDlg->GetWidth();
+    const int maxHeight = screen ? screen->height : parentDlg->GetHeight();
+    const int minX = -parentDlg->GetX();
+    const int minY = -parentDlg->GetY();
     if (!font.Get() || maxWidth <= horizontalPadding * 2 || maxHeight <= verticalPadding * 2)
         return false;
 
@@ -102,7 +99,7 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
                                      : std::max(textWidth + horizontalPadding * 2, labelPcx ? labelPcx->width : 0);
     const int height = std::min(fixedHeight > 0 ? fixedHeight : font->height + verticalPadding * 2, maxHeight);
     const int right = labelPcx ? dlgItem->GetX() + dlgItem->GetWidth()
-                              : Clamp(0, x, maxWidth - width) + width;
+                              : Clamp(minX, x, minX + maxWidth - width) + width;
     const int top = labelPcx ? dlgItem->GetY() : y;
     if (!labelPcx || labelPcx->width != width || labelPcx->height != height)
     {
@@ -117,8 +114,8 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     }
     dlgItem->SetWidth(width);
     dlgItem->SetHeight(height);
-    dlgItem->SetX(Clamp(0, right - width, maxWidth - width));
-    dlgItem->SetY(Clamp(0, top, maxHeight - height));
+    dlgItem->SetX(Clamp(minX, right - width, minX + maxWidth - width));
+    dlgItem->SetY(Clamp(minY, top, minY + maxHeight - height));
 
     // Same runtime text-on-PCX approach as the language selection dialog.
     libc::memset(labelPcx->buffer, 0, labelPcx->buffSize);
@@ -529,20 +526,27 @@ void AssemblyInformation::LoadAssemblyLabelText()
 
 void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
 {
+    auto *screen = H3WindowManager::Get()->GetDrawBuffer();
+    const int screenWidth = screen ? screen->width : dlg->GetWidth();
+    const int screenHeight = screen ? screen->height : dlg->GetHeight();
+    constexpr int sideMargin = 10;
+    constexpr int bottomMargin = 2;
+    m_eraVersion.fixedWidth = std::min(160, screenWidth);
+    m_eraVersion.fixedHeight = 16;
+    m_eraVersion.x = std::min(sideMargin, screenWidth - m_eraVersion.fixedWidth) - dlg->GetX();
+    m_eraVersion.y = screenHeight - m_eraVersion.fixedHeight - bottomMargin - dlg->GetY();
     const int rows = (m_localVersion.show != FALSE) + (m_remoteVersion.show != FALSE);
     m_assemblyTitle.show = rows != 0;
-    if (!rows || dlg->GetWidth() < 40 || dlg->GetHeight() < 40)
+    if (!rows || screenWidth < 40 || screenHeight < 40)
         return;
-    const int width = Clamp(40, mainmenu::config::Int("gem_plugin.main_menu.assembly_version.width", 280), dlg->GetWidth());
-    const int titleWidth = Clamp(20, mainmenu::config::Int("gem_plugin.main_menu.assembly_version.title_width", 130), width - 20);
+    const int width = std::min(280, screenWidth);
+    const int titleWidth = std::min(130, width - 20);
     H3FontLoader titleFont(NH3Dlg::Text::MEDIUM);
     const int minRowHeight = rows == 1 && titleFont.Get() ? titleFont->height + 6 : 12;
-    const int rowHeight = Clamp(minRowHeight, mainmenu::config::Int("gem_plugin.main_menu.assembly_version.row_height", 16), dlg->GetHeight() / rows);
+    const int rowHeight = Clamp(minRowHeight, 16, screenHeight / rows);
     const int height = rows * (rowHeight - 1) + 1;
-    const int requestedX = mainmenu::config::Int("gem_plugin.main_menu.assembly_version.x", -1);
-    const int requestedY = mainmenu::config::Int("gem_plugin.main_menu.assembly_version.y", -1);
-    const int left = Clamp(0, requestedX < 0 ? dlg->GetWidth() - width - 10 : requestedX, dlg->GetWidth() - width);
-    const int top = Clamp(0, requestedY < 0 ? dlg->GetHeight() - height - 2 : requestedY, dlg->GetHeight() - height);
+    const int left = std::max(0, screenWidth - width - sideMargin) - dlg->GetX();
+    const int top = screenHeight - height - bottomMargin - dlg->GetY();
     m_assemblyTitle.x = left;
     m_assemblyTitle.y = top;
     m_assemblyTitle.fixedWidth = titleWidth;

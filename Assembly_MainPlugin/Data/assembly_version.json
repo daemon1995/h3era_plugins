@@ -3,13 +3,8 @@
     "main_menu": {
       "assembly_version": {
         "title": "Assembly version",
-        "x": -1,
         "installed_format": "Installed: %s",
-        "width": 280,
-        "row_height": 16,
-        "title_width": 130,
-        "latest_format": "Latest: %s",
-        "y": -1
+        "latest_format": "Latest: %s"
       }
     }
   }
