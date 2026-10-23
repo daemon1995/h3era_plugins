@@ -51,14 +51,6 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
         sprintf(h3_TextBuffer, "%s.%s.format", BASE_JSON_KEY, jsonSubKey);
         format = EraJS::read(h3_TextBuffer);
 
-        sprintf(h3_TextBuffer, "%s.%s.font", BASE_JSON_KEY, jsonSubKey);
-        LPCSTR fName = EraJS::read(h3_TextBuffer, readSuccess);
-        fontName = readSuccess ? fName : h3::NH3Dlg::Text::MEDIUM;
-        sprintf(h3_TextBuffer, "%s.%s.length_in_px", BASE_JSON_KEY, jsonSubKey);
-        UINT lenFromJson = EraJS::readInt(h3_TextBuffer, readSuccess);
-        if (readSuccess && lenFromJson > 0)
-            characterLength = lenFromJson;
-
         alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 
         Era::ReadStrFromIni("ERA", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
@@ -66,18 +58,78 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
     }
 }
 
-H3DlgText *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
+H3DlgPcx16 *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
 {
-    H3FontLoader fnt(this->fontName);                          // = H3Font::Load(h3::NH3Dlg::Text::MEDIUM);
-    const int itemWidth = fnt->GetMaxLineWidth(text.String()); // text.Length()* characterLength;
-    if (800 - x < itemWidth)
-        x = 800 - itemWidth;
-    if (600 - y < 16)
-        y = 600 - 16;
-    auto it =
-        dlg->CreateText(x, y, itemWidth, fnt->height, text.String(), fnt->GetName(), 7, -1, eTextAlignment::HLEFT);
+    parentDlg = dlg;
+    dlgItem = H3DlgPcx16::Create(0, 0, 1, 1, -1, nullptr);
+    if (!dlgItem || !UpdateImage())
+    {
+        if (dlgItem)
+            dlgItem->Destroy(TRUE);
+        dlgItem = nullptr;
+        parentDlg = nullptr;
+        return nullptr;
+    }
+    dlg->AddItem(dlgItem);
+    return dlgItem;
+}
 
-    return it;
+bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
+{
+    if (!parentDlg || !dlgItem)
+        return false;
+    H3FontLoader font(NH3Dlg::Text::SMALL);
+    constexpr int horizontalPadding = 5;
+    constexpr int verticalPadding = 3;
+    const int maxWidth = parentDlg->GetWidth();
+    const int maxHeight = parentDlg->GetHeight();
+    if (!font.Get() || maxWidth <= horizontalPadding * 2 || maxHeight <= verticalPadding * 2)
+        return false;
+
+    // Keep the right edge and never shrink the backing image: an asynchronous
+    // version update must paint over the entire previous label.
+    const int textWidth = Clamp(1, font->GetMaxLineWidth(text.String()), maxWidth - horizontalPadding * 2);
+    const int width = std::max(textWidth + horizontalPadding * 2, labelPcx ? labelPcx->width : 0);
+    const int height = std::min(font->height + verticalPadding * 2, maxHeight);
+    const int right = labelPcx ? dlgItem->GetX() + dlgItem->GetWidth()
+                              : Clamp(0, x, maxWidth - width) + width;
+    const int top = labelPcx ? dlgItem->GetY() : y;
+    if (!labelPcx || labelPcx->width != width || labelPcx->height != height)
+    {
+        auto *replacement = H3LoadedPcx16::Create(width, height);
+        if (!replacement)
+            return false;
+        dlgItem->SetPcx(nullptr);
+        if (labelPcx)
+            labelPcx->Destroy();
+        labelPcx = replacement;
+        dlgItem->SetPcx(labelPcx);
+    }
+    dlgItem->SetWidth(width);
+    dlgItem->SetHeight(height);
+    dlgItem->SetX(Clamp(0, right - width, maxWidth - width));
+    dlgItem->SetY(Clamp(0, top, maxHeight - height));
+
+    // Same runtime text-on-PCX approach as the language selection dialog.
+    libc::memset(labelPcx->buffer, 0, labelPcx->buffSize);
+    labelPcx->DrawFrame(0, 0, width, height); // Thin, one-pixel frame.
+    if (drawText)
+        font->TextDraw(labelPcx, text.String(), horizontalPadding, verticalPadding,
+                       width - horizontalPadding * 2, height - verticalPadding * 2,
+                       eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
+    return true;
+}
+
+void AssemblyInformation::Version::ReleaseImage() noexcept
+{
+    // Dialog items belong to the game; detach our image before their destructor.
+    if (dlgItem)
+        dlgItem->SetPcx(nullptr);
+    if (labelPcx)
+        labelPcx->Destroy();
+    labelPcx = nullptr;
+    dlgItem = nullptr;
+    parentDlg = nullptr;
 }
 
 void AssemblyInformation::Version::AdjustItemText() noexcept
@@ -346,6 +398,7 @@ const BOOL AssemblyInformation::CompareVersions()
         versionBlinkVisible = true;
         if (isVisible && m_localVersion.dlgItem)
         {
+            m_localVersion.UpdateImage();
             m_localVersion.dlgItem->Show();
             m_localVersion.dlgItem->Draw();
             m_localVersion.dlgItem->Refresh();
@@ -355,6 +408,7 @@ const BOOL AssemblyInformation::CompareVersions()
     {
         // Do not leave the installed version hidden when blinking stops.
         versionBlinkVisible = true;
+        m_localVersion.UpdateImage();
         m_localVersion.dlgItem->Show();
         m_localVersion.dlgItem->Draw();
         m_localVersion.dlgItem->Refresh();
@@ -410,7 +464,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
     Get().isVisible = false;
     for (auto *version : Get().versions)
-        version->dlgItem = nullptr;
+        version->ReleaseImage();
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
 // int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h,
@@ -441,10 +495,33 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
         {
             version->AdjustItemText();
             version->dlgItem = version->AddToDlg(dlg);
-            isVisible = true;
+            isVisible |= version->dlgItem != nullptr;
         }
     }
+    AlignVersionLabels();
+}
 
+void AssemblyInformation::AlignVersionLabels() noexcept
+{
+    auto *installed = m_localVersion.dlgItem;
+    auto *online = m_remoteVersion.dlgItem;
+    if (!installed || !online)
+        return;
+
+    // Keep the configured placement, with a common right edge and a gap
+    // between the installed/online labels, including their frames.
+    const int right = std::max(installed->GetX() + installed->GetWidth(),
+                               online->GetX() + online->GetWidth());
+    installed->SetX(right - installed->GetWidth());
+    online->SetX(right - online->GetWidth());
+    constexpr int gap = 2;
+    if (installed->GetY() + installed->GetHeight() + gap > online->GetY())
+    {
+        const int top = std::max(0, online->GetY() - installed->GetHeight() - gap);
+        installed->SetY(top);
+        online->SetY(std::min(top + installed->GetHeight() + gap,
+                             m_remoteVersion.parentDlg->GetHeight() - online->GetHeight()));
+    }
 }
 
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
@@ -457,7 +534,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
         const AssemblyInformation::Version *activeVersion = nullptr;
         for (auto *ver : instance.versions)
         {
-            H3DlgText *it = ver->dlgItem;
+            H3DlgPcx16 *it = ver->dlgItem;
             if (it && it->IsVisible())
             {
                 if (it == msg->ItemAtPosition(msg->GetDlg()))
@@ -484,7 +561,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
         AssemblyInformation::RemoteVersion &remoteVersion = instance.m_remoteVersion;
 
-        H3DlgText *it = remoteVersion.dlgItem;
+        H3DlgPcx16 *it = remoteVersion.dlgItem;
 
         remoteVersion.ApplyCompletedRequest();
         if (remoteVersion.workDone && it)
@@ -493,10 +570,8 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
             if (it->IsVisible())
             {
                 remoteVersion.AdjustItemText();
-                it->SetText(remoteVersion.text);
-                H3FontLoader fn(remoteVersion.fontName);
-                it->SetWidth(fn->GetMaxLineWidth(remoteVersion.text.String())); // (remoteVersion.text.Length() + 1)*
-                // remoteVersion.characterLength);
+                remoteVersion.UpdateImage();
+                instance.AlignVersionLabels();
                 it->Draw();
                 it->Refresh();
             }
@@ -531,10 +606,9 @@ void AssemblyInformation::UpdateVersionBlink() noexcept
 
     versionBlinkLastUpdate = currentTime;
     versionBlinkVisible = !versionBlinkVisible;
-    if (versionBlinkVisible)
-        m_localVersion.dlgItem->Show();
-    else
-        m_localVersion.dlgItem->Hide();
+    // Blink only the text. Drawing the black backing image erases the old
+    // glyphs while the frame, click target and item visibility stay stable.
+    m_localVersion.UpdateImage(versionBlinkVisible != FALSE);
     m_localVersion.dlgItem->Draw();
     m_localVersion.dlgItem->Refresh();
 }

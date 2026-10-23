@@ -20,10 +20,6 @@ class AssemblyInformation : public IGamePatch
     {
         int x = 0;
         int y = 0;
-        // UINT16 itemId = -1;
-        UINT characterLength = 7;
-
-        const char *fontName = 0;
         const char *format = 0;
 
         H3String version = h3_NullString;
@@ -35,7 +31,9 @@ class AssemblyInformation : public IGamePatch
         BOOL show = false;
         BOOL alwaysDraw = false;
 
-        H3DlgText *dlgItem = nullptr;
+        H3DlgPcx16 *dlgItem = nullptr;
+        H3LoadedPcx16 *labelPcx = nullptr;
+        H3BaseDlg *parentDlg = nullptr;
 
       public:
         virtual void GetJsonData(const char *jsonSubKey);
@@ -44,7 +42,9 @@ class AssemblyInformation : public IGamePatch
 
       public:
         void ClickProcedure() const noexcept;
-        H3DlgText *AddToDlg(H3BaseDlg *dlg) noexcept;
+        H3DlgPcx16 *AddToDlg(H3BaseDlg *dlg) noexcept;
+        bool UpdateImage(bool drawText = true) noexcept;
+        void ReleaseImage() noexcept;
 
     } m_eraVersion;
 
@@ -102,6 +102,7 @@ class AssemblyInformation : public IGamePatch
   private:
     void LoadDataFromJson();
     void UpdateVersionBlink() noexcept;
+    void AlignVersionLabels() noexcept;
 
   public:
     void CreateDlgItems(H3BaseDlg *dlg);
