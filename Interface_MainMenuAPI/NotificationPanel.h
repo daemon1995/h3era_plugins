@@ -150,6 +150,7 @@ struct NotificationPanel
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
     void SetVisible(const BOOL isVisible, const BOOL activateAllNotifications = false) noexcept;
     BOOL ProcessPanel(H3Msg *msg, const BOOL forceRedraw = false) noexcept;
+    bool IsLinkHovered(H3Msg *msg) const noexcept;
     void ReloadLanguageData() noexcept;
     static int __fastcall OnPanelCallerClick(void *msg) noexcept;
     static NotificationPanel *Init(H3BaseDlg *parrent, const int x = 1, const int y = 1, const int width = 400,

@@ -31,6 +31,7 @@
     <ClInclude Include="UserNotification.h" />
     <ClInclude Include="VersionUtils.h" />
     <ClInclude Include="..\headers\EraPluginsAPI\NotificationLinks.hpp" />
+    <ClInclude Include="..\headers\EraPluginsAPI\MainMenuCursor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

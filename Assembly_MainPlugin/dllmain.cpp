@@ -4,7 +4,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "1.12.1";
+const char *PLUGIN_VERSION = "1.12.2";
 const char *INSTANCE_NAME = "EraPlugin.AssemblyInformation.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 //	const char* PROJECT_NAME = "$(ProjectName)";

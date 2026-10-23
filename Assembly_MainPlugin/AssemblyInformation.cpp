@@ -3,6 +3,7 @@
 #include "framework.h"
 #include "VersionUtils.h"
 #include "../headers/EraPluginsAPI/NotificationLinks.hpp"
+#include "../headers/EraPluginsAPI/MainMenuCursor.h"
 #include "../Interface_MainMenuAPI/MainMenuConfig.h"
 // #include "webFunctions.cpp"
 
@@ -61,7 +62,15 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
 H3DlgPcx16 *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
 {
     parentDlg = dlg;
-    dlgItem = H3DlgPcx16::Create(0, 0, 1, 1, -1, nullptr);
+    int itemId = 29000;
+    while (itemId <= 32767 && dlg->GetH3DlgItem(itemId))
+        ++itemId;
+    if (itemId > 32767)
+    {
+        parentDlg = nullptr;
+        return nullptr;
+    }
+    dlgItem = H3DlgPcx16::Create(0, 0, 1, 1, itemId, nullptr);
     if (!dlgItem || !UpdateImage())
     {
         if (dlgItem)
@@ -526,8 +535,10 @@ void AssemblyInformation::AlignVersionLabels() noexcept
 
 int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 {
+    mainmenu::CursorRequest cursor(msg);
     auto &instance = Get();
     BOOL setCustomCursor = false;
+    auto *hovered = msg->ItemAtPosition(msg->GetDlg());
 
     if (instance.isVisible)
     {
@@ -537,7 +548,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
             H3DlgPcx16 *it = ver->dlgItem;
             if (it && it->IsVisible())
             {
-                if (it == msg->ItemAtPosition(msg->GetDlg()))
+                if (it == hovered && !ver->shellExecutePath.Empty())
                 {
                     activeVersion = ver;
                 }
@@ -582,16 +593,13 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
         instance.UpdateVersionBlink();
     }
 
-    if (setCustomCursor)
-    {
-        P_MouseManager->SetCursor(3, 0);
-    }
-    else if (msg->GetX()) // check if mouse isn't reset
-    {
-        P_MouseManager->DefaultCursor();
-    }
-
-    return FASTCALL_1(int, h->GetDefaultFunc(), msg);
+    // The outermost menu hook applies the combined request, in either plugin
+    // order. Assembly also works independently without MainMenuAPI.
+    cursor.RequestHand(setCustomCursor != FALSE);
+    const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
+    if (result != 2 && cursor.IsOwner() && (msg->GetX() || cursor.WantsHand()))
+        mainmenu::ApplyHandCursor(cursor.WantsHand());
+    return result;
 }
 
 void AssemblyInformation::UpdateVersionBlink() noexcept

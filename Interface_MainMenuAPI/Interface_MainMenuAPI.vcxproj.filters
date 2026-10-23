@@ -51,6 +51,9 @@
     <ClInclude Include="NotificationPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\MainMenuCursor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\headers\EraPluginsAPI\NotificationLinks.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

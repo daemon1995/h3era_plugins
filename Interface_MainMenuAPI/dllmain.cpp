@@ -1,9 +1,10 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "framework.h"
+#include "../headers/EraPluginsAPI/MainMenuCursor.h"
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "2.2";
+const char *PLUGIN_VERSION = "2.2.1";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -32,23 +33,22 @@ int __stdcall DlgMainMenu_NewLoad_Dtor(HiHook *h, H3BaseDlg *dlg)
 int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 {
     MainMenuGraphics::DrawLogo(msg);
-    bool notificationCursor = false;
+    mainmenu::CursorRequest cursor(msg);
     if (auto *panel = NotificationPanel::instance)
     {
         if (panel->parentDlg == msg->GetDlg())
         {
-            if (msg->GetX())
-                P_MouseManager->DefaultCursor();
-            notificationCursor = panel->ProcessPanel(
+            cursor.RequestHand(panel->IsLinkHovered(msg));
+            panel->ProcessPanel(
                 msg, mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false));
         }
     }
     const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
     if (result != 2)
     {
-        if (notificationCursor)
-            P_MouseManager->SetCursor(3, 0);
         MenuWidgetManager::Get().HandleEvent(msg);
+        if (cursor.IsOwner() && (msg->GetX() || cursor.WantsHand()))
+            mainmenu::ApplyHandCursor(cursor.WantsHand());
     }
     return result;
 }

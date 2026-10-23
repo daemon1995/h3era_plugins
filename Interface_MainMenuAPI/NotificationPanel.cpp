@@ -813,6 +813,13 @@ int __fastcall NotificationPanel::OnPanelCallerClick(void *msg) noexcept
     return true;
 }
 
+bool NotificationPanel::IsLinkHovered(H3Msg *msg) const noexcept
+{
+    return msg && msg->GetDlg() == parentDlg && isVisible && currentModInfo &&
+           currentModInfo->externalLink && currentModInfo->modNameDlgText &&
+           currentModInfo->modNameDlgText == msg->ItemAtPosition(parentDlg);
+}
+
 BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept
 {
     if (!isVisible || !notificationsTotal)
@@ -890,7 +897,7 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
         {
 
             // set cursor to hand
-            result = (currentModInfo && currentModInfo->modNameDlgText == processItem && currentModInfo->externalLink);
+            result = IsLinkHovered(msg);
 
             if (result && msg->IsLeftDown())
             {
