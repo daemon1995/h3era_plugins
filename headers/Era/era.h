@@ -338,8 +338,9 @@ ERA_API void* (__stdcall *_Hook) (TPlugin plugin, void* Addr, THookHandler Handl
 void* Splice (void* OrigFunc, void* HandlerFunc, int CallingConv, int NumArgs, int* CustomParam = nullptr, void** AppliedPatch = nullptr);
 ERA_API void* (__stdcall *_Splice) (TPlugin plugin, void* OrigFunc, void* HandlerFunc, int CallingConv, int NumArgs, int* CustomParam, void** AppliedPatch);
 
-/** Writes Count bytes from Src buffer to Dst code block */
-ERA_API void (__stdcall *WriteAtCode) (int Count, void* Src, void* Dst);
+/** Writes Count bytes from Src buffer to Dst code block using the connected plugin. Returns true on success. */
+bool WriteAtCode (int Count, void* Src, void* Dst);
+ERA_API bool (__stdcall *_WriteAtCode) (TPlugin plugin, int Count, void* Src, void* Dst);
 
 /** Returns applied patch size in bytes (number of ovewritten bytes) */
 ERA_API int (__stdcall *GetAppliedPatchSize) (void* AppliedPatch);

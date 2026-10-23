@@ -16,6 +16,20 @@ using RegisterObjectType = int(__stdcall *)(int type, int subtype, int drawOnMin
 // Returns -1 for neutral, 0..7 for a player, -2 for an invalid/unregistered object.
 using GetObjectOwner = int(__stdcall *)(int x, int y, int z);
 
+// Glow uses a separate type registry. enabled=0 disables a type/subtype; 1 enables it.
+// Exact subtypes override ANY_SUBTYPE; overrides are cleared when leaving/loading a map.
+// Custom types must use the native visitors mask in setup bits 5..12.
+using SetObjectGlow = int(__stdcall *)(int type, int subtype, int enabled);
+using SetObjectGlowEnabled = int(__stdcall *)(int enabled);
+using GetObjectGlowEnabled = int(__stdcall *)();
+
+inline SetObjectGlowEnabled FindObjectGlowControl() noexcept
+{
+    const auto module = GetModuleHandleA(PLUGIN_NAME);
+    return module ? reinterpret_cast<SetObjectGlowEnabled>(GetProcAddress(module, "Erm_SetObjectGlowEnabled"))
+                  : nullptr;
+}
+
 // Geometry API v1 preserves blocked cells and every entrance after aligning the primary entrance.
 using GetObjectReplacementApiVersion = int(__stdcall *)();
 // Writes 15 integers; layout is documented in API_ErmFunctions/OBJECT_REPLACEMENT.md.

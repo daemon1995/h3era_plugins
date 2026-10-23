@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #if (defined(_MSVC_LANG) && _MSVC_LANG < 201703L) || (!defined(_MSVC_LANG) && __cplusplus < 201703L)
 #error JsonOverridesSchema.hpp requires C++17; include eraJson.hpp for the compatible reader API.
 #endif
@@ -8,6 +8,14 @@
 #define ERA_ARTIFACT_FIELDS(X) \
     X(name) X(cost) X(position) X(type) X(description) \
     X(comboArtifactId) X(partOfComboArtifactId) X(disabled) X(hasSpell)
+
+#define ERA_HERO_DATA_FIELDS(X) \
+    X(isFemale) X(race) X(heroClass) X(hasSpellbook) X(startingSpell) X(armyType) \
+    X(smallPortrait) X(largePortrait) X(roeHero) X(expansionHero) X(campaignHero)
+
+#define ERA_SPELL_FIELDS(X) \
+    X(type) X(soundName) X(animationIndex) X(flags) X(name) X(shortName) X(level) X(school) \
+    X(spEffect) X(manaCost) X(baseValue) X(chanceToGet) X(aiValue) X(description)
 
 namespace EraJS
 {
@@ -20,20 +28,13 @@ struct ArtifactSchema
 };
 inline bool ValidArtifactNumber(LPCSTR key, long long value, int artifactCount, int combinationCount)
 {
-    if (key == ArtifactSchema::cost) return value >= 0;
-    if (key == ArtifactSchema::disabled || key == ArtifactSchema::hasSpell) return value == 0 || value == 1;
-    if (key == ArtifactSchema::type) return value >= 0 && (value & ~31LL) == 0;
-    if (key == ArtifactSchema::comboArtifactId) return value >= -1 && value < combinationCount;
-    if (key == ArtifactSchema::partOfComboArtifactId) return value >= -1 && value < artifactCount;
-    if (key == ArtifactSchema::position)
-    {
-        if (value >= 0 && value <= 14) return true;
-        switch (value)
-        {
-        case 65: case 1334: case 1339: case 16771: case 21732: case 117033: case 35338: case 21748: return true;
-        default: return false;
-        }
-    }
+    if (!key) return false;
+    if (std::strcmp(key, ArtifactSchema::cost) == 0) return value >= 0;
+    if (std::strcmp(key, ArtifactSchema::disabled) == 0 || std::strcmp(key, ArtifactSchema::hasSpell) == 0) return value == 0 || value == 1;
+    if (std::strcmp(key, ArtifactSchema::type) == 0) return value >= 0 && (value & ~31LL) == 0;
+    if (std::strcmp(key, ArtifactSchema::comboArtifactId) == 0) return value >= -1 && value < combinationCount;
+    if (std::strcmp(key, ArtifactSchema::partOfComboArtifactId) == 0) return value >= -1 && value < artifactCount;
+    if (std::strcmp(key, ArtifactSchema::position) == 0) return value >= 0 && value <= 14;
     return true;
 }
 template <typename T> inline void ReadArtifactField(T &field, LPCSTR key, int id, int artifactCount, int combinationCount)
@@ -63,6 +64,18 @@ template <typename Creature, typename Visitor> inline void VisitCreatureText(con
     visitor("singular", creature.nameSingular);
     visitor("plural", creature.namePlural);
     visitor("description", creature.description);
+}
+template <typename Hero, typename Visitor> inline void VisitHeroData(const Hero &hero, Visitor visitor)
+{
+#define ERA_HERO_VISIT(field) visitor(#field, hero.field);
+    ERA_HERO_DATA_FIELDS(ERA_HERO_VISIT)
+#undef ERA_HERO_VISIT
+}
+template <typename Spell, typename Visitor> inline void VisitSpell(const Spell &spell, Visitor visitor)
+{
+#define ERA_SPELL_VISIT(field) visitor(#field, spell.field);
+    ERA_SPELL_FIELDS(ERA_SPELL_VISIT)
+#undef ERA_SPELL_VISIT
 }
 inline void ReadCreatureDescription(LPCSTR &target, int id)
 {

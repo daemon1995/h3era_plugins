@@ -102,13 +102,13 @@ ERA_IMPORT(SplitMix32);
 ERA_IMPORT(ToStaticStr);
 ERA_IMPORT(trStatic);
 ERA_IMPORT(trTemp);
-ERA_IMPORT(WriteAtCode);
 ERA_IMPORT(WriteLog);
 ERA_IMPORT(WriteSavegameSection);
 ERA_IMPORT(WriteStrToIni);
 ERA_IMPORT_RENAMED(GetVersion, GetEraVersion);
 ERA_IMPORT_RENAMED(Hook, _Hook);
 ERA_IMPORT_RENAMED(Splice, _Splice);
+ERA_IMPORT_RENAMED(WriteAtCode, _WriteAtCode);
 ERA_IMPORT_RENAMED(tr, _tr);
 
 std::string GetModuleFileName(HINSTANCE hInstance)
@@ -163,6 +163,11 @@ void *Hook(void *Addr, THookHandler HandlerFunc, void **AppliedPatch, int MinCod
 void *Splice(void *OrigFunc, void *HandlerFunc, int CallingConv, int NumArgs, int *CustomParam, void **AppliedPatch)
 {
     return _Splice(plugin, OrigFunc, HandlerFunc, CallingConv, NumArgs, CustomParam, AppliedPatch);
+}
+
+bool WriteAtCode(int Count, void *Src, void *Dst)
+{
+    return _WriteAtCode(plugin, Count, Src, Dst);
 }
 
 static_str tr(const char *key)

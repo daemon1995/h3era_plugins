@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifdef ERA_MAPED
 #include "eramap.h"
 #else
@@ -12,7 +12,7 @@
 #include <limits>
 #include <type_traits>
 #ifdef ERA_TRACK_TEXT_OVERRIDES
-#include <unordered_map>
+#include "../EraPluginsAPI/TextOverridesAPI.h"
 #endif
 #include <algorithm>
 
@@ -139,57 +139,12 @@ inline double readFloat(const std::string &key) noexcept { return readFloat(key.
 
 enum class ReadStatus { Missing, Invalid, Applied };
 
-// Only the game adapter opts in. Slots must remain alive until ForgetTextRange().
+// Process-owned bindings live in the shared text service.
 #ifdef ERA_TRACK_TEXT_OVERRIDES
-struct TextBinding
-{
-    LPCSTR original;
-    LPCSTR published;
-    std::string key, alias;
-};
-inline std::unordered_map<LPCSTR *, TextBinding> &TextBindings()
-{
-    static std::unordered_map<LPCSTR *, TextBinding> bindings;
-    return bindings;
-}
-inline void TrackText(LPCSTR &target, LPCSTR key, LPCSTR alias)
-{
-    auto &bindings = TextBindings();
-    auto found = bindings.find(&target);
-    if (found == bindings.end())
-        bindings.emplace(&target, TextBinding{target, target, key, alias ? alias : ""});
-    else
-    {
-        if (target != found->second.published) found->second.original = target;
-        found->second.key = key;
-        found->second.alias = alias ? alias : "";
-    }
-}
 inline void ForgetTextRange(const void *base, size_t bytes)
-{
-    const uintptr_t address = reinterpret_cast<uintptr_t>(base);
-    auto &bindings = TextBindings();
-    for (auto it = bindings.begin(); it != bindings.end();)
-    {
-        const uintptr_t slot = reinterpret_cast<uintptr_t>(it->first);
-        if (slot >= address && slot - address < bytes) it = bindings.erase(it);
-        else ++it;
-    }
-}
+{ if (const auto *api = era_text::GetApi()) api->forget(base, bytes); }
 inline void ReloadTextOverrides()
-{
-    for (auto &entry : TextBindings())
-    {
-        auto &binding = entry.second;
-        // Another plugin owns a newer value: do not overwrite it or restore an old snapshot.
-        if (*entry.first != binding.published) continue;
-        bool found = false;
-        LPCSTR value = read(binding.key, found);
-        if (!found && !binding.alias.empty()) value = read(binding.alias, found);
-        *entry.first = found ? value : binding.original;
-        binding.published = *entry.first;
-    }
-}
+{ if (const auto *api = era_text::GetApi()) api->reload(); }
 #else
 inline void ForgetTextRange(const void *, size_t) {}
 #endif
@@ -205,24 +160,17 @@ template <typename T> inline ReadStatus ReadValue(T &target, LPCSTR key, LPCSTR 
 template <> inline ReadStatus ReadValue<LPCSTR>(LPCSTR &target, LPCSTR key, LPCSTR alias)
 {
 #ifdef ERA_TRACK_TEXT_OVERRIDES
-    TrackText(target, key, alias);
+    if (const auto *api = era_text::GetApi())
+    {
+        const int result = api->apply(&target, key, alias);
+        return result == 1 ? ReadStatus::Applied : result == 0 ? ReadStatus::Missing : ReadStatus::Invalid;
+    }
 #endif
     bool found = false;
     const char *value = read(key, found);
     if (!found && alias) value = read(alias, found);
-    if (!found)
-    {
-#ifdef ERA_TRACK_TEXT_OVERRIDES
-        auto &binding = TextBindings().at(&target);
-        target = binding.original;
-        binding.published = target;
-#endif
-        return ReadStatus::Missing;
-    }
+    if (!found) return ReadStatus::Missing;
     target = value;
-#ifdef ERA_TRACK_TEXT_OVERRIDES
-    TextBindings().at(&target).published = target;
-#endif
     return ReadStatus::Applied;
 }
 template <typename T> inline BOOL ReadSingleValue(T &target, LPCSTR key, bool &success)

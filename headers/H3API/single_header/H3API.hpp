@@ -3383,15 +3383,15 @@ namespace h3
 
 	/**
 	 * @brief 8x6 mask for properties and drawing of adventure map objects
-	 * (0,0) is bottom right corner and corresponds to bit 0
-	 * bit increments go left to right and then bottom to top
+	 * (0,0) is bottom right corner and corresponds to bit 47
+	 * raw bit indices increase left to right and then top to bottom
 	 *
-	 * 47:(7,5) 46:(6,5) 45:(5,5) 44:(4,5) 43:(3,5) 42:(2,5) 41:(1,5) 40:(0,5)
-	 * 39:(7,4) 38:(6,4) 37:(5,4) 36:(4,4) 35:(3,4) 34:(2,4) 33:(1,4) 32:(0,4)
-	 * 31:(7,3) 30:(6,3) 29:(5,3) 28:(4,3) 27:(3,3) 26:(2,3) 25:(1,3) 24:(0,3)
-	 * 23:(7,2) 22:(6,2) 21:(5,2) 20:(4,2) 19:(3,2) 18:(2,2) 17:(1,2) 16:(0,2)
-	 * 15:(7,1) 14:(6,1) 13:(5,1) 12:(4,1) 11:(3,1) 10:(2,1)  9:(1,1)  8:(0,1)
-	 *  7:(7,0)  6:(6,0)  5:(5,0)  4:(4,0)  3:(3,0)  2:(2,0)  1:(1,0)  0:(0,0)
+	 *  0:(7,5)  1:(6,5)  2:(5,5)  3:(4,5)  4:(3,5)  5:(2,5)  6:(1,5)  7:(0,5)
+	 *  8:(7,4)  9:(6,4) 10:(5,4) 11:(4,4) 12:(3,4) 13:(2,4) 14:(1,4) 15:(0,4)
+	 * 16:(7,3) 17:(6,3) 18:(5,3) 19:(4,3) 20:(3,3) 21:(2,3) 22:(1,3) 23:(0,3)
+	 * 24:(7,2) 25:(6,2) 26:(5,2) 27:(4,2) 28:(3,2) 29:(2,2) 30:(1,2) 31:(0,2)
+	 * 32:(7,1) 33:(6,1) 34:(5,1) 35:(4,1) 36:(3,1) 37:(2,1) 38:(1,1) 39:(0,1)
+	 * 40:(7,0) 41:(6,0) 42:(5,0) 43:(4,0) 44:(3,0) 45:(2,0) 46:(1,0) 47:(0,0)
 	 *
 	 */
 	struct H3ObjectMask
@@ -3496,20 +3496,20 @@ namespace h3
 		 */
 		_H3API_ const H3Bitfield& operator[](UINT index) const;
 		/**
-		 * @brief an incrementable iterator matching H3 access order start
-		 * @return iterator for bottom right corner
+		 * @brief an incrementable iterator over ascending raw bit indices
+		 * @return iterator for raw bit 0, the top left corner
 		 */
 		_H3API_ iterator begin();
 		/**
-		 * @brief an incrementable iterator matching H3 access order end
-		 * @return iterator for 6th row (counting from 0)
+		 * @brief end of ascending raw bit iteration
+		 * @return iterator past raw bit 47
 		 */
 		_H3API_ iterator end();
 		/**
 		 * @brief an iterator to the specified position
 		 * allows some extra access e.g.
 		 * mask(0) = true;
-		 * @param index 0..47 starting from bottom right
+		 * @param index raw bit index 0..47 starting from top left
 		 * @return iterator to specified position
 		 */
 		_H3API_ iterator operator()(UINT8 index);
@@ -5114,7 +5114,7 @@ namespace h3
             ALL_SPECIAL  = -2,
 
             /* regular */
-
+			NONE	= -1,
             WOOD    = 0,
             MERCURY = 1,
             ORE     = 2,
@@ -7691,6 +7691,7 @@ namespace h3
         {
             enum ePlayerColors : INT32
             {
+				NONE = -1,
                 RED    = 0,
                 BLUE   = 1,
                 TAN    = 2,
@@ -17086,6 +17087,8 @@ namespace h3
 		_H3API_ H3DlgDefButton* CreateOnOffCheckbox(INT32 x, INT32 y, INT32 id, INT32 frame, INT32 clickFrame = -1);
 		_H3API_ H3DlgDefButton* CreateOKButton(); // adjust for hintBar
 		_H3API_ H3DlgDefButton* CreateOK32Button(INT32 x, INT32 y); // height is 32
+		_H3API_ H3DlgDefButton* CreateOKButton(INT32 x, INT32 y, INT32 id, BOOL closeDialog);
+		_H3API_ H3DlgDefButton* CreateCancelButton(INT32 x, INT32 y, INT32 id, BOOL closeDialog);
 		_H3API_ H3DlgDefButton* CreateCancelButton(); // adjust for hintBar
 		_H3API_ H3DlgDefButton* CreateCancelButton(INT32 x, INT32 y);
 
@@ -17860,6 +17863,7 @@ namespace h3
 									const H3PictureCategories& pic1 = H3PictureCategories(),
 									const H3PictureCategories& pic2 = H3PictureCategories(),
 									const H3PictureCategories& pic3 = H3PictureCategories());
+		static VOID RMC(LPCSTR text) { RMB(text); }
 		/**
 		 * @brief Display a simple dialog box with up to 3 images, shown on Right-Mouse Button click
 		 * @param text Message to be shown
@@ -18151,9 +18155,9 @@ namespace h3
 		/** @brief [0060]*/
 		UINT32                     lastLeftClickTime;
 		/** @brief [0064]*/
-		h3unk8                     isCampaignMaybe;
+		union { h3unk8 isCampaignMaybe; BOOL8 loadGameMode; };
 		/** @brief [0065]*/
-		h3unk8                     isLoadingMaybe;
+		union { h3unk8 isLoadingMaybe; BOOL8 saveGameMode; };
 		/** @brief [0066]*/
 		h3unk8                     _f_66;
 		/** @brief [0068]*/
@@ -19299,6 +19303,7 @@ namespace h3
 		_H3API_ H3RecruitMgr(H3Army& army, BOOL8 is_summoning_portal, H3CreatureSlot16& slot0,
 			H3CreatureSlot16& slot1, H3CreatureSlot16& slot2, H3CreatureSlot16& slot3);
 		_H3API_ H3RecruitMgr(H3Army& army, H3Generator& generator);
+		_H3API_ H3RecruitMgr(H3Town& town, INT32 dwellingLevel);
 		/* Used for war machines */
 		_H3API_ H3RecruitMgr(H3Hero* hero, INT32 type, INT16& resourceAmount);
 		/* Used for war machines */
@@ -25276,7 +25281,7 @@ namespace h3
 	}
 	_H3API_ H3ObjectMask::iterator H3ObjectMask::operator()(UINT8 column, UINT8 row)
 	{
-		return iterator(this, (row << 3) + column); // row * 8 + column
+		return iterator(this, 47 - (row << 3) - column);
 	}
 	_H3API_ H3Bitfield::reference::reference(H3Bitfield* bitfield) :
 		m_bitfield(bitfield), m_position()
@@ -31536,6 +31541,8 @@ namespace h3
         int _h = h;
 		const int backH = back->height;
 		const int backW = back->width;
+        if (backW <= 0 || backH <= 0)
+            return FALSE;
         while (_h > 0)
         {
             int _x = x;
@@ -31543,9 +31550,10 @@ namespace h3
             int _w = w;
             while (_w > 0)
             {
-                back.Get()->DrawToPcx16(0, 0, _w, dh, this, _x, _y, FALSE);
-                _x += backW;
-                _w -= backW;
+                const int dw = (std::min)(backW, _w);
+                back.Get()->DrawToPcx16(0, 0, dw, dh, this, _x, _y, FALSE);
+                _x += dw;
+                _w -= dw;
             }
             _y += backH;
             _h -= backH;
@@ -33490,6 +33498,26 @@ namespace h3
 	{
 		return CreateCancelButton(widthDlg - 25 - 64, heightDlg - 50);
 	}
+	_H3API_ H3DlgDefButton* H3BaseDlg::CreateOKButton(INT32 x, INT32 y, INT32 id, BOOL closeDialog)
+	{
+		auto* button = H3DlgDefButton::Create(x, y, id, NH3Dlg::Assets::OKAY_DEF, 0, 1, closeDialog, NH3VKey::H3VK_ENTER);
+		if (button)
+		{
+			AddItem(H3DlgPcx::Create(x - 1, y - 1, NH3Dlg::Assets::BOX_64_30_PCX));
+			AddItem(button);
+		}
+		return button;
+	}
+	_H3API_ H3DlgDefButton* H3BaseDlg::CreateCancelButton(INT32 x, INT32 y, INT32 id, BOOL closeDialog)
+	{
+		auto* button = H3DlgDefButton::Create(x, y, id, NH3Dlg::Assets::CANCEL_DEF, 0, 1, closeDialog, NH3VKey::H3VK_ESCAPE);
+		if (button)
+		{
+			AddItem(H3DlgPcx::Create(x - 1, y - 1, NH3Dlg::Assets::BOX_64_30_PCX));
+			AddItem(button);
+		}
+		return button;
+	}
 	_H3API_ H3DlgDefButton* H3BaseDlg::CreateCancelButton(INT32 x, INT32 y)
 	{
 		H3DlgDefButton* button = H3DlgDefButton::Create(x, y, eControlId::CANCEL, NH3Dlg::Assets::CANCEL_DEF, 0, 1, TRUE, NH3VKey::H3VK_ESCAPE);
@@ -35103,6 +35131,10 @@ namespace h3
 	_H3API_ VOID H3RecruitMgr::Run()
 	{
 		H3ExecutiveMgr::Get()->StartManager(this);
+	}
+	_H3API_ H3RecruitMgr::H3RecruitMgr(H3Town& town, INT32 dwellingLevel)
+	{
+		THISCALL_4(H3RecruitMgr*, 0x551960, this, &town, dwellingLevel, FALSE);
 	}
 	_H3API_ H3RecruitMgr& H3RecruitMgr::initialize(H3Army& army, BOOL8 is_summoning_portal,
 		INT32 type0, INT16* amount0, INT32 type1, INT16* amount1,
