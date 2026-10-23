@@ -2,82 +2,78 @@
 
 #include "pch.h"
 
+#include "HdTemplateCompatibility.h"
 
+// RunTemplatesListDlg 011533F0
 
-//RunTemplatesListDlg 011533F0
+// адрес для чека инфы 00586921, см EAX
+//
+// itemId справа :
+// кадр дефа размера выбранной карты : 189
+// текст "название миссии" : 100 (похоже что не так)
+// текст имени карты : 100 - без открытых вкладок, 101 - сценарий, 102 - дополнительные опции, 103 - случайная
+// 0057BCCC
+//
+// доступные сценарии : 128
+// дополнительные опции : 129
+// случайная карта : 130
+// hw опции: 131
+// текст "описание миссии" : 105 (точно ли ? )
+// текст описания миссии : FFFFFFFF
+// сложность с пешки до короля : 107 108 109 110 111
 
-//адрес для чека инфы 00586921, см EAX
+// еще опции : ? ? ? (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
+// начать : 186
+// выйти : 188
 //
-//itemId справа :
-//кадр дефа размера выбранной карты : 189
-//текст "название миссии" : 100 (похоже что не так)
-//текст имени карты : 100 - без открытых вкладок, 101 - сценарий, 102 - дополнительные опции, 103 - случайная
-//0057BCCC
 //
-//доступные сценарии : 128
-//дополнительные опции : 129
-//случайная карта : 130
-//hw опции: 131
-//текст "описание миссии" : 105 (точно ли ? )
-//текст описания миссии : FFFFFFFF
-//сложность с пешки до короля : 107 108 109 110 111
+// itemId в random map :
+// текст template слева от hd вкладки : 7003
+// сам скролл вкладки с шаблонами??: 7001
+// hd вкладка с шаблонами : 7002 (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
+// размер карты с S по Undergroung : 281 282 283 284 3003 3004 3005 285
+// игроки(люди или ии) с 1 по рандом : 287 288 289 290 291 292 293 294 295
+// игроки(только ии) с 0 по рандом : 307 308 309 310 311 312 313 314 315
+// командные соглашения : ? ? ? (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
+// тип дорог : 7007 7008 7009 (hd id - шники ? ? ? )
+// доля воды с без воды по рандом : 326 327 328 329
+// сила монстров со слабые по рандом : 331 332 333 334
+// сгенерированные карты : 335
+//
+//
+// itemId в available scenarios :
+// фильтры по размеру с S по все : 137 138 139 140 3000 3001 3002 141
+// фильтры по игрокам до условий поражения : 190 191 192 193 194 195
+// выбранная карта с верхней по нижнюю : 142 - 159
+// слайдер карт вниз - вверх : 151 (в обе стороны)
+//
+//
+// itemId в show advanced options :
+// флаги с красного по розовый : 263 264 265 266 267 268 269 270
+// человек или ии : 102 (? ? ? )
+// стрелка влево смены города : 215 216 217 218 219 220 221 222
+// стрелка вправо смены города : 223 224 225 226 227 228 229 230
+// стрелка влево смены героя : 231 232 233 234 235 236 237 238
+// стрелка вправо смены героя : 239 240 241 242 243 244 245 246
+// стрелка влево смены бонуса : 247 248 249 250 251 252 253 254
+// стрелка вправо смены бонуса : 255 256 257 258 259 260 261 262
+// таймер(вкладка) : 2705 (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
+// слайдер таймер классический : 338 (в обе стороны)
 
-//еще опции : ? ? ? (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
-//начать : 186
-//выйти : 188
-//
-//
-//itemId в random map :
-//текст template слева от hd вкладки : 7003
-//сам скролл вкладки с шаблонами??: 7001
-//hd вкладка с шаблонами : 7002 (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
-//размер карты с S по Undergroung : 281 282 283 284 3003 3004 3005 285
-//игроки(люди или ии) с 1 по рандом : 287 288 289 290 291 292 293 294 295
-//игроки(только ии) с 0 по рандом : 307 308 309 310 311 312 313 314 315
-//командные соглашения : ? ? ? (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
-//тип дорог : 7007 7008 7009 (hd id - шники ? ? ? )
-//доля воды с без воды по рандом : 326 327 328 329
-//сила монстров со слабые по рандом : 331 332 333 334
-//сгенерированные карты : 335
-//
-//
-//itemId в available scenarios :
-//фильтры по размеру с S по все : 137 138 139 140 3000 3001 3002 141
-//фильтры по игрокам до условий поражения : 190 191 192 193 194 195
-//выбранная карта с верхней по нижнюю : 142 - 159
-//слайдер карт вниз - вверх : 151 (в обе стороны)
-//
-//
-//itemId в show advanced options :
-//флаги с красного по розовый : 263 264 265 266 267 268 269 270
-//человек или ии : 102 (? ? ? )
-//стрелка влево смены города : 215 216 217 218 219 220 221 222
-//стрелка вправо смены города : 223 224 225 226 227 228 229 230
-//стрелка влево смены героя : 231 232 233 234 235 236 237 238
-//стрелка вправо смены героя : 239 240 241 242 243 244 245 246
-//стрелка влево смены бонуса : 247 248 249 250 251 252 253 254
-//стрелка вправо смены бонуса : 255 256 257 258 259 260 261 262
-//таймер(вкладка) : 2705 (не триггерит LeftClickProc - в хуке хд - мода до этого следует своя логика)
-//слайдер таймер классический : 338 (в обе стороны)
-
-
-
-//char byte_104A779C = 0;
-//char byte_104A7440 = 0;
+// char byte_104A779C = 0;
+// char byte_104A7440 = 0;
 
 LPCSTR BTN_RMC_HINT_KEY = "XXL.rmcHint.%d";
 LPCSTR COLUMN_MAP_SIZE_KEY = "XXL.mapSizeColumn.%d";
 
-
 // Размеры карт (одна сторона)
-#define MAPSIZE_S   36
-#define MAPSIZE_M   72
-#define MAPSIZE_L  108
+#define MAPSIZE_S 36
+#define MAPSIZE_M 72
+#define MAPSIZE_L 108
 #define MAPSIZE_XL 144
-#define MAPSIZE_H  180
+#define MAPSIZE_H 180
 #define MAPSIZE_XH 216
-#define MAPSIZE_G  252
-
+#define MAPSIZE_G 252
 
 // itemId для сценариев
 
@@ -89,7 +85,6 @@ LPCSTR COLUMN_MAP_SIZE_KEY = "XXL.mapSizeColumn.%d";
 // Номер элемента диалоге - просмотр G-карт.
 #define GMAP_DLGITEM_ID 3002
 
-
 // itemId для случайной карты
 
 // Номер элемента диалоге - просмотр H случайных карт.
@@ -99,20 +94,17 @@ LPCSTR COLUMN_MAP_SIZE_KEY = "XXL.mapSizeColumn.%d";
 // Номер элемента диалоге - просмотр G случайных карт.
 #define GRMAP_DLGITEM_ID 3005
 
-
-void SetRmcHint(H3DlgItem* item, BOOL8 alloc_mem)
+void SetRmcHint(H3DlgItem *item, BOOL8 alloc_mem)
 {
     libc::sprintf(h3_TextBuffer, BTN_RMC_HINT_KEY, item->GetID());
     LPCSTR rmcHint = EraJS::read(h3_TextBuffer);
     item->SetHints(NULL, rmcHint, alloc_mem);
 }
 
-
-
 _LHF_(LoHook_MapSelectDlg_Create_SizeButtons)
 {
     // Список элементов диалога.
-    H3Vector<H3DlgItem*>* items_lst = reinterpret_cast<H3Vector<H3DlgItem*>*>(c->edi);
+    H3Vector<H3DlgItem *> *items_lst = reinterpret_cast<H3Vector<H3DlgItem *> *>(c->edi);
 
     // H-карты.
     items_lst->Append(H3DlgDefButton::Create(211, 52, 41, 33, HMAP_DLGITEM_ID, "SCHGBUT.def", 0, 1, 0, 0));
@@ -127,13 +119,14 @@ _LHF_(LoHook_MapSelectDlg_Create_SizeButtons)
 }
 
 // Обработка кнопок выбора размера в создании части для случайных карт диалога выбора карты.
-void __stdcall HiHook_MapSelectDlg_RandMapDlgCreate(HiHook* h, H3SelectScenarioDialog* this_)
+void __stdcall HiHook_MapSelectDlg_RandMapDlgCreate(HiHook *h, H3SelectScenarioDialog *this_)
 {
+    HdTemplateCompatibility_Ensure();
     // Оригинальные элементы.
     THISCALL_1(void, h->GetDefaultFunc(), this_);
 
     // Диалог.
-    H3Vector<H3DlgItem*>* items_lst = &this_->GetList();
+    H3Vector<H3DlgItem *> *items_lst = &this_->GetList();
 
     // Генерация H-карты.
     items_lst->Append(H3DlgDefButton::Create(230, 81, 41, 33, HRMAP_DLGITEM_ID, "RanSizHG.def", 0, 1, 0, 0));
@@ -144,24 +137,25 @@ void __stdcall HiHook_MapSelectDlg_RandMapDlgCreate(HiHook* h, H3SelectScenarioD
     // Генерация G-карты.
     items_lst->Append(H3DlgDefButton::Create(316, 81, 41, 33, GRMAP_DLGITEM_ID, "RanSizGT.def", 0, 1, 0, 0));
 
-    //byte_104A779C = 0;
-    //byte_104A7440 = 0;
+    HdTemplateCompatibility_Refresh(this_);
+
+    // byte_104A779C = 0;
+    // byte_104A7440 = 0;
 }
 
 // Обработка кнопок выбора размера в показе спика карт.
 _LHF_(LoHook_MapSelectDlg_MapListShow_SizeButtons)
 {
     // Диалог.
-    H3SelectScenarioDialog* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->esi);
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->esi);
 
     // Элемент диалога.
-    H3DlgItem* item;
+    H3DlgItem *item;
 
     // Должны ли элементы быть доступными.
-    bool need_enabled = (!IntAt(0x69959C) 
-        || !DwordAt(0x69D858) 
-        || THISCALL_1(INT8, *(_ptr_*)(*(_ptr_*)DwordAt(0x69D858) + 144), DwordAt(0x69D858))
-        || dlg->saveGameMode);
+    bool need_enabled =
+        (!IntAt(0x69959C) || !DwordAt(0x69D858) ||
+         THISCALL_1(INT8, *(_ptr_ *)(*(_ptr_ *)DwordAt(0x69D858) + 144), DwordAt(0x69D858)) || dlg->saveGameMode);
 
     // H-карты.
     item = dlg->GetH3DlgItem(HMAP_DLGITEM_ID);
@@ -190,12 +184,11 @@ _LHF_(LoHook_MapSelectDlg_MapListShow_SizeButtons)
         item->EnableItem(need_enabled);
     }
 
-
     return EXEC_DEFAULT;
 }
 
 // Обработка новых элементов в скрытии спика карт.
-void __stdcall LoHook_MapSelectDlg_MapListHide(HiHook* h, H3SelectScenarioDialog* this_)
+void __stdcall LoHook_MapSelectDlg_MapListHide(HiHook *h, H3SelectScenarioDialog *this_)
 {
     this_->RemoveControlState(HMAP_DLGITEM_ID, eControlState(6));
     this_->RemoveControlState(XHMAP_DLGITEM_ID, eControlState(6));
@@ -205,12 +198,11 @@ void __stdcall LoHook_MapSelectDlg_MapListHide(HiHook* h, H3SelectScenarioDialog
     THISCALL_1(void, h->GetDefaultFunc(), this_);
 }
 
-
 // Обработка кнопок выбора размера в показе меню настроек ГСК.
 _LHF_(LoHook_MapSelectDlg_RMGShow_SizeButtons)
 {
     // Диалог.
-    H3SelectScenarioDialog* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->esi);
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->esi);
 
     dlg->AddControlState(HRMAP_DLGITEM_ID, eControlState(6));
     dlg->AddControlState(XHRMAP_DLGITEM_ID, eControlState(6));
@@ -219,12 +211,11 @@ _LHF_(LoHook_MapSelectDlg_RMGShow_SizeButtons)
     return EXEC_DEFAULT;
 }
 
-
 // Обработка кнопок выбора размера в скрытии меню настроек ГСК.
 _LHF_(LoHook_MapSelectDlg_RMGHide_SizeButtons)
 {
     // Диалог.
-    H3SelectScenarioDialog* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->esi);
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->esi);
 
     dlg->RemoveControlState(HRMAP_DLGITEM_ID, eControlState(6));
     dlg->RemoveControlState(XHRMAP_DLGITEM_ID, eControlState(6));
@@ -232,7 +223,6 @@ _LHF_(LoHook_MapSelectDlg_RMGHide_SizeButtons)
 
     return EXEC_DEFAULT;
 }
-
 
 // Перерисовка новых кнопок выбора размера карты вместе со всеми.
 _LHF_(LoHook_MapSelectDlg_SizeButtonsRedraw)
@@ -243,15 +233,14 @@ _LHF_(LoHook_MapSelectDlg_SizeButtonsRedraw)
     return EXEC_DEFAULT;
 }
 
-
 // Обработка нажатия кнопок в меню выбора карты.
 _LHF_(LoHook_MapSelectDlg_ButtonClick)
 {
     // Диалог.
-    H3SelectScenarioDialog* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->ebx);
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
 
     // Сообщение на обновление дефа размера карты в правом верхнем углу
-    //H3Msg* msg = reinterpret_cast<H3Msg*>(c->esi);
+    // H3Msg* msg = reinterpret_cast<H3Msg*>(c->esi);
     H3Msg msg;
     msg.command = eMsgCommand::MOUSE_BUTTON;
     msg.subtype = eMsgSubtype::SET_FRAME;
@@ -293,7 +282,7 @@ _LHF_(LoHook_MapSelectDlg_ButtonClick)
             THISCALL_1(void, 0x57F240, dlg);
             dlg->mapInfo.mapDimension = mapDimension;
             P_Game->mapInfo.mapDimension = mapDimension;
-            msg.parameter = reinterpret_cast<void*>(4);
+            msg.parameter = reinterpret_cast<void *>(4);
             THISCALL_2(void, 0x5FF3A0, dlg, &msg);
             // Выход с перерисовкой.
             c->return_address = 0x587277;
@@ -308,7 +297,7 @@ _LHF_(LoHook_MapSelectDlg_ButtonClick)
             THISCALL_1(void, 0x57F240, dlg);
             dlg->mapInfo.mapDimension = mapDimension;
             P_Game->mapInfo.mapDimension = mapDimension;
-            msg.parameter = reinterpret_cast<void*>(5);
+            msg.parameter = reinterpret_cast<void *>(5);
             THISCALL_2(void, 0x5FF3A0, dlg, &msg);
             // Выход с перерисовкой.
             c->return_address = 0x587277;
@@ -323,7 +312,7 @@ _LHF_(LoHook_MapSelectDlg_ButtonClick)
             THISCALL_1(void, 0x57F240, dlg);
             dlg->mapInfo.mapDimension = mapDimension;
             P_Game->mapInfo.mapDimension = mapDimension;
-            msg.parameter = reinterpret_cast<void*>(6);
+            msg.parameter = reinterpret_cast<void *>(6);
             THISCALL_2(void, 0x5FF3A0, dlg, &msg);
             // Выход с перерисовкой.
             c->return_address = 0x587277;
@@ -341,7 +330,7 @@ _LHF_(LoHook_MapSelectDlg_ButtonClick)
         if (itemId < 281)
         {
             return EXEC_DEFAULT;
-        }   
+        }
         if (itemId > 284)
         {
             if (itemId == 285)
@@ -354,7 +343,7 @@ _LHF_(LoHook_MapSelectDlg_ButtonClick)
         }
         dlg->mapInfo.mapDimension = 4 * (9 * itemId - 2520);
         P_Game->mapInfo.mapDimension = 36 * (c->eax - 280);
-        msg.parameter = reinterpret_cast<void*>(c->eax - 281);
+        msg.parameter = reinterpret_cast<void *>(c->eax - 281);
         THISCALL_2(void, 0x5FF3A0, dlg, &msg);
         return EXEC_DEFAULT;
     }
@@ -362,51 +351,57 @@ _LHF_(LoHook_MapSelectDlg_ButtonClick)
     return EXEC_DEFAULT;
 }
 
-
 // Установка подсказок в диалоге выбора карты для новых элементов.
-void __stdcall HiHook_MapSelectDlg_SetTips(HiHook* h, H3SelectScenarioDialog* this_, DWORD* tips, INT32 start_item_id, INT32 end_item_id, BOOL8 alloc_mem)
+void __stdcall HiHook_MapSelectDlg_SetTips(HiHook *h, H3SelectScenarioDialog *this_, DWORD *tips, INT32 start_item_id,
+                                           INT32 end_item_id, BOOL8 alloc_mem)
 {
     // Устанавливаем подсказки стандартным элементам.
     THISCALL_5(void, h->GetDefaultFunc(), this_, tips, start_item_id, end_item_id, alloc_mem);
 
     // Элемент диалога.
-    H3DlgItem* item;
+    H3DlgItem *item;
 
     // Деф размера карты в правом верхнем углу
     item = this_->GetH3DlgItem(189);
-    if (item) SetRmcHint(item, alloc_mem);
+    if (item)
+        SetRmcHint(item, alloc_mem);
 
     // H-карты.
     item = this_->GetH3DlgItem(HMAP_DLGITEM_ID);
-    if (item) SetRmcHint(item, alloc_mem);
+    if (item)
+        SetRmcHint(item, alloc_mem);
 
     // XH-карты.
     item = this_->GetH3DlgItem(XHMAP_DLGITEM_ID);
-    if (item) SetRmcHint(item, alloc_mem);
+    if (item)
+        SetRmcHint(item, alloc_mem);
 
     // G-карты.
     item = this_->GetH3DlgItem(GMAP_DLGITEM_ID);
-    if (item) SetRmcHint(item, alloc_mem);
+    if (item)
+        SetRmcHint(item, alloc_mem);
 
     // Генерация H-карты.
     item = this_->GetH3DlgItem(HRMAP_DLGITEM_ID);
-    if (item) SetRmcHint(item, alloc_mem);
+    if (item)
+        SetRmcHint(item, alloc_mem);
 
     // Генерация XH-карты.
     item = this_->GetH3DlgItem(XHRMAP_DLGITEM_ID);
-    if (item) SetRmcHint(item, alloc_mem);
+    if (item)
+        SetRmcHint(item, alloc_mem);
 
     // Генерация G-карты.
     item = this_->GetH3DlgItem(GRMAP_DLGITEM_ID);
-    if (item) SetRmcHint(item, alloc_mem);
+    if (item)
+        SetRmcHint(item, alloc_mem);
 }
-
 
 // Настройка состояния кнопок размера настроек случайной карты.
 _LHF_(LoHook_MapSelectDlg_RmgSetSizeButtonsState)
 {
     // Диалог выбора карты.
-    H3SelectScenarioDialog* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->esi);
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->esi);
 
     // Делаем кнопки новых размеров ненажатыми.
     dlg->RemoveControlState(HRMAP_DLGITEM_ID, eControlState::SELECTED);
@@ -449,7 +444,6 @@ _LHF_(LoHook_MapSelectDlg_RmgSetSizeButtonsState)
 
     return EXEC_DEFAULT;
 }
-
 
 // Настройка иконки размера карты: выбор сценария кампании.
 _LHF_(LoHook_MapSelectDlg_SizeIcon_CampScenario)
@@ -502,7 +496,6 @@ _LHF_(LoHook_MapSelectDlg_SizeIcon_CampScenario)
     return NO_EXEC_DEFAULT;
 }
 
-
 // Настройка иконки размера карты: информация о сценарии.
 _LHF_(LoHook_MapSelectDlg_SizeIcon_ScenarioInfo)
 {
@@ -553,7 +546,6 @@ _LHF_(LoHook_MapSelectDlg_SizeIcon_ScenarioInfo)
     c->return_address = 0x56950F;
     return NO_EXEC_DEFAULT;
 }
-
 
 // Настройка иконки размера карты: выбор карты.
 _LHF_(LoHook_MapSelectDlg_SizeIcon_SelectMap)
@@ -606,7 +598,6 @@ _LHF_(LoHook_MapSelectDlg_SizeIcon_SelectMap)
     return NO_EXEC_DEFAULT;
 }
 
-
 // Настройка иконки размера карты: выбор карты - сеть.
 _LHF_(LoHook_MapSelectDlg_SizeIcon_SelectMapOnline)
 {
@@ -657,7 +648,6 @@ _LHF_(LoHook_MapSelectDlg_SizeIcon_SelectMapOnline)
     c->return_address = 0x585AF6;
     return NO_EXEC_DEFAULT;
 }
-
 
 // Настройка иконки размера карты: фильтр карт.
 _LHF_(LoHook_MapSelectDlg_SizeIcon_FilterMaps)
@@ -719,7 +709,6 @@ _LHF_(LoHook_MapSelectDlg_SizeIcon_FilterMaps)
     return NO_EXEC_DEFAULT;
 }
 
-
 _LHF_(LoHook_MapSelectDlg_SizeAbbr)
 {
     int mapSize = c->esi;
@@ -736,32 +725,21 @@ _LHF_(LoHook_MapSelectDlg_SizeAbbr)
     return EXEC_DEFAULT;
 }
 
-
-void __stdcall HiHook_Cheat_OpenMap(HiHook* h, H3Game* this_, INT32 x, INT32 y, INT32 z, INT32 player_id, INT32 radius, BOOL8 unk)
+void __stdcall HiHook_Cheat_OpenMap(HiHook *h, H3Game *this_, INT32 x, INT32 y, INT32 z, INT32 player_id, INT32 radius,
+                                    BOOL8 unk)
 {
     // Открываем всю карту.
-    THISCALL_7(void, h->GetDefaultFunc(),
-        this_,
-        IntAt(0x6783C8) / 2,
-        IntAt(0x6783CC) / 2,
-        z,
-        player_id,
-        IntAt(4 * (IntAt(0x6783C8) < IntAt(0x6783CC)) + 0x6783C8), //std::max<INT32>(IntAt(0x6783C8), IntAt(0x6783CC)),
+    THISCALL_7(
+        void, h->GetDefaultFunc(), this_, IntAt(0x6783C8) / 2, IntAt(0x6783CC) / 2, z, player_id,
+        IntAt(4 * (IntAt(0x6783C8) < IntAt(0x6783CC)) + 0x6783C8), // std::max<INT32>(IntAt(0x6783C8), IntAt(0x6783CC)),
         unk);
 }
 
-
-void __stdcall HiHook_0040275b(HiHook* h, H3Game* this_, int x, int y, int z, int player_owner, int radius)
+void __stdcall HiHook_0040275b(HiHook *h, H3Game *this_, int x, int y, int z, int player_owner, int radius)
 {
-    THISCALL_6(void, h->GetDefaultFunc(),
-        this_,
-        IntAt(0x6783C8) / 2,
-        IntAt(0x6783CC) / 2,
-        z,
-        player_owner,
-        IntAt(4 * (IntAt(0x6783C8) < IntAt(0x6783CC)) + 0x6783C8));
+    THISCALL_6(void, h->GetDefaultFunc(), this_, IntAt(0x6783C8) / 2, IntAt(0x6783CC) / 2, z, player_owner,
+               IntAt(4 * (IntAt(0x6783C8) < IntAt(0x6783CC)) + 0x6783C8));
 }
-
 
 // Отправляем сообщение при нажатии на изменение размера карты в настройках ГСК.
 _LHF_(LoHook_MapSelectDlg_RmgSizeButtonClick_OnlineMsg)
@@ -791,10 +769,9 @@ _LHF_(LoHook_MapSelectDlg_RmgSizeButtonClick_OnlineMsg)
     }
 }
 
-
 _LHF_(LoHook_005806d9)
 {
-    H3SelectScenarioDialog* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->esi);
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->esi);
     int param = 0;
 
     // Размер карты.
@@ -844,19 +821,18 @@ _LHF_(LoHook_005806d9)
     msg.command = eMsgCommand::MOUSE_BUTTON;
     msg.subtype = eMsgSubtype::SET_FRAME;
     msg.itemId = 189;
-    msg.parameter = reinterpret_cast<void*>(param);
+    msg.parameter = reinterpret_cast<void *>(param);
     THISCALL_2(void, 0x5FF3A0, dlg, &msg);
 
     return EXEC_DEFAULT;
 }
-
 
 _LHF_(LoHook_00584470)
 {
     UINT32 mapIndex = -1;
     int mapDimension = 0;
     bool emptyMapSize = true;
-    H3SelectScenarioDialog* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->ebx);
+    H3SelectScenarioDialog *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
     int size = dlg->currentMapsList.Size();
 
     if (dlg->randomMapGeneration)
@@ -868,17 +844,15 @@ _LHF_(LoHook_00584470)
     }
     mapIndex = dlg->selectedMapIndex;
 
-    if (mapIndex < 0
-        || size == 0
-        || mapIndex >= static_cast<UINT32>(size)
-        || !dlg->currentMapsList[mapIndex].mapVersion
-        || (mapDimension = dlg->currentMapsList[mapIndex].mapDimension, emptyMapSize = mapDimension <= 0, !mapDimension))
+    if (mapIndex < 0 || size == 0 || mapIndex >= static_cast<UINT32>(size) ||
+        !dlg->currentMapsList[mapIndex].mapVersion ||
+        (mapDimension = dlg->currentMapsList[mapIndex].mapDimension, emptyMapSize = mapDimension <= 0, !mapDimension))
     {
         if (!dlg->saveGameMode)
         {
             return 1;
         }
-            
+
         mapDimension = P_Game->mapInfo.mapDimension;
         goto LABEL_10;
     }
@@ -886,39 +860,33 @@ LABEL_11:
     if (!emptyMapSize)
     {
         sprintf_s(h3_TextBuffer, 0x300u, "%dx%d", mapDimension, mapDimension);
-        P_TinyFont->TextDraw(
-            P_WindowManager->screenPcx16,
-            h3_TextBuffer, 
-            dlg->GetX() + 712,
-            dlg->GetY() + 55, 35, 16, eTextColor(4), eTextAlignment(5));
+        P_TinyFont->TextDraw(P_WindowManager->screenPcx16, h3_TextBuffer, dlg->GetX() + 712, dlg->GetY() + 55, 35, 16,
+                             eTextColor(4), eTextAlignment(5));
     }
 
     return EXEC_DEFAULT;
 }
 
-
 _LHF_(LoHook_00567a0b)
 {
-    H3SelectScenarioDialog* dlg = *reinterpret_cast<H3SelectScenarioDialog**>(c->ebp - 0x34);
+    H3SelectScenarioDialog *dlg = *reinterpret_cast<H3SelectScenarioDialog **>(c->ebp - 0x34);
     sprintf_s(h3_TextBuffer, 0x300u, "%dx%d", P_Game->mapInfo.mapDimension, P_Game->mapInfo.mapDimension);
     dlg->AddItem(H3DlgText::Create(709, 49, 35, 16, h3_TextBuffer, "tiny.fnt", 4, 100, 5, 0), false);
-    
+
     return EXEC_DEFAULT;
 }
 
-
-
 _LHF_(LoHook_00586103)
 {
-    H3ScenarioMapInformation* mapInfo = (H3ScenarioMapInformation*)(c->ecx + c->ebx);
+    H3ScenarioMapInformation *mapInfo = (H3ScenarioMapInformation *)(c->ecx + c->ebx);
     int filterSize = c->eax;
     int mapDimension = mapInfo->mapDimension;
-    
+
     if (!mapInfo->mapVersion)
     {
         c->return_address = 0x586109;
         return NO_EXEC_DEFAULT;
-    }   
+    }
     if (mapDimension > filterSize)
     {
         if (filterSize == 252)
@@ -936,13 +904,12 @@ _LHF_(LoHook_00586103)
     return NO_EXEC_DEFAULT;
 }
 
-
 _LHF_(LoHook_005854be)
 {
-    H3ScenarioMapInformation* mapInfo = (H3ScenarioMapInformation*)(c->ebx + c->esi);
+    H3ScenarioMapInformation *mapInfo = (H3ScenarioMapInformation *)(c->ebx + c->esi);
     int filterSize = c->eax;
     int mapDimension = mapInfo->mapDimension;
-    
+
     if (!mapInfo->mapVersion)
     {
         c->return_address = 0x5854C4;
@@ -965,29 +932,9 @@ _LHF_(LoHook_005854be)
     return NO_EXEC_DEFAULT;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Удаление мусора из имени рандом карты
 
-void __stdcall HiHook_00580D40(HiHook* h, H3SelectScenarioDialog* this_, int randMaps)
+void __stdcall HiHook_00580D40(HiHook *h, H3SelectScenarioDialog *this_, int randMaps)
 {
     THISCALL_2(void, h->GetDefaultFunc(), this_, randMaps);
 
@@ -996,15 +943,6 @@ void __stdcall HiHook_00580D40(HiHook* h, H3SelectScenarioDialog* this_, int ran
         THISCALL_3(void, 0x5857D0, this_, this_->selectedMapIndex, 0); // UpdateNewGameMap
     }
 }
-
-
-
-
-
-
-
-
-
 
 void MapSize_Init()
 {
@@ -1044,13 +982,13 @@ void MapSize_Init()
     _PI->WriteByte(0x57D643 + 1, 41);
     _PI->WriteDword(0x57D6A1 + 1, 359);
     _PI->WriteByte(0x57D69D + 1, 34);
-    _PI->WriteCodePatch(0x584909, "%n", 54); // 54 nop
-    _PI->WriteCodePatch(0x57D49B, "%n", 2); // 2 nop
-    _PI->WriteCodePatch(0x57D4A6, "%n", 70); // 70 nop
-    _PI->WriteCodePatch(0x57D4EF, "%n", 27); // 27 nop
-    _PI->WriteCodePatch(0x5801CA, "%n", 23); // 23 nop
-    _PI->WriteCodePatch(0x58208F, "%n", 23); // 23 nop
-    _PI->WriteCodePatch(0x584E35, "%n", 54); // 54 nop
+    _PI->WriteCodePatch(0x584909, "%n", 54);                                       // 54 nop
+    _PI->WriteCodePatch(0x57D49B, "%n", 2);                                        // 2 nop
+    _PI->WriteCodePatch(0x57D4A6, "%n", 70);                                       // 70 nop
+    _PI->WriteCodePatch(0x57D4EF, "%n", 27);                                       // 27 nop
+    _PI->WriteCodePatch(0x5801CA, "%n", 23);                                       // 23 nop
+    _PI->WriteCodePatch(0x58208F, "%n", 23);                                       // 23 nop
+    _PI->WriteCodePatch(0x584E35, "%n", 54);                                       // 54 nop
     _PI->WriteHiHook(0x402704, CALL_, EXTENDED_, THISCALL_, HiHook_Cheat_OpenMap); // Чит
     _PI->WriteHiHook(0x4F4B61, CALL_, EXTENDED_, THISCALL_, HiHook_Cheat_OpenMap); // Чит-меню
     _PI->WriteHiHook(0x40275b, CALL_, EXTENDED_, THISCALL_, HiHook_0040275b);

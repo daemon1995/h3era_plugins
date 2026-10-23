@@ -1,6 +1,8 @@
 ﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
 #include "pch.h"
 
+void Minimap_Init();
+
 Patcher *globalPatcher;
 PatcherInstance *_PI;
 
@@ -18,6 +20,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             _PI = globalPatcher->CreateInstance("XXL");
             Era::ConnectEra(hModule, "XXL");
             MapSize_Init();
+            Minimap_Init();
             RandomMapOptions_Init();
         }
         break;
