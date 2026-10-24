@@ -1,4 +1,4 @@
-# Assembly_MainPlugin 1.13.2
+# Assembly_MainPlugin 1.13.3
 
 Assembly versions use one compact runtime PCX16 block: a `medfont.fnt` title
 on the left and `smalfont.fnt` installed/latest rows on the right. The three
@@ -27,9 +27,10 @@ Keys below `gem_plugin.main_menu.assembly_version`:
 
 Frames share one pixel: there is no gap between rows or columns. Widths and
 positions are fixed in code: the assembly block is 280 pixels wide with a
-130-pixel title column and 16-pixel version rows; the engine label is 160x16.
-Both corners use 10-pixel side and 2-pixel bottom margins. A single-row block
-reserves enough height for medfont. Only captions are localized in JSON;
+130-pixel title column; the engine label is 160 pixels wide. Row and engine
+label heights use the actual smalfont height plus six pixels for padding.
+Both corners touch the picture edges, without side or bottom margins. The
+title also reserves enough height for medfont. Only captions are localized in JSON;
 language reload updates the images in place. Captions must fit their cells.
 
 The old `current_version`/`online_version` `display_version`, `custom_text`,

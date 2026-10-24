@@ -114,7 +114,7 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     const int textWidth = Clamp(1, font->GetMaxLineWidth(text.String()), maxWidth - horizontalPadding * 2);
     const int width = fixedWidth > 0 ? std::min(fixedWidth, maxWidth)
                                      : std::max(textWidth + horizontalPadding * 2, labelPcx ? labelPcx->width : 0);
-    const int height = std::min(fixedHeight > 0 ? fixedHeight : font->height + verticalPadding * 2, maxHeight);
+    const int height = std::min(std::max(fixedHeight, font->height + verticalPadding * 2), maxHeight);
     const int right = labelPcx ? dlgItem->GetX() + dlgItem->GetWidth()
                               : Clamp(minX, x, minX + maxWidth - width) + width;
     const int top = labelPcx ? dlgItem->GetY() : y;
@@ -548,10 +548,12 @@ void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
     const int screenHeight = bounds.height;
     const int offsetX = bounds.x - dlg->GetX();
     const int offsetY = bounds.y - dlg->GetY();
-    constexpr int sideMargin = 10;
-    constexpr int bottomMargin = 2;
+    constexpr int sideMargin = 0;
+    constexpr int bottomMargin = 0;
+    H3FontLoader smallFont(NH3Dlg::Text::SMALL);
+    const int smallLabelHeight = smallFont.Get() ? smallFont->height + 6 : 22;
     m_eraVersion.fixedWidth = std::min(160, screenWidth);
-    m_eraVersion.fixedHeight = 16;
+    m_eraVersion.fixedHeight = smallLabelHeight;
     m_eraVersion.x = offsetX + std::min(sideMargin, screenWidth - m_eraVersion.fixedWidth);
     m_eraVersion.y = offsetY + screenHeight - m_eraVersion.fixedHeight - bottomMargin;
     const int rows = (m_localVersion.show != FALSE) + (m_remoteVersion.show != FALSE);
@@ -561,8 +563,11 @@ void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
     const int width = std::min(280, screenWidth);
     const int titleWidth = std::min(130, width - 20);
     H3FontLoader titleFont(NH3Dlg::Text::MEDIUM);
-    const int minRowHeight = rows == 1 && titleFont.Get() ? titleFont->height + 6 : 12;
-    const int rowHeight = Clamp(minRowHeight, 16, screenHeight / rows);
+    const int titleHeight = titleFont.Get() ? titleFont->height + 6 : 22;
+    // Each text rectangle must hold a complete font line after subtracting
+    // the three-pixel top/bottom padding. A smaller rectangle draws no text.
+    const int minRowHeight = std::max(smallLabelHeight, (titleHeight - 1 + rows - 1) / rows + 1);
+    const int rowHeight = std::min(minRowHeight, screenHeight / rows);
     const int height = rows * (rowHeight - 1) + 1;
     const int left = offsetX + std::max(0, screenWidth - width - sideMargin);
     const int top = offsetY + screenHeight - height - bottomMargin;
