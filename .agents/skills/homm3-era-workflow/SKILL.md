@@ -18,6 +18,7 @@ Default repository: `C:/dev/homm3/plugins/daemon_n/H3EraPlugins`. Adjacent repos
 
 ## User's working preferences
 
+- Create Git commits and push changes only when the user explicitly requests those actions for the current work. Do not commit or push automatically after edits, fixes, builds or version bumps, and do not carry authorization from an earlier completed request into subsequent changes. Otherwise leave changes in the working tree for review.
 - Do not use computer-use, desktop/browser UI automation, or the computer-use skill for these projects. Work through source files, command-line tools, scripts, available APIs and existing exports. If evidence is accessible only through a GUI, explain the specific missing evidence instead of switching to computer-use.
 - Work promptly and keep changes focused. Follow the owning plugin's existing coding style, naming, initialization, hooks, file organization and API conventions. Prefer the smallest clear implementation; avoid unrelated refactors, speculative frameworks and unnecessary planning or documentation.
 - Do not create or run tests for every minor edit. Use targeted verification when the user requests it or a concrete behavior change, failure or regression risk warrants it. Batch related edits before checking; do not repeatedly rerun successful checks without a new reason. A relevant compilation is distinct from adding a test suite; do not require whole-solution builds for small plugin changes.
