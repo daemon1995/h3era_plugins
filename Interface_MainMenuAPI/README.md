@@ -1,4 +1,4 @@
-# Interface_MainMenuAPI 2.2.3
+# Interface_MainMenuAPI 2.2.4
 
 One plugin owns main-menu background rendering, logos, video positioning and
 the button panel. It replaces Interface_MainMenuLogo,
@@ -25,6 +25,9 @@ active. Names do not need separate IDs or a manually maintained hit rectangle.
 Name widget width is the font's maximum line width plus two pixels, clamped to
 the available name area. The widget and underline stay centered and resize
 together after a language change, including when a longer translation is loaded.
+Previous/next buttons use `SendCommand(6 - isEnable, 4096)` according to the
+available pages, updating after switching, hiding notifications or reopening
+the panel. Both are disabled when there is no adjacent page.
 
 MainMenuAPI 2.2.1 and Assembly 1.12.2 combine link-hover cursor requests for
 each menu message and apply the cursor once after the hook chain. Remaining

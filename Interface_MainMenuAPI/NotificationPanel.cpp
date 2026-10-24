@@ -433,6 +433,20 @@ void NotificationPanel::UpdateVisibleNotificationsList() noexcept
         libc::sprintf(h3_TextBuffer, NOTIFICATION_COUNTER_FORMAT, currentModInfoIndex, notificationsVisible);
         notificationsCounter->SetText(h3_TextBuffer);
     }
+    const auto updateButton = [this](H3DlgDefButton *button, const bool isEnable) {
+        if (!button)
+            return;
+        button->SendCommand(6 - isEnable, 4096);
+        if (isVisible)
+        {
+            button->Draw();
+            button->Refresh();
+        }
+    };
+    updateButton(previousModButton, isVisible && currentModInfoIndex > 1 &&
+                                       currentModInfoIndex <= notificationsVisible);
+    updateButton(nextModButton, isVisible && currentModInfoIndex > 0 &&
+                                   currentModInfoIndex < notificationsVisible);
 }
 
 NotificationPanel::ModInfo *NotificationPanel::GetModInfoFromVisible(const UINT index) noexcept
@@ -793,10 +807,9 @@ void NotificationPanel::SwitchModInfo(const int step) noexcept
                 currentModInfoIndex = currentModInfo->displayedIndex;
                 SetModVisible(*currentModInfo, true);
 
+                UpdateVisibleNotificationsList();
                 if (notificationsCounter)
                 {
-                    UpdateVisibleNotificationsList();
-
                     notificationsCounter->Draw();
                     notificationsCounter->Refresh();
                 }
