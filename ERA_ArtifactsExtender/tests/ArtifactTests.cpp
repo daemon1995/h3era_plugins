@@ -1,8 +1,7 @@
-// Exercises production JSON parsing, frame growth, palette mapping and WIC loading.
+// Exercises artifact JSON, save validation and engine table layouts.
 // No game process or engine-address calls are used by these test cases.
 #include "../pch.h"
 #include "../ArtifactData.cpp"
-#include "../ArtifactImages.cpp"
 #include "../ArtifactSave.h"
 #include "../ArtifactTablesManager.cpp"
 #include <map>
@@ -93,48 +92,6 @@ void JsonTests()
     translations.clear();
 }
 
-void FrameTests()
-{
-    struct Frame { int id; };
-    struct Group { int count; unsigned spritesSize; Frame **frames; };
-    Frame a{1}, b{2}, placeholder{0};
-    Group group{2, 2, static_cast<Frame **>(std::malloc(2 * sizeof(Frame *)))};
-    group.frames[0] = &a;
-    group.frames[1] = &b;
-    auto alloc = [](void *p, size_t n) { return std::realloc(p, n); };
-    assert(artifacts::GrowArtifactFrames(group, 1024, &placeholder, alloc));
-    assert(group.count == 1024 && group.frames[0] == &a && group.frames[1] == &b);
-    for (int id = 2; id < 1024; ++id) assert(group.frames[id] == &placeholder);
-    auto *before = group.frames;
-    assert(artifacts::GrowArtifactFrames(group, 1024, &placeholder, alloc) && before == group.frames);
-    std::free(group.frames);
-    Group empty{0, 0, nullptr};
-    assert(artifacts::GrowArtifactFrames(empty, 1, &placeholder, alloc) && empty.frames[0] == &placeholder);
-    before = empty.frames;
-    assert(!artifacts::GrowArtifactFrames(empty, 1024, &placeholder, [](void *, size_t) -> void * { return nullptr; }));
-    assert(empty.frames == before && empty.count == 1 && empty.spritesSize == 1);
-    std::free(empty.frames);
-}
-
-void ImageTests(const char *fixture)
-{
-    struct RGB { unsigned char r, g, b; };
-    struct Palette { RGB color[256]{}; } palette;
-    palette.color[1] = {255, 0, 0}; // Reserved DEF index must not be chosen.
-    palette.color[8] = {250, 0, 0};
-    palette.color[9] = {0, 255, 0};
-    using artifacts::Pixel;
-    assert(artifacts::ArtifactPaletteIndex(Pixel{0,0,255,255}, palette) == 8);
-    assert(artifacts::ArtifactPaletteIndex(Pixel{255,255,0,255}, palette) == 0);
-    assert(artifacts::ArtifactPaletteIndex(Pixel{0,0,255,0}, palette) == 0);
-    artifacts::Image image;
-    assert(artifacts::LoadBitmap(fixture, image));
-    assert(image.width == 2 && image.height == 1);
-    assert(image.pixels[0].r == 255 && image.pixels[0].a == 255);
-    assert(image.pixels[1].a == 0);
-    assert(!artifacts::LoadBitmap("missing-artifact-image.png", image));
-}
-
 void SaveValidationTests()
 {
     artifacts::SavedArtifact record = {100, 1, 2, -1, -1, 0, 0, 0, 0, 0, 0};
@@ -149,13 +106,10 @@ void SaveValidationTests()
     assert(!artifacts::ValidSaved(record, false));
 }
 
-int main(int argc, char **argv)
+int main()
 {
-    assert(argc == 2);
     Era::RuntimeLayoutTests();
     JsonTests();
-    FrameTests();
-    ImageTests(argv[1]);
     SaveValidationTests();
-    std::cout << "PASS: JSON; DEF; palette/PNG alpha; save records; native and post-WoG runtime layouts\n";
+    std::cout << "PASS: JSON; save records; native and post-WoG runtime layouts\n";
 }

@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "ArtifactSave.h"
+#include "../headers/EraPluginsAPI/GraphicsAPI.h"
+#include "../headers/EraPluginsAPI/RuntimeServices.h"
 #include <algorithm>
 #include <limits>
 
@@ -55,6 +57,19 @@ void ArtifactsExtender::Discover()
 void ArtifactsExtender::Init()
 {
     if (tables.setups) return;
+    if (era_services::Find<era_services::Ownership>(era_services::ARTIFACT_OWNER))
+    {
+        Log("Another artifact data provider owns the table. Artifact extender was not installed.");
+        return;
+    }
+    // New IDs may exceed the native DEF's capacity. Require the provider before
+    // publishing expanded tables; graphics readiness itself comes later.
+    if (!era_graphics::GetApi())
+    {
+        images.Ready();
+        Log("Graphics API v1 is required. Artifact extender was not installed.");
+        return;
+    }
     if (!tables.Compatible())
     {
         Log("Incompatible executable/table owner. Artifact extender was not installed.");
@@ -62,6 +77,8 @@ void ArtifactsExtender::Init()
     }
     Discover();
     tables.Install(tables.count);
+    static const era_services::Ownership owner;
+    era_services::Publish(era_services::ARTIFACT_OWNER, &owner);
     _PI->WriteHiHook(0x4EE036, CDECL_, AfterReadAllTxtFiles);
     _PI->WriteHiHook(0x55C9C0, THISCALL_, LoadDef);
     _PI->WriteHiHook(0x4C9190, THISCALL_, RandomArtifact);
@@ -77,6 +94,7 @@ void ArtifactsExtender::Init()
     Era::RegisterHandler(OnBeforeLoadGame, "OnBeforeLoadGame");
     Era::RegisterHandler(OnSavegameRead, "OnSavegameRead");
     Era::RegisterHandler(OnAfterReloadLanguageData, "OnAfterReloadLanguageData");
+    Era::RegisterHandler(OnGraphicsResourcesReady, era_graphics::READY_EVENT);
 }
 
 void ArtifactsExtender::AfterTextLoaded()
@@ -110,6 +128,15 @@ void ArtifactsExtender::AfterTextLoaded()
     ready = true;
     ResetExtraState();
     if (loadedObjectSetup) AddMapObjects(loadedObjectSetup);
+    ApplyImages();
+    Log("JSON applied; active artifact range is 0..%d", tables.count - 1);
+}
+
+void ArtifactsExtender::ApplyImages()
+{
+    // PcxPngExists already works after OnAfterWoG, but the PCX loader and draw
+    // hooks do not. Early loads show a missing-PCX error and cache default.pcx.
+    if (!ready || !images.Ready()) return;
     // The load hook also handles later resource reloads. This reference is balanced.
     if (auto *def = H3LoadedDef::Load("artifact.def"))
     {
@@ -117,7 +144,13 @@ void ArtifactsExtender::AfterTextLoaded()
             Log("Artifact DEF ready: %d frames", def->groups[0]->count);
         def->Dereference();
     }
-    Log("JSON applied; active artifact range is 0..%d", tables.count - 1);
+}
+
+_ERH_(ArtifactsExtender::OnGraphicsResourcesReady)
+{
+    auto &self = Get();
+    Log("Graphics API ready; applying artifact images");
+    self.ApplyImages();
 }
 
 int __stdcall ArtifactsExtender::AfterReadAllTxtFiles(HiHook *hook)
@@ -135,7 +168,8 @@ H3LoadedDef *__stdcall ArtifactsExtender::LoadDef(HiHook *hook, LPCSTR name)
     if (def && artifact)
     {
         auto &self = Get();
-        self.images.Apply(def, self.tables.count, self.definitions);
+        if (self.ready && self.images.Ready())
+            self.images.Apply(def, self.tables.count, self.definitions);
     }
     return def;
 }

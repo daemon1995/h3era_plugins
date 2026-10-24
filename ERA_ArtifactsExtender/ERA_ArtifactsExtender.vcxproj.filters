@@ -21,9 +21,6 @@
     <ClInclude Include="ArtifactImages.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ArtifactImageAlgorithms.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ArtifactSave.h">
       <Filter>Header Files</Filter>
     </ClInclude>

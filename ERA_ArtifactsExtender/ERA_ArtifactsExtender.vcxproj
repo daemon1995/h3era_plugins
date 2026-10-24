@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -33,7 +33,7 @@
   <ItemGroup>
     <ClInclude Include="ArtifactData.h" />
     <ClInclude Include="ArtifactImages.h" />
-    <ClInclude Include="ArtifactImageAlgorithms.h" />
+
     <ClInclude Include="ArtifactSave.h" />
     <ClInclude Include="ArtifactsExtender.h" />
     <ClInclude Include="ArtifactTablesManager.h" />
@@ -41,6 +41,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConfigExport.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="ArtifactData.cpp" />
     <ClCompile Include="ArtifactImages.cpp" />

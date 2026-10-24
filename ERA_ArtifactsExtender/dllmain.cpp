@@ -1,3 +1,4 @@
+﻿void RegisterArtifactConfigProvider();
 #include "pch.h"
 
 Patcher *globalPatcher = nullptr;
@@ -20,6 +21,7 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
     if (reason == DLL_PROCESS_ATTACH)
     {
         Era::ConnectEra(module, INSTANCE_NAME);
+        RegisterArtifactConfigProvider();
         globalPatcher = GetPatcher();
         _PI = globalPatcher->CreateInstance(INSTANCE_NAME);
         Era::RegisterHandler(OnAfterWog, "OnAfterWog");

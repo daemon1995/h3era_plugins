@@ -1,6 +1,7 @@
 #pragma once
 #include "ArtifactTablesManager.h"
 #include "ArtifactImages.h"
+#include "../headers/EraPluginsAPI/ConfigExportAPI.h"
 
 namespace artifacts
 {
@@ -16,6 +17,7 @@ class ArtifactsExtender
 
     void Discover();
     void AfterTextLoaded();
+    void ApplyImages();
     void AddMapObjects(H3MainSetup *setup);
     void ResetExtraState();
     bool IsDisabled(H3Main *main, int id) const;
@@ -32,6 +34,7 @@ class ArtifactsExtender
     static int __stdcall LoadMap(HiHook *hook, H3Main *main, int file);
     static void __stdcall LoadObjects(HiHook *hook, H3MainSetup *setup);
     static _ERH_(OnBeforeLoadGame);
+    static _ERH_(OnGraphicsResourcesReady);
 
     static _ERH_(OnSavegameWrite);
     static _ERH_(OnSavegameRead);
@@ -40,5 +43,6 @@ class ArtifactsExtender
   public:
     static ArtifactsExtender &Get();
     void Init();
+    static int __stdcall CollectConfig(void *, const era_config::Sink *);
 };
 } // namespace artifacts

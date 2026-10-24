@@ -1,5 +1,6 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include <cstdarg>
+#include "../headers/Era/JsonOverridesSchema.hpp"
 
 namespace artifacts
 {
@@ -85,12 +86,12 @@ void ArtifactData::Apply(H3ArtifactSetup &setup, signed char *primary, LPCSTR &e
         const char *groundDef = EraJS::read(key + ".mapDef", found);
         if (found) mapDef = groundDef;
         ReadChecked(imageFrame, key, "imageFrame", [](int v) { return v >= 0 && v < CAPACITY; });
-        ReadChecked(setup.cost, key, "cost", [](int v) { return v >= 0; });
+        ReadChecked(setup.cost, key, "cost", [&](int v) { return EraJS::ValidArtifactNumber(EraJS::ArtifactSchema::cost, v, CAPACITY, 12); });
         // Indices into LockSlotToArtSlots, not worn-slot numbers or masks.
-        ReadChecked(setup.position, key, "position", [](int v) { return v >= 0 && v <= 14; });
-        ReadChecked(setup.type, key, "type", [](int v) { return v >= 0 && (v & ~31) == 0; });
-        ReadChecked(setup.disabled, key, "disabled", [](int v) { return v == 0 || v == 1; });
-        ReadChecked(setup.hasSpell, key, "hasSpell", [](int v) { return v == 0 || v == 1; });
+        ReadChecked(setup.position, key, "position", [&](int v) { return EraJS::ValidArtifactNumber(EraJS::ArtifactSchema::position, v, CAPACITY, 12); });
+        ReadChecked(setup.type, key, "type", [&](int v) { return EraJS::ValidArtifactNumber(EraJS::ArtifactSchema::type, v, CAPACITY, 12); });
+        ReadChecked(setup.disabled, key, "disabled", [&](int v) { return EraJS::ValidArtifactNumber(EraJS::ArtifactSchema::disabled, v, CAPACITY, 12); });
+        ReadChecked(setup.hasSpell, key, "hasSpell", [&](int v) { return EraJS::ValidArtifactNumber(EraJS::ArtifactSchema::hasSpell, v, CAPACITY, 12); });
         const char *fields[] = {"primary.attack", "primary.defence", "primary.spellPower", "primary.knowledge"};
         for (int skill = 0; skill < 4; ++skill)
         {
