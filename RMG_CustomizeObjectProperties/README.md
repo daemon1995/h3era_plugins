@@ -8,7 +8,7 @@ RMG remains the owner of the extender registry and dispatch. New C++ clients dis
 Patcher variable `ERA.Services.ObjectExtenders.v2`; legacy exported entry points remain available.
 Object-definition parsing/priority/merging is shared with the editor, while each host owns native loading and memory.
 RMG contributes its own definitions/settings to the generic configuration-export API; domain extenders contribute
-their data independently. See [configuration services](../API_ErmFunctions/CONFIG_SERVICES.md).
+their data independently. See [configuration services](../ERA_RuntimeServices/Docs/CONFIG_SERVICES.md).
 
 ## Object subtype count API
 
