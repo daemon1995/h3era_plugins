@@ -6,6 +6,7 @@
 
 namespace advMapHints
 {
+struct HintDrawContext;
 constexpr LPCSTR KEY_ALT_HINT_ENOUGH_POINTS = "gem_plugin.adventure_map_dlg.pathfinder_hints.enough";
 constexpr LPCSTR KEY_ALT_HINT_NOT_ENOUGH_POINTS = "gem_plugin.adventure_map_dlg.pathfinder_hints.not_enough";
 constexpr LPCSTR KEY_ALT_HINT_CANT_REACH = "gem_plugin.adventure_map_dlg.pathfinder_hints.cannot_reach";
@@ -68,6 +69,10 @@ class AdventureMapHints : public IGamePatch
   private:
     LPCSTR GetHintText(const H3AdventureManager *adv, const H3MapItem *mapItem, const int mapX, const int mapY,
                        const int mapZ) noexcept;
+    void DrawObjectHint(H3AdventureManager *adv, H3MapItem *mapItem, int mapX, int mapY, int mapZ,
+                        int screenX, int screenY, UINT16 objectIndex, const POINT *centre, HintDrawContext &context);
+    static void DrawTileObjectHints(H3AdventureManager *adv, int mapX, int mapY, int mapZ,
+                                    int screenX, int screenY, HintDrawContext &context);
 
   public:
     static AdventureMapHints &Get();

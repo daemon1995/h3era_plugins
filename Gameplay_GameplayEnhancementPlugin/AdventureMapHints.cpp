@@ -1,10 +1,37 @@
 #include "AdventureMapHints.h"
 #include "ModuleSupport.h"
+#include "AdventureHintGeometry.h"
 
 namespace advMapHints
 {
+struct HintDrawContext
+{
+    const char *phase = "native tile draw";
+    int mapX, mapY, mapZ;
+    int objectIndex = -1, objectType = -1;
+    const H3DefFrame *frame = nullptr;
+};
 namespace
 {
+int LogHintDrawException(EXCEPTION_POINTERS *exception, const HintDrawContext &context)
+{
+    // Record the original fault before the map renderer catches it.
+    const auto record = exception->ExceptionRecord;
+    HMODULE module = nullptr;
+    char modulePath[MAX_PATH] = {};
+    GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                      reinterpret_cast<LPCSTR>(record->ExceptionAddress), &module);
+    if (module)
+        GetModuleFileNameA(module, modulePath, MAX_PATH);
+    char message[1024];
+    libc::sprintf(message,
+        "phase=%s tile=(%d,%d,%d) object=%d type=%d frame=%p exception=%08lX address=%p module=%s offset=%08lX",
+        context.phase, context.mapX, context.mapY, context.mapZ, context.objectIndex, context.objectType,
+        context.frame, record->ExceptionCode, record->ExceptionAddress, modulePath,
+        DWORD(reinterpret_cast<ULONG_PTR>(record->ExceptionAddress) - reinterpret_cast<ULONG_PTR>(module)));
+    Era::WriteLog("AdventureMapHints", "Alt hint drawing exception", message);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 constexpr int OBJECT_MASK_WIDTH = 8;
 constexpr int OBJECT_MASK_HEIGHT = 6;
 constexpr int HINT_SHADOW_SIZE = 3;
@@ -237,168 +264,267 @@ void __stdcall AdventureMapHints::AdvMgr_TileObjectDraw(HiHook *h, H3AdventureMa
                                                         int mapZ, int screenX, int screenY)
 {
 
-    THISCALL_6(void, h->GetDefaultFunc(), adv, mapX, mapY, mapZ, screenX, screenY);
-
     if (!instance->needDrawHints)
-        return;
-
-    // check if tile may have object and visible by user
-    const int mapSize = *P_MapSize;
-    if (mapX >= 0 && mapY >= 0 && mapX < mapSize && mapY < mapSize &&
-        H3TileVision::CanViewTile(mapX, mapY, mapZ, instance->playerID))
     {
+        THISCALL_6(void, h->GetDefaultFunc(), adv, mapX, mapY, mapZ, screenX, screenY);
+        return;
+    }
+    HintDrawContext context;
+    context.mapX = mapX;
+    context.mapY = mapY;
+    context.mapZ = mapZ;
+    __try
+    {
+        THISCALL_6(void, h->GetDefaultFunc(), adv, mapX, mapY, mapZ, screenX, screenY);
+        DrawTileObjectHints(adv, mapX, mapY, mapZ, screenX, screenY, context);
+    }
+    __except (LogHintDrawException(GetExceptionInformation(), context))
+    {
+        // The filter always continues the exception search.
+    }
+}
 
-        H3MapItem *currentItem = adv->GetMapItem(mapX, mapY, mapZ);
-        if (!currentItem)
-            return;
-
-        // if not entrance point find if it visible by player and don't draw current item
-        if (!currentItem->IsEntrance())
+void AdventureMapHints::DrawTileObjectHints(H3AdventureManager *adv, int mapX, int mapY, int mapZ,
+                                           int screenX, int screenY, HintDrawContext &context)
+{
+    context.phase = "tile visibility";
+    const int mapSize = *P_MapSize;
+    if (mapX < 0 || mapY < 0 || mapX >= mapSize || mapY >= mapSize ||
+        !H3TileVision::CanViewTile(mapX, mapY, mapZ, instance->playerID))
+        return;
+    auto tile = adv->GetMapItem(mapX, mapY, mapZ);
+    if (!tile)
+        return;
+    auto &map = P_Game->mainSetup;
+    bool handledEntrance = false;
+    for (const auto &draw : tile->objectDrawing)
+    {
+        context.phase = "object drawing record";
+        context.objectIndex = draw.sprite;
+        context.objectType = -1;
+        context.frame = nullptr;
+        if (draw.sprite >= map.objectDetails.Size())
+            continue;
+        auto &details = map.objectDetails[draw.sprite];
+        if (details.num >= map.objectAttributes.Size())
+            continue;
+        auto &attributes = map.objectAttributes[details.num];
+        context.objectType = attributes.type;
+        if (static_cast<unsigned>(attributes.type) >= std::size(instance->settings.drawObjectHint) ||
+            !instance->settings.drawObjectHint[attributes.type].userValue)
+            continue;
+        const int column = draw.tileID & 15, row = draw.tileID >> 4;
+        if (column >= 8 || row >= 6 || column >= attributes.width || row >= attributes.height ||
+            !attributes.colors(static_cast<UINT8>(column), static_cast<UINT8>(row)))
+            continue;
+        if (draw.sprite == tile->drawnObjectIndex)
+            handledEntrance = true;
+        if (instance->drawnOjectIndexes.count(draw.sprite))
+            continue;
+        int x = -1, y = -1;
+        // Same native entrance resolver used by the object-rendering API.
+        context.phase = "native entrance resolver";
+        THISCALL_3(void, 0x4FF280, &details, &x, &y);
+        if (x < 0 || y < 0 || x >= mapSize || y >= mapSize)
+            continue;
+        auto entrance = adv->GetMapItem(x, y, details.z);
+        if (!entrance || !entrance->IsEntrance() || !instance->NeedDrawMapItem(entrance) ||
+            entrance->objectType != attributes.type)
+            continue;
+        POINT centre;
+        const POINT *anchor = nullptr;
+        context.phase = "visible object tile centre";
+        // Units keep their specialized placement. Static object anchors use only
+        // the stable 8x6 colour mask, independent of every animated DEF frame.
+        if (attributes.type != eObject::HERO && attributes.type != eObject::MONSTER &&
+            attributes.type != eObject::BOAT)
         {
-            auto *entrance = currentItem->GetEntrance();
-            if (!entrance || H3TileVision::CanViewTile(entrance->GetCoordinates(), instance->playerID))
-                return;
+            const int srcTileX = attributes.width - column - 1;
+            const int srcTileY = attributes.height - row - 1;
+            const int originX = screenX * 32 + adv->screenDrawOffset.x - srcTileX * 32;
+            const int originY = screenY * 32 + adv->screenDrawOffset.y + 8 - srcTileY * 32;
+            auto known = [&](int tileX, int tileY) {
+                const int c = attributes.width - tileX - 1, r = attributes.height - tileY - 1;
+                const int mx = mapX - srcTileX + tileX, my = mapY - srcTileY + tileY;
+                return c >= 0 && c < 8 && r >= 0 && r < 6 && mx >= 0 && my >= 0 &&
+                       mx < mapSize && my < mapSize &&
+                       attributes.colors(static_cast<UINT8>(c), static_cast<UINT8>(r)) &&
+                       H3TileVision::CanViewTile(mx, my, mapZ, instance->playerID);
+            };
+            if (!geometry::VisibleTileCentre(attributes.width, attributes.height, originX, originY,
+                                              m_mapView, known, centre))
+                continue;
+            centre.y -= HINT_STAGGER_Y;
+            anchor = &centre;
+        }
+        instance->DrawObjectHint(adv, entrance, x, y, details.z, screenX + x - mapX,
+                                 screenY + y - mapY, draw.sprite, anchor, context);
+    }
+    // Units and objects without a normal DEF drawing record retain native placement.
+    if (!handledEntrance && tile->IsEntrance())
+        instance->DrawObjectHint(adv, tile, mapX, mapY, mapZ, screenX, screenY, tile->drawnObjectIndex, nullptr, context);
+}
+
+void AdventureMapHints::DrawObjectHint(H3AdventureManager *adv, H3MapItem *currentItem, int mapX, int mapY,
+                                      int mapZ, int screenX, int screenY, UINT16 objectIndex, const POINT *centre,
+                                      HintDrawContext &context)
+{
+    context.phase = "object hint eligibility";
+    context.objectIndex = objectIndex;
+    context.objectType = currentItem->objectType;
+    if (NeedDrawMapItem(currentItem) && drawnOjectIndexes.insert(objectIndex).second)
+    {
+        constexpr int TILE_WIDTH = 32;
+        constexpr int TEXT_MARGIN = 2;
+        const int objectWidthInTiles = GetObjectWidthInTiles(currentItem);
+        H3String hintText;
+        context.phase = "native hint text generation";
+        hintText = instance->GetHintText(adv, currentItem, mapX, mapY, mapZ);
+        context.phase = "hint text layout";
+
+        if (hintText.Empty())
+            return;
+        LPCSTR hintTextPtr = hintText.String();
+
+        constexpr int minTextFieldWidth = TILE_WIDTH;
+
+        auto fnt = P_TinyFont->Get();
+        if (!fnt)
+            return;
+        const int maxHintTextLineWidth = fnt->GetMaxLineWidth(hintTextPtr); // get max text width
+
+        const int maxAllowedTextWidth = TILE_WIDTH * (objectWidthInTiles + 1); // allow max width
+        int textWidth = Clamp(minTextFieldWidth, maxHintTextLineWidth, maxAllowedTextWidth);
+
+        if (maxHintTextLineWidth > textWidth) // if over the limit
+        {
+            H3Vector<H3String> stingList;
+            fnt->SplitTextIntoLines(hintTextPtr, textWidth, stingList); // rearrange text
+            hintText = h3_NullString;
+            for (auto &str : stingList)
+            {
+                hintText += str;
+                if (!str.Empty())
+                    hintText.Append('\n');
+            }
+            if (!hintText.Empty())
+                hintText.SetLength(hintText.Length() - 1); // remove last symbol
+            hintTextPtr = hintText.String();               // reset ptr
+            textWidth = fnt->GetMaxLineWidth(hintTextPtr);
         }
 
-        if (instance->NeedDrawMapItem(currentItem) &&
-            instance->drawnOjectIndexes.insert(currentItem->drawnObjectIndex).second)
+        const int pcxWidth = textWidth + TEXT_MARGIN * 2;
+
+        const int hintTextLines = fnt->GetLinesCountInText(hintTextPtr, textWidth);
+        const int minTextFieldHeight = fnt->height + 2;
+        const int textHeight = hintTextLines * (minTextFieldHeight - 1);
+        const int pcxHeight = textHeight + TEXT_MARGIN;
+        context.phase = "hint PCX allocation";
+
+        // Keep one scratch PCX16 for all hints. Its dimensions describe its
+        // stride and capacity, so grow it when either required dimension
+        // exceeds the current allocation while drawing each hint at its own size.
+        if (!instance->tempHintBuffer || pcxWidth > instance->tempHintBuffer->width ||
+            pcxHeight > instance->tempHintBuffer->height)
         {
-
-            constexpr int TILE_WIDTH = 32;
-            constexpr int TEXT_MARGIN = 2;
-            const int objectWidthInTiles = GetObjectWidthInTiles(currentItem);
-            H3String hintText;
-            hintText = instance->GetHintText(adv, currentItem, mapX, mapY, mapZ);
-
-            if (hintText.Empty())
+            const int bufferWidth =
+                instance->tempHintBuffer ? (std::max)(pcxWidth, instance->tempHintBuffer->width) : pcxWidth;
+            const int bufferHeight =
+                instance->tempHintBuffer ? (std::max)(pcxHeight, instance->tempHintBuffer->height) : pcxHeight;
+            H3LoadedPcx16 *largerBuffer = H3LoadedPcx16::Create(bufferWidth, bufferHeight);
+            if (!largerBuffer)
                 return;
-            LPCSTR hintTextPtr = hintText.String();
 
-            constexpr int minTextFieldWidth = TILE_WIDTH;
+            if (instance->tempHintBuffer)
+                instance->tempHintBuffer->Destroy();
+            instance->tempHintBuffer = largerBuffer;
+        }
 
-            auto fnt = P_TinyFont->Get();
-            if (!fnt)
-                return;
-            const int maxHintTextLineWidth = fnt->GetMaxLineWidth(hintTextPtr); // get max text width
+        H3LoadedPcx16 *tempBuffer = instance->tempHintBuffer;
+        context.phase = "hint text drawing";
+        libc::memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
 
-            const int maxAllowedTextWidth = TILE_WIDTH * (objectWidthInTiles + 1); // allow max width
-            int textWidth = Clamp(minTextFieldWidth, maxHintTextLineWidth, maxAllowedTextWidth);
+        fnt->TextDraw(tempBuffer, hintTextPtr, TEXT_MARGIN, 0, textWidth, pcxHeight);
 
-            if (maxHintTextLineWidth > textWidth) // if over the limit
+        if (tempBuffer)
+        {
+            tempBuffer->DrawFrame(0, 0, pcxWidth, pcxHeight, 189, 149, 57);
+
+            int objectWidth = 1 * TILE_WIDTH;
+            const int outOfWidthBorder = (pcxWidth - objectWidth) >> 1;
+
+            int destPcxX = screenX * TILE_WIDTH + adv->screenDrawOffset.x - outOfWidthBorder;
+
+            const int additionalYOffset = instance->settings.drawObjectHint[currentItem->objectType].yOffset;
+
+            int destPcxY = screenY * TILE_WIDTH + adv->screenDrawOffset.y - pcxHeight + additionalYOffset;
+            if (centre)
             {
-                H3Vector<H3String> stingList;
-                fnt->SplitTextIntoLines(hintTextPtr, textWidth, stingList); // rearrange text
-                hintText = h3_NullString;
-                for (auto &str : stingList)
-                {
-                    hintText += str;
-                    if (!str.Empty())
-                        hintText.Append('\n');
-                }
-                if (!hintText.Empty())
-                    hintText.SetLength(hintText.Length() - 1); // remove last symbol
-                hintTextPtr = hintText.String();               // reset ptr
-                textWidth = fnt->GetMaxLineWidth(hintTextPtr);
+                destPcxX = centre->x - pcxWidth / 2;
+                destPcxY = centre->y - pcxHeight / 2;
             }
-
-            const int pcxWidth = textWidth + TEXT_MARGIN * 2;
-
-            const int hintTextLines = fnt->GetLinesCountInText(hintTextPtr, textWidth);
-            const int minTextFieldHeight = fnt->height + 2;
-            const int textHeight = hintTextLines * (minTextFieldHeight - 1);
-            const int pcxHeight = textHeight + TEXT_MARGIN;
-
-            // Keep one scratch PCX16 for all hints. Its dimensions describe its
-            // stride and capacity, so grow it when either required dimension
-            // exceeds the current allocation while drawing each hint at its own size.
-            if (!instance->tempHintBuffer || pcxWidth > instance->tempHintBuffer->width ||
-                pcxHeight > instance->tempHintBuffer->height)
+            const RECT originalRect{destPcxX, destPcxY, destPcxX + pcxWidth + HINT_SHADOW_SIZE,
+                                    destPcxY + pcxHeight + HINT_SHADOW_SIZE};
+            bool overlapsHintOnTheLeft = false;
+            for (const auto &previousHint : instance->drawnHintRects)
             {
-                const int bufferWidth =
-                    instance->tempHintBuffer ? (std::max)(pcxWidth, instance->tempHintBuffer->width) : pcxWidth;
-                const int bufferHeight =
-                    instance->tempHintBuffer ? (std::max)(pcxHeight, instance->tempHintBuffer->height) : pcxHeight;
-                H3LoadedPcx16 *largerBuffer = H3LoadedPcx16::Create(bufferWidth, bufferHeight);
-                if (!largerBuffer)
-                    return;
-
-                if (instance->tempHintBuffer)
-                    instance->tempHintBuffer->Destroy();
-                instance->tempHintBuffer = largerBuffer;
+                if (previousHint.mapX < mapX && RectanglesIntersect(originalRect, previousHint.rect))
+                {
+                    overlapsHintOnTheLeft = true;
+                    break;
+                }
             }
+            if (overlapsHintOnTheLeft)
+                destPcxY += ((mapX + mapY) & 1) ? HINT_STAGGER_Y : -HINT_STAGGER_Y;
 
-            H3LoadedPcx16 *tempBuffer = instance->tempHintBuffer;
-            libc::memset(tempBuffer->buffer, 0, tempBuffer->buffSize);
-
-            fnt->TextDraw(tempBuffer, hintTextPtr, TEXT_MARGIN, 0, textWidth, pcxHeight);
-
-            if (tempBuffer)
+            if (centre)
             {
-                tempBuffer->DrawFrame(0, 0, pcxWidth, pcxHeight, 189, 149, 57);
+                destPcxX = Clamp(int(m_mapView.left), destPcxX,
+                                 (std::max)(int(m_mapView.left), int(m_mapView.right) - pcxWidth - HINT_SHADOW_SIZE));
+                destPcxY = Clamp(int(m_mapView.top), destPcxY,
+                                 (std::max)(int(m_mapView.top), int(m_mapView.bottom) - pcxHeight - HINT_SHADOW_SIZE));
+            }
+            // Intersect the blit with the viewport.
+            const int drawX = (std::max<int>)(destPcxX, m_mapView.left);
+            const int drawY = (std::max<int>)(destPcxY, m_mapView.top);
+            const int srcX = drawX - destPcxX;
+            const int srcY = drawY - destPcxY;
+            const int drawWidth = (std::min<int>)(pcxWidth - srcX, m_mapView.right - drawX);
+            const int drawHeight = (std::min<int>)(pcxHeight - srcY, m_mapView.bottom - drawY);
 
-                int objectWidth = 1 * TILE_WIDTH;
-                const int outOfWidthBorder = (pcxWidth - objectWidth) >> 1;
+            // if need to draw any hint
+            if (drawHeight > 0 && drawWidth > 0)
+            {
+                // get general Window draw buffer to draw temp pcx with x/y offsets
+                context.phase = "hint blit and shadow";
+                auto drawBuffer = P_WindowManager->GetDrawBuffer();
+                // DrawToPcx16's wrapper takes width/height from the source PCX.
+                // Pass the clipped extent explicitly, keeping its actual dimensions and stride.
+                THISCALL_12(void, 0x44DF80, tempBuffer, srcX, srcY, drawWidth, drawHeight, drawBuffer->buffer,
+                            drawX, drawY, drawBuffer->width, drawBuffer->height, drawBuffer->scanlineSize, 1);
 
-                int destPcxX = screenX * TILE_WIDTH + adv->screenDrawOffset.x - outOfWidthBorder;
+                int heightReserve = m_mapView.bottom - drawHeight - drawY;
+                UINT shadowWidth = 0;
 
-                const int additionalYOffset = instance->settings.drawObjectHint[currentItem->objectType].yOffset;
+                UINT shadowHeight = 0;
 
-                int destPcxY = screenY * TILE_WIDTH + adv->screenDrawOffset.y - pcxHeight + additionalYOffset;
-                const RECT originalRect{destPcxX, destPcxY, destPcxX + pcxWidth + HINT_SHADOW_SIZE,
-                                        destPcxY + pcxHeight + HINT_SHADOW_SIZE};
-                bool overlapsHintOnTheLeft = false;
-                for (const auto &previousHint : instance->drawnHintRects)
-                {
-                    if (previousHint.mapX < mapX && RectanglesIntersect(originalRect, previousHint.rect))
-                    {
-                        overlapsHintOnTheLeft = true;
-                        break;
-                    }
-                }
-                if (overlapsHintOnTheLeft)
-                    destPcxY += ((mapX + mapY) & 1) ? HINT_STAGGER_Y : -HINT_STAGGER_Y;
+                if (heightReserve > 0)
+                    shadowHeight = heightReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : heightReserve;
 
-                // Intersect the blit with the viewport without moving the hint.
-                const int drawX = (std::max<int>)(destPcxX, m_mapView.left);
-                const int drawY = (std::max<int>)(destPcxY, m_mapView.top);
-                const int srcX = drawX - destPcxX;
-                const int srcY = drawY - destPcxY;
-                const int drawWidth = (std::min<int>)(pcxWidth - srcX, m_mapView.right - drawX);
-                const int drawHeight = (std::min<int>)(pcxHeight - srcY, m_mapView.bottom - drawY);
+                int widthReserve = m_mapView.right - drawWidth - drawX;
+                if (widthReserve > 0)
+                    shadowWidth = widthReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : widthReserve;
 
-                // if need to draw any hint
-                if (drawHeight > 0 && drawWidth > 0)
-                {
-                    // get general Window draw buffer to draw temp pcx with x/y offsets
-                    auto drawBuffer = P_WindowManager->GetDrawBuffer();
-                    // DrawToPcx16's wrapper takes width/height from the source PCX.
-                    // Pass the clipped extent explicitly, keeping its actual dimensions and stride.
-                    THISCALL_12(void, 0x44DF80, tempBuffer, srcX, srcY, drawWidth, drawHeight, drawBuffer->buffer,
-                                drawX, drawY, drawBuffer->width, drawBuffer->height, drawBuffer->scanlineSize, 1);
+                if (shadowWidth)
+                    drawBuffer->DrawShadow(drawX + drawWidth, drawY, shadowWidth, drawHeight + shadowHeight);
 
-                    int heightReserve = m_mapView.bottom - drawHeight - drawY;
-                    UINT shadowWidth = 0;
+                if (shadowHeight)
+                    drawBuffer->DrawShadow(drawX, drawY + drawHeight, drawWidth + (shadowHeight ? 0 : shadowWidth),
+                                           shadowHeight);
 
-                    UINT shadowHeight = 0;
-
-                    if (heightReserve > 0)
-                        shadowHeight = heightReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : heightReserve;
-
-                    int widthReserve = m_mapView.right - drawWidth - drawX;
-                    if (widthReserve > 0)
-                        shadowWidth = widthReserve >= HINT_SHADOW_SIZE ? HINT_SHADOW_SIZE : widthReserve;
-
-                    if (shadowWidth)
-                        drawBuffer->DrawShadow(drawX + drawWidth, drawY, shadowWidth, drawHeight + shadowHeight);
-
-                    if (shadowHeight)
-                        drawBuffer->DrawShadow(drawX, drawY + drawHeight, drawWidth + (shadowHeight ? 0 : shadowWidth),
-                                               shadowHeight);
-
-                    const RECT drawnRect{drawX, drawY, drawX + drawWidth + static_cast<int>(shadowWidth),
-                                         drawY + drawHeight + static_cast<int>(shadowHeight)};
-                    instance->drawnHintRects.push_back({drawnRect, mapX});
-                }
+                const RECT drawnRect{drawX, drawY, drawX + drawWidth + static_cast<int>(shadowWidth),
+                                     drawY + drawHeight + static_cast<int>(shadowHeight)};
+                instance->drawnHintRects.push_back({drawnRect, mapX});
             }
         }
     }

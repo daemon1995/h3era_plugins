@@ -28,6 +28,7 @@
     <ClInclude Include="PluginVersion.h" />
     <ClInclude Include="ArtifactComparison.h" />
     <ClInclude Include="AdventureMapHints.h" />
+    <ClInclude Include="AdventureHintGeometry.h" />
     <ClInclude Include="ArtifactHints.h" />
     <ClInclude Include="GameplayFeature.h" />
     <ClInclude Include="GraphicsEnhancements.h" />

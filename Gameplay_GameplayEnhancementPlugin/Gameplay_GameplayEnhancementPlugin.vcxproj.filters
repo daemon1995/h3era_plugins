@@ -32,6 +32,9 @@
     <ClInclude Include="AdventureMapHints.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AdventureHintGeometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ISettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
