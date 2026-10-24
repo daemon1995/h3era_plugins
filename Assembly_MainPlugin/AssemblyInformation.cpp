@@ -683,7 +683,7 @@ void AssemblyInformation::UpdateVersionBlink() noexcept
         return;
 
     const DWORD currentTime = h3::GetTime();
-    constexpr DWORD BLINK_INTERVAL_MS = 500;
+    constexpr DWORD BLINK_INTERVAL_MS = 1000;
     if (currentTime - versionBlinkLastUpdate < BLINK_INTERVAL_MS)
         return;
 
