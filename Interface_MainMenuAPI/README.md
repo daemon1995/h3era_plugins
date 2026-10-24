@@ -1,4 +1,4 @@
-# Interface_MainMenuAPI 2.2.1
+# Interface_MainMenuAPI 2.2.2
 
 One plugin owns main-menu background rendering, logos, video positioning and
 the button panel. It replaces Interface_MainMenuLogo,
@@ -18,6 +18,10 @@ Panel captions retain `era.notifications.*`, and hidden-message history stays in
 translations and `ntf_*.def` resources remain in the mod's Lang/Data files.
 The panel works without Assembly and when all assembly version labels are disabled.
 Heroes Launcher detection moved with the panel; its call is commented out.
+
+Link clicks and the hand cursor compare the widget found by the dialog with
+the saved notification-name widget pointer, requiring it to be visible and
+active. Names do not need separate IDs or a manually maintained hit rectangle.
 
 MainMenuAPI 2.2.1 and Assembly 1.12.2 combine link-hover cursor requests for
 each menu message and apply the cursor once after the hook chain. Remaining
