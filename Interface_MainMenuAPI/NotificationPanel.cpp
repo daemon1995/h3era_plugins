@@ -436,7 +436,7 @@ void NotificationPanel::UpdateVisibleNotificationsList() noexcept
     const auto updateButton = [this](H3DlgDefButton *button, const bool isEnable) {
         if (!button)
             return;
-        button->SendCommand(6 - isEnable, 4096);
+        button->SendCommand(5 + isEnable, 4096);
         if (isVisible)
         {
             button->Draw();
