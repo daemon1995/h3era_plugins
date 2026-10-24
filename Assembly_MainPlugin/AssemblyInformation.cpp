@@ -160,7 +160,10 @@ void AssemblyInformation::Version::AdjustItemText() noexcept
 {
     if (!customText)
     {
-        sprintf(h3_TextBuffer, format, version.String());
+        const char *value = version.String();
+        if (!strcmp(format, "v%s") && (*value == 'v' || *value == 'V'))
+            ++value;
+        sprintf(h3_TextBuffer, format, value);
         text = h3_TextBuffer;
     }
 }
@@ -535,9 +538,9 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 void AssemblyInformation::LoadAssemblyLabelText()
 {
     m_eraVersion.format = mainmenu::config::Text("gem_plugin.main_menu.era_version.format", "ERA Engine v%s");
-    m_assemblyTitle.text = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.title", "Assembly version");
-    m_localVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.installed_format", "Installed: %s");
-    m_remoteVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.latest_format", "Latest: %s");
+    m_assemblyTitle.text = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.title", "Assembly");
+    m_localVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.installed_format", "v%s");
+    m_remoteVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.latest_format", "v%s");
     m_assemblyTitle.alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 }
 
@@ -556,36 +559,33 @@ void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
     m_eraVersion.fixedHeight = smallLabelHeight;
     m_eraVersion.x = offsetX + std::min(sideMargin, screenWidth - m_eraVersion.fixedWidth);
     m_eraVersion.y = offsetY + screenHeight - m_eraVersion.fixedHeight - bottomMargin;
-    const int rows = (m_localVersion.show != FALSE) + (m_remoteVersion.show != FALSE);
-    m_assemblyTitle.show = rows != 0;
-    if (!rows || screenWidth < 40 || screenHeight < 40)
+    const int columns = (m_localVersion.show != FALSE) + (m_remoteVersion.show != FALSE);
+    m_assemblyTitle.show = columns != 0;
+    if (!columns || screenWidth < 40 || screenHeight < 40)
         return;
-    const int width = std::min(280, screenWidth);
-    const int titleWidth = std::min(130, width - 20);
-    H3FontLoader titleFont(NH3Dlg::Text::MEDIUM);
-    const int titleHeight = titleFont.Get() ? titleFont->height + 6 : 22;
-    // Each text rectangle must hold a complete font line after subtracting
-    // the three-pixel top/bottom padding. A smaller rectangle draws no text.
-    const int minRowHeight = std::max(smallLabelHeight, (titleHeight - 1 + rows - 1) / rows + 1);
-    const int rowHeight = std::min(minRowHeight, screenHeight / rows);
-    const int height = rows * (rowHeight - 1) + 1;
-    const int left = offsetX + std::max(0, screenWidth - width - sideMargin);
-    const int top = offsetY + screenHeight - height - bottomMargin;
+    // Three adjoining cells: Assembly | installed | latest. Width does not
+    // depend on the translated caption or the current version strings.
+    const int width = std::min(80 + columns * 69, screenWidth);
+    const int titleWidth = std::min(80, width - columns * 11);
+    const int versionWidth = (width - titleWidth) / columns + 1;
+    const int height = std::min(smallLabelHeight, screenHeight);
+    const int left = offsetX + screenWidth - width;
+    const int top = offsetY + screenHeight - height;
     m_assemblyTitle.x = left;
     m_assemblyTitle.y = top;
     m_assemblyTitle.fixedWidth = titleWidth;
     m_assemblyTitle.fixedHeight = height;
-    m_assemblyTitle.fontName = NH3Dlg::Text::MEDIUM;
-    int row = 0;
+    m_assemblyTitle.fontName = NH3Dlg::Text::SMALL;
+    int columnX = left + titleWidth - 1;
     for (auto *version : {static_cast<Version *>(&m_localVersion), static_cast<Version *>(&m_remoteVersion)})
     {
         version->fontName = NH3Dlg::Text::SMALL;
-        version->fixedWidth = width - titleWidth + 1;
-        version->fixedHeight = rowHeight;
-        version->x = left + titleWidth - 1;
-        version->y = top + row * (rowHeight - 1);
+        version->fixedWidth = versionWidth;
+        version->fixedHeight = height;
+        version->x = columnX;
+        version->y = top;
         if (version->show)
-            ++row;
+            columnX += versionWidth - 1;
     }
 }
 

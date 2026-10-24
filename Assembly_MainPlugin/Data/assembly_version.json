@@ -2,9 +2,9 @@
   "gem_plugin": {
     "main_menu": {
       "assembly_version": {
-        "title": "Assembly version",
-        "installed_format": "Installed: %s",
-        "latest_format": "Latest: %s"
+        "title": "Assembly",
+        "installed_format": "v%s",
+        "latest_format": "v%s"
       }
     }
   }

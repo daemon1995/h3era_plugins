@@ -2,9 +2,9 @@
   "gem_plugin": {
     "main_menu": {
       "assembly_version": {
-        "title": "Версия сборки",
-        "installed_format": "Установлена: %s",
-        "latest_format": "Последняя: %s"
+        "title": "Сборка",
+        "installed_format": "v%s",
+        "latest_format": "v%s"
       }
     }
   }
