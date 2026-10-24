@@ -35,7 +35,6 @@ static mainmenu::background::Layout GetVersionLabelBounds(H3BaseDlg *dlg)
     }
     return bounds;
 }
-// @todo // add red color for different versions
 AssemblyInformation::AssemblyInformation(PatcherInstance *_pi)
     : IGamePatch(_pi), versions{&m_eraVersion, &m_localVersion, &m_remoteVersion}
 {
@@ -60,8 +59,15 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
 
         customText = readSuccess && !text.Empty();
 
-        sprintf(h3_TextBuffer, "%s.%s.format", BASE_JSON_KEY, jsonSubKey);
-        format = EraJS::read(h3_TextBuffer);
+        if (!strcmp(jsonSubKey, "current_version"))
+            format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.installed_format", "v%s");
+        else if (!strcmp(jsonSubKey, "online_version"))
+            format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.latest_format", "v%s");
+        else
+        {
+            sprintf(h3_TextBuffer, "%s.%s.format", BASE_JSON_KEY, jsonSubKey);
+            format = mainmenu::config::Text(h3_TextBuffer, "ERA Engine v%s");
+        }
 
         alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 
@@ -140,7 +146,7 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     if (drawText)
         font->TextDraw(labelPcx, text.String(), horizontalPadding, verticalPadding,
                        width - horizontalPadding * 2, height - verticalPadding * 2,
-                       eTextColor::HIGHLIGHT, eTextAlignment::MIDDLE_CENTER);
+                       textColor, eTextAlignment::MIDDLE_CENTER);
     return true;
 }
 
@@ -385,13 +391,8 @@ void AssemblyInformation::LocalVersion::GetJsonData(const char *jsonSubKey)
 
     sprintf(h3_TextBuffer, "%s.%s.custom_version", BASE_JSON_KEY, jsonSubKey);
     version = EraJS::read(h3_TextBuffer, readSuccess);
-    if (readSuccess && !version.Empty())
-        customVersion = true;
-
-    sprintf(h3_TextBuffer, "%s.%s.read_registry", BASE_JSON_KEY, jsonSubKey);
-    readRegistry = EraJS::readInt(h3_TextBuffer);
-    if (!customText)
-        GetVersion();
+    customVersion = readSuccess && !version.Empty();
+    GetVersion();
 
     Era::ReadStrFromIni("Assembly", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
     shellExecutePath = h3_TextBuffer;
@@ -419,6 +420,13 @@ const BOOL AssemblyInformation::CompareVersions()
     const BOOL wasHigher = m_localVersion.remoteVersionIsHigher;
     m_localVersion.remoteVersionIsHigher =
         assemblyVersion::IsNewer(m_remoteVersion.version.String(), m_localVersion.version.String());
+    m_localVersion.textColor = m_localVersion.remoteVersionIsHigher ? eTextColor::RED : eTextColor::HIGHLIGHT;
+    if (wasHigher != m_localVersion.remoteVersionIsHigher && isVisible && m_localVersion.dlgItem)
+    {
+        m_localVersion.UpdateImage();
+        m_localVersion.dlgItem->Draw();
+        m_localVersion.dlgItem->Refresh();
+    }
 
     if (m_localVersion.remoteVersionIsHigher && !wasHigher)
     {
@@ -449,36 +457,10 @@ void AssemblyInformation::LocalVersion::GetVersion() noexcept
 {
     if (!customVersion)
     {
-        Era::ReadStrFromIni("key", "Registry", ASSEMBLY_INI_FILE, h3_TextBuffer);
-        if (ReadRegistry(h3_TextBuffer))
-        {
-        }
-
-        if (Era::ReadStrFromIni("Version", "Assembly", "ERA_Project.ini", h3_TextBuffer))
+        version = h3_NullString;
+        if (Era::ReadStrFromIni("Version", "Assembly", ASSEMBLY_INI_FILE, h3_TextBuffer))
             version = h3_TextBuffer;
     }
-}
-
-BOOL AssemblyInformation::LocalVersion::ReadRegistry(const char *registryKey)
-{
-    HKEY hKey;
-
-    LONG lRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE, registryKey, 0, KEY_READ, &hKey);
-    bool bExistsAndSuccess(lRes == ERROR_SUCCESS);
-
-    if (bExistsAndSuccess)
-    {
-        CHAR szBuffer[64];
-        DWORD dwBufferSize = sizeof(szBuffer);
-        ULONG nError;
-        nError = RegQueryValueExA(hKey, "version", 0, NULL, (LPBYTE)szBuffer, &dwBufferSize);
-        if (ERROR_SUCCESS == nError)
-            version = szBuffer;
-        RegCloseKey(hKey);
-        bExistsAndSuccess = !version.Empty();
-    }
-
-    return bExistsAndSuccess;
 }
 
 int __stdcall AssemblyInformation::DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)

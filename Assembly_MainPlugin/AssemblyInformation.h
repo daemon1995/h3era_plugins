@@ -24,6 +24,7 @@ class AssemblyInformation : public IGamePatch
         int fixedHeight = 0;
         const char *fontName = NH3Dlg::Text::SMALL;
         const char *format = 0;
+        eTextColor textColor = eTextColor::HIGHLIGHT;
 
         H3String version = h3_NullString;
         H3String text = h3_NullString;
@@ -54,7 +55,6 @@ class AssemblyInformation : public IGamePatch
 
     struct LocalVersion : public Version
     {
-        BOOL readRegistry = false;
         BOOL customVersion = false;
         BOOL remoteVersionIsHigher = false;
 
@@ -62,9 +62,6 @@ class AssemblyInformation : public IGamePatch
         virtual void GetJsonData(const char *jsonSubKey) final override;
         virtual void GetVersion() noexcept final override;
         virtual void AdjustItemText() noexcept final override;
-
-      public:
-        BOOL ReadRegistry(const char *registryKey);
 
     } m_localVersion;
 
