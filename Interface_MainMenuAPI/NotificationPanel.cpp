@@ -81,19 +81,18 @@ BOOL NotificationPanel::ModInfo::ReloadDescription() noexcept
                       modIndex == NONE_INDEX ? jsonFormat::UNIQUE_MOD_NAME : jsonFormat::ORDERED_MOD_NAME,
                       modFolderName.c_str(), modIndex);
 
-        H3FontLoader fn(NH3Dlg::Text::MEDIUM);
-
-        const int maxUnderlineWidth = modNameDlgText->GetWidth();
-        const int oldModNameWidth = Clamp(1, fn->GetMaxLineWidth(displayedName) + 2, maxUnderlineWidth);
         displayedName = EraJS::read(h3_TextBuffer);
 
-        const int modNameWidth = Clamp(1, fn->GetMaxLineWidth(displayedName) + 2, maxUnderlineWidth);
-        const int xOffset = (oldModNameWidth - modNameWidth) / 2;
+        const int modNameWidth = Clamp(1, modNameDlgText->GetFont()->GetMaxLineWidth(displayedName) + 2,
+                                       nameAreaWidth);
+        const int nameX = nameAreaX + (nameAreaWidth - modNameWidth) / 2;
+        modNameDlgText->SetWidth(modNameWidth);
+        modNameDlgText->SetX(nameX);
 
         if (nameUnderline)
         {
             nameUnderline->SetWidth(modNameWidth);
-            nameUnderline->SetX(nameUnderline->GetX() + xOffset);
+            nameUnderline->SetX(nameX);
         }
 
         libc::sprintf(h3_TextBuffer, modIndex == NONE_INDEX ? jsonFormat::UNIQUE_MOD_URL : jsonFormat::ORDERED_MOD_URL,
@@ -504,22 +503,23 @@ void NotificationPanel::CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3Dl
     const int y = modBackground->GetY() + offset - 4;
     const int width = modBackground->GetWidth() - offset * 2;
     const int height = modBackground->GetHeight() - offset + 2;
+    modInfo.nameAreaX = x;
+    modInfo.nameAreaWidth = width;
+    H3FontLoader fn(NH3Dlg::Text::MEDIUM);
+    const int modNameWidth = Clamp(1, fn->GetMaxLineWidth(modInfo.displayedName) + 2, width);
+    const int nameX = x + (width - modNameWidth) / 2;
 
     //  if (modInfo.externalLink)
     {
         const H3RGB565 linkColor(H3RGB888(0, 0xAA, 0xFF));
-        H3FontLoader fn(NH3Dlg::Text::MEDIUM);
-
-        const int modNameWidth = Clamp(1, fn->GetMaxLineWidth(modInfo.displayedName) + 2, width);
-        const int underX = (width - modNameWidth) / 2 + x;
-        modInfo.nameUnderline = H3DlgFrame::Create(underX, y + 24, modNameWidth, 1, linkColor);
+        modInfo.nameUnderline = H3DlgFrame::Create(nameX, y + 24, modNameWidth, 1, linkColor);
         modInfo.items.emplace_back(modInfo.nameUnderline);
     }
 
     const eTextColor textColor = modInfo.externalLink ? eTextColor::REGULAR : eTextColor::BLUE2;
 
     modInfo.modNameDlgText =
-        H3DlgText::Create(x, y + 6, width, 20, modInfo.displayedName, NH3Dlg::Text::MEDIUM, textColor);
+        H3DlgText::Create(nameX, y + 6, modNameWidth, 20, modInfo.displayedName, NH3Dlg::Text::MEDIUM, textColor);
     modInfo.items.emplace_back(modInfo.modNameDlgText);
 
     H3RGB565 highLightColor(H3RGB888::Highlight());

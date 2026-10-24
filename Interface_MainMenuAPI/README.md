@@ -1,4 +1,4 @@
-# Interface_MainMenuAPI 2.2.2
+# Interface_MainMenuAPI 2.2.3
 
 One plugin owns main-menu background rendering, logos, video positioning and
 the button panel. It replaces Interface_MainMenuLogo,
@@ -22,6 +22,9 @@ Heroes Launcher detection moved with the panel; its call is commented out.
 Link clicks and the hand cursor compare the widget found by the dialog with
 the saved notification-name widget pointer, requiring it to be visible and
 active. Names do not need separate IDs or a manually maintained hit rectangle.
+Name widget width is the font's maximum line width plus two pixels, clamped to
+the available name area. The widget and underline stay centered and resize
+together after a language change, including when a longer translation is loaded.
 
 MainMenuAPI 2.2.1 and Assembly 1.12.2 combine link-hover cursor requests for
 each menu message and apply the cursor once after the hook chain. Remaining
