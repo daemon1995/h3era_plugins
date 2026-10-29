@@ -3261,6 +3261,8 @@ namespace h3
 
 namespace h3
 {
+	namespace NH3Terrain { enum eTerrainType : INT32; }
+	typedef NH3Terrain::eTerrainType eTerrain;
 	_H3API_DECLARE_(Bitfield);
 	_H3API_DECLARE_(ObjectMask);
 	_H3API_DECLARE_(PlayersBitfield);
@@ -3379,6 +3381,9 @@ namespace h3
 		 * @return the value of the end mask, that is all bits that are not part of the last 32 bits
 		 */
 		_H3API_ static UINT Mask(UINT number_bits);
+		_H3API_ BOOL8 HasBit(UINT32 bit) { return THISCALL_2(BOOL8, 0x5168B0, this, bit); }
+		_H3API_ VOID SetBit(UINT32 bit, BOOL8 state) { THISCALL_3(BOOL8, 0x506E70, this, bit, state); }
+		_H3API_ BOOL8 HasTerrain(eTerrain terrain) { return HasBit(static_cast<UINT32>(terrain)); }
 	}; /* H3Bitfield */
 
 	/**
@@ -3834,9 +3839,13 @@ namespace h3
 		/** @brief [08]*/
 		INT32  objectID;
 		/** @brief [0C] is it a decorative item?*/
-		BOOL32 decor;
+		BOOL8  decor; // Read as a byte at 0x54B283 / 0x54B2C8
+		h3unk8 _pad_0D[3];
 	};
 	_H3API_ASSERT_SIZE_(H3GlobalObjectSettings);
+	_H3API_ASSERT_OFFSET_(H3GlobalObjectSettings, objectName, 0x04);
+	_H3API_ASSERT_OFFSET_(H3GlobalObjectSettings, objectID, 0x08);
+	_H3API_ASSERT_OFFSET_(H3GlobalObjectSettings, decor, 0x0C);
 
 #pragma pack(pop) /* align-4 */
 
@@ -4594,6 +4603,60 @@ namespace h3
             FIRST_AID_TENT      = 147,
             AMMO_CART           = 148,
             ARROW_TOWER         = 149,
+
+            // WoG creature IDs (the same numeric IDs may have other meanings in HotA).
+            SUPREME_ARCHANGEL   = 150,
+            DIAMOND_DRAGON      = 151,
+            LORD_OF_THUNDER     = 152,
+            HELL_BARON          = 153,
+            BLOOD_DRAGON        = 154,
+            DARKNESS_DRAGON     = 155,
+            GHOST_BEHEMOTH      = 156,
+            HELL_HYDRA          = 157,
+            SACRED_PHOENIX      = 158,
+            GHOST               = 159,
+            EMISSARY_OF_WAR     = 160,
+            EMISSARY_OF_PEACE   = 161,
+            EMISSARY_OF_MANA    = 162,
+            EMISSARY_OF_LORE    = 163,
+            FIRE_MESSENGER      = 164,
+            EARTH_MESSENGER     = 165,
+            AIR_MESSENGER       = 166,
+            WATER_MESSENGER     = 167,
+            GORYNYCH            = 168,
+            WAR_ZEALOT          = 169,
+            ARCTIC_SHARPSHOOTER = 170,
+            LAVA_SHARPSHOOTER   = 171,
+            NIGHTMARE           = 172,
+            SANTA_GREMLIN       = 173,
+            COMMANDER_FIRST_A   = 174,
+            PALADIN_A           = 174,
+            HIEROPHANT_A        = 175,
+            TEMPLE_GUARDIAN_A   = 176,
+            SUCCUBUS_A          = 177,
+            SOUL_EATER_A        = 178,
+            BRUTE_A             = 179,
+            OGRE_LEADER_A       = 180,
+            SHAMAN_A            = 181,
+            ASTRAL_SPIRIT_A     = 182,
+            COMMANDER_LAST_A    = 182,
+            COMMANDER_FIRST_D   = 183,
+            PALADIN_D           = 183,
+            HIEROPHANT_D        = 184,
+            TEMPLE_GUARDIAN_D   = 185,
+            SUCCUBUS_D          = 186,
+            SOUL_EATER_D        = 187,
+            BRUTE_D             = 188,
+            OGRE_LEADER_D       = 189,
+            SHAMAN_D            = 190,
+            ASTRAL_SPIRIT_D     = 191,
+            COMMANDER_LAST_D    = 191,
+            SYLVAN_CENTAUR      = 192,
+            SORCERESS_WOG       = 193,
+            WEREWOLF            = 194,
+            HELL_STEED          = 195,
+            DRACOLICH           = 196,
+            LAST_WOG            = 196,
         };
     } /* namespace NH3Creatures */
     typedef NH3Creatures::eCreatures eCreature;
@@ -6793,9 +6856,13 @@ namespace h3
             SWAMP        = 4,
             ROUGH        = 5,
             SUBTERRANEAN = 6,
+            UNDERGROUND  = SUBTERRANEAN,
             LAVA         = 7,
             WATER        = 8,
             ROCK         = 9,
+            VOID         = ROCK,
+            HIGHLANDS    = 10,
+            WASTELAND    = 11,
         };
     } /* namespace NH3Terrain */
     typedef NH3Terrain::eTerrainType eTerrain;
@@ -7622,6 +7689,24 @@ namespace h3
 
 } /* namespace h3 */
 
+
+namespace h3
+{
+#pragma pack(push, 4)
+	struct H3SeerReward
+	{
+		_H3API_SIZE_(0xC);
+		/** @brief [0] */
+		eSeer	rewardType;
+		/** @brief [4] */
+		int		rewardValue;
+		/** @brief [8] */
+		int		rewardValue2;
+	};
+	_H3API_ASSERT_SIZE_(H3SeerReward);
+#pragma pack(pop)
+} /* namespace h3 */
+
 namespace h3
 {
 	_H3API_DECLARE_(MapitemSeerHut);
@@ -8292,17 +8377,17 @@ namespace h3
 	{
 		_H3API_SIZE_(0x70);
 		_H3API_GET_INFO_(0x6992D4, H3Pathfinder);
-	protected:
-		/** @brief [0] */
-		h3unk8 _f_00[8];
 	public:
+		UINT32 maxQueueCount;       /**< @brief [00] */
+		BOOL8 payTransitionCosts;   /**< @brief [04] */
+		h3unk8 _f_05[3];
 		/** @brief [8] */
 		INT32 availableMovement;
 		/** @brief [C] */
 		INT32 maxLandMovement;
 		/** @brief [10] see 0x56B768*/
 		INT32 maxWaterMovement;
-		h3unk8 _f_14;
+		union { h3unk8 _f_14; BOOL8 summonBoatAccess; };
 		/** @brief [15] can hero cast Dimension Door?*/
 		BOOL8 ddAccess;
 		/** @brief [16] can hero cast fly?*/
@@ -8313,31 +8398,23 @@ namespace h3
 		INT32 waterwalkLevel;
 		/** @brief [1C] level of fly if cast*/
 		INT32 flyLevel;
-	protected:
-		h3unk8 _f_20[4];
-	public:
+		BOOL32 limitReached;       /**< @brief [20] */
 		/** @brief [24] an array of path nodes*/
 		union
 		{
 			H3PathNode* movementInfo;
 			H3PathNode* pathNodes;
 		};
-	protected:
-		h3unk8 _f_28[8];
-	public:
-		/** @brief [30] map width*/
-		INT32 mapX;
-		/** @brief [34] map height*/
-		INT32 mapY;
-	protected:
-		H3Vector<h3unk8[30]> _f_38;
-	public:
-		/** @brief [48] H3Position of path to take*/
-		H3Vector<H3Position> arrowPath;
-	protected:
-		/** @brief [58] vector of size 4 items */
-		H3Vector<h3unk32> _f_58;
-	public:
+		union
+		{
+			RECT validRectangle;   /**< @brief [28] */
+			struct { INT32 _f_28[2]; INT32 mapX; INT32 mapY; };
+		};
+		H3Vector<H3PathNode> queue; /**< @brief [38] */
+		/** @brief [48] Path reconstructed as pointers to map nodes */
+		H3Vector<H3PathNode*> arrowPath;
+		/** @brief [58] */
+		H3Vector<H3PathNode*> visitedPoints;
 		/** @brief [68] */
 		struct BattleHexes
 		{
@@ -8354,6 +8431,11 @@ namespace h3
 		_H3API_ H3FastMap<H3PathNode> GetFastMap();
 	};
 	_H3API_ASSERT_SIZE_(H3Pathfinder);
+	_H3API_ASSERT_OFFSET_(H3Pathfinder, validRectangle, 0x28);
+	_H3API_ASSERT_OFFSET_(H3Pathfinder, mapX, 0x30);
+	_H3API_ASSERT_OFFSET_(H3Pathfinder, queue, 0x38);
+	_H3API_ASSERT_OFFSET_(H3Pathfinder, arrowPath, 0x48);
+	_H3API_ASSERT_OFFSET_(H3Pathfinder, visitedPoints, 0x58);
 
 #pragma pack(pop) /* align-4 */
 
@@ -8370,7 +8452,7 @@ namespace h3
 	struct H3PathNode
 	{
 		_H3API_SIZE_(0x1E);
-	protected:
+	public:
 		/** @brief [00]*/
 		H3Position mixedPosition;
 	public:
@@ -8387,17 +8469,31 @@ namespace h3
 				unsigned walkableWater   : 1;	// 0x20 56BAEF shows water+waterwalk access
 				unsigned unk2            : 26; 	// 0x40, 0x80, ...
 			};
+			struct
+			{
+				unsigned _baseAccess : 6;
+				unsigned townPortal : 1;     // 0x40
+				unsigned dimensionDoor : 1;  // 0x80
+				unsigned castleGate : 1;     // 0x100
+				unsigned startAtTrigger : 1; // 0x200 (present in Complete/ERA)
+				unsigned canStop : 1;        // 0x400
+				unsigned lastCanStop : 1;    // 0x800
+				unsigned direction : 4;
+				INT32 deltaX : 5;
+				INT32 deltaY : 5;
+				unsigned flightCost : 6;
+			};
 			UINT32 access;
 		};
-	protected:
-		h3unk8 _f_08[16];
-	public:
+		H3Position lastPoint; /**< @brief [08] */
+		H3Position monster;   /**< @brief [0C] */
+		INT32 barrierValue;   /**< @brief [10] */
+		INT32 dangerValue;    /**< @brief [14] */
 		/** @brief [18]*/
 		UINT16 movementCost;
-	protected:
 		/** @brief [1A]*/
 		UINT16 movementCost2;
-		h3unk8 _f_1C[2];
+		UINT16 movementLeft; /**< @brief [1C] */
 	public:
 		_H3API_ UINT8 GetX() const;
 		_H3API_ UINT8 GetY() const;
@@ -8407,6 +8503,11 @@ namespace h3
 		_H3API_ H3MapItem* GetMapItem() const;
 	};
 	_H3API_ASSERT_SIZE_(H3PathNode);
+	_H3API_ASSERT_OFFSET_(H3PathNode, lastPoint, 0x8);
+	_H3API_ASSERT_OFFSET_(H3PathNode, monster, 0xc);
+	_H3API_ASSERT_OFFSET_(H3PathNode, barrierValue, 0x10);
+	_H3API_ASSERT_OFFSET_(H3PathNode, movementCost, 0x18);
+	_H3API_ASSERT_OFFSET_(H3PathNode, movementLeft, 0x1c);
 
 #pragma pack(pop) /* align-1 */
 
@@ -8468,26 +8569,25 @@ namespace h3
 	struct H3SimulatedCreature
 	{
 		_H3API_SIZE_(0x48);
-		INT32 count;
-		INT32 type;
-		INT32 num1;
-		INT32 num2;
-		INT32 speed;
-	protected:
-		DOUBLE f_14;
-		DOUBLE f_1C;
-		DOUBLE f_24;
-		h3unk8 f_2C[4];
-		h3unk8 f_30[4];
-		h3unk8 f_34[4];
-	public:
-		INT32 turretPriority;
-		INT32 unitPower;
-		INT32 stackPower;
-	protected:
+		union { INT32 count; INT32 index; };      /**< @brief [00] Army slot */
+		INT32 type;                              /**< @brief [04] */
+		union { INT32 num1; INT32 number; };      /**< @brief [08] */
+		union { INT32 num2; INT32 originalNumber; }; /**< @brief [0C] */
+		INT32 speed;                             /**< @brief [10] */
+		h3unk8 _f_14[4];
+		DOUBLE meleeModifier;                    /**< @brief [18] */
+		DOUBLE finalMeleeModifier;               /**< @brief [20] */
+		DOUBLE rangedModifier;                   /**< @brief [28] */
+		DOUBLE combatValuePerHit;                /**< @brief [30] */
+		union { INT32 turretPriority; INT32 speedCategory; }; /**< @brief [38] */
+		INT32 unitPower;                         /**< @brief [3C] */
+		INT32 stackPower;                        /**< @brief [40] */
 		h3unk8 f_44[4];
 	};
 	_H3API_ASSERT_SIZE_(H3SimulatedCreature);
+	_H3API_ASSERT_OFFSET_(H3SimulatedCreature, meleeModifier, 0x18);
+	_H3API_ASSERT_OFFSET_(H3SimulatedCreature, combatValuePerHit, 0x30);
+	_H3API_ASSERT_OFFSET_(H3SimulatedCreature, stackPower, 0x40);
 
 #pragma pack(pop) /* align-4 */
 
@@ -8507,19 +8607,26 @@ namespace h3
 		INT heroAttack;
 		/** @brief [4] */
 		INT heroDefence;
-	protected:
-		h3unk8 _f_08[4];
-	public:
+		BOOL8 killsOnly; /**< @brief [08] */
+		BOOL8 simulated; /**< @brief [09] */
+		h3unk8 _f_0A[2];
 		/** @brief [C] */
-		INT damage[4];
+		union
+		{
+			INT damage[4];
+			struct { INT32 friendlyCombatValue, enemyCombatValue, awakeFriendlyValue, awakeEnemyValue; };
+		};
 		/** @brief [1C] */
-		INT moveType;
+		union { INT moveType; INT32 roundsLeft; };
 		/** @brief [20] */
 		INT thisSide;
 		/** @brief [24] */
 		INT enemySide;
 	};
 	_H3API_ASSERT_SIZE_(H3SimulatedHero);
+	_H3API_ASSERT_OFFSET_(H3SimulatedHero, simulated, 0x9);
+	_H3API_ASSERT_OFFSET_(H3SimulatedHero, friendlyCombatValue, 0xc);
+	_H3API_ASSERT_OFFSET_(H3SimulatedHero, enemySide, 0x24);
 
 #pragma pack(pop) /* align-4 */
 
@@ -8539,19 +8646,21 @@ namespace h3
 		/** @brief [0] */
 		INT32 spellId;
 		/** @brief [4] associated secondary skill level to the spell*/
-		INT32 skillLevel;
+		union { INT32 skillLevel; INT32 mastery; };
 		/** @brief [8] */
 		INT32 spellPower;
 		/** @brief [C] */
 		INT32 spellDuration;
-	protected:
-		h3unk8 _f_10;
-		INT32 _f_14; // {-1}
-		INT32 _f_18; // {-1}
-		INT32 _f_1C; // {0}
-		UINT8 _f_20; // {0}
+		BOOL8 checkResistance; /**< @brief [10] */
+		INT32 targetHex;       /**< @brief [14] */
+		INT32 secondTargetHex; /**< @brief [18] */
+		INT32 value;           /**< @brief [1C] */
+		BOOL8 castNow;         /**< @brief [20] */
 	};
 	_H3API_ASSERT_SIZE_(H3SimulatedSpell);
+	_H3API_ASSERT_OFFSET_(H3SimulatedSpell, checkResistance, 0x10);
+	_H3API_ASSERT_OFFSET_(H3SimulatedSpell, targetHex, 0x14);
+	_H3API_ASSERT_OFFSET_(H3SimulatedSpell, castNow, 0x20);
 
 #pragma pack(pop) /* align-4 */
 
@@ -8575,9 +8684,10 @@ namespace h3
 		H3Hero* enemyHero;
 		INT32 side;
 		INT32 enemySide;
-		h3unk8 _f_14[8];
-		BOOL8 enemyDefeated;
-		BOOL8 _f_1D;
+		INT32 enemyCanAttack; /**< @brief [14] */
+		INT32 canBeAttacked;  /**< @brief [18] */
+		union { BOOL8 enemyDefeated; BOOL8 winLikely; }; /**< @brief [1C] */
+		union { BOOL8 _f_1D; BOOL8 isCreatureSpell; };
 		union
 		{
 			H3SimulatedHero combatInfo;
@@ -14211,7 +14321,7 @@ namespace h3
 				unsigned undead            : 1; // 40000
 				unsigned attackAllAround   : 1; // 80000
 				unsigned fireballAttack    : 1; // 100000
-				unsigned cannotMove        : 1; // 200000 ~21
+				unsigned dead              : 1; // 200000 - previous name - cannotMove
 				unsigned summon            : 1; // 400000
 				unsigned clone             : 1; // 800000
 				unsigned morale            : 1; // 1000000
@@ -14287,13 +14397,16 @@ namespace h3
 
 		/** @brief [00]*/
 		BOOL8   attackedAlready;
+		BOOL8   bShowRangeFrames;  /**< @brief [01] */
+		INT8    iShowAttackFrameType; /**< @brief [02] */
+		INT8    iNextFrameType;    /**< @brief [03] */
 		/** @brief [04] ??*/
 		INT32   totalPlayerStacks;
 		/** @brief [08] 4-visible, 8-not visible*/
 		UINT32  visibility;
-		h3unk32 _f_0C;
-		h3unk32 _f_10;
-		h3unk32 _f_14;
+		union { h3unk32 _f_0C; BOOL8 bShowTroopCount; };
+		union { h3unk32 _f_10; INT32 targetSide; };
+		union { h3unk32 _f_14; INT32 targetIndex; };
 		h3unk32 _f_18;
 		/** @brief [1C] where to shoot/move to*/
 		INT32   battlefieldDestination;
@@ -14452,9 +14565,7 @@ namespace h3
 		FLOAT blindEffect;
 		/** @brief [0x4A0]*/
 		FLOAT fireShieldEffect;
-	protected:
-		h3unk32 _f_4A4;
-	public:
+		FLOAT healthMul; /**< @brief [4A4] */
 		/** @brief [0x4A8] in %*/
 		FLOAT protectionAirEffect;
 		/** @brief [0x4AC] in %*/
@@ -14572,6 +14683,9 @@ namespace h3
 		_H3API_ INT32 MaxHitPoints() const;
 	};
 	_H3API_ASSERT_SIZE_(H3CombatCreature);
+	_H3API_ASSERT_OFFSET_(H3CombatCreature, targetSide, 0x10);
+	_H3API_ASSERT_OFFSET_(H3CombatCreature, targetIndex, 0x14);
+	_H3API_ASSERT_OFFSET_(H3CombatCreature, healthMul, 0x4a4);
 
 #pragma pack(pop) /* align-4 */
 
@@ -15160,15 +15274,15 @@ namespace h3
 
 #pragma pack(push, 4)
 
-	struct H3MapInfo
+	struct H3MapHeaderData
 	{
-		_H3API_SIZE_(0x304);
+		_H3API_SIZE_(0x2C0);
 		INT32                mapVersion;                    /** @brief [000]*/
 		BOOL8                hasPlayers;                    /** @brief [004]*/
 		INT8                 mapDifficulty;                 /** @brief [005]*/
-		INT8                 computerPlayableCount;         /** @brief [006]*/
-		INT8                 humanOnlyCount;                /** @brief [007]*/
-		h3unk8                humanOnly_8;                   /** @brief [008] unsure what distinction is with [007]*/
+		union { INT8 computerPlayableCount; INT8 numPlayers; };         /** @brief [006]*/
+		union { INT8 humanOnlyCount; INT8 minNumHumanPlayers; };                /** @brief [007]*/
+		union { h3unk8 humanOnly_8; INT8 maxNumHumanPlayers; };                   /** @brief [008] unsure what distinction is with [007]*/
 	protected:
 		h3unk8                _f_9;
 		h3unk8                _f_A;
@@ -15184,12 +15298,23 @@ namespace h3
 		H3VictoryCondition   victory;                       /** @brief [030]*/
 		H3LossCondition      loss;                          /** @brief [07C]*/
 		H3PlayerAttributes   playerAttributes[8];           /** @brief [0A0]*/
+	};
+	_H3API_ASSERT_SIZE_(H3MapHeaderData);
+	_H3API_ASSERT_OFFSET_(H3MapHeaderData, victory, 0x30);
+	_H3API_ASSERT_OFFSET_(H3MapHeaderData, playerAttributes, 0xa0);
+
+	struct H3MapInfo : H3MapHeaderData
+	{
+		_H3API_SIZE_(0x304);
 		H3Set<H3MapHeroInfo> playerHeroes;                  /** @brief [2C0]*/
 		H3String             mapName;                       /** @brief [2D0]*/
 		H3String             mapDescription;                /** @brief [2E0]*/
 		H3Bitfield           expansionHeroes[5];            /** @brief [2F0]*/
 	};
+	typedef H3MapInfo H3MapHeader;
 	_H3API_ASSERT_SIZE_(H3MapInfo);
+	_H3API_ASSERT_OFFSET_(H3MapInfo, playerHeroes, 0x2c0);
+	_H3API_ASSERT_OFFSET_(H3MapInfo, mapName, 0x2d0);
 
 #pragma pack(pop) /* align-4 */
 
@@ -15335,10 +15460,8 @@ namespace h3
 		UINT8   patrol_y;
 		/** @brief [46] radius for patrolling, -1 means no range limit*/
 		INT8   patrolRadius;
-	protected:
-		h3unk8	_f_47;
-		h3unk8  _f_48;
-	public:
+		UINT8 facing;    /**< @brief [47] */
+		UINT8 formation; /**< @brief [48] */
 		/** @brief [49] maximum movement points of the hero on a given turn*/
 		INT32   maxMovement;
 		/** @brief [4D] remaining movement points of the hero on a given turn*/
@@ -15372,9 +15495,7 @@ namespace h3
 	public:
 		/** @brief [8F] seed for skill tree, 1..255*/
 		UINT8	levelSeed;
-	protected:
-		UINT8	_f_90;
-	public:
+		UINT8 lastWisdom; /**< @brief [90] Last Wisdom offer level */
 		/** @brief [91] creatures of the hero*/
 		H3Army army;
 		/** @brief [C9] level of each secondary skill*/
@@ -15692,12 +15813,42 @@ namespace h3
 
 } /* namespace h3 */
 
+
+namespace h3
+{
+#pragma pack(push, 8)
+	struct H3AIPlayer
+	{
+		_H3API_SIZE_(0x98);
+		/** @brief [00] Player index used to address H3Main::players */
+		INT16 team;
+		/** @brief [04] Cached magus hut value */
+		INT32 magus_hut_value;
+		/** @brief [08] Funds reserved by the AI; resourceCount is a legacy name */
+		union { INT32 reservedFunds[7]; INT32 resourceCount[7]; };
+		/** @brief [24] */
+		INT32 resourceSupply[7];
+		/** @brief [40] */
+		INT32 resourceDemand[7];
+		/** @brief [60] Seven doubles; [5C..5F] is alignment padding */
+		DOUBLE resourceImportance[7];
+	};
+	_H3API_ASSERT_SIZE_(H3AIPlayer);
+	_H3API_ASSERT_OFFSET_(H3AIPlayer, team, 0x0);
+	_H3API_ASSERT_OFFSET_(H3AIPlayer, magus_hut_value, 0x4);
+	_H3API_ASSERT_OFFSET_(H3AIPlayer, resourceImportance, 0x60);
+	_H3API_ASSERT_OFFSET_(H3AIPlayer, reservedFunds, 0x08);
+	_H3API_ASSERT_OFFSET_(H3AIPlayer, resourceSupply, 0x24);
+	_H3API_ASSERT_OFFSET_(H3AIPlayer, resourceDemand, 0x40);
+#pragma pack(pop)
+} /* namespace h3 */
+
 namespace h3
 {
 	_H3API_DECLARE_(Player);
 	struct H3Hero;
 
-#pragma pack(push, 4)
+#pragma pack(push, 8)
 
 	/** @brief data about each of the 8 players on the map*/
 	struct H3Player
@@ -15763,25 +15914,51 @@ namespace h3
 		BOOL quickCombatEnabled;
 		/** @brief [E8] */
 		DWORD comboArtifacts;
-		/** @brief [EC] */
-        struct AIPlayer
-        {
-            H3Resources resourceExpectedCount;
-            H3Resources income;
-			char gap38[4];
-            DOUBLE resourceImportance[7];
-            INT32 averageResourceValue;
-            float turnValueOfAvgArtifact;
-        } aIPlayer;
+		/**
+		 * @brief [F0] Embedded AI state, distinct from H3AIPlayer.
+		 * [EC..EF] is alignment padding; 0x4B9B35 clears 0x78 bytes at [F0].
+		 */
+		struct AIPlayer
+		{
+			_H3API_SIZE_(0x78);
+			FLOAT gameAttentionValue[3];   /**< @brief [00] Player +F0 */
+			FLOAT turnAttentionValue[3];   /**< @brief [0C] Player +FC */
+			H3Resources income;            /**< @brief [18] Player +108 */
+			// [34..37] is alignment padding before the doubles.
+			DOUBLE resourceImportance[7];  /**< @brief [38] Player +128 */
+			INT32 averageResourceValue;    /**< @brief [70] Player +160 */
+			FLOAT turnValueOfAvgArtifact;  /**< @brief [74] Player +164 */
+		} aIPlayer;
 
     public:
 		_H3API_ H3Hero* GetActiveHero();
 	};
 	_H3API_ASSERT_SIZE_(H3Player);
+	_H3API_ASSERT_SIZE_(H3Player::AIPlayer);
+	_H3API_ASSERT_OFFSET_(H3Player, comboArtifacts, 0xE8);
+	_H3API_ASSERT_OFFSET_(H3Player, aIPlayer, 0xF0);
+	_H3API_ASSERT_OFFSET_(H3Player::AIPlayer, gameAttentionValue, 0x00);
+	_H3API_ASSERT_OFFSET_(H3Player::AIPlayer, turnAttentionValue, 0x0C);
+	_H3API_ASSERT_OFFSET_(H3Player::AIPlayer, income, 0x18);
+	_H3API_ASSERT_OFFSET_(H3Player::AIPlayer, resourceImportance, 0x38);
+	_H3API_ASSERT_OFFSET_(H3Player::AIPlayer, averageResourceValue, 0x70);
+	_H3API_ASSERT_OFFSET_(H3Player::AIPlayer, turnValueOfAvgArtifact, 0x74);
+	_H3API_ASSERT_OFFSET_(H3Player, playerResources, 0x9C);
+	_H3API_ASSERT_OFFSET_(H3Player, quickCombatEnabled, 0xE4);
+	// 0x528A35 indexes doubles at player + 0x128 + resourceId * 8.
+	// 0x528A26 reads the gold entry at player + 0x158.
+	_H3API_STATIC_ASSERT_(offsetof(H3Player, aIPlayer) +
+		offsetof(H3Player::AIPlayer, resourceImportance) == 0x128,
+		"H3Player resource values must begin at 0x128");
+	_H3API_STATIC_ASSERT_(offsetof(H3Player, aIPlayer) +
+		offsetof(H3Player::AIPlayer, resourceImportance) + 6 * sizeof(DOUBLE) == 0x158,
+		"H3Player gold value must be at 0x158");
+	_H3API_STATIC_ASSERT_(sizeof(((H3Player::AIPlayer*)0)->resourceImportance) == 7 * sizeof(DOUBLE),
+		"H3Player must contain seven double resource values");
 
 	_H3API_NAMED_STRUCT_(H3Player, ActivePlayer, 0x69CCFC);
 
-#pragma pack(pop) /* align-4 */
+#pragma pack(pop) /* align-8 */
 
 } /* namespace h3 */
 
@@ -16068,6 +16245,163 @@ namespace h3
 
 } /* namespace h3 */
 
+
+namespace h3
+{
+#pragma pack(push, 4)
+	enum eNetworkMsg : INT32
+	{
+		RS_GAME_TRANSMIT_INIT = 0x3E8,
+		RS_GAME_TRANSMIT_MAIN = 0x3E9,
+		RS_GAME_TRANSMIT_REQ = 0x3EA,
+		RS_GAME_TRANSMIT_END = 0x3EB,
+		RS_CHAT_MSG = 0x3EC,
+		RS_COMBAT_INIT = 0x3ED,
+		RS_COMBAT_MAIN = 0x3EE,
+		RS_COMBAT_CONTROL = 0x3EF,
+		RS_COMBAT_END_PLACEMENT = 0x3F0,
+		RS_COMBAT_TYPE = 0x3F1,
+		RS_MAP_CHANGE = 0x3F2,
+		RS_HERO_LEVEL_UPDATE = 0x3F3,
+		RS_READY_TO_PLAY = 0x3F4,
+		RS_ALL_READY_TO_PLAY = 0x3F5,
+		RS_PLAYER_DROPPED = 0x3F6,
+		RS_SET_AS_HOST = 0x3F7,
+		RS_TURN_UPDATE = 0x3F8,
+		RS_PLAYER_DROP_UPDATE = 0x3F9,
+		RS_PLAYER_DEAD = 0x3FA,
+		RS_PLAYER_WON = 0x3FB,
+		RS_PLAYER_LOST = 0x3FC,
+		RS_SET_VISIBILITY = 0x3FD,
+		RS_RESET_VISIBILITY = 0x3FE,
+		RS_GAME_HEADER_INFO = 0x3FF,
+		RS_GAME_HEADER_INFO_INIT = 0x400,
+		RS_GAME_HEADER_INFO_END = 0x401,
+		RS_NEW_SETUP_INFO = 0x402,
+		RS_SCROLL = 0x403,
+		RS_NEW_MAP_HEADER_INFO = 0x404,
+		RS_MAP_HEADER_REQUEST = 0x405,
+		RS_MAP_FILE_NAME = 0x406,
+		RS_SORT_MAPS = 0x407,
+		RS_SET_FILTER = 0x408,
+		RS_NEXT_SCREEN = 0x409,
+		RS_PREV_SCREEN = 0x40A,
+		RS_REQUEST_HERO_FACE = 0x40B,
+		RS_REQUEST_HERO_FACE_REPLY = 0x40C,
+		RS_SETAGR = 0x40D,
+		RS_NEW_HOST = 0x40E,
+		RS_UPDATE_PLAYER_POS = 0x40F,
+		RS_NEW_PLAYER = 0x410,
+		RS_REQ_HEADER_CONFIRM = 0x411,
+		RS_HEADER_CONFIRM = 0x412,
+		RS_CLICK = 0x413,
+		RS_TOWN_UPDATE = 0x414,
+		RS_LAUNCHING_GAME = 0x415,
+		RS_BAD_VERSION = 0x416,
+		RS_SETUP_PING = 0x417,
+		RS_SETUP_PING_RESPONSE = 0x418,
+		RS_MAP_CHANGE_START = 0x419,
+		RS_MOVE_HERO = 0x41A,
+		RS_TELEPORT_HERO = 0x41B,
+		RS_CLAIM_MINE = 0x41C,
+		RS_CLAIM_TOWN = 0x41D,
+		RS_CLAIM_GENERATOR = 0x41E,
+		RS_CLAIM_GARRISON = 0x41F,
+		RS_CLAIM_SHIPYARD = 0x420,
+		RS_BUILD_BOAT = 0x421,
+		RS_ERASE_OBJECT = 0x422,
+		RS_DEAD_HERO = 0x423,
+		RS_RECRUIT_HERO = 0x424,
+		RS_DEAD_PLAYER = 0x425,
+		RS_HIDE_HERO = 0x426,
+		RS_MAP_CHANGE_END = 0x427,
+		RS_TRADE_REQUEST = 0x428,
+		RS_TRADE_REQUEST_DONE = 0x429,
+		RS_HERO_UPDATE = 0x42A,
+		RS_ARTIFACT_DROP = 0x42B,
+		RS_BACKPACK_DROP = 0x42C,
+		RS_MONSTER_DROP = 0x42D,
+		RS_GIVE_ME_STUFF = 0x42E,
+		RS_PLAYER_ACTIVE = 0x42F,
+		RS_PING = 0x430,
+		RS_PING_RESPONSE = 0x431,
+		RS_GIFT = 0x432,
+		RS_GIFT_REQUEST = 0x433,
+		RS_SESSION_LOST = 0x434,
+		RS_TEAM_WON = 0x435,
+		RS_NORMAL_WIN = 0x436,
+		RS_DESTROY_PLAYER = 0x437,
+		RS_GAME_TRANSMIT_ACK = 0x438,
+		RS_GAME_XFER_CONFIRM_END = 0x439,
+		RS_GENERATING_RANDOM_MAP = 0x43A,
+		RS_REQUEST_RANDOM_MAPS_LIST_SIZE = 0x43B,
+		RS_REQUEST_RANDOM_MAPS_LIST = 0x43C,
+	};
+
+	struct H3NetworkMsg
+	{
+		_H3API_SIZE_(0x14);
+		/** @brief [00] -1 means everyone*/
+		INT32 recipientId;
+		/** @brief [04] DirectPlay sender ID */
+		UINT32 m_dpidFrom;
+		/** @brief [08] Message ID */
+		eNetworkMsg msgId;
+		/** @brief [0C] Buffer size */
+		INT32 bufferSize;
+		/** @brief [10] Uncompressed size */
+		INT32 m_UncompressedSize;
+	};
+	_H3API_ASSERT_SIZE_(H3NetworkMsg);
+	_H3API_ASSERT_OFFSET_(H3NetworkMsg, msgId, 0x8);
+	_H3API_ASSERT_OFFSET_(H3NetworkMsg, bufferSize, 0xc);
+	_H3API_ASSERT_OFFSET_(H3NetworkMsg, m_UncompressedSize, 0x10);
+
+	struct H3NetworkPlayerDropMsg : H3NetworkMsg
+	{
+		_H3API_SIZE_(0x18);
+		/** @brief [14] */
+		UINT32 m_dpid;
+	};
+	_H3API_ASSERT_SIZE_(H3NetworkPlayerDropMsg);
+
+	struct H3NetworkPlayerInfo
+	{
+		_H3API_SIZE_(0x20);
+		/** [00] */
+		INT32 dpid;
+		/** [04] */
+		CHAR cName[24];
+		/** [1C] */
+		INT32 version;
+	};
+	_H3API_ASSERT_SIZE_(H3NetworkPlayerInfo);
+
+	struct H3MapListEntry
+	{
+		_H3API_SIZE_(0x8);
+		BOOL8 randomMap;
+		INT32 index;
+	};
+	_H3API_ASSERT_SIZE_(H3MapListEntry);
+
+	struct H3NewPlayerUpdateProc
+	{
+		_H3API_SIZE_(0x24);
+		_H3API_VTABLE_(0x641D54);
+		VOID* vTable;
+		INT32 dpid;
+		INT32 numSent;
+		H3Vector<H3MapListEntry> mapList;
+		INT32 sentTime;
+		BOOL8 finished;
+	};
+	_H3API_ASSERT_SIZE_(H3NewPlayerUpdateProc);
+	_H3API_ASSERT_OFFSET_(H3NewPlayerUpdateProc, mapList, 0xc);
+	_H3API_ASSERT_OFFSET_(H3NewPlayerUpdateProc, finished, 0x20);
+#pragma pack(pop)
+} /* namespace h3 */
+
 namespace h3
 {
 	template<typename T> struct H3NetworkData;
@@ -16190,6 +16524,8 @@ namespace h3
 #pragma pack(push, 4)
 
 	/** @brief Used when loading preliminary data from map files*/
+	struct H3SavedGameHeader;
+
 	struct H3ScenarioMapInformation : H3MapInfo
 	{
 		_H3API_SIZE_(0xCA4);
@@ -16239,7 +16575,39 @@ namespace h3
 		h3unk32                    _f_CA0;
 	};
 	_H3API_ASSERT_SIZE_(H3ScenarioMapInformation);
-
+	typedef H3ScenarioMapInformation H3GameSelectionHeadersStruct;
+	struct H3SavedGameHeader
+	{
+		_H3API_SIZE_(0x5A4);
+		// 0x00
+		INT8 id[8];
+		// 0x08
+		INT32 version;
+		// 0x0C
+		INT32 gameVersion;
+		// 0x10
+		H3MapInfo mapInfo;
+		// 0x314
+		H3PlayersInfo playersInfo;
+		// 0x4E0
+		INT8 campaignGame;
+		h3unk8 align[3];
+		// 0x4E4
+		H3CmpInfo campaignInfo;
+		// 0x560
+		H3String fileName;
+		// 0x570
+		INT16 difficultyRating;
+		// 0x574
+		INT32 numDeadPlayers;
+		// 0x578
+		INT8 deadPlayer[8];
+		// 0x580
+		INT32 humanPlayer[8];
+		// 0x5A0
+		INT32 currentPlayer;
+	};
+	_H3API_ASSERT_SIZE_(H3SavedGameHeader);
 #pragma pack(pop) /* align-4 */
 
 } /* namespace h3 */
@@ -16379,6 +16747,41 @@ namespace h3
 
 #pragma pack(pop) /* align-4 */
 
+} /* namespace h3 */
+
+
+namespace h3
+{
+#pragma pack(push, 1)
+	struct H3HeroType
+	{
+		_H3API_SIZE_(0x40);
+		_H3API_GET_INFO_(0x67DCEC, H3HeroType);
+		/** @brief [00]*/
+		INT32		townType;
+		/** @brief [04]*/
+		LPCSTR		name;
+		/** @brief [08]*/
+		float		aggression;
+		/** @brief [0C]*/
+		H3PrimarySkills startingPrimarySkills;
+		/** @brief [10]*/
+		H3PrimarySkills primarySkillChanceGainToLvl9;
+		/** @brief [14]*/
+		H3PrimarySkills primarySkillChanceGainAfterLvl10;
+		/** @brief [18]*/
+		char		secondarySkillChanceGain[28];
+		/** @brief [34]*/
+		char		hireChanceInTowns[9];
+		/** @brief [3D]*/
+		char		gap3D[3];
+	};
+	_H3API_ASSERT_SIZE_(H3HeroType);
+	_H3API_ASSERT_OFFSET_(H3HeroType, name, 0x4);
+	_H3API_ASSERT_OFFSET_(H3HeroType, startingPrimarySkills, 0xc);
+	_H3API_ASSERT_OFFSET_(H3HeroType, secondarySkillChanceGain, 0x18);
+	_H3API_ASSERT_OFFSET_(H3HeroType, hireChanceInTowns, 0x34);
+#pragma pack(pop)
 } /* namespace h3 */
 
 namespace h3
@@ -16812,6 +17215,7 @@ namespace h3
         typedef H3DataArrayPointer<H3DwellingBuildingCosts>  H3DwellingBuildingCosts_ptr;
         typedef H3DataArrayPointer<H3GlobalObjectSettings>   H3GlobalObjectSettings_ptr;
         typedef H3DataArrayPointer<H3HeroInfo>               H3HeroInfo_ptr;
+        typedef H3DataArrayPointer<H3HeroType>               H3HeroType_ptr;
         typedef H3DataArrayPointer<H3HeroSpecialty>          H3HeroSpecialty_ptr;
         typedef H3DataArrayPointer<H3ObstacleInfo>           H3ObstacleInfo_ptr;
         typedef H3DataArrayPointer<H3PuzzleCoordinates>      H3PuzzleCoordinates_ptr;
@@ -16834,6 +17238,7 @@ namespace h3
     typedef H3Internal::H3DwellingBuildingCosts_ptr  P_DwellingBuildingCosts;
     typedef H3Internal::H3GlobalObjectSettings_ptr   P_GlobalObjectSettings;
     typedef H3Internal::H3HeroInfo_ptr               P_HeroInfo;
+    typedef H3Internal::H3HeroType_ptr               P_HeroType;
     typedef H3Internal::H3HeroSpecialty_ptr          P_HeroSpecialty;
     typedef H3Internal::H3ObstacleInfo_ptr           P_ObstacleInfo;
     typedef H3Internal::H3PuzzleCoordinates_ptr      P_PuzzleCoordinates;
@@ -16866,6 +17271,7 @@ namespace h3
 #define P_GlobalObjectSettings   h3::H3Internal::H3GlobalObjectSettings_ptr()
 #define P_ObjectSettings         h3::H3Internal::H3GlobalObjectSettings_ptr()
 #define P_HeroInfo               h3::H3Internal::H3HeroInfo_ptr()
+#define P_HeroType               h3::H3Internal::H3HeroType_ptr()
 #define P_HeroSpecialty          h3::H3Internal::H3HeroSpecialty_ptr()
 #define P_ObstacleInfo           h3::H3Internal::H3ObstacleInfo_ptr()
 #define P_DefObstacleInfo        h3::H3Internal::H3ObstacleInfo_ptr()
@@ -17449,7 +17855,13 @@ namespace h3
 		/** @brief [80]*/
 		H3String      luckModifiers;
 		/** @brief [90]*/
-		h3unk8        _f_90[32];
+		INT32         upgradeId;         /**< @brief [90] */
+		BOOL8         showUpgradeButton; /**< @brief [94] */
+		BOOL8         showDismissButton; /**< @brief [95] */
+		BOOL8         showOkButton;      /**< @brief [96] */
+		h3unk8        _f_97;
+		INT32         influence[3];      /**< @brief [98] */
+		INT32         duration[3];       /**< @brief [A4] */
 		/** @brief [B0]*/
 		H3DlgTextPcx* varBackPcx;
 		/** @brief [B4]*/
@@ -17578,6 +17990,60 @@ namespace h3
 
 #pragma pack(pop) /* align-4 */
 
+} /* namespace h3 */
+
+
+namespace h3
+{
+#pragma pack(push, 4)
+	struct H3ViewWorldDlg : H3NetworkDlg
+	{
+		_H3API_SIZE_(0x70);
+		_H3API_VTABLE_(0x643C64);
+
+		/** @brief [60]*/
+		INT32              viewableWidth;
+		/** @brief [64]*/
+		INT32              viewableHeight;
+		/** @brief [68]*/
+		H3DlgCustomButton* rolloverWidget;
+		/** @brief [6C]*/
+		H3Position         origin;
+	};
+	_H3API_ASSERT_SIZE_(H3ViewWorldDlg);
+
+	struct H3GarrisonTypeDlg : H3NetworkDlg
+	{
+		_H3API_SIZE_(0x70);
+		_H3API_VTABLE_(0x643828);
+
+		/** @brief [60]*/
+		H3Hero*    hero;
+		/** @brief [64]*/
+		INT32      lastHover;
+		/** @brief [68]*/
+		INT32      lastQualifier;
+		/** @brief [6C]*/
+		BOOL8      isJoinDialog;
+	};
+	_H3API_ASSERT_SIZE_(H3GarrisonTypeDlg);
+
+	struct H3MonsterJoinDlg : H3GarrisonTypeDlg
+	{
+		_H3API_SIZE_(0x70);
+		_H3API_VTABLE_(0x643864);
+
+	};
+	_H3API_ASSERT_SIZE_(H3MonsterJoinDlg);
+
+	struct H3GarrisonDlg : H3GarrisonTypeDlg
+	{
+		_H3API_SIZE_(0x70);
+		_H3API_VTABLE_(0x6438A0);
+
+	};
+	_H3API_ASSERT_SIZE_(H3GarrisonDlg);
+#pragma pack(pop)
 } /* namespace h3 */
 
 namespace h3
@@ -18137,6 +18603,32 @@ namespace h3
 
 #pragma pack(pop) /* align-4 */
 
+} /* namespace h3 */
+
+
+namespace h3
+{
+#pragma pack(push, 4)
+	struct H3NetworkMsgHandler
+	{
+		_H3API_SIZE_(0xC);
+		/** @brief [00]*/
+		DWORD* vftable;
+		/** @brief [04]*/
+		INT8 m_inPopup;
+		/** @brief [08]*/
+		H3NetworkMsg* m_pAbortPopupMsg;
+	};
+	_H3API_ASSERT_SIZE_(H3NetworkMsgHandler);
+
+	struct H3SingleSelectionNetworkMsgHandler : H3NetworkMsgHandler
+	{
+		_H3API_SIZE_(0x10);
+		/** @brief [0C]*/
+		BOOL8 flushMessages;
+	};
+	_H3API_ASSERT_SIZE_(H3SingleSelectionNetworkMsgHandler);
+#pragma pack(pop)
 } /* namespace h3 */
 
 namespace h3
@@ -19362,7 +19854,7 @@ namespace h3
 		BOOL32 bChangeSounds;
 		/** @brief [8C]*/
 		BOOL32 MP3Playing;
-		/** @brief [A0]*/
+		/** @brief [90] Initialized at 0x599A98 */
 		_RTL_CRITICAL_SECTION section_sound_call;
 		_RTL_CRITICAL_SECTION section_MP3_change;
 		_RTL_CRITICAL_SECTION section_MP3_name_change;
@@ -19393,6 +19885,7 @@ namespace h3
         _H3API_ static INT64 PlaySoundByFileAsync(LPCSTR wav_name);
 	};
 	_H3API_ASSERT_SIZE_(H3SoundManager);
+	_H3API_ASSERT_OFFSET_(H3SoundManager, driver, 0x3c);
 
 #pragma pack(pop) /* align-4 */
 
@@ -20131,6 +20624,12 @@ namespace h3
         static INT32 Get() { return ValueAt<INT32>(0x5BE36E + 3); }
         typedef INT32 VALUE_TYPE;
     };
+	struct H3TerrainCount
+	{
+		static constexpr h3::ADDRESS ADDRESS = 0x5168B8 + 2;
+		static INT8 Get() { return ValueAt<INT8>(ADDRESS); }
+		typedef INT8 VALUE_TYPE;
+	};
 
     namespace H3Internal
     {
@@ -20167,6 +20666,7 @@ namespace h3
         typedef H3PrimitivePointer<H3TextDlgMaxHeight>           H3TextDlgMaxHeight_ptr;
         typedef H3PrimitivePointer<H3TextDlgMaxWidth>            H3TextDlgMaxWidth_ptr;
         typedef H3PrimitivePointer<H3TownCount>                  H3TownCount_ptr;
+		typedef H3PrimitivePointer<H3TerrainCount>               H3TerrainCount_ptr;
 
     } /* namespace H3Internal */
 
@@ -20204,6 +20704,7 @@ namespace h3
     typedef H3Internal::H3TextDlgMaxHeight_ptr           P_TextDlgMaxHeight;
     typedef H3Internal::H3TextDlgMaxWidth_ptr            P_TextDlgMaxWidth;
     typedef H3Internal::H3TownCount_ptr                  P_TownCount;
+	typedef H3Internal::H3TerrainCount_ptr               P_TerrainCount;
 
 #else
 
@@ -20239,6 +20740,7 @@ namespace h3
 #define P_TextDlgMaxHeight           h3::H3Internal::H3TextDlgMaxHeight_ptr()
 #define P_TextDlgMaxWidth            h3::H3Internal::H3TextDlgMaxWidth_ptr()
 #define P_TownCount                  h3::H3Internal::H3TownCount_ptr()
+#define P_TerrainCount               h3::H3Internal::H3TerrainCount_ptr()
 
 #endif /* _H3API_DONT_USE_MACROS_ */
 
@@ -21349,6 +21851,8 @@ namespace h3
 	struct H3RmgGroundTile
 	{
 		_H3API_SIZE_(4);
+		union {
+		struct {
 		unsigned  landType    : 5; /**< @brief [00]*/
 		unsigned _b6          : 1; /**< @brief [05]*/
 		unsigned  landSprite  : 7; /**< @brief [06]*/
@@ -21359,6 +21863,16 @@ namespace h3
 		unsigned _b26         : 1; /**< @brief [25]*/
 		unsigned  roadType    : 3; /**< @brief [26]*/
 		unsigned _b30         : 3; /**< @brief [29]*/
+		};
+		struct {
+		unsigned rawLandType    : 6;
+		unsigned rawLandSprite  : 8;
+		unsigned rawRiverType   : 4;
+		unsigned rawRiverSprite : 8;
+		unsigned rawRoadType    : 4;
+		unsigned rawFlags       : 2;
+		};
+		};
 	};
 	_H3API_ASSERT_SIZE_(H3RmgGroundTile);
 
@@ -21441,7 +21955,7 @@ namespace h3
 	struct H3RmgLocalMap : public H3RmgMap
 	{
 		_H3API_SIZE_(0x38);
-		h3unk _f_18[16];
+		RECT area; /**< @brief [18] */
 		H3Vector<H3RmgObject*> localObjects; /**< @brief [28]*/
 	};
 	_H3API_ASSERT_SIZE_(H3RmgLocalMap);
@@ -21449,6 +21963,34 @@ namespace h3
 #pragma pack(pop) /* align-4 */
 
 } /* namespace h3 */
+namespace h3
+{
+#pragma pack(push, 4)
+	struct H3RmgRandomMapGenerator;
+	struct H3RmgValObjGroup : H3RmgLocalMap
+	{
+		_H3API_SIZE_(0x68);
+		// Uses H3RmgMap's live vtable (0x6409DC); 0x6409F8 is a base dtor vtable.
+		H3Vector<H3POINT> points;    /**< @brief [38] */
+		BOOL8 hasGuard;              /**< @brief [48] */
+		h3unk8 _f_49[3];
+		INT32 entranceX;             /**< @brief [4C] */
+		INT32 entranceY;             /**< @brief [50] */
+		INT32 x;                     /**< @brief [54] */
+		INT32 y;                     /**< @brief [58] */
+		INT32 z;                     /**< @brief [5C] */
+		BOOL8 isGenerated;           /**< @brief [60] */
+		H3RmgRandomMapGenerator* rmg; /**< @brief [64] */
+	};
+	_H3API_ASSERT_SIZE_(H3RmgValObjGroup);
+	_H3API_ASSERT_OFFSET_(H3RmgValObjGroup, points, 0x38);
+	_H3API_ASSERT_OFFSET_(H3RmgValObjGroup, entranceX, 0x4c);
+	_H3API_ASSERT_OFFSET_(H3RmgValObjGroup, isGenerated, 0x60);
+	_H3API_ASSERT_OFFSET_(H3RmgValObjGroup, rmg, 0x64);
+	typedef H3RmgValObjGroup H3RmgLocalMapExt;
+#pragma pack(pop)
+} /* namespace h3 */
+
 
 namespace h3
 {
@@ -21501,9 +22043,11 @@ namespace h3
 	struct H3RmgZoneData
 	{
 		_H3API_SIZE_(4);
-		unsigned _b1    : 16;
-		unsigned  zone1 : 8;
-		unsigned  zone2 : 8;
+		union
+		{
+			struct { unsigned _b1 : 16; unsigned zone1 : 8; unsigned zone2 : 8; };
+			struct { UINT16 distToObject; INT8 zoneId; INT8 borderZoneId; };
+		};
 	};
 	_H3API_ASSERT_SIZE_(H3RmgZoneData);
 
@@ -21548,6 +22092,134 @@ namespace h3
 
 } /* namespace h3 */
 
+
+namespace h3
+{
+#pragma pack(push, 4)
+	struct H3RmgTerrainSpriteDef
+	{
+		_H3API_SIZE_(0x8);
+		INT32  groupId;
+		BYTE   variant;
+		BYTE   pad[3];
+	};
+	_H3API_ASSERT_SIZE_(H3RmgTerrainSpriteDef);
+
+	struct H3RmgTerrainSpriteGroup
+	{
+		_H3API_SIZE_(0x8);
+		INT32 firstIndex;
+		INT32 count;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgTerrainSpriteGroup);
+
+	struct H3RmgTerrainObject
+	{
+		_H3API_SIZE_(0x1E4);
+		_H3API_VTABLE_(0x642CA8);
+		_H3API_CTOR_DTOR_(0x5B3A90, 0x00);
+		DWORD*         vTable;
+		BOOL8          usePrimaryGroup;
+		BOOL8          useSecondaryGroup;
+		BYTE           pad06[2];
+		INT32          alternateSpriteChance;
+		INT32          spriteCount;
+		H3RmgTerrainSpriteDef* spriteDefs;
+		H3RmgTerrainSpriteGroup groups[58];
+	};
+	_H3API_ASSERT_SIZE_(H3RmgTerrainObject);
+	_H3API_ASSERT_OFFSET_(H3RmgTerrainObject, spriteDefs, 0x10);
+	_H3API_ASSERT_OFFSET_(H3RmgTerrainObject, groups, 0x14);
+	using TerrainObjectsTable = H3RmgTerrainObject* [h3::limits::TERRAIN];
+	inline TerrainObjectsTable& GetCurrentTerrainObjects()
+	{
+		return *reinterpret_cast<TerrainObjectsTable*>(IntAt(0x5B4169 + 3));
+	}
+#define g_TerrainObjects (GetCurrentTerrainObjects())
+#pragma pack(pop)
+} /* namespace h3 */
+
+
+namespace h3
+{
+#pragma pack(push, 4)
+	enum eRbColor
+	{
+		RB_RED = 0,
+		RB_BLACK = 1
+	};
+
+	struct H3RmgZonePoolNode
+	{
+		_H3API_SIZE_(0x18);
+		H3RmgZonePoolNode* left;     /**< @brief [00]*/
+		H3RmgZonePoolNode* parent;   /**< @brief [04]*/
+		H3RmgZonePoolNode* right;    /**< @brief [08]*/
+		H3POINT            point;    /**< @brief [0C]*/
+		eRbColor           color;    /**< @brief [14]*/
+	};
+	_H3API_ASSERT_SIZE_(H3RmgZonePoolNode);
+
+	struct H3RmgPointSet
+	{
+		_H3API_SIZE_(0x10);
+		INT32              unk00;
+		H3RmgZonePoolNode* header;
+		BOOL8              allowDuplicateKeys; // =1 - режим multiset, =0 - проверка уникальности
+		h3unk8             unk09[3];
+		INT32              nodeCount;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgPointSet);
+
+	union H3RmgCellGroundInfo
+	{
+		_H3API_SIZE_(0x2);
+		WORD raw;
+
+		struct
+		{
+			WORD initialized : 1;
+			WORD terrain : 4;
+			WORD landSprite : 7;
+			WORD mirrorV : 1;
+			WORD mirrorH : 1;
+			WORD flag14 : 1;
+			WORD flag15 : 1;
+		};
+	};
+	_H3API_ASSERT_SIZE_(H3RmgCellGroundInfo);
+
+	struct H3RmgZoneMap
+	{
+		_H3API_SIZE_(0x44);
+		H3RmgMap*         map;
+		eTerrain          terrain;
+		INT32             a4;
+		INT32             mapWidth;
+		INT32             mapHeight;
+		H3RmgPointSet     boundaryPoints;
+		H3RmgPointSet     frontierPoints;
+		H3Vector<H3RmgCellGroundInfo> cellInfoCache;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgZoneMap);
+
+	// 0x5B7570 constructs this holder and allocates its 0x44-byte cache.
+	struct H3RmgZoneMapHolder
+	{
+		_H3API_SIZE_(0x8);
+		BOOL8 inited;                  /**< @brief [00] */
+		H3RmgZoneMap* zoneMap;          /**< @brief [04] */
+	};
+	_H3API_ASSERT_SIZE_(H3RmgZoneMapHolder);
+	_H3API_ASSERT_OFFSET_(H3RmgPointSet, header, 0x4);
+	_H3API_ASSERT_OFFSET_(H3RmgPointSet, nodeCount, 0xc);
+	_H3API_ASSERT_OFFSET_(H3RmgZoneMap, boundaryPoints, 0x14);
+	_H3API_ASSERT_OFFSET_(H3RmgZoneMap, frontierPoints, 0x24);
+	_H3API_ASSERT_OFFSET_(H3RmgZoneMap, cellInfoCache, 0x34);
+	_H3API_ASSERT_OFFSET_(H3RmgZoneMapHolder, zoneMap, 0x4);
+#pragma pack(pop)
+} /* namespace h3 */
+
 namespace h3
 {
 	struct H3RmgObjectPropsRef;
@@ -21575,8 +22247,11 @@ namespace h3
 		/** @brief [08]*/
 		H3Point             coordinates;
 		/** @brief [14]*/
-		h3unk32             _f_14;
-		h3unk8              _f_18;
+		BOOL8 losePriority;          /**< @brief [14] */
+		BOOL8 winPriority;           /**< @brief [15] */
+		BOOL8 overlapsTerrain;       /**< @brief [16] */
+		BOOL8 overlapsPriorityArea;  /**< @brief [17] */
+		BOOL8 overlapsForbiddenArea; /**< @brief [18] */
 
 		_H3API_ h3func GetVTable() const;
 	};
@@ -21616,7 +22291,8 @@ namespace h3
 		_H3API_SIZE_(0x2C);
 		INT32 indexOnMap; /**< @brief [1C]*/
 		INT32 count;      /**< @brief [20]*/
-		h3unk _f_24[8];   /**< @brief [24]*/
+		INT32 _f_24;      /**< @brief [24] Initialized to 3 at 0x541234 */
+		h3unk8 _f_28[4];
 	};
 	_H3API_ASSERT_SIZE_(H3RmgObjectMonster);
 
@@ -21652,14 +22328,39 @@ namespace h3
 	};
 	_H3API_ASSERT_SIZE_(H3RmgObjectProperties);
 
-	struct H3RmgObjectPropsRef // size E8
+	struct H3RmgRandTrnElement
+	{
+		_H3API_SIZE_(0x4C);
+		INT32			rowIndex;				/**< @brief [00]*/ // obstacleId - 1
+		INT32			terrainModifiers[10];	/**< @brief [04]*/
+		H3Vector<INT32> adjacentWeights;		/**< @brief [2C]*/
+		H3Vector<INT32> overlapWeights;			/**< @brief [3C]*/
+												/**< @brief [4C]*/
+
+	};
+	_H3API_ASSERT_SIZE_(H3RmgRandTrnElement);
+	_H3API_ASSERT_OFFSET_(H3RmgRandTrnElement, terrainModifiers, 0x4);
+	_H3API_ASSERT_OFFSET_(H3RmgRandTrnElement, adjacentWeights, 0x2c);
+	_H3API_ASSERT_OFFSET_(H3RmgRandTrnElement, overlapWeights, 0x3c);
+
+	struct H3RmgObjectPropsRef
 	{
 		_H3API_SIZE_(0xE8);
-		H3RmgObjectProperties* prototype;		 /**< @brief [00]*/
-		h3unk32          _f_4;			 /**< @brief [04]*/
-		UINT32           refCount;		 /**< @brief [08]*/
-		INT32            prototypeIndex; /**< @brief [0C]*/
+		H3RmgObjectProperties* prototype;/**< @brief [00]*/
+		INT32		 primaryTerrainId;	 /**< @brief [04]*/ // первый разрешённый terrain / page из prototype->landpage
+		UINT32       refCount;		     /**< @brief [08]*/
+		INT32        prototypeIndex;     /**< @brief [0C]*/
+		H3RmgRandTrnElement* randTrnProperties; /**< @brief [10]*/
+		H3Vector<H3POINT> perimeterPoints;/**< @brief [14]*/
+		INT32        placementScoreTable[48]; /**< @brief [24]*/
+		BOOL8        placementScoreTableInited; /**< @brief [E4]*/
+		h3unk8       _pad_E5[3];
 	};
+	_H3API_ASSERT_SIZE_(H3RmgObjectPropsRef);
+	_H3API_ASSERT_OFFSET_(H3RmgObjectPropsRef, randTrnProperties, 0x10);
+	_H3API_ASSERT_OFFSET_(H3RmgObjectPropsRef, perimeterPoints, 0x14);
+	_H3API_ASSERT_OFFSET_(H3RmgObjectPropsRef, placementScoreTable, 0x24);
+	_H3API_ASSERT_OFFSET_(H3RmgObjectPropsRef, placementScoreTableInited, 0xe4);
 
 #pragma pack(pop) /* align-4 */
 
@@ -21930,6 +22631,173 @@ namespace h3
 #pragma pack(pop) /* align-4 */
 
 } /* namespace h3 */
+namespace h3
+{
+#pragma pack(push, 4)
+	struct H3RmgRandomMapGenerator;
+	typedef H3RmgObjectMonster H3RmgMonster;
+	typedef H3RmgObjectSeer H3RmgSeer;
+	typedef H3RmgObjectTown H3RmgTown;
+
+	struct H3RmgMineOrShipyard : H3RmgObject
+	{
+		_H3API_SIZE_(0x1C);
+		_H3API_VTABLE_(0x640AB4);
+	};
+	_H3API_ASSERT_SIZE_(H3RmgMineOrShipyard);
+
+	struct H3RmgResource : H3RmgObject
+	{
+		_H3API_SIZE_(0x1C);
+		_H3API_VTABLE_(0x640AD4);
+	};
+	_H3API_ASSERT_SIZE_(H3RmgResource);
+
+	struct H3RmgPandora : H3RmgObject
+	{
+		_H3API_SIZE_(0x54);
+		_H3API_VTABLE_(0x640AE4);
+		INT32			experience;
+		H3Resources		resources;
+		INT32			monType;
+		INT32			objectValue;
+		H3Vector<DWORD> spellList;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgPandora);
+
+	struct H3RmgKeymaster : H3RmgObject
+	{
+		_H3API_SIZE_(0x24);
+		_H3API_VTABLE_(0x640AF4);
+		H3RmgRandomMapGenerator* rmg;	/**< @brief [1C]*/
+		INT32		valueMaybe;			/**< @brief [20]*/
+	};
+	_H3API_ASSERT_SIZE_(H3RmgKeymaster);
+
+	struct H3RmgQuestArtifact : H3RmgObject
+	{
+		_H3API_SIZE_(0x28);
+		_H3API_VTABLE_(0x640B04);
+		H3RmgRandomMapGenerator* rmg; /**< @brief [1C]*/
+		H3RmgSeer* seer;        /**< @brief [20]*/
+		H3RmgObjectGenerator* objGen; /**< @brief [24]*/
+	};
+	_H3API_ASSERT_SIZE_(H3RmgQuestArtifact);
+
+	struct H3RmgPrison : H3RmgObject
+	{
+		_H3API_SIZE_(0x2C);
+		_H3API_VTABLE_(0x640B24);
+		H3RmgRandomMapGenerator* rmg;
+		INT32		objectId;
+		eHero		heroId;
+		INT32		heroExperience;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgPrison);
+
+	struct H3RmgPandoraMonsterGenerator : H3RmgObjectGenerator
+	{
+		_H3API_SIZE_(0x1C);
+		_H3API_VTABLE_(0x640B8C);
+		INT32			montype;
+		INT32			objectValue;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgPandoraMonsterGenerator);
+
+	struct H3RmgPandoraMagicGenerator : H3RmgObjectGenerator
+	{
+		_H3API_SIZE_(0x20);
+		_H3API_VTABLE_(0x640BB0);
+		INT32			minLevel;
+		INT32			maxLevel;
+		INT32			schoolBit;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgPandoraMagicGenerator);
+
+	struct H3RmgPrisonGenerator : H3RmgObjectGenerator
+	{
+		_H3API_SIZE_(0x18);
+		_H3API_VTABLE_(0x640BE0);
+		INT32		heroExperience;
+	};
+	_H3API_ASSERT_SIZE_(H3RmgPrisonGenerator);
+
+	struct H3RmgSpellScrollGenerator : H3RmgObjectGenerator
+	{
+		_H3API_SIZE_(0x18);
+		_H3API_VTABLE_(0x640C34);
+		INT32   spellLevel;			/**< @brief [14]*/
+	};
+	_H3API_ASSERT_SIZE_(H3RmgSpellScrollGenerator);
+
+	struct H3RmgBaseProgressBar
+	{
+		_H3API_SIZE_(0xC);
+		_H3API_VTABLE_(0x6409D0);
+
+		h3func*		vTable;				/**< @brief [00]*/
+		INT32		maxValue;			/**< @brief [04]*/
+		INT32		currentValue;		/**< @brief [08]*/
+										/**< @brief [0C]*/
+		inline H3RmgBaseProgressBar* vDelete(BOOL8 freeMem)
+		{
+			return THISCALL_2(H3RmgBaseProgressBar*, vTable[0], this, freeMem);
+		}
+		inline void ChangeMaxValue(INT32 maxValue)
+		{
+			return THISCALL_2(void, vTable[1], this, maxValue);
+		}
+		inline void AddValue(INT32 value)
+		{
+			return THISCALL_2(void, vTable[2], this, value);
+		}
+	};
+	_H3API_ASSERT_SIZE_(H3RmgBaseProgressBar);
+
+	struct H3RmgProgressBar : H3RmgBaseProgressBar
+	{
+		_H3API_SIZE_(0x28);
+		_H3API_VTABLE_(0x641B24);
+		H3Vector<H3DlgItem*>	dlgItems;		/**< @brief [0C]*/ // Список элементов диалога
+		H3BaseDlg*				dlg;			/**< @brief [1C]*/ // Диалог
+		H3LoadedDef*			progressBoxDef;	/**< @brief [20]*/ // Деф с квадратиком отображения прогресса
+		INT32					lastBoxesCount;	/**< @brief [24]*/ // Количество квадратиков при прошлом отображении (16*верхине + нижние)
+												/**< @brief [28]*/
+	};
+	_H3API_ASSERT_SIZE_(H3RmgProgressBar);
+
+	struct H3CreatureSwapper
+	{
+		_H3API_SIZE_(0x20);
+		H3Army*		army;				/**< @brief [00]*/
+		H3Army*		adjacentArmy;		/**< @brief [04]*/
+		CHAR		hasAngelicAlliance;	/**< @brief [08]*/
+		INT16		morale;				/**< @brief [0A]*/
+		INT16		alignmentCount;		/**< @brief [0C]*/
+		CHAR		alignments[10];		/**< @brief [0E]*/
+		INT32		armyValueIncrease;	/**< @brief [18]*/
+		INT16		improvement;		/**< @brief [1C]*/
+	};
+	_H3API_ASSERT_SIZE_(H3CreatureSwapper);
+	_H3API_ASSERT_OFFSET_(H3CreatureSwapper, morale, 0xa);
+	_H3API_ASSERT_OFFSET_(H3CreatureSwapper, alignments, 0xe);
+	_H3API_ASSERT_OFFSET_(H3CreatureSwapper, improvement, 0x1c);
+
+	struct H3CreaturePurchaser : H3CreatureSwapper
+	{
+		_H3API_SIZE_(0x3C);
+		INT32		playerId;			/**< @brief [20]*/
+		INT32*		gold;				/**< @brief [24]*/
+		BOOL8		subtractCostMode;	/**< @brief [28]*/
+		H3Vector<h3unk32> creatures;	/**< @brief [2C]*/
+	};
+	_H3API_ASSERT_SIZE_(H3CreaturePurchaser);
+	_H3API_ASSERT_OFFSET_(H3CreaturePurchaser, subtractCostMode, 0x28);
+	_H3API_ASSERT_OFFSET_(H3CreaturePurchaser, creatures, 0x2c);
+
+#pragma pack(pop)
+} /* namespace h3 */
+
 
 namespace h3
 {
@@ -32258,7 +33126,7 @@ namespace h3
         return activeSpellDuration[eSpell::BLIND]
             || activeSpellDuration[eSpell::STONE]
             || activeSpellDuration[eSpell::PARALYZE]
-            || info.cannotMove;
+            || info.dead;
     }
     _H3API_ BOOL H3CombatCreature::IsDefending() const
     {
@@ -34976,7 +35844,7 @@ namespace h3
 		const H3CombatMonster* mon = stacks[currentActiveSide];
 		while (mon->type != eCreature::UNDEFINED)
 		{
-			if (!mon->numberAlive && mon->info.cannotMove && mon->IsSummon())
+			if (!mon->numberAlive && mon->info.dead && mon->IsSummon())
 				break;
 			++mon;
 			if (++i >= 20)
