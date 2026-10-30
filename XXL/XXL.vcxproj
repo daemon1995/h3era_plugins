@@ -14,14 +14,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="MapSize.h" />
-    <ClInclude Include="HdTemplateCompatibility.h" />
-    <ClInclude Include="RandomMapOptions.h" />
+    <ClInclude Include="WoGPathCore.h" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="MapSize.cpp" />
-    <ClCompile Include="HdTemplateCompatibility.cpp" />
     <ClCompile Include="Minimap.cpp" />
-    <ClCompile Include="RandomMapOptions.cpp" />
+    <ClCompile Include="WoGLine.cpp" />
+    <ClCompile Include="WoGPath.cpp" />
     <ClCompile Include="..\headers\Era\era.cpp" />
   </ItemGroup>
   <ItemGroup><None Include="README.md" /></ItemGroup>
