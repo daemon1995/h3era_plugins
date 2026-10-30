@@ -56,28 +56,38 @@ struct MenuDialogSize { int width; int height; };
 MenuDialogSize OptionsDialogSize(int screenWidth, int screenHeight, bool fullScreen);
 bool DialogShadowFits(int x, int y, int width, int height, int screenWidth, int screenHeight);
 enum class ScrollArea { None, Mods, Options };
+enum class MenuView { Mods, Categories };
 ScrollArea ScrollAreaAt(int mouseX, int mouseY, int sidebarWidth, int sidebarTop, int sidebarHeight,
                         int optionX, int optionTop, int optionWidth, int optionHeight);
 
 class OptionMenuModel final
 {
     std::vector<MenuMod> mods;
+    // Category pages combine sources without copying option values.
+    std::vector<MenuPage> categoryPages;
     std::vector<EOption *> allOptions;
     std::vector<EOption *> searchMatches;
     std::vector<MenuCategory> searchCategories;
     std::vector<MenuCategory> emptyCategories;
     std::vector<EOption *> empty;
     std::map<std::pair<std::string, std::string>, int> pagePositions;
+    std::map<std::string, int> categoryPositions;
     std::string query;
     std::wstring normalizedQuery;
     unsigned codePage;
     int selectedMod = -1;
     int selectedPage = -1;
+    int selectedCategory = -1;
+    MenuView view = MenuView::Mods;
+    int sidebarPositions[2] = {};
     int searchPosition = 0;
 
   public:
     explicit OptionMenuModel(const OptionRegistry &registry, unsigned codePage);
     const std::vector<MenuMod> &Mods() const { return mods; }
+    const std::vector<MenuPage> &CategoryPages() const { return categoryPages; }
+    MenuView View() const { return view; }
+    int SelectedCategory() const { return selectedCategory; }
     int SelectedMod() const { return selectedMod; }
     int SelectedPage() const { return selectedPage; }
     const std::string &Query() const { return query; }
@@ -86,6 +96,10 @@ class OptionMenuModel final
     const std::vector<MenuCategory> &Categories() const;
     void ClickMod(int mod);
     void SelectPage(int mod, int page);
+    void SetView(MenuView value) { view = value; }
+    int SidebarPosition() const { return sidebarPositions[view == MenuView::Categories]; }
+    void SetSidebarPosition(int position) { sidebarPositions[view == MenuView::Categories] = position; }
+    void SelectCategory(int category);
     void ToggleCategory(int category);
     void SetQuery(const std::string &text);
     int ScrollPosition() const;

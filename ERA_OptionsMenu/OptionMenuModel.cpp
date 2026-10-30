@@ -92,6 +92,7 @@ std::vector<OptionGridRow> BuildOptionGrid(const std::vector<MenuCategory> &cate
         // A sole choice with the category's name uses the category title once.
         EOption *soleChoice = category.options.size() == 1 &&
             category.options.front()->Definition().type == OptionType::Choice &&
+            category.name == OptionCategory(category.options.front()->Definition()) &&
             OptionCategory(category.options.front()->Definition()) == category.options.front()->Definition().name ?
             category.options.front() : nullptr;
         const OptionCell title = {soleChoice, OptionCellKind::Category, -1, &category, categoryIndex};
@@ -268,6 +269,48 @@ OptionMenuModel::OptionMenuModel(const OptionRegistry &registry, unsigned codePa
     }
     for (auto &mod : mods)
         for (auto &page : mod.pages) SortCategories(page.categories);
+    // A category is shared by name; each mod/page remains a separate source
+    // group even when two mods have the same displayed name.
+    std::map<std::string, size_t> categoryIndices;
+    std::map<std::tuple<std::string, std::string, std::string>, size_t> sourceIndices;
+    for (auto *option : allOptions)
+    {
+        const auto &definition = option->Definition();
+        const auto &name = OptionCategory(definition);
+        auto category = categoryIndices.find(name);
+        if (category == categoryIndices.end())
+        {
+            category = categoryIndices.emplace(name, categoryPages.size()).first;
+            categoryPages.push_back({name});
+        }
+        auto &page = categoryPages[category->second];
+        page.options.push_back(option);
+        const auto identity = std::make_tuple(name, definition.modFolder, definition.page);
+        auto source = sourceIndices.find(identity);
+        if (source == sourceIndices.end())
+        {
+            source = sourceIndices.emplace(identity, page.categories.size()).first;
+            std::string title = definition.modName;
+            if (std::count_if(mods.begin(), mods.end(), [&definition](const MenuMod &mod) {
+                return mod.name == definition.modName;
+            }) > 1) title += " [" + definition.modFolder + "]";
+            if (!definition.page.empty()) title += " / " + definition.page;
+            page.categories.push_back({title});
+            page.categories.back().order = definition.categoryOrder;
+        }
+        else page.categories[source->second].order = std::min(page.categories[source->second].order, definition.categoryOrder);
+        page.categories[source->second].options.push_back(option);
+    }
+    // Match the author's category priority, then the smallest option ID.
+    std::stable_sort(categoryPages.begin(), categoryPages.end(), [](const MenuPage &left, const MenuPage &right) {
+        const auto priority = [](const MenuPage &page) {
+            int order = page.options.front()->Definition().categoryOrder;
+            for (auto *option : page.options) order = std::min(order, option->Definition().categoryOrder);
+            return order;
+        };
+        return priority(left) < priority(right);
+    });
+    if (!categoryPages.empty()) selectedCategory = 0;
     if (!mods.empty())
     {
         selectedMod = selectedPage = 0;
@@ -278,6 +321,8 @@ OptionMenuModel::OptionMenuModel(const OptionRegistry &registry, unsigned codePa
 const std::vector<EOption *> &OptionMenuModel::Options() const
 {
     if (IsSearching()) return searchMatches;
+    if (view == MenuView::Categories)
+        return selectedCategory < 0 ? empty : categoryPages[selectedCategory].options;
     if (selectedMod < 0 || selectedPage < 0) return empty;
     return mods[selectedMod].pages[selectedPage].options;
 }
@@ -285,6 +330,8 @@ const std::vector<EOption *> &OptionMenuModel::Options() const
 const std::vector<MenuCategory> &OptionMenuModel::Categories() const
 {
     if (IsSearching()) return searchCategories;
+    if (view == MenuView::Categories)
+        return selectedCategory < 0 ? emptyCategories : categoryPages[selectedCategory].categories;
     if (selectedMod < 0 || selectedPage < 0) return emptyCategories;
     return mods[selectedMod].pages[selectedPage].categories;
 }
@@ -293,7 +340,7 @@ void OptionMenuModel::ClickMod(int mod)
 {
     if (mod < 0 || mod >= static_cast<int>(mods.size())) return;
     mods[mod].expanded = !mods[mod].expanded;
-    SelectPage(mod, 0);
+    SelectPage(mod, mod == selectedMod ? selectedPage : 0);
 }
 
 void OptionMenuModel::SelectPage(int mod, int page)
@@ -302,13 +349,23 @@ void OptionMenuModel::SelectPage(int mod, int page)
         page >= static_cast<int>(mods[mod].pages.size())) return;
     selectedMod = mod;
     selectedPage = page;
+    view = MenuView::Mods;
+    SetQuery("");
+}
+
+void OptionMenuModel::SelectCategory(int category)
+{
+    if (category < 0 || category >= static_cast<int>(categoryPages.size())) return;
+    selectedCategory = category;
+    view = MenuView::Categories;
     SetQuery("");
 }
 
 void OptionMenuModel::ToggleCategory(int category)
 {
     if (category < 0 || category >= static_cast<int>(Categories().size())) return;
-    auto &target = IsSearching() ? searchCategories[category] : mods[selectedMod].pages[selectedPage].categories[category];
+    auto &target = IsSearching() ? searchCategories[category] : view == MenuView::Categories ?
+        categoryPages[selectedCategory].categories[category] : mods[selectedMod].pages[selectedPage].categories[category];
     target.collapsed = !target.collapsed;
 }
 
@@ -348,6 +405,12 @@ void OptionMenuModel::SetQuery(const std::string &text)
 int OptionMenuModel::ScrollPosition() const
 {
     if (IsSearching()) return searchPosition;
+    if (view == MenuView::Categories)
+    {
+        if (selectedCategory < 0) return 0;
+        const auto found = categoryPositions.find(categoryPages[selectedCategory].name);
+        return found == categoryPositions.end() ? 0 : found->second;
+    }
     if (selectedMod < 0 || selectedPage < 0) return 0;
     const auto found = pagePositions.find({mods[selectedMod].folder, mods[selectedMod].pages[selectedPage].name});
     return found == pagePositions.end() ? 0 : found->second;
@@ -357,6 +420,10 @@ void OptionMenuModel::SetScrollPosition(int position)
 {
     position = std::max(0, position);
     if (IsSearching()) searchPosition = position;
+    else if (view == MenuView::Categories)
+    {
+        if (selectedCategory >= 0) categoryPositions[categoryPages[selectedCategory].name] = position;
+    }
     else if (selectedMod >= 0 && selectedPage >= 0)
         pagePositions[{mods[selectedMod].folder, mods[selectedMod].pages[selectedPage].name}] = position;
 }

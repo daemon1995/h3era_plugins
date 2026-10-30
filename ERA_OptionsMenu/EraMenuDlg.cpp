@@ -17,6 +17,8 @@ constexpr int CloseId = 14;
 constexpr int ExportId = 15;
 constexpr int ResizeId = 16;
 constexpr int BansId = 17;
+constexpr int ModsViewId = 18;
+constexpr int CategoriesViewId = 19;
 constexpr int ModScrollId = 20;
 constexpr int PageScrollBase = 5000;
 constexpr size_t MaxCachedScrollbars = 64;
@@ -24,9 +26,9 @@ constexpr int ModRowBase = 100;
 constexpr int OptionNameBase = 1000;
 constexpr int CheckboxBase = 3000;
 constexpr int RadioBase = 4000;
-constexpr int SidebarTop = 88;
-constexpr int ListTop = 114;
-constexpr int ModRowHeight = 42;
+constexpr int SidebarTop = 144;
+constexpr int ListTop = 144;
+constexpr int ModRowHeight = 34;
 constexpr int MinimumRowHeight = 24;
 
 unsigned GameCodePage()
@@ -137,7 +139,10 @@ const char *ReadOnlyReason(bool currentMap)
 void ShowOptionPreview(const era_options::EOption &option, int value, bool allowEditing, bool currentMap)
 {
     const auto &definition = option.Definition();
-    std::string text = "{" + definition.name + "}\n\n" +
+    std::string source = definition.modName;
+    for (const auto &part : {definition.page, era_options::OptionCategory(definition)})
+        if (!part.empty()) source += " / " + part;
+    std::string text = "{" + definition.name + "}\n" + source + "\n\n" +
         (definition.popup.empty() ? definition.hint : definition.popup);
     if (value < 0) text += "\n\n" + std::string(UiText("value_unavailable", "Cannot read the current value."));
     else if (definition.type == era_options::OptionType::Choice)
@@ -176,8 +181,8 @@ void ShowOptionPreview(const era_options::EOption &option, int value, bool allow
 } // namespace
 
 EraMenuDlg::EraMenuDlg(int width, int height, bool fullScreen, const era_options::OptionMenuModel &state,
-    int sidebarPosition, bool allowEditing, bool currentMap) : OptionsDialog(width, height), model(state),
-    firstMod(sidebarPosition), fullScreen(fullScreen), allowEditing(allowEditing), currentMap(currentMap)
+    bool allowEditing, bool currentMap) : OptionsDialog(width, height), model(state),
+    firstMod(state.SidebarPosition()), fullScreen(fullScreen), allowEditing(allowEditing), currentMap(currentMap)
 {
     CreateBackground();
     hintBar = CreateHint();
@@ -210,8 +215,11 @@ void EraMenuDlg::CreateWidgets()
     Button(this, widthDlg - 466, 12, 122, 28, BansId, UiText("object_bans", "Object bans"));
     Button(this, widthDlg - 334, 12, 104, 28, ResizeId, fullScreen ?
         UiText("windowed", "Window (F11)") : UiText("fullscreen", "Full screen (F11)"));
-    if (auto *defaults = Button(this, widthDlg - 220, 12, 110, 28, DefaultsId, UiText("defaults", "Defaults")))
+    if (auto *defaults = Button(this, widthDlg - 220, 12, 110, 28, DefaultsId, UiText("reset_section", "Reset section")))
+    {
+        defaults->SetHints(UiText("reset_section_hint", "Reset only the options shown in this section or search."), nullptr, false);
         if (!allowEditing) { defaults->Shade(); defaults->DeActivate(); }
+    }
     Button(this, widthDlg - 100, 12, 80, 28, CloseId, "OK");
     CreateText(18, 43, widthDlg - 36, 16, UiText("search", "Search all mods by name, key, ID or tags (Ctrl+F)"),
         NH3Dlg::Text::SMALL, eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
@@ -220,6 +228,12 @@ void EraMenuDlg::CreateWidgets()
     if (search) search->SetAutoredraw(TRUE);
     if (search) search->SetText(model.Query().c_str());
     Button(this, widthDlg - 110, 58, 90, 26, ClearId, UiText("clear", "Clear"));
+    modsView = Button(this, 18, 88, 124, 26, ModsViewId, UiText("by_mods", "By mod"));
+    categoriesView = Button(this, 148, 88, 142, 26, CategoriesViewId, UiText("by_categories", "By category"));
+    if (modsView) modsView->SetHints(UiText("by_mods_hint", "Choose a mod and one of its pages on the left."), nullptr, false);
+    if (categoriesView) categoriesView->SetHints(UiText("by_categories_hint", "Browse matching categories from all mods; each group names its source."), nullptr, false);
+    viewHint = CreateText(302, 88, widthDlg - 322, 26, "", NH3Dlg::Text::SMALL,
+        eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
     listHeight = heightDlg - ListTop - 88;
     sidebarHeight = heightDlg - SidebarTop - 88;
     sidebarWidth = (std::max)(160, widthDlg / 4);
@@ -227,7 +241,9 @@ void EraMenuDlg::CreateWidgets()
     columnWidth = (widthDlg - optionX - 42) / 2;
     textWidth = columnWidth - 40;
     CreateFrame(sidebarWidth + 20, SidebarTop, 1, sidebarHeight, -1, H3RGB565::Black());
-    pageTitle = CreateText(optionX + 8, SidebarTop, widthDlg - optionX - 42, 22, "",
+    sidebarTitle = CreateText(18, 118, sidebarWidth - 8, 22, "", NH3Dlg::Text::SMALL,
+        eTextColor::GOLD, -1, eTextAlignment::MIDDLE_LEFT);
+    pageTitle = CreateText(optionX + 8, 118, widthDlg - optionX - 42, 22, "",
         NH3Dlg::Text::SMALL, eTextColor::GOLD, -1, eTextAlignment::MIDDLE_LEFT);
     for (int slot = 0; slot < (std::max)(1, sidebarHeight / ModRowHeight); ++slot)
         modRows.push_back(Button(this, 18, SidebarTop + slot * ModRowHeight,
@@ -285,6 +301,12 @@ void EraMenuDlg::RebuildOptions()
     {
         std::string title;
         if (model.IsSearching()) title = UiText("search_results", "Search results: all mods");
+        else if (model.View() == era_options::MenuView::Categories && model.SelectedCategory() >= 0)
+        {
+            const auto &name = model.CategoryPages()[model.SelectedCategory()].name;
+            title = std::string(UiText("all_mods", "All mods")) + " / " +
+                (name.empty() ? UiText("general", "General") : name);
+        }
         else if (model.SelectedMod() >= 0)
         {
             const auto &mod = model.Mods()[model.SelectedMod()];
@@ -302,6 +324,7 @@ void EraMenuDlg::SelectPageScrollbar()
     optionScroll = nullptr;
     if (lastOptionStart == 0) return;
     const std::pair<int, int> page = model.IsSearching() ? std::make_pair(-1, -1) :
+        model.View() == era_options::MenuView::Categories ? std::make_pair(-2, model.SelectedCategory()) :
         std::make_pair(model.SelectedMod(), model.SelectedPage());
     const auto found = pageScrollbars.find(page);
     if (found != pageScrollbars.end()) { optionScroll = found->second; return; }
@@ -325,19 +348,38 @@ void EraMenuDlg::SelectPageScrollbar()
 void EraMenuDlg::RefreshMods(bool revealSelection)
 {
     sidebarEntries.clear();
-    for (int mod = 0; mod < static_cast<int>(model.Mods().size()); ++mod)
+    const bool byCategory = model.View() == era_options::MenuView::Categories;
+    for (auto *button : {modsView, categoriesView})
+        if (button)
+        {
+            const bool selected = (button == categoriesView) == byCategory;
+            button->SetFrame(selected ? 1 : 0);
+            button->SetClickFrame(1);
+        }
+    if (sidebarTitle) sidebarTitle->SetText(byCategory ? UiText("categories", "Categories") : UiText("mods_pages", "Mods and pages"));
+    if (viewHint) viewHint->SetText(model.IsSearching() ? UiText("search_scope", "Search covers all mods in either view.") :
+        byCategory ? UiText("category_scope", "All mods; source shown above each group") :
+        UiText("mod_scope", "Choose a mod, then a page"));
+    if (byCategory)
+    {
+        for (int category = 0; category < static_cast<int>(model.CategoryPages().size()); ++category)
+            sidebarEntries.push_back({-1, category});
+    }
+    else for (int mod = 0; mod < static_cast<int>(model.Mods().size()); ++mod)
     {
         sidebarEntries.push_back({mod, -1});
-        if (model.Mods()[mod].expanded)
+        if (model.Mods()[mod].expanded && model.Mods()[mod].pages.size() > 1)
             for (int page = 0; page < static_cast<int>(model.Mods()[mod].pages.size()); ++page)
                 sidebarEntries.push_back({mod, page});
     }
     if (revealSelection)
     {
-        const bool expanded = model.SelectedMod() >= 0 && model.Mods()[model.SelectedMod()].expanded;
+        const bool expanded = model.SelectedMod() >= 0 && model.Mods()[model.SelectedMod()].expanded &&
+            model.Mods()[model.SelectedMod()].pages.size() > 1;
         for (int index = 0; index < static_cast<int>(sidebarEntries.size()); ++index)
-            if (sidebarEntries[index].mod == model.SelectedMod() &&
-                sidebarEntries[index].page == (expanded ? model.SelectedPage() : -1))
+            if ((byCategory && sidebarEntries[index].page == model.SelectedCategory()) ||
+                (!byCategory && sidebarEntries[index].mod == model.SelectedMod() &&
+                sidebarEntries[index].page == (expanded ? model.SelectedPage() : -1)))
             {
                 if (index < firstMod) firstMod = index;
                 if (index >= firstMod + static_cast<int>(modRows.size()))
@@ -347,6 +389,7 @@ void EraMenuDlg::RefreshMods(bool revealSelection)
     }
     firstMod = UpdateScroll(modScroll, (std::max)(0, static_cast<int>(sidebarEntries.size()) -
         static_cast<int>(modRows.size())), firstMod, P_WindowManager->lastDlg == this);
+    model.SetSidebarPosition(firstMod);
     for (size_t slot = 0; slot < modRows.size(); ++slot)
     {
         auto *button = modRows[slot];
@@ -354,24 +397,38 @@ void EraMenuDlg::RefreshMods(bool revealSelection)
         const int index = firstMod + static_cast<int>(slot);
         if (index >= static_cast<int>(sidebarEntries.size())) { button->HideDeactivate(); continue; }
         const auto &entry = sidebarEntries[index];
-        const auto &mod = model.Mods()[entry.mod];
         std::string label;
         bool selected = false;
-        if (entry.page < 0)
+        if (byCategory)
         {
-            label = std::string(mod.expanded ? "[-] " : "[+] ") + mod.name;
-            selected = !model.IsSearching() && entry.mod == model.SelectedMod();
+            const auto &category = model.CategoryPages()[entry.page];
+            label = category.name.empty() ? UiText("general", "General") : category.name;
+            label += " (" + std::to_string(category.options.size()) + ")";
+            selected = !model.IsSearching() && entry.page == model.SelectedCategory();
+        }
+        else if (entry.page < 0)
+        {
+            const auto &mod = model.Mods()[entry.mod];
+            label = (mod.pages.size() > 1 ? std::string(mod.expanded ? "[-] " : "[+] ") : "") + mod.name;
+            size_t count = 0;
+            for (const auto &page : mod.pages) count += page.options.size();
+            label += " (" + std::to_string(count) + ")";
+            selected = !model.IsSearching() && entry.mod == model.SelectedMod() &&
+                (!mod.expanded || mod.pages.size() == 1);
         }
         else
         {
-            const auto &name = mod.pages[entry.page].name;
+            const auto &page = model.Mods()[entry.mod].pages[entry.page];
+            const auto &name = page.name;
             label = name.empty() ? UiText("general", "General") : name;
+            label += " (" + std::to_string(page.options.size()) + ")";
             selected = !model.IsSearching() && entry.mod == model.SelectedMod() && entry.page == model.SelectedPage();
         }
-        const int indent = entry.page < 0 ? 0 : 14;
+        const int indent = byCategory || entry.page < 0 ? 0 : 14;
         button->SetX(18 + indent);
         button->SetWidth(static_cast<UINT16>(sidebarWidth - 24 - indent));
         button->SetText(label.c_str());
+        button->SetHints(label.c_str(), nullptr, true);
         button->SetFrame(selected ? 1 : 0);
         button->ShowActivate();
     }
@@ -440,7 +497,7 @@ void EraMenuDlg::RefreshOptions()
     }
     if (summary)
     {
-        std::string text = std::to_string(model.Options().size()) + " / " +
+        std::string text = std::string(UiText("option_count", "Options: ")) + std::to_string(model.Options().size()) + " / " +
             std::to_string(era_options::Registry().Options().size());
         if (!allowEditing) text += " | " + std::string(currentMap ?
             UiText("map_view", "Current map: read only") : UiText("view", "Read only"));
@@ -467,6 +524,16 @@ era_options::EOption *EraMenuDlg::OptionAtControl(int controlId) const
 
 BOOL EraMenuDlg::OnLeftClick(INT itemId, H3Msg &)
 {
+    if (itemId == ModsViewId || itemId == CategoriesViewId)
+    {
+        if (search) search->SetFocus(FALSE);
+        model.SetView(itemId == CategoriesViewId ? era_options::MenuView::Categories : era_options::MenuView::Mods);
+        firstMod = model.SidebarPosition();
+        RebuildOptions();
+        RefreshMods(true);
+        Redraw();
+        return FALSE;
+    }
     if (itemId == CloseId) { SaveAndClose(); return FALSE; }
     if (itemId == ResizeId) { resizeRequested = true; Stop(); return FALSE; }
     if (itemId == BansId)
@@ -505,7 +572,8 @@ BOOL EraMenuDlg::OnLeftClick(INT itemId, H3Msg &)
     if (slot >= 0 && slot < static_cast<int>(modRows.size()) && firstMod + slot < static_cast<int>(sidebarEntries.size()))
     {
         const auto entry = sidebarEntries[firstMod + slot];
-        if (entry.page < 0) model.ClickMod(entry.mod);
+        if (model.View() == era_options::MenuView::Categories) model.SelectCategory(entry.page);
+        else if (entry.page < 0) model.ClickMod(entry.mod);
         else model.SelectPage(entry.mod, entry.page);
         if (search) { search->SetText(""); search->SetFocus(FALSE); }
         RebuildOptions();
@@ -549,7 +617,8 @@ BOOL EraMenuDlg::OnMouseHover(H3DlgItem *item)
     if (GetHintBar())
     {
         const auto *option = item ? OptionAtControl(item->GetID()) : nullptr;
-        std::string hint = option ? option->Definition().hint : "";
+        std::string hint = option ? option->Definition().modName + " / " + option->Definition().hint :
+            item && item->GetHint() ? item->GetHint() : "";
         if (option)
         {
             if (DisplayValue(*option) < 0) hint += " | " + std::string(UiText("value_unavailable", "Cannot read the current value."));
@@ -714,8 +783,9 @@ BOOL EraMenuDlg::CreateAndRun(bool showBans, bool allowEditing)
     }
     era_options::OptionMenuModel state(era_options::Registry(), GameCodePage());
     const auto &settingsPath = era_options::ValuesFilePath();
+    state.SetView(GetPrivateProfileIntA("Dialog", "View", 0, settingsPath.c_str()) == 1 ?
+        era_options::MenuView::Categories : era_options::MenuView::Mods);
     bool full = GetPrivateProfileIntA("Dialog", "FullScreen", 0, settingsPath.c_str()) != 0;
-    int sidebarPosition = 0;
     ObjectBansDlg::State bansState;
     bool resize = false, switchMenu = false, visitedOptions = false;
     do
@@ -734,10 +804,9 @@ BOOL EraMenuDlg::CreateAndRun(bool showBans, bool allowEditing)
         {
             visitedOptions = true;
             if (allowEditing) era_options::RefreshWogValues(currentMap);
-            EraMenuDlg dlg(size.width, size.height, full, state, sidebarPosition, allowEditing, currentMap);
+            EraMenuDlg dlg(size.width, size.height, full, state, allowEditing, currentMap);
             dlg.Start();
             state = dlg.model;
-            sidebarPosition = dlg.firstMod;
             resize = dlg.resizeRequested;
             switchMenu = dlg.bansRequested;
             if (switchMenu) showBans = true;
@@ -749,6 +818,9 @@ BOOL EraMenuDlg::CreateAndRun(bool showBans, bool allowEditing)
                 H3Messagebox(UiText("resize_save_error", "Could not save the dialog size setting."));
         }
     } while (resize || switchMenu);
+    if (visitedOptions && !WritePrivateProfileStringA("Dialog", "View",
+        state.View() == era_options::MenuView::Categories ? "1" : "0", settingsPath.c_str()))
+        H3Messagebox(UiText("view_save_error", "Could not save the menu view preference."));
     if (!allowEditing || currentMap) return TRUE;
     std::string error;
     const bool saved = visitedOptions ? era_options::SaveOptionValues() : era_options::SaveObjectBanPreferences(error);

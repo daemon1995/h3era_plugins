@@ -1,0 +1,31 @@
+{
+  "era_options": {
+    "ui": {
+      "title": "ERA Options",
+      "object_bans": "Object bans",
+      "windowed": "Window (F11)",
+      "fullscreen": "Full screen (F11)",
+      "reset_section": "Reset section",
+      "reset_section_hint": "Reset only the options shown in this section or search.",
+      "search": "Search all mods by name, key, ID or tags (Ctrl+F)",
+      "clear": "Clear",
+      "by_mods": "By mod",
+      "by_categories": "By category",
+      "by_mods_hint": "Choose a mod and one of its pages on the left.",
+      "by_categories_hint": "Browse categories from all mods; each group names its source.",
+      "mods_pages": "Mods and pages",
+      "categories": "Categories",
+      "mod_scope": "Choose a mod, then a page",
+      "category_scope": "All mods; source shown above each group",
+      "search_scope": "Search covers all mods in either view.",
+      "search_results": "Search results: all mods",
+      "all_mods": "All mods",
+      "general": "General",
+      "no_results": "No options found.",
+      "option_count": "Options: ",
+      "errors": "JSON errors",
+      "export": "Export JSON",
+      "view_save_error": "Could not save the menu view preference."
+    }
+  }
+}

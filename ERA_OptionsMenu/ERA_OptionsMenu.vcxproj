@@ -20,6 +20,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
     <None Include="README.md" />
+    <None Include="lang\era_options_ui.json" />
+    <None Include="lang\ru\era_options_ui.json" />
+    <None Include="tests\OptionMenuModelTests.cpp" />
+    <None Include="tests\RunTests.cmd" />
     <None Include="lang\era_options_wog.json" />
     <None Include="tools\ImportWoGOptions.mjs" />
     <None Include="lang\era_options_wog_scripts.json" />

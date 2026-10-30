@@ -29,6 +29,10 @@ class EraMenuDlg final : public era_options::OptionsDialog
     H3DlgText *summary = nullptr;
     H3DlgText *empty = nullptr;
     H3DlgText *pageTitle = nullptr;
+    H3DlgText *sidebarTitle = nullptr;
+    H3DlgText *viewHint = nullptr;
+    H3DlgCaptionButton *modsView = nullptr;
+    H3DlgCaptionButton *categoriesView = nullptr;
     int firstMod = 0;
     int firstOption = 0;
     int lastOptionStart = 0;
@@ -45,7 +49,7 @@ class EraMenuDlg final : public era_options::OptionsDialog
     bool allowEditing = true;
     bool currentMap = false;
 
-    EraMenuDlg(int width, int height, bool fullScreen, const era_options::OptionMenuModel &state, int sidebarPosition,
+    EraMenuDlg(int width, int height, bool fullScreen, const era_options::OptionMenuModel &state,
         bool allowEditing, bool currentMap);
     int DisplayValue(const era_options::EOption &option) const;
     void CreateBackground();
