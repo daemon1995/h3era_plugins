@@ -8,7 +8,6 @@
 namespace wog { namespace artificer {
 constexpr int OBJECT_SUBTYPE = 52;
 constexpr int WOG_OPTION = 26;
-constexpr const char *LEGACY_HANDLER_REGISTRY_KEY = "wog_objects.artificer.handlesLegacy";
 constexpr int SLOT_COUNT = 83;
 constexpr int BACKPACK = 19;
 constexpr int MOVEMENT_COST = 100;
@@ -41,31 +40,43 @@ struct Wallet
     }
 };
 
-// Stable save format in H3MapItem::setup; no compiler-specific bit fields.
+// Four-byte H3MapItem::setup layout, using the same Win32 bit fields as the HotA extenders.
 struct State
 {
-    uint32_t word = 0;
-    static State Fresh(unsigned day) { return {0xC0000000u | (day & 0xFFFFu)}; } // owner 8, initialized
-    bool Valid() const { return (word & 0x80000000u) && ((word >> 27) & 15u) <= 8 && Orders() <= 2; }
-    unsigned Day() const { return word & 0xFFFFu; }
-    int Orders() const { return (word >> 16) & 3u; }
-    bool AiVisited() const { return (word & (1u << 18)) != 0; }
-    unsigned Visitors() const { return (word >> 19) & 255u; }
+    union
+    {
+        uint32_t word = 0;
+        struct
+        {
+            unsigned day : 16;         // [00] Last service day, modulo 65536.
+            unsigned orders : 2;       // [16] Completed orders for that day, 0..2.
+            unsigned aiVisited : 1;    // [18] AI service during that week.
+            unsigned reserved : 12;    // [19]
+            unsigned initialized : 1; // [31] Native setup marker.
+        };
+    };
+    static State Fresh(unsigned day)
+    {
+        State state{};
+        state.day = day;
+        state.initialized = true;
+        return state;
+    }
+    bool Valid() const { return initialized && orders <= 2; }
+    unsigned Day() const { return day; }
+    int Orders() const { return orders; }
+    bool AiVisited() const { return aiVisited; }
     State At(unsigned day) const
     {
         if (!Valid()) return Fresh(day);
         State result = *this;
-        if (Day() != (day & 0xFFFFu)) result.word &= ~(3u << 16);
-        if ((Day() ? Day() - 1 : 0) / 7 != (day ? day - 1 : 0) / 7) result.word &= ~(1u << 18);
-        result.word = (result.word & ~0xFFFFu) | (day & 0xFFFFu);
+        if (Day() != (day & 0xFFFFu)) result.orders = 0;
+        if ((Day() ? Day() - 1 : 0) / 7 != (day ? day - 1 : 0) / 7) result.aiVisited = false;
+        result.day = day;
         return result;
     }
-    void MarkVisitor(int owner, bool ai)
-    {
-        if (owner >= 0 && owner < 8) word |= 1u << (19 + owner);
-        if (ai) word |= 1u << 18;
-    }
-    void CompleteOrder() { word = (word & ~(3u << 16)) | (unsigned(Orders() + 1) << 16); }
+    void MarkAiVisit() { aiVisited = true; }
+    void CompleteOrder() { ++orders; }
 };
 static_assert(sizeof(State) == 4, "Artificer state must fit mapItem->setup");
 
@@ -376,9 +387,7 @@ inline CommitResult CommitSaleBatch(Host &host, const SaleBatch &quoted)
         !after.human || !after.mithril || afterState.Day() != state.Day() || afterState.Orders() != state.Orders())
         return recover();
     host.Pay(quoted.price);
-    auto completed = host.ReadState();
-    completed.MarkVisitor(options.owner, false);
-    host.SaveState(completed);
+    host.SaveState(host.ReadState());
     return CommitResult::Success;
 }
 inline CommitResult Commit(Host &host, const Offer &offer)
@@ -416,7 +425,7 @@ inline CommitResult Commit(Host &host, const Offer &offer)
     host.Pay(offer.price);
     auto completed = host.ReadState();
     if (!offer.Sale()) { host.SpendMovement(MOVEMENT_COST); completed.CompleteOrder(); }
-    completed.MarkVisitor(options.owner, !options.human);
+    if (!options.human) completed.MarkAiVisit();
     host.SaveState(completed);
     return CommitResult::Success;
 }

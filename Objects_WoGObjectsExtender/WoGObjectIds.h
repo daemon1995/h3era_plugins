@@ -5,6 +5,7 @@ namespace wog { namespace objects {
 
 enum Subtype : int
 {
+    VENUS_FOUNTAIN = 2,
     MYSTERIOUS_DWELLING = 3,
     JUNK_MERCHANT = 8,
     ARCANE_TOWER = 9,
@@ -12,23 +13,31 @@ enum Subtype : int
     DEATH_CHAMBER = 15,
     MAGIC_WATER_MUSHROOM = 18,
     ALTAR_OF_TRANSFORMATION = 20,
+    SUMMONING_STONES = 21,
     FORGOTTEN_SHRINE = 22,
     MAGIC_EARTH_MUSHROOM = 23,
     ALMS_HOUSE = 24,
     MAGIC_FIRE_MUSHROOM = 29,
     BATTLE_ACADEMY = 32,
     PALACE_OF_DREAMS = 33,
+    BERSERKER_FOUNTAIN = 48,
     LIVING_SKULL = 50,
     MARKET_OF_TIME = 51,
     ARTIFICER = 52,
+    ADVENTURE_CAVE = 57,
+    SCHOOL_OF_WIZARDRY = 62,
     EMERALD_TOWER = 65,
     MIRROR_OF_HOME_WAY = 66
 };
 
-// WoG option IDs used only to gate the legacy 63/subtype identity.
-// Native ERA 141/subtype objects are controlled by RMG.objectGeneration.*.enabled.
+// Original script options; object ownership is selected by the per-map assoc policy.
+// RMG generation of 141/subtype objects is controlled by RMG.objectGeneration.*.enabled.
 enum Option : int
 {
+    OPT_POTIONS = 17,
+    OPT_SUMMONING_STONES = 32,
+    OPT_ADVENTURE_CAVE = 30,
+    OPT_SCHOOL_OF_WIZARDRY = 28,
     OPT_MYSTERIOUS_DWELLING = 15,
     OPT_JUNK_MERCHANT = 108,
     OPT_ARCANE_TOWER = 104,

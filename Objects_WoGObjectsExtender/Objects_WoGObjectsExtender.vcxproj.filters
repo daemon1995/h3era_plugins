@@ -42,10 +42,22 @@
     <ClInclude Include="WoGObjectIds.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WoGObjectSetup.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="WoGObjectPolicy.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="WoGObjectState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WoGObjectResources.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="WoGObjectHero.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="WoGObjectPotionDialog.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="WoGObjectChoiceDialogs.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="WoGObjectUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WoGObjectCaveState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WoGObjectCaveData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,6 +65,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WoGObjectChoiceDialogs.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="Artificer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,6 +84,7 @@
     <ClCompile Include="WoGObjectIds.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WoGObjectPolicy.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="WoGObjectState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -95,6 +109,16 @@
     <ClCompile Include="WoGObjectHandlers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WoGObjectLearning.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WoGObjectPotionDialog.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="WoGObjectPotions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WoGObjectCave.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
@@ -104,5 +128,17 @@
     <None Include="lang\ru\wog_objects.json">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Install-WoGObjects.ps1" />
+    <None Include="Verification\prepare-wog-install.py" />
+    <None Include="Verification\check-wog-install.py" />
+    <None Include="Verification\CaveState.tests.cpp" />
+    <None Include="Verification\run-cave.cmd" />
+    <None Include="Verification\NativeState.tests.cpp" />
+    <None Include="Verification\NativeStateStubs.h" />
+    <None Include="Verification\PotionDialog.tests.cpp" />
+    <None Include="Verification\run-native-state.cmd" />
+    <None Include="Verification\run-potion-dialog.cmd" />
+    <None Include="Verification\audit-wog-scripts.py" />
+    <None Include="Verification\update-native-data.py" />
   </ItemGroup>
 </Project>

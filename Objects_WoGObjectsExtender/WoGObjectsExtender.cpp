@@ -1,13 +1,16 @@
-#include "WoGObjectsExtender.h"
-#include "Artificer.h"
-#include "MarketOfTime.h"
-#include "WoGObjectHandlers.h"
-#include "WoGObjectIds.h"
 #include <algorithm>
 #include <deque>
 #include <set>
 #include <string>
 #include <vector>
+
+#include "Artificer.h"
+#include "MarketOfTime.h"
+#include "WoGObjectHandlers.h"
+#include "WoGObjectIds.h"
+#include "WoGObjectPolicy.h"
+#include "WoGObjectState.h"
+#include "WoGObjectsExtender.h"
 
 namespace wog
 {
@@ -77,7 +80,7 @@ _LHF_(CloneLegacyWoGObjectProperties)
     for (size_t i = 1; i < initialCount; ++i)
     {
         const char *raw = (*objectTxt)[i];
-        std::string line = raw ? raw : "";
+        std::string line = raw ? raw : h3_NullString;
         if (!SplitProperty(line.c_str(), spans))
             continue;
         const int type = PropertyInt(line, spans[5]);
@@ -90,7 +93,7 @@ _LHF_(CloneLegacyWoGObjectProperties)
     for (size_t i = 1; i < initialCount; ++i)
     {
         const char *raw = (*objectTxt)[i];
-        std::string line = raw ? raw : "";
+        std::string line = raw ? raw : h3_NullString;
         if (!SplitProperty(line.c_str(), spans))
             continue;
         const int type = PropertyInt(line, spans[5]);
@@ -138,7 +141,7 @@ void WoGObjectsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) no
     objectSubtypesInfo.Reserve(maxSubtype + 3 +
                                static_cast<int>(objects::DescriptorsEnd() - objects::DescriptorsBegin()));
 
-    // Keep every legacy WoG subtype registered. Ported entries are intercepted only when their WoG option is enabled;
+    // Keep every legacy WoG subtype registered. Map assoc policy chooses the handler of each ported identity;
     // unported entries remain available to the original ERM implementation.
     for (int i = 1; i <= maxSubtype; ++i)
     {
@@ -150,7 +153,10 @@ void WoGObjectsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) no
         if (i == artificer::OBJECT_SUBTYPE)
             optionId = artificer::WOG_OPTION;
         WoGObjectOptionsIds[i] = optionId;
-        AddUniqueObjectInfo(WOG_OBJECT_TYPE, i, i == artificer::OBJECT_SUBTYPE ? artificer::AI_SCOUTING_WEIGHT : 0,
+        const auto *descriptor = objects::FindDescriptor(i);
+        AddUniqueObjectInfo(WOG_OBJECT_TYPE, i,
+                            descriptor ? descriptor->defaultAiWeight
+                                       : (i == artificer::OBJECT_SUBTYPE ? artificer::AI_SCOUTING_WEIGHT : 0),
                             extender::ePageWogObject);
     }
 
@@ -158,10 +164,9 @@ void WoGObjectsExtender::AfterLoadingObjectsTxtProc(const INT16 *maxSubtypes) no
     AddUniqueObjectInfo(ERA_OBJECT_TYPE, artificer::OBJECT_SUBTYPE, artificer::AI_SCOUTING_WEIGHT,
                         extender::ePageWogObject);
     for (const auto *d = objects::DescriptorsBegin(); d != objects::DescriptorsEnd(); ++d)
+    {
         AddUniqueObjectInfo(ERA_OBJECT_TYPE, d->subtype, d->defaultAiWeight, extender::ePageWogObject);
-
-    Era::SetEraRegistryIntValue(marketOfTime::LEGACY_HANDLER_REGISTRY_KEY, TRUE);
-    Era::SetEraRegistryIntValue(artificer::LEGACY_HANDLER_REGISTRY_KEY, TRUE);
+    }
 }
 
 H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const extender::RMGObjectProperties &info,
@@ -177,6 +182,10 @@ H3RmgObjectGenerator *WoGObjectsExtender::CreateRMGObjectGen(const extender::RMG
 
 BOOL WoGObjectsExtender::InitNewGameMapItemSetup(H3MapItem *mapItem, int, int) const noexcept
 {
+    // This engine pass precedes map ERM instructions. A 63 object may still be assigned to ERM;
+    // preserve its authored setup and lazily initialize it when native code actually visits it.
+    if (!mapItem || mapItem->objectType != ERA_OBJECT_TYPE || !policy::Handles(mapItem))
+        return FALSE;
     if (SubObjectSubtype(mapItem) == artificer::OBJECT_SUBTYPE)
         return artificer::Initialize(mapItem);
     return handlers::Init(mapItem);
@@ -204,40 +213,59 @@ BOOL WoGObjectsExtender::IsWoGOptionEnabled(const int optionId) noexcept
 BOOL WoGObjectsExtender::VisitMapItem(H3Hero *hero, H3MapItem *mapItem, const H3Position pos,
                                       const BOOL isHuman) const noexcept
 {
+    if (!policy::Handles(mapItem))
+        return FALSE;
+    // Dialogs/redraws may show the visiting hero on this map tile while the handler is still running.
+    // Its setup then holds the hero ID, so keep object data independent of that mutable tile.
+    auto *source = mapItem;
+    H3MapItem object{};
+    object.objectType = source->objectType;
+    object.objectSubtype = source->objectSubtype;
+    object.setup = source->setup;
+    for (const auto &drawing : source->objectDrawing)
+        object.objectDrawing.AddSize4(drawing);
+    mapItem = &object;
+    state::ObjectPositionScope position(mapItem, pos);
+    if (mapItem->setup == 0xFFFFFFFFu)
+        mapItem->setup = 0;
     const int subtype = SubObjectSubtype(mapItem);
+    BOOL handled = FALSE;
     if (subtype == artificer::OBJECT_SUBTYPE)
-        return artificer::Visit(hero, mapItem, pos, isHuman);
-    if (subtype == marketOfTime::OBJECT_SUBTYPE)
-    {
-        if (mapItem->objectType == WOG_OBJECT_TYPE && !IsWoGOptionEnabled(marketOfTime::WOG_OPTION))
-            return TRUE;
-        return marketOfTime::Visit(hero, isHuman);
-    }
-    if (const auto *d = objects::FindDescriptor(subtype))
-    {
-        if (mapItem->objectType == WOG_OBJECT_TYPE && !IsWoGOptionEnabled(d->optionId))
-            return TRUE;
-        return handlers::Visit(hero, mapItem, pos, isHuman);
-    }
-    return FALSE;
+        handled = artificer::Visit(hero, mapItem, pos, isHuman);
+    else if (subtype == marketOfTime::OBJECT_SUBTYPE)
+        handled = marketOfTime::Visit(hero, isHuman);
+    else if (objects::FindDescriptor(subtype))
+        handled = handlers::Visit(hero, mapItem, pos, isHuman);
+
+    // Each service stores only its own restrictions. Player-period rewards mark visitors on success.
+    if (source->objectType == object.objectType && source->objectSubtype == object.objectSubtype)
+        source->setup = object.setup;
+    return handled;
 }
 
 BOOL WoGObjectsExtender::SetHintInH3TextBuffer(H3MapItem *mapItem, const H3Hero *hero, const int interactPlayerId,
                                                const BOOL isRightClick) const noexcept
 {
+    if (!policy::Handles(mapItem))
+        return FALSE;
     const int subtype = SubObjectSubtype(mapItem);
+    BOOL handled = FALSE;
     if (subtype == artificer::OBJECT_SUBTYPE)
-        return artificer::SetHint(mapItem, hero, isRightClick);
-    if (subtype == marketOfTime::OBJECT_SUBTYPE)
-        return marketOfTime::SetHint(isRightClick);
-    if (objects::IsPortedSubtype(subtype))
-        return handlers::Hint(mapItem, hero, interactPlayerId, isRightClick);
-    return FALSE;
+        handled = artificer::SetHint(mapItem, hero, isRightClick);
+    else if (subtype == marketOfTime::OBJECT_SUBTYPE)
+        handled = marketOfTime::SetHint(isRightClick);
+    else if (objects::IsPortedSubtype(subtype))
+        handled = handlers::Hint(mapItem, hero, interactPlayerId, isRightClick);
+    if (handled)
+        handlers::AppendVisitHint(mapItem, hero, interactPlayerId, isRightClick);
+    return handled;
 }
 
 BOOL WoGObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, const H3Player *player, int &aiWeight,
                                             int *moveDistance, const H3Position pos) const noexcept
 {
+    if (!policy::Handles(mapItem))
+        return FALSE;
     const int subtype = SubObjectSubtype(mapItem);
     if (subtype == artificer::OBJECT_SUBTYPE)
         return artificer::SetAiWeight(mapItem, hero, pos, aiWeight);
@@ -247,7 +275,9 @@ BOOL WoGObjectsExtender::SetAiMapItemWeight(H3MapItem *mapItem, H3Hero *hero, co
         return TRUE;
     }
     if (objects::IsPortedSubtype(subtype))
+    {
         return handlers::AiWeight(mapItem, hero, player, aiWeight, moveDistance, pos);
+    }
     return FALSE;
 }
 
@@ -320,6 +350,7 @@ void WoGObjectsExtender::CreatePatches()
     _pi->WriteLoHook(0x705B18, LegacyObjectVisit);
     _pi->WriteLoHook(0x40C5A1, LegacyObjectHoverHint);
     _pi->WriteLoHook(0x414F66, LegacyObjectClickHint);
+    policy::RegisterEvents();
     artificer::RegisterEvents();
     handlers::RegisterEvents();
     m_isInited = TRUE;

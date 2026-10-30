@@ -1,19 +1,23 @@
-#include "WoGObjectHandlers.h"
-#include "WoGObjectIds.h"
-#include "WoGObjectState.h"
-#include "WoGObjectUtils.h"
-#include "WoGObjectsExtender.h"
 #include <algorithm>
 #include <array>
 #include <map>
 #include <set>
 #include <vector>
 
-namespace wog { namespace handlers {
-namespace {
+#include "WoGObjectHandlers.h"
+#include "WoGObjectIds.h"
+#include "WoGObjectState.h"
+#include "WoGObjectUtils.h"
+#include "WoGObjectsExtender.h"
+
+namespace wog
+{
+namespace handlers
+{
+namespace
+{
 using namespace objects;
 
-constexpr int RES_MITHRIL = 7;
 constexpr int ENTRY_GEMS = 7;
 constexpr int DEFAULT_MAX_SPECIES = 12;
 
@@ -40,8 +44,8 @@ std::map<int, CreatureSnapshot> snapshots;
 
 std::string CreatureKey(const int creature, const char *field)
 {
-    return H3String::Format("wog_objects.native.%d.creature.%d.%s", EMERALD_TOWER, creature,
-                            field ? field : "value").String();
+    return H3String::Format("wog_objects.native.%d.creature.%d.%s", EMERALD_TOWER, creature, field ? field : "value")
+        .String();
 }
 int CGet(const int creature, const char *field, const int def = 0)
 {
@@ -78,19 +82,43 @@ void ApplySpecial(H3CreatureInformation &info, const int special)
 {
     switch (special)
     {
-    case 1: info.flyer = 1; break;
-    case 2: info.extendedAttack = 1; break;
+    case 1:
+        info.flyer = 1;
+        break;
+    case 2:
+        info.extendedAttack = 1;
+        break;
     case 3:
-        info.undead = 1; info.noMorale = 1; info.alive = 0; break;
+        info.undead = 1;
+        info.noMorale = 1;
+        info.alive = 0;
+        break;
     case 4:
-        info.alive = 1; info.undead = 0; info.noMorale = 0; break;
-    case 5: info.noMorale = 1; break;
-    case 6: info.doubleAttack = 1; break;
-    case 7: info.attackAllAround = 1; break;
-    case 8: info.noRetaliation = 1; break;
-    case 9: info.mindImmunity = 1; break;
-    case 10: info.fireImmunity = 1; break;
-    case 11: info.noMeleePenalty = 1; break;
+        info.alive = 1;
+        info.undead = 0;
+        info.noMorale = 0;
+        break;
+    case 5:
+        info.noMorale = 1;
+        break;
+    case 6:
+        info.doubleAttack = 1;
+        break;
+    case 7:
+        info.attackAllAround = 1;
+        break;
+    case 8:
+        info.noRetaliation = 1;
+        break;
+    case 9:
+        info.mindImmunity = 1;
+        break;
+    case 10:
+        info.fireImmunity = 1;
+        break;
+    case 11:
+        info.noMeleePenalty = 1;
+        break;
     }
 }
 
@@ -114,7 +142,8 @@ void ApplyPersisted(const int creature)
     for (int i = 0; i < CGet(creature, "damageCount"); ++i)
     {
         const int step = (std::max)(1, info.damageHigh / 5);
-        info.damageLow += step; info.damageHigh += step;
+        info.damageLow += step;
+        info.damageHigh += step;
     }
     for (int i = 0; i < CGet(creature, "healthCount"); ++i)
         info.hitPoints += (std::max)(1, info.hitPoints / 5);
@@ -188,11 +217,14 @@ int ChooseAiCreature(H3Hero *hero)
 {
     int best = -1;
     long long bestValue = -1;
+    const bool speciesLimit = EnhancedSpeciesCount() >= MaxSpecies();
     for (int i = 0; hero && i < 7; ++i)
     {
         const int cr = hero->army.type[i];
         if (!util::ValidCreature(cr) || hero->army.count[i] <= 0 ||
             (cr >= creature::FIRST_EMISSARY && cr <= creature::LAST_EMISSARY))
+            continue;
+        if (speciesLimit && CGet(cr, "enhancements") == 0)
             continue;
         const long long value = static_cast<long long>(P_CreatureInformation[cr].aiValue) * hero->army.count[i];
         if (value > bestValue)
@@ -204,7 +236,10 @@ int ChooseAiCreature(H3Hero *hero)
     return best;
 }
 
-bool MithrilEnabled() { return WoGObjectsExtender::IsWoGOptionEnabled(36); }
+bool MithrilEnabled()
+{
+    return WoGObjectsExtender::IsWoGOptionEnabled(36);
+}
 
 std::vector<int> AvailableSpecials(const int creatureId, const bool human = true)
 {
@@ -213,11 +248,14 @@ std::vector<int> AvailableSpecials(const int creatureId, const bool human = true
         return result;
     const auto &c = P_CreatureInformation[creatureId];
     const int mask = CGet(creatureId, "specialMask");
-    auto add = [&](int id, bool allowed) { if (allowed && !(mask & (1 << id))) result.push_back(id); };
-    const bool teleporter = creatureId == eCreature::DEVIL || creatureId == eCreature::ARCH_DEVIL ||
-                            creatureId == creature::HELL_BARON;
-    const bool drainsLife = creatureId == eCreature::VAMPIRE_LORD || creatureId == creature::GHOST ||
-                            creatureId == creature::BLOOD_DRAGON;
+    auto add = [&](int id, bool allowed) {
+        if (allowed && !(mask & (1 << id)))
+            result.push_back(id);
+    };
+    const bool teleporter =
+        creatureId == eCreature::DEVIL || creatureId == eCreature::ARCH_DEVIL || creatureId == creature::HELL_BARON;
+    const bool drainsLife =
+        creatureId == eCreature::VAMPIRE_LORD || creatureId == creature::GHOST || creatureId == creature::BLOOD_DRAGON;
     add(1, !c.flyer && !teleporter);
     add(2, !c.extendedAttack && !c.attackAllAround);
     if (!CGet(creatureId, "aliveUndeadChosen"))
@@ -272,9 +310,12 @@ int SpellCost(const H3CreatureInformation &c)
     if (charges <= 0 || charges > 12)
         return 0;
     const int level = c.level;
-    if (level <= 3) return (std::max)(2, (std::min)(5, 6 - charges));
-    if (level == 4) return (std::max)(5, (std::min)(10, 11 - charges));
-    if (level == 5) return (std::max)(10, (std::min)(15, 16 - charges));
+    if (level <= 3)
+        return (std::max)(2, (std::min)(5, 6 - charges));
+    if (level == 4)
+        return (std::max)(5, (std::min)(10, 11 - charges));
+    if (level == 5)
+        return (std::max)(10, (std::min)(15, 16 - charges));
     return (std::max)(15, (std::min)(20, 21 - charges));
 }
 
@@ -283,38 +324,53 @@ int ChooseImprovement(const int creatureId, const bool human, int &special)
     special = -1;
     if (!human)
     {
-        std::vector<int> options = {IMP_ATTACK, IMP_DEFENCE, IMP_DAMAGE, IMP_HEALTH, IMP_SPEED};
-        if (creatureId != creature::GHOST) options.push_back(IMP_GROWTH);
         const auto &c = P_CreatureInformation[creatureId];
-        if (c.numberShots > 0 && c.numberShots < 24) options.push_back(IMP_SHOTS);
-        if (MithrilEnabled() && SpellCost(c) > 0) options.push_back(IMP_SPELLS);
-        if (MithrilEnabled() && !AvailableSpecials(creatureId, false).empty()) options.push_back(IMP_SPECIAL);
-        int choice = options[util::Random(0, static_cast<int>(options.size()) - 1)];
-        if (choice == IMP_SPECIAL)
+        if (c.speed < 12)
+            return IMP_SPEED;
+        if (c.numberShots > 0 && c.numberShots < 24)
+            return IMP_SHOTS;
+        if (MithrilEnabled())
         {
-            special = ChooseSpecial(creatureId, false);
-            if (special < 0) choice = IMP_ATTACK;
+            const auto available = AvailableSpecials(creatureId, false);
+            for (int wanted : {6, 8, 7, 1, 9, 10, 11, 2, 5})
+                if (std::find(available.begin(), available.end(), wanted) != available.end())
+                {
+                    special = wanted;
+                    return IMP_SPECIAL;
+                }
         }
-        return choice;
+        // Keep the source's free AI upgrade, but choose an actual benefit deterministically.
+        if (c.attack < c.defence)
+            return IMP_ATTACK;
+        if (c.defence < c.attack)
+            return IMP_DEFENCE;
+        return CGet(creatureId, "healthCount") <= CGet(creatureId, "damageCount") ? IMP_HEALTH : IMP_DAMAGE;
     }
 
     const auto &c = P_CreatureInformation[creatureId];
     std::vector<int> options;
     H3PictureVector pics;
-    auto add = [&](int imp, eResource res, int amount) { options.push_back(imp); pics.Add(H3PictureCategories::Resource(res, amount)); };
+    auto add = [&](int imp, eResource res, int amount) {
+        options.push_back(imp);
+        pics.Add(H3PictureCategories::Resource(res, amount));
+    };
     add(IMP_ATTACK, eResource::SULFUR, 15);
     add(IMP_DEFENCE, eResource::ORE, 30);
     add(IMP_DAMAGE, eResource::GEMS, 25);
     add(IMP_HEALTH, eResource::CRYSTAL, 25);
     add(IMP_SPEED, eResource::MERCURY, 20);
-    if (creatureId != creature::GHOST) add(IMP_GROWTH, eResource::WOOD, 75);
-    if (c.numberShots > 0 && c.numberShots < 24) add(IMP_SHOTS, eResource::GOLD, 1000);
-    if (MithrilEnabled() && SpellCost(c) > 0) add(IMP_SPELLS, eResource::GOLD, SpellCost(c));
+    if (creatureId != creature::GHOST)
+        add(IMP_GROWTH, eResource::WOOD, 75);
+    if (c.numberShots > 0 && c.numberShots < 24)
+        add(IMP_SHOTS, eResource::GOLD, 1000);
+    if (MithrilEnabled() && SpellCost(c) > 0)
+        add(IMP_SPELLS, eResource::GOLD, SpellCost(c));
 
     const int index = util::ChoosePictures(util::Tr("emerald.chooseImprovement").c_str(), pics);
     if (index >= 0 && index < static_cast<int>(options.size()))
         return options[index];
-    if (MithrilEnabled() && !AvailableSpecials(creatureId).empty() && H3Messagebox::Choice(util::Tr("emerald.specialQuestion").c_str()))
+    if (MithrilEnabled() && !AvailableSpecials(creatureId).empty() &&
+        H3Messagebox::Choice(util::Tr("emerald.specialQuestion").c_str()))
     {
         special = ChooseSpecial(creatureId, true);
         if (special > 0)
@@ -351,7 +407,7 @@ void RemoveCreature(H3Hero *hero, const int creatureId, int amount)
 
 struct Price
 {
-    int resource = -1;
+    eResource resource = eResource::NONE;
     int amount = 0;
     int extraWoodOre = 0;
     int extraRare = 0;
@@ -363,15 +419,42 @@ Price PriceFor(const int creatureId, const int improvement, const int special)
     Price p;
     switch (improvement)
     {
-    case IMP_ATTACK: p.resource = eResource::SULFUR; p.amount = 15; break;
-    case IMP_DEFENCE: p.resource = eResource::ORE; p.amount = 30; break;
-    case IMP_DAMAGE: p.resource = eResource::GEMS; p.amount = 25; break;
-    case IMP_HEALTH: p.resource = eResource::CRYSTAL; p.amount = 25; break;
-    case IMP_SPEED: p.resource = eResource::MERCURY; p.amount = 20; break;
-    case IMP_GROWTH: p.resource = eResource::WOOD; p.amount = 75; break;
-    case IMP_SHOTS: p.resource = eResource::GOLD; p.amount = 1000; break;
-    case IMP_SPELLS: p.resource = RES_MITHRIL; p.amount = SpellCost(P_CreatureInformation[creatureId]); break;
-    case IMP_SPECIAL: p.resource = RES_MITHRIL; p.amount = SpecialCost(special); break;
+    case IMP_ATTACK:
+        p.resource = eResource::SULFUR;
+        p.amount = 15;
+        break;
+    case IMP_DEFENCE:
+        p.resource = eResource::ORE;
+        p.amount = 30;
+        break;
+    case IMP_DAMAGE:
+        p.resource = eResource::GEMS;
+        p.amount = 25;
+        break;
+    case IMP_HEALTH:
+        p.resource = eResource::CRYSTAL;
+        p.amount = 25;
+        break;
+    case IMP_SPEED:
+        p.resource = eResource::MERCURY;
+        p.amount = 20;
+        break;
+    case IMP_GROWTH:
+        p.resource = eResource::WOOD;
+        p.amount = 75;
+        break;
+    case IMP_SHOTS:
+        p.resource = eResource::GOLD;
+        p.amount = 1000;
+        break;
+    case IMP_SPELLS:
+        p.resource = eResource::MITHRIL;
+        p.amount = SpellCost(P_CreatureInformation[creatureId]);
+        break;
+    case IMP_SPECIAL:
+        p.resource = eResource::MITHRIL;
+        p.amount = SpecialCost(special);
+        break;
     }
     const int enhancements = CGet(creatureId, "enhancements");
     if (enhancements > 0)
@@ -391,7 +474,7 @@ bool CanPay(const H3Hero *hero, const Price &p)
     const auto &r = P_Main->players[hero->owner].playerResources;
     if (p.resource <= 6 && r.asArray[p.resource] < p.amount)
         return false;
-    if (p.resource == RES_MITHRIL && IntAt(0x27F9A00 + hero->owner * 4) < p.amount)
+    if (p.resource == eResource::MITHRIL && util::Resource(hero->owner, eResource::MITHRIL) < p.amount)
         return false;
     if (p.extraWoodOre || p.extraRare)
     {
@@ -410,7 +493,7 @@ bool CanPay(const H3Hero *hero, const Price &p)
 
 void Pay(H3Hero *hero, const Price &p)
 {
-    hero->AddResource(p.resource, -p.amount);
+    util::ChangeResource(hero, p.resource, -p.amount);
     if (p.extraWoodOre || p.extraRare)
     {
         hero->AddResource(eResource::WOOD, -p.extraWoodOre);
@@ -427,22 +510,40 @@ void RecordImprovement(const int creatureId, const int improvement, const int sp
     EnsureSnapshot(creatureId);
     switch (improvement)
     {
-    case IMP_ATTACK: CSet(creatureId, "attackCount", CGet(creatureId, "attackCount") + 1); break;
-    case IMP_DEFENCE: CSet(creatureId, "defenceCount", CGet(creatureId, "defenceCount") + 1); break;
-    case IMP_DAMAGE: CSet(creatureId, "damageCount", CGet(creatureId, "damageCount") + 1); break;
-    case IMP_HEALTH: CSet(creatureId, "healthCount", CGet(creatureId, "healthCount") + 1); break;
-    case IMP_SPEED: CSet(creatureId, "speedCount", CGet(creatureId, "speedCount") + 1); break;
-    case IMP_GROWTH: CSet(creatureId, "growthCount", CGet(creatureId, "growthCount") + 1); break;
-    case IMP_SHOTS: CSet(creatureId, "shotsBought", 1); break;
-    case IMP_SPELLS: CSet(creatureId, "spellCount", CGet(creatureId, "spellCount") + 1); break;
+    case IMP_ATTACK:
+        CSet(creatureId, "attackCount", CGet(creatureId, "attackCount") + 1);
+        break;
+    case IMP_DEFENCE:
+        CSet(creatureId, "defenceCount", CGet(creatureId, "defenceCount") + 1);
+        break;
+    case IMP_DAMAGE:
+        CSet(creatureId, "damageCount", CGet(creatureId, "damageCount") + 1);
+        break;
+    case IMP_HEALTH:
+        CSet(creatureId, "healthCount", CGet(creatureId, "healthCount") + 1);
+        break;
+    case IMP_SPEED:
+        CSet(creatureId, "speedCount", CGet(creatureId, "speedCount") + 1);
+        break;
+    case IMP_GROWTH:
+        CSet(creatureId, "growthCount", CGet(creatureId, "growthCount") + 1);
+        break;
+    case IMP_SHOTS:
+        CSet(creatureId, "shotsBought", 1);
+        break;
+    case IMP_SPELLS:
+        CSet(creatureId, "spellCount", CGet(creatureId, "spellCount") + 1);
+        break;
     case IMP_SPECIAL:
         CSet(creatureId, "specialMask", CGet(creatureId, "specialMask") | (1 << special));
-        if (special == 3 || special == 4) CSet(creatureId, "aliveUndeadChosen", 1);
-        if (special == 5) CSet(creatureId, "noMoraleChosen", 1);
+        if (special == 3 || special == 4)
+            CSet(creatureId, "aliveUndeadChosen", 1);
+        if (special == 5)
+            CSet(creatureId, "noMoraleChosen", 1);
         break;
     }
-    const bool normalAi5 = improvement >= IMP_ATTACK && improvement <= IMP_SPELLS &&
-                           improvement != IMP_GROWTH && improvement != IMP_SHOTS;
+    const bool normalAi5 =
+        improvement >= IMP_ATTACK && improvement <= IMP_SPELLS && improvement != IMP_GROWTH && improvement != IMP_SHOTS;
     if (normalAi5)
         CSet(creatureId, "ai5", CGet(creatureId, "ai5") + 1);
     if (improvement == IMP_SPECIAL)
@@ -460,10 +561,10 @@ BOOL VisitEmerald(H3Hero *hero, H3MapItem *item, const bool human)
 {
     if (!hero || !item)
         return TRUE;
-    const std::string monthKey = state::ObjectKey(item, EMERALD_TOWER, "visitedMonth", hero->owner);
-    if (state::IsStamp(monthKey, state::Month()))
+    if (state::ObjectPlayerPeriod(item, EMERALD_TOWER, hero->owner, "visitedMonth", state::Month()))
     {
-        if (human) H3Messagebox::Show(util::Tr("emerald.visited").c_str());
+        if (human)
+            H3Messagebox::Show(util::Tr("emerald.visited").c_str());
         return TRUE;
     }
 
@@ -486,14 +587,18 @@ BOOL VisitEmerald(H3Hero *hero, H3MapItem *item, const bool human)
     const int creatureId = human ? ChooseCreature(hero) : ChooseAiCreature(hero);
     if (!util::ValidCreature(creatureId))
     {
-        if (paidEntry) hero->AddResource(eResource::GEMS, 6);
-        if (human) H3Messagebox::Show(util::Tr("emerald.noCreature").c_str());
+        if (paidEntry)
+            hero->AddResource(eResource::GEMS, 6);
+        if (human)
+            H3Messagebox::Show(util::Tr("emerald.noCreature").c_str());
         return TRUE;
     }
     if (CGet(creatureId, "enhancements") == 0 && EnhancedSpeciesCount() >= MaxSpecies())
     {
-        if (paidEntry) hero->AddResource(eResource::GEMS, 6);
-        if (human) H3Messagebox::Show(util::Tr("emerald.speciesLimit", {"max", std::to_string(MaxSpecies())}).c_str());
+        if (paidEntry)
+            hero->AddResource(eResource::GEMS, 6);
+        if (human)
+            H3Messagebox::Show(util::Tr("emerald.speciesLimit", {"max", std::to_string(MaxSpecies())}).c_str());
         return TRUE;
     }
 
@@ -501,7 +606,8 @@ BOOL VisitEmerald(H3Hero *hero, H3MapItem *item, const bool human)
     const int improvement = ChooseImprovement(creatureId, human, special);
     if (improvement == IMP_NONE)
     {
-        if (paidEntry) hero->AddResource(eResource::GEMS, 6);
+        if (paidEntry)
+            hero->AddResource(eResource::GEMS, 6);
         return TRUE;
     }
 
@@ -514,8 +620,9 @@ BOOL VisitEmerald(H3Hero *hero, H3MapItem *item, const bool human)
             H3Messagebox::Show(util::Tr("emerald.cannotPay", {"creatures", std::to_string(price.sacrifice)}).c_str());
             return TRUE;
         }
-        if (!H3Messagebox::Choice(util::Tr("emerald.confirmSacrifice", {"creatures", std::to_string(price.sacrifice)}).c_str(),
-                                  H3PictureCategories::Creature(static_cast<eCreature>(creatureId), price.sacrifice)))
+        if (!H3Messagebox::Choice(
+                util::Tr("emerald.confirmSacrifice", {"creatures", std::to_string(price.sacrifice)}).c_str(),
+                H3PictureCategories::Creature(static_cast<eCreature>(creatureId), price.sacrifice)))
         {
             hero->AddResource(eResource::GEMS, 6);
             return TRUE;
@@ -525,16 +632,23 @@ BOOL VisitEmerald(H3Hero *hero, H3MapItem *item, const bool human)
     }
 
     RecordImprovement(creatureId, improvement, special);
-    state::Stamp(monthKey, state::Month());
+    state::SetObjectPlayerPeriod(item, EMERALD_TOWER, hero->owner, "visitedMonth", state::Month(), hero);
     if (paidEntry && improvement == IMP_SHOTS)
         hero->AddResource(eResource::GEMS, 6); // Matches the original special refund for the 24-shot purchase.
     if (human)
-        H3Messagebox::Show(util::Tr("emerald.done").c_str(), H3PictureCategories::Creature(static_cast<eCreature>(creatureId), 1));
+        H3Messagebox::Show(util::Tr("emerald.done").c_str(),
+                           H3PictureCategories::Creature(static_cast<eCreature>(creatureId), 1));
     return TRUE;
 }
 
-void __stdcall OnEmeraldLoad(Era::TEvent *) { RestoreAndReplay(); }
-void __stdcall OnEmeraldLeave(Era::TEvent *) { RestoreSnapshots(); }
+void __stdcall OnEmeraldLoad(Era::TEvent *)
+{
+    RestoreAndReplay();
+}
+void __stdcall OnEmeraldLeave(Era::TEvent *)
+{
+    RestoreSnapshots();
+}
 
 } // namespace
 
@@ -549,7 +663,10 @@ int EmeraldAiWeight(H3MapItem *item, H3Hero *hero) noexcept
         return 0;
     if (state::ObjectPlayerPeriod(item, objects::EMERALD_TOWER, hero->owner, "visitedMonth", state::Month()))
         return 0;
-    return ChooseAiCreature(hero) >= 0 ? 1600 : 0;
+    const int creature = ChooseAiCreature(hero);
+    if (creature < 0 || (!CGet(creature, "enhancements") && EnhancedSpeciesCount() >= MaxSpecies()))
+        return 0;
+    return 1600;
 }
 
 void RegisterEmeraldEvents() noexcept
@@ -559,4 +676,5 @@ void RegisterEmeraldEvents() noexcept
     Era::RegisterHandler(OnEmeraldLeave, "OnGameLeft");
 }
 
-}} // namespace wog::handlers
+} // namespace handlers
+} // namespace wog

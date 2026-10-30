@@ -27,8 +27,16 @@
     <ClInclude Include="WoGObjectsExtender.h" />
     <ClInclude Include="WoGObjectHandlers.h" />
     <ClInclude Include="WoGObjectIds.h" />
+    <ClInclude Include="WoGObjectSetup.h" />
+    <ClInclude Include="WoGObjectPolicy.h" />
     <ClInclude Include="WoGObjectState.h" />
     <ClInclude Include="WoGObjectUtils.h" />
+    <ClInclude Include="WoGObjectPotionDialog.h" />
+    <ClInclude Include="WoGObjectChoiceDialogs.h" />
+    <ClInclude Include="WoGObjectResources.h" />
+    <ClInclude Include="WoGObjectHero.h" />
+    <ClInclude Include="WoGObjectCaveState.h" />
+    <ClInclude Include="WoGObjectCaveData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
@@ -38,6 +46,7 @@
     <ClCompile Include="MarketOfTime.cpp" />
     <ClCompile Include="WoGObjectsExtender.cpp" />
     <ClCompile Include="WoGObjectIds.cpp" />
+    <ClCompile Include="WoGObjectPolicy.cpp" />
     <ClCompile Include="WoGObjectState.cpp" />
     <ClCompile Include="WoGObjectUtils.cpp" />
     <ClCompile Include="WoGObjectBasic.cpp" />
@@ -46,6 +55,11 @@
     <ClCompile Include="WoGObjectCombat.cpp" />
     <ClCompile Include="WoGObjectEmerald.cpp" />
     <ClCompile Include="WoGObjectHandlers.cpp" />
+    <ClCompile Include="WoGObjectLearning.cpp" />
+    <ClCompile Include="WoGObjectPotions.cpp" />
+    <ClCompile Include="WoGObjectPotionDialog.cpp" />
+    <ClCompile Include="WoGObjectChoiceDialogs.cpp" />
+    <ClCompile Include="WoGObjectCave.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
@@ -55,6 +69,19 @@
     <None Include="Install-Artificer.ps1" />
     <None Include="lang\wog_objects.json" />
     <None Include="lang\ru\wog_objects.json" />
+    <None Include="Install-WoGObjects.ps1" />
+    <None Include="Verification\prepare-wog-install.py" />
+    <None Include="Verification\wog_policy_scripts.py" />
+    <None Include="Verification\check-wog-install.py" />
+    <None Include="Verification\CaveState.tests.cpp" />
+    <None Include="Verification\run-cave.cmd" />
+    <None Include="Verification\NativeState.tests.cpp" />
+    <None Include="Verification\NativeStateStubs.h" />
+    <None Include="Verification\PotionDialog.tests.cpp" />
+    <None Include="Verification\run-native-state.cmd" />
+    <None Include="Verification\run-potion-dialog.cmd" />
+    <None Include="Verification\audit-wog-scripts.py" />
+    <None Include="Verification\update-native-data.py" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -1,0 +1,6 @@
+# Ship this plugin's data and verification with its C++ sources.
+!lang/
+!lang/**
+!Verification/
+!Verification/**
+/build/

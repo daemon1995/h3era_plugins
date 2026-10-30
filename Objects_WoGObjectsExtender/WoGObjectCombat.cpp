@@ -1,11 +1,14 @@
-#include "WoGObjectHandlers.h"
-#include "WoGObjectIds.h"
-#include "WoGObjectState.h"
-#include "WoGObjectUtils.h"
-#include "WoGObjectsExtender.h"
 #include <algorithm>
 #include <array>
 #include <vector>
+
+#include "WoGObjectHandlers.h"
+#include "WoGObjectIds.h"
+#include "WoGObjectPolicy.h"
+#include "WoGObjectState.h"
+#include "WoGObjectUtils.h"
+#include "WoGObjectsExtender.h"
+
 
 namespace wog
 {
@@ -33,6 +36,9 @@ bool deathBattle = false;
 int deathDifficulty = 0;
 int deathHeroId = -1;
 int deathRound = -1;
+int deathWinner = -1;
+int deathTactics = 0;
+std::string kingName;
 
 int PendingShrineSpell(const H3Hero *hero)
 {
@@ -43,7 +49,9 @@ int PendingShrineSpell(const H3Hero *hero)
 void SetPendingShrineSpell(const H3Hero *hero, const int spell)
 {
     if (hero)
+    {
         state::Set(state::HeroKey(FORGOTTEN_SHRINE, hero->id, "pendingSpell"), spell + 1);
+    }
 }
 
 bool HeroWears(const H3Hero *hero, const int artifact)
@@ -92,7 +100,7 @@ void ApplyShrineToSide(const int side)
     const int spell = PendingShrineSpell(hero);
     if (spell < 0 || ShrineSpellBlocked(hero, spell))
         return;
-
+    Era::RandomRangeWithFreeParam(1, 111, 1);
     // Native ApplySpell performs the creature's real spell-immunity checks. Orb of Vulnerability is handled
     // by the engine's combat setup; this avoids the hard-coded creature table from the old ERM script.
     for (int i = 0; i < 21; ++i)
@@ -136,25 +144,44 @@ BOOL VisitForgottenShrine(H3Hero *hero, const bool human)
     SetPendingShrineSpell(hero, spell);
     if (human)
     {
-        const char *name = P_Spell[spell].name ? P_Spell[spell].name : "";
+        const char *name = P_Spell[spell].name ? P_Spell[spell].name : h3_NullString;
         H3Messagebox::Show(util::Tr("shrine.granted", {"spell", name}).c_str(),
                            H3PictureCategories::Spell(static_cast<eSpell>(spell)));
     }
     return TRUE;
 }
 
+int DeathBaseDifficulty(const H3MapItem *item)
+{
+    const setup::DeathChamber value{item->setup};
+    if (value.Initialized()) return value.BaseDifficulty();
+    const auto p = state::Position(item);
+    return 1 + ((uint32_t(p.x) * 73856093u ^ uint32_t(p.y) * 19349663u ^ uint32_t(p.z) * 83492791u) % 4);
+}
 int DeathDifficulty(H3MapItem *item)
 {
     if (!item)
         return 1;
-    const std::string key = state::ObjectKey(item, DEATH_CHAMBER, "difficulty", -1);
-    int value = state::Get(key, 0);
-    if (value < 1 || value > 4)
+    int value = DeathBaseDifficulty(item);
+    if (WoGObjectsExtender::IsWoGOptionEnabled(235))
     {
-        value = util::Random(1, 4);
-        state::Set(key, value);
+        const int cleared = setup::DeathChamber{item->setup}.ClearedDay();
+        value += (std::max)(0, (state::Day() - (cleared ? cleared + 28 : 1)) / 7);
     }
     return value;
+}
+bool DeathAvailable(H3MapItem *item)
+{
+    const int cleared = setup::DeathChamber{item->setup}.ClearedDay();
+    return !cleared || (WoGObjectsExtender::IsWoGOptionEnabled(235) && state::Day() - cleared >= 28);
+}
+void __stdcall BeforeDeathBattle(Era::TEvent *)
+{
+    if (!deathBattle || deathHeroId < 0 || policy::LoadingGame())
+        return;
+    util::Receiver("BA:B20;");
+    deathTactics = util::TacticsEnabled(P_Main->GetHero(deathHeroId));
+    util::SetTactics(P_Main->GetHero(deathHeroId), false);
 }
 
 H3Army MakeDeathArmy(const int difficulty)
@@ -171,6 +198,15 @@ void SetupDeathBattlefield()
 {
     if (!deathBattle || !P_CombatManager)
         return;
+    P_CombatManager->specialTerrain = 4; // BU:G targets the magical terrain at combat +0x53C0.
+    util::Receiver("BF:C;");             // WoG private BF_Prepare gate, before default obstacle generation.
+    util::ClearObstacles();
+    const int obstacles[][2] = {{65, 59},  {65, 127}, {65, 89},  {65, 97},  {34, 3},   {34, 5},   {34, 7},   {34, 9},
+                                {34, 11},  {34, 13},  {34, 173}, {34, 175}, {34, 177}, {34, 179}, {34, 181}, {34, 183},
+                                {62, 21},  {62, 24},  {62, 26},  {62, 27},  {62, 30},  {62, 157}, {62, 160}, {62, 162},
+                                {62, 163}, {62, 166}, {61, 75},  {61, 79},  {61, 109}, {61, 113}};
+    for (const auto &obstacle : obstacles)
+        util::PlaceObstacle(obstacle[0], obstacle[1]);
     deathRound = -1;
     H3CombatCreature &king = P_CombatManager->stacks[1][0];
     if (king.numberAlive <= 0)
@@ -182,6 +218,9 @@ void SetupDeathBattlefield()
     king.info.speed = 50;
     king.retaliations = 5000;
     king.info.doubleAttack = 1;
+    kingName = Era::tr("wog.70.name");
+    king.info.nameSingular = const_cast<char *>(kingName.c_str());
+    king.info.namePlural = const_cast<char *>(kingName.c_str());
     king.info.attack += statBonus;
     king.info.defence += statBonus;
     king.info.damageLow += statBonus;
@@ -190,11 +229,19 @@ void SetupDeathBattlefield()
     {
         king.info.flyer = 1;
         king.info.noMeleePenalty = 1;
+        king.info.attack += statBonus;
+        king.info.defence += statBonus;
+        king.info.damageLow += statBonus;
+        king.info.damageHigh += statBonus;
     }
     if (statBonus > 6)
     {
         king.info.noRetaliation = 1;
         king.info.attackAllAround = 1;
+        king.info.attack += statBonus;
+        king.info.defence += statBonus;
+        king.info.damageLow += statBonus;
+        king.info.damageHigh += statBonus;
     }
     if (statBonus > 10)
         king.info.fireImmunity = 1;
@@ -222,7 +269,13 @@ void DeathRoundStarted()
         const int amount = util::Random(1, 10) * deathDifficulty;
         const int hexes[] = {60, 128, 90, 98};
         for (int hex : hexes)
+        {
+            // Same native removal used by ERA stdlib Battle_RemoveObstacle.
+            const int index = P_CombatManager->squares[hex].obstacleIndex;
+            if (index >= 0)
+                THISCALL_2(void, 4613904, P_CombatManager->Get(), index);
             P_CombatManager->SummonCreature(1, eCreature::LICH, amount, hex, FALSE, TRUE);
+        }
     }
     if (deathRound >= 2)
     {
@@ -259,7 +312,7 @@ void DeathBeforeAction()
         {
             const int power = i % 2 + deathDifficulty + damageBonus;
             const int school = (std::min)(3, (std::max)(1, power));
-            P_CombatManager->CastSpell(SPELL_DEATH_RIPPLE, -1, 2, -1, school, power);
+            util::CastCreatureSpell(king, SPELL_DEATH_RIPPLE, king->position, school, power);
         }
         return;
     }
@@ -274,6 +327,9 @@ void DeathBeforeAction()
     }
     else if (active->side == 0)
     {
+        const int action = int(P_CombatManager->action);
+        if (action != 2 && action != 3 && action != 6 && action != 7)
+            return;
         static const int curse[4] = {52, 47, 45, 50}; // Misfortune, Disrupting Ray, Weakness, Sorrow.
         const int spell = curse[(std::max)(1, (std::min)(4, deathDifficulty)) - 1];
         active->ApplySpell(spell, (std::max)(1, deathDifficulty), eSecSkillLevel::BASIC, nullptr);
@@ -284,7 +340,7 @@ BOOL VisitDeathChamber(H3Hero *hero, H3MapItem *item, const H3Position pos, cons
 {
     if (!hero || !item)
         return TRUE;
-    if (state::Get(state::ObjectKey(item, DEATH_CHAMBER, "visited", hero->owner), 0))
+    if (!DeathAvailable(item))
     {
         if (human)
             H3Messagebox::Show(util::Tr("death.visited").c_str());
@@ -302,20 +358,22 @@ BOOL VisitDeathChamber(H3Hero *hero, H3MapItem *item, const H3Position pos, cons
     else if (util::ArmyAiValue(hero->army) < estimatedEnemy * 5 / 4)
         return TRUE;
 
-    H3Army defenders = MakeDeathArmy(difficulty);
+    // H3Army defenders = MakeDeathArmy(difficulty);
     deathBattle = true;
     deathDifficulty = difficulty;
     deathHeroId = hero->id;
     deathRound = -1;
+    deathWinner = -1;
 
-    const int seed = H3Random::MultiplayerRandom(1, 0x7FFFFFFF);
-    constexpr H3Town *town = nullptr;
-    constexpr H3Hero *defHero = nullptr;
-    const int result = THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), static_cast<UINT>(pos), hero, &hero->army,
-                                   hero->owner, town, defHero, &defenders, seed, TRUE, TRUE);
+    // const int seed = H3Random::MultiplayerRandom(1, 0x7FFFFFFF);
+    // constexpr H3Town *town = nullptr;
+    // constexpr H3Hero *defHero = nullptr;
+    const int result = util::Fight(hero, pos, eCreature::POWER_LICH, 1);
+    // THISCALL_11(int, 0x075ADD9, P_AdventureManager->Get(), static_cast<UINT>(pos), hero, &hero->army, ePlayer::NONE,
+    // town, defHero, &defenders, seed, TRUE, TRUE);
     (void)result;
 
-    const bool won = hero->owner >= 0 && hero->army.HasCreatures();
+    const bool won = deathWinner == 0 && hero->owner >= 0 && hero->army.HasCreatures();
     deathBattle = false;
     deathDifficulty = 0;
     deathHeroId = -1;
@@ -327,10 +385,11 @@ BOOL VisitDeathChamber(H3Hero *hero, H3MapItem *item, const H3Position pos, cons
     const int gold = difficulty * 3000 + 6000;
     hero->AddResource(eResource::GOLD, gold);
     if (WoGObjectsExtender::IsWoGOptionEnabled(36))
-        hero->AddResource(RES_MITHRIL, difficulty * 2 + 2);
+        util::ChangeResource(hero, eResource::MITHRIL, difficulty * 2 + 2);
     if (util::ValidCreature(creature::GHOST))
         util::AddArmy(hero->army, {{creature::GHOST, ghosts}});
-    state::Set(state::ObjectKey(item, DEATH_CHAMBER, "visited", hero->owner), 1);
+    auto value = setup::DeathChamber::At(DeathBaseDifficulty(item), state::Day());
+    state::StoreSetup(item, value.word, hero);
     if (human)
         H3Messagebox::Show(
             util::Tr("death.reward", {"gold", std::to_string(gold), "ghosts", std::to_string(ghosts)}).c_str());
@@ -363,6 +422,10 @@ void __stdcall OnSetupBattlefieldNative(Era::TEvent *)
 }
 void __stdcall OnAfterBattleNative(Era::TEvent *)
 {
+    if (deathBattle && P_CombatManager)
+        deathWinner = P_CombatManager->winnerSide;
+    if (deathBattle && deathHeroId >= 0)
+        util::SetTactics(P_Main->GetHero(deathHeroId), deathTactics != 0);
     ClearShrineBlessings();
     deathBattle = false;
     deathDifficulty = 0;
@@ -415,7 +478,7 @@ int CombatObjectAiWeight(H3MapItem *item, H3Hero *hero) noexcept
     case FORGOTTEN_SHRINE:
         return PendingShrineSpell(hero) >= 0 || hero->movement <= 200 ? 0 : 750;
     case DEATH_CHAMBER:
-        if (state::Get(state::ObjectKey(item, DEATH_CHAMBER, "visited", hero->owner), 0))
+        if (!DeathAvailable(item))
             return 0;
         return util::ArmyAiValue(hero->army) >=
                        (8000LL * DeathDifficulty(item) * DeathDifficulty(item) + 12000LL) * 5 / 4
@@ -428,6 +491,7 @@ int CombatObjectAiWeight(H3MapItem *item, H3Hero *hero) noexcept
 
 void RegisterCombatEvents() noexcept
 {
+    Era::RegisterHandler(BeforeDeathBattle, "OnBeforeBattleUniversal");
     Era::RegisterHandler(OnSetupBattlefieldNative, "OnSetupBattlefield");
     Era::RegisterHandler(OnAfterBattleNative, "OnAfterBattleUniversal");
     Era::RegisterHandler(OnBattleRoundNative, "OnBattleRound");

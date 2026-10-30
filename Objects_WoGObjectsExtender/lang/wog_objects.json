@@ -1,0 +1,748 @@
+{
+  "RMG": {
+    "objectGeneration": {
+      "141": {
+        "51": {
+          "name": "Market of Time",
+          "value": 10000,
+          "density": 30,
+          "properties": [
+            "AVXMKTT0.def 001111111111111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 111111111 011111111 141 51 1 0"
+          ],
+          "enabled": 1,
+          "text": {
+            "hint": "Market of Time"
+          }
+        },
+        "52": {
+          "name": "Artificer",
+          "value": 5000,
+          "density": 50,
+          "sound": {
+            "enter": "STORE.wav",
+            "loop": "LOOPFACT.wav"
+          },
+          "properties": [
+            "ZArtif1.def 100011111111111111111111111111111111111111111111 001000000000000000000000000000000000000000000000 111111111 011111111 141 52 1 0"
+          ],
+          "enabled": 1,
+          "text": {
+            "hint": "Artificer"
+          }
+        },
+        "3": {
+          "name": "Mysterious Creature Dwelling",
+          "enabled": 1,
+          "value": 6000,
+          "density": 35,
+          "properties": [
+            "ZObj001.def 111111111000111111111111111111111111111111111111 000000000010000000000000000000000000000000000000 111111111 011111111 141 3 0 0"
+          ],
+          "text": {
+            "hint": "Offers a hero seven randomized stacks from the hero's native faction. One offer per hero."
+          }
+        },
+        "8": {
+          "name": "Junk Merchant",
+          "enabled": 1,
+          "value": 2000,
+          "density": 45,
+          "properties": [
+            "ZObj006.def 111111111000011111111111111111111111111111111111 000000000010000000000000000000000000000000000000 111111111 011111111 141 8 0 0"
+          ],
+          "text": {
+            "hint": "Trades selected backpack artifacts and spell scrolls for fixed WoG rewards."
+          }
+        },
+        "9": {
+          "name": "Arcane Tower",
+          "enabled": 1,
+          "value": 5000,
+          "density": 25,
+          "properties": [
+            "ZObj007.def 101111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 9 0 0"
+          ],
+          "text": {
+            "hint": "Exchanges primary-skill points. Usable once per player each week."
+          }
+        },
+        "14": {
+          "name": "Magic Air Mushroom",
+          "enabled": 1,
+          "value": 3000,
+          "density": 35,
+          "properties": [
+            "ZObj008.def 101111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 14 1 0"
+          ],
+          "text": {
+            "hint": "Temporarily grants Expert Air Magic. Usable once per hero each week."
+          }
+        },
+        "15": {
+          "name": "Death Chamber",
+          "enabled": 1,
+          "value": 15000,
+          "density": 12,
+          "properties": [
+            "ZObj009.def 101111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 15 1 0"
+          ],
+          "text": {
+            "hint": "Challenges the hero with the Undead King battle. The reward scales with danger."
+          }
+        },
+        "18": {
+          "name": "Magic Water Mushroom",
+          "enabled": 1,
+          "value": 3000,
+          "density": 35,
+          "properties": [
+            "ZObj012.def 101111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 18 1 0"
+          ],
+          "text": {
+            "hint": "Temporarily grants Expert Water Magic. Usable once per hero each week."
+          }
+        },
+        "20": {
+          "name": "Altar of Transformation",
+          "enabled": 1,
+          "value": 7000,
+          "density": 20,
+          "properties": [
+            "ZObj014.def 001111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 20 1 0"
+          ],
+          "text": {
+            "hint": "Transforms eligible army stacks into roughly equivalent creatures of a selected town. Usable once per player each week."
+          }
+        },
+        "22": {
+          "name": "Forgotten Shrine",
+          "enabled": 1,
+          "value": 4000,
+          "density": 30,
+          "properties": [
+            "ZObj016.def 011111111111111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 111111111 011111111 141 22 1 0"
+          ],
+          "text": {
+            "hint": "Consumes the hero's movement and grants a random expert combat spell for the next battle."
+          }
+        },
+        "23": {
+          "name": "Magic Earth Mushroom",
+          "enabled": 1,
+          "value": 3000,
+          "density": 35,
+          "properties": [
+            "ZObj017.def 101111111011111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 23 1 0"
+          ],
+          "text": {
+            "hint": "Temporarily grants Expert Earth Magic. Usable once per hero each week."
+          }
+        },
+        "24": {
+          "name": "Alms House",
+          "enabled": 1,
+          "value": 5000,
+          "density": 25,
+          "properties": [
+            "ZObj018.def 101111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 24 1 0"
+          ],
+          "text": {
+            "hint": "Helps heroes who have no resources or very low basic statistics. One visit per hero."
+          }
+        },
+        "29": {
+          "name": "Magic Fire Mushroom",
+          "enabled": 1,
+          "value": 3000,
+          "density": 35,
+          "properties": [
+            "ZObj023.def 101111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 29 1 0"
+          ],
+          "text": {
+            "hint": "Temporarily grants Expert Fire Magic. Usable once per hero each week."
+          }
+        },
+        "32": {
+          "name": "Battle Academy",
+          "enabled": 1,
+          "value": 8000,
+          "density": 20,
+          "properties": [
+            "ZObj026.def 100111111000011111011111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 32 1 0"
+          ],
+          "text": {
+            "hint": "Sells daily training and an artifact. Each hero may buy one service per day."
+          }
+        },
+        "33": {
+          "name": "Palace of Dreams",
+          "enabled": 1,
+          "value": 2500,
+          "density": 35,
+          "properties": [
+            "ZObj027.def 100011111000111111011111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 33 1 0"
+          ],
+          "text": {
+            "hint": "A gambling palace: pay gold and movement for chances to win resources, Mithril or artifacts."
+          }
+        },
+        "50": {
+          "name": "Living Skull",
+          "enabled": 1,
+          "value": 3500,
+          "density": 30,
+          "properties": [
+            "Skull.def 101111111011111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 50 1 0"
+          ],
+          "text": {
+            "hint": "Searches the map for artifacts, spell scrolls and special targets; some services can reveal or bring the target."
+          }
+        },
+        "65": {
+          "name": "Emerald Tower",
+          "enabled": 1,
+          "value": 10000,
+          "density": 15,
+          "properties": [
+            "ZObj050.def 001111111111111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 111111111 011111111 141 65 1 0"
+          ],
+          "text": {
+            "hint": "Globally improves one creature species for resources and sacrifice. Usable once per player each month."
+          }
+        },
+        "66": {
+          "name": "Mirror of the Home-Way",
+          "enabled": 1,
+          "value": 2500,
+          "density": 25,
+          "properties": [
+            "SFzerk.def 011111110011111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 111111111 011111111 141 66 1 0"
+          ],
+          "text": {
+            "hint": "Opens a free Home-Way/Town Portal selection for a human hero. AI deliberately ignores this object."
+          }
+        },
+        "2": {
+          "name": "Venus Fountain",
+          "enabled": 1,
+          "value": 2500,
+          "density": 30,
+          "properties": [
+            "ZH4Obj02.def 000111110001111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 000010101 141 2 0 0"
+          ],
+          "text": {
+            "hint": "Receive three doses of Venus potion. Before a battle, a dose grants maximum Morale and Luck."
+          }
+        },
+        "21": {
+          "name": "Summoning Stones",
+          "enabled": 1,
+          "value": 7000,
+          "density": 15,
+          "properties": [
+            "ZObj015.def 101111110001111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 21 1 0"
+          ],
+          "text": {
+            "hint": "Summon recruits or garrison troops from owned towns. One service per day."
+          }
+        },
+        "48": {
+          "name": "Berserker Fountain",
+          "enabled": 1,
+          "value": 3000,
+          "density": 30,
+          "properties": [
+            "ZObj042.def 011111111111111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 111111111 011111111 141 48 1 0"
+          ],
+          "text": {
+            "hint": "Receive three doses of Berserker potion: +10 Attack and Luck, but no mana for one battle."
+          }
+        },
+        "57": {
+          "name": "Adventure Cave",
+          "enabled": 1,
+          "value": 10000,
+          "density": 15,
+          "properties": [
+            "ZCave1.def 000111111111111111111111111111111111111111111111 010000000000000000000000000000000000000000000000 111111111 011111111 141 57 1 0"
+          ],
+          "text": {
+            "hint": "Explore branching chambers: Rogues, Hermits, special battles and treasures. Cleared rooms remain cleared."
+          }
+        },
+        "62": {
+          "name": "School of Wizardry",
+          "enabled": 1,
+          "value": 5000,
+          "density": 25,
+          "properties": [
+            "ZTower1.def 001111111111111111111111111111111111111111111111 100000000000000000000000000000000000000000000000 111111111 011111111 141 62 1 0"
+          ],
+          "text": {
+            "hint": "Offers daily primary and secondary training, a spell, or learning spells from scrolls."
+          }
+        }
+      }
+    }
+  },
+  "wog_objects": {
+    "marketOfTime": {
+      "name": "Market of Time",
+      "title": "{Market of Time}\n\nWe teach meditation techniques that let you forget a secondary skill and free room for new learning. Our service costs @gold@ gold coins.",
+      "choice": "Which skill do you want to forget?\n\nThe service costs @gold@ gold and @movement@ movement points. Cancel shows the next group if there are more skills.",
+      "forget": "{Market of Time}\n\nDo you really want to forget this skill for @gold@ gold?",
+      "noMoney": "{Market of Time}\n\nYou don't have enough gold. Come back when you can afford our services.",
+      "noSkills": "{Market of Time}\n\nWe're sorry, @name@, but you need to know at least one secondary skill first.",
+      "noMoves": "{Market of Time}\n\nYour hero is too tired. Come back with at least 500 movement points.",
+      "hint": "{Market of Time}\n\nForget one secondary skill for @gold@ gold and @movement@ movement points. You may return as long as you can pay both costs."
+    },
+    "artificer": {
+      "objName": "Artificer",
+      "price": {
+        "gold": "@gold@ gold",
+        "mithril": "@mithril@ Mithril",
+        "both": "@gold@ gold and @mithril@ Mithril"
+      },
+      "offer": "{@name@}\n\nThis is my offer:\n\nFor {@price@} I can @action@ your\n@from@\nto an absolutely new\n@to@.\n\nDo you agree?",
+      "action": {
+        "upgrade": "upgrade",
+        "change": "change"
+      },
+      "needResources": "{@name@}\n\nI need @price@ for my work.\nCome back when you have enough!",
+      "hint": "{Artificer}\n\nUpgrades, exchanges and combines artifacts. Each work costs 100 movement points (or your remaining movement if lower). The second work costs double.\n\nOrders remaining today: @orders@.\nBackpack sales are available while the Artificer can still work.",
+      "fatigue": {
+        "0": "(not tired)",
+        "1": "(tired)",
+        "2": "(very tired)"
+      },
+      "selectArtifact": "@name@\n\nArtifacts available to @action@: @count@.\nChoose one to proceed.",
+      "slots": {
+        "misc": "   (misc. @slot@)"
+      },
+      "page": {
+        "next": ">   Next page...",
+        "previous": "<   Previous page..."
+      },
+      "greeting": {
+        "first": "I am the @name@ and I can upgrade your equipped artifacts.\nChoose what you want to do.",
+        "second": "I am the @name@ and I can upgrade your equipped artifacts\nbut I'm a bit tired now and my services will cost double.\nChoose what you want to do."
+      },
+      "menu": {
+        "upgrade": "»   Upgrade an artifact",
+        "change": "»   Change an artifact to another one that's similar",
+        "combine": "»   Combine a group of artifacts to a more powerful one",
+        "help": "?   Find out about services",
+        "sell": "»   Sell one artefact for mithril or gold",
+        "leave": "-   Leave this place"
+      },
+      "tired": "{@name@}\n\nI can upgrade your equipped artifacts.\nBut I am very tired today.\n\nCome back tommorow.\n",
+      "sell": {
+        "noArtifacts": "You have no artifacts in your backpack, so unless there's something you want to unequip, I guess we won't be doing business today. No hard feelings though - come back anytime!",
+        "chooseArtifact": "I will buy your unwanted artifacts and give you {~Cyan}MITHRIL{~} or {~Gold}GOLD{~} for them! Now, please show me the first few artifacts in your backpack.",
+        "chooseCurrency": "What do you want for the @first@, Mithril or Gold?",
+        "mithril": "Confirm selling the @first@ for {@mithril@} mithril?",
+        "gold": "Confirm selling the @first@ for {@gold@} Gold?"
+      },
+      "head": "   (head)",
+      "shoulders": "   (shoulders)",
+      "neck": "   (neck)",
+      "rightHand": "   (right hand)",
+      "leftHand": "   (left hand)",
+      "torso": "   (torso)",
+      "rightRing": "   (right ring)",
+      "leftRing": "   (left ring)",
+      "feet": "   (feet)",
+      "cancel": "-   Nothing. I've changed my mind.",
+      "noArtifacts": "{@name@}\n\nI am sorry but I can't help you! You haven't got any artifacts that I can work with.",
+      "finished": "{@name@}\n\nAll is ok. Take your new artifact.",
+      "anotherOffer": "{@name@}\n\nI'm tired but if you want I can upgrade a second artifact today for double the price.\n\nDo you wish to employ my services for double the price?",
+      "chooseReplacement": "@name@\n\nChoose the artifact that you want to get.",
+      "combinedName": "@first@ and @second@",
+      "chooseCombination": "@name@\n\nChoose the group of artifacts that you want to combine.",
+      "help": "{1. Upgrade artifact.}\nThis service lets you upgrade your equipped artifact to the next level. This is the list of upgradeable artifacts with their further upgrades:\n\nCentaur Axe => Blackshard of the Dead Knight => Greater Gnoll's Flail => Ogre's Club of Havoc => Sword of Hellfire => Titan's Gladius\n\nShield of the Dwarven Lords => Shield of the Yawning Dead => Buckler of the Gnoll King => Targ of the Rampaging Ogre => Shield of the Damned => Sentinel's Shield\n\nHelm of the Alabaster Unicorn => Skull Helmet => Helm of Chaos => Crown of the Supreme Magi => Hellstorm Helmet => Thunder Helmet\n\nBreastplate of Petrified Wood => Rib Cage => Scales of the Greater Basilisk => Tunic of the Cyclops King => Breastplate of Brimstone => Titan's Cuirass\n\nArmor of Wonder => Sandals of the Saint => Celestial Necklace of Bliss => Lion's Shield of Courage => Sword of Judgement => Helm of Heavenly Enlightenment\n\nQuiet Eye of the Dragon => Red Dragon Flame Tongue => Dragon Scale Shield => Dragon Scale Armor\n\nDragonbone Greaves =>  Dragon Wing Tabard => Necklace of Dragonteeth => Crown of Dragontooth\n\nStill Eye of the Dragon => Pendant of Courage\n\nAmulet of the Undertaker => Vampire's Cowl => Dead Man's Boots\n\nGarniture of Interference => Surcoat of Counterpoise => Boots of Polarity\n\nBow of Elven Cherrywood => Bowstring of the Unicorn's Mane => Angel Feather Arrows\n\nBird of Perception => Stoic Watchman => Emblem of Cognizance\n\nStatesman's Medal => Diplomat's Ring => Ambassador's Sash\n\nRing of the Wayfarer => Cape of Velocity\n\nEquestrian's Gloves => Boots of Speed\n\nNecklace of Ocean Guidance => Sea Captain's Hat\n\nCharm of Mana => Talisman of Mana => Mystic Orb of Mana\n\nCollar of Conjuring => Ring of Conjuring => Cape of Conjuring\n\nRecanter's Cloak => Orb of Inhibition\n\nRing of Vitality => Vial of Lifeblood\n\nRing of Life => Vial of Lifeblood\n\nNecklace of Swiftness => Cape of Velocity\n\nEndless Purse of Gold => Endless Bag of Gold => Endless Sack of Gold\n\nLegs of Legion => Loins of Legion => Torso of Legion => Arms of Legion => Head of Legion\n\n{2. Change artifact to one that's similar.}\nThis service lets you to change one artifact to another with similar abilities. This is the list of changeable artifacts with their possible exchanges.\n\nRing of Vitality <=> Ring of Life\n\nClover of Fortune <=> Cards of Prophecy <=> Ladybird of Luck\n\nBadge of Courage <=> Crest of Valor <=> Glyph of Gallantry\n\nSpeculum <=> Spyglass\n\nSpirit of Oppression <=> Hourglass of the Evil Hour\n\nOrb of the Firmament <=> Orb of Silt <=> Orb of Tempestuous Fire <=> Orb of Driving Rain\n\nTome of Fire Magic <=> Tome of Air Magic <=> Tome of Water Magic <=> Tome of Earth Magic\n\nEverflowing Crystal Cloak <=> Ring of Infinite Gems <=> Everpouring Vial of Mercury <=> Eversmoking Ring of Sulfur\n\nInexhaustible Cart of Ore <=> Inexhaustible Cart of Lumber\n\nPendant of Life <=> Pendant of Death\n\n{3. Combine a group of artifacts to a more powerful one.}\nThis service lets you choose a group of artifacts and combine them to a more powerful artifact. This is the list of combineable groups with their final artifacts.\n\nQuiet Eye of the Dragon + Still Eye of the Dragon => Dragon Eye Ring\n\nClover of Fortune + Cards of Prophecy + Ladybird of Luck + Badge of Courage + Crest of Valor + Glyph of Gallantry => Pendant of Courage\n\nOrb of the Firmament + Orb of Silt + Orb of Tempestuous Fire + Orb of Driving Rain => Orb of Vulnerability\n\n{Note:}\nThere is no way to upgrade your artifacts to banned artifacts. Please remember this.",
+      "name": "Artificer",
+      "choose": "{Artificer}\n\nChoose an artifact or recipe.",
+      "chooseCurrency": "{Artificer}\n\nChoose payment for your backpack artifact.",
+      "gold": "Gold",
+      "mithril": "Mithril",
+      "backpackSlot": "(backpack @slot@)",
+      "noResources": "{Artificer}\n\nYou do not have enough gold or mithril for this order.",
+      "changed": "{Artificer}\n\nThe inventory, resources or offer changed. The order was cancelled; no payment was taken.",
+      "recoveryFailure": "{Artificer}\n\nAnother handler prevented restoration of an artifact. No payment was taken. Check your hero's inventory before continuing.",
+      "ui": {
+        "hero": "Visitor: @name@",
+        "orders": "Orders left today: @count@. Work costs @movement@ movement.",
+        "secondOrder": "One order left today. The second order costs twice as much.",
+        "tired": "No work orders left today. You can still sell items from your backpack.",
+        "upgrades": "Upgrade",
+        "exchanges": "Exchange",
+        "combinations": "Combine",
+        "sales": "Sell",
+        "close": "Leave",
+        "upgrade": "Upgrade",
+        "exchange": "Exchange",
+        "combine": "Combine",
+        "sell": "Sell item",
+        "offerCount": "Available offers: @count@",
+        "saleCount": "Backpack items for sale: @count@",
+        "emptyBag": "No eligible items in the backpack.\n\nEquipped artifacts are kept.",
+        "noOrders": "The artificer has finished work for today.\n\nReturn tomorrow, or open Sell.",
+        "noOffers": "No suitable artifacts for this service.\n\nTry another tab.",
+        "page": "@current@ / @total@",
+        "receiving": "You receive",
+        "selling": "You are selling",
+        "combination": "Artifact combination",
+        "components": "Artifacts required",
+        "saleRules": "Only backpack items are sold.\nSelling uses no movement or work orders.",
+        "cannotPay": "You cannot afford this offer.",
+        "saleHint": "Sell the selected backpack item for the displayed amount.",
+        "workHint": "Exchange the shown artifacts and resources. Costs 100 movement and one order.",
+        "sellAll": "Sell all",
+        "sellAllHint": "Sell every eligible backpack item. Total: @price@.",
+        "confirmAll": "{Sell all artifacts}\n\nSell @count@ eligible backpack items for {@price@}?\n\nEquipped artifacts are kept. No movement or work orders are used.",
+        "completed": "Done. Your artifacts and resources have been updated.",
+        "hint": "Select an artifact. Double-click / Enter: trade. Right-click: description. Esc: leave.",
+        "help": "{Artificer}\n\nChoose a service on the tabs. Select an offer on the left; its result, required artifacts and final price appear on the right. Names and descriptions come from the game. Right-click an artifact to view its description.\n\nUpgrade and exchange use equipped items. Combine may also use backpack items. Each job costs 100 movement and one order. There are two orders per day; the second costs twice as much.\n\nSell uses all eligible backpack items. Choose gold or mithril, then sell one item or use Sell all. Equipped items are kept. Selling is available even after both orders are used, and costs no movement or orders.\n\nDouble-click an artifact or press Enter to confirm the selected trade. Esc closes the window.",
+        "tiredNoSales": "The artificer has finished work for today.",
+        "noOrdersNoSales": "No work orders left today.\n\nReturn tomorrow.",
+        "batchSummary": "Sell all: @count@ items\n\nTotal proceeds:\n@price@",
+        "batchUnavailable": "The total exceeds the resource limit.",
+        "helpTitle": "Artificer services",
+        "helpButton": "Help",
+        "givingCount": "You give (@count@)",
+        "selectTrade": "Select a row in either list to see the complete recipe and price.",
+        "upgradeDetails": "Upgrade. Required artifacts: @items@. Price: @price@. Uses @movement@ movement and one order.",
+        "exchangeDetails": "Exchange. You give: @items@. Price: @price@. Uses @movement@ movement and one order.",
+        "combineDetails": "Combine. Recipe: @items@. Price: @price@. Uses @movement@ movement and one order.",
+        "saleDetails": "You sell: @items@. Reward: @price@. All @count@ items: @total@. Selling uses no movement or orders."
+      }
+    },
+    "native": {
+      "common": {
+        "more": "Show the next offers?",
+        "moreTowns": "Show the remaining town...",
+        "unavailable": "No service is available at present."
+      },
+      "dwelling": {
+        "visited": "@hero@ has already received an offer from this dwelling.",
+        "cannotBuy": "You cannot accept this offer. You need @gold@ gold and enough free/compatible army slots.",
+        "offer": "The dwelling offers these creatures for @gold@ gold.",
+        "buy": "Recruit the offered creatures for @gold@ gold?",
+        "noGold": "You need @gold@ gold to buy these creatures."
+      },
+      "alms": {
+        "visited": "This hero has already received help here.",
+        "tired": "The hero is too exhausted to receive aid.",
+        "helped": "The Alms House gives the hero everything they are currently missing. The hero spends the rest of the day here.",
+        "nothing": "The caretakers cannot find anything this hero truly lacks."
+      },
+      "mushroom": {
+        "expert": "This hero already has Expert mastery of this magic school.",
+        "used": "This mushroom has already empowered this hero this week.",
+        "granted": "The mushroom temporarily grants Expert mastery of this school of magic until the next week."
+      },
+      "academy": {
+        "visited": "This hero has already bought something at a Battle Academy today.",
+        "primaryQuestion": "Improve Attack or Defense?",
+        "choosePrimary": "Choose the primary skill to improve.",
+        "pay": "Pay @gold@ gold for this primary-skill training?",
+        "secondaryQuestion": "Buy today's secondary-skill training for @gold@ gold?",
+        "artifactQuestion": "Buy today's artifact for @gold@ gold?",
+        "menu": "{Battle Academy}\nChoose one available service. The price is charged when you select its picture. One service per hero per day."
+      },
+      "shrine": {
+        "alreadyBlessed": "This hero is already carrying a blessing for the next battle.",
+        "noMovement": "The hero needs more than 200 movement points to receive a blessing.",
+        "ask": "Accept a random blessing for the next battle? This consumes all remaining movement.",
+        "granted": "The Forgotten Shrine grants {@spell@} for the hero's next battle."
+      },
+      "death": {
+        "visited": "This player has already defeated this Death Chamber.",
+        "ask": "Enter the Death Chamber? Danger level: @difficulty@.",
+        "reward": "The Undead King is defeated. Reward: @gold@ gold and @ghosts@ Ghosts, plus Mithril when that resource is enabled."
+      },
+      "emerald": {
+        "maxSpecies": 12,
+        "visited": "This Emerald Tower has already been used by this player this month.",
+        "appointment": "An appointment costs 7 gems. If no improvement is made, 6 gems are refunded. Enter?",
+        "noGems": "You need at least 7 gems.",
+        "chooseCreature": "Choose a creature species to improve globally.",
+        "noCreature": "There is no eligible creature species in the army.",
+        "speciesLimit": "The tower can maintain improvements for at most @max@ creature species.",
+        "chooseImprovement": "Choose an improvement. The shown resource is the base price; repeated enhancements also require additional resources and creature sacrifice.",
+        "specialQuestion": "Open the list of special abilities purchasable with Mithril?",
+        "chooseSpecial": "Choose a special ability. The shown number is its Mithril price.",
+        "cannotPay": "You lack the required resources or the @creatures@ creatures that must be sacrificed.",
+        "confirmSacrifice": "Confirm the improvement and sacrifice @creatures@ creatures?",
+        "done": "The creature species has been improved globally."
+      },
+      "hint": {
+        "unavailable": "Currently unavailable for this hero/player because its visit period or one-time use has already been consumed.",
+        "blessingPending": "This hero already has a Forgotten Shrine blessing waiting for the next battle.",
+        "3": "Offers a hero seven randomized stacks from the hero's native faction. One offer per hero.",
+        "8": "Trades selected backpack artifacts and spell scrolls for fixed WoG rewards.",
+        "9": "Exchanges primary-skill points. Usable once per player each week.",
+        "14": "Temporarily grants Expert Air Magic. Usable once per hero each week.",
+        "15": "Challenges the hero with the Undead King battle. The reward scales with danger.",
+        "18": "Temporarily grants Expert Water Magic. Usable once per hero each week.",
+        "20": "Transforms eligible army stacks into roughly equivalent creatures of a selected town. Usable once per player each week.",
+        "22": "Consumes the hero's movement and grants a random expert combat spell for the next battle.",
+        "23": "Temporarily grants Expert Earth Magic. Usable once per hero each week.",
+        "24": "Helps heroes who have no resources or very low basic statistics. One visit per hero.",
+        "29": "Temporarily grants Expert Fire Magic. Usable once per hero each week.",
+        "32": "Sells daily training and an artifact. Each hero may buy one service per day.",
+        "33": "A gambling palace: pay gold and movement for chances to win resources, Mithril or artifacts.",
+        "50": "Searches the map for artifacts, spell scrolls and special targets; some services can reveal or bring the target.",
+        "65": "Globally improves one creature species for resources and sacrifice. Usable once per player each month.",
+        "66": "Opens a free Home-Way/Town Portal selection for a human hero. AI deliberately ignores this object.",
+        "2": "Receive three doses of Venus potion. Before a battle, a dose grants maximum Morale and Luck.",
+        "21": "Summon recruits or garrison troops from owned towns. One service per day.",
+        "48": "Receive three doses of Berserker potion: +10 Attack and Luck, but no mana for one battle.",
+        "57": "Explore branching chambers: Rogues, Hermits, special battles and treasures. Cleared rooms remain cleared.",
+        "62": "Offers daily primary and secondary training, a spell, or learning spells from scrolls."
+      },
+      "potions": {
+        "hydromel": "Hydromel",
+        "berserker": "Berserker potion",
+        "venus": "Venus potion",
+        "refill": "@hero@ receives @doses@ doses: @potion@.",
+        "drinkHydromel": "@hero@: drink Hydromel? +2 Attack and Defense for this battle. Doses: @doses@.",
+        "drinkBerserker": "@hero@: drink Berserker potion? +10 Attack and maximum Luck, but no mana during this battle. Doses: @doses@.",
+        "drinkVenus": "@hero@: drink Venus potion? Maximum Luck and Morale for this battle. Doses: @doses@.",
+        "mixed": "Mixing potions costs @hero@ one point of Spell Power.",
+        "choose": "@hero@: potions before battle",
+        "select": "Mixing Hydromel and Berserker potion may permanently reduce Spell Power by 1.",
+        "effectHydromel": "{Hydromel} — doses: @doses@.\n+2 Attack and Defense for this battle.",
+        "effectBerserker": "{Berserker potion} — doses: @doses@.\n+10 Attack, maximum Luck and no mana for this battle.",
+        "effectVenus": "{Venus potion} — doses: @doses@.\nMaximum Luck and Morale for this battle."
+      },
+      "school": {
+        "menu": "{School of Wizardry}\nChoose a service: Spell Power, Knowledge, secondary skill, daily spell, or copying scrolls.",
+        "visited": "This hero already used a school service today.",
+        "learned": "Your studies are complete.",
+        "unavailable": "This service is unavailable.",
+        "confirm": "Learn @name@ for @gold@ gold?",
+        "copy": "Copy @spell@ from a scroll for @gold@ gold? The scroll is consumed.",
+        "changed": "The offer is no longer available."
+      },
+      "summon": {
+        "unavailable": "No affordable reinforcement can be summoned today. The stones may be used once per day.",
+        "choose": "Select creatures and their source town.",
+        "recruit": "Recruit @count@ @creature@ from @town@. The full price is shown below.",
+        "transport": "Transport @count@ @creature@ from the garrison of @town@ for @gold@ gold.",
+        "confirm": "Summon these reinforcements?",
+        "changed": "The town, troop supply or resources have changed. No recruitment was completed.",
+        "garrison": "Transfer from the town garrison.",
+        "unitPrice": "Per creature: @price@",
+        "listHint": "Click a creature to open its town dwelling recruitment window. Canceling recruitment keeps this list open."
+      },
+      "cave": {
+        "choose": "{Adventure Cave}\nChoose a passage. Cancel to leave.",
+        "emptyLabel": "cleared",
+        "empty": "This chamber has already been explored.",
+        "entrance": "Infernal Troglodytes guard the entrance. Fight them?",
+        "fight": "Continue? @count@ @creature@ await you on a special battlefield.",
+        "fightRogues": "The Rogues are hostile. Attack their camp?",
+        "victory": "You search the defeated monsters and collect @gold@ gold and their treasure.",
+        "roguesUsed": "These Rogues already helped this hero today.",
+        "service": "@service@\nPrice: @gold@ gold. Accept?",
+        "noService": "The Rogues cannot fulfill this order at present.",
+        "poor": "You cannot afford their price.",
+        "serviceDone": "The Rogues fulfill your order.",
+        "heal": "Help the sick Hermit? An Expert in First Aid can heal him; otherwise a suitable equipped artifact must be given.",
+        "hermitBlocked": "The Hermit cannot teach you yet. @reason@",
+        "lessonUsed": "No lesson is available: you already studied today or have mastered this discipline.",
+        "lesson": "Study @lesson@, lesson @level@ of 3?",
+        "poolUsed": "You already have this pool blessing until next week.",
+        "pool": "Your army receives Expert @spell@ in every battle until next week.",
+        "orb": "The orb changes the shroud over the map.",
+        "cache": "You find @gold@ gold and a special item. Local merchants may buy the item.",
+        "altarUsed": "You lack mana or already have this altar power until next week.",
+        "altar": "@effect@\nSpend @mana@ mana? The power lasts until next week.",
+        "release": "Release the surviving Rogue captain in exchange for the location of a hidden treasure?",
+        "obelisk": "Search the Obelisk at @x@, @y@.",
+        "obeliskReward": "The Rogue spoke the truth. You find gold and two artifacts.",
+        "obeliskLie": "The Rogue deceived you. There is no treasure here.",
+        "sell": "Sell @count@ @item@ for @gold@ gold?",
+        "stolen": "@hero@ discovers that @artifact@ has been stolen!",
+        "ambush": "Rogues ambush your hero!",
+        "room": {
+          "0": "Rogue camp",
+          "1": "Hermit",
+          "2": "Monster lair",
+          "3": "Underground chamber"
+        },
+        "services": {
+          "0": "Recruit 15 Rogues",
+          "1": "Steal an enemy Gold Mine",
+          "2": "Ambush an enemy hero",
+          "3": "Steal an enemy artifact"
+        },
+        "lessons": {
+          "0": "Wealth: double treasure-chest gold",
+          "1": "Combat: unlimited retaliation",
+          "2": "Magic: an extra spell cast each battle",
+          "3": "Voodoo: ground and disarm enemies in melee"
+        },
+        "hermitRequirement": {
+          "0": h3_NullString,
+          "1": "Heal his illness.",
+          "2": "Remove the other inhabitants from the cave.",
+          "3": "Put away all artifacts except war machines and the spellbook."
+        },
+        "altars": {
+          "0": "Venom: attacks poison their target",
+          "1": "Fork: Magic Arrow strikes all enemy stacks",
+          "2": "Aegis: first-level creatures gain double health",
+          "3": "Ferocity: +2 Attack, Defense and Speed each round"
+        },
+        "item": {
+          "69": "ancient books",
+          "70": "mandrake roots",
+          "71": "tulips",
+          "72": "toys",
+          "75": "wine",
+          "76": "dog armor",
+          "77": "three-handed swords",
+          "78": "useless wands"
+        },
+        "journal": {
+          "69": "Adventure Cave cargo: ancient books. Sell it to interested merchants.",
+          "70": "Adventure Cave cargo: mandrake roots. Sell it to interested merchants.",
+          "71": "Adventure Cave cargo: tulips. Sell it to interested merchants.",
+          "72": "Adventure Cave cargo: toys. Sell it to interested merchants.",
+          "75": "Adventure Cave cargo: wine. Sell it to interested merchants.",
+          "76": "Adventure Cave cargo: dog armor. Sell it to interested merchants.",
+          "77": "Adventure Cave cargo: three-handed swords. Sell it to interested merchants.",
+          "78": "Adventure Cave cargo: useless wands. Sell it to interested merchants.",
+          "64": "Wealth: double treasure-chest gold",
+          "65": "Combat: unlimited retaliation",
+          "66": "Magic: an extra spell cast each battle",
+          "67": "Voodoo: ground and disarm enemies in melee"
+        },
+        "mineStolen": "Rogues have stolen one of your Gold Mines!",
+        "roguesSleeping": "The Rogues are asleep. Left: wake them and talk. Right: slaughter half their camp and fight the survivors.",
+        "roguesMenu": "Left: talk to the Rogues and hear their offer. Right: fight them.",
+        "roguesHostile": "The Rogues threaten your party. Left: flee, losing 2 Morale. Right: fight.",
+        "wake": "Wake the sleeping Rogues?",
+        "fork": "Two passages lead into the darkness.\n\nLeft: @left@\nRight: @right@\n\nWhich passage will you explore?",
+        "left": "Left",
+        "right": "Right",
+        "unknown": "unknown",
+        "journalTitle": "{Adventure Cave notes: @hero@}"
+      }
+    }
+  },
+  "wog": {
+    "12": {
+      "native": {
+        "chooseArtifact": "Choose an artifact to search for.",
+        "chooseSpell": "Choose a spell scroll to search for.",
+        "bring": "Spend @mithril@ Mithril to bring @artifact@ to the hero?",
+        "noMithril": "Not enough Mithril.",
+        "here": "The object is very close.",
+        "notFound": "The Living Skull cannot find a matching object on the map.",
+        "found": "The Skull senses the target on the @layer@ layer.",
+        "locationOffer": "Spend 2 @resource@ to learn the direction to the target?",
+        "location": "The target lies to the @direction@.",
+        "noResource": "You do not have the required resource.",
+        "revealOffer": "Pay 1000 gold to reveal the area around the target?",
+        "freeSearch": "The Skull performs its free weekly search and finds this artifact.",
+        "tired": "The Skull has already performed three paid searches today.",
+        "noGold": "You need 100 gold for a search.",
+        "searchOffer": "Pay 100 gold for this search?",
+        "ui": {
+          "artifacts": "Artifacts",
+          "scrolls": "Scrolls",
+          "skullSelect": "Select a target. Right-click for its description. Search costs 100 gold.",
+          "search": "Search",
+          "noMatches": "No matches. Change the search text."
+        },
+        "cantBring": "This artifact cannot be transported: special artifacts and relics must be collected in person.",
+        "noRoom": "The backpack is full. Make room before transporting the artifact.",
+        "noRevealGold": "You need 1000 gold to reveal the artifact.",
+        "delivered": "The artifact has been brought to the hero."
+      }
+    },
+    "14": {
+      "native": {
+        "visited": "This Altar of Transformation has already been used by this player this week.",
+        "noMon": "There are no creatures in the army that the altar can transform.",
+        "use": "Spend up to @mana@ spell points to control the transformation? The actual mana invested is the percentage chance of getting the selected town.",
+        "chooseTown": "Choose the town whose creatures you want to receive.",
+        "chooseMana": "Choose how many spell points to invest. The selected amount is also the percentage chance of receiving creatures from the chosen town; 0 means a fully random transformation.",
+        "ui": {
+          "altarDestination": "Choose the desired creature town",
+          "neutral": "Neutral",
+          "before": "Army: creatures and quantity",
+          "after": "Desired result (quantity unchanged)",
+          "unchanged": "Unchanged",
+          "randomTown": "Random town",
+          "altarCost": "Spend: @mana@ spell points | Remaining: @left@\nChance of the selected town: @chance@%. Otherwise, a random town."
+        }
+      }
+    },
+    "104": {
+      "native": {
+        "visited": "This Arcane Tower has already been used by this player this week.",
+        "chooseGain": "Choose the primary skill to increase.",
+        "choosePay": "Choose the primary skill to reduce.",
+        "cannotPay": "The selected skill cannot be reduced any further.",
+        "confirm": "Exchange one point? You can make up to @left@ more exchange(s) with the selected source skill.",
+        "ui": {
+          "give": "Give",
+          "receive": "Receive",
+          "arcaneRate": "Exchange primary skills\n1 point for 1 point\n\nChoose a skill on each side.",
+          "arcaneAmount": "Exchange: @amount@\nMaximum: @max@\n\nEquipment bonuses cannot be spent."
+        }
+      }
+    },
+    "108": {
+      "native": {
+        "scroll": "Sell this spell scroll for @gold@ gold?",
+        "offer": "Trade this artifact?\n\nReward: @reward@",
+        "rewardGold": "@value@ gold",
+        "rewardResource": "@value@ units of resource #@id@",
+        "rewardCreatures": "@value@ creatures",
+        "rewardArtifact": "an artifact",
+        "rewardPrimary": "a primary skill increase",
+        "rewardMana": "@value@ spell points",
+        "rewardSpell": "a spell",
+        "rewardExperience": "@value@ experience",
+        "rewardReveal": "reveal the map in radius @value@",
+        "done": "Completed trades: @count@.",
+        "nothing": "There is nothing the merchant wants to buy.",
+        "ui": {
+          "junkSelect": "Select an artifact to see the reward.",
+          "junkCount": "In backpack: @count@",
+          "junkReady": "OK: trade one copy for this reward.",
+          "junkBlocked": "This trade is unavailable: no copy in the backpack or the reward cannot be received.",
+          "junkDone": "Trades completed: @count@",
+          "junkChanged": "The offer is no longer available.",
+          "junkInstruction": "Left-click: reward preview. OK: exchange. Right-click: artifact description."
+        }
+      }
+    },
+    "11": {
+      "native": {
+        "noMoves": "The hero needs more than 300 movement points to enter the Palace of Dreams.",
+        "choose": "Choose a game. Left: resources. Right: artifacts. Each spin costs 100 gold.",
+        "again": "Play again for 100 gold?",
+        "winGold": "You won @value@ gold!",
+        "winResource": "You won @value@ resources!",
+        "winArtifact": "You won an artifact!",
+        "summary": "Games played: @plays@. Wins: @wins@.",
+        "ui": {
+          "palaceResources": "Resource machine",
+          "palaceArtifacts": "Artifact machine",
+          "palaceCost": "One spin costs 100 gold.",
+          "palaceAgain": "OK: play again for 100 gold. Cancel: leave.",
+          "palaceClose": "Game finished. OK: close."
+        },
+        "noGold": "You need 100 gold to play.",
+        "loss": "No match. Try your luck again!",
+        "winMithril": "You won @value@ Mithril!"
+      }
+    }
+  }
+}

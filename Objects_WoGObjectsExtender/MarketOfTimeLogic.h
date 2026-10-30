@@ -7,7 +7,6 @@ namespace marketOfTime
 {
 constexpr int OBJECT_SUBTYPE = 51;
 constexpr int WOG_OPTION = 109;
-constexpr const char *LEGACY_HANDLER_REGISTRY_KEY = "wog_objects.marketOfTime.handlesLegacy";
 constexpr int GOLD_COST = 2000;
 constexpr int MOVEMENT_COST = 500;
 constexpr int SKILL_COUNT = 28;
