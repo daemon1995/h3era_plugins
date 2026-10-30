@@ -2,6 +2,9 @@
 #include "ObjectExtenders/DwellingsExtender.h"
 #include "ObjectDefinitions.h"
 #include "ObjectText.h"
+#include "TextHandlers/ArtifactHandler.h"
+#include "TextHandlers/MapObjectHandler.h"
+#include "TextHandlers/TextOverrides.h"
 
 Patcher *globalPatcher = nullptr;
 PatcherInstance *_PI = nullptr;
@@ -17,9 +20,16 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
         constexpr LPCSTR instanceName = "EraPlugin." PROJECT_NAME ".daemon_n";
         if (!Eramap::ConnectEra(module, instanceName))
             return FALSE;
-        initialized = true;
         globalPatcher = GetPatcher();
+        if (!globalPatcher)
+            return FALSE;
         _PI = globalPatcher->CreateInstance(instanceName);
+        if (!_PI)
+            return FALSE;
+        initialized = true;
+        editorObjects::TextOverrides::Init();
+        ArtifactHandler::Init();
+        MapObjectHandler::Init();
         editorObjects::ObjectDefinitions::Init();
         editorObjects::DwellingsExtender::Init();
         editorObjects::ObjectText::Init();

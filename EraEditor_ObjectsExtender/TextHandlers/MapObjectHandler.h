@@ -13,16 +13,13 @@ struct MapObjectData
         return *reinterpret_cast<MapObjectData **>(0x0401EB8 + 1);
     }
 };
+static_assert(sizeof(MapObjectData) == 16, "Editor object type records must remain 16 bytes");
 class MapObjectHandler
 {
   public:
     struct formats
     {
-        static constexpr LPCSTR DWELLING1 = "era.dwellings1.%d";
-        static constexpr LPCSTR DWELLING4 = "era.dwellings4.%d";
         static constexpr LPCSTR OBJECTS = "era.objects.%d";
-        static constexpr LPCSTR CREATURE_BANKS = "RMG.objectGeneration.%d.%d.name";
-        static constexpr LPCSTR CUSTOM_OBJECT = CREATURE_BANKS;
     };
 
     static void Init();

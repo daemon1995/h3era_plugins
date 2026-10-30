@@ -1,14 +1,37 @@
 # EraEditor_ObjectsExtender
 
-Native ERA map-editor plugin for JSON object prototypes, names and descriptions. Texts and prototype loading
+Single native ERA map-editor plugin for JSON table overrides, object prototypes, names and descriptions. Texts and prototype loading
 work for every supported object type (0–231), including creature banks, universities and objects from the
 HotA/WoG extenders. Creature dwellings additionally have an adapter for expandable native name tables:
 type **17** (one creature) and type **20** (up to four creatures).
 
-Keep this DLL alongside `EraEditor_JsonOverrides`. That plugin adapts artifact and existing TXT tables;
-this one handles map-object prototypes and per-type/subtype hints. Both use `headers/Era/ObjectText.hpp`
-for object text keys, also shared with `RMG_CustomizeObjectProperties`. No third plugin or duplicated
-text hook in each object extender is needed.
+This DLL includes the artifact and existing TXT-table handlers previously built as `EraEditor_JsonOverrides`.
+Only `EraEditor_ObjectsExtender.dll` is required. [Install-WoG.ps1](Install-WoG.ps1) installs this DLL and its
+PDB/MAP/DBGMap, verifies hashes and retires `EraEditor_JsonOverrides.dll` and its debug files from all real mod
+directories. Previous files and a restoration manifest are backed up; a failed installation restores them.
+Close the game and both normal and Unleashed editor processes before installing. Use `-Build` to build Release/Win32 first, or
+`-ArtifactsRoot <directory>` for outputs in `bin/` and `DebugMaps/`. The default target is `Mods/WoG`;
+`-GamePath` and `-ModName` select a different installation.
+Object text keys use `headers/Era/ObjectText.hpp`, also shared with `RMG_CustomizeObjectProperties`.
+
+Artifact keys use `era.artifacts.<id>.*` from `headers/Era/JsonOverridesSchema.hpp`. Before GrayFace creates its
+private artifact list, the adapter raises its in-memory `Number of Artifacts` setting to include declared JSON IDs.
+It does not write `Options.ini`; GrayFace owns the resulting table and native range patches. Expansion stays
+within the configured mask DWORD span (for example, 171 can grow to 192); increasing map-mask storage is deferred.
+Out-of-range declarations are logged and are not added by this adapter. Type names use `era.objects.<type>`;
+existing creature-bank names use `RMG.objectGeneration.16.<subtype>.name`. These handlers run after native TXT loading.
+Artifact names/descriptions, object type names and bank names refresh on language reload. Missing keys restore
+the native text; explicitly empty text remains an override. Later replacements by another handler are preserved.
+Numeric artifact fields are applied at startup only. String bindings are forgotten before their native table reloads.
+Missing artifact prototypes are appended to `ZEObjts.txt` from a native artifact template. Explicit definitions
+already in the catalog are preserved. New prototypes use `mapDef`, otherwise an existing `AVA%04d.def` matching
+the ID, with the native template as a fallback if the resource is absent. Editor-native LOD lookup is used.
+New records beyond `ArTraits.txt` receive JSON names and parameters; sparse undeclared records remain disabled.
+New combination-artifact links remain deferred, matching the game extender.
+
+There is one editor connection, Patcher instance and initialization path. `TextHandlers/` adapts native TXT tables;
+`ObjectDefinitions` handles prototypes; `ObjectText` handles palette/map hints; `ObjectExtenders/DwellingsExtender`
+adapts dwelling name tables. Inactive legacy town, hero and creature handlers are excluded from the build.
 
 Build **Win32**, Debug or Release. The default output is:
 

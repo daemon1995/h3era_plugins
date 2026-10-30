@@ -20,6 +20,10 @@
   <ItemGroup>
     <ClInclude Include="ObjectDefinitions.h" />
     <ClInclude Include="ObjectText.h" />
+    <ClInclude Include="TextHandlers\ArtifactHandler.h" />
+    <ClInclude Include="TextHandlers\MapObjectHandler.h" />
+    <ClInclude Include="TextHandlers\TextOverrides.h" />
+    <ClInclude Include="..\headers\Era\JsonOverridesSchema.hpp" />
     <ClInclude Include="..\headers\Era\ObjectText.hpp" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ObjectProperties.h" />
@@ -29,12 +33,16 @@
   <ItemGroup>
     <ClCompile Include="ObjectDefinitions.cpp" />
     <ClCompile Include="ObjectText.cpp" />
+    <ClCompile Include="TextHandlers\ArtifactHandler.cpp" />
+    <ClCompile Include="TextHandlers\MapObjectHandler.cpp" />
+    <ClCompile Include="TextHandlers\TextOverrides.cpp" />
     <ClCompile Include="..\headers\Era\eramap.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ObjectExtenders\DwellingsExtender.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+    <None Include="Install-WoG.ps1" />
     <None Include="examples\object_text.json" />
     <None Include="..\RMG_CustomizeObjectProperties\examples\dwellings.json" />
   </ItemGroup>

@@ -7,6 +7,9 @@
   <ItemGroup>
     <ClCompile Include="ObjectDefinitions.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="ObjectText.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="TextHandlers\ArtifactHandler.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="TextHandlers\MapObjectHandler.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="TextHandlers\TextOverrides.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="..\headers\Era\eramap.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="dllmain.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="ObjectExtenders\DwellingsExtender.cpp"><Filter>Source Files</Filter></ClCompile>
@@ -14,6 +17,10 @@
   <ItemGroup>
     <ClInclude Include="ObjectDefinitions.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="ObjectText.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="TextHandlers\ArtifactHandler.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="TextHandlers\MapObjectHandler.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="TextHandlers\TextOverrides.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="..\headers\Era\JsonOverridesSchema.hpp"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="..\headers\Era\ObjectText.hpp"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="framework.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="ObjectProperties.h"><Filter>Header Files</Filter></ClInclude>

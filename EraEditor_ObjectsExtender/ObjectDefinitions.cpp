@@ -1,6 +1,7 @@
 ﻿#include "ObjectDefinitions.h"
 #include "ObjectProperties.h"
 #include "ObjectExtenders/DwellingsExtender.h"
+#include "TextHandlers/ArtifactHandler.h"
 #include "../headers/EraPluginsAPI/ObjectDefinitionsAPI.h"
 #include <array>
 #include "../headers/Era/eraModList.hpp"
@@ -70,6 +71,7 @@ H3TextFile *__stdcall ObjectDefinitions::LoadObjectPrototypes(HiHook *h, LPCSTR 
         captured = true;
     }
     MergeObjectProperties(lines, additions);
+    ArtifactHandler::AppendObjectDefinitions(lines);
     if (!additions.empty() || lines.size() != size_t(count) + 1)
     {
         auto *data = CDECL_1(LPCSTR *, 0x504A8E, lines.size() * sizeof(LPCSTR));
