@@ -4,7 +4,8 @@
 #include "HelpLogic.h"
 
 // All mod-help readers use one canonical key under help.<mod-folder>.
-// Missing translations retain the key returned by ERA. The supported shape is:
+// Missing translations in mod-authored content retain the key returned by ERA;
+// built-in dialog labels use HelpUI.h's readable fallback text. The supported shape is:
 //   help.<folder>.hotkeys[i] = { keys, name, description, type }
 //   help.<folder>.categories[i] = { name, content }
 // MainDlg can therefore defer mod discovery/parsing until a mod list or the

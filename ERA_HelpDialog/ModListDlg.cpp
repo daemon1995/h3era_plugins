@@ -20,7 +20,7 @@ ModListDlg::ModListDlg(const helpdlg::ModDropdownLayout &layout, const std::vect
 {
     instance = this;
     flags &= ~16; // Draw the dropdown without a dialog shadow.
-    helpdlg::AddSafeBackground(*this, false, false);
+    helpdlg::AddSafeBackground(*this, false);
     const auto selected = std::find(mods.begin(), mods.end(), selectedMod);
     if (selected != mods.end())
     {

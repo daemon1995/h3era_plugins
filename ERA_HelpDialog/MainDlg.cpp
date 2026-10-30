@@ -6,9 +6,7 @@
 #include "ModListDlg.h"
 #include "PlaceholderPage.h"
 #include "SearchPanel.h"
-#include <shellapi.h>
-
-#pragma comment(lib, "Shell32.lib")
+#include "../headers/EraPluginsAPI/NotificationLinks.hpp"
 // Stable undecorated API names for GetProcAddress, in addition to stdcall names.
 #pragma comment(linker, "/EXPORT:ERAHelp_ShowDialog=_ERAHelp_ShowDialog@8")
 #pragma comment(linker, "/EXPORT:ERAHelp_ShowObject=_ERAHelp_ShowObject@8")
@@ -85,6 +83,7 @@ void LoadSession()
 MainDlg::MainDlg(int width, int height, int x, int y, eHelpPage page, int subtype)
     : H3Dlg(width, height, x, y, false, false), initialPage(page), activePage(page), initialSubtype(subtype)
 {
+    flags &= ~16;
     selectorBackground.Set(helpdlg::CreateSelectorBackground(width));
     helpdlg::AddSafeBackground(*this);
     instance = this;
@@ -96,30 +95,71 @@ MainDlg::MainDlg(int width, int height, int x, int y, eHelpPage page, int subtyp
     contentX = 8 + categoriesWidth + 4;
     contentWidth = width - contentX - 8;
 
-    header = new HeaderPage(8, 8, width - 16, 64, categoriesWidth, this);
-    auto *ok = helpdlg::CloseButtonRight(*this);
+    constexpr int outerMargin = 6, sectionGap = 6, headerHeight = 60;
+    header = new HeaderPage(8, outerMargin, width - 16, headerHeight, categoriesWidth, this);
+    bodyY = outerMargin + headerHeight + sectionGap;
+    H3DefLoader okDef(NH3Dlg::Assets::OKAY32_DEF);
+    const int okWidth = okDef.Get() ? okDef->widthDEF : 66;
+    const int okHeight = okDef.Get() ? okDef->heightDEF : 32;
+    H3DefLoader guideDef("SECSK32.def");
+    const int guideHeight = guideDef.Get() ? guideDef->heightDEF : 32;
+    const LPCSTR resizeDefName = ReadInt("FullScreen") ? "VWMAG1.def" : "VWMAG2.def";
+    H3DefLoader resizeDef(resizeDefName);
+    const int resizeWidth = resizeDef.Get() ? resizeDef->widthDEF : 62;
+    const int resizeHeight = resizeDef.Get() ? resizeDef->heightDEF : 28;
+    const int footerHeight = std::max(std::max(okHeight + 2, guideHeight + 2), resizeHeight + 2);
+    bottomBarY = height - outerMargin - footerHeight;
+    const int okButtonX = contentX + contentWidth - okWidth - 1;
+    const int okButtonY = bottomBarY + (footerHeight - okHeight) / 2;
+    auto *ok = H3DlgDefButton::Create(okButtonX, okButtonY, int(eControlId::OK), NH3Dlg::Assets::OKAY32_DEF,
+                                      0, 1, TRUE, eVKey::H3VK_ENTER);
     const int okX = ok ? ok->GetX() : width - 82;
-    const int okHeight = ok ? ok->GetHeight() : 32;
-    bottomBarY = ok ? ok->GetY() : height - 48;
-    bodyHeight = std::max(80, bottomBarY - bodyY - 6);
+    bodyHeight = std::max(80, bottomBarY - bodyY - sectionGap);
     if (ok)
     {
+        AddItem(ok);
+        ok->SetX(okButtonX);
+        ok->SetY(okButtonY);
+        helpdlg::GoldFrame(*this, okButtonX - 1, okButtonY - 1, ok->GetWidth() + 2, ok->GetHeight() + 2);
         ok->AddHotkey(eVKey::H3VK_ESCAPE);
         ok->AddHotkey(eVKey::H3VK_F1);
     }
 
-    guideButton = helpdlg::CategoryButton(14, bottomBarY, buttons::HELP, helpdlg::Text("help.ui.guide"));
+    guideButton = H3DlgCaptionButton::Create(14, bottomBarY + (footerHeight - guideHeight) / 2, buttons::HELP,
+                                              "SECSK32.def", "{~>CRCOMBAT.def:0:5}",
+                                              NH3Dlg::Text::SMALL, 0, 0, false, 0, eTextColor::REGULAR);
     if (guideButton)
     {
         AddItem(guideButton);
+        guideButton->SetClickFrame(1);
+        helpdlg::GoldFrame(*this, guideButton->GetX() - 1, guideButton->GetY() - 1,
+                           guideButton->GetWidth() + 2, guideButton->GetHeight() + 2);
         guideButton->SetHints(helpdlg::Text("help.ui.guide_hint"), nullptr, false);
     }
 
-    const int hintX = contentX;
+    constexpr int bottomGap = 8;
+    const int resizeX = guideButton ? guideButton->GetX() + guideButton->GetWidth() + bottomGap : 14;
+    auto *resize = H3DlgDefButton::Create(resizeX,
+                                          bottomBarY + (footerHeight - resizeHeight) / 2, buttons::RESIZE_DLG,
+                                          resizeDefName, 0, 1, FALSE, 0);
+    if (resize)
+    {
+        AddItem(resize);
+        helpdlg::GoldFrame(*this, resize->GetX() - 1, resize->GetY() - 1,
+                           resize->GetWidth() + 2, resize->GetHeight() + 2);
+        resize->SetHints(helpdlg::Text("help.ui.resize"), nullptr, false);
+    }
+
+    const int hintX = std::max(contentX, resizeX + resizeWidth + bottomGap);
     const int hintWidth = std::max(100, okX - hintX - 6);
-    hintBar = CreateHint(hintX, bottomBarY, hintWidth, okHeight);
+    const int hintY = bottomBarY + 1, hintHeight = footerHeight - 2;
+    hintBackground.Set(helpdlg::CreateSelectorBackground(hintWidth, "ERAHDBAR.PCX", hintHeight, true));
+    hintBar = helpdlg::CreateHintBar(*this, hintX, hintY, hintWidth, hintHeight, "ERAHDBAR.PCX");
     if (hintBar)
+    {
+        helpdlg::GoldFrame(*this, hintX - 1, bottomBarY, hintWidth + 2, footerHeight);
         hintBar->Show();
+    }
     RefreshSearchPlaceholders();
 }
 MainDlg::~MainDlg()
@@ -136,6 +176,12 @@ MainDlg::~MainDlg()
     delete searchPanel;
     for (auto *mod : mods)
         delete mod;
+    helpdlg::ReleaseSelectorText(hintBar);
+    // All TextPcx users are detached before releasing the dialog-owned PCXs.
+    if (auto *pcx = hintBackground.Release())
+        pcx->Dereference();
+    if (auto *pcx = selectorBackground.Release())
+        pcx->Dereference();
     instance = nullptr;
     if (resultItemId == buttons::RESIZE_DLG)
         P_WindowManager->resultItemID = buttons::RESIZE_DLG;
@@ -488,7 +534,7 @@ void MainDlg::ExecuteAction(LPCSTR command)
     const std::string value = action.substr(separator + 1);
     if (kind == "http" || kind == "https")
     {
-        ShellExecuteA(nullptr, "open", action.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        mainmenu::OpenNotificationLink(action.c_str());
         return;
     }
     if (kind == "erm")
@@ -567,7 +613,11 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
     // The text is already updated; do not let this notification release focus
     // or dispatch actions on the page beneath it.
     if ((msg.IsLeftDown() || msg.IsLeftClick()) && msg.itemId == buttons::SEARCH_EDIT)
+    {
+        if (msg.IsLeftDown() && header->SearchContains(msg.GetX() - GetX(), msg.GetY() - GetY()))
+            header->FocusSearch();
         return FALSE;
+    }
     if (msg.IsLeftDown() || msg.IsLeftClick() || msg.IsRightClick())
     {
         const int localX = msg.GetX() - GetX();
@@ -622,6 +672,16 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
             return FALSE;
         }
     }
+    if (msg.itemId == buttons::SEARCH_CLEAR && (msg.IsLeftDown() || msg.IsLeftClick()))
+    {
+        if (msg.IsLeftDown())
+        {
+            CloseSearch();
+            header->FocusSearch();
+            RefreshSearchPlaceholders();
+        }
+        return FALSE;
+    }
     if (msg.IsLeftClick())
     {
         if (msg.itemId == buttons::MODLIST)
@@ -651,20 +711,6 @@ BOOL MainDlg::DialogProc(H3Msg &msg)
                 if (activeSection)
                     activeSection->Redraw();
             }
-            return FALSE;
-        }
-        if (msg.itemId == buttons::SEARCH_CLEAR)
-        {
-            CloseSearch();
-            header->FocusSearch();
-            RefreshSearchPlaceholders();
-            return FALSE;
-        }
-        if (msg.itemId == buttons::SEARCH)
-        {
-            const std::string requested = header->Query();
-            SetSearchQuery(requested);
-            Search();
             return FALSE;
         }
         if (msg.itemId == buttons::HELP)

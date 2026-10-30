@@ -1,5 +1,6 @@
 #include "HeroTeleport.h"
 #include "TeleportSelector.h"
+#include "TeleportGraphics.h"
 
 #pragma comment(linker, "/EXPORT:DisplayHeroTeleporter=_DisplayHeroTeleporter@20")
 
@@ -18,32 +19,38 @@ DllExport int __stdcall DisplayHeroTeleporter(const int heroId, const int object
 }
 
 TeleportDlg::TeleportDlg(const int variant, const DWORD currentObjectIndex)
-    : H3Dlg(592, 744, -1, -1, FALSE, TRUE, 1), variant(variant), currentObjectIndex(currentObjectIndex),
+    : H3Dlg(592, std::min(744, H3GameHeight::Get()), -1, -1, FALSE, TRUE, 1), variant(variant), currentObjectIndex(currentObjectIndex),
       config(mrart::TeleportConfig::LoadVariant(variant))
 {
+    MAP_SIZE = std::min(480, heightDlg - 264);
+    MAP_X = (widthDlg - MAP_SIZE) / 2;
     CreateDialogItems();
 }
 
 void TeleportDlg::CreateDialogItems()
 {
-    CreateText(0, 12, widthDlg, 34, mrart::TeleportConfig::DialogText("mrart.teleport_dlg.title", ""),
+    CreateText(0, 12, widthDlg, 34, mrart::TeleportConfig::DialogText("mrart.teleport_dlg.title", "Teleport"),
                NH3Dlg::Text::BIG, eTextColor::GOLD, 1);
-    CreateText(0, 574, widthDlg, 34,
-               mrart::TeleportConfig::DialogText("mrart.teleport_dlg.quadrant_question", ""),
+    CreateText(0, MAP_Y + MAP_SIZE + 8, widthDlg, 34,
+               mrart::TeleportConfig::DialogText("mrart.teleport_dlg.quadrant_question", "Choose a quadrant."),
                NH3Dlg::Text::MEDIUM, eTextColor::WHITE, 2);
 
-    minimap = CreatePcx16(MAP_X, MAP_Y, MAP_SIZE, MAP_SIZE, 10, config.minimapPcx);
+    minimap = mrart::CreateScaledPcx(*this, MAP_X, MAP_Y, MAP_SIZE, MAP_SIZE, 10, config.minimapPcx);
 
     panels.resize(config.quadrantCount);
     for (int quadrant = 0; quadrant < config.quadrantCount; ++quadrant)
     {
-        const auto &item = config.quadrants[quadrant];
+        auto &item = config.quadrants[quadrant];
+        item.x = item.x * MAP_SIZE / 480;
+        item.y = item.y * MAP_SIZE / 480;
+        item.width = item.width * MAP_SIZE / 480;
+        item.height = item.height * MAP_SIZE / 480;
         if (item.width <= 0 || item.height <= 0)
             continue;
 
         const int x = MAP_X + item.x;
         const int y = MAP_Y + item.y;
-        panels[quadrant].picture = CreatePcx16(x, y, item.width, item.height, 100 + quadrant, item.greenPcx);
+        panels[quadrant].picture = mrart::CreateScaledPcx(*this, x, y, item.width, item.height, 100 + quadrant, item.greenPcx);
         panels[quadrant].hitArea = CreateHidden(x, y, item.width, item.height, QUADRANT_FIRST_ID + quadrant);
     }
 
@@ -59,8 +66,8 @@ void TeleportDlg::CreateDialogItems()
         }
     }
 
-    CreateCancelButton(105, 645);
-    if (H3DlgDefButton *okButton = CreateOKButton(409, 645))
+    CreateCancelButton(105, heightDlg - 99);
+    if (H3DlgDefButton *okButton = CreateOKButton(409, heightDlg - 99))
         okButton->Disable();
 }
 
@@ -73,11 +80,16 @@ void TeleportDlg::SelectQuadrant(const int quadrant)
     if (item.width <= 0 || item.height <= 0)
         return;
 
+    if (selectedQuadrant >= 0)
+        mrart::ReplaceScaledPcx(panels[selectedQuadrant].picture, config.quadrants[selectedQuadrant].greenPcx);
     selectedQuadrant = quadrant;
+    mrart::ReplaceScaledPcx(panels[quadrant].picture, item.purplePcx);
     if (selectionFrame)
     {
         selectionFrame->SetX(MAP_X + item.x);
         selectionFrame->SetY(MAP_Y + item.y);
+        selectionFrame->SetWidth(item.width);
+        selectionFrame->SetHeight(item.height);
         selectionFrame->Show();
     }
     if (H3DlgDefButton *okButton = GetDefButton(eControlId::OK))

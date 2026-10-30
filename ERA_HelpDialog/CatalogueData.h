@@ -21,6 +21,7 @@ struct CatalogueEntry
     LPCSTR def = nullptr;
     int frame = 0;
     int spellSchool = -1;
+    int faction = -1;
     FilterRecord filter;
 };
 

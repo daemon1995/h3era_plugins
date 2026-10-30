@@ -1,0 +1,35 @@
+{
+  "help": {
+    "advanced classes mod": {
+      "name": "Advanced Classes Mod",
+      "description": "Adds Warrior, Mage and Adventurer hero classes and hybrid classes, Master/Grandmaster skill and spell ranks, reworked specialities and commander abilities. Hero-screen shortcuts: W, E, A and R.",
+      "hotkeys": {
+        "name": "Hotkeys",
+        "0": {
+          "keys": "W",
+          "name": "Hero class table",
+          "description": "Open the ACM class table on the hero screen.",
+          "type": "HERO"
+        },
+        "1": {
+          "keys": "E",
+          "name": "Hero bonus list",
+          "description": "Open the ACM bonus list on the hero screen.",
+          "type": "HERO"
+        },
+        "2": {
+          "keys": "A",
+          "name": "Advanced hero class",
+          "description": "Open the advanced-class information on the hero screen.",
+          "type": "HERO"
+        },
+        "3": {
+          "keys": "R",
+          "name": "Spell upgrade list",
+          "description": "Open the spell-upgrade list on the hero screen.",
+          "type": "HERO"
+        }
+      }
+    }
+  }
+}

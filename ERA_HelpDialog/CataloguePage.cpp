@@ -18,7 +18,6 @@ constexpr int kObjectFirst = 100;
 constexpr int kChoiceFirst = 29000;
 constexpr int kChoiceScroll = 28999;
 constexpr int kChoiceRowHeight = 24;
-constexpr LPCSTR kResetFiltersDef = "ERAHDRST.DEF";
 const eHelpPage kCataloguePages[] = {eHelpPage::CREATURES, eHelpPage::ARTIFACTS,        eHelpPage::HEROES,
                                      eHelpPage::SPELLS,    eHelpPage::SECONDARY_SKILLS, eHelpPage::TOWNS};
 
@@ -70,7 +69,7 @@ class ChoiceListDlg final : public H3Dlg
     {
         instance = this;
         flags &= ~16;
-        helpdlg::AddSafeBackground(*this, false, false);
+        helpdlg::AddSafeBackground(*this, false);
         const bool needsScroll = static_cast<int>(options.size()) > rows;
         const int rowWidth = widthDlg - (needsScroll ? 16 : 0);
         for (int row = 0; row < rows; ++row)
@@ -248,11 +247,13 @@ CatalogueSection::CatalogueSection(int categoriesX, int categoriesY, int categor
     const int resetX = sortX + sortBlockWidth + 6;
     if (hasFilters)
     {
-        resetButton = helpdlg::IconButton(nullptr, resetX, controlsY, resetWidth, controlsHeight,
-                                          idBase + kResetFilters, kResetFiltersDef, h3_NullString);
+        resetButton = H3DlgDef::Create(resetX, controlsY, idBase + kResetFilters, "tpthchk.def", 1);
         AddItem(resetButton);
         if (resetButton)
+        {
+            resetButton->SetY(controlsY + (controlsHeight - resetButton->GetHeight()) / 2);
             resetButton->SetHints(helpdlg::Text("help.ui.reset_filters"), nullptr, false);
+        }
     }
 
     // Latest layout order: sort dropdown, reset icon, then page-specific filters.
@@ -314,8 +315,11 @@ CatalogueSection::CatalogueSection(int categoriesX, int categoriesY, int categor
     if (!catalogue.entries.empty())
         defName = catalogue.entries.front().def;
     H3DefLoader def(defName ? defName : NH3Dlg::Assets::ARTIFACT_DEF);
-    const int portraitWidth = defName && def.Get() ? def->widthDEF : 58;
-    const int portraitHeight = defName && def.Get() ? def->heightDEF : 64;
+    const bool artifacts = data.page == eHelpPage::ARTIFACTS;
+    const int spriteWidth = defName && def.Get() ? def->widthDEF : 58;
+    const int spriteHeight = defName && def.Get() ? def->heightDEF : 64;
+    const int portraitWidth = artifacts ? std::max(spriteWidth, helpdlg::kArtifactSlotSize) : spriteWidth;
+    const int portraitHeight = artifacts ? std::max(spriteHeight, helpdlg::kArtifactSlotSize) : spriteHeight;
     int layoutPortraitHeight = portraitHeight;
     if (data.page == eHelpPage::CREATURES || data.page == eHelpPage::SPELLS)
     {
@@ -348,6 +352,19 @@ CatalogueSection::CatalogueSection(int categoriesX, int categoriesY, int categor
             const int left = x + 8 + column * cellWidth;
             const int top = gridY + row * cellHeight;
             const int itemId = idBase + kObjectFirst + slot;
+            auto *artifactBackground =
+                artifacts ? H3DlgPcx::Create(left + (cellWidth - helpdlg::kArtifactSlotSize) / 2,
+                                             top + (portraitHeight - helpdlg::kArtifactSlotSize) / 2,
+                                             helpdlg::kArtifactSlotSize, helpdlg::kArtifactSlotSize, -1,
+                                             helpdlg::kArtifactSlotPcx)
+                          : nullptr;
+            if (artifactBackground)
+            {
+                dialog->AddItem(artifactBackground);
+                decorations.push_back(artifactBackground);
+                artifactBackground->HideDeactivate();
+            }
+            artifactBackgrounds.push_back(artifactBackground);
             std::vector<H3DlgDef *> underlays;
             if (data.page == eHelpPage::SPELLS && def.Get())
                 for (int school = 0; school < 4; ++school)
@@ -364,7 +381,8 @@ CatalogueSection::CatalogueSection(int categoriesX, int categoriesY, int categor
                 }
             spellUnderlays.push_back(std::move(underlays));
             H3DlgDef *sprite = defName && def.Get()
-                                   ? H3DlgDef::Create(left + (cellWidth - portraitWidth) / 2, top, itemId, defName, 0)
+                                   ? H3DlgDef::Create(left + (cellWidth - spriteWidth) / 2,
+                                                      top + (portraitHeight - spriteHeight) / 2, itemId, defName, 0)
                                    : nullptr;
             H3DlgPcx *pcx =
                 !defName ? H3DlgPcx::Create(left + (cellWidth - 58) / 2, top, 58, 64, itemId, nullptr) : nullptr;
@@ -383,13 +401,9 @@ CatalogueSection::CatalogueSection(int categoriesX, int categoriesY, int categor
             const int labelY = top + layoutPortraitHeight + 2;
             const int labelWidth = cellWidth - 4;
             auto *label =
-                H3DlgText::Create(left, labelY, labelWidth, helpdlg::kCatalogueCaptionHeight, h3_NullString,
-                                  NH3Dlg::Text::SMALL, eTextColor::REGULAR, itemId, eTextAlignment::MIDDLE_CENTER);
+                helpdlg::CreateObjectCaption(left, labelY, labelWidth, helpdlg::kCatalogueCaptionHeight, itemId);
             AddItem(label);
             objectLabels.push_back(label);
-            auto *labelFrame = AddDecorationFrame(dialog, decorations, left, labelY, labelWidth,
-                                                  helpdlg::kCatalogueCaptionHeight, H3RGB565(H3RGB888(116, 100, 70)));
-            objectLabelFrames.push_back(labelFrame);
 
             auto *selection =
                 H3DlgFrame::Create(left, top, cellWidth - 4, cellHeight - 2, -1, H3RGB565(H3RGB888::Highlight()));
@@ -423,6 +437,8 @@ CatalogueSection::CatalogueSection(int categoriesX, int categoriesY, int categor
 
 CatalogueSection::~CatalogueSection()
 {
+    for (auto *label : objectLabels)
+        helpdlg::ReleaseObjectCaption(label);
     helpdlg::ReleaseSelectorText(sortButton);
     for (auto *button : facetButtons)
         helpdlg::ReleaseSelectorText(button);
@@ -448,6 +464,7 @@ LPCSTR CatalogueSection::SortOptionName(int option) const noexcept
         return helpdlg::Text("help.sort.id");
     return helpdlg::Text(catalogue.page == eHelpPage::HEROES      ? "help.sort.hero"
                          : catalogue.page == eHelpPage::ARTIFACTS ? "help.sort.artifact"
+                         : catalogue.page == eHelpPage::CREATURES ? "help.sort.faction_level_id"
                                                                   : "help.sort.level");
 }
 
@@ -459,6 +476,8 @@ void CatalogueSection::SetFilter(const helpdlg::CatalogueFilter &state)
     filter.sort = helpdlg::Bound(filter.sort, 0, SortOptionCount() - 1);
     const unsigned validLevels = catalogue.levelCount ? (1u << catalogue.levelCount) - 1u : 0u;
     filter.levels &= validLevels;
+    if (catalogue.page == eHelpPage::SPELLS && filter.facets[0] == 3)
+        filter.facets[0] = 0;
     for (size_t facet = 0; facet < catalogue.facets.size(); ++facet)
         filter.facets[facet] =
             helpdlg::Bound(filter.facets[facet], 0, static_cast<int>(catalogue.facets[facet].options.size()) - 1);
@@ -505,6 +524,17 @@ void CatalogueSection::Rebuild(bool resetScroll)
             return a.id < b.id;
         if (filter.sort == 2)
         {
+            if (catalogue.page == eHelpPage::CREATURES)
+            {
+                const bool aFaction = a.faction != -1, bFaction = b.faction != -1;
+                if (aFaction != bFaction)
+                    return aFaction;
+                if (a.faction != b.faction)
+                    return a.faction < b.faction;
+                if (aFaction && a.filter.level != b.filter.level)
+                    return a.filter.level < b.filter.level;
+                return a.id < b.id;
+            }
             int aGroup = 0, bGroup = 0;
             if (catalogue.page == eHelpPage::HEROES)
                 aGroup = a.filter.facets[0], bGroup = b.filter.facets[0];
@@ -554,7 +584,7 @@ std::string CatalogueSection::CategoryCaption(int category, int count) const
     if (category < 0 || category >= static_cast<int>(catalogue.categories.size()))
         return h3_NullString;
     LPCSTR name = catalogue.categories[category];
-    std::string prefix;
+    std::string prefix = catalogue.page == eHelpPage::SPELLS ? "{~>SECSK32.def:0:0} " : "{~>itpa.def:0:0} ";
     if (category >= 1 && category <= catalogue.factionCategoryCount)
     {
         name = helpdlg::TownName(category - 1);
@@ -567,7 +597,7 @@ std::string CatalogueSection::CategoryCaption(int category, int count) const
     }
 
     const auto caption = helpdlg::FormatText("help.formats.category_count", name, count);
-    return prefix.empty() ? caption : "{~text align=left}" + prefix + caption + "}";
+    return "{~text align=left}" + prefix + caption + "}";
 }
 
 void CatalogueSection::RefreshCategories()
@@ -607,7 +637,6 @@ void CatalogueSection::Redraw()
     for (size_t slot = 0; slot < objectLabels.size(); ++slot)
     {
         auto *label = objectLabels[slot];
-        auto *labelFrame = objectLabelFrames[slot];
         auto *sprite = defPortraits[slot];
         auto *fallbackCreaturePortrait =
             slot < fallbackCreaturePortraits.size() ? fallbackCreaturePortraits[slot] : nullptr;
@@ -622,11 +651,6 @@ void CatalogueSection::Redraw()
             else
                 selection->HideDeactivate();
         }
-        if (labelFrame)
-            if (visible)
-                labelFrame->Show()->DeActivate();
-            else
-                labelFrame->HideDeactivate();
         if (visible)
         {
             const int record = filtered[index];
@@ -636,7 +660,7 @@ void CatalogueSection::Redraw()
                                     helpdlg::Text("help.ui.object_hint"));
             if (label)
             {
-                label->SetText(entry.name);
+                helpdlg::SetObjectCaptionText(*dialog, label, entry.name);
                 label->SetHints(hint.c_str(), nullptr, true);
                 label->ShowActivate();
             }
@@ -693,6 +717,13 @@ void CatalogueSection::Redraw()
                 pcx->SetPcx(static_cast<H3LoadedPcx *>(nullptr));
                 pcx->HideDeactivate();
             }
+        }
+        if (auto *background = artifactBackgrounds[slot])
+        {
+            if (visible && sprite && sprite->IsVisible())
+                background->Show()->DeActivate();
+            else
+                background->HideDeactivate();
         }
         const int school = visible ? catalogue.entries[filtered[index]].spellSchool : -1;
         for (size_t background = 0; background < spellUnderlays[slot].size(); ++background)
@@ -871,8 +902,6 @@ BOOL CatalogueSection::ProcessMessage(H3Msg &msg)
                                                          item <= kLevelFirst + catalogue.levelCount);
     if (filterControl && !msg.IsLeftDown())
         return TRUE;
-    if (msg.IsLeftDown() && !filterControl)
-        return FALSE;
     const int objectSlots = static_cast<int>(objectLabels.size());
     const int fallbackFirst = kObjectFirst + objectSlots;
     int objectSlot = -1;
@@ -882,6 +911,8 @@ BOOL CatalogueSection::ProcessMessage(H3Msg &msg)
         objectSlot = item - fallbackFirst;
     if (objectSlot >= 0)
     {
+        if (msg.IsLeftClick())
+            return TRUE;
         const int index = filter.firstRow * columns + objectSlot;
         if (index < static_cast<int>(filtered.size()))
         {
@@ -898,6 +929,8 @@ BOOL CatalogueSection::ProcessMessage(H3Msg &msg)
         }
         return TRUE;
     }
+    if (msg.IsLeftDown() && !filterControl)
+        return FALSE;
     if (!msg.IsLeftClick() && !filterControl)
         return FALSE;
     if (item == kResetFilters)

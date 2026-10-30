@@ -1,249 +1,5 @@
 {
   "help": {
-    "wog": {
-      "name": "WoG",
-      "hotkeys": {
-        "0": {
-          "keys": "F5",
-          "type": "COMBAT",
-          "name": "All statistics",
-          "description": "Show all statistics and active spells for the selected creature in battle."
-        },
-        "1": {
-          "keys": "F6",
-          "type": "COMBAT",
-          "name": "Battlefield grid",
-          "description": "Toggle the hex grid over the battlefield."
-        },
-        "2": {
-          "keys": "F7",
-          "type": "COMBAT",
-          "name": "Cursor shadow",
-          "description": "Toggle the hex shadow under the combat cursor."
-        },
-        "3": {
-          "keys": "F8",
-          "type": "COMBAT",
-          "name": "Movement shadow",
-          "description": "Toggle the movement-range shadow for the selected creature."
-        },
-        "4": {
-          "keys": "CTRL+RIGHT CLICK",
-          "type": "ADV_MAP",
-          "name": "Leave one troop stack",
-          "description": "Leave one troop stack on an empty adjacent map square when the WoG option is enabled."
-        },
-        "5": {
-          "keys": "CTRL+CLICK",
-          "type": "HERO",
-          "name": "Combine Sylvan Centaurs",
-          "description": "Combine Grand Elves and Centaur Captains in the Hero screen when the WoG option is enabled."
-        },
-        "6": {
-          "keys": "ALT",
-          "type": "COMBAT",
-          "name": "Switch creature action",
-          "description": "Open the supported combat action switcher while the Alt key is held."
-        },
-        "7": {
-          "keys": "1 / 2 / 3 / 4",
-          "type": "COMBAT",
-          "name": "Choose creature action",
-          "description": "Choose an action in the combat action switcher."
-        },
-        "8": {
-          "keys": "W",
-          "type": "HERO",
-          "name": "Hero class table",
-          "description": "Open the enhanced hero class table where the WoG hero panel provides it."
-        },
-        "9": {
-          "keys": "E",
-          "type": "HERO",
-          "name": "Hero bonus list",
-          "description": "Open the enhanced hero bonus list where the WoG hero panel provides it."
-        },
-        "10": {
-          "keys": "A / D",
-          "type": "COMBAT",
-          "name": "Previous or next skill",
-          "description": "Move between commander or secondary-skill entries in the supported combat panel."
-        },
-        "11": {
-          "keys": "LEFT / RIGHT",
-          "type": "COMBAT",
-          "name": "Previous or next skill",
-          "description": "Move between commander or secondary-skill entries in the supported combat panel."
-        },
-        "name": "WoG hotkeys"
-      },
-      "categories": {
-        "0": {
-          "name": "WoG overview",
-          "content": "Wake of Gods extends Heroes III with configurable mechanics and scripts. The documented hotkeys below depend on the installed options. The catalogue uses live game tables; this document supplies explanations for the optional WoG features."
-        },
-        "1": {
-          "name": "Combat shortcuts",
-          "content": "F5 shows creature statistics, F6 toggles the battlefield grid, F7 toggles the cursor shadow, and F8 toggles the movement shadow. Alt and number keys are used by the optional action switcher."
-        },
-        "2": {
-          "name": "Adventure and hero shortcuts",
-          "content": "Ctrl+right-click and Ctrl+click provide optional troop and creature-management actions. W and E are used by supported enhanced hero panels."
-        }
-      }
-    },
-    "era scripts": {
-      "name": "ERA Scripts",
-      "hotkeys": {
-        "0": {
-          "keys": "ALT",
-          "type": "ADV_MAP",
-          "name": "Adventure map hints",
-          "description": "Hold Alt on the adventure map to show the enhanced movement or destination hint."
-        },
-        "1": {
-          "keys": "ALT",
-          "type": "COMBAT",
-          "name": "Combat action switcher",
-          "description": "Hold Alt to open the creature-action switcher when that commission is installed and enabled."
-        },
-        "2": {
-          "keys": "1 / 2 / 3 / 4",
-          "type": "COMBAT",
-          "name": "Select combat action",
-          "description": "Select an action in the creature-action switcher."
-        },
-        "3": {
-          "keys": "A / D",
-          "type": "COMBAT",
-          "name": "Commander skill navigation",
-          "description": "Use A and D to move to the previous or next commander skill in the supported panel."
-        },
-        "4": {
-          "keys": "LEFT / RIGHT",
-          "type": "COMBAT",
-          "name": "Commander skill navigation",
-          "description": "Use the left and right arrows to move between commander skills in the supported panel."
-        },
-        "5": {
-          "keys": "L",
-          "type": "OTHER",
-          "name": "Load game",
-          "description": "Open the load-game page in the extended system options dialog."
-        },
-        "6": {
-          "keys": "S",
-          "type": "OTHER",
-          "name": "Save game",
-          "description": "Open the save-game page in the extended system options dialog."
-        },
-        "7": {
-          "keys": "R",
-          "type": "OTHER",
-          "name": "Restart scenario",
-          "description": "Restart the current scenario from the extended system options dialog."
-        },
-        "8": {
-          "keys": "M",
-          "type": "OTHER",
-          "name": "Main menu",
-          "description": "Return to the main menu from the extended system options dialog."
-        },
-        "9": {
-          "keys": "Q",
-          "type": "OTHER",
-          "name": "Quit game",
-          "description": "Quit to the desktop from the extended system options dialog."
-        },
-        "10": {
-          "keys": "ESC / ENTER / O",
-          "type": "OTHER",
-          "name": "Return or close",
-          "description": "Close or return from the extended system options dialog."
-        },
-        "11": {
-          "keys": "1 / 2 / 3",
-          "type": "OTHER",
-          "name": "Options pages",
-          "description": "Switch between the first three pages of the extended system options dialog."
-        },
-        "12": {
-          "keys": "H",
-          "type": "OTHER",
-          "name": "Open help",
-          "description": "Open the help dialog from supported settings dialogs."
-        },
-        "13": {
-          "keys": "1..10",
-          "type": "MAIN_MENU",
-          "name": "Main-menu widgets",
-          "description": "The first ten main-menu widgets receive numeric hotkeys in their displayed order."
-        },
-        "14": {
-          "keys": "W",
-          "type": "OTHER",
-          "name": "Options action",
-          "description": "Open the W action in the ERA options menu."
-        },
-        "15": {
-          "keys": "E",
-          "type": "OTHER",
-          "name": "Options action",
-          "description": "Open the E action in the ERA options menu."
-        },
-        "16": {
-          "keys": "SPACE",
-          "type": "OTHER",
-          "name": "Confirm dialog",
-          "description": "The gameplay enhancement plugin adds Space as an alternative to OK in supported dialogs."
-        },
-        "17": {
-          "keys": "CTRL+LEFT CLICK",
-          "type": "COMBAT",
-          "name": "Creature spell selector",
-          "description": "Open the optional creature spell selector from a combat creature window."
-        },
-        "18": {
-          "keys": "H",
-          "type": "COMBAT",
-          "name": "Combat hint settings",
-          "description": "Open the combat hint settings panel when the combat-hints extension is installed."
-        },
-        "19": {
-          "keys": "ENTER / ESC / F1",
-          "type": "OTHER",
-          "name": "Help dialog controls",
-          "description": "Confirm or close the Help dialog; F1 is an alternate OK key and Escape cancels it."
-        },
-        "20": {
-          "keys": "H / ESC",
-          "type": "OTHER",
-          "name": "Close help guide",
-          "description": "Close the Help guide window with H or Escape."
-        },
-        "21": {
-          "keys": "NUMPAD 7/8/9/4/5/6/1/2/3/0/.",
-          "type": "ADV_MAP",
-          "name": "Numpad map controls",
-          "description": "With NumLock enabled, the gameplay extension maps the numpad to the corresponding map navigation keys."
-        },
-        "name": "ERA Scripts hotkeys"
-      },
-      "categories": {
-        "0": {
-          "name": "Adventure map tools",
-          "content": "ERA scripts add configurable adventure, hero, combat and system tools. Their shortcuts are grouped by the window where the feature is used. Alt adventure hints and combat action switching depend on installed and enabled modules."
-        },
-        "1": {
-          "name": "Combat tools",
-          "content": "The optional combat action switcher uses Alt and number keys. Commander-skill navigation supports A/D and the left/right arrows in its supported panel."
-        },
-        "2": {
-          "name": "System controls",
-          "content": "The extended system options dialog provides L, S, R, M, Q, Escape, Enter, O, and page keys 1 through 3. H opens supported help dialogs."
-        }
-      }
-    },
     "dlg": {
       "main": {
         "header": [
@@ -295,7 +51,7 @@
         {
           "name": "All",
           "hint": "Show all creatures.",
-          "rmc": "All registered creatures. Use Sort to choose name, ID or level/name."
+          "rmc": "Available creatures. Use Sort to choose name, ID or faction/level/ID. Faction/level/ID orders creatures by faction, then level, then ID; creatures without a faction (-1) follow in ID order."
         },
         {
           "name": "Castle",
@@ -490,7 +246,6 @@
       "filter": "Filter:",
       "all_mods": "All mods",
       "hotkey_source": "Hotkey source",
-      "back": "Back",
       "filter_cycle_hint": "Press the left mouse button to choose a value.",
       "search_label": "Search:",
       "search_hint": "Titles only. Ctrl+F: focus. Results: left to go, right for preview.",
@@ -565,7 +320,7 @@
         },
         {
           "name": "Object catalogues",
-          "content": "Creatures: town, neutral, war-machine and commander categories; levels 1-7; movement and attack filters. Cards show live statistics, cost, growth, abilities and upgrades. Only creatures with a nonempty name and combat DEF name are listed. Town icons appear only on faction categories.\n\nArtifacts: class categories, equipment position and combination filters. Cards show effects, cost and combination components. Only artifacts with a nonempty name, description and a visibly nonempty artifact.def frame are listed. IDs 144 and 145 are inventory placeholders and are always excluded. There is no artifact level filter.\n\nHeroes: town categories and sorting, including might/magic groups. Cards show portraits, specialties and starting data; left-click also shows the biography.\n\nSpells: school categories, levels 0-5, Use and Damage filters. Multi-school spells can appear in several categories. All 81 native spells include creature abilities 70-80, grouped at level 0. Mastery tables show mana, effect and Spell Power formulas.\n\nSecondary skills: groups and all three mastery descriptions for 28 skills.\n\nTowns: names, rosters and hero classes from the game. Available through global Search and integration calls."
+          "content": "Creatures: town, neutral, war-machine and commander categories; levels 1-7; movement and attack filters. Cards show live statistics, cost, growth, abilities and upgrades. Named creatures are listed. A missing combat DEF uses the compact information card instead of the native creature dialog. Town icons appear only on faction categories.\n\nArtifacts: class categories, equipment position and combination filters. Cards show effects, cost and combination components. Only artifacts with a nonempty name, description and a visibly nonempty artifact.def frame are listed. IDs 144 and 145 are inventory placeholders and are always excluded. There is no artifact level filter.\n\nHeroes: town categories and sorting, including might/magic groups. Cards show portraits, specialties and starting data; left-click also shows the biography.\n\nSpells: school categories, levels 0-5, Use and Damage filters. Multi-school spells can appear in several categories. All 81 native spells include creature abilities 70-80, grouped at level 0. Mastery tables show mana, effect and Spell Power formulas.\n\nSecondary skills: groups and all three mastery descriptions for 28 skills.\n\nTowns: names, rosters and hero classes from the game. Available through global Search and integration calls."
         },
         {
           "name": "Working examples",
@@ -692,15 +447,15 @@
         },
         {
           "name": "Writing mod help",
-          "content": "Place a JSON file in an active mod's lang directory. Its root is help.<actual lower-case folder>. name is a display name and may differ from the folder key. Copy examples/help_authoring.json and replace its my mod key to start.\n\ncategories contains article records with name and content. hotkeys has a section name and numeric records containing keys, name, description and type. Metadata only documents bindings. Contexts: EVERYWHERE, ADV_MAP, HERO, TOWN, COMBAT, MAIN_MENU and OTHER. Missing contexts become Other.\n\nCategories accept arrays or numeric-key objects; use a numeric-key object with name for hotkeys. Keep indices consecutive. Reading stops after 32 missing records or index 4095. A usable hotkey list generates runtime category 0; article indices then shift by one.\n\nAn optional description appends Overview. Plugins is appended only for actual .era, .dll and .bin files in EraPlugins, EraPlugins/BeforeWog or EraPlugins/AfterWog. It lists supplied files, not load status. Optional plugins records contain file, name and description; paths are relative to the mod folder.\n\nNative-object notes use help.creatures.entries.<id>.description, or the artifacts, heroes, spells, skills and towns equivalents. See examples/object_notes.json.\n\nEmpty text is a JSON empty string. Save as UTF-8 or use Unicode escapes. UI labels and formats live under help.ui, help.text, help.sort, help.formats and catalogue facets."
+          "content": "Put the English JSON in Mods/<folder>/Lang/my_help.json and its Russian translation in Mods/<folder>/Lang/ru/my_help.json. Use the same filename and the actual lower-case folder key under help. Files must be UTF-8. See examples/help_authoring.json and AUTHORING.md.\n\nname is the displayed mod name; when absent the folder name is used. description adds an Overview article. categories contains articles with name and content. hotkeys is an object with a name and numeric records: keys, name, description, type. These entries document shortcuts; they do not install key handlers.\n\nContexts: EVERYWHERE, ADV_MAP, HERO, TOWN, COMBAT, MAIN_MENU, OTHER. Use consecutive numeric IDs. Reading ends after 32 missing records or index 4095. A nonempty hotkey list adds category 0 before the authored articles. Generated Overview and Plugins sections are appended.\n\nKeep descriptions with their own mod. Do not copy UI translations, another mod's content or this whole reference into your file."
         },
         {
           "name": "Objects and actions",
-          "content": "Working examples uses an empty content string and overlay text for its explanation. This keeps a full-height article widget away from its controls.\n\nobjects is a consecutive array. kind accepts text, image, button, link and ErmFunction. value contains text or a resource name. Text without overlay: 1 joins the article. Fixed objects use x, y, width, height and zOrder relative to the content panel. Higher zOrder is created later. Leave gaps and stay inside the panel.\n\nimage uses a native PCX or group-zero DEF frame. It keeps its native size and must fit the rectangle. TwCrPort.def uses creature ID + 2; artifact.def uses the artifact ID.\n\nButtons and links run on left-button release. Actions: creatures:0, artifacts:7, heroes:0, spells:15, skills:2, towns:0, search and guide. Object actions open the same information card as a catalogue click, keeping the current page, filters and scroll position. mod:<folder>:<runtime category> opens an article. The return example uses mod:era help:1. Full http:// or https:// links open the system browser only when clicked.\n\nERM is optional. Install examples/HelpDialogExample.erm in the mod's Data/s folder, restart and start a map before using the optional category in examples/help_authoring.json. Its button calls HelpDialog_Example without arguments and shows a JSON-localized message. Other functions use erm:<name> or erm:<positive ID>. Opening or searching a category never executes actions."
+          "content": "objects supports text, image, button, link, erm and ErmFunction. A plain text object is appended to the article; overlay: 1 places it at x/y. Width, height and zOrder define its rectangle and drawing order inside the content panel. DEF images use group 0. Keep native image sizes and leave gaps between controls.\n\nButton/link actions run on left-button release. Object portraits and search results open on press. Actions: creatures:0, artifacts:7, heroes:0, spells:15, skills:2, towns:0, search, guide, mod:<folder>:<category>, http://..., https://... and erm:<function>. An external URL always asks for confirmation first.\n\nERM actions require a started map and an installed function. Merely reading JSON never executes actions. The working examples need no additional ERM script."
         },
         {
           "name": "API and compatibility",
-          "content": "Include headers/EraPluginsAPI/HelpDialogAPI.hpp in another plugin. ERAHelp_ShowDialog(page, subtype) opens the library; ERAHelp_ShowObject(page, id) reveals an object; ERAHelp_ShowObjectHint(page, id, popup) opens its card. Call after ERA initialization on the game UI thread.\n\nPage IDs: Mods 100, Hotkeys 101, Creatures 102, Artifacts 103, Towns 104, Heroes 107, Secondary skills 108 and Spells 109. A popup hint uses RMB_Show and requires the right button to be held. Modal cards have a close button; creatures use their native window when a name and combat DEF are present. Invalid or unused IDs are rejected.\n\nCreature and artifact counts come from the game. Fixed tables support 163 heroes, 28 skills, 9 towns and 81 spells. Additional scripted tables need explicit integration. Cards show current table values and defaults, not predicted combat results.\n\nDocuments use the canonical help.<folder> root. Missing translations display their JSON key, as returned by ERA; there are no substitute labels. Legacy categories.hotkeys.content accepts key or keys; a usable preferred hotkeys list wins. Contexts also accept numeric values -1 through 6 and the documented aliases.\n\nMissing optional fields stay empty. Absent images and invalid DEF frames are skipped. Reading JSON and previewing search results never execute actions."
+          "content": "Include headers/EraPluginsAPI/HelpDialogAPI.hpp in another plugin. ERAHelp_ShowDialog(page, subtype) opens the library; ERAHelp_ShowObject(page, id) reveals an object; ERAHelp_ShowObjectHint(page, id, popup) opens its card. Call after ERA initialization on the game UI thread.\n\nPage IDs: Mods 100, Hotkeys 101, Creatures 102, Artifacts 103, Towns 104, Heroes 107, Secondary skills 108 and Spells 109. A popup hint uses RMB_Show and requires the right button to be held. Modal cards have a close button; creatures use their native window only when the combat DEF is available; otherwise the compact card opens as a normal dialog. Invalid or unused IDs are rejected.\n\nCreature and artifact counts come from the game. Fixed tables support 163 heroes, 28 skills, 9 towns and 81 spells. Additional scripted tables need explicit integration. Cards show current table values and defaults, not predicted combat results.\n\nDocuments use the canonical help.<folder> root. Missing translations display their JSON key, as returned by ERA; there are no substitute labels. Legacy categories.hotkeys.content accepts key or keys; a usable preferred hotkeys list wins. Contexts also accept numeric values -1 through 6 and the documented aliases.\n\nMissing optional fields stay empty. Absent images and invalid DEF frames are skipped. Reading JSON and previewing search results never execute actions."
         }
       ]
     },
@@ -722,35 +477,7 @@
           "name": "Neutral alignment"
         }
       ],
-      "entries": {
-        "0": {
-          "description": "Castle combines human troops and angels. Its creature roster and default hero classes are listed above."
-        },
-        "1": {
-          "description": "Rampart combines forest creatures and elven troops. Check the live roster and individual creature cards for the current mod's values."
-        },
-        "2": {
-          "description": "Tower combines magical troops and constructs. Its hero and creature details are supplied by the current game tables."
-        },
-        "3": {
-          "description": "Inferno combines demonic troops. Optional WoG scripts may change its special mechanics; consult the mod documentation for those rules."
-        },
-        "4": {
-          "description": "Necropolis combines undead troops. Creature cards show their current traits; the Necromancy skill card lists its effects at each mastery level."
-        },
-        "5": {
-          "description": "Dungeon combines subterranean creatures and dragons. Use school and creature filters to compare the available magic and troops."
-        },
-        "6": {
-          "description": "Might-oriented troops and hero classes."
-        },
-        "7": {
-          "description": "Fortress combines swamp troops. Creature cards show defense, health, speed, costs and documented traits."
-        },
-        "8": {
-          "description": "Conflux combines elemental troops. Multi-school spells can appear in more than one school category."
-        }
-      }
+      "entries": {}
     },
     "artifacts": {
       "categories": [
@@ -870,8 +597,7 @@
           "options": [
             "Any",
             "Combat",
-            "Adventure",
-            "Creature ability"
+            "Adventure"
           ]
         },
         {
@@ -1201,18 +927,7 @@
       "categories": [
         {
           "name": "Keyboard reference",
-          "content": "Standard controls shared with Heroes III. The publisher manual lists them on pages 18-19. Its HD Edition graphics-switch command is not a feature of this ERA installation.",
-          "objects": [
-            {
-              "kind": "link",
-              "value": "Publisher manual",
-              "action": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/297000/manuals/Heroes_of_Might_and_Magic_III_HDEdition_OnlineManual_EN.pdf?t=1699009789",
-              "x": 8,
-              "y": 110,
-              "width": 190,
-              "height": 25
-            }
-          ]
+          "content": "Standard controls for Heroes III: Complete. Bindings depend on the current screen; active mods may replace them."
         }
       ]
     },
@@ -1629,6 +1344,7 @@
       "name": "Name",
       "id": "ID",
       "level": "Level / name",
+      "faction_level_id": "Faction / level / ID",
       "hero": "Might / magic",
       "artifact": "Slot / name"
     },

@@ -1,0 +1,17 @@
+{
+  "help": {
+    "wog": {
+      "name": "WoG",
+      "description": "Adds commanders, creature experience, new creatures and artifacts, town destruction/rebuilding and the ERM scripting system. Script-based features depend on enabled options and other active mods.",
+      "hotkeys": {
+        "name": "Hotkeys",
+        "0": {
+          "keys": "Alt",
+          "name": "Cycle creature action",
+          "description": "The installed Combat_SwitchingCreatureAction plugin cycles the available action. The held-Alt number menu is disabled in the current source.",
+          "type": "COMBAT"
+        }
+      }
+    }
+  }
+}

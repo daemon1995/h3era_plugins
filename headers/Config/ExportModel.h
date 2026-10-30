@@ -8,6 +8,7 @@
 
 namespace jsonExport
 {
+// In-memory, ordered JSON representation shared by the exporter and its provider service.
 using Json = nlohmann::ordered_json;
 
 inline Json &At(Json &root, const std::string &path)
@@ -55,6 +56,7 @@ inline void PutRmgOverrides(Json &root, const std::string &path, unsigned mask, 
 }
 struct Record
 {
+    // A stable identity can contribute to text, data and RMG defaults across providers.
     bool original = true;
     Json text, data;
     Json rmgDefaults;

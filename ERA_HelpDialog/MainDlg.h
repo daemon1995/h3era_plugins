@@ -14,6 +14,7 @@ class MainDlg : public H3Dlg
 {
     static MainDlg *instance;
     H3PcxLoader selectorBackground;
+    H3PcxLoader hintBackground;
     HeaderPage *header = nullptr;
     ModSection *modSection = nullptr;
     HotkeysSection *hotkeysSection = nullptr;
@@ -28,7 +29,7 @@ class MainDlg : public H3Dlg
     bool modsLoaded = false;
     eHelpPage initialPage, activePage;
     int initialSubtype = 0, activeSubtype = 0;
-    int bodyY = 78, bodyHeight = 0, categoriesWidth = 220, contentX = 232, contentWidth = 0;
+    int bodyY = 0, bodyHeight = 0, categoriesWidth = 220, contentX = 232, contentWidth = 0;
     int bottomBarY = 0;
     int pendingObject = -1;
     std::string searchQuery;

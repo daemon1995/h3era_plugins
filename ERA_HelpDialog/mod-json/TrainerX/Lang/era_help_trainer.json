@@ -1,0 +1,65 @@
+{
+  "help": {
+    "trainerx": {
+      "name": "TrainerX",
+      "description": "Adventure-map cheats and an object scanner; separate combat cheats and battlefield-terrain selection. F2/F3 have different actions on the adventure map and in combat. F6 opens additional adventure cheats.",
+      "hotkeys": {
+        "name": "Hotkeys",
+        "0": {
+          "keys": "F2",
+          "name": "Edit hero/player",
+          "description": "Open the hero/player editor.",
+          "type": "ADV_MAP"
+        },
+        "1": {
+          "keys": "F3",
+          "name": "Toggle object scanner",
+          "description": "Enable or disable the scanner; right-click an object for its menu.",
+          "type": "ADV_MAP"
+        },
+        "2": {
+          "keys": "F6",
+          "name": "Additional cheats",
+          "description": "Open additional adventure-map cheats.",
+          "type": "ADV_MAP"
+        },
+        "3": {
+          "keys": "X",
+          "name": "Execute ERM commands",
+          "description": "Open ERM command input; documented in the Russian readme.",
+          "type": "ADV_MAP"
+        },
+        "4": {
+          "keys": "Alt+click",
+          "name": "Repeat scanner action",
+          "description": "While the object scanner is enabled, repeat its last action.",
+          "type": "ADV_MAP"
+        },
+        "5": {
+          "keys": "Alt+number",
+          "name": "Scanner options",
+          "description": "While the object scanner is enabled, change its options.",
+          "type": "ADV_MAP"
+        },
+        "6": {
+          "keys": "F2",
+          "name": "Battlefield terrain",
+          "description": "Change the special battlefield-terrain type.",
+          "type": "COMBAT"
+        },
+        "7": {
+          "keys": "F3",
+          "name": "Combat cheats",
+          "description": "Open additional combat cheats.",
+          "type": "COMBAT"
+        },
+        "8": {
+          "keys": "F12",
+          "name": "Reload ERA scripts",
+          "description": "Reload scripts after enabling TrainerX during a game. The author recommends save/load if descriptions become incorrect.",
+          "type": "EVERYWHERE"
+        }
+      }
+    }
+  }
+}

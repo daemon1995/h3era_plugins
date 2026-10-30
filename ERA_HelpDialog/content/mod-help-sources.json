@@ -1,0 +1,48 @@
+{
+  "profile": [
+    "advanced classes mod",
+    "trainerx",
+    "game enhancement mod",
+    "wog"
+  ],
+  "mods": {
+    "advanced classes mod": {
+      "folder": "Advanced Classes Mod",
+      "metadata": "mod.json",
+      "descriptions": {
+        "en_US": "Readme.txt"
+      },
+      "filename": "era_help_acm.json"
+    },
+    "trainerx": {
+      "folder": "TrainerX",
+      "metadata": "mod.json",
+      "descriptions": {
+        "en_US": "readme.txt",
+        "ru_RU": "readme_ru.txt"
+      },
+      "filename": "era_help_trainer.json"
+    },
+    "game enhancement mod": {
+      "folder": "Game Enhancement Mod",
+      "metadata": "mod.json",
+      "descriptions": {
+        "en_US": "description_en.md",
+        "ru_RU": "description_ru.md"
+      },
+      "hotkey_source": "Author readme, examples/gem_help.json and the local plugin/script sources listed in AUDIT.md.",
+      "audit_notes": "Combat L is provided by HD mod, not by the current gem_scripts.erm. No combat Ctrl+L handler was found, so both old GEM records were removed. gem_settings.erm also has F1 handlers; the HelpDialog F1 hook may override them.",
+      "filename": "era_help_gem.json"
+    },
+    "wog": {
+      "folder": "WoG",
+      "metadata": "mod.json",
+      "descriptions": {
+        "en_US": "description.txt",
+        "ru_RU": "description_rus.txt"
+      },
+      "hotkey_source": "Combat_SwitchingCreatureAction/ActionSwitcher.cpp and HeldAltMenu.cpp; inactive numeric selector removed.",
+      "filename": "era_help_wog.json"
+    }
+  }
+}

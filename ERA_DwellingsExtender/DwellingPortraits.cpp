@@ -20,7 +20,7 @@ bool DwellingPortraits::GraphicsReady()
     const auto *api = era_graphics::GetApi();
     if (!api && !reportedUnavailable)
     {
-        Log("Graphics API v1 unavailable; update API_ErmFunctions.era. Using native portraits.");
+        Log("Graphics API v1 unavailable; update ERA_RuntimeServices.era. Using native portraits.");
         reportedUnavailable = true;
     }
     return api && api->isReady();

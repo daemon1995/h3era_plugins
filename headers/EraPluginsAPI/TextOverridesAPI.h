@@ -4,6 +4,8 @@
 namespace era_text
 {
 constexpr const char *SERVICE = "ERA.Services.TextOverrides.v1";
+// Applies a translation to a borrowed string slot. Missing keys restore the captured original;
+// alias is tried only when the primary key is absent. Slots must be forgotten before storage moves.
 struct Api
 {
     unsigned structSize, version;

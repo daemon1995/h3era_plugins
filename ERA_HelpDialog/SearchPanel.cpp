@@ -5,8 +5,10 @@ namespace helpdlg
 {
 namespace
 {
-constexpr int kScroll = 28001, kBack = 28003;
+constexpr int kScroll = 28001;
 constexpr int kScopeFirst = 28100, kRowFirst = 28200;
+constexpr LPCSTR kSearchRowPcx = "ERAHDSRH.PCX";
+constexpr int kRowHeight = 32, kRowStep = 36;
 const main::eHelpPage kPages[] = {
     main::eHelpPage::CREATURES,        main::eHelpPage::ARTIFACTS, main::eHelpPage::HEROES, main::eHelpPage::SPELLS,
     main::eHelpPage::SECONDARY_SKILLS, main::eHelpPage::TOWNS,     main::eHelpPage::MODS,   main::eHelpPage::HOTKEYS};
@@ -38,17 +40,23 @@ SearchPanel::SearchPanel(int cx, int top, int cw, int h, int left, int w, H3Dlg 
         AddItem(button);
         scopes.push_back(button);
     }
-    AddItem(Button(nullptr, x + width - 90, y + 6, 80, 28, kBack, Text("help.ui.back")));
-    countText = H3DlgText::Create(x + 8, y + 6, width - 106, 28, h3_NullString, NH3Dlg::Text::SMALL,
+    countText = H3DlgText::Create(x + 8, y + 6, width - 16, 28, h3_NullString, NH3Dlg::Text::SMALL,
                                   eTextColor::REGULAR, -1, eTextAlignment::MIDDLE_LEFT);
     AddItem(countText);
-    const int rowCount = std::max(1, (height - 48) / 34);
+    const int rowCount = std::max(1, (height - 48) / kRowStep);
+    rowBackground.Set(CreateSelectorBackground(width - 34, kSearchRowPcx, kRowHeight, true, 85));
     for (int row = 0; row < rowCount; ++row)
     {
-        auto *button = Button(nullptr, x + 8, y + 40 + row * 34, width - 34, 32, kRowFirst + row, h3_NullString);
-        AddItem(button);
-        rows.push_back(button);
+        auto *item = SelectorText(x + 8, y + 40 + row * kRowStep, width - 34, kRowHeight, kRowFirst + row,
+                                  h3_NullString, kSearchRowPcx);
+        if (item)
+            item->SetAlignment(eTextAlignment::MIDDLE_LEFT);
+        AddItem(item);
+        rows.push_back(item);
     }
+    selectionFrame = GoldFrame(*dialog, 0, 0, width - 34, kRowHeight);
+    if (selectionFrame)
+        selectionFrame->HideDeactivate();
     hoverFrame = H3DlgFrame::Create(x + 7, y + 39, width - 32, 34, -1, H3RGB565(H3RGB888::Highlight()));
     if (hoverFrame)
     {
@@ -56,12 +64,16 @@ SearchPanel::SearchPanel(int cx, int top, int cw, int h, int left, int w, H3Dlg 
         hoverFrame->Disable();
         hoverFrame->HideDeactivate();
     }
-    scroll = H3DlgScrollbar::Create(x + width - 22, y + 40, 16, rowCount * 34, kScroll, 2, ScrollProc, false, 1, true);
+    scroll = H3DlgScrollbar::Create(x + width - 22, y + 40, 16, rowCount * kRowStep, kScroll, 2, ScrollProc, false, 1, true);
     AddItem(scroll);
     Rebuild();
 }
 SearchPanel::~SearchPanel()
 {
+    for (auto *row : rows)
+        ReleaseSelectorText(row);
+    if (auto *pcx = rowBackground.Release())
+        pcx->Dereference();
     if (visiblePanel == this)
         visiblePanel = nullptr;
 }
@@ -84,6 +96,7 @@ void SearchPanel::SetVisible(BOOL state) noexcept
     {
         hoveredRow = -1;
         UpdateHoverFrame();
+        PlaceSelectorFrame(selectionFrame, nullptr);
         if (visiblePanel == this)
             visiblePanel = nullptr;
     }
@@ -91,9 +104,10 @@ void SearchPanel::SetVisible(BOOL state) noexcept
 void SearchPanel::Rebuild()
 {
     matches.clear();
+    const int objectId = SearchObjectId(query);
     for (size_t index = 0; index < entries.size(); ++index)
         if ((!activeSubtype || entries[index].page == kPages[activeSubtype - 1]) &&
-            MatchesWords(entries[index].label, query))
+            (MatchesWords(entries[index].label, query) || (objectId >= 0 && entries[index].objectId == objectId)))
             matches.push_back(static_cast<int>(index));
     firstIndex = selectedIndex = 0;
     selection = -1;
@@ -106,25 +120,24 @@ void SearchPanel::Redraw()
                                  isVisible);
     for (size_t row = 0; row < rows.size(); ++row)
     {
-        auto *button = rows[row];
-        if (!button)
+        auto *item = rows[row];
+        if (!item)
             continue;
         const int index = firstIndex + static_cast<int>(row);
         if (isVisible && index < static_cast<int>(matches.size()))
         {
             const auto &entry = entries[matches[index]];
-            button->SetText(entry.label.c_str());
-            button->SetHints(FormatText("help.formats.object_hint",
+            item->SetText(("  " + entry.label).c_str());
+            item->SetHints(FormatText("help.formats.object_hint",
                                         ObjectTitle(entry.label.c_str(), entry.objectId).c_str(),
                                         Text("help.ui.search_result_hint"))
                                  .c_str(),
                              nullptr, true);
-            button->SetFrame(index == selectedIndex ? 1 : 0);
-            button->Enable();
-            button->ShowActivate();
+            item->Enable();
+            item->ShowActivate();
         }
         else
-            button->HideDeactivate();
+            item->HideDeactivate();
     }
     for (size_t index = 0; index < scopes.size(); ++index)
         if (scopes[index])
@@ -134,6 +147,10 @@ void SearchPanel::Redraw()
         }
     if (countText)
         countText->SetText(FormatText("help.formats.results", static_cast<int>(matches.size())).c_str());
+    const int selectedRow = selectedIndex - firstIndex;
+    PlaceSelectorFrame(selectionFrame, isVisible && selectedRow >= 0 && selectedRow < static_cast<int>(rows.size())
+                                           ? rows[selectedRow]
+                                           : nullptr);
     UpdateHoverFrame();
     RedrawDialog();
 }
@@ -182,6 +199,8 @@ BOOL SearchPanel::ProcessMessage(H3Msg &msg)
     if (row >= 0 && row < static_cast<int>(rows.size()) && firstIndex + row < static_cast<int>(matches.size()) &&
         rows[row] && rows[row]->IsVisible() && rows[row]->IsActive() && rows[row]->IsEnabled())
     {
+        if (msg.IsLeftClick())
+            return TRUE;
         if (msg.IsRightClick())
         {
             selection = matches[firstIndex + row];
@@ -196,11 +215,6 @@ BOOL SearchPanel::ProcessMessage(H3Msg &msg)
     }
     if (!msg.IsLeftClick())
         return FALSE;
-    if (msg.itemId == kBack)
-    {
-        backRequested = true;
-        return TRUE;
-    }
     if (msg.itemId >= kScopeFirst && msg.itemId < kScopeFirst + 9)
     {
         activeSubtype = msg.itemId - kScopeFirst;

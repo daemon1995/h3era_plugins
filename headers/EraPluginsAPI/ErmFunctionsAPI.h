@@ -1,12 +1,29 @@
 #pragma once
 #include <windows.h>
+#include <cstdint>
 
 namespace erm_functions
 {
-constexpr const char *PLUGIN_NAME = "API_ErmFunctions.era";
+// Function-pointer declarations and ABI contracts for ERA_RuntimeServices exports.
+constexpr const char *PLUGIN_NAME = "ERA_RuntimeServices.era";
 constexpr int NO_OWNER = -1;
 constexpr int INVALID_OBJECT = -2;
 constexpr int ANY_SUBTYPE = -1;
+
+// Pure spatial ordering: xyz contains count triples; output holds count indices.
+// No game access or map mutation. Returns index count, -1 for invalid arguments.
+using OrderGarrisonSites = int(__stdcall *)(const int* xyz, int count, int mapSize,
+                                           int* output, int capacity, unsigned seed);
+// Bottom-right coordinates of a passable, entrance-free flat terrain. 1 placed,
+// 0 not placed, -1 native failure (may have placed an object).
+// Multiplayer is currently rejected; see the network protocol limitation.
+using PlaceSpecialTerrain = int(__stdcall *)(int x, int y, int z, int type);
+// CENTER coordinates; minimum-area fitting DEF, including equivalent 46/230 and
+// 21/223 types. Preserves the selected DEF's actual type. 1 placed, 0 skipped,
+// -1 native failure/map change: stop the batch. No topology-changing templates.
+// LOCAL operation: caller must replicate the same invocation via ERM P/D in MP.
+// Suppresses ERA's redundant placement event; network support checks ERA 3.9.31.
+using PlaceSmallestSpecialTerrain = int(__stdcall *)(int x, int y, int z, int type);
 
 // All exports use __stdcall and undecorated names in both build configurations.
 // Coordinates are the object's entrance (yellow tile), including when a hero stands there.
@@ -23,6 +40,22 @@ using SetObjectGlow = int(__stdcall *)(int type, int subtype, int enabled);
 using SetObjectGlowEnabled = int(__stdcall *)(int enabled);
 using GetObjectGlowEnabled = int(__stdcall *)();
 
+#pragma pack(push, 4)
+struct ObjectGlowProfile
+{
+    std::uint32_t structSize = sizeof(ObjectGlowProfile), version = 1;
+    std::uint64_t counterFrequency = 0;
+    std::uint64_t calls = 0, tiles = 0, hits = 0, misses = 0, flushes = 0;
+    std::uint64_t glowTicks = 0, fogTicks = 0, decodeTicks = 0;
+    std::uint64_t peakMaskBytes = 0, peakScratchBytes = 0;
+};
+#pragma pack(pop)
+static_assert(sizeof(ObjectGlowProfile) == 96, "Glow profile v1 ABI");
+// Main thread only. Enable starts a new sample; disable stops and retains it.
+// Samples survive map resets; get copies counters without modifying the sample.
+using SetObjectGlowProfiling = int(__stdcall *)(int enabled);
+using GetObjectGlowProfile = int(__stdcall *)(ObjectGlowProfile *output);
+
 inline SetObjectGlowEnabled FindObjectGlowControl() noexcept
 {
     const auto module = GetModuleHandleA(PLUGIN_NAME);
@@ -31,13 +64,26 @@ inline SetObjectGlowEnabled FindObjectGlowControl() noexcept
 }
 
 // Geometry API v1 preserves blocked cells and every entrance after aligning the primary entrance.
+enum ReplacementResult : int
+{
+    ReplacementRejected = 0, // No deletion was attempted; source remains intact.
+    ReplacementSucceeded = 1,
+    ReplacementPartialFailure = -1, // Deletion attempted or source changed by a hook; stop this pass.
+    ReplacementMapChanged = -2, // Map was left/reloaded by a native hook; stop all map access.
+    ReplacementNetworkUnsupported = -3 // No map changes; selected DEF is not networked in v1.
+};
 using GetObjectReplacementApiVersion = int(__stdcall *)();
-// Writes 15 integers; layout is documented in API_ErmFunctions/OBJECT_REPLACEMENT.md.
+// Writes 15 integers; layout is documented in ERA_RuntimeServices/Docs/OBJECT_REPLACEMENT.md.
 using GetObjectGeometry = int(__stdcall *)(int x, int y, int z, int *output, int capacity);
 // Returns an opaque 1-based prototype token, or 0 if no variant fits. Tokens are map-local.
 using FindObjectReplacement = int(__stdcall *)(int x, int y, int z, int type, int subtype,
                                                int terrain, int approachMask);
-// Revalidates the token and geometry immediately before placement. Returns 1 on success.
+// Six integers per target (type, subtype, terrain, approach, weight, caller data).
+// Writes one prototype token per target; returns 0 if the batch could not be evaluated.
+using FindObjectReplacements = int(__stdcall *)(int x, int y, int z, const int *records,
+                                                int count, int *output);
+// Revalidates the token and geometry immediately before placement. See ReplacementResult.
+// A negative result MUST NOT be treated as an ordinary unsuitable candidate.
 using ReplaceObject = int(__stdcall *)(int x, int y, int z, int type, int subtype,
                                        int terrain, int approachMask, int prototype);
 

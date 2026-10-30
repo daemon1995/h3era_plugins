@@ -189,6 +189,7 @@ struct CardIcon
     const char *def = "";
     std::string label;
     int frame = 0;
+    int artifactId = -1;
 };
 struct CardRow
 {
@@ -196,6 +197,8 @@ struct CardRow
     std::string value;
     bool detailsOnly = false;
     std::vector<CardIcon> icons;
+    bool componentGrid = false;
+    bool artifactCard = false;
 };
 inline std::vector<const CardRow *> VisibleCardRows(const std::vector<CardRow> &rows, bool popup)
 {
@@ -278,7 +281,7 @@ struct CatalogueGrid
 {
     int cellWidth, cellHeight, columns, rows;
 };
-constexpr int kCatalogueCaptionHeight = 22;
+constexpr int kCatalogueCaptionHeight = 32;
 
 constexpr int kPageButtonHeight = 25;
 constexpr int kPageButtonGap = 2;
@@ -420,6 +423,18 @@ inline std::string GroupPluginFiles(const std::vector<std::string> &files, const
         }
     }
     return output;
+}
+
+inline int SearchObjectId(const std::string &query)
+{
+    const auto start = query.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos)
+        return -1;
+    const auto end = query.find_last_not_of(" \t\r\n");
+    const auto number = query.substr(start, end - start + 1);
+    if (number.find_first_not_of("0123456789") != std::string::npos)
+        return -1;
+    return ParseInt(number, -1);
 }
 
 inline bool MatchesWords(const std::string &haystack, const std::string &query)

@@ -16,9 +16,9 @@ class CatalogueSection final : public DlgSection, private DlgPage
     H3DlgText *sortLabel = nullptr;
     std::vector<H3DlgText *> levelTexts;
     std::vector<std::pair<H3DlgFrame *, H3DlgFrame *>> levelSelectionFrames;
-    std::vector<H3DlgText *> objectLabels;
-    std::vector<H3DlgFrame *> objectLabelFrames;
+    std::vector<H3DlgPcx16 *> objectLabels;
     std::vector<H3DlgDef *> defPortraits;
+    std::vector<H3DlgPcx *> artifactBackgrounds;
     std::vector<H3DlgDef *> fallbackCreaturePortraits;
     std::vector<std::vector<H3DlgDef *>> spellUnderlays;
     std::vector<H3DlgPcx *> pcxPortraits;
@@ -30,7 +30,7 @@ class CatalogueSection final : public DlgSection, private DlgPage
     H3DlgText *countText = nullptr;
     H3DlgText *emptyText = nullptr;
     H3DlgTextPcx *sortButton = nullptr;
-    H3DlgItem *resetButton = nullptr;
+    H3DlgDef *resetButton = nullptr;
     int idBase;
     int x, y, width, height;
     int categoryRows = 1;

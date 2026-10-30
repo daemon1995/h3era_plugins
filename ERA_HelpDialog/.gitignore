@@ -1,6 +1,4 @@
-!tests/
-!tests/HelpLogicTests.cpp
-!tests/validate_translations.py
+tests/
 !lang/
 lang/*
 !lang/era_help.json

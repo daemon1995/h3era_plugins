@@ -27,6 +27,9 @@
     <ClInclude Include="TeleportSelector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TeleportGraphics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -39,6 +42,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TeleportSelector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectListDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\headers\DrawPcx16ResizedBicubic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

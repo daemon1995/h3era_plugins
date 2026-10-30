@@ -1,0 +1,136 @@
+ZVSE2
+
+; Alt+W: wait with all local human stacks. Alt+D / Alt+Space: defend.
+; Button names must match Data/Buttons/gem_buttons.btn and gem_core.erm exactly.
+!?FU(OnBeforeBattleUniversal);
+!!FU(nig_ClearGlobalVars):P;
+
+!?FU(OnAfterBattleUniversal);
+!!FU(nig_ClearGlobalVars):P;
+
+!?FU(OnBattleRound);
+!!FU(nig_ClearGlobalVars):P;
+
+!?FU(nig_ClearGlobalVars);
+!!VRi^nig_isAllWaitAction^:S(FALSE);
+!!VRi^nig_allWaitSide^:S0;
+!!VRi^nig_allWaitRound^:S0;
+!!VRi^nig_isAllDefendAction^:S(FALSE);
+!!VRi^nig_allDefendSide^:S0;
+!!VRi^nig_allDefendRound^:S0;
+
+!?FU(OnKeyPressed_Battle)&(ERM_FLAG_IS_HUMAN);
+!!FU&i^key_down^<>(TRUE):E;
+!!FU&i^key_leftAlt^<>(TRUE)/i^key_rightAlt^<>(TRUE):E;
+!!VR(action:y):S-1;
+!!VR(action)&x1=(KEY_W):S1;
+!!VR(action)|x1=(KEY_D)/x1=(KEY_SPACE):S0;
+!!FU&(action)<0:E;
+!!UN:C6916668/4/?(pendingAction:y);
+!!FU&(pendingAction)<>(BATTLE_ACTION_CANCEL):E;
+!!FU(gem_All_Actions_Function):P(action)/(TRUE)/?(accepted:y);
+!!VRx2&(accepted):S(TRUE);
+
+!?FU(OnBattleScreenMouseClick)&(ERM_FLAG_IS_HUMAN)/i^mouse_action^=(MOUSE_LMB_RELEASED)/i^battle_round^>-1;
+!!VR(action:y):S-1;
+!!VR(action)&i^gem_allwait_Button_ID^>0/i^mouse_item^=i^gem_allwait_Button_ID^:S1;
+!!VR(action)&i^gem_alldefend_Button_ID^>0/i^mouse_item^=i^gem_alldefend_Button_ID^:S0;
+!!FU&(action)<0:E;
+!!FU(gem_All_Actions_Function):P(action)/(FALSE);
+
+!?FU(gem_All_Actions_Function)&(ERM_FLAG_IS_HUMAN);
+!#VA(actionType:x) (withSound:x) (accepted:x);
+!!VR(accepted):S(FALSE);
+!!FU|(actionType)<0/(actionType)>1:E;
+!!BU:T?(tactics:y);
+!!FU&(tactics):E;
+!!BG:N?(stackId:y) Q?(side:y);
+!!FU|(stackId)<0/(stackId)>=42:E;
+!!FU|(side)<0/(side)>1:E;
+!!FU&i^battle_localHuman_%(side)^<>(TRUE):E;
+!!BM(stackId):T?(creature:y) N?(count:y);
+!!FU|(creature)=(MON_ARROW_TOWERS)/(count)<1:E;
+!!FU(nig_CheckStackIsControled):P(stackId)/?(controlled:y);
+!!FU&(controlled)=(FALSE):E;
+!!if&(actionType)=1;
+  !!UN:C(COMBAT_MANAGER)/4/?(manager:y) C(manager)/81380/1/?(waitPhase:y);
+  !!FU&(waitPhase):E;
+!!en;
+!!if&i^battle_humanOnly^=(TRUE);
+  !!if&(actionType)=1;
+    !!IF:Q1^%T(gem.battle.Confirm1)^;
+  !!el;
+    !!IF:Q1^%T(gem.battle.Confirm2)^;
+  !!en;
+  !!FU&-1:E;
+!!en;
+; An explicit new order supersedes the previous mass order.
+!!FU(nig_ClearGlobalVars):P;
+!!if&(actionType)=1;
+  !!VRi^nig_isAllWaitAction^:S(TRUE);
+  !!VRi^nig_allWaitSide^:S(side);
+  !!VRi^nig_allWaitRound^:Si^battle_round^;
+  !!BG:A(BATTLE_ACTION_WAIT);
+!!el;
+  !!VRi^nig_isAllDefendAction^:S(TRUE);
+  !!VRi^nig_allDefendSide^:S(side);
+  !!VRi^nig_allDefendRound^:Si^battle_round^;
+  !!BG:A(BATTLE_ACTION_DEFEND);
+!!en;
+!!VR(accepted):S(TRUE);
+!!if&(withSound)=(TRUE);
+  !!SN:P^Button.wav^;
+!!en;
+
+!?FU(nig_CheckStackIsControled);
+!#VA(stackId:x) (controlled:x);
+!!VR(controlled):S(FALSE);
+!!FU|(stackId)<0/(stackId)>=42:E;
+!!UN:C(COMBAT_MANAGER)/4/?(manager:y);
+!!BM(stackId):Z?(stack:y);
+; IsMonsterAutoControlledByAI returns nonzero for uncontrolled stacks.
+!!SN:E4670752/(CALLCONV_THISCALL)/(manager)/(stack);
+!!VR(controlled):Sv1 B X1;
+
+!?FU(OnAfterBattleAction)&(ERM_FLAG_IS_HUMAN);
+!!FU&i^nig_isAllWaitAction^=(FALSE)/i^nig_isAllDefendAction^=(FALSE):E;
+!!BG:N?(stackId:y) Q?(side:y);
+!!FU|(stackId)<0/(stackId)>=42:E;
+!!VR(orderSide:y):Si^nig_allDefendSide^;
+!!VR(orderRound:y):Si^nig_allDefendRound^;
+!!if&i^nig_isAllWaitAction^;
+  !!VR(orderSide):Si^nig_allWaitSide^;
+  !!VR(orderRound):Si^nig_allWaitRound^;
+  !!UN:C(COMBAT_MANAGER)/4/?(manager:y) C(manager)/81380/1/?(waitPhase:y);
+  !!if&(waitPhase);
+    !!FU(nig_ClearGlobalVars):P;
+    !!FU:E;
+  !!en;
+!!en;
+!!if&(orderRound)<>i^battle_round^;
+  !!FU(nig_ClearGlobalVars):P;
+  !!FU:E;
+!!en;
+!!if&(side)<>(orderSide);
+  !!BA:E?(network:y);
+  !!if|(network)/i^gem_control_units^;
+    !!FU(nig_ClearGlobalVars):P;
+  !!en;
+  !!FU:E;
+!!en;
+!!FU&i^battle_localHuman_%(side)^<>(TRUE):E;
+!!FU(nig_CheckStackIsControled):P(stackId)/?(controlled:y);
+!!FU&(controlled)=(FALSE):E;
+!!BM(stackId):T?(creature:y) N?(count:y) F?(flags:y);
+!!FU|(creature)=(MON_ARROW_TOWERS)/(count)<1:E;
+!!if&i^gem_ignore_siege_weapon^;
+  !!VR(siege:y):S(flags) &(MON_FLAG_SIEGE_WEAPON);
+  !!FU&(siege):E;
+!!en;
+!!if&i^nig_isAllWaitAction^;
+  !!VR(waited:y):S(flags) &(MON_FLAG_WAITING);
+  !!FU&(waited):E;
+  !!BG:A(BATTLE_ACTION_WAIT);
+!!el;
+  !!BG:A(BATTLE_ACTION_DEFEND);
+!!en;

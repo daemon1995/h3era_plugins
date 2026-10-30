@@ -1,0 +1,22 @@
+﻿{
+  "mrart": {
+    "dig": {
+      "dialog_width": 420,
+      "messages": {
+        "insufficient": {
+          "text": "Для раскопок нужен полный запас хода.",
+          "color": 1
+        },
+        "confirmation": {
+          "text": "Начать раскопки? Герой потратит оставшийся ход.",
+          "color": 1
+        },
+        "empty": {
+          "text": "Здесь ничего нет.",
+          "color": 1
+        }
+      },
+      "tiles": {}
+    }
+  }
+}

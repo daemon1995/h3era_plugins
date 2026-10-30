@@ -4,76 +4,99 @@ namespace main
 {
 namespace
 {
-constexpr LPCSTR kResizeDef = "ERAHDRES.DEF";
-constexpr LPCSTR kSettingsDef = "ERAHDSET.DEF";
+constexpr LPCSTR kModButtonDef = "iHlpMod.def";
+constexpr int kSearchPadding = 6;
 } // namespace
 HeaderPage::HeaderPage(int x, int y, int width, int height, int leftWidth, H3Dlg *parent) : DlgPage(parent)
 {
-    AddFrame(x, y, width, height);
-
-    const int panelX = x + 4;
-    const int panelY = y + 4;
-    const int panelWidth = std::max(120, leftWidth - 8);
+    // Match the category and content columns below the header.
+    const int panelX = x;
+    const int panelY = y;
+    const int panelWidth = leftWidth;
     const int rowHeight = 26;
-    AddFrame(panelX, panelY, panelWidth, rowHeight * 2 + 4);
+    // Leave two pixels below the second row, including the search controls.
+    const int panelHeight = height;
+    AddFrame(panelX, panelY, panelWidth, panelHeight);
 
-    modButton = helpdlg::Button(nullptr, panelX + 2, panelY + 2, panelWidth - 4, rowHeight, buttons::MODLIST,
-                                helpdlg::PageName(eHelpPage::MODS), PAGE_BUTTON_DEF);
+    modButton = H3DlgCaptionButton::Create(panelX + 6, panelY + 2, buttons::MODLIST, kModButtonDef,
+                                            helpdlg::PageName(eHelpPage::MODS), NH3Dlg::Text::SMALL, 0, 0, false,
+                                            0, eTextColor::REGULAR);
     AddItem(modButton);
     if (modButton)
+    {
+        modButton->SetClickFrame(1);
         modButton->SetHints(helpdlg::Text("help.ui.mod_select_hint"), nullptr, false);
+    }
 
     constexpr int utilityWidth = 26;
     const int searchY = panelY + rowHeight + 4;
-    const int editX = panelX + 2;
-    const int editWidth = panelWidth - utilityWidth * 2 - 8;
-    searchEdit = H3DlgEdit::Create(editX, searchY, editWidth, 24, 128, helpdlg::Text("help.ui.search_placeholder"),
+    const int searchX = panelX + 6;
+    const int searchWidth = modButton ? modButton->GetWidth() : panelWidth - utilityWidth - 12;
+    const int editX = searchX + kSearchPadding;
+    const int editWidth = searchWidth - 2 * kSearchPadding;
+    if (auto *background = parent->GetBackgroundPcx())
+    {
+        H3PcxLoader searchBackground;
+        searchBackground.Set(helpdlg::CreateSelectorBackground(searchWidth, "ERAHDEDT.PCX", 24, true));
+        if (searchBackground.Get())
+            searchBackground->DrawToPcx16(0, 0, searchWidth, 24, background, searchX, searchY, FALSE);
+    }
+    AddFrame(searchX, searchY, searchWidth, 24);
+    searchEdit = H3DlgEdit::Create(editX, searchY + 2, editWidth, 20, 128, h3_NullString,
                                    NH3Dlg::Text::SMALL, eTextColor::REGULAR, eTextAlignment::MIDDLE_LEFT, nullptr,
-                                   buttons::SEARCH_EDIT, true, 2, 2);
+                                   buttons::SEARCH_EDIT, false, 0, 0);
     AddItem(searchEdit);
     if (searchEdit)
     {
         searchEdit->SetAutoredraw(TRUE);
         searchEdit->SetHints(helpdlg::Text("help.ui.search_hint"), nullptr, false);
     }
-    auto *clear = helpdlg::Button(nullptr, editX + editWidth + 2, searchY, utilityWidth, 24, buttons::SEARCH_CLEAR,
-                                  helpdlg::Text("help.ui.symbol_clear"), "OVBUTN2.def");
+    searchPlaceholder = H3DlgText::Create(editX, searchY + 2, editWidth, 20,
+                                          helpdlg::Text("help.ui.search_placeholder"), NH3Dlg::Text::SMALL,
+                                          eTextColor::REGULAR, buttons::SEARCH_PLACEHOLDER,
+                                          eTextAlignment::MIDDLE_LEFT);
+    if (searchPlaceholder)
+    {
+        dialog->AddItem(searchPlaceholder);
+        decorations.push_back(searchPlaceholder);
+        searchPlaceholder->Disable();
+        searchPlaceholder->HideDeactivate();
+    }
+    auto *clear = H3DlgDef::Create(searchX + searchWidth + 2, searchY, buttons::SEARCH_CLEAR, "tpthchk.def", 1);
     AddItem(clear);
-    auto *go = helpdlg::Button(nullptr, editX + editWidth + utilityWidth + 4, searchY, utilityWidth, 24,
-                               buttons::SEARCH, helpdlg::Text("help.ui.symbol_search"), "OVBUTN2.def");
-    AddItem(go);
     if (clear)
+    {
+        clear->SetY(searchY + (24 - clear->GetHeight()) / 2);
         clear->SetHints(helpdlg::Text("help.ui.clear"), nullptr, false);
-    if (go)
-        go->SetHints(helpdlg::Text("help.ui.search"), nullptr, false);
+    }
 
-    const int iconWidth = 30;
-    const int iconX = x + width - iconWidth - 6;
     const int tableX = x + leftWidth + 4;
-    const int tableWidth = std::max(120, iconX - tableX - 4);
-    const int cellWidth = tableWidth / 3;
-    AddFrame(tableX - 2, panelY, tableWidth + 2, rowHeight * 2 + 4);
+    const int tableWidth = x + width - tableX;
+    constexpr int padding = 4, columnGap = 6, rowGap = 4;
+    const int gridWidth = tableWidth - 2 * padding + columnGap;
+    const int cellHeight = (panelHeight - 2 * padding - rowGap) / 2;
+    AddFrame(tableX, panelY, tableWidth, panelHeight);
     const eHelpPage pages[] = {eHelpPage::CREATURES, eHelpPage::ARTIFACTS,        eHelpPage::HEROES,
                                eHelpPage::SPELLS,    eHelpPage::SECONDARY_SKILLS, eHelpPage::HOTKEYS};
     for (int index = 0; index < 6; ++index)
     {
-        auto *button = helpdlg::Button(
-            nullptr, tableX + (index % 3) * cellWidth, panelY + 2 + (index / 3) * (rowHeight + 2), cellWidth - 4,
-            rowHeight, static_cast<int>(pages[index]), helpdlg::PageName(pages[index]), PAGE_BUTTON_DEF);
+        auto *button = H3DlgCaptionButton::Create(
+            0, 0,
+            static_cast<int>(pages[index]), PAGE_BUTTON_DEF, helpdlg::PageName(pages[index]), NH3Dlg::Text::SMALL,
+            0, 0, false, 0, eTextColor::REGULAR);
+        if (button)
+        {
+            const int column = index % 3;
+            const int cellLeft = tableX + padding + column * gridWidth / 3;
+            const int cellWidth = (column + 1) * gridWidth / 3 - column * gridWidth / 3 - columnGap;
+            button->SetX(cellLeft + (cellWidth - button->GetWidth()) / 2);
+            button->SetY(panelY + padding + (index / 3) * (cellHeight + rowGap) +
+                         (cellHeight - button->GetHeight()) / 2);
+            button->SetClickFrame(1);
+        }
         AddItem(button);
         tabs.push_back(button);
     }
-
-    auto *resize = helpdlg::IconButton(nullptr, iconX, panelY + 1, iconWidth, rowHeight, buttons::RESIZE_DLG,
-                                       kResizeDef, helpdlg::Text("help.ui.symbol_resize"));
-    AddItem(resize);
-    auto *settings = helpdlg::IconButton(nullptr, iconX, panelY + rowHeight + 3, iconWidth, rowHeight,
-                                         buttons::SETTINGS, kSettingsDef, helpdlg::Text("help.ui.symbol_settings"));
-    AddItem(settings);
-    if (resize)
-        resize->SetHints(helpdlg::Text("help.ui.resize"), nullptr, false);
-    if (settings)
-        settings->SetHints(helpdlg::Text("help.ui.settings"), nullptr, false);
 
     RefreshSearchPlaceholder();
 }
@@ -101,33 +124,24 @@ void HeaderPage::SetActiveButton(int id, LPCSTR modName) noexcept
 
 LPCSTR HeaderPage::Query() const
 {
-    if (!searchEdit)
-        return h3_NullString;
-    LPCSTR value = helpdlg::Borrow(searchEdit->GetText());
-    return !strcmp(value, helpdlg::Text("help.ui.search_placeholder")) ? h3_NullString : value;
+    return searchEdit ? helpdlg::Borrow(searchEdit->GetText()) : h3_NullString;
 }
 
 void HeaderPage::SetQuery(const std::string &query)
 {
     if (!searchEdit)
         return;
-    if (!query.empty())
-        searchEdit->SetText(query.c_str());
-    else if (SearchFocused())
-        searchEdit->SetText(h3_NullString);
-    else
-        searchEdit->SetText(helpdlg::Text("help.ui.search_placeholder"));
+    searchEdit->SetText(query.c_str());
+    RefreshSearchPlaceholder();
 }
 
 void HeaderPage::FocusSearch()
 {
     if (!searchEdit)
         return;
-    LPCSTR value = helpdlg::Borrow(searchEdit->GetText());
-    if (!strcmp(value, helpdlg::Text("help.ui.search_placeholder")))
-        searchEdit->SetText(h3_NullString);
     if (!SearchFocused())
         searchEdit->SetFocus(TRUE);
+    RefreshSearchPlaceholder();
 }
 bool HeaderPage::SearchFocused() const noexcept
 {
@@ -135,22 +149,22 @@ bool HeaderPage::SearchFocused() const noexcept
 }
 bool HeaderPage::SearchContains(int dialogX, int dialogY) const noexcept
 {
-    return searchEdit && dialogX >= searchEdit->GetX() && dialogX < searchEdit->GetX() + searchEdit->GetWidth() &&
-           dialogY >= searchEdit->GetY() && dialogY < searchEdit->GetY() + searchEdit->GetHeight();
+    return searchEdit && dialogX >= searchEdit->GetX() - kSearchPadding &&
+           dialogX < searchEdit->GetX() + searchEdit->GetWidth() + kSearchPadding &&
+           dialogY >= searchEdit->GetY() - 2 && dialogY < searchEdit->GetY() + searchEdit->GetHeight() + 2;
 }
 void HeaderPage::RefreshSearchPlaceholder() noexcept
 {
-    if (!searchEdit)
+    if (!searchEdit || !searchPlaceholder)
         return;
-    LPCSTR value = helpdlg::Borrow(searchEdit->GetText());
-    const LPCSTR placeholder = helpdlg::Text("help.ui.search_placeholder");
-    if (SearchFocused())
-    {
-        if (!strcmp(value, placeholder))
-            searchEdit->SetText(h3_NullString);
-    }
-    else if (!*value)
-        searchEdit->SetText(placeholder);
+    const bool show = isVisible && !SearchFocused() && !*Query();
+    if (show == (searchPlaceholder->IsVisible() != FALSE))
+        return;
+    if (show)
+        searchPlaceholder->Show()->DeActivate();
+    else
+        searchPlaceholder->HideDeactivate();
+    RedrawDialog();
 }
 void HeaderPage::ReleaseInputFocus(int keepItemId) noexcept
 {

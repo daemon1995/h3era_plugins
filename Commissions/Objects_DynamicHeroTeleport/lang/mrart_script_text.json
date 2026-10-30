@@ -1,0 +1,529 @@
+{
+  "MySkills": [
+    {
+      "name": "flying",
+      "description": "flyingDescription"
+    },
+    {
+      "name": "posion",
+      "description": "posionDescription"
+    }
+  ],
+  "mrart": {
+    "teleport_dlg": {
+      "title": "Межземельные врата",
+      "destination_question": "Куда бы вы хотели отправиться?",
+      "quadrant_question": "Выберите нужный квадрант.",
+      "variant_count": 8,
+      "primary": {
+        "width": 592,
+        "height": 744,
+        "card_width": 250,
+        "card_height": 72,
+        "first_y": 217,
+        "step_y": 105,
+        "left_x": 26,
+        "right_x": 322
+      },
+      "secondary": {
+        "width": 592,
+        "height": 744,
+        "map_x": 56,
+        "map_y": 94,
+        "map_size": 480
+      },
+      "variants": {
+        "0": {
+          "name": "Магическая местность",
+          "minimap_pcx": "artminm0.png",
+          "preview_green_pcx": "locv01grn001.png",
+          "preview_purple_pcx": "locv01prp001.png",
+          "quadrant_count": 4,
+          "quadrants": {
+            "0": {
+              "x": 12,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv01grn001.png",
+              "purple_pcx": "locv01prp001.png"
+            },
+            "1": {
+              "x": 372,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv01grn002.png",
+              "purple_pcx": "locv01prp002.png"
+            },
+            "2": {
+              "x": 372,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv01grn003.png",
+              "purple_pcx": "locv01prp003.png"
+            },
+            "3": {
+              "x": 12,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv01grn004.png",
+              "purple_pcx": "locv01prp004.png"
+            }
+          }
+        },
+        "1": {
+          "name": "Охотничьи угодья",
+          "minimap_pcx": "artminm1.png",
+          "preview_green_pcx": "locv02grn001.png",
+          "preview_purple_pcx": "locv02prp001.png",
+          "quadrant_count": 4,
+          "quadrants": {
+            "0": {
+              "x": 84,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv02grn001.png",
+              "purple_pcx": "locv02prp001.png"
+            },
+            "1": {
+              "x": 300,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv02grn002.png",
+              "purple_pcx": "locv02prp002.png"
+            },
+            "2": {
+              "x": 300,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv02grn003.png",
+              "purple_pcx": "locv02prp003.png"
+            },
+            "3": {
+              "x": 84,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv02grn004.png",
+              "purple_pcx": "locv02prp004.png"
+            }
+          }
+        },
+        "2": {
+          "name": "Правительственные земли",
+          "minimap_pcx": "artminm2.png",
+          "preview_green_pcx": "locv03grn001.png",
+          "preview_purple_pcx": "locv03prp001.png",
+          "quadrant_count": 8,
+          "quadrants": {
+            "0": {
+              "x": 156,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn001.png",
+              "purple_pcx": "locv03prp001.png"
+            },
+            "1": {
+              "x": 228,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn002.png",
+              "purple_pcx": "locv03prp002.png"
+            },
+            "2": {
+              "x": 372,
+              "y": 156,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn003.png",
+              "purple_pcx": "locv03prp003.png"
+            },
+            "3": {
+              "x": 372,
+              "y": 228,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn004.png",
+              "purple_pcx": "locv03prp004.png"
+            },
+            "4": {
+              "x": 228,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn005.png",
+              "purple_pcx": "locv03prp005.png"
+            },
+            "5": {
+              "x": 156,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn006.png",
+              "purple_pcx": "locv03prp006.png"
+            },
+            "6": {
+              "x": 84,
+              "y": 228,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn007.png",
+              "purple_pcx": "locv03prp007.png"
+            },
+            "7": {
+              "x": 84,
+              "y": 156,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv03grn008.png",
+              "purple_pcx": "locv03prp008.png"
+            }
+          }
+        },
+        "3": {
+          "name": "Обитель демонов",
+          "minimap_pcx": "artminm3.png",
+          "preview_green_pcx": "locv04grn001.png",
+          "preview_purple_pcx": "locv04prp001.png",
+          "quadrant_count": 4,
+          "quadrants": {
+            "0": {
+              "x": 372,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv04grn001.png",
+              "purple_pcx": "locv04prp001.png"
+            },
+            "1": {
+              "x": 372,
+              "y": 228,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv04grn002.png",
+              "purple_pcx": "locv04prp002.png"
+            },
+            "2": {
+              "x": 12,
+              "y": 228,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv04grn003.png",
+              "purple_pcx": "locv04prp003.png"
+            },
+            "3": {
+              "x": 12,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv04grn004.png",
+              "purple_pcx": "locv04prp004.png"
+            }
+          }
+        },
+        "4": {
+          "name": "Варварские степи",
+          "minimap_pcx": "artminm4.png",
+          "preview_green_pcx": "locv05grn001.png",
+          "preview_purple_pcx": "locv05prp001.png",
+          "quadrant_count": 4,
+          "quadrants": {
+            "0": {
+              "x": 84,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv05grn001.png",
+              "purple_pcx": "locv05prp001.png"
+            },
+            "1": {
+              "x": 300,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv05grn002.png",
+              "purple_pcx": "locv05prp002.png"
+            },
+            "2": {
+              "x": 300,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv05grn003.png",
+              "purple_pcx": "locv05prp003.png"
+            },
+            "3": {
+              "x": 84,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv05grn004.png",
+              "purple_pcx": "locv05prp004.png"
+            }
+          }
+        },
+        "5": {
+          "name": "Спорная территория",
+          "minimap_pcx": "artminm5.png",
+          "preview_green_pcx": "locv06grn001.png",
+          "preview_purple_pcx": "locv06prp001.png",
+          "quadrant_count": 8,
+          "quadrants": {
+            "0": {
+              "x": 156,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn001.png",
+              "purple_pcx": "locv06prp001.png"
+            },
+            "1": {
+              "x": 228,
+              "y": 12,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn002.png",
+              "purple_pcx": "locv06prp002.png"
+            },
+            "2": {
+              "x": 372,
+              "y": 156,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn003.png",
+              "purple_pcx": "locv06prp003.png"
+            },
+            "3": {
+              "x": 372,
+              "y": 228,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn004.png",
+              "purple_pcx": "locv06prp004.png"
+            },
+            "4": {
+              "x": 228,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn005.png",
+              "purple_pcx": "locv06prp005.png"
+            },
+            "5": {
+              "x": 156,
+              "y": 408,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn006.png",
+              "purple_pcx": "locv06prp006.png"
+            },
+            "6": {
+              "x": 84,
+              "y": 228,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn007.png",
+              "purple_pcx": "locv06prp007.png"
+            },
+            "7": {
+              "x": 84,
+              "y": 156,
+              "width": 63,
+              "height": 63,
+              "green_pcx": "locv06grn008.png",
+              "purple_pcx": "locv06prp008.png"
+            }
+          }
+        },
+        "6": {
+          "name": "Вечные снега",
+          "minimap_pcx": "artminm6.png",
+          "preview_green_pcx": "locv07grn001.png",
+          "preview_purple_pcx": "locv07prp001.png",
+          "quadrant_count": 4,
+          "quadrants": {
+            "0": {
+              "x": 228,
+              "y": 156,
+              "width": 64,
+              "height": 64,
+              "green_pcx": "locv07grn001.png",
+              "purple_pcx": "locv07prp001.png"
+            },
+            "1": {
+              "x": 300,
+              "y": 156,
+              "width": 64,
+              "height": 64,
+              "green_pcx": "locv07grn002.png",
+              "purple_pcx": "locv07prp002.png"
+            },
+            "2": {
+              "x": 300,
+              "y": 228,
+              "width": 64,
+              "height": 64,
+              "green_pcx": "locv07grn003.png",
+              "purple_pcx": "locv07prp003.png"
+            },
+            "3": {
+              "x": 228,
+              "y": 228,
+              "width": 64,
+              "height": 64,
+              "green_pcx": "locv07grn004.png",
+              "purple_pcx": "locv07prp004.png"
+            }
+          }
+        },
+        "7": {
+          "name": "Темница",
+          "minimap_pcx": "artminm7.png",
+          "preview_green_pcx": "locv08grn01.png",
+          "preview_purple_pcx": "locv08prp01.png",
+          "quadrant_count": 12,
+          "quadrants": {
+            "0": {
+              "x": 80,
+              "y": 8,
+              "width": 150,
+              "height": 68,
+              "green_pcx": "locv08grn01.png",
+              "purple_pcx": "locv08prp01.png"
+            },
+            "1": {
+              "x": 230,
+              "y": 8,
+              "width": 149,
+              "height": 68,
+              "green_pcx": "locv08grn02.png",
+              "purple_pcx": "locv08prp02.png"
+            },
+            "2": {
+              "x": 404,
+              "y": 80,
+              "width": 68,
+              "height": 149,
+              "green_pcx": "locv08grn03.png",
+              "purple_pcx": "locv08prp03.png"
+            },
+            "3": {
+              "x": 404,
+              "y": 230,
+              "width": 68,
+              "height": 148,
+              "green_pcx": "locv08grn04.png",
+              "purple_pcx": "locv08prp04.png"
+            },
+            "4": {
+              "x": 230,
+              "y": 404,
+              "width": 149,
+              "height": 68,
+              "green_pcx": "locv08grn05.png",
+              "purple_pcx": "locv08prp05.png"
+            },
+            "5": {
+              "x": 80,
+              "y": 404,
+              "width": 150,
+              "height": 68,
+              "green_pcx": "locv08grn06.png",
+              "purple_pcx": "locv08prp06.png"
+            },
+            "6": {
+              "x": 8,
+              "y": 230,
+              "width": 68,
+              "height": 148,
+              "green_pcx": "locv08grn07.png",
+              "purple_pcx": "locv08prp07.png"
+            },
+            "7": {
+              "x": 8,
+              "y": 80,
+              "width": 68,
+              "height": 149,
+              "green_pcx": "locv08grn08.png",
+              "purple_pcx": "locv08prp08.png"
+            },
+            "8": {
+              "x": 154,
+              "y": 80,
+              "width": 107,
+              "height": 105,
+              "green_pcx": "locv08grn09.png",
+              "purple_pcx": "locv08prp09.png"
+            },
+            "9": {
+              "x": 259,
+              "y": 80,
+              "width": 105,
+              "height": 105,
+              "green_pcx": "locv08grn10.png",
+              "purple_pcx": "locv08prp10.png"
+            },
+            "10": {
+              "x": 259,
+              "y": 230,
+              "width": 106,
+              "height": 106,
+              "green_pcx": "locv08grn11.png",
+              "purple_pcx": "locv08prp11.png"
+            },
+            "11": {
+              "x": 154,
+              "y": 230,
+              "width": 105,
+              "height": 105,
+              "green_pcx": "locv08grn12.png",
+              "purple_pcx": "locv08prp12.png"
+            }
+          }
+        }
+      },
+      "object_list": {
+        "title": "Межземельные врата",
+        "destination": "Объект",
+        "coordinates": "Координаты",
+        "page": "Страница",
+        "previous": "Назад",
+        "next": "Далее"
+      }
+    },
+    "achievements": [
+      {
+        "name": "name",
+        "text": "text texttexttexttexttexttexttext",
+        "pcx_name": "mrart_a0.pcx",
+        "levels": 13
+      },
+      {
+        "name": "name1",
+        "text": "text1",
+        "pcx_name": "mrart_a1.pcx",
+        "levels": 1
+      },
+      {
+        "name": "name2",
+        "text": "text2",
+        "pcx_name": "mrart_a2.pcx",
+        "levels": 4
+      },
+      {
+        "name": "name3",
+        "text": "text3",
+        "pcx_name": "mrart_a3.pcx",
+        "levels": 43
+      }
+    ]
+  }
+}

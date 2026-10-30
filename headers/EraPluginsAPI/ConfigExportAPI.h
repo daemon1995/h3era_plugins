@@ -3,12 +3,15 @@
 
 namespace era_config
 {
+// Service discovery and data-ready notifications; providers register after READY_EVENT.
 constexpr const char *SERVICE = "ERA.Services.ConfigExport";
 constexpr const char *READY_EVENT = "OnConfigExportApiReady";
 constexpr const char *DATA_READY_EVENT = "OnConfigDataReady";
+// Ok means success; Unavailable means data is not ready; Busy prevents re-entrant work.
 enum Result : int { Ok = 1, Unavailable = 0, Invalid = -1, ProviderFailed = -2, Busy = -3 };
 #pragma pack(push, 4)
 // JSON construction, merging and serialization belong to the service DLL. No STL ABI.
+// Provider fields are separated so callers can export translated text and native data independently.
 enum Section : unsigned { Text = 0, Data = 1, Defaults = 2 };
 enum ValueType : unsigned { Signed = 0, Unsigned, Real, Utf8, LocalText, Array, Object, Boolean, Null };
 struct Value

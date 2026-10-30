@@ -35,7 +35,7 @@ class TeleportConfig
     {
         bool success = false;
         LPCSTR value = EraJS::read(key.String(), success);
-        return success ? value : fallback;
+        return success && value && *value ? value : fallback;
     }
 
     static int ReadInt(const H3String &key, const int fallback) noexcept
@@ -85,6 +85,10 @@ class TeleportConfig
                 ReadInt(QuadrantKey("mrart.teleport_dlg.variants.%d.quadrants.%d.width", variant, quadrant), 0);
             item.height =
                 ReadInt(QuadrantKey("mrart.teleport_dlg.variants.%d.quadrants.%d.height", variant, quadrant), 0);
+            item.x = std::max(0, std::min(480, item.x));
+            item.y = std::max(0, std::min(480, item.y));
+            item.width = std::max(0, std::min(480 - item.x, item.width));
+            item.height = std::max(0, std::min(480 - item.y, item.height));
             item.greenPcx = ReadText(
                 QuadrantKey("mrart.teleport_dlg.variants.%d.quadrants.%d.green_pcx", variant, quadrant),
                 h3_NullString);

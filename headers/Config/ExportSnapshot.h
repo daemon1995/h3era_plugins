@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <cctype>
 namespace jsonExport {
+// Owns a complete collection pass. Invalid identities, conflicting providers or fields
+// set error and reject the snapshot instead of publishing a partial merge.
 struct Snapshot
 {
     std::vector<jsonExport::Category> categories;

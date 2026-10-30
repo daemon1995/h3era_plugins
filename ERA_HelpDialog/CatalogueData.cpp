@@ -29,7 +29,7 @@ bool HasCreatureData(int id)
     if (id < 0 || id >= static_cast<int>(P_CreatureCount))
         return false;
     const auto &info = P_CreatureInformation[id];
-    return helpdlg::HasCreatureData(info.nameSingular, info.defName);
+    return info.nameSingular && *info.nameSingular;
 }
 
 int ArtifactTableCount() noexcept
@@ -59,6 +59,13 @@ class ArtifactFrameProbe
 bool ShowNativeCreatureDialog(int creatureId)
 {
     if (!HasCreatureData(creatureId) || !P_WindowManager)
+        return false;
+    const auto &info = P_CreatureInformation[creatureId];
+    if (!helpdlg::HasCreatureData(info.nameSingular, info.defName))
+        return false;
+    H3DefLoader combatDef(info.defName);
+    if (!combatDef.Get() || combatDef->widthDEF <= 0 || combatDef->heightDEF <= 0 || !combatDef->groups ||
+        combatDef->groupsCount <= 0)
         return false;
     const int savedResult = P_WindowManager->resultItemID;
     // H3CreatureInfoDlg is an abstract native type. Its storage is constructed
@@ -202,6 +209,7 @@ CatalogueEntry Creature(int id, bool details = true)
     entry.name = Borrow(info.nameSingular);
     entry.def = NH3Dlg::Assets::CREATURE_LARGE;
     entry.frame = id + 2;
+    entry.faction = info.town;
     const bool commander = Era::IsCommanderId && Era::IsCommanderId(id);
     entry.filter.categories.push_back(commander                         ? 12
                                       : info.siegeWeapon                ? 11
@@ -293,8 +301,11 @@ CatalogueEntry Hero(int id, bool details = true)
     entry.compactDetails = true;
     entry.statsLabel = Text("help.text.starting_primary_skills");
     if (type)
+        // The town extender redirects the operand at 0x460CF0 used by
+        // P_PrimarySkillName. The level-up dialog reads the actual skill table
+        // from the operand at 0x4F91FA instead.
         for (int skill = 0; skill < 4; ++skill)
-            entry.stats.push_back({Borrow(P_PrimarySkillName[skill]), Number(type->primary[skill])});
+            entry.stats.push_back({Borrow(ValueAt<LPCSTR *>(0x4F91FA)[skill]), Number(type->primary[skill])});
     entry.cardRows.push_back({Text("help.text.specialty"), Safe(specialty.spFull) + "\n" + Safe(specialty.spDescr)});
     std::string startingSkills;
     std::vector<CardIcon> skillIcons;
@@ -439,19 +450,22 @@ CatalogueEntry Artifact(int id, bool details = true)
     {
         const int combined = FindCombinationArtifactId(H3ArtifactSetup::Get(), ArtifactTableCount(),
                                                        static_cast<int>(info.partOfComboArtifactId));
-        const auto name = combined >= 0 ? Safe(P_ArtifactSetup[combined].name) : Text("help.text.unknown_combination");
-        entry.cardRows.push_back({Text("help.text.combines_into"), name});
+        if (combined >= 0)
+        {
+            entry.cardRows.push_back({Text("help.text.combines_into"), ""});
+            entry.cardRows.back().artifactCard = true;
+            entry.cardRows.back().icons.push_back({NH3Dlg::Assets::ARTIFACT_DEF, Safe(P_ArtifactSetup[combined].name), combined, combined});
+        }
+        else
+            entry.cardRows.push_back({Text("help.text.combines_into"), Text("help.text.unknown_combination")});
     }
     if (info.comboArtifactId != eCombinationArtifacts::NONE)
     {
-        std::string components;
+        entry.cardRows.push_back({Text("help.text.components"), ""});
+        entry.cardRows.back().componentGrid = true;
         for (int component = 0; component < ArtifactTableCount(); ++component)
             if (P_ArtifactSetup[component].partOfComboArtifactId == info.comboArtifactId)
-            {
-                const auto name = Safe(P_ArtifactSetup[component].name);
-                components += (components.empty() ? h3_NullString : ", ") + name;
-            }
-        entry.cardRows.push_back({Text("help.text.components"), components});
+                entry.cardRows.back().icons.push_back({NH3Dlg::Assets::ARTIFACT_DEF, Safe(P_ArtifactSetup[component].name), component, component});
     }
     Finish(entry);
     return entry;
@@ -585,7 +599,7 @@ Catalogue BuildCatalogue(main::eHelpPage page)
         const int count = static_cast<int>(P_CreatureCount);
         catalogue.entries.reserve(count);
         for (int id = 0; id < count; ++id)
-            if (HasCreatureData(id))
+            if (HasCreatureData(id) && id != 122 && id != 124 && id != 126 && id != 128)
                 catalogue.entries.push_back(Creature(id, false));
     }
     else if (page == main::eHelpPage::HEROES)
@@ -612,7 +626,7 @@ Catalogue BuildCatalogue(main::eHelpPage page)
     {
         catalogue.categories.resize(6);
         catalogue.levelCount = 6;
-        catalogue.facets = {ReadFacet(page, 0, 4), ReadFacet(page, 1, 3)};
+        catalogue.facets = {ReadFacet(page, 0, 3), ReadFacet(page, 1, 3)};
         // H3SpellCount is the 70 hero spells; H3Spell's native table has
         // 81 entries including creature abilities, IDs 70..80.
         const int count = limits::TOTAL_SPELLS;
@@ -707,18 +721,16 @@ bool ShowCreatureDetails(int creatureId, bool popup)
 {
     if (!HasCreatureData(creatureId))
         return false;
-    if (!popup)
-        return ShowNativeCreatureDialog(creatureId);
-
-    // Reuse the exact catalogue entry and RMB rendering path of the Creatures
-    // page instead of opening the native LMB creature window.
     return ShowObjectDetails(Creature(creatureId), popup);
 }
 
 bool ShowObjectDetails(const CatalogueEntry &entry, bool popup)
 {
-    if (entry.page == main::eHelpPage::CREATURES && !popup)
-        return ShowNativeCreatureDialog(entry.id);
+    if (!popup && entry.page == main::eHelpPage::CREATURES &&
+        (entry.id == 122 || entry.id == 124 || entry.id == 126 || entry.id == 128))
+        return false;
+    if (entry.page == main::eHelpPage::CREATURES && !popup && ShowNativeCreatureDialog(entry.id))
+        return true;
     if (!entry.detailsLoaded && entry.id >= 0)
     {
         CatalogueEntry details;

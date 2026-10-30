@@ -399,3 +399,60 @@ class ObjectExtender
 };
 
 } // namespace extender
+
+
+// RMG_CustomizeObjectProperties.era, undecorated exports, Win32 stdcall.
+// All records are copied to caller-owned memory. Set structSize before calling.
+namespace rmg_api
+{
+struct ObjectInfo
+{
+    unsigned structSize;
+    int type, subtype, settingsSubtype;
+    int enabled, mapLimit, zoneLimit, value, density;
+};
+// Returns FALSE for unknown/uninitialized pairs. This reads committed settings;
+// type/subtype alone cannot identify individual Pandora or prison variants.
+using GetCurrent = BOOL(__stdcall *)(int type, int subtype, ObjectInfo *out);
+// Enumerates an open dialog, in its current order. Returns FALSE if closed or
+// index is out of range. Both records refer to the same dialog entry; current
+// is the committed value, draft is the dialog value. Order can change on sort.
+using GetDialogEntry = BOOL(__stdcall *)(int index, ObjectInfo *draft, ObjectInfo *current);
+constexpr const char *GET_CURRENT = "RMG_GetCurrentObjectInfo";
+constexpr const char *GET_DIALOG_ENTRY = "RMG_GetDialogObjectInfo";
+} // namespace rmg_api
+
+// Stable identity. Ordinary objects use OBJECT and zero parameters. Variant
+// kinds use type/subtype plus the parameters documented below; do not persist
+// settingsSubtype, which is assigned in registration order.
+namespace rmg_api
+{
+enum VariantKind
+{
+    OBJECT = 0,
+    PANDORA_GOLD = 1,
+    PANDORA_EXPERIENCE = 2,
+    PANDORA_MAGIC = 3,
+    PANDORA_MONSTERS = 4,
+    PRISON = 5
+};
+struct ObjectKey
+{
+    unsigned structSize;
+    int type, subtype, kind;
+    // GOLD: amount; EXPERIENCE/PRISON: experience; MONSTERS: creature ID;
+    // MAGIC: minimum level, maximum level, school mask. Unused fields are zero.
+    int first, second, third;
+};
+// Memory enumeration includes ordinary base records and separate variant records.
+// Enumerate from zero until FALSE; order is not a stable identity. Use the key
+// for later lookup. Call on the game thread; records can change during reload.
+// The caller initializes structSize on every output. Returns FALSE for an
+// invalid key, unavailable data, closed dialog, or an out-of-range index.
+using GetByKey = BOOL(__stdcall *)(const ObjectKey *key, ObjectInfo *out);
+using GetMemoryEntry = BOOL(__stdcall *)(int index, ObjectKey *key, ObjectInfo *out);
+using GetDialogEntryByKey = BOOL(__stdcall *)(int index, ObjectKey *key, ObjectInfo *draft, ObjectInfo *current);
+constexpr const char *GET_BY_KEY = "RMG_GetObjectInfoByKey";
+constexpr const char *GET_MEMORY_ENTRY = "RMG_GetMemoryObjectInfo";
+constexpr const char *GET_DIALOG_ENTRY_BY_KEY = "RMG_GetDialogObjectInfoByKey";
+} // namespace rmg_api

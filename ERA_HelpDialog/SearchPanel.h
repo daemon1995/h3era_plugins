@@ -15,10 +15,13 @@ class SearchPanel final : public main::DlgSection, private main::DlgPage
 {
     std::vector<SearchEntry> entries;
     std::vector<int> matches;
-    std::vector<H3DlgCaptionButton *> scopes, rows;
+    std::vector<H3DlgCaptionButton *> scopes;
+    H3PcxLoader rowBackground;
+    std::vector<H3DlgTextPcx *> rows;
     H3DlgText *countText = nullptr;
     H3DlgScrollbar *scroll = nullptr;
     H3DlgFrame *hoverFrame = nullptr;
+    H3DlgFrame *selectionFrame = nullptr;
     int hoveredRow = -1;
     std::string query;
     int firstIndex = 0, selectedIndex = 0, selection = -1;

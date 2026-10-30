@@ -1,0 +1,212 @@
+{
+  "help": {
+    "advanced classes mod": {
+      "name": "Advanced Classes Mod",
+      "description": "Adds Warrior, Mage and Adventurer hero classes and hybrid classes, Master/Grandmaster skill and spell ranks, reworked specialities and commander abilities. Hero-screen shortcuts: W, E, A and R.",
+      "hotkeys": {
+        "name": "Hotkeys",
+        "0": {
+          "keys": "W",
+          "name": "Hero class table",
+          "description": "Open the ACM class table on the hero screen.",
+          "type": "HERO"
+        },
+        "1": {
+          "keys": "E",
+          "name": "Hero bonus list",
+          "description": "Open the ACM bonus list on the hero screen.",
+          "type": "HERO"
+        },
+        "2": {
+          "keys": "A",
+          "name": "Advanced hero class",
+          "description": "Open the advanced-class information on the hero screen.",
+          "type": "HERO"
+        },
+        "3": {
+          "keys": "R",
+          "name": "Spell upgrade list",
+          "description": "Open the spell-upgrade list on the hero screen.",
+          "type": "HERO"
+        }
+      }
+    },
+    "trainerx": {
+      "name": "TrainerX",
+      "description": "Adventure-map cheats and an object scanner; separate combat cheats and battlefield-terrain selection. F2/F3 have different actions on the adventure map and in combat. F6 opens additional adventure cheats.",
+      "hotkeys": {
+        "name": "Hotkeys",
+        "0": {
+          "keys": "F2",
+          "name": "Edit hero/player",
+          "description": "Open the hero/player editor.",
+          "type": "ADV_MAP"
+        },
+        "1": {
+          "keys": "F3",
+          "name": "Toggle object scanner",
+          "description": "Enable or disable the scanner; right-click an object for its menu.",
+          "type": "ADV_MAP"
+        },
+        "2": {
+          "keys": "F6",
+          "name": "Additional cheats",
+          "description": "Open additional adventure-map cheats.",
+          "type": "ADV_MAP"
+        },
+        "3": {
+          "keys": "X",
+          "name": "Execute ERM commands",
+          "description": "Open ERM command input; documented in the Russian readme.",
+          "type": "ADV_MAP"
+        },
+        "4": {
+          "keys": "Alt+click",
+          "name": "Repeat scanner action",
+          "description": "While the object scanner is enabled, repeat its last action.",
+          "type": "ADV_MAP"
+        },
+        "5": {
+          "keys": "Alt+number",
+          "name": "Scanner options",
+          "description": "While the object scanner is enabled, change its options.",
+          "type": "ADV_MAP"
+        },
+        "6": {
+          "keys": "F2",
+          "name": "Battlefield terrain",
+          "description": "Change the special battlefield-terrain type.",
+          "type": "COMBAT"
+        },
+        "7": {
+          "keys": "F3",
+          "name": "Combat cheats",
+          "description": "Open additional combat cheats.",
+          "type": "COMBAT"
+        },
+        "8": {
+          "keys": "F12",
+          "name": "Reload ERA scripts",
+          "description": "Reload scripts after enabling TrainerX during a game. The author recommends save/load if descriptions become incorrect.",
+          "type": "EVERYWHERE"
+        }
+      }
+    },
+    "game enhancement mod": {
+      "name": "Game Enhancement Mod",
+      "description": "Adds object and route hints, extended creature information, town controls, army and artifact shortcuts, and optional spell research. Features depend on GEM settings and the installed plugins.",
+      "hotkeys": {
+        "name": "Hotkeys",
+        "0": {
+          "keys": "Alt",
+          "name": "Object labels",
+          "description": "Hold Alt to show supported map-object labels when adventure hints are enabled.",
+          "type": "ADV_MAP"
+        },
+        "1": {
+          "keys": "Alt+hover",
+          "name": "Route movement cost",
+          "description": "Show required and remaining movement points for the selected hero.",
+          "type": "ADV_MAP"
+        },
+        "2": {
+          "keys": "Alt+RMB",
+          "name": "Separate map-object hint",
+          "description": "Show the object hint in a message when supported by the hint script.",
+          "type": "ADV_MAP"
+        },
+        "3": {
+          "keys": "Ctrl+L",
+          "name": "Load without confirmation",
+          "description": "gem_scripts.erm opens the load-game screen directly.",
+          "type": "ADV_MAP"
+        },
+        "4": {
+          "keys": "` / ~",
+          "name": "Additional town menu",
+          "description": "Default key code 192; configurable in gem_settings.town_menu.dlg_run_bttn.",
+          "type": "TOWN"
+        },
+        "5": {
+          "keys": "A+LMB",
+          "name": "Quick creature upgrade",
+          "description": "Use on creature stacks or hero armies; requires fast upgrade stacks in town.dll.",
+          "type": "TOWN"
+        },
+        "6": {
+          "keys": "A+hover",
+          "name": "Upgrade cost hint",
+          "description": "Hold A over the supported town troop or hero item to preview the upgrade cost.",
+          "type": "TOWN"
+        },
+        "7": {
+          "keys": "Alt+W",
+          "name": "Wait with all troops",
+          "description": "Apply waiting to the local human army for this round. Disabled during Tactics; multiplayer battles may request confirmation.",
+          "type": "COMBAT"
+        },
+        "8": {
+          "keys": "Alt+D / Alt+Space",
+          "name": "Defend with all troops",
+          "description": "Apply defence to the local human army for this round. Disabled during Tactics; multiplayer battles may request confirmation.",
+          "type": "COMBAT"
+        },
+        "9": {
+          "keys": "Shift+LMB artifact slot",
+          "name": "Quick artifact picker",
+          "description": "List compatible artifacts from this hero's backpack for the clicked equipment slot. Requires Interface_ArtifactsQuickSwitching.era; can override HD Shift-click transfer.",
+          "type": "HERO"
+        },
+        "10": {
+          "keys": "MMB artifact slot",
+          "name": "Quick artifact picker",
+          "description": "Open the same equipment picker with the middle mouse button.",
+          "type": "HERO"
+        },
+        "11": {
+          "keys": "Shift+LMB artifact slot",
+          "name": "Meeting: Quick artifact picker",
+          "description": "List compatible artifacts from this hero's backpack for the clicked equipment slot. Requires Interface_ArtifactsQuickSwitching.era; can override HD Shift-click transfer.",
+          "type": "OTHER"
+        },
+        "12": {
+          "keys": "MMB artifact slot",
+          "name": "Meeting: Quick artifact picker",
+          "description": "Open the same equipment picker with the middle mouse button.",
+          "type": "OTHER"
+        },
+        "13": {
+          "keys": "Space",
+          "name": "Dialog: confirm",
+          "description": "The gameplay features module adds Space to supported OK buttons.",
+          "type": "OTHER"
+        },
+        "14": {
+          "keys": "NumPad digits",
+          "name": "Numeric input with Num Lock",
+          "description": "The gameplay features module maps the numeric keypad to digits while Num Lock is on.",
+          "type": "OTHER"
+        },
+        "15": {
+          "keys": "` / ~",
+          "name": "GEM settings",
+          "description": "Open the GEM settings menu on the adventure map.",
+          "type": "ADV_MAP"
+        }
+      }
+    },
+    "wog": {
+      "name": "WoG",
+      "description": "Adds commanders, creature experience, new creatures and artifacts, town destruction/rebuilding and the ERM scripting system. Script-based features depend on enabled options and other active mods.",
+      "hotkeys": {
+        "name": "Hotkeys",
+        "0": {
+          "keys": "Alt",
+          "name": "Cycle creature action",
+          "description": "The installed Combat_SwitchingCreatureAction plugin cycles the available action. The held-Alt number menu is disabled in the current source.",
+          "type": "COMBAT"
+        }
+      }
+    }
+  }
+}

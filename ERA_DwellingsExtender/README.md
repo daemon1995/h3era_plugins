@@ -10,7 +10,7 @@ new-map, weekly or AI callbacks. Removing the plugin leaves the RMG dwelling inf
 ## Installation
 
 The Visual Studio solution includes `ERA_DwellingsExtender.vcxproj`. Build **Release / Win32**.
-`Install-WoG.ps1 -Build` builds and installs this plugin, API_ErmFunctions, the updated RMG plugin and locale manager into
+`Install-WoG.ps1 -Build` builds and installs this plugin, ERA_RuntimeServices, the updated RMG plugin and locale manager into
 `Mods/WoG/EraPlugins`, retaining the previous files under this project's `build/installed-backups/`.
 Without `-Build`, the installer uses the existing local `build/` outputs. Close the game before installation.
 
@@ -44,9 +44,9 @@ uses RMG. The editor has its own object-definition plugin.
 
 ## Kingdom overview
 
-Portrait creation requires **Graphics API v1 in API_ErmFunctions.era**. Update the API and both extenders together.
+Portrait creation requires **Graphics API v1 in ERA_RuntimeServices.era**. Update the API and both extenders together.
 The shared service owns frame caching, source resources, RLE and palette render hooks; the dwelling plugin owns
-JSON and portrait layout. See [GRAPHICS.md](../API_ErmFunctions/GRAPHICS.md). Missing/old providers are logged;
+JSON and portrait layout. See [GRAPHICS.md](../ERA_RuntimeServices/Docs/GRAPHICS.md). Missing/old providers are logged;
 native portraits remain available and extension waits for graphics readiness.
 
 The installed constructor chooses `ZlagPort.def` in WoG or `FlagPort.def` in SoD. The plugin loads that game resource

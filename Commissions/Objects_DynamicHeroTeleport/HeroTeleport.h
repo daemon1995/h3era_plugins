@@ -4,9 +4,9 @@
 
 class TeleportDlg : public H3Dlg
 {
-    static constexpr int MAP_X = 56;
-    static constexpr int MAP_Y = 94;
-    static constexpr int MAP_SIZE = 480;
+    int MAP_X = 56;
+    int MAP_Y = 94;
+    int MAP_SIZE = 480;
     static constexpr int QUADRANT_FIRST_ID = 200;
 
     struct QuadrantPanel

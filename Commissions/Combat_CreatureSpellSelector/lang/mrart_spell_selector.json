@@ -1,0 +1,16 @@
+{
+  "mrart": {
+    "spell_selector": {
+      "ctrl_click": 1,
+      "prompt_enchanter": 1,
+      "spells_def": "spells.def",
+      "random_hint": "Случайное заклинание (D)",
+      "button_hint": "Выбрать заклинание",
+      "priority": {
+        "37": "",
+        "134": "",
+        "136": ""
+      }
+    }
+  }
+}

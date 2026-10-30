@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-// JSON-free convenience wrappers. The service owns the snapshot and performs
-// selection, counting, merging and serialization. Only metadata/text is copied.
+// JSON-free convenience wrappers. The service owns each snapshot and performs selection,
+// counting, merging and serialization. Output callbacks are captured into caller-owned strings.
 namespace configExport {
 using Selection = era_config::Selection;
 using Options = era_config::Options;

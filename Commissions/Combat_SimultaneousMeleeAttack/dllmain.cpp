@@ -23,7 +23,7 @@ struct DefenderState
 void FinishDeferredDeath(H3CombatCreature *stack)
 {
     // A stack killed during retaliation (e.g. by fire shield) was already removed by the engine.
-    if (stack->numberAlive <= 0 && !stack->info.cannotMove)
+    if (stack->numberAlive <= 0 && !stack->info.dead)
     {
         stack->numberAlive = 0;
         stack->ApplyPhysicalDamage(0);
@@ -61,7 +61,7 @@ BOOL8 __stdcall BattleStack_BeforeAttackEnemy(HiHook *hook, H3CombatCreature *at
     defenderState = DefenderState();
     // Leave attacks without a possible retaliation entirely to the engine.
     if (attacker->info.noRetaliation || defender->retaliations <= 0 || defender->numberAlive <= 0 ||
-        defender->info.cannotMove)
+        defender->info.dead)
     {
         return THISCALL_3(BOOL8, hook->GetDefaultFunc(), attacker, defender, direction);
     }

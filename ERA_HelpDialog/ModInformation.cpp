@@ -102,7 +102,10 @@ Category *MakePluginsCategory(LPCSTR folder, const ModJsonDocument &document)
 ModInformation::ModInformation(LPCSTR folder, UINT identifier, bool physicalMod)
     : id(identifier), path(folder), document(folder)
 {
-    name = document.Read("name");
+    bool hasName = false;
+    name = document.Read("name", hasName);
+    if (!hasName || !*name)
+        name = path.String();
     std::vector<HotKey> hotkeys;
     for (const auto &record : helpdlg::ReadHotkeyRecords(
              [this](const std::string &key, bool &found) { return document.Read(key.c_str(), found); }))

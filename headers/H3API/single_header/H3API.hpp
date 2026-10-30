@@ -11167,6 +11167,39 @@ namespace h3
                 ASK_GIFT         = 1075,
                 CONNECTION_LOST  = 1076,
                 UNK1078          = 1078,
+
+                GAME_TRANSMIT_INIT              = 1000, // LOAD_GAME alias
+                PLAYER_DROPPED                  = 1014, // DROP_GAME alias
+                SET_AS_HOST                     = 1015, // UNK1015 alias
+                // Scenario/lobby messages; names match eNetworkMsg.
+                GAME_HEADER_INFO                = 1023,
+                GAME_HEADER_INFO_INIT           = 1024,
+                GAME_HEADER_INFO_END            = 1025,
+                NEW_SETUP_INFO                  = 1026,
+                SCROLL                          = 1027,
+                NEW_MAP_HEADER_INFO             = 1028,
+                MAP_HEADER_REQUEST              = 1029,
+                MAP_FILE_NAME                   = 1030,
+                SORT_MAPS                       = 1031,
+                SET_FILTER                      = 1032,
+                NEXT_SCREEN                     = 1033,
+                PREV_SCREEN                     = 1034,
+                REQUEST_HERO_FACE               = 1035,
+                REQUEST_HERO_FACE_REPLY         = 1036,
+                SETAGR                          = 1037,
+                NEW_HOST                        = 1038,
+                UPDATE_PLAYER_POS               = 1039,
+                NEW_PLAYER                      = 1040,
+                REQ_HEADER_CONFIRM              = 1041,
+                HEADER_CONFIRM                  = 1042,
+                CLICK                           = 1043,
+                TOWN_UPDATE                     = 1044,
+                LAUNCHING_GAME                  = 1045,
+                BAD_VERSION                     = 1046,
+                SETUP_PING                      = 1047,
+                SETUP_PING_RESPONSE             = 1048,
+                MAP_CHANGE_START                = 1049,
+                HD_LOBBY_MESSAGE                = 2211, // HD_WOG menu notifications
             };
         }
         typedef NNetwork::eNetworkId eNetworkId;

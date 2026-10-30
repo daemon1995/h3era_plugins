@@ -8,13 +8,14 @@
 namespace era_graphics
 {
 constexpr std::uint32_t API_VERSION = 1;
-constexpr const char *PLUGIN_NAME = "API_ErmFunctions.era";
+constexpr const char *PLUGIN_NAME = "ERA_RuntimeServices.era";
 constexpr const char *READY_EVENT = "OnGraphicsResourcesReady";
 constexpr const char *SERVICE = "ERA.Services.Graphics.v1";
 using FrameHandle = std::uint32_t;
 
 enum Result : int
 {
+    // Zero means the provider is present but not ready; negative values identify a rejected request.
     Ok = 1, NotReady = 0, InvalidArgument = -1, MissingResource = -2,
     UnsupportedFormat = -3, InvalidFrame = -4, OutOfMemory = -5, RecursiveSource = -6
 };
@@ -59,6 +60,7 @@ struct UpdateRequest
 };
 struct Api
 {
+    // Versioned function table; clients must check readiness and every callback before use.
     std::uint32_t structSize;
     std::uint32_t version;
     std::uint32_t capabilities;

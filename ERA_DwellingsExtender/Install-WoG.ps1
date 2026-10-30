@@ -1,7 +1,7 @@
 param([string]$GamePath = 'D:\games\HoMM 3 ERA', [switch]$Build)
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path $PSScriptRoot -Parent
-$projects = @('API_ErmFunctions', 'ERA_DwellingsExtender', 'RMG_CustomizeObjectProperties', 'ERA_LocaleManager')
+$projects = @('ERA_RuntimeServices', 'ERA_SystemOptionsExtension', 'ERA_DwellingsExtender', 'RMG_CustomizeObjectProperties', 'ERA_LocaleManager')
 if (Get-Process -Name 'h3era','h3era HD' -ErrorAction SilentlyContinue) { throw 'Close the game before installing plugins.' }
 if ($Build) {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -19,11 +19,12 @@ $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssZ')
 $backupRoot = Join-Path $PSScriptRoot "build\installed-backups\$stamp"
 $files = @()
 foreach ($name in $projects) {
+    $binaryName = $name
     foreach ($extension in @('era', 'pdb')) {
-        $source = Join-Path $workspace "$name\build\$name.$extension"
+        $source = Join-Path $workspace "$name\build\$binaryName.$extension"
         if (!(Test-Path -LiteralPath $source -PathType Leaf)) { throw "Build output missing: $source" }
-        $target = Join-Path $plugins "$name.$extension"
-        $files += @{ Source = $source; Target = $target; Backup = (Join-Path $backupRoot "$name.$extension"); Existed = (Test-Path -LiteralPath $target) }
+        $target = Join-Path $plugins "$binaryName.$extension"
+        $files += @{ Source = $source; Target = $target; Backup = (Join-Path $backupRoot "$binaryName.$extension"); Existed = (Test-Path -LiteralPath $target) }
     }
 }
 New-Item -ItemType Directory -Path $backupRoot | Out-Null
@@ -50,5 +51,5 @@ try {
     }
     throw $installationError
 }
-Write-Output 'Installed and hash-verified: API_ErmFunctions, ERA_DwellingsExtender, RMG_CustomizeObjectProperties, ERA_LocaleManager.'
+Write-Output 'Installed and hash-verified: ERA_RuntimeServices, ERA_SystemOptionsExtension, ERA_DwellingsExtender, RMG_CustomizeObjectProperties, ERA_LocaleManager.'
 Write-Output "Previous files and manifest: $backupRoot"

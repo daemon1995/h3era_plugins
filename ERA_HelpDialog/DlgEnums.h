@@ -27,7 +27,8 @@ enum eButton
     BOTTOM_SEARCH_EDIT = 115,
     BOTTOM_SEARCH_CLEAR = 116,
     BOTTOM_SEARCH = 117,
-    MODLIST_ARROW = 118
+    MODLIST_ARROW = 118,
+    SEARCH_PLACEHOLDER = 119
 };
 } // namespace buttons
 

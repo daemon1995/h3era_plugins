@@ -8,6 +8,7 @@ class HeaderPage final : public DlgPage
     std::vector<H3DlgCaptionButton *> tabs;
     H3DlgCaptionButton *modButton = nullptr;
     H3DlgEdit *searchEdit = nullptr;
+    H3DlgText *searchPlaceholder = nullptr;
 
   public:
     virtual ~HeaderPage() override = default;

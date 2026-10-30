@@ -1,5 +1,6 @@
 #include "TeleportSelector.h"
 #include "HeroTeleport.h"
+#include "TeleportGraphics.h"
 
 #pragma comment(linker, "/EXPORT:DisplayTeleportSelector=_DisplayTeleportSelector@8")
 
@@ -22,11 +23,13 @@ DllExport int __stdcall DisplayTeleportSelector(const DWORD *visitedObjectIndexe
 }
 
 TeleportSelector::TeleportSelector(const DWORD *visitedObjectIndexes, const DWORD currentObjectIndex)
-    : H3Dlg(592, 744, -1, -1, FALSE, TRUE, 1), currentObjectIndex(currentObjectIndex)
+    : H3Dlg(592, std::min(744, H3GameHeight::Get()), -1, -1, FALSE, TRUE, 1), currentObjectIndex(currentObjectIndex)
 {
     for (int i = 0; i < mrart::TELEPORT_VARIANT_COUNT; ++i)
         this->visitedObjectIndexes[i] = visitedObjectIndexes[i];
 
+    CARD_FIRST_Y = heightDlg < 744 ? 150 : 217;
+    CARD_STEP_Y = heightDlg < 744 ? (heightDlg - 245) / 4 : 105;
     CreateItems();
 }
 
@@ -41,10 +44,10 @@ BOOL TeleportSelector::IsAvailable(const int variant) const noexcept
 
 void TeleportSelector::CreateItems()
 {
-    CreateText(0, 12, widthDlg, 34, mrart::TeleportConfig::DialogText("mrart.teleport_dlg.title", ""),
+    CreateText(0, 12, widthDlg, 34, mrart::TeleportConfig::DialogText("mrart.teleport_dlg.title", "Teleport"),
                NH3Dlg::Text::BIG, eTextColor::GOLD, 1);
-    CreateText(0, 166, widthDlg, 34,
-               mrart::TeleportConfig::DialogText("mrart.teleport_dlg.destination_question", ""),
+    CreateText(0, CARD_FIRST_Y - 48, widthDlg, 34,
+               mrart::TeleportConfig::DialogText("mrart.teleport_dlg.destination_question", "Choose a destination."),
                NH3Dlg::Text::MEDIUM, eTextColor::WHITE, 2);
 
     hitAreas.reserve(mrart::TELEPORT_VARIANT_COUNT);
@@ -54,10 +57,12 @@ void TeleportSelector::CreateItems()
         const BOOL available = IsAvailable(variant);
         const int x = CARD_X[variant & 1];
         const int y = CARD_FIRST_Y + (variant >> 1) * CARD_STEP_Y;
+        const H3String fallbackName = H3String::Format("Variant %d", variant + 1);
 
         LPCSTR preview = available ? config.previewPurplePcx : config.previewGreenPcx;
-        CreatePcx16(x, y, CARD_WIDTH, CARD_HEIGHT - 24, 20 + variant, preview);
-        CreateText(x, y + CARD_HEIGHT - 24, CARD_WIDTH, 24, config.name, NH3Dlg::Text::MEDIUM,
+        mrart::CreateScaledPcx(*this, x, y, CARD_WIDTH, CARD_HEIGHT - 24, 20 + variant, preview);
+        CreateText(x, y + CARD_HEIGHT - 24, CARD_WIDTH, 24,
+                   config.name && *config.name ? config.name : fallbackName.String(), NH3Dlg::Text::MEDIUM,
                    available ? eTextColor::WHITE : eTextColor::GRAY, 40 + variant);
 
         const H3RGB565 frameColor = available ? H3RGB565::Purple() : H3RGB565::Gray();
@@ -81,8 +86,8 @@ void TeleportSelector::CreateItems()
         AddItem(selectionFrame);
     }
 
-    CreateCancelButton(105, 645);
-    if (H3DlgDefButton *okButton = CreateOKButton(409, 645))
+    CreateCancelButton(105, heightDlg - 99);
+    if (H3DlgDefButton *okButton = CreateOKButton(409, heightDlg - 99))
         okButton->Disable();
 }
 

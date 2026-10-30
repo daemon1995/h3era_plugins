@@ -1,5 +1,22 @@
 #include "pch.h"
 
+namespace
+{
+int ReadInt(const std::string &key, int fallback = 0)
+{
+    bool found = false;
+    const int value = EraJS::readInt(key, found);
+    return found ? value : fallback;
+}
+
+LPCSTR ReadText(const std::string &key, LPCSTR fallback = nullptr)
+{
+    bool found = false;
+    LPCSTR value = EraJS::read(key, found);
+    return found && value && *value ? value : fallback;
+}
+} // namespace
+
 // using namespace EraJS;
 POINT WgtSettings::artSlotPositions[19];
 WgtSettings::ButtonsAlignment WgtSettings::buttonsAlignment;
@@ -48,25 +65,23 @@ HeroWgt::HeroWgt(const std::string &jsonKey) : WgtSettings(jsonKey)
 {
     npcBttn.pos.x = EraJS::readInt(jsonKey + ".commander.x");
     npcBttn.pos.y = EraJS::readInt(jsonKey + ".commander.y");
-    npcBttn.id = EraJS::readInt(jsonKey + ".commander.x");
-    npcBttn.id = EraJS::readInt(jsonKey + ".commander.x");
-    npcBttn.id = EraJS::readInt(jsonKey + ".commander.x");
-    npcBttn.id = EraJS::readInt(jsonKey + ".commander.x");
-    npcBttn.defName = EraJS::read(jsonKey + ".commander.def");
+    npcBttn.id = ReadInt(jsonKey + ".commander.id", -1);
+    npcBttn.defName = const_cast<char *>(ReadText(jsonKey + ".commander.def"));
 
-    mgrBttn.id = EraJS::readInt(jsonKey + ".manager.id");
-    mgrBttn.defName = EraJS::read(jsonKey + ".manager.def");
+    mgrBttn.id = ReadInt(jsonKey + ".manager.id", -1);
+    mgrBttn.defName = const_cast<char *>(ReadText(jsonKey + ".manager.def"));
     mgrBttn.pos.x = EraJS::readInt(jsonKey + ".manager.x");
     mgrBttn.pos.y = EraJS::readInt(jsonKey + ".manager.y");
     mgrBttn.altPos.x = EraJS::readInt(jsonKey + ".manager.xNoNpc");
     mgrBttn.altPos.y = EraJS::readInt(jsonKey + ".manager.yNoNpc");
 
-    mgrBttn.hint = Era::tr("nhd.button.manager");
+    LPCSTR managerHint = Era::tr("nhd.button.manager");
+    mgrBttn.hint = const_cast<char *>(managerHint && *managerHint ? managerHint : "Open the hero manager.");
 
     buttonsAlignment.buttonsToAline.Resize(0);
     // buttonsToAline.Reserve(20);
 
-    std::stringstream ss(EraJS::read(jsonKey + ".buttons_alignement.tags"));
+    std::stringstream ss(ReadText(jsonKey + ".buttons_alignement.tags", ""));
     int counter{};
     while (ss.good() || counter++ < 10)
     {

@@ -232,14 +232,17 @@ _LHF_(LegendHeroes::HeroDlg_BeforeArtifactsPlacement)
     UINT8 nymOffset = instance->m_heroLooks->interfaceMod * 2;
 
     // create mgr button only if owner is here
-    if (P_DialogHero->owner == P_Game->GetPlayerID() && P_Game->GetPlayerID() == P_CurrentPlayerID)
+    if (wgt.mgrBttn.id > 0 && wgt.mgrBttn.defName && *wgt.mgrBttn.defName &&
+        P_DialogHero->owner == P_Game->GetPlayerID() && P_Game->GetPlayerID() == P_CurrentPlayerID)
     {
         H3DlgDefButton *managerButton =
             H3DlgDefButton::Create(0, 0, wgt.mgrBttn.id, wgt.mgrBttn.defName, 0 + nymOffset, 1 + nymOffset, 0, NULL);
-
-        managerButton->SetHints(wgt.mgrBttn.hint, wgt.mgrBttn.hint, true);
-        managerButton->AddHotkey(eVKey::H3VK_M);
-        dlg->AddItem(managerButton, false);
+        if (managerButton)
+        {
+            managerButton->SetHints(wgt.mgrBttn.hint, wgt.mgrBttn.hint, true);
+            managerButton->AddHotkey(eVKey::H3VK_M);
+            dlg->AddItem(managerButton, false);
+        }
     }
 
     return EXEC_DEFAULT;
@@ -300,7 +303,7 @@ _LHF_(LegendHeroes::HeroDlg_AfterCreate)
 
     // ������ ���������
     it = dlg->GetH3DlgItem(NPC_BUTTON_ID);
-    if (it)
+    if (it && wgt.npcBttn.defName && *wgt.npcBttn.defName)
     {
         // �������� def ������
         it->SendCommand(DLG_CMD_SET_DEF, (int)wgt.npcBttn.defName);
@@ -308,11 +311,14 @@ _LHF_(LegendHeroes::HeroDlg_AfterCreate)
         INT8 nymOffset = instance->m_heroLooks->interfaceMod * 2;
         H3DlgDefButton *defBttn = dlg->GetDefButton(NPC_BUTTON_ID);
 
-        defBttn->SetFrame(0 + nymOffset);
-        defBttn->SetClickFrame(1 + nymOffset);
+        if (defBttn)
+        {
+            defBttn->SetFrame(0 + nymOffset);
+            defBttn->SetClickFrame(1 + nymOffset);
+        }
     }
 
-    it = dlg->GetDefButton(wgt.mgrBttn.id);
+    it = wgt.mgrBttn.id > 0 ? dlg->GetDefButton(wgt.mgrBttn.id) : nullptr;
     if (it && !it->GetHint())
         it->SetHints(wgt.mgrBttn.hint, wgt.mgrBttn.hint, true);
 

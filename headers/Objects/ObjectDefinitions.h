@@ -32,14 +32,19 @@ inline bool ReadObjectCount(const char *text, int &count) noexcept
 struct ObjectProperty
 {
     std::string key;
+    std::string objectKey;
     int type = 0;
     int subtype = -1;
+    size_t generationMaskOffset = 0;
+    size_t generationMaskLength = 0;
+    bool generationDisabled = false;
 };
 
 inline bool ParseObjectProperty(const std::string &line, ObjectProperty &result)
 {
     std::array<std::string, 9> fields;
     const char *current = line.c_str();
+    size_t generationMaskOffset = 0;
     for (auto &field : fields)
     {
         while (*current && std::isspace(static_cast<unsigned char>(*current)))
@@ -49,6 +54,8 @@ inline bool ParseObjectProperty(const std::string &line, ObjectProperty &result)
             ++current;
         if (begin == current)
             return false;
+        if (&field == &fields[4])
+            generationMaskOffset = static_cast<size_t>(begin - line.c_str());
         field.assign(begin, current);
     }
     while (*current && std::isspace(static_cast<unsigned char>(*current)))
@@ -57,10 +64,9 @@ inline bool ParseObjectProperty(const std::string &line, ObjectProperty &result)
         return false;
     for (int column = 1; column <= 4; ++column)
     {
-        size_t length = 9;
-        if (column <= 2)
-            length = 48;
-        if (fields[column].size() != length || fields[column].find_first_not_of("01") != std::string::npos)
+        const size_t length = fields[column].size();
+        const bool validLength = column <= 2 ? length == 48 : length >= 9 && length <= 32;
+        if (!validLength || fields[column].find_first_not_of("01") != std::string::npos)
             return false;
     }
     int values[4]{};
@@ -77,9 +83,17 @@ inline bool ParseObjectProperty(const std::string &line, ObjectProperty &result)
         return false;
     result.type = values[0];
     result.subtype = values[1];
+    result.generationMaskOffset = generationMaskOffset;
+    result.generationMaskLength = fields[4].size();
+    result.generationDisabled = fields[4].find('1') == std::string::npos;
     std::transform(fields[0].begin(), fields[0].end(), fields[0].begin(),
                    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
-    result.key = fields[0] + "_" + std::to_string(result.type) + "_" + std::to_string(result.subtype);
+    // Bitset text is most-significant bit first. Missing leading bits in
+    // legacy nine-bit masks are zero, so normalize equivalent mask widths.
+    for (int column = 3; column <= 4; ++column)
+        fields[column].insert(0, 32 - fields[column].size(), '0');
+    result.objectKey = fields[0] + "_" + std::to_string(result.type) + "_" + std::to_string(result.subtype);
+    result.key = result.objectKey + "_" + fields[3] + "_" + fields[4];
     return true;
 }
 
@@ -111,26 +125,42 @@ inline std::array<int, OBJECT_TYPE_LIMIT> SubtypeCounts(const std::vector<std::s
     return counts;
 }
 
-// Preserve native definitions; replace matching DEF/type/subtype entries, append new ones once.
+// Preserve terrain variants. A zero generation mask disables the whole
+// DEF/type/subtype group, including variants added earlier in this merge.
 inline void MergeObjectProperties(std::vector<std::string> &lines, const std::vector<std::string> &additions)
 {
     if (lines.empty())
         return;
-    std::unordered_map<std::string, size_t> indices;
+    std::unordered_map<std::string, std::vector<size_t>> indices;
     ObjectProperty property;
     for (size_t i = 1; i < lines.size(); ++i)
         if (ParseObjectProperty(lines[i], property))
-            indices[property.key] = i;
+            indices[property.objectKey].push_back(i);
     for (const auto &line : additions)
     {
         if (!ParseObjectProperty(line, property))
             continue;
-        const auto found = indices.find(property.key);
-        if (found != indices.end())
-            lines[found->second] = line;
+        auto &variants = indices[property.objectKey];
+        ObjectProperty existing;
+        if (property.generationDisabled && !variants.empty())
+        {
+            for (const size_t index : variants)
+                if (ParseObjectProperty(lines[index], existing))
+                    lines[index].replace(existing.generationMaskOffset, existing.generationMaskLength,
+                                         existing.generationMaskLength, '0');
+            continue;
+        }
+        // Match the last equivalent variant, as before, without collapsing
+        // original duplicates. Reparse after a previous disabling override.
+        auto found = variants.rbegin();
+        for (; found != variants.rend(); ++found)
+            if (ParseObjectProperty(lines[*found], existing) && existing.key == property.key)
+                break;
+        if (found != variants.rend())
+            lines[*found] = line;
         else
         {
-            indices[property.key] = lines.size();
+            variants.push_back(lines.size());
             lines.push_back(line);
         }
     }

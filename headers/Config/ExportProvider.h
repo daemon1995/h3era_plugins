@@ -7,6 +7,8 @@
 #include <type_traits>
 
 namespace configProvider {
+// Thin C++ adapter for providers: the service copies values synchronously, so temporary
+// strings remain valid for each Put call. Exceptions convert failed sink writes to provider failure.
 struct Failure {};
 inline void Check(int result) { if (result != era_config::Ok) throw Failure{}; }
 struct Category {

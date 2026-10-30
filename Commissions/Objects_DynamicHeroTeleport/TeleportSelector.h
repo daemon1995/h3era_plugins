@@ -10,8 +10,8 @@ class TeleportSelector : public H3Dlg
     static constexpr int CARD_X[2] = {26, 322};
     static constexpr int CARD_WIDTH = 250;
     static constexpr int CARD_HEIGHT = 72;
-    static constexpr int CARD_FIRST_Y = 217;
-    static constexpr int CARD_STEP_Y = 105;
+    int CARD_FIRST_Y = 217;
+    int CARD_STEP_Y = 105;
 
     DWORD visitedObjectIndexes[mrart::TELEPORT_VARIANT_COUNT]{};
     DWORD currentObjectIndex;

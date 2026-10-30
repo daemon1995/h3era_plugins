@@ -2,6 +2,7 @@
 #include "RuntimeServices.h"
 namespace era_objects
 {
+// Read-only view of the final merged object-definition catalog published by an editor/game adapter.
 constexpr const char *DEFINITIONS = "ERA.Services.ObjectDefinitions.v1";
 struct DefinitionsApi
 {

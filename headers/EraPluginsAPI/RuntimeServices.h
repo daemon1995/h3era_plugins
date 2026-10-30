@@ -1,11 +1,13 @@
 #pragma once
 #include <cstdint>
 
-// Include after header.h/H3API. Patcher variables are process-local and shared by
-// all DLLs; neither a plugin filename nor an export lookup is part of discovery.
+// Shared discovery/publication for process-local services. Include after header.h/H3API.
+// Patcher variables are shared by DLLs; discovery never loads a plugin by filename.
 namespace era_services
 {
+// Versioned prefix for service tables published through a named patcher variable.
 struct Header { std::uint32_t structSize, version; };
+// Return only a compatible table; null covers missing providers and ABI mismatches.
 template <class Api> const Api *Find(const char *key, unsigned version = 1)
 {
     if (!key || !*key) return nullptr;
@@ -13,6 +15,7 @@ template <class Api> const Api *Find(const char *key, unsigned version = 1)
     const auto *api = patcher ? patcher->VarGetValue<const Api *>(key, nullptr) : nullptr;
     return api && api->version == version && api->structSize >= sizeof(Api) ? api : nullptr;
 }
+// Publish a process-lifetime table. Refuse to replace a different owner at the same key.
 template <class Api> bool Publish(const char *key, const Api *api)
 {
     auto *patcher = GetPatcher();

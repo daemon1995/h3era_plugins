@@ -1,0 +1,199 @@
+﻿ZVSE2
+
+** Written by           : daemon_n
+** Commmissioned by     : mr.artemidius
+
+// constants:
+!#DC(MRART_HERO_TELEPORT_OBJECT_TYPE) = (OBJ_NEW_WOG_OBJECTS);
+!#DC(MRART_HERO_TELEPORT_OBJECT_SUBTYPE) = 61;
+
+
+
+
+9) сделать так, чтобы у героя (152) в подземелье всегда был обзор радиусом 2 клетки:
+!?FU(mrart_OnHeroScoutingGetBonus);
+!!UN:Cx1/(STRUCT_HOOK_CONTEXT_ESI)/4/?(hero:y);
+!!UN:C(hero)/26/4/?(heroId:y);
+!!if&(heroId)=(HERO_ROLAND);
+  !!UN:C(hero)/4/2/?(heroZ:y);
+  !!if&(heroZ)>0; // if hero is in the underworld
+    !!UN:Cx1/(STRUCT_HOOK_CONTEXT_EAX)/4/2; set radius = 2
+    !!UN:Cx1/(STRUCT_HOOK_CONTEXT_RET)/4/5129161;
+  !!en;
+!!en;
+
+
+8) сделать так, чтобы посадка на корабль/высадка с него занимала не весь оставшийся ход, а ровно 1000 мувпоинтов или остаток, если их меньше:
+!?FU(mrart_OnHeroBoarding);
+!!UN:Cx1/(STRUCT_HOOK_CONTEXT_ESI)/4/?(hero:y) C(hero)/26/4/?(heroId:y);
+!!FU(mrart_Hero_AdjustBoardingCost):P(heroId);
+!!SN:X?y99/0;                            [skip default]
+!!UN:Cx1/(STRUCT_HOOK_CONTEXT_RET)/4/d2; [lol works for boarding/unboarding]
+
+!?FU(mrart_Hero_AdjustBoardingCost);
+!#VA(heroId:x);
+!!HE(heroId):S(SKILL_NAVIGATION)/?(skillLvl:y) X?t/?s/d/d/d/d/d; [calc skills bonus]
+!!VR(skillLvl:y)&t=0/s=(SKILL_NAVIGATION):+1;                    [+1 for speciality]
+!!HE(heroId):W?(currentPoints:y)/1;
+
+!!VR(cost:y):S1000;                                              [* (skillLvl:y) +600;                          [200-600]
+!!VR(currentPoints):-(cost) F0/(INT_MAX);                        [decrease and limit value]
+!!HE(heroId):W(currentPoints:y)/1;                               [set new cost no redraw]
+
+
+!?FU(OnStartOrLoad);
+!!SN:F^erm_hooker:SetHook^/5128938/(mrart_OnHeroScoutingGetBonus);
+!!SN:F^erm_hooker:SetHook^/4842304/(mrart_OnHeroBoarding);
+!!SN:F^erm_hooker:SetHook^/4853000/(mrart_OnHeroBoarding);
+
+1) сделать так, чтобы при победе над героем мы не получали его артефакты:
+
+; jump over adding equipped arts
+!!UN:C4627664/2/5099;
+; jump over adding backpack arts
+!!UN:C4627816/2/5099;
+
+; jump over displaying artifacts dlg
+!!UN:C4682374/2/2795;
+!!UN:C4682376/1/(OPCODE_NOP_1);
+
+
+
+
+!?FU(mrart_PackXYZ);
+!#VA(x:x) (y:x) (z:x) (result:x);
+!!VR(result):S(x) &1023;
+!!VR(partY:y):S(y) &1023 Sd<<16;
+!!VR(partZ:y):S(z) &1 Sd<<26;
+!!VR(result):|(partY) |(partZ);
+
+6) окно телепортации для кастомного объекта, которое будет вызывать окно с выбором
+   направления и квадранта:
+    - временно только показываем результат выбора;
+    - массив для плагина всегда содержит 8 DWORD, по одному на направление;
+
+!?OB(MRART_HERO_TELEPORT_OBJECT_TYPE)/(MRART_HERO_TELEPORT_OBJECT_SUBTYPE)&i^timerIsHuman^/999;
+!!PM(CURRENT_OBJ):Pi^timerOwner^/(TRUE); // set object as visited
+
+
+!$OB(MRART_HERO_TELEPORT_OBJECT_TYPE)/(MRART_HERO_TELEPORT_OBJECT_SUBTYPE)&i^timerIsHuman^/999;
+!!FU(mrart_GetTeleportsList):P(MRART_HERO_TELEPORT_OBJECT_SUBTYPE)/i^timerOwner^/?(list:y)/?(listSize:y);
+
+!!if&(listSize)>0/(list)<>-1;
+  !!SN:M(list)/?(listAddr:y)/0;
+  !!SN:F^Objects_DynamicHeroTeleport:DisplayObjectList^/(listAddr)/(listSize)/-1/?(selectedIndex:y);
+  !!if&(selectedIndex)>=0;
+    !!SN:M(list)/(selectedIndex)/?(destination:y);
+    !!VR(destX:y):S(destination) &1023;
+    !!VR(destY:y):S(destination) Sd>>16 &1023;
+    !!VR(destZ:y):S(destination) Sd>>26 &1;
+    !!HE-1:P(destX)/(destY)/(destZ)/1;
+  !!en;
+!!en;
+
+!?FU(mrart_TestTeleportSelector);
+!#VA(testCase:x);
+!!FU(NewIntArray):P8/?(testList:x);
+!!VR(currentObjectIndex:y):S0;
+
+!!if&(testCase)=1;
+  ; Все 8 направлений доступны, текущее значение исключает объект 104.
+  !!SN:M(testList)/0/101;
+  !!SN:M(testList)/1/102;
+  !!SN:M(testList)/2/103;
+  !!SN:M(testList)/3/104;
+  !!SN:M(testList)/4/105;
+  !!SN:M(testList)/5/106;
+  !!SN:M(testList)/6/107;
+  !!SN:M(testList)/7/108;
+  !!VR(currentObjectIndex):S104;
+!!el;
+  !!if&(testCase)=2;
+    ; Пример из задачи: [1,1,2,0,0,0,7,8]. Текущий объект = 2.
+    !!SN:M(testList)/0/1;
+    !!SN:M(testList)/1/1;
+    !!SN:M(testList)/2/2;
+    !!SN:M(testList)/3/0;
+    !!SN:M(testList)/4/0;
+    !!SN:M(testList)/5/0;
+    !!SN:M(testList)/6/7;
+    !!SN:M(testList)/7/8;
+    !!VR(currentObjectIndex):S2;
+  !!el;
+    !!if&(testCase)=3;
+      ; Разреженный список: доступны только направления 3 и 6.
+      !!SN:M(testList)/0/0;
+      !!SN:M(testList)/1/0;
+      !!SN:M(testList)/2/305;
+      !!SN:M(testList)/3/0;
+      !!SN:M(testList)/4/0;
+      !!SN:M(testList)/5/306;
+      !!SN:M(testList)/6/0;
+      !!SN:M(testList)/7/0;
+    !!el;
+      !!if&(testCase)=4;
+        ; Пустой список: все карточки должны быть недоступны.
+        !!SN:M(testList)/0/0;
+        !!SN:M(testList)/1/0;
+        !!SN:M(testList)/2/0;
+        !!SN:M(testList)/3/0;
+        !!SN:M(testList)/4/0;
+        !!SN:M(testList)/5/0;
+        !!SN:M(testList)/6/0;
+        !!SN:M(testList)/7/0;
+      !!el;
+        ; Текущий объект находится в первом слоте.
+        !!SN:M(testList)/0/501;
+        !!SN:M(testList)/1/502;
+        !!SN:M(testList)/2/503;
+        !!SN:M(testList)/3/504;
+        !!SN:M(testList)/4/505;
+        !!SN:M(testList)/5/506;
+        !!SN:M(testList)/6/507;
+        !!SN:M(testList)/7/508;
+        !!VR(currentObjectIndex):S501;
+      !!en;
+    !!en;
+  !!en;
+!!en;
+
+!!SN:M(testList)/?(testListAddr:y)/0;
+!!SN:F^Objects_DynamicHeroTeleport:DisplayTeleportSelector^/(testListAddr:y)/(currentObjectIndex:y)/?(selectedItem:y);
+!!IF:L^Teleport selector test %(testCase), result %(selectedItem)^;
+
+!?FU(mrart_GetTeleportsList);
+!#VA(objSubtype:x) (playerId:x) (list:x) (visitedCounter:x);
+!!VR(list:x):S-1;
+!!VR(visitedCounter):S0;
+!!VR(sourceX:y):Sv998;
+!!VR(sourceY:y):Sv999;
+!!VR(sourceZ:y):Sv1000;
+!!FU|(playerId)<(PLAYER_FIRST)/(playerId)>(PLAYER_LAST):E;             [exit if wrong player]
+!!UN:U(MRART_HERO_TELEPORT_OBJECT_TYPE)/(objSubtype)/?(objectsCount:y);
+!!FU&(objectsCount)<1:E;                                               [exit if no objects]
+
+!!FU(NewIntArray):P(objectsCount)/?(list);
+!!VR(visitedCounter):S0;
+!!VR(playerBit:y):S1 Sd<<(playerId);
+!!re i/1/(objectsCount);
+  !!UN:U(MRART_HERO_TELEPORT_OBJECT_TYPE)/(objSubtype)/i/2;
+  !!co&v2=(sourceX)/v3=(sourceY)/v4=(sourceZ);
+  !!TR2:V?(visibility:y);
+  !!VR(visibility):&(playerBit);
+  !!co&(visibility)=(FALSE);
+  !!PM2:P(playerId)/?(isVisited:y);
+  !!if&(isVisited);
+    !!VR(packed:y):Sv4 Sd<<26;
+    !!VR(part:y):Sv3 Sd<<16;
+    !!VR(packed):|(part) |v2;
+    !!SN:M(list)/(visitedCounter)/(packed);
+    *!IF:L^%i^;
+    !!VR(visitedCounter):+1;
+  !!en;
+!!en;
+!!if&(visitedCounter)>0;
+  !!SN:M(list)/(visitedCounter);
+  !!SN:F^ExtendArrayLifetime^/(list);
+!!el;
+  !!VR(list):S-1;
+!!en;
