@@ -28,6 +28,8 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MenuWidgetManager.cpp" />
     <ClCompile Include="MainMenuGraphics.cpp" />
+    <ClCompile Include="MainMenuBackground.cpp" />
+    <ClCompile Include="MainMenuPng.cpp" />
     <ClCompile Include="MainMenuVideo.cpp" />
     <ClCompile Include="NotificationPanel.cpp" />
   </ItemGroup>
@@ -36,6 +38,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="MenuWidgetManager.h" />
     <ClInclude Include="MainMenuGraphics.h" />
+    <ClInclude Include="MainMenuPng.h" />
     <ClInclude Include="MainMenuBackground.h" />
     <ClInclude Include="MainMenuConfig.h" />
     <ClInclude Include="MainMenuVideo.h" />

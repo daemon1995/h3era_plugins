@@ -1,0 +1,9 @@
+{
+  "xxl_input": "/mnt/data/XXL(1).zip",
+  "files_checked": 14,
+  "xxl_static_writes": 67,
+  "gbf_sites": 28,
+  "overlap_count": 0,
+  "overlaps": [],
+  "warning": "Only direct static address writes are detected. Absence of matches is NOT proof of compatibility."
+}

@@ -60,9 +60,7 @@ H3String GetPandoraMagicSchoolName(const INT32 schoolBit)
 
         if (hasName)
         {
-            bool separatorReadSuccess = false;
-            const LPCSTR separator = EraJS::read("RMG.text.dlg.pandora.school.separator", separatorReadSuccess);
-            result.Append(separatorReadSuccess && separator ? separator : ", ");
+            result.Append(EraJS::read("RMG.text.dlg.pandora.school.separator"));
         }
         result.Append(name);
         hasName = TRUE;
@@ -71,9 +69,7 @@ H3String GetPandoraMagicSchoolName(const INT32 schoolBit)
     if (hasName)
         return result;
 
-    bool unknownReadSuccess = false;
-    const LPCSTR unknown = EraJS::read("RMG.text.dlg.pandora.school.unknown", unknownReadSuccess);
-    return unknownReadSuccess && unknown ? H3String(unknown) : H3String::Format("0x%X", schoolBit);
+    return H3String(EraJS::read("RMG.text.dlg.pandora.school.unknown"));
 }
 } // namespace
 
@@ -428,7 +424,7 @@ H3String PrisonVariants::GetDisplayName(const H3RmgObjectGenerator *generator)
     const H3String baseName = RMGObjectInfo::GetObjectName(eObject::PRISON, 0);
     bool readSuccess = false;
     const LPCSTR format = EraJS::read(PRISON_NAME_JSON_KEY, readSuccess);
-    return readSuccess ? H3String::Format(format, baseName.String(), key.experience) : baseName;
+    return readSuccess && format && *format ? H3String::Format(format, baseName.String(), key.experience) : baseName;
 }
 
 const std::vector<PrisonVariants::Record> &PrisonVariants::GetRecords() noexcept
@@ -466,6 +462,7 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
 
     std::fill(std::begin(limitsInfo.mapTypesLimit), std::end(limitsInfo.mapTypesLimit), defaultLimit);
     std::fill(std::begin(limitsInfo.zoneTypeLimits), std::end(limitsInfo.zoneTypeLimits), defaultLimit);
+    std::fill(std::begin(limitsInfo.zoneLimitsPerSubtype), std::end(limitsInfo.zoneLimitsPerSubtype), false);
 
     // repeat original setting default code
     struct Limit
@@ -522,10 +519,11 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
             type.inherited[rmgExport::ZONE] = zoneGlobalLimitDefault;
         }
         std::fill(std::begin(limitsInfo.zoneTypeLimits), std::end(limitsInfo.zoneTypeLimits), zoneGlobalLimitDefault);
+        std::fill(std::begin(limitsInfo.zoneLimitsPerSubtype), std::end(limitsInfo.zoneLimitsPerSubtype), true);
     }
 
-    // Type-level JSON overrides are also the native aggregate type caps, not
-    // just defaults copied to the per-subtype rows in the dialog.
+    // Map overrides remain aggregate type caps. Zone overrides are defaults
+    // for each subtype and must not become shared native zone caps.
     for (int type = 0; type < H3_MAX_OBJECTS; ++type)
     {
         const H3String mapKey = H3String::Format(RMGObjectInfo::OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, type, "map");
@@ -535,7 +533,10 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
         const H3String zoneKey = H3String::Format(RMGObjectInfo::OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, type, "zone");
         const int zoneLimit = EraJS::readInt(zoneKey.String(), readSucces);
         if (readSucces)
+        {
             limitsInfo.zoneTypeLimits[type] = zoneLimit;
+            limitsInfo.zoneLimitsPerSubtype[type] = true;
+        }
 
         const auto normalized = NormalizeTypeLimits(limitsInfo.mapTypesLimit[type], limitsInfo.zoneTypeLimits[type]);
         limitsInfo.mapTypesLimit[type] = normalized.map;
@@ -664,9 +665,12 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 // skip changes for some objects to not break native map generation
                 switch (rmgObjGen->type)
                 {
+                case eObject::PRISON: // temporary disable prisons generation;
+                    continue;
                     // add these objects w/o any restrictions
                 // case eObject::BORDERGUARD:
                 // case eObject::KEYMASTER:
+                //
                 case eObject::SEER_HUT:
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
                     continue;
@@ -847,7 +851,7 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
 {
     nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
                            reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit), limitsInfo.mapTypesLimit,
-                           limitsInfo.zoneTypeLimits);
+                           limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype);
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
 

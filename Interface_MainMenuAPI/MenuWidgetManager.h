@@ -55,6 +55,8 @@ class MenuWidgetManager
     H3DlgScrollbar *scrollbar = nullptr;
     H3DlgDefButton *arrows[2] = {nullptr, nullptr};
     H3DlgPcx16 *framedBackground = nullptr;
+    H3BaseDlg *backupDialog = nullptr;
+    bool backupPending = false;
     std::unordered_map<std::string, int> widgetIndexes;
     std::vector<LocalMenuWidgetInfo> registeredWidgets;
     std::vector<LocalMenuWidgetInfo *> createdWidgets;
@@ -68,6 +70,7 @@ class MenuWidgetManager
     INT RegisteredNumber() const noexcept;
     BOOL RegisterWidget(const mainmenu::MenuWidgetInfo &info);
     void CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags menuList);
+    void CaptureBackground(H3BaseDlg *dlg);
     void DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw = false);
     void HandleEvent(H3Msg *msg);
     BOOL IsVisible() const noexcept;

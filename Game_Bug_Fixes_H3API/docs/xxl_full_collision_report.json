@@ -1,0 +1,23 @@
+{
+  "xxl_files_scanned": 14,
+  "gbf_files_scanned": 16,
+  "xxl_direct_writes": 75,
+  "gbf_direct_writes": 466,
+  "address_range_overlaps": 0,
+  "overlaps": [],
+  "known_semantic_overlap": [
+    {
+      "gbf_callsite": "0x00587272",
+      "xxl_function_hook": "0x00580D40",
+      "common_update": "0x005857D0",
+      "gbf_source": "Graphics.cpp",
+      "mitigation": "GBF Graphics skips own refresh if active XXL hook exists"
+    }
+  ],
+  "limitations": [
+    "No dynamic HD_WOG.dll addresses",
+    "No virtual call-target graph",
+    "No runtime hook order verification",
+    "No game test; compiler not available"
+  ]
+}

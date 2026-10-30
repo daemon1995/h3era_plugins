@@ -20,8 +20,7 @@ inline TypeGenerationLimits NormalizeTypeLimits(int map, int zone) noexcept
 
 // The game resets these tables in the RMG constructor. Apply after that reset,
 // and restore the exact previous values when generation finishes.
-template <std::size_t Count>
-class NativeTypeLimitsOverride
+template <std::size_t Count> class NativeTypeLimitsOverride
 {
     std::array<int, Count> previousMap{};
     std::array<int, Count> previousZone{};
@@ -32,9 +31,13 @@ class NativeTypeLimitsOverride
     NativeTypeLimitsOverride() = default;
     NativeTypeLimitsOverride(const NativeTypeLimitsOverride &) = delete;
     NativeTypeLimitsOverride &operator=(const NativeTypeLimitsOverride &) = delete;
-    ~NativeTypeLimitsOverride() { Restore(); }
+    ~NativeTypeLimitsOverride()
+    {
+        Restore();
+    }
 
-    void Apply(int *mapTable, int *zoneTable, const int *mapLimits, const int *zoneLimits) noexcept
+    void Apply(int *mapTable, int *zoneTable, const int *mapLimits, const int *zoneLimits,
+               const bool *zoneLimitsPerSubtype) noexcept
     {
         Restore();
         std::copy_n(mapTable, Count, previousMap.begin());
@@ -45,7 +48,9 @@ class NativeTypeLimitsOverride
         {
             const auto limits = NormalizeTypeLimits(mapLimits[i], zoneLimits[i]);
             nativeMap[i] = limits.map;
-            nativeZone[i] = limits.zone;
+            // JSON zone defaults are enforced by the plugin's subtype counters.
+            // The aggregate zone cap must allow every subtype up to the map cap.
+            nativeZone[i] = zoneLimitsPerSubtype[i] ? limits.map : limits.zone;
         }
     }
 

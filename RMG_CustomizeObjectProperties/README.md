@@ -6,6 +6,10 @@ Map selection and random-map menus belong to this plugin, including H/XH/G size 
 player choices, template/alliance dialogs and HD compatibility. See [MapSelection](MapSelection/README.md).
 Deploy it together with the updated XXL, which now handles only the adventure-map minimap.
 
+Copy `lang/RMG_Interface.json` to the mod's `Lang` directory with the plugin update.
+Map-selection and wogification UI text comes from JSON; the code has no fallback labels.
+Shared graphics resource names are declared in `Assets.h` as compile-time constants.
+
 Plugins can integrate with its object lifecycle through the public `ObjectExtender` API. See the [API quick start](QUICK_START.md).
 
 RMG remains the owner of the extender registry and dispatch. New C++ clients discover its versioned table in

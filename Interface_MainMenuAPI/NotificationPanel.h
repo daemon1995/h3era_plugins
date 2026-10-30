@@ -27,8 +27,6 @@ struct NotificationPanel
     static constexpr int FRAME_OFFSET = 2;
     // namespace assetss
 
-    static constexpr LPCSTR PCX_BACK = "DlgBluBk.pcx";
-
     static constexpr LPCSTR NOTIFICATION_COUNTER_FORMAT = "%d / %d";
     static constexpr LPCSTR INI_FILE_NAME = "runtime/era/main_menu_notifications.ini";
     static constexpr LPCSTR INI_SECTION_NAME = "HIDDEN";
@@ -91,6 +89,20 @@ struct NotificationPanel
 
     H3DlgCaptionButton *parentCaller = nullptr;
     H3LoadedPcx16 *backupScreen = nullptr;
+    bool openAfterFirstDraw = false;
+    bool themeReady = false;
+    int themeScreenWidth = 0;
+    int themeScreenHeight = 0;
+    H3LoadedPcx16 *themeAsset = nullptr;
+
+    struct ButtonImage
+    {
+        H3DlgDefButton *button = nullptr;
+        H3LoadedPcx16 *pcx = nullptr;
+        bool valid = false;
+        bool pressed = false;
+        bool enabled = true;
+    } buttonImages[4];
 
     // personal dlg items
     struct RuntimeDlgPcx16
@@ -103,10 +115,9 @@ struct NotificationPanel
     {
         RuntimeDlgPcx16 panelBackground;
         RuntimeDlgPcx16 modBackground;
-        RuntimeDlgPcx16 hideMod;
-        RuntimeDlgPcx16 hideAll;
+        RuntimeDlgPcx16 counter;
 
-        RuntimeDlgPcx16 *asArray[4] = {&panelBackground, &modBackground, &hideMod, &hideAll};
+        RuntimeDlgPcx16 *asArray[3] = {&panelBackground, &modBackground, &counter};
     } runtimes;
 
     H3DlgDefButton *nextModButton = nullptr;
@@ -114,7 +125,7 @@ struct NotificationPanel
 
     H3DlgCaptionButton *hideOneButton = nullptr;
     H3DlgCaptionButton *hideAllButton = nullptr;
-    H3DlgTextPcx *notificationsCounter = nullptr;
+    H3DlgPcx16 *notificationsCounter = nullptr;
     H3DlgText *panelTitle = nullptr;
 
     std::vector<ModInfo> modInfos;
@@ -141,6 +152,9 @@ struct NotificationPanel
     void CreateModAreaFrame(const UINT x, const UINT y, const UINT width, const UINT height) noexcept;
     void CreateModDlgItems(H3BaseDlg *dlg, ModInfo &modInfo, H3DlgPcx16 *modBackground) noexcept;
 
+    void UpdateCounterImage() noexcept;
+    void PrepareTextBackground(ModInfo &info) noexcept;
+    void PlaceAtPictureCorner() noexcept;
     void UpdateVisibleNotificationsList() noexcept;
     ModInfo *GetModInfoFromVisible(const UINT index) noexcept;
     void SwitchModInfo(const int step) noexcept;
@@ -153,6 +167,9 @@ struct NotificationPanel
     void SetVisible(const BOOL isVisible, const BOOL activateAllNotifications = false) noexcept;
     BOOL ProcessPanel(H3Msg *msg, const BOOL forceRedraw = false) noexcept;
     bool IsLinkHovered(H3Msg *msg) const noexcept;
+    void PrepareAppearance(H3BaseDlg *dlg, H3LoadedPcx16 *cleanScreen) noexcept;
+    bool DrawButtonBackground(H3LoadedDef *def, int frame, int sx, int sy, int width, int height,
+                              void *buffer, int dx, int dy, int dw, int dh, int pitch) noexcept;
     void ReloadLanguageData() noexcept;
     static int __fastcall OnPanelCallerClick(void *msg) noexcept;
     static NotificationPanel *Init(H3BaseDlg *parrent, const int x = 1, const int y = 1, const int width = 400,

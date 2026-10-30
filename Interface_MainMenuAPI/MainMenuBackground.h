@@ -86,27 +86,7 @@ inline Layout GetLayout(h3::H3BaseDlg *dlg, bool configured)
                      config::Enabled("era.main_menu.background.frame.enabled", false));
 }
 
-inline bool Draw(h3::H3BaseDlg *dlg)
-{
-    const auto layout = GetLayout(dlg, Enabled());
-    if (!layout.custom)
-        return false;
-    auto *screen = h3::H3WindowManager::Get()->GetDrawBuffer();
-    auto *asset = GetAsset();
-    if (!screen || !screen->buffer || !asset || screen == asset)
-        return false;
-
-    // Preserve HD's background texture; draw only the image and optional frame
-    // before the dialog items, including the API's panel.
-    if (layout.assetWidth == asset->width && layout.assetHeight == asset->height)
-        asset->DrawToPcx16(layout.assetX, layout.assetY, FALSE, screen);
-    else
-        resized::H3LoadedPcx16Resized::DrawPcx16ResizedBicubic(
-            screen, asset, asset->width, asset->height, layout.assetX, layout.assetY,
-            layout.assetWidth, layout.assetHeight);
-    if (layout.frame)
-        screen->SimpleFrameRegion(layout.x - 4, layout.y - 4, layout.width + 8, layout.height + 8);
-    return true;
-}
+bool Draw(h3::H3BaseDlg *dlg);
+void ReleaseCache();
 } // namespace background
 } // namespace mainmenu

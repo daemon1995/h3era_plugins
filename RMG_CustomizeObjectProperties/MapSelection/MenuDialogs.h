@@ -2,7 +2,8 @@
 
 namespace mapselection
 {
-LPCSTR Text(LPCSTR key, LPCSTR fallback);
+constexpr int REQUEST_PLAYER_CHOICE = 0x524D4701;
+LPCSTR Text(LPCSTR key);
 bool InitHdMenu();
 void InstallScenarioName();
 void PreviewHero(int hero);

@@ -1,4 +1,5 @@
 #include "../pch.h"
+#include "../Assets.h"
 #include "MenuDialogs.h"
 #include "RandomMapOptions.h"
 
@@ -6,7 +7,7 @@ namespace mapselection
 {
 namespace
 {
-constexpr int REQUEST_PLAYER_CHOICE = 0x524D4701;
+
 constexpr int HERO_COLUMNS = 4;
 constexpr int HERO_ROWS = 5;
 constexpr int PAGE_HEROES = HERO_COLUMNS * HERO_ROWS;
@@ -126,13 +127,13 @@ int __stdcall SelectionNetwork(HiHook* hook, H3SelectScenarioDialog* dlg, INT32*
 {
     // HD rejects guest changes to native RMG controls, but knows nothing about
     // the additional XXL IDs. Apply the same rule before its packet handler.
-    if (packet && packet[2] == 1043 && packet[3] >= 24 && IsSelectionAuthority() &&
+    if (packet && packet[2] == eNetwork::CLICK && packet[3] >= 24 && IsSelectionAuthority() &&
         packet[5] >= 3000 && packet[5] <= 3005)
     {
         CDECL_1(void, 0x60B0F0, packet);
         return 0;
     }
-    if (packet && packet[2] == 1043 && packet[3] >= 24 && IsSelectionAuthority() &&
+    if (packet && packet[2] == eNetwork::CLICK && packet[3] >= 24 && IsSelectionAuthority() &&
         packet[5] >= 207 && packet[5] <= 262)
     {
         const int color = (packet[5] - 207) % 8;
@@ -172,7 +173,7 @@ int __stdcall SelectionNetwork(HiHook* hook, H3SelectScenarioDialog* dlg, INT32*
         CDECL_1(void, 0x60B0F0, packet);
         return 0;
     }
-    const bool rebuild = packet && packet[2] == 1039 && IsNewGame(dlg);
+    const bool rebuild = packet && packet[2] == eNetwork::UPDATE_PLAYER_POS && IsNewGame(dlg);
     const int status = THISCALL_3(int, hook->GetDefaultFunc(), dlg, packet, result);
     if (rebuild && !status)
     {
@@ -256,7 +257,7 @@ class PlayerDialog : public MenuDialog
         {
             const int cellW = CellWidth(parent), cellH = CellHeight(parent);
             const int heroX = PanelWidth(parent, 3) + PANEL_GAP;
-            randomHero = CreatePcx(heroX + GRID_MARGIN, GRID_MARGIN, 300, "HPSRAND1.PCX");
+            randomHero = CreatePcx(heroX + GRID_MARGIN, GRID_MARGIN, 300, rmgassets::HPSRAND1_PCX);
             if (randomHero)
             {
                 if (auto* frame = CreateFrame(heroX + GRID_MARGIN - 1, GRID_MARGIN - 1,
@@ -298,7 +299,7 @@ class PlayerDialog : public MenuDialog
                     const int heroX = PanelWidth(parent, 3) + PANEL_GAP;
                     const int x = heroX + GRID_MARGIN + (i % HERO_COLUMNS) * (cellW + GRID_PADDING);
                     const int y = GRID_MARGIN + (1 + i / HERO_COLUMNS) * (cellH + GRID_PADDING);
-                    portrait = CreatePcx(x, y, 400 + i, "HPSRAND1.PCX");
+                    portrait = CreatePcx(x, y, 400 + i, rmgassets::HPSRAND1_PCX);
                     if (portrait)
                     {
                         frame = CreateFrame(x - 1, y - 1, cellW + 2, cellH + 2, 600 + i,
@@ -366,8 +367,9 @@ class PlayerDialog : public MenuDialog
                     RequestChoice(parent, color, kind, value);
                     if (kind == 1) page = 0;
                     waiting = !IsSelectionAuthority();
-                    closeOnSnapshot = kind == 2 && waiting;
-                    if (kind == 2) { pressedHero = msg.itemId; heroReleased = false; }
+                    const bool closeOnRelease = kind == 2 || (kind == 1 && !HasHeroPanel(color));
+                    closeOnSnapshot = closeOnRelease && waiting;
+                    if (closeOnRelease) { pressedHero = msg.itemId; heroReleased = false; }
                     RefreshPlayer();
                 }
             }
@@ -444,8 +446,8 @@ class PlayerDialog : public MenuDialog
             const int x = townX + GRID_MARGIN + (position % 3) * (cellW + GRID_PADDING);
             const int y = panelY + GRID_MARGIN + (position / 3) * (cellH + GRID_PADDING);
             if (i < 0)
-                CreatePcx(x, y, 100, "HPSRAND0.PCX");
-            else CreateDef(x, y, 101 + i, "ITPA.def", 2 * i + 2);
+                CreatePcx(x, y, 100, rmgassets::HPSRAND0_PCX);
+            else CreateDef(x, y, 101 + i, rmgassets::ITPA_DEF, 2 * i + 2);
             if (auto* frame = CreateFrame(x - 1, y - 1, cellW + 2, cellH + 2, 121 + i, H3RGB565(H3RGB888::Highlight())))
                 frame->DeActivate()->Hide();
         }

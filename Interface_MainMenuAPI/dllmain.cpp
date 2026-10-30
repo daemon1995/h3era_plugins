@@ -1,10 +1,12 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
 #include "framework.h"
+
+// dllmain.cpp : Defines the entry point for the DLL application.
 #include "../headers/EraPluginsAPI/MainMenuCursor.h"
+#include "MainMenuPng.h"
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "2.2.5";
+const char *PLUGIN_VERSION = "2.3.0";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -27,6 +29,7 @@ int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int va
 
 int __stdcall DlgMainMenu_NewLoad_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
+    mainmenu::png::Release(dlg);
     MenuWidgetManager::Get().DestroyWidgets(dlg);
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
@@ -39,8 +42,7 @@ int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
         if (panel->parentDlg == msg->GetDlg())
         {
             cursor.RequestHand(panel->IsLinkHovered(msg));
-            panel->ProcessPanel(
-                msg, mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false));
+            panel->ProcessPanel(msg, mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false));
         }
     }
     const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
@@ -55,6 +57,8 @@ int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
 int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
+    mainmenu::background::ReleaseCache();
+    mainmenu::png::Release(dlg);
     if (auto *panel = NotificationPanel::instance)
     {
         if (panel->parentDlg == dlg)
@@ -105,6 +109,7 @@ int __stdcall DlgMainMenu_Campaign_Proc(HiHook *h, H3Msg *msg)
 
 int __stdcall DlgMainMenu_Campaign_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
+    mainmenu::png::Release(dlg);
     MenuWidgetManager::Get().DestroyWidgets(dlg);
 
     if (campaignData.dlg)
@@ -137,6 +142,7 @@ static void InitializeHooks()
         return;
     initialized = true;
     MainMenuGraphics::Get();
+    mainmenu::png::Install(_PI);
     mainmenu::InstallVideoPositioning();
     _PI->WriteHiHook(0x04FBDA0, THISCALL_, DlgMainMenu_Proc); // Main Main Menu Dlg Proc
     _PI->WriteHiHook(0x04EF02B, THISCALL_, DlgMainMenu_Dtor); // MAIN menu

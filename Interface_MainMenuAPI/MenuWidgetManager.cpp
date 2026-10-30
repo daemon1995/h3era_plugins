@@ -180,8 +180,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         std::swap(createdWidgets[hideWidgetInd], createdWidgets[0]);
     }
 
-    const bool customBackground = menuList != mainmenu::eMenuFlags::CAMPAIGN &&
-                                  mainmenu::background::Enabled();
+    const bool customBackground = mainmenu::background::Enabled();
     const auto layout = mainmenu::background::GetLayout(dlg, customBackground);
     auto *screen = P_WindowManager->GetDrawBuffer();
     const int gameWidth = screen->width;
@@ -199,8 +198,10 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     const int backgroundY = layout.y;
     const int backgroundRight = backgroundX + backgroundWidth;
     const int frameOffset = backgroundX >= frameWidth && backgroundY >= frameWidth &&
-                            backgroundRight + frameWidth <= gameWidth &&
-                            backgroundY + backgroundHeight + frameWidth <= gameHeight ? frameWidth : 0;
+                                    backgroundRight + frameWidth <= gameWidth &&
+                                    backgroundY + backgroundHeight + frameWidth <= gameHeight
+                                ? frameWidth
+                                : 0;
 
     // struct PanelStyle
     //{
@@ -306,26 +307,21 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
 
     framedBackground->SetPcx(framedBackgroundPcx);
 
-    // Capture the same background that Graphics will draw before our items.
-    // Otherwise hiding the panel can restore a stale HD frame over the canvas.
-    if (customBackground)
-        mainmenu::background::Draw(dlg);
-
     if (placedOutside)
     {
         if (outsideBackupScreenPcx == nullptr)
         {
             outsideBackupScreenPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundHeight + frameOffset * 2);
-            outsideBackupScreenPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), framedBackground->GetAbsoluteX(),
-                                               framedBackground->GetAbsoluteY());
         }
     }
     else
     {
         insideBackupScreenPcx = H3LoadedPcx16::Create(backgroundAreaWidth, backgroundAreaHeight);
-        insideBackupScreenPcx->CopyRegion(P_WindowManager->GetDrawBuffer(), framedBackground->GetAbsoluteX(),
-                                          framedBackground->GetAbsoluteY());
     }
+    // HD installs its cached frame during vShow, after this constructor.
+    // Capture on the first full redraw, before any panel items are drawn.
+    backupDialog = dlg;
+    backupPending = true;
 
     framedBackground->Show();
     isVisible = true;
@@ -395,13 +391,25 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     }
     displayedWidgetsCount = widgetsToDraw;
 }
+void MenuWidgetManager::CaptureBackground(H3BaseDlg *dlg)
+{
+    if (!backupPending || backupDialog != dlg || !framedBackground)
+        return;
+    auto *backup = placedOutside ? outsideBackupScreenPcx : insideBackupScreenPcx;
+    if (!backup)
+        return;
+    backup->CopyRegion(P_WindowManager->GetDrawBuffer(), framedBackground->GetAbsoluteX(),
+                       framedBackground->GetAbsoluteY());
+    backupPending = false;
+}
+
 void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw)
 {
 
     if (framedBackground)
     {
 
-        if (isVisible)
+        if (isVisible && !backupPending)
         {
             if (!placedOutside && insideBackupScreenPcx)
             {
@@ -458,6 +466,8 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw)
     frameStartY = 0;
     isVisible = false;
     placedOutside = false;
+    backupDialog = nullptr;
+    backupPending = false;
     scrollbar = nullptr;
     memset(arrows, 0, sizeof(arrows));
     menuType = mainmenu::eMenuFlags::MAIN;
@@ -466,43 +476,41 @@ void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw)
 
 void MenuWidgetManager::HandleEvent(H3Msg *msg)
 {
-    if (createdWidgets.empty())
+    if (createdWidgets.empty() || !isVisible)
         return;
-    if (isVisible)
+    if (msg->itemId >= topWidgetId && msg->itemId <= bottomWidgetId)
     {
-        if (msg->itemId >= topWidgetId && msg->itemId <= bottomWidgetId)
-        {
-            const int widgetInd = msg->itemId - START_WIDGET_ID;
-            const LocalMenuWidgetInfo *widget = createdWidgets[widgetInd];
+        const int widgetInd = msg->itemId - START_WIDGET_ID;
+        const LocalMenuWidgetInfo *widget = createdWidgets[widgetInd];
 
-            if (widget && widget->uiElement && widget->customProc && widget->id == msg->itemId)
-            {
-                // test thingy to hide the menu while processing the event
-                // const bool needToHide = false;
-                // if (needToHide)
-                //{
-                //    this->SetVisible(false);
-                //}
-                const bool result = widget->customProc(msg);
-                // if (needToHide)
-                //     this->SetVisible(true, true);
-                if (result)
-                    return;
-            }
+        if (widget && widget->uiElement && widget->customProc && widget->id == msg->itemId &&
+            (msg->IsLeftClick() || msg->IsRightClick()))
+        {
+            // test thingy to hide the menu while processing the event
+            // const bool needToHide = false;
+            // if (needToHide)
+            //{
+            //    this->SetVisible(false);
+            //}
+            const bool result = widget->customProc(msg);
+            // if (needToHide)
+            //     this->SetVisible(true, true);
+            if (result)
+                return;
         }
-        else if (msg->IsLeftClick())
-        {
+    }
+    else if (msg->IsLeftClick())
+    {
 
-            if (arrows[0] && msg->itemId == arrows[0]->GetID())
-            {
-                const int previousId = topWidgetId - START_WIDGET_ID - 1;
-                RedrawWidgets(previousId, msg->GetDlg());
-            }
-            else if (arrows[1] && msg->itemId == arrows[1]->GetID())
-            {
-                const int nextId = topWidgetId - START_WIDGET_ID + 1;
-                RedrawWidgets(nextId, msg->GetDlg());
-            }
+        if (arrows[0] && msg->itemId == arrows[0]->GetID())
+        {
+            const int previousId = topWidgetId - START_WIDGET_ID - 1;
+            RedrawWidgets(previousId, msg->GetDlg());
+        }
+        else if (arrows[1] && msg->itemId == arrows[1]->GetID())
+        {
+            const int nextId = topWidgetId - START_WIDGET_ID + 1;
+            RedrawWidgets(nextId, msg->GetDlg());
         }
     }
 }

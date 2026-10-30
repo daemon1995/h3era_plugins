@@ -8,7 +8,7 @@ inline const char *Text(const char *key, const char *fallback)
 {
     bool found = false;
     const char *text = EraJS::read(key, found);
-    return found ? text : fallback;
+    return found && text && *text ? text : fallback;
 }
 
 inline int Int(const char *key, int fallback)
@@ -22,7 +22,7 @@ inline bool Enabled(const char *key, bool fallback)
 {
     bool found = false;
     const char *text = EraJS::read(key, found);
-    if (!found)
+    if (!found || !text || !*text)
         return fallback;
     if (!strcmp(text, "true"))
         return true;

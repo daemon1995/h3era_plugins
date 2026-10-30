@@ -8,3 +8,8 @@ Verification/*
 !Verification/PrepareObjectDispatchTests.py
 !Verification/run-object-dispatch.cmd
 !Verification/DwellingInfoTests.cpp
+
+# UI text is required by the plugin; keep its source catalog with the code.
+!lang/
+lang/*
+!lang/RMG_Interface.json

@@ -116,15 +116,16 @@ struct AdditionalConfig
     ConfigEntry quickCombatType{"Combat.QuickCombatType", 0, 0, 3};
     ConfigEntry showCreatureHealthBar{"Combat.ShowCreatureHealthBar", 1, 1};
     ConfigEntry smoothMapScroll{"AdvMap.SmoothMapScroll", 1, 1};
+    ConfigEntry objectGlow{"AdvMap.ObjectGlow", 1, 1};
     ConfigEntry battleSave{"Combat.SaveBeforeBattle", 1, 1};
 
   private:
     void BindCallbacks() noexcept;
 
-    std::array<ConfigEntry *, 8> Entries() noexcept
+    std::array<ConfigEntry *, 9> Entries() noexcept
     {
         return {{&alternativeButtonClick, &backgroundSound, &quickAutoResolve, &battleQueue, &quickCombatType,
-                 &showCreatureHealthBar, &smoothMapScroll, &battleSave}};
+                 &showCreatureHealthBar, &smoothMapScroll, &objectGlow, &battleSave}};
     }
 
   protected:

@@ -1,0 +1,233 @@
+{
+  "subject": "Game Bug Fixes H3API MapSize patch sites",
+  "baseline_executable": "h3era.exe (user-supplied, not redistributed)",
+  "sha256": "451e208cb2985bca75330f0e3c52f89f9219c0c3701bc6e1f354217890c36181",
+  "pe_image_base": "0x00400000",
+  "note": "Signatures show unmodified bytes in supplied exe, not whether XXL at runtime patches these addresses.",
+  "sites": [
+    {
+      "address": 7368155,
+      "address_hex": "0x00706DDB",
+      "length": 6,
+      "kind": "WriteHiHook",
+      "original_hex": "55 8b ec 83 ec 20",
+      "source_line": 232
+    },
+    {
+      "address": 7369342,
+      "address_hex": "0x0070727E",
+      "length": 6,
+      "kind": "WriteHiHook",
+      "original_hex": "55 8b ec 83 ec 20",
+      "source_line": 233
+    },
+    {
+      "address": 7369978,
+      "address_hex": "0x007074FA",
+      "length": 6,
+      "kind": "WriteHiHook",
+      "original_hex": "55 8b ec 83 ec 1c",
+      "source_line": 234
+    },
+    {
+      "address": 7373760,
+      "address_hex": "0x007083C0",
+      "length": 6,
+      "kind": "WriteHiHook",
+      "original_hex": "55 8b ec 83 ec 30",
+      "source_line": 235
+    },
+    {
+      "address": 7368209,
+      "address_hex": "0x00706E11",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "90 00 00 00",
+      "source_line": 238
+    },
+    {
+      "address": 7368240,
+      "address_hex": "0x00706E30",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "90 00 00 00",
+      "source_line": 239
+    },
+    {
+      "address": 7839352,
+      "address_hex": "0x00779E78",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "90 00 00 00",
+      "source_line": 241
+    },
+    {
+      "address": 7839383,
+      "address_hex": "0x00779E97",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "90 00 00 00",
+      "source_line": 242
+    },
+    {
+      "address": 7678740,
+      "address_hex": "0x00752B14",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "90 00 00 00",
+      "source_line": 244
+    },
+    {
+      "address": 7678771,
+      "address_hex": "0x00752B33",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "90 00 00 00",
+      "source_line": 245
+    },
+    {
+      "address": 7837071,
+      "address_hex": "0x0077958F",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 253
+    },
+    {
+      "address": 7837253,
+      "address_hex": "0x00779645",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 254
+    },
+    {
+      "address": 7837445,
+      "address_hex": "0x00779705",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 255
+    },
+    {
+      "address": 7837627,
+      "address_hex": "0x007797BB",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 256
+    },
+    {
+      "address": 7837830,
+      "address_hex": "0x00779886",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 257
+    },
+    {
+      "address": 7838013,
+      "address_hex": "0x0077993D",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 258
+    },
+    {
+      "address": 7838206,
+      "address_hex": "0x007799FE",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 259
+    },
+    {
+      "address": 7838389,
+      "address_hex": "0x00779AB5",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 260
+    },
+    {
+      "address": 7370200,
+      "address_hex": "0x007075D8",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 263
+    },
+    {
+      "address": 7370279,
+      "address_hex": "0x00707627",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 264
+    },
+    {
+      "address": 7841584,
+      "address_hex": "0x0077A730",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 267
+    },
+    {
+      "address": 7841664,
+      "address_hex": "0x0077A780",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 268
+    },
+    {
+      "address": 7841690,
+      "address_hex": "0x0077A79A",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 269
+    },
+    {
+      "address": 7841712,
+      "address_hex": "0x0077A7B0",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "62 35 93 02",
+      "source_line": 270
+    },
+    {
+      "address": 7842073,
+      "address_hex": "0x0077A919",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 273
+    },
+    {
+      "address": 7842146,
+      "address_hex": "0x0077A962",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 274
+    },
+    {
+      "address": 7882048,
+      "address_hex": "0x00784540",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "60 35 93 02",
+      "source_line": 275
+    },
+    {
+      "address": 7882041,
+      "address_hex": "0x00784539",
+      "length": 4,
+      "kind": "WriteDword",
+      "original_hex": "90 00 00 00",
+      "source_line": 276
+    }
+  ]
+}

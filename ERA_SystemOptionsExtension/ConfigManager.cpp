@@ -6,6 +6,7 @@
 #include "MapScroller.h"
 #include "SoundSettings.h"
 #include "framework.h"
+#include "../headers/EraPluginsAPI/ErmFunctionsAPI.h"
 #include <cstddef>
 #include <cstring>
 
@@ -107,6 +108,26 @@ void ApplyHealthBar(const ConfigEntry &entry, const EOptionChangeSource)
 void ApplySmoothMapScroll(const ConfigEntry &entry, const EOptionChangeSource)
 {
     scroll::MapScroller::ApplySmoothScrollState(entry.value);
+}
+void ApplyObjectGlow(const ConfigEntry &entry, const EOptionChangeSource)
+{
+    if (const auto setEnabled = erm_functions::FindObjectGlowControl())
+        setEnabled(entry.value);
+}
+void __stdcall RegisterObjectGlowDefaults(Era::TEvent *)
+{
+    const auto module = GetModuleHandleA(erm_functions::PLUGIN_NAME);
+    const auto setType = module ? reinterpret_cast<erm_functions::SetObjectGlow>(
+                                     GetProcAddress(module, "Erm_SetObjectGlow"))
+                               : nullptr;
+    if (setType)
+    {
+        // Defaults from HotAPatches_Cpp.md: garden, water wheel, windmill, warehouse.
+        const int types[] = {eObject::MYSTICAL_GARDEN, eObject::WATER_WHEEL, eObject::WINDMILL, 142};
+        for (const int type : types)
+            setType(type, erm_functions::ANY_SUBTYPE, TRUE);
+    }
+    ApplyObjectGlow(AdditionalConfig::Get().objectGlow, EOptionChangeSource::InitialLoad);
 }
 BOOL ReadHealth(LPCSTR key, char *buffer)
 {
@@ -221,6 +242,7 @@ void AdditionalConfig::BindCallbacks() noexcept
     quickCombatType.applyCallback = cmbsttngs::CombatSettings::ApplyQuickCombatType;
     showCreatureHealthBar.applyCallback = ApplyHealthBar;
     smoothMapScroll.applyCallback = ApplySmoothMapScroll;
+    objectGlow.applyCallback = ApplyObjectGlow;
 }
 void AdditionalConfig::InitialApply()
 {
@@ -230,6 +252,14 @@ void AdditionalConfig::InitialApply()
     cmbsttngs::CombatSettings::Get();
     for (auto *entry : Entries())
         entry->Apply(EOptionChangeSource::InitialLoad);
+    // API registrations are map-local and must be restored after loading a game.
+    static bool glowEventsRegistered = false;
+    if (!glowEventsRegistered)
+    {
+        Era::RegisterHandler(RegisterObjectGlowDefaults, "OnGameEnter");
+        glowEventsRegistered = true;
+    }
+    RegisterObjectGlowDefaults(nullptr);
 }
 BOOL AdditionalConfig::Save()
 {
@@ -255,7 +285,7 @@ BOOL AdditionalConfig::SaveIfDirty(const BOOL reportError)
     {
         bool translated = false;
         LPCSTR format = EraJS::read("era.opt.system.saveError", translated);
-        if (!translated)
+        if (!translated || !format || !*format)
             format = "Unable to save settings to %s. Changes remain active; saving will be retried.";
         H3Messagebox::Show(H3String::Format(format, fileName));
     }

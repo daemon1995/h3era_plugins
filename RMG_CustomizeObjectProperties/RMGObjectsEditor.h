@@ -255,6 +255,7 @@ struct ObjectLimitsInfo
 
     INT32 mapTypesLimit[H3_MAX_OBJECTS]{};
     INT32 zoneTypeLimits[H3_MAX_OBJECTS]{};
+    bool zoneLimitsPerSubtype[H3_MAX_OBJECTS]{};
 
     ADDRESS RMG_ObjectTypeZoneLimit = 0x69D244;
     ADDRESS RMG_ObjectTypeMapLimit = 0x69CE9C;

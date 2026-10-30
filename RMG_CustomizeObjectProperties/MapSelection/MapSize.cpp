@@ -1,6 +1,7 @@
 // XXL map-size hooks, ported from JackSlater/XXL.
 
 #include "../pch.h"
+#include "../Assets.h"
 
 #include "HdTemplateCompatibility.h"
 
@@ -107,13 +108,13 @@ _LHF_(LoHook_MapSelectDlg_Create_SizeButtons)
     H3Vector<H3DlgItem *> *items_lst = reinterpret_cast<H3Vector<H3DlgItem *> *>(c->edi);
 
     // H-карты.
-    items_lst->Append(H3DlgDefButton::Create(211, 52, 41, 33, HMAP_DLGITEM_ID, "SCHGBUT.def", 0, 1, 0, 0));
+    items_lst->Append(H3DlgDefButton::Create(211, 52, 41, 33, HMAP_DLGITEM_ID, rmgassets::SCHGBUT_DEF, 0, 1, 0, 0));
 
     // XH-карты.
-    items_lst->Append(H3DlgDefButton::Create(258, 52, 41, 33, XHMAP_DLGITEM_ID, "SCXHBUT.def", 0, 1, 0, 0));
+    items_lst->Append(H3DlgDefButton::Create(258, 52, 41, 33, XHMAP_DLGITEM_ID, rmgassets::SCXHBUT_DEF, 0, 1, 0, 0));
 
     // G-карты.
-    items_lst->Append(H3DlgDefButton::Create(305, 52, 41, 33, GMAP_DLGITEM_ID, "SCGTBUT.def", 0, 1, 0, 0));
+    items_lst->Append(H3DlgDefButton::Create(305, 52, 41, 33, GMAP_DLGITEM_ID, rmgassets::SCGTBUT_DEF, 0, 1, 0, 0));
 
     return EXEC_DEFAULT;
 }
@@ -129,13 +130,13 @@ void __stdcall HiHook_MapSelectDlg_RandMapDlgCreate(HiHook *h, H3SelectScenarioD
     H3Vector<H3DlgItem *> *items_lst = &this_->GetList();
 
     // Генерация H-карты.
-    items_lst->Append(H3DlgDefButton::Create(230, 81, 41, 33, HRMAP_DLGITEM_ID, "RanSizHG.def", 0, 1, 0, 0));
+    items_lst->Append(H3DlgDefButton::Create(230, 81, 41, 33, HRMAP_DLGITEM_ID, rmgassets::RANSIZHG_DEF, 0, 1, 0, 0));
 
     // Генерация XH-карты.
-    items_lst->Append(H3DlgDefButton::Create(273, 81, 41, 33, XHRMAP_DLGITEM_ID, "RanSizXH.def", 0, 1, 0, 0));
+    items_lst->Append(H3DlgDefButton::Create(273, 81, 41, 33, XHRMAP_DLGITEM_ID, rmgassets::RANSIZXH_DEF, 0, 1, 0, 0));
 
     // Генерация G-карты.
-    items_lst->Append(H3DlgDefButton::Create(316, 81, 41, 33, GRMAP_DLGITEM_ID, "RanSizGT.def", 0, 1, 0, 0));
+    items_lst->Append(H3DlgDefButton::Create(316, 81, 41, 33, GRMAP_DLGITEM_ID, rmgassets::RANSIZGT_DEF, 0, 1, 0, 0));
 
     HdTemplateCompatibility_Refresh(this_);
 
@@ -871,7 +872,7 @@ _LHF_(LoHook_00567a0b)
 {
     H3SelectScenarioDialog *dlg = *reinterpret_cast<H3SelectScenarioDialog **>(c->ebp - 0x34);
     sprintf_s(h3_TextBuffer, 0x300u, "%dx%d", P_Game->mapInfo.mapDimension, P_Game->mapInfo.mapDimension);
-    dlg->AddItem(H3DlgText::Create(709, 49, 35, 16, h3_TextBuffer, "tiny.fnt", 4, 100, 5, 0), false);
+    dlg->AddItem(H3DlgText::Create(709, 49, 35, 16, h3_TextBuffer, rmgassets::TINY_FNT, 4, 100, 5, 0), false);
 
     return EXEC_DEFAULT;
 }

@@ -1,0 +1,3122 @@
+[
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x525ED1",
+    "line": 191
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x42c830",
+    "line": 194
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4B3C80",
+    "line": 199
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x426F41",
+    "line": 203
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x426FA1",
+    "line": 206
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x426FA3",
+    "line": 207
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x41EFA6",
+    "line": 213
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x41EFAC",
+    "line": 214
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x431392",
+    "line": 217
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0436200",
+    "line": 221
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x426D17",
+    "line": 226
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x426D4B",
+    "line": 229
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x424120",
+    "line": 232
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x42426D",
+    "line": 236
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x424412",
+    "line": 239
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x0423F47",
+    "line": 242
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x42C778",
+    "line": 246
+  },
+  {
+    "module": "AIFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x42C8AD",
+    "line": 247
+  },
+  {
+    "module": "AudioFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x004626CF",
+    "line": 650
+  },
+  {
+    "module": "AudioFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x00462C3A",
+    "line": 651
+  },
+  {
+    "module": "AudioFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x005998F8",
+    "line": 652
+  },
+  {
+    "module": "AudioFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x043D8DE",
+    "line": 653
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteByte",
+    "address": "0x41E3A3",
+    "line": 37
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteByte",
+    "address": "0x41E4DF",
+    "line": 38
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteByte",
+    "address": "0x465943",
+    "line": 39
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteByte",
+    "address": "0x4639FE",
+    "line": 42
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteByte",
+    "address": "0x463A31",
+    "line": 43
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4E4D40",
+    "line": 47
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x465656",
+    "line": 50
+  },
+  {
+    "module": "Ben.cpp",
+    "kind": "WriteDword",
+    "address": "0x534621",
+    "line": 54
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x07176D1",
+    "line": 936
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x05D1620",
+    "line": 942
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x71C7A7",
+    "line": 947
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x71C7B3",
+    "line": 948
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x71C7D2",
+    "line": 949
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04E36CE",
+    "line": 955
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x076B46D",
+    "line": 957
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x071960B",
+    "line": 961
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x07184B0",
+    "line": 965
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0719BE3",
+    "line": 969
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x07662B2",
+    "line": 973
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x076631A",
+    "line": 974
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0759749",
+    "line": 978
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0759870",
+    "line": 979
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0759A24",
+    "line": 980
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0525985",
+    "line": 987
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0525A3C",
+    "line": 990
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0525B90",
+    "line": 993
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0528090",
+    "line": 996
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0428580",
+    "line": 999
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0527FE0",
+    "line": 1002
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x052C140",
+    "line": 1005
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0524850",
+    "line": 1008
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0526333",
+    "line": 1011
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x052587F",
+    "line": 1013
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x042C3B0",
+    "line": 1016
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x04D7B70",
+    "line": 1019
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x0719993",
+    "line": 1037
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x07199A9",
+    "line": 1038
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x0719A55",
+    "line": 1053
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x0719A6B",
+    "line": 1054
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x476020",
+    "line": 1009
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x523FE6",
+    "line": 1012
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x711E7F",
+    "line": 1015
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x711F49",
+    "line": 1016
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x5029C0",
+    "line": 1019
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x4A7E63",
+    "line": 1022
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4A7E8A",
+    "line": 1023
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A4AFE",
+    "line": 1026
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x762601",
+    "line": 1030
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x70DB3B",
+    "line": 1033
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x41DBE8",
+    "line": 1039
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x4F4B57",
+    "line": 1042
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x4026FA",
+    "line": 1043
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x402751",
+    "line": 1045
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04027FE",
+    "line": 1048
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x678344",
+    "line": 1052
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x678344",
+    "line": 1053
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x678344",
+    "line": 1054
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x070561A",
+    "line": 1058
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x073A847",
+    "line": 1063
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x073A850",
+    "line": 1064
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x075D42C",
+    "line": 1069
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0713429",
+    "line": 1073
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04AA153",
+    "line": 1077
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4708FC",
+    "line": 1080
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x464044",
+    "line": 1083
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteDword",
+    "address": "0x6408D8",
+    "line": 1084
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4AA979",
+    "line": 1089
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4aa820",
+    "line": 1090
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04AA9B3",
+    "line": 1091
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04AA9BF",
+    "line": 1092
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04AA9EA",
+    "line": 1093
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x041C879",
+    "line": 1098
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x05A065D",
+    "line": 1102
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4DA8FC",
+    "line": 1106
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x05A881C",
+    "line": 1110
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x441B25",
+    "line": 1114
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x441BD6",
+    "line": 1115
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x41E74A",
+    "line": 1118
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x478DA2",
+    "line": 1120
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x478EBC",
+    "line": 1122
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x441982",
+    "line": 1126
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x441AFF",
+    "line": 1128
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0463606",
+    "line": 1133
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteWord",
+    "address": "0x40D979",
+    "line": 1202
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x70BF78",
+    "line": 1211
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x070AA96",
+    "line": 1212
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x441b5d",
+    "line": 1215
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A2476",
+    "line": 1221
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4814C0",
+    "line": 1226
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x4814DD",
+    "line": 1228
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x4814DD",
+    "line": 1229
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x4814DD",
+    "line": 1230
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4806D9",
+    "line": 1233
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x07060AC",
+    "line": 1237
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteJmp",
+    "address": "0x0705F42",
+    "line": 1238
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x505E15",
+    "line": 1241
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x505E15",
+    "line": 1242
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x5C1051",
+    "line": 1245
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4C948F",
+    "line": 1247
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4C9497",
+    "line": 1248
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4C950F",
+    "line": 1249
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5A1C17",
+    "line": 1256
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x46681B",
+    "line": 1260
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4B09D0",
+    "line": 1263
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x403F00",
+    "line": 1266
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x415D4D",
+    "line": 1267
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteWord",
+    "address": "0x4F508F",
+    "line": 1271
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteWord",
+    "address": "0x4F50DE",
+    "line": 1272
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteWord",
+    "address": "0x4F511A",
+    "line": 1273
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteByte",
+    "address": "0x4F4ED2",
+    "line": 1275
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteJmp",
+    "address": "0x0441C75",
+    "line": 1283
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteJmp",
+    "address": "0x0440017",
+    "line": 1284
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4419D0",
+    "line": 1290
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x43FE80",
+    "line": 1291
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x075C9A1",
+    "line": 1295
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x075CA66",
+    "line": 1296
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x075CAA6",
+    "line": 1297
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x43FA11",
+    "line": 1299
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x43FE0B",
+    "line": 1300
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x43FA7C",
+    "line": 1301
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4418A5",
+    "line": 1302
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteJmp",
+    "address": "0x43FA16",
+    "line": 1305
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteJmp",
+    "address": "0x43FE10",
+    "line": 1306
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x408ff7",
+    "line": 1311
+  },
+  {
+    "module": "GameLogic.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x408ff2",
+    "line": 1313
+  },
+  {
+    "module": "GamePatches.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4EDD65",
+    "line": 45
+  },
+  {
+    "module": "GamePatches.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4EE1B4",
+    "line": 46
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5ED3EF",
+    "line": 531
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5ED95F",
+    "line": 532
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EDDF2",
+    "line": 533
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EE372",
+    "line": 534
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EEC9C",
+    "line": 535
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EAEE1",
+    "line": 538
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EB6D3",
+    "line": 539
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5E6F1F",
+    "line": 544
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5E7E82",
+    "line": 546
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EE4C5",
+    "line": 549
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EE4F8",
+    "line": 550
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EE601",
+    "line": 551
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EE73E",
+    "line": 552
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EE3D5",
+    "line": 553
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EE430",
+    "line": 554
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5ED1CF",
+    "line": 555
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EE8A8",
+    "line": 556
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EC2DA",
+    "line": 557
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EC30D",
+    "line": 558
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EC656",
+    "line": 559
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EC694",
+    "line": 560
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EC7DD",
+    "line": 561
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EA9DC",
+    "line": 562
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5EC916",
+    "line": 563
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EEB48",
+    "line": 566
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE3BA",
+    "line": 569
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE81A",
+    "line": 572
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EAA59",
+    "line": 575
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EAA7B",
+    "line": 577
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EAAC0",
+    "line": 579
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EC8EA",
+    "line": 581
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE50B",
+    "line": 584
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE619",
+    "line": 587
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE756",
+    "line": 588
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE8C0",
+    "line": 589
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EC7F5",
+    "line": 590
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5ED1E7",
+    "line": 591
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EA9F9",
+    "line": 592
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EC2F5",
+    "line": 595
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EC67C",
+    "line": 596
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EE41B",
+    "line": 597
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EE4E0",
+    "line": 598
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EEBAB",
+    "line": 599
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EE58F",
+    "line": 600
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EE6CC",
+    "line": 601
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EE55D",
+    "line": 604
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EE69F",
+    "line": 605
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5EC5E8",
+    "line": 606
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE57C",
+    "line": 609
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE6BC",
+    "line": 611
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE62A",
+    "line": 614
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5EE767",
+    "line": 616
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x525ED1",
+    "line": 618
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x5D47B3",
+    "line": 637
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5C5C1B",
+    "line": 640
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x462D98",
+    "line": 643
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x52F7CE",
+    "line": 646
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5310F1",
+    "line": 647
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x5F3D9F",
+    "line": 650
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5F3DA4",
+    "line": 651
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x5F3DF5",
+    "line": 652
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x5F3DFA",
+    "line": 653
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x79984C",
+    "line": 656
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x799850",
+    "line": 657
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x5D7ACA",
+    "line": 661
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x449A41",
+    "line": 663
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x565E4A",
+    "line": 665
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x4F90CB",
+    "line": 668
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x749093",
+    "line": 672
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x74909C",
+    "line": 673
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x7490B0",
+    "line": 674
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x7490B6",
+    "line": 675
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x7490CD",
+    "line": 676
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x71F3FC",
+    "line": 680
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x71F5BA",
+    "line": 681
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x71F5D3",
+    "line": 682
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x7217BB",
+    "line": 683
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x721B03",
+    "line": 684
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x722792",
+    "line": 685
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x723219",
+    "line": 686
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x723657",
+    "line": 687
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x7238D8",
+    "line": 688
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x723ACB",
+    "line": 689
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x723CBD",
+    "line": 690
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x723F1C",
+    "line": 691
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x462C6C",
+    "line": 694
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5A368C",
+    "line": 697
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteJmp",
+    "address": "0x5A365D",
+    "line": 699
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteJmp",
+    "address": "0x5A37B9",
+    "line": 700
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x5641A2",
+    "line": 703
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x55205E",
+    "line": 707
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x552060",
+    "line": 708
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x760A4F",
+    "line": 711
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x4A8BBE",
+    "line": 714
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x05F4E7F",
+    "line": 717
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04F3CD2",
+    "line": 720
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04F396A",
+    "line": 721
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x04F3B58",
+    "line": 722
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x677750",
+    "line": 725
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x677750",
+    "line": 726
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x041175B",
+    "line": 730
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x04D9B44",
+    "line": 737
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x05B136C",
+    "line": 740
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x05AA140",
+    "line": 743
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x04E8031",
+    "line": 746
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x046D966",
+    "line": 749
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x043E482",
+    "line": 750
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x051CB3F",
+    "line": 754
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x051CB41",
+    "line": 755
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteDword",
+    "address": "0x051DB0F",
+    "line": 757
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x051DC2D",
+    "line": 758
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteByte",
+    "address": "0x051DB7B",
+    "line": 759
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051CAED",
+    "line": 761
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051CD5E",
+    "line": 762
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051D096",
+    "line": 763
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051D1E5",
+    "line": 764
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051D4EE",
+    "line": 765
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051D810",
+    "line": 766
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051DBE8",
+    "line": 767
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x051DE00",
+    "line": 768
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x587272",
+    "line": 771
+  },
+  {
+    "module": "Graphics.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4EEAF2",
+    "line": 777
+  },
+  {
+    "module": "HdModFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x54A264",
+    "line": 29
+  },
+  {
+    "module": "HdModFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x54A264",
+    "line": 42
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0408DC5",
+    "line": 120
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4082CD",
+    "line": 123
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x409E2F",
+    "line": 124
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4AA7E5",
+    "line": 125
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x41C5F2",
+    "line": 126
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0418D8D",
+    "line": 131
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0418E1D",
+    "line": 132
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0419153",
+    "line": 133
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4650BF",
+    "line": 205
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5F37BE",
+    "line": 207
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x441330",
+    "line": 211
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x44151D",
+    "line": 214
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x441792",
+    "line": 217
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x43F620",
+    "line": 222
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x43F63B",
+    "line": 225
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x43F963",
+    "line": 228
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x43FA66",
+    "line": 231
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x43FD45",
+    "line": 234
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4400E7",
+    "line": 241
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4430A3",
+    "line": 246
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x443CA3",
+    "line": 251
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4438B0",
+    "line": 256
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4E393B",
+    "line": 263
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x4E3945",
+    "line": 264
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x44AFB7",
+    "line": 267
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x44AFCB",
+    "line": 268
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x44AFDA",
+    "line": 269
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x44B12E",
+    "line": 272
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x43DC56",
+    "line": 275
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x43DC6F",
+    "line": 276
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x43DCDF",
+    "line": 279
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x44BEF3",
+    "line": 282
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x44BF07",
+    "line": 283
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x44BF16",
+    "line": 284
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x44BFF6",
+    "line": 287
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x44BFFF",
+    "line": 288
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x44C004",
+    "line": 289
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x44BE90",
+    "line": 292
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x44C18A",
+    "line": 295
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x44C156",
+    "line": 298
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x4382b0",
+    "line": 301
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4383e2",
+    "line": 302
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteByte",
+    "address": "0x5f4309",
+    "line": 303
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x4355B0",
+    "line": 308
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x438C26",
+    "line": 309
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x528A95",
+    "line": 314
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x528D93",
+    "line": 317
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x528277",
+    "line": 320
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x528288",
+    "line": 321
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x706DDB",
+    "line": 220
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x70727E",
+    "line": 221
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x7074FA",
+    "line": 222
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x7083C0",
+    "line": 223
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x706E0F",
+    "line": 226
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x706E2F",
+    "line": 227
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x779E76",
+    "line": 229
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x779E96",
+    "line": 230
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x752B11",
+    "line": 232
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x752B30",
+    "line": 233
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77958D",
+    "line": 241
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x779643",
+    "line": 242
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x779703",
+    "line": 243
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x7797B9",
+    "line": 244
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x779884",
+    "line": 245
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77993B",
+    "line": 246
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x7799FC",
+    "line": 247
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x779AB3",
+    "line": 248
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x7075D6",
+    "line": 251
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x707625",
+    "line": 252
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77A72E",
+    "line": 255
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77A77F",
+    "line": 256
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77A797",
+    "line": 257
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77A7AD",
+    "line": 258
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77A917",
+    "line": 261
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x77A960",
+    "line": 262
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x78453F",
+    "line": 263
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "kind": "WriteDword",
+    "address": "0x784538",
+    "line": 264
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x464D75",
+    "line": 506
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x445CF9",
+    "line": 508
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x43FF92",
+    "line": 510
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x43FFF4",
+    "line": 512
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x714BE5",
+    "line": 516
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteByte",
+    "address": "0x75C82C",
+    "line": 519
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteJmp",
+    "address": "0x71C685",
+    "line": 523
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x71C685",
+    "line": 524
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4AC5F5",
+    "line": 527
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x47835B",
+    "line": 530
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x478360",
+    "line": 533
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x44307A",
+    "line": 536
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x726DE4",
+    "line": 540
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteByte",
+    "address": "0x767A05",
+    "line": 545
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteByte",
+    "address": "0x767A2A",
+    "line": 546
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteDword",
+    "address": "0x724A9F",
+    "line": 550
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x724AC5",
+    "line": 551
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteDword",
+    "address": "0x74ED27",
+    "line": 552
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x74ED5C",
+    "line": 553
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4E64FA",
+    "line": 556
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4E64D1",
+    "line": 557
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4E4E7E",
+    "line": 558
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5D15D0",
+    "line": 561
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5D16B0",
+    "line": 562
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x759C78",
+    "line": 567
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x759E7D",
+    "line": 568
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x717B37",
+    "line": 571
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x717FAB",
+    "line": 572
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4B3309",
+    "line": 577
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4B352F",
+    "line": 580
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4B37A5",
+    "line": 582
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x4B37BC",
+    "line": 583
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteByte",
+    "address": "0x757365",
+    "line": 587
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteByte",
+    "address": "0x757369",
+    "line": 588
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0447D9C",
+    "line": 593
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0447E4A",
+    "line": 594
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x5F37EA",
+    "line": 597
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x5F37F8",
+    "line": 598
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x5F3800",
+    "line": 599
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4E800F",
+    "line": 609
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4436EA",
+    "line": 613
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x443615",
+    "line": 614
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x43AF42",
+    "line": 618
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5A76C6",
+    "line": 621
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x46907B",
+    "line": 623
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x440935",
+    "line": 625
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x07674FA",
+    "line": 629
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0767644",
+    "line": 632
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x071C6CF",
+    "line": 635
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x0469670",
+    "line": 636
+  },
+  {
+    "module": "Monsters.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x766E4E",
+    "line": 642
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x76B889",
+    "line": 210
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x76B97B",
+    "line": 211
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x441BAA",
+    "line": 275
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x41EAD2",
+    "line": 278
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x44A950",
+    "line": 280
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5C1867",
+    "line": 282
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x42758F",
+    "line": 283
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x42CA6B",
+    "line": 284
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x52846A",
+    "line": 285
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x76E7D7",
+    "line": 288
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x76E80B",
+    "line": 289
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x76E7D7",
+    "line": 290
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x76CB70",
+    "line": 295
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x76CB76",
+    "line": 296
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x76D4B3",
+    "line": 300
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x76B39E",
+    "line": 305
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x492A56",
+    "line": 309
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteDword",
+    "address": "0x492A63",
+    "line": 310
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x769A52",
+    "line": 314
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteByte",
+    "address": "0x769A5C",
+    "line": 315
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x076C1AA",
+    "line": 321
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteByte",
+    "address": "0x7695A0",
+    "line": 322
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x076949E",
+    "line": 324
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0705FDD",
+    "line": 330
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x04A9F93",
+    "line": 331
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteJmp",
+    "address": "0x0706059",
+    "line": 333
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x075A615",
+    "line": 337
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteByte",
+    "address": "0x0770BD6",
+    "line": 341
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteByte",
+    "address": "0x0770C17",
+    "line": 342
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteByte",
+    "address": "0x0705BDB",
+    "line": 345
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteByte",
+    "address": "0x0706053",
+    "line": 347
+  },
+  {
+    "module": "Npc.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x0770967",
+    "line": 348
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4DAB67",
+    "line": 390
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4E2DFE",
+    "line": 391
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A4B7F",
+    "line": 392
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x49F8A2",
+    "line": 393
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4E2D73",
+    "line": 394
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x574157",
+    "line": 395
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x49E543",
+    "line": 396
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A786E",
+    "line": 397
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A35B0",
+    "line": 398
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A31D4",
+    "line": 399
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A2410",
+    "line": 400
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A3AC0",
+    "line": 401
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A1D50",
+    "line": 402
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5BDEA0",
+    "line": 403
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5BDF55",
+    "line": 404
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5BE143",
+    "line": 405
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5BE224",
+    "line": 406
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A2F92",
+    "line": 407
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x463976",
+    "line": 408
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4639A4",
+    "line": 409
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4639D2",
+    "line": 410
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x463A2F",
+    "line": 411
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4639FC",
+    "line": 412
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x463A64",
+    "line": 413
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x42DDA6",
+    "line": 255
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x42437D",
+    "line": 258
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x426FE4",
+    "line": 260
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x426EE0",
+    "line": 261
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x426390",
+    "line": 262
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x42443B",
+    "line": 263
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4274D4",
+    "line": 264
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5F5320",
+    "line": 268
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5F4C99",
+    "line": 269
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5D52CA",
+    "line": 272
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x541B6A",
+    "line": 275
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x56B344",
+    "line": 278
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x43020E",
+    "line": 279
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x49E4EC",
+    "line": 282
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x446BCD",
+    "line": 285
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteJmp",
+    "address": "0x464DF1",
+    "line": 286
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x49C021",
+    "line": 289
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x4A763F",
+    "line": 290
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x4A9423",
+    "line": 291
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x4AA82E",
+    "line": 292
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x4C9662",
+    "line": 293
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x4FD164",
+    "line": 294
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x505C9F",
+    "line": 295
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteByte",
+    "address": "0x52CD36",
+    "line": 296
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x4FD12A",
+    "line": 298
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x505C75",
+    "line": 299
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x52CD26",
+    "line": 300
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x44AA4F",
+    "line": 301
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x44AA58",
+    "line": 302
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x42D922",
+    "line": 303
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x42DA39",
+    "line": 304
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x42DAD9",
+    "line": 305
+  },
+  {
+    "module": "SammonCreatures.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5A7095",
+    "line": 238
+  },
+  {
+    "module": "SammonCreatures.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x71E031",
+    "line": 240
+  },
+  {
+    "module": "SammonCreatures.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x7679F5",
+    "line": 245
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4D7C4B",
+    "line": 116
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4A3D9A",
+    "line": 119
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4DA990",
+    "line": 122
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x476da0",
+    "line": 125
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x04E2540",
+    "line": 128
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4E2C70",
+    "line": 131
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4ad4cc",
+    "line": 134
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x5CEA83",
+    "line": 251
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHexPatch",
+    "address": "0x5CEACD",
+    "line": 252
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x59BFFD",
+    "line": 255
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5A1C7B",
+    "line": 258
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5F8545",
+    "line": 261
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x5A5522",
+    "line": 264
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x5A84BD",
+    "line": 267
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x4915B7",
+    "line": 270
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteCodePatch",
+    "address": "0x464DF1",
+    "line": 273
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteLoHook",
+    "address": "0x40C2D3",
+    "line": 276
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x05A3C60",
+    "line": 279
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteWord",
+    "address": "0x041D9E3",
+    "line": 282
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x05BE430",
+    "line": 285
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4D9763",
+    "line": 292
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4D9786",
+    "line": 293
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4D9798",
+    "line": 294
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4C2445",
+    "line": 296
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4D961F",
+    "line": 298
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4D9673",
+    "line": 299
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4D9720",
+    "line": 300
+  },
+  {
+    "module": "Spells.cpp",
+    "kind": "WriteHiHook",
+    "address": "0x4D96C8",
+    "line": 301
+  }
+]

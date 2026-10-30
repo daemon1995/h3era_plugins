@@ -46,5 +46,5 @@ std::vector<std::string> Profiles();
 bool ValidProfileName(const std::string &name);
 void Install();
 void ShowDialog();
-const char *Text(const char *key, const char *fallback);
+const char *Text(const char *key);
 }

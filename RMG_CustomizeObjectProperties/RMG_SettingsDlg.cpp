@@ -2,12 +2,13 @@
 #include <unordered_map>
 
 #include "pch.h"
+#include "Assets.h"
 
-#include "RMG_SettingsDlg.h"
 #include "AtomicIniSave.h"
 #include "DialogInput.h"
-#include "Wogification/Settings.h"
 #include "MapSelection/RandomMapOptions.h"
+#include "RMG_SettingsDlg.h"
+#include "Wogification/Settings.h"
 
 int GetCreatureBankIndex(const int objType, const int subtype)
 {
@@ -248,7 +249,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
 
     //	auto okBttn = this->CreateOKButton();
 
-    headerPcx = H3DlgPcx16::Create(25, 6, widthDlg - 50, 45, -1, "RMG_back.pcx");
+    headerPcx = H3DlgPcx16::Create(25, 6, widthDlg - 50, 45, -1, rmgassets::RMG_BACK_PCX);
     AddItem(headerPcx);
     // this->background->DarkenArea(25, 6, widthDlg - 50, 45, 80);
 
@@ -264,14 +265,14 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
         BOOL closeDlg; // = false;
 
     } buttosData[5] = {
-        {{-25 - bttnWidth, -50}, "RMG_cncl.def", "cancel", {eVKey::H3VK_ESCAPE, eVKey::H3VK_S}, true, false},
-        {{-33 - bttnWidth * 2, -50}, "RMG_okay.def", "ok", {eVKey::H3VK_ENTER, eVKey::H3VK_SPACEBAR}, true, false},
-        {{25 + 8 + bttnWidth, -50}, "RMG_dflt.def", "default", {eVKey::H3VK_D, 0}, true, false},
-        {{25, -50}, "RanRand.def", "random", {eVKey::H3VK_R, 0}, true, false},
+        {{-25 - bttnWidth, -50}, rmgassets::RMG_CNCL_DEF, "cancel", {eVKey::H3VK_ESCAPE, eVKey::H3VK_S}, true, false},
+        {{-33 - bttnWidth * 2, -50}, rmgassets::RMG_OKAY_DEF, "ok", {eVKey::H3VK_ENTER, eVKey::H3VK_SPACEBAR}, true, false},
+        {{25 + 8 + bttnWidth, -50}, rmgassets::RMG_DFLT_DEF, "default", {eVKey::H3VK_D, 0}, true, false},
+        {{25, -50}, rmgassets::RANRAND_DEF, "random", {eVKey::H3VK_R, 0}, true, false},
         // Keep the help button in the free area to the right of the three
         // page-selector columns. This prevents it from covering a selector
         // when all nine pages are present.
-        {{-25 - bttnWidth, 13}, "RMG_help.def", "help", {eVKey::H3VK_H, 0}, false, false}};
+        {{-25 - bttnWidth, 13}, rmgassets::RMG_HELP_DEF, "help", {eVKey::H3VK_H, 0}, false, false}};
 
     H3DlgDefButton *bttns[5]{}; // = nullptr;
 
@@ -319,7 +320,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
     H3DlgCaptionButton *captionButtons[pagesNum] = {};
     constexpr size_t pageColumns = 5;
 
-    constexpr LPCSTR pageButtonDefName = "GSPBUT2.DEF";
+    constexpr LPCSTR pageButtonDefName = rmgassets::GSPBUT2_DEF;
 
     H3DefLoader pageButtonDef(pageButtonDefName);
 
@@ -369,7 +370,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
         if (hintBar)
         {
             THISCALL_12(H3DlgHintBar *, 0x5BCB70, hintBar, _x, _y, _w, _h, h3_NullString, NH3Dlg::Text::SMALL,
-                        "rmghntbr.pcx", eTextColor::REGULAR, 0, eTextAlignment::MIDDLE_CENTER, 8);
+                        rmgassets::RMGHNTBR_PCX, eTextColor::REGULAR, 0, eTextAlignment::MIDDLE_CENTER, 8);
             AddItem(hintBar);
         }
     }
@@ -466,7 +467,7 @@ VOID RMG_SettingsDlg::OnHelp() const noexcept
     H3Dlg dlg(helpWidth, helpHeight, -1, -1, 0, 1);
 
     H3DefLoader okBttnDef(NH3Dlg::Assets::OKAY32_DEF);
-    H3DefLoader siteBttn("wogcurse.def");
+    H3DefLoader siteBttn(rmgassets::WOGCURSE_DEF);
 
     constexpr int offset = 20;
     const int textWidth = helpWidth - 2 * offset;
@@ -501,9 +502,11 @@ VOID RMG_SettingsDlg::OnHelp() const noexcept
 INT RMG_SettingsDlg::vDialogProc(H3Msg &msg)
 {
     H3Msg event = msg;
-    if (rmginput::BlurOutside(*this,event,[this](H3DlgEdit *edit) { FinishEdit(edit,TRUE); })) isDlgTextEditInput = false;
+    if (rmginput::BlurOutside(*this, event, [this](H3DlgEdit *edit) { FinishEdit(edit, TRUE); }))
+        isDlgTextEditInput = false;
     const int result = H3Dlg::vDialogProc(event);
-    msg = event; return result;
+    msg = event;
+    return result;
 }
 
 BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
@@ -609,8 +612,10 @@ BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
 
 BOOL RMG_SettingsDlg::RemoveEditsFocus(const BOOL save) const noexcept
 {
-    const bool changed = rmginput::BlurAll(*const_cast<RMG_SettingsDlg *>(this),[this,save](H3DlgEdit *edit) { FinishEdit(edit,save); });
-    if (changed) isDlgTextEditInput = false;
+    const bool changed = rmginput::BlurAll(*const_cast<RMG_SettingsDlg *>(this),
+                                           [this, save](H3DlgEdit *edit) { FinishEdit(edit, save); });
+    if (changed)
+        isDlgTextEditInput = false;
     return changed;
 }
 void RMG_SettingsDlg::FinishEdit(H3DlgEdit *edit, BOOL save) const noexcept
@@ -618,9 +623,10 @@ void RMG_SettingsDlg::FinishEdit(H3DlgEdit *edit, BOOL save) const noexcept
     for (auto *page : m_pages)
         if (auto *objects = dynamic_cast<ObjectsPage *>(page))
             for (auto *panel : objects->objectsPanels)
-                if (std::find(std::begin(panel->edits),std::end(panel->edits),edit) != std::end(panel->edits))
+                if (std::find(std::begin(panel->edits), std::end(panel->edits), edit) != std::end(panel->edits))
                 {
-                    if (save) panel->PanelInfoToObjectInfo();
+                    if (save)
+                        panel->PanelInfoToObjectInfo();
                     panel->ObjectInfoToPanelInfo();
                     return;
                 }
@@ -677,10 +683,13 @@ BOOL RMG_SettingsDlg::ReadIniDlgSettings() noexcept
 }
 BOOL RMG_SettingsDlg::WriteIniDlgSettings() const noexcept
 {
-    return rmgsettings::SaveIniAtomically(INI_FILE_PATH, [this](LPCSTR stagePath) {
-        return Era::WriteStrToIni("lastPageId", std::to_string(m_lastPageId).c_str(),
-                                 SETTINGS_INI_SECTION, stagePath) != FALSE;
-    }, true);
+    return rmgsettings::SaveIniAtomically(
+        INI_FILE_PATH,
+        [this](LPCSTR stagePath) {
+            return Era::WriteStrToIni("lastPageId", std::to_string(m_lastPageId).c_str(), SETTINGS_INI_SECTION,
+                                      stagePath) != FALSE;
+        },
+        true);
 }
 
 BOOL RMG_SettingsDlg::SaveRMGObjectsInfo(const BOOL saveIni) const noexcept
@@ -695,13 +704,17 @@ BOOL RMG_SettingsDlg::SaveRMGObjectsInfo(const BOOL saveIni) const noexcept
             for (auto *page : m_pages)
                 if (auto *objectPage = dynamic_cast<ObjectsPage *>(page))
                     for (const auto &object : objectPage->rmgDlgObjects)
-                        if (!object.WriteToINI(stagePath)) success = false;
-            if (!Era::WriteStrToIni("lastPageId", std::to_string(m_lastPageId).c_str(),
-                                    SETTINGS_INI_SECTION, stagePath)) success = false;
+                        if (!object.WriteToINI(stagePath))
+                            success = false;
+            if (!Era::WriteStrToIni("lastPageId", std::to_string(m_lastPageId).c_str(), SETTINGS_INI_SECTION,
+                                    stagePath))
+                success = false;
             if (!Era::WriteStrToIni(INI_ALWAYS_RANDOM, std::to_string(completelyRandomIsPressed != FALSE).c_str(),
-                                    SETTINGS_INI_SECTION, stagePath)) success = false;
+                                    SETTINGS_INI_SECTION, stagePath))
+                success = false;
             return success;
-        })) return FALSE;
+        }))
+        return FALSE;
 
     // Commit runtime values only after the complete settings file is saved.
     for (auto *page : m_pages)
@@ -790,14 +803,14 @@ RMG_SettingsDlg::ObjectsPanel::ObjectsPanel(const int x, const int y, Page *pare
     // First Ceate panel Background + frame
     // add item into page list
 
-    backgroundPcx = H3DlgPcx16::Create(x, y, FIELD_WIDTH, FIELD_HEIGHT, itemId++, "RMG_back.pcx");
+    backgroundPcx = H3DlgPcx16::Create(x, y, FIELD_WIDTH, FIELD_HEIGHT, itemId++, rmgassets::RMG_BACK_PCX);
     if (backgroundPcx)
     {
         items.emplace_back(backgroundPcx);
         items.emplace_back(H3DlgFrame::Create(backgroundPcx, color, itemId++));
     }
 
-    LPCSTR chbxName = "RMG_chbx.def";
+    constexpr LPCSTR chbxName = rmgassets::RMG_CHBX_DEF;
 
     enabledCheckBox = H3DlgDef::Create(x + 3, y + 8, itemId++, chbxName, 0, 1);
     enabledCheckBox->SetHint(EraJS::read("RMG.text.dlg.objectPanel.checkbox.hint"));
@@ -831,12 +844,12 @@ RMG_SettingsDlg::ObjectsPanel::ObjectsPanel(const int x, const int y, Page *pare
     {
         if (edits[i] = H3DlgEdit::Create(DLG_EDITS_X_OFFSET + 100 * i + 22, y + 15, 52, 22, MAX_TEXT_LENGTH,
                                          h3_NullString, h3::NH3Dlg::Text::MEDIUM, 1, eTextAlignment::MIDDLE_CENTER,
-                                         "RMG_edit.pcx", itemId++, 4, 1, 1))
+                                         rmgassets::RMG_EDIT_PCX, itemId++, 4, 1, 1))
             items.emplace_back(edits[i]);
     }
     const int defaultButtonX = items.back()->GetX() + items.back()->GetWidth() + 8;
     //    const int defaultButtonX = items.back()->GetX() + 100;
-    defaultButton = H3DlgDefButton::Create(defaultButtonX, y + 15, itemId++, "RMG_dfmn.def", 0, 1, false, false);
+    defaultButton = H3DlgDefButton::Create(defaultButtonX, y + 15, itemId++, rmgassets::RMG_DFMN_DEF, 0, 1, false, false);
     defaultButton->SetHints(EraJS::read("RMG.text.dlg.objectPanel.default.hint"),
                             EraJS::read("RMG.text.dlg.objectPanel.default.rmc"), false);
 
@@ -895,7 +908,8 @@ const BOOL RMG_SettingsDlg::ObjectsPanel::UnfocusEdits(const BOOL saveChanges) n
     }
     if (changed)
     {
-        if (saveChanges) PanelInfoToObjectInfo();
+        if (saveChanges)
+            PanelInfoToObjectInfo();
         ObjectInfoToPanelInfo();
     }
     return changed;
@@ -984,7 +998,8 @@ H3Msg *__stdcall RMG_SettingsDlg::H3DlgEdit__TranslateInputKey(HiHook *h, H3Inpu
         if (auto *page = dynamic_cast<ObjectsPage *>(instance->m_currentPage))
             for (const auto *panel : page->objectsPanels)
                 for (const auto *edit : panel->edits)
-                    if (edit && edit->IsVisible() && edit->IsFocused()) numericFocused = true;
+                    if (edit && edit->IsVisible() && edit->IsFocused())
+                        numericFocused = true;
     if (numericFocused)
     {
         isDlgTextEditInput = true;
@@ -1378,7 +1393,7 @@ RMG_SettingsDlg::PandoraPage::PandoraPage(H3DlgCaptionButton *captionbttn, const
                                                   static_cast<int>(category.objectsCount));
         category.button = H3DlgCaptionButton::Create(
             categoryX + static_cast<int>(i) * (categoryWidth + categoryGap), categoryY, categoryWidth, categoryHeight,
-            CATEGORY_FIRST_ID + static_cast<int>(i), "ecptsml1.def", caption.String(), NH3Dlg::Text::SMALL, 0, 0, 0, 0,
+            CATEGORY_FIRST_ID + static_cast<int>(i), rmgassets::ECPTSML1_DEF, caption.String(), NH3Dlg::Text::SMALL, 0, 0, 0, 0,
             eTextColor::HIGHLIGHT);
         if (category.button)
         {
@@ -1890,7 +1905,7 @@ RMG_SettingsDlg::ObjectsPage::PageHeader::PageHeader(const int x, const int y, c
     auto dlg = RMG_SettingsDlg::Page::dlg;
 
     // First create columns back
-    backgroundPcx = H3DlgPcx16::Create(x, y, width, height, -1, "RMG_back.pcx");
+    backgroundPcx = H3DlgPcx16::Create(x, y, width, height, -1, rmgassets::RMG_BACK_PCX);
 
     items.emplace_back(backgroundPcx);
 
@@ -1898,8 +1913,7 @@ RMG_SettingsDlg::ObjectsPage::PageHeader::PageHeader(const int x, const int y, c
     items.emplace_back(H3DlgFrame::Create(backgroundPcx, color));
     // dlg->AddItem(H3DlgFrame::Create(backgroundPcx, color));
 
-    // LPCSTR(0x6839DC);
-    LPCSTR defName = 1 ? LPCSTR(0x6839DC) : "ScnrBDn.def";
+    constexpr LPCSTR defName = rmgassets::SLIDEBUV_DEF;
 
     // create frame and description for the map rmgDlgObjects fields
 
@@ -2354,10 +2368,10 @@ _LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_StartButtonClick)
     auto dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
 
     if (mapselection::IsSelectionAuthority())
-    if (auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID))
-    {
-        userRandSeed = atol(edit->GetText());
-    }
+        if (auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID))
+        {
+            userRandSeed = atol(edit->GetText());
+        }
     return EXEC_DEFAULT;
 }
 
@@ -2386,8 +2400,11 @@ _LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_ShowRandomMapsSettings)
             }
         }
         for (int id : {itemIds::DLG_SETTINGS_BUTTON_ID, itemIds::RMG_RANDOMIZE_BUTTON_ID})
-            if (auto* item = dlg->GetH3DlgItem(id))
-                if (mapselection::IsSelectionAuthority()) item->UnShade(); else item->Shade();
+            if (auto *item = dlg->GetH3DlgItem(id))
+                if (mapselection::IsSelectionAuthority())
+                    item->UnShade();
+                else
+                    item->Shade();
     }
 
     return EXEC_DEFAULT;
@@ -2425,11 +2442,14 @@ int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
         {
             const int currentFrame = randomGameButton->GetFrame();
             const bool enableFullRandom = (currentFrame ^ 2) == 2;
-            if (!rmgsettings::SaveIniAtomically(RMG_SettingsDlg::INI_FILE_PATH, [enableFullRandom](LPCSTR stagePath) {
-                    return Era::WriteStrToIni(RMG_SettingsDlg::INI_ALWAYS_RANDOM,
-                                             Era::IntToStr(enableFullRandom).c_str(),
-                                             RMG_SettingsDlg::SETTINGS_INI_SECTION, stagePath) != FALSE;
-                }, true))
+            if (!rmgsettings::SaveIniAtomically(
+                    RMG_SettingsDlg::INI_FILE_PATH,
+                    [enableFullRandom](LPCSTR stagePath) {
+                        return Era::WriteStrToIni(RMG_SettingsDlg::INI_ALWAYS_RANDOM,
+                                                  Era::IntToStr(enableFullRandom).c_str(),
+                                                  RMG_SettingsDlg::SETTINGS_INI_SECTION, stagePath) != FALSE;
+                    },
+                    true))
             {
                 H3Messagebox(EraJS::read("RMG.text.dlg.iniError"));
                 return 0;
@@ -2443,7 +2463,6 @@ int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
             {
                 H3Messagebox::Show(EraJS::read("RMG.text.buttons.random.help"));
             }
-
         }
     }
 
@@ -2480,7 +2499,7 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
         }
 
         // create randomize button
-        H3DefLoader def("RMG_Dice.def");
+        H3DefLoader def(rmgassets::RMG_DICE_DEF);
         if (H3DlgCustomButton *randomGameButton =
                 H3DlgCustomButton::Create(208, 286, def->widthDEF, def->heightDEF, itemIds::RMG_RANDOMIZE_BUTTON_ID,
                                           def->GetName(), SelectScenarioDlgRandomizeProc, 0, 1))
@@ -2506,7 +2525,7 @@ void __stdcall RMG_SettingsDlg::NewScenarioDlg_Create(HiHook *hook, H3SelectScen
         }
         if (H3DlgEdit *textEdit = dlg->CreateEdit(
                 246, 328, 128, 20, 11, EraJS::read("RMG.text.seed.edit"), h3::NH3Dlg::Text::SMALL, eTextColor::REGULAR,
-                eTextAlignment::MIDDLE_CENTER, "rmg_sedt.pcx", itemIds::RMG_SEED_TEXTEDIT_ID, true, 1, 1))
+                eTextAlignment::MIDDLE_CENTER, rmgassets::RMG_SEDT_PCX, itemIds::RMG_SEED_TEXTEDIT_ID, true, 1, 1))
         {
             textEdit->SetAutoredraw(true);
             textEdit->SetHint(EraJS::read("RMG.text.seed.rmc"));
@@ -2646,27 +2665,35 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
 
 H3LoadedPcx16 *RMG_SettingsDlg::CreateWogificationPreview(int type, int subtype)
 {
-    if (!mainSetup || type < 0 || type >= H3_MAX_OBJECTS) return nullptr;
+    if (!mainSetup || type < 0 || type >= H3_MAX_OBJECTS)
+        return nullptr;
     if (type == eObject::MONSTER && subtype >= 0)
     {
         if (auto *def = H3LoadedDef::Load(NH3Dlg::Assets::CREATURE_SMALL))
         {
             GraphicalAttributes preview{};
-            if (def->groupsCount > 0 && def->groups && def->groups[0] && subtype+2 < def->groups[0]->count)
-                preview.objectPcx = CopyDefFrameWithoutTransparentBorder(def,def->GetGroupFrame(0,subtype+2));
+            if (def->groupsCount > 0 && def->groups && def->groups[0] && subtype + 2 < def->groups[0]->count)
+                preview.objectPcx = CopyDefFrameWithoutTransparentBorder(def, def->GetGroupFrame(0, subtype + 2));
             def->Dereference();
-            if (preview.objectPcx) { ResizeObjectPcx(preview); return preview.objectPcx; }
+            if (preview.objectPcx)
+            {
+                ResizeObjectPcx(preview);
+                return preview.objectPcx;
+            }
         }
     }
     for (const auto &a : mainSetup->objectLists[type])
     {
-        if (subtype >= 0 && a.subtype != subtype) continue;
+        if (subtype >= 0 && a.subtype != subtype)
+            continue;
         H3LoadedDef *def = H3LoadedDef::Load(a.defName.String());
-        if (!def) continue;
+        if (!def)
+            continue;
         GraphicalAttributes preview{};
-        preview.objectPcx = CopyDefFrameWithoutTransparentBorder(def, def->GetGroupFrame(0,0));
+        preview.objectPcx = CopyDefFrameWithoutTransparentBorder(def, def->GetGroupFrame(0, 0));
         def->Dereference();
-        if (!preview.objectPcx) continue;
+        if (!preview.objectPcx)
+            continue;
         ResizeObjectPcx(preview);
         return preview.objectPcx;
     }
@@ -2675,9 +2702,9 @@ H3LoadedPcx16 *RMG_SettingsDlg::CreateWogificationPreview(int type, int subtype)
 
 } // namespace rmgdlg
 
-
 #pragma comment(linker, "/EXPORT:RMG_GetDialogObjectInfo=_RMG_GetDialogObjectInfo@12")
-namespace {
+namespace
+{
 void MakeRmgApiKey(rmg_api::ObjectKey &out, const RMGObjectInfo &info, const H3RmgObjectGenerator *generator)
 {
     out = {sizeof(out), info.type, info.subtype, rmg_api::OBJECT, 0, 0, 0};
@@ -2686,57 +2713,66 @@ void MakeRmgApiKey(rmg_api::ObjectKey &out, const RMGObjectInfo &info, const H3R
     if (PandoraVariants::GetKey(generator, pandora))
     {
         out.kind = static_cast<int>(pandora.kind) + 1;
-        out.first = pandora.first; out.second = pandora.second; out.third = pandora.third;
+        out.first = pandora.first;
+        out.second = pandora.second;
+        out.third = pandora.third;
     }
     else if (PrisonVariants::GetKey(generator, prison))
     {
-        out.kind = rmg_api::PRISON; out.first = prison.experience;
+        out.kind = rmg_api::PRISON;
+        out.first = prison.experience;
     }
 }
 void CopyRmgApiInfo(rmg_api::ObjectInfo &out, const RMGObjectInfo &info, int settingsSubtype)
 {
-    out = {sizeof(out), info.type, info.subtype, settingsSubtype, info.enabled,
-           info.mapLimit, info.zoneLimit, info.value, info.density};
+    out = {sizeof(out),   info.type,      info.subtype, settingsSubtype, info.enabled,
+           info.mapLimit, info.zoneLimit, info.value,   info.density};
 }
-}
+} // namespace
 BOOL rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(int index, void *draftPtr, void *currentPtr, void *keyPtr) noexcept
 {
     auto *draft = static_cast<rmg_api::ObjectInfo *>(draftPtr);
     auto *current = static_cast<rmg_api::ObjectInfo *>(currentPtr);
     auto *key = static_cast<rmg_api::ObjectKey *>(keyPtr);
     if ((key && key->structSize < sizeof(*key)) || !instance || index < 0 || !draft || !current ||
-        draft->structSize < sizeof(*draft) || current->structSize < sizeof(*current)) return FALSE;
+        draft->structSize < sizeof(*draft) || current->structSize < sizeof(*current))
+        return FALSE;
     for (auto *page : instance->m_pages)
         if (auto *objects = dynamic_cast<ObjectsPage *>(page))
             for (const auto &object : objects->rmgDlgObjects)
                 if (index-- == 0)
                 {
                     const int subtype = object.objectGenerator
-                        ? RMGObjectInfo::GetSettingsSubtype(object.objectGenerator) : object.objectInfo.subtype;
-                    const auto &committed = object.objectGenerator
-                        ? RMGObjectInfo::CurrentObjectInfo(object.objectGenerator)
-                        : RMGObjectInfo::CurrentObjectInfo(object.objectInfo.type, object.objectInfo.subtype);
-                    if (key) MakeRmgApiKey(*key, object.objectInfo, object.objectGenerator);
+                                            ? RMGObjectInfo::GetSettingsSubtype(object.objectGenerator)
+                                            : object.objectInfo.subtype;
+                    const auto &committed =
+                        object.objectGenerator
+                            ? RMGObjectInfo::CurrentObjectInfo(object.objectGenerator)
+                            : RMGObjectInfo::CurrentObjectInfo(object.objectInfo.type, object.objectInfo.subtype);
+                    if (key)
+                        MakeRmgApiKey(*key, object.objectInfo, object.objectGenerator);
                     CopyRmgApiInfo(*draft, object.objectInfo, subtype);
                     CopyRmgApiInfo(*current, committed, subtype);
                     return TRUE;
                 }
     return FALSE;
 }
-extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetDialogObjectInfo(
-    int index, rmg_api::ObjectInfo *draft, rmg_api::ObjectInfo *current)
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetDialogObjectInfo(int index, rmg_api::ObjectInfo *draft,
+                                                                        rmg_api::ObjectInfo *current)
 {
     return rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(index, draft, current);
 }
-extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetCurrentObjectInfo(
-    int type, int subtype, rmg_api::ObjectInfo *out)
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetCurrentObjectInfo(int type, int subtype,
+                                                                         rmg_api::ObjectInfo *out)
 {
     if (!out || out->structSize < sizeof(*out) || type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
         return FALSE;
     const auto &records = RMGObjectInfo::currentRMGObjectsInfoByType[type];
-    if (size_t(subtype) >= records.size()) return FALSE;
+    if (size_t(subtype) >= records.size())
+        return FALSE;
     const auto &record = records[subtype];
-    if (record.type != type || record.subtype != subtype) return FALSE;
+    if (record.type != type || record.subtype != subtype)
+        return FALSE;
     CopyRmgApiInfo(*out, record, subtype);
     return TRUE;
 }
@@ -2744,19 +2780,22 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetCurrentObjectInfo(
 #pragma comment(linker, "/EXPORT:RMG_GetDialogObjectInfoByKey=_RMG_GetDialogObjectInfoByKey@16")
 #pragma comment(linker, "/EXPORT:RMG_GetMemoryObjectInfo=_RMG_GetMemoryObjectInfo@12")
 #pragma comment(linker, "/EXPORT:RMG_GetObjectInfoByKey=_RMG_GetObjectInfoByKey@8")
-extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetDialogObjectInfoByKey(
-    int index, rmg_api::ObjectKey *key, rmg_api::ObjectInfo *draft, rmg_api::ObjectInfo *current)
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetDialogObjectInfoByKey(int index, rmg_api::ObjectKey *key,
+                                                                             rmg_api::ObjectInfo *draft,
+                                                                             rmg_api::ObjectInfo *current)
 {
     return key && rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(index, draft, current, key);
 }
-extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetMemoryObjectInfo(
-    int index, rmg_api::ObjectKey *key, rmg_api::ObjectInfo *out)
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetMemoryObjectInfo(int index, rmg_api::ObjectKey *key,
+                                                                        rmg_api::ObjectInfo *out)
 {
-    if (index < 0 || !key || key->structSize < sizeof(*key) || !out || out->structSize < sizeof(*out)) return FALSE;
+    if (index < 0 || !key || key->structSize < sizeof(*key) || !out || out->structSize < sizeof(*out))
+        return FALSE;
     for (int type = 0; type < h3::limits::OBJECTS; ++type)
         for (const auto &record : RMGObjectInfo::currentRMGObjectsInfoByType[type])
         {
-            if (record.type != type || record.subtype < 0) continue;
+            if (record.type != type || record.subtype < 0)
+                continue;
             if (index-- == 0)
             {
                 MakeRmgApiKey(*key, record, nullptr);
@@ -2768,7 +2807,7 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetMemoryObjectInfo(
         if (index-- == 0)
         {
             const auto &info = record.currentInfo;
-            *key = {sizeof(*key), info.type, info.subtype, static_cast<int>(record.key.kind) + 1,
+            *key = {sizeof(*key),     info.type,         info.subtype,    static_cast<int>(record.key.kind) + 1,
                     record.key.first, record.key.second, record.key.third};
             CopyRmgApiInfo(*out, info, record.virtualSubtype);
             return TRUE;
@@ -2783,10 +2822,11 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetMemoryObjectInfo(
         }
     return FALSE;
 }
-extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetObjectInfoByKey(
-    const rmg_api::ObjectKey *key, rmg_api::ObjectInfo *out)
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetObjectInfoByKey(const rmg_api::ObjectKey *key,
+                                                                       rmg_api::ObjectInfo *out)
 {
-    if (!key || key->structSize < sizeof(*key) || !out || out->structSize < sizeof(*out)) return FALSE;
+    if (!key || key->structSize < sizeof(*key) || !out || out->structSize < sizeof(*out))
+        return FALSE;
     if (key->kind == rmg_api::OBJECT && key->first == 0 && key->second == 0 && key->third == 0)
         return RMG_GetCurrentObjectInfo(key->type, key->subtype, out);
     for (const auto &record : PandoraVariants::GetRecords())
@@ -2799,8 +2839,8 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetObjectInfoByKey(
         }
     for (const auto &record : PrisonVariants::GetRecords())
         if (key->kind == rmg_api::PRISON && record.currentInfo.type == key->type &&
-            record.currentInfo.subtype == key->subtype && record.key.experience == key->first &&
-            key->second == 0 && key->third == 0)
+            record.currentInfo.subtype == key->subtype && record.key.experience == key->first && key->second == 0 &&
+            key->third == 0)
         {
             CopyRmgApiInfo(*out, record.currentInfo, record.virtualSubtype);
             return TRUE;

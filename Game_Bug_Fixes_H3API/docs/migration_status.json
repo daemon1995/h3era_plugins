@@ -1,0 +1,164 @@
+[
+  {
+    "module": "AIFixes.cpp",
+    "source_bytes": 12821,
+    "patch_calls_estimate": 18,
+    "migration": "Проверены прямые адреса; AI устанавливается по умолчанию; повторная запись 0x423F4A удалена; семантика 0x4B3C80 отличается от оригинала; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "AudioFixes.cpp",
+    "source_bytes": 27017,
+    "patch_calls_estimate": 23,
+    "migration": "Адреса найдены, реализация изменена; устанавливается по умолчанию; аудиопотоки не проверены.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "Ben.cpp",
+    "source_bytes": 2356,
+    "patch_calls_estimate": 8,
+    "migration": "Восемь адресов совпадают; устанавливается по умолчанию; порядок с PrimarySkills требует проверки.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "CrExpoFixes.cpp",
+    "source_bytes": 43436,
+    "patch_calls_estimate": 35,
+    "migration": "Прямые адреса найдены; устанавливается по умолчанию, включая экспериментальный AI-блок; ABI и игровой тест не подтверждены.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "GameLogic.cpp",
+    "source_bytes": 55119,
+    "patch_calls_estimate": 91,
+    "migration": "Core и Remaining компилируются и устанавливаются; сверены активные адреса; эквивалентность и игра не подтверждены.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "GamePatches.cpp",
+    "source_bytes": 1773,
+    "patch_calls_estimate": 2,
+    "migration": "AfterWoG перенесён, BeforeWoG и переменные HD не перенесены; проверить при переносе подсказок.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "Graphics.cpp",
+    "source_bytes": 34968,
+    "patch_calls_estimate": 122,
+    "migration": "Адреса найдены, 0x525ED1 делегирован AI; устанавливается по умолчанию; не проверено в игре.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "HdModFixes.cpp",
+    "source_bytes": 1901,
+    "patch_calls_estimate": 2,
+    "migration": "RenameMap перенесён и устанавливается условно; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "HeroMovementFixes.cpp",
+    "source_bytes": 5056,
+    "patch_calls_estimate": 8,
+    "migration": "Семь активных точек найдены; устанавливается по умолчанию; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "LuckFixes.cpp",
+    "source_bytes": 13965,
+    "patch_calls_estimate": 41,
+    "migration": "Прямые адреса найдены; устанавливается по умолчанию; совместимость атак не проверена.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "MapSizeFixes.cpp",
+    "source_bytes": 8329,
+    "patch_calls_estimate": 28,
+    "migration": "Незавершённый порт; шесть записей отключены, отдельный GBF_INSTALL_MAP_SIZE_FIXES; см. MAPSIZE_WOG_AUDIT.ru.md.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "Monsters.cpp",
+    "source_bytes": 29272,
+    "patch_calls_estimate": 51,
+    "migration": "Прямые адреса найдены; устанавливается по умолчанию; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "Npc.cpp",
+    "source_bytes": 13725,
+    "patch_calls_estimate": 32,
+    "migration": "Прямые адреса и события найдены; устанавливается по умолчанию; ABI WoG и поведение не подтверждены.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "RK primary skill overflow.cpp",
+    "source_bytes": 10518,
+    "patch_calls_estimate": 24,
+    "migration": "24 адреса найдены; отдельный исходный плагин, не часть HooksInit исходного GBF; возможен дубль с отдельной DLL; порядок с Ben не проверен.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "RoseKavalier.cpp",
+    "source_bytes": 11665,
+    "patch_calls_estimate": 32,
+    "migration": "Основные точки в AI; отсутствуют FaerieButton и FaerieButton_RMB; условие ERA_bug_fixes; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "SammonCreatures.cpp",
+    "source_bytes": 13279,
+    "patch_calls_estimate": 3,
+    "migration": "Три адреса найдены; устанавливается по умолчанию; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "ScoutingRadiusFixes.cpp",
+    "source_bytes": 4312,
+    "patch_calls_estimate": 7,
+    "migration": "Шесть точек устанавливаются; 0x476DA0 отсутствует, флаг в оригинале только записывается; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  },
+  {
+    "module": "Spells.cpp",
+    "source_bytes": 14928,
+    "patch_calls_estimate": 21,
+    "migration": "Прямые адреса найдены; устанавливается по умолчанию; поведение не проверено.",
+    "active_in_build": true,
+    "msvc_tested": true,
+    "game_tested": false
+  }
+]

@@ -1,6 +1,7 @@
 #include "SystemOptionsDlg.h"
 #include "BattleSave.h"
 #include "SoundSettings.h"
+#include "../headers/EraPluginsAPI/ErmFunctionsAPI.h"
 
 #pragma comment(linker, "/EXPORT:RegisterErmCallbackButton=_RegisterErmCallbackButton@16")
 #pragma comment(linker, "/EXPORT:UnregisterErmCallbackButton=_UnregisterErmCallbackButton@4")
@@ -395,6 +396,19 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         for (auto &info : checkboxesInfo)
         {
+            page->CreateSetting<CheckBoxSetting>(info);
+        }
+        if (const auto setEnabled = erm_functions::FindObjectGlowControl())
+        {
+            setEnabled(extraConfig.objectGlow.value);
+            SettingsInfo info{extraConfig.objectGlow.keyName,
+                              {checkboxX, checkboxY + baseSettingHeight * 5},
+                              itemId++,
+                              &extraConfig.objectGlow.value,
+                              ERA_OPT(map, objectGlow, name),
+                              ERA_OPT(map, objectGlow, hint),
+                              FALSE,
+                              &extraConfig.objectGlow};
             page->CreateSetting<CheckBoxSetting>(info);
         }
         // RIGHT PAGE PART

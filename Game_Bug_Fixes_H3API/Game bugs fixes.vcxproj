@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="Current">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><ProjectGuid>{E595AC24-E995-4FCD-97DC-C82B574B85D6}</ProjectGuid><Keyword>Win32Proj</Keyword><RootNamespace>GameBugFixesH3API</RootNamespace></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v141_xp</PlatformToolset><CharacterSet>MultiByte</CharacterSet><UseDebugLibraries>true</UseDebugLibraries></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v141_xp</PlatformToolset><CharacterSet>MultiByte</CharacterSet><UseDebugLibraries>false</UseDebugLibraries></PropertyGroup>
+  <PropertyGroup><TargetName>Game bugs fixes extended</TargetName><PluginTargetExt>.dll</PluginTargetExt></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup><IntDir>$(ProjectDir)obj\$(ProjectName)\$(Configuration)\</IntDir></PropertyGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"><Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /></ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"><Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /></ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile><LanguageStandard>stdcpp17</LanguageStandard><ConformanceMode>false</ConformanceMode><StructMemberAlignment>1Byte</StructMemberAlignment><PrecompiledHeader>NotUsing</PrecompiledHeader><WarningLevel>Level3</WarningLevel><RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary><Optimization>Disabled</Optimization><PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions><AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories></ClCompile>
+    <Link><SubSystem>Windows</SubSystem><TargetMachine>MachineX86</TargetMachine><GenerateDebugInformation>true</GenerateDebugInformation></Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile><LanguageStandard>stdcpp17</LanguageStandard><ConformanceMode>false</ConformanceMode><StructMemberAlignment>1Byte</StructMemberAlignment><PrecompiledHeader>NotUsing</PrecompiledHeader><WarningLevel>Level3</WarningLevel><RuntimeLibrary>MultiThreaded</RuntimeLibrary><Optimization>MaxSpeed</Optimization><PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions><AdditionalIncludeDirectories>$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories></ClCompile>
+    <Link><SubSystem>Windows</SubSystem><TargetMachine>MachineX86</TargetMachine><GenerateDebugInformation>true</GenerateDebugInformation></Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AbiLayoutChecks.cpp" />
+    <ClCompile Include="src\Plugin.cpp" />
+    <ClCompile Include="src\Fixes\Ben.cpp" />
+    <ClCompile Include="src\Fixes\Scouting.cpp" />
+    <ClCompile Include="src\Fixes\HeroMovement.cpp" />
+    <ClCompile Include="src\Fixes\Runtime.cpp" />
+    <ClCompile Include="src\Fixes\AI.cpp" />
+    <ClCompile Include="..\headers\Era\era.cpp" />
+  <ClCompile Include="src\Fixes\Spells.cpp" /><ClCompile Include="src\Fixes\Summon.cpp" /><ClCompile Include="src\Fixes\Monsters.cpp" /><ClCompile Include="src\Fixes\Luck.cpp" /><ClCompile Include="src\Fixes\Npc.cpp" /><ClCompile Include="src\Fixes\Graphics.cpp" /><ClCompile Include="src\Fixes\Audio.cpp" /><ClCompile Include="src\Fixes\CrExpo.cpp" /><ClCompile Include="src\Fixes\PrimarySkills.cpp" /><ClCompile Include="src\Fixes\GameLogicCore.cpp" /><ClCompile Include="src\Fixes\GameLogicRemaining.cpp" /></ItemGroup>
+  <ItemGroup><ClInclude Include="include\Plugin.h" /><ClInclude Include="..\headers\Era\era.h" /><ClInclude Include="..\headers\H3API\single_header\H3API.hpp" /><ClInclude Include="include\PluginRng.h" /><ClInclude Include="include\WoGCrExpo.h" /><ClInclude Include="WoG_NPC.h" /></ItemGroup>
+  <ItemGroup>
+    <None Include="legacy\src\AIFixes.cpp" />
+    <None Include="legacy\src\AudioFixes.cpp" />
+    <None Include="legacy\src\Ben.cpp" />
+    <None Include="legacy\src\CrExpoFixes.cpp" />
+    <None Include="legacy\src\GameLogic.cpp" />
+    <None Include="legacy\src\GamePatches.cpp" />
+    <None Include="legacy\src\Graphics.cpp" />
+    <None Include="legacy\src\HdModFixes.cpp" />
+    <None Include="legacy\src\HeroMovementFixes.cpp" />
+    <None Include="legacy\src\LuckFixes.cpp" />
+    <None Include="legacy\src\MapSizeFixes.cpp" />
+    <None Include="legacy\src\Monsters.cpp" />
+    <None Include="legacy\src\Npc.cpp" />
+    <None Include="legacy\src\PluginRng.h" />
+    <None Include="legacy\src\RK primary skill overflow.cpp" />
+    <None Include="legacy\src\RoseKavalier.cpp" />
+    <None Include="legacy\src\SammonCreatures.cpp" />
+    <None Include="legacy\src\ScoutingRadiusFixes.cpp" />
+    <None Include="legacy\src\Spells.cpp" />
+  <None Include="src\Ports\GameLogic.incomplete.cpp" /></ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

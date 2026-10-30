@@ -1,5 +1,6 @@
 #include "framework.h"
 #include "MainMenuGraphics.h"
+#include "MainMenuPng.h"
 
 MainMenuGraphics *MainMenuGraphics::instance = nullptr;
 H3BaseDlg *MainMenuGraphics::showingMenu = nullptr;
@@ -128,7 +129,21 @@ int __stdcall MainMenuGraphics::DlgMainMenu_Redraw(HiHook *h, H3BaseDlg *dlg, BO
                                            layout.width, layout.height, layout.x, layout.y).String());
         }
     }
+    H3BaseDlg *previousPngMenu = nullptr;
+    if (fullRedraw)
+    {
+        mainmenu::png::Capture(dlg);
+        previousPngMenu = mainmenu::png::SetDrawingMenu(dlg);
+    }
+    if (fullRedraw)
+    {
+        MenuWidgetManager::Get().CaptureBackground(dlg);
+        if (auto *panel = NotificationPanel::instance)
+            panel->PrepareAppearance(dlg, H3WindowManager::Get()->GetDrawBuffer());
+    }
     const int result = THISCALL_4(int, h->GetDefaultFunc(), dlg, redrawScreen, firstItemId, lastItemId);
+    if (fullRedraw)
+        mainmenu::png::SetDrawingMenu(previousPngMenu);
     if (replaced && redrawScreen)
     {
         auto *wm = H3WindowManager::Get();
@@ -146,12 +161,14 @@ void MainMenuGraphics::CreatePatches()
     {
         m_isInited = true;
 
-        // Only these two menu vtables: retain HD's original redraw chain and
+        // Only these three menu vtables: retain HD's original redraw chain and
         // render the background before it draws the dialog/API items.
         _PI->WriteHiHook(0x63FF74, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Redraw);
         _PI->WriteHiHook(0x63E6EC, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Redraw);
+        _PI->WriteHiHook(0x63BC1C, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Redraw);
         _PI->WriteHiHook(0x63FF64, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Show);
         _PI->WriteHiHook(0x63E6DC, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Show);
+        _PI->WriteHiHook(0x63BC0C, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Show);
 
         if (selectScenario.enable)
         {

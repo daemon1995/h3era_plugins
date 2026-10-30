@@ -1,6 +1,8 @@
 #include "../pch.h"
-#include "RandomMapOptions.h"
+#include "../Assets.h"
+
 #include "MenuDialogs.h"
+#include "RandomMapOptions.h"
 
 namespace mapselection
 {
@@ -23,12 +25,12 @@ bool settingsLoaded = false;
 bool restorePlayers = false;
 // True only while this plugin starts a new standalone scenario on the authority.
 bool startingLocalGame = false;
-char settingsPath[MAX_PATH] = "Runtime\\PluginSettings\\MapSelection.ini";
+constexpr char settingsPath[] = "Runtime\\PluginSettings\\MapSelection.ini";
 
 // Keep the native 0x7C-byte slot and packet 1039 unchanged. All eligible
 // heroes live here; a choice beyond the native window is projected into slot 15.
 // Guests receive the actual hero ID in that slot, never a process-local index.
-H3SelectScenarioDialog* candidateDialog = nullptr;
+H3SelectScenarioDialog *candidateDialog = nullptr;
 HeroCandidates candidateLists[16];
 bool collectingHeroes = false;
 
@@ -41,17 +43,19 @@ _LHF_(CreateHandicapTextButton)
     return NO_EXEC_DEFAULT;
 }
 
-int CandidateSlot(H3SelectScenarioDialog* dlg, H3ScenarioPlayer* player)
+int CandidateSlot(H3SelectScenarioDialog *dlg, H3ScenarioPlayer *player)
 {
     for (int i = 0; i < PLAYER_COUNT; ++i)
     {
-        if (player == &dlg->mapPlayersHuman[i]) return i;
-        if (player == &dlg->mapPlayersComputer[i]) return PLAYER_COUNT + i;
+        if (player == &dlg->mapPlayersHuman[i])
+            return i;
+        if (player == &dlg->mapPlayersComputer[i])
+            return PLAYER_COUNT + i;
     }
     return -1;
 }
 
-const HeroCandidates& Candidates(H3SelectScenarioDialog* dlg, H3ScenarioPlayer* player)
+const HeroCandidates &Candidates(H3SelectScenarioDialog *dlg, H3ScenarioPlayer *player)
 {
     static const HeroCandidates empty;
     const int slot = CandidateSlot(dlg, player);
@@ -62,22 +66,24 @@ _LHF_(CollectStartingHero)
 {
     if (!collectingHeroes || !candidateDialog)
         return EXEC_DEFAULT;
-    auto* player = reinterpret_cast<H3ScenarioPlayer*>(IntAt(c->ebp - 0x18));
+    auto *player = reinterpret_cast<H3ScenarioPlayer *>(IntAt(c->ebp - 0x18));
     const int slot = CandidateSlot(candidateDialog, player);
     if (slot < 0)
         return EXEC_DEFAULT;
-    auto& list = candidateLists[slot];
+    auto &list = candidateLists[slot];
     bool allowed = c->edx < limits::TOTAL_HEROES;
     if (allowed && candidateDialog->randomMapGeneration)
     {
-        const auto& hero = P_HeroInfo[c->edx];
+        const auto &hero = P_HeroInfo[c->edx];
         // TRmgGenerator writes the inverse of these flags into the generated
         // header. The synthetic lobby header otherwise marks every hero free.
         allowed = !hero.campaignHero && (candidateDialog->gameVersion ? hero.expansionHero : hero.roeHero);
-        const auto* mask = candidateDialog->mapInfo.expansionHeroes;
+        const auto *mask = candidateDialog->mapInfo.expansionHeroes;
         bool hasMask = false;
-        for (int i = 0; i < 5; ++i) hasMask |= mask[i].Get() != 0;
-        if (hasMask) allowed = allowed && mask[c->edx / 32].GetState(c->edx % 32);
+        for (int i = 0; i < 5; ++i)
+            hasMask |= mask[i].Get() != 0;
+        if (hasMask)
+            allowed = allowed && mask[c->edx / 32].GetState(c->edx % 32);
     }
     if (allowed && list.count < limits::TOTAL_HEROES)
     {
@@ -91,12 +97,12 @@ _LHF_(CollectStartingHero)
     return NO_EXEC_DEFAULT;
 }
 
-bool IsNewGame(const H3SelectScenarioDialog* dlg)
+bool IsNewGame(const H3SelectScenarioDialog *dlg)
 {
     return dlg && !dlg->loadGameMode && !dlg->saveGameMode && !P_IsCampaignGame;
 }
 
-bool IsNewLocalGame(const H3SelectScenarioDialog* dlg)
+bool IsNewLocalGame(const H3SelectScenarioDialog *dlg)
 {
     return IsNewGame(dlg) && !IntAt(0x69959C);
 }
@@ -109,39 +115,41 @@ bool IsSelectionAuthority()
     return directPlay && THISCALL_1(BOOL8, DwordAt(DwordAt(directPlay) + 144), directPlay);
 }
 
-bool IsRandomMap(const H3SelectScenarioDialog* dlg)
+bool IsRandomMap(const H3SelectScenarioDialog *dlg)
 {
     return IsNewLocalGame(dlg) && dlg->randomMapGeneration;
 }
 
-H3ScenarioPlayer* HumanPlayer(H3SelectScenarioDialog* dlg, int color)
+H3ScenarioPlayer *HumanPlayer(H3SelectScenarioDialog *dlg, int color)
 {
-    for (auto& player : dlg->mapPlayersHuman)
+    for (auto &player : dlg->mapPlayersHuman)
         if (player.player2 == color)
             return &player;
     return nullptr;
 }
 
-bool CanControlPlayer(H3SelectScenarioDialog* dlg, int color)
+bool CanControlPlayer(H3SelectScenarioDialog *dlg, int color)
 {
     if (!IsNewGame(dlg) || color < 0 || color >= PLAYER_COUNT || P_Game->playersInfo.playerType[color] < 0)
         return false;
-    if (!IntAt(0x69959C)) return true;
-    const auto* human = HumanPlayer(dlg, color);
-    if (!human) return IsSelectionAuthority();
+    if (!IntAt(0x69959C))
+        return true;
+    const auto *human = HumanPlayer(dlg, color);
+    if (!human)
+        return IsSelectionAuthority();
     const int localId = IntAt(0x69D658);
     return localId && human->player == localId;
 }
 
-H3ScenarioPlayer* Player(H3SelectScenarioDialog* dlg, int color)
+H3ScenarioPlayer *Player(H3SelectScenarioDialog *dlg, int color)
 {
-    auto* human = HumanPlayer(dlg, color);
+    auto *human = HumanPlayer(dlg, color);
     return human ? human : &dlg->mapPlayersComputer[color];
 }
 
-int PlayerTown(H3SelectScenarioDialog* dlg, int color)
+int PlayerTown(H3SelectScenarioDialog *dlg, int color)
 {
-    const auto& attributes = P_Game->mapInfo.playerAttributes[color];
+    const auto &attributes = P_Game->mapInfo.playerAttributes[color];
     const unsigned mask = attributes.availableFactionsBitset;
     // For a town fixed by the map, native code derives its type from the mask;
     // the dialog's town field can remain -1. Match that rule without changing it.
@@ -152,14 +160,14 @@ int PlayerTown(H3SelectScenarioDialog* dlg, int color)
     return Player(dlg, color)->town;
 }
 
-int SelectedHero(const H3ScenarioPlayer& player)
+int SelectedHero(const H3ScenarioPlayer &player)
 {
     const int i = player.selectedHeroIndex;
     const int hero = i >= 0 && i < player.heroesCount && i < 16 ? player.heroes[i] : -1;
     return hero >= 0 && hero < limits::TOTAL_HEROES ? hero : -1;
 }
 
-bool HeroTaken(H3SelectScenarioDialog* dlg, const H3ScenarioPlayer* owner, int hero)
+bool HeroTaken(H3SelectScenarioDialog *dlg, const H3ScenarioPlayer *owner, int hero)
 {
     if (hero < 0)
         return false;
@@ -167,24 +175,24 @@ bool HeroTaken(H3SelectScenarioDialog* dlg, const H3ScenarioPlayer* owner, int h
     {
         if (P_Game->playersInfo.playerType[color] < 0)
             continue;
-        const auto* other = Player(dlg, color);
+        const auto *other = Player(dlg, color);
         if (other != owner && SelectedHero(*other) == hero)
             return true;
     }
     return false;
 }
 
-bool ChooseHero(H3SelectScenarioDialog* dlg, int color, int hero)
+bool ChooseHero(H3SelectScenarioDialog *dlg, int color, int hero)
 {
     if (!IsNewGame(dlg) || color < 0 || color >= PLAYER_COUNT)
         return false;
-    auto* player = Player(dlg, color);
+    auto *player = Player(dlg, color);
     if (hero == -1)
     {
         player->selectedHeroIndex = -1;
         return true;
     }
-    const auto& list = Candidates(dlg, player);
+    const auto &list = Candidates(dlg, player);
     if (HeroTaken(dlg, player, hero))
         return false;
     for (int i = 0; i < list.count; ++i)
@@ -206,17 +214,16 @@ bool ChooseHero(H3SelectScenarioDialog* dlg, int color, int hero)
     return false;
 }
 
-bool HasComputerHeroChoice(H3SelectScenarioDialog* dlg, int color)
+bool HasComputerHeroChoice(H3SelectScenarioDialog *dlg, int color)
 {
-    if (!IsNewGame(dlg) || color < 0 || color >= PLAYER_COUNT
-        || HumanPlayer(dlg, color) || P_Game->playersInfo.playerType[color] < 0)
+    if (!IsNewGame(dlg) || color < 0 || color >= PLAYER_COUNT || HumanPlayer(dlg, color) ||
+        P_Game->playersInfo.playerType[color] < 0)
         return false;
-    const auto& attributes = P_Game->mapInfo.playerAttributes[color];
-    return PlayerTown(dlg, color) >= 0
-        && (attributes.generateHeroAtMainTown || attributes.hasRandomHero);
+    const auto &attributes = P_Game->mapInfo.playerAttributes[color];
+    return PlayerTown(dlg, color) >= 0 && (attributes.generateHeroAtMainTown || attributes.hasRandomHero);
 }
 
-bool CanChooseComputerHero(H3SelectScenarioDialog* dlg, int color)
+bool CanChooseComputerHero(H3SelectScenarioDialog *dlg, int color)
 {
     return IsSelectionAuthority() && HasComputerHeroChoice(dlg, color);
 }
@@ -228,7 +235,7 @@ struct PlayerSelectionMessage
 {
     INT32 recipient = -1;
     INT32 sender = 0;
-    INT32 type = 1039;
+    INT32 type = eNetwork::UPDATE_PLAYER_POS;
     INT32 size = sizeof(PlayerSelectionMessage);
     INT32 reserved = 0;
     BYTE humans[sizeof(H3ScenarioPlayer) * PLAYER_COUNT];
@@ -236,13 +243,13 @@ struct PlayerSelectionMessage
 };
 static_assert(sizeof(PlayerSelectionMessage) == 2004, "Native selection-message ABI");
 
-void CapturePlayerSelection(PlayerSelectionMessage& msg, H3SelectScenarioDialog* dlg)
+void CapturePlayerSelection(PlayerSelectionMessage &msg, H3SelectScenarioDialog *dlg)
 {
     memcpy(msg.humans, dlg->mapPlayersHuman, sizeof(msg.humans));
     memcpy(msg.computers, dlg->mapPlayersComputer, sizeof(msg.computers));
 }
 
-void BroadcastPlayerSelection(H3SelectScenarioDialog* dlg)
+void BroadcastPlayerSelection(H3SelectScenarioDialog *dlg)
 {
     if (!IntAt(0x69959C) || !IsSelectionAuthority())
         return;
@@ -256,8 +263,8 @@ int ReadInt(LPCSTR section, LPCSTR key, int fallback)
 {
     char text[4096];
     int value = fallback;
-    return Era::ReadStrFromIni(key, section, settingsPath, text) && sscanf_s(text, "%d", &value) == 1
-        ? value : fallback;
+    return Era::ReadStrFromIni(key, section, settingsPath, text) && sscanf_s(text, "%d", &value) == 1 ? value
+                                                                                                      : fallback;
 }
 
 void WriteInt(LPCSTR section, LPCSTR key, int value)
@@ -270,7 +277,87 @@ void WriteInt(LPCSTR section, LPCSTR key, int value)
 
 bool RememberSettings()
 {
-    return settingsPath[0] && ReadInt("XXL", "RememberSettings", 1) != 0;
+    return settingsPath[0] && ReadInt("XXL", "RememberSettings", 0) != 0;
+}
+
+bool SetRememberSettings(bool enabled)
+{
+    const bool previous = RememberSettings();
+    if (!Era::WriteStrToIni("RememberSettings", enabled ? "1" : "0", "XXL", settingsPath))
+        return false;
+    if (Era::SaveIni(settingsPath))
+        return true;
+    Era::WriteStrToIni("RememberSettings", previous ? "1" : "0", "XXL", settingsPath);
+    return false;
+}
+
+void ToggleRememberSettings(H3SelectScenarioDialog *dlg)
+{
+    if (!IsNewLocalGame(dlg))
+        return;
+    auto *checkbox = dlg->GetDef(REMEMBER_SETTINGS_ID);
+    if (!checkbox || !checkbox->IsVisible() || !checkbox->IsEnabled())
+        return;
+    const bool enabled = !RememberSettings();
+    if (!SetRememberSettings(enabled))
+    {
+        H3Messagebox(Text("rememberSettingsError"));
+        return;
+    }
+    // Do not apply an old snapshot when enabling the option in an open lobby.
+    restorePlayers = false;
+    checkbox->SetFrame(enabled ? 1 : 0);
+    // Repaint the background/items before the native text and player overlays.
+    // Drawing only the new DEF frame leaves pixels from its previous frame.
+    dlg->H3BaseDlg::Redraw();
+    dlg->Redraw();
+}
+
+void CreateRememberSettingsControl(H3SelectScenarioDialog *dlg)
+{
+    if (!IsNewLocalGame(dlg) || dlg->GetH3DlgItem(REMEMBER_SETTINGS_ID))
+        return;
+    const bool enabled = RememberSettings();
+    auto *checkbox = H3DlgDef::Create(0, 0, REMEMBER_SETTINGS_ID, rmgassets::RMG_CHBX_DEF, enabled ? 1 : 0, 0);
+    if (!checkbox)
+        return;
+    checkbox->SetHint(Text("rememberSettingsHint"));
+    checkbox->HideDeactivate();
+    dlg->AddItem(checkbox);
+}
+
+void SetRememberSettingsVisible(H3SelectScenarioDialog *dlg, bool visible)
+{
+    auto *flag = dlg->GetH3DlgItem(263);
+    auto *button = dlg->GetH3DlgItem(REMEMBER_SETTINGS_ID);
+    if (!button)
+        return;
+    if (visible && flag && IsNewLocalGame(dlg))
+    {
+        const int x = flag->GetX() + (flag->GetWidth() - button->GetWidth()) / 2;
+        const int y = flag->GetY() - button->GetHeight() - 4;
+        button->SetX(x);
+        button->SetY(y);
+        button->ShowActivate();
+    }
+    else
+        button->HideDeactivate();
+}
+
+// ShowAdvancedOptions has finished positioning/showing player controls.
+// EBX is the dialog; the native instruction sets mapSelectShown at +0x37C.
+_LHF_(ShowPlayerSettings)
+{
+    SetRememberSettingsVisible(reinterpret_cast<H3SelectScenarioDialog *>(c->ebx), true);
+    return EXEC_DEFAULT;
+}
+
+// HideMapSelection has hidden the player controls. ESI is still the dialog;
+// the native instruction clears the same flag before returning to its caller.
+_LHF_(HidePlayerSettings)
+{
+    SetRememberSettingsVisible(reinterpret_cast<H3SelectScenarioDialog *>(c->esi), false);
+    return EXEC_DEFAULT;
 }
 
 void ReadLastGame()
@@ -282,28 +369,31 @@ void ReadLastGame()
     {
         char section[24];
         sprintf_s(section, "Player%d", color);
-        auto& p = lastGame.players[color];
+        auto &p = lastGame.players[color];
         p.town = ReadInt(section, "Town", -1);
         p.hero = ReadInt(section, "Hero", -1);
         p.bonus = ReadInt(section, "Bonus", 3);
-        if (p.town < -1 || p.town > 8) p.town = -1;
-        if (p.hero < -1 || p.hero >= limits::TOTAL_HEROES) p.hero = -1;
-        if (p.bonus < 0 || p.bonus > 3) p.bonus = 3;
+        if (p.town < -1 || p.town > 8)
+            p.town = -1;
+        if (p.hero < -1 || p.hero >= limits::TOTAL_HEROES)
+            p.hero = -1;
+        if (p.bonus < 0 || p.bonus > 3)
+            p.bonus = 3;
     }
 }
 
-LastGame Capture(H3SelectScenarioDialog* dlg)
+LastGame Capture(H3SelectScenarioDialog *dlg)
 {
     LastGame s;
     for (int color = 0; color < PLAYER_COUNT; ++color)
     {
-        const auto* p = Player(dlg, color);
+        const auto *p = Player(dlg, color);
         s.players[color] = {p->town, SelectedHero(*p), p->bonusType};
     }
     return s;
 }
 
-void SaveLastGame(const LastGame& s)
+void SaveLastGame(const LastGame &s)
 {
     if (!RememberSettings())
         return;
@@ -321,7 +411,7 @@ void SaveLastGame(const LastGame& s)
         OutputDebugStringA("RMG: cannot save last random-map settings.\n");
 }
 
-H3SelectScenarioDialog* __stdcall ScenarioCtor(HiHook* h, H3SelectScenarioDialog* dlg, int mode)
+H3SelectScenarioDialog *__stdcall ScenarioCtor(HiHook *h, H3SelectScenarioDialog *dlg, int mode)
 {
     // TEMPORARY multiplayer test: expose campaign heroes to both the lobby
     // and the native random-map generator for this process. Remove after test.
@@ -335,12 +425,17 @@ H3SelectScenarioDialog* __stdcall ScenarioCtor(HiHook* h, H3SelectScenarioDialog
     candidateDialog = nullptr;
     settingsLoaded = false;
     restorePlayers = false;
-    auto* result = THISCALL_2(H3SelectScenarioDialog*, h->GetDefaultFunc(), dlg, mode);
+    auto *result = THISCALL_2(H3SelectScenarioDialog *, h->GetDefaultFunc(), dlg, mode);
+    if (IsNewLocalGame(dlg) && ReadInt("XXL", "RememberSettings", -1) == -1)
+        if (!SetRememberSettings(false))
+            OutputDebugStringA("RMG: cannot initialize RememberSettings=0.\n");
+    CreateRememberSettingsControl(dlg);
+    SetRememberSettingsVisible(dlg, dlg->mapSelectShown != FALSE);
     UpdateMenuControls(dlg);
     return result;
 }
 
-void __stdcall ShowRandomSettings(HiHook* h, H3SelectScenarioDialog* dlg)
+void __stdcall ShowRandomSettings(HiHook *h, H3SelectScenarioDialog *dlg)
 {
     if (!settingsLoaded && !dlg->loadGameMode && !dlg->saveGameMode && !IntAt(0x69959C))
     {
@@ -356,7 +451,7 @@ void __stdcall ShowRandomSettings(HiHook* h, H3SelectScenarioDialog* dlg)
 // At this branch EBX=dialog, EDX=color; the second native lookup already falls back to AI.
 _LHF_(FillComputerHeroes)
 {
-    auto* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->ebx);
+    auto *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
     if (IsNewGame(dlg) && c->edx < PLAYER_COUNT)
     {
         c->eax = reinterpret_cast<int>(&dlg->mapPlayersComputer[c->edx]);
@@ -366,7 +461,7 @@ _LHF_(FillComputerHeroes)
     return EXEC_DEFAULT;
 }
 
-void __stdcall FillHeroes(HiHook* h, H3SelectScenarioDialog* dlg)
+void __stdcall FillHeroes(HiHook *h, H3SelectScenarioDialog *dlg)
 {
     const bool random = IsRandomMap(dlg);
     const bool restore = random && restorePlayers;
@@ -374,13 +469,13 @@ void __stdcall FillHeroes(HiHook* h, H3SelectScenarioDialog* dlg)
     {
         for (int color = 0; color < PLAYER_COUNT; ++color)
         {
-            auto* p = Player(dlg, color);
+            auto *p = Player(dlg, color);
             if (!restore || P_Game->playersInfo.playerType[color] < 0)
                 continue;
-            const auto& saved = lastGame.players[color];
+            const auto &saved = lastGame.players[color];
             const auto mask = P_Game->mapInfo.playerAttributes[color].availableFactionsBitset;
-            if (p->town == -1 && saved.town >= 0 && (mask & (1u << saved.town))
-                && (saved.town != 8 || dlg->gameVersion != 0))
+            if (p->town == -1 && saved.town >= 0 && (mask & (1u << saved.town)) &&
+                (saved.town != 8 || dlg->gameVersion != 0))
                 p->town = saved.town;
             if (p->bonusType == 3)
                 p->bonusType = saved.bonus;
@@ -393,7 +488,7 @@ void __stdcall FillHeroes(HiHook* h, H3SelectScenarioDialog* dlg)
         for (int color = 0; color < PLAYER_COUNT; ++color)
             Player(dlg, color)->heroesCount = 0;
     candidateDialog = dlg;
-    for (auto& list : candidateLists)
+    for (auto &list : candidateLists)
         list.count = 0;
     collectingHeroes = IsNewGame(dlg);
     THISCALL_1(void, h->GetDefaultFunc(), dlg);
@@ -417,7 +512,7 @@ void __stdcall FillHeroes(HiHook* h, H3SelectScenarioDialog* dlg)
         {
             if (P_Game->playersInfo.playerType[color] < 0)
                 continue;
-            auto* p = Player(dlg, color);
+            auto *p = Player(dlg, color);
             const int hero = lastGame.players[color].hero;
             if (p->town < 0 || p->selectedHeroIndex != -1 || hero < 0 || HeroTaken(dlg, p, hero))
                 continue;
@@ -426,21 +521,21 @@ void __stdcall FillHeroes(HiHook* h, H3SelectScenarioDialog* dlg)
     }
 }
 
-BOOL8 __stdcall CanChooseHero(HiHook* h, H3SelectScenarioDialog* dlg, int color)
+BOOL8 __stdcall CanChooseHero(HiHook *h, H3SelectScenarioDialog *dlg, int color)
 {
     if (CanChooseComputerHero(dlg, color))
         return true;
     return THISCALL_2(BOOL8, h->GetDefaultFunc(), dlg, color);
 }
 
-void __stdcall ScrollHero(HiHook* h, H3SelectScenarioDialog* dlg, int step, H3ScenarioPlayer* p)
+void __stdcall ScrollHero(HiHook *h, H3SelectScenarioDialog *dlg, int step, H3ScenarioPlayer *p)
 {
     if (!IsNewGame(dlg))
     {
         THISCALL_3(void, h->GetDefaultFunc(), dlg, step, p);
         return;
     }
-    const auto& list = Candidates(dlg, p);
+    const auto &list = Candidates(dlg, p);
     const int count = list.count;
     if (count < 1)
     {
@@ -450,16 +545,21 @@ void __stdcall ScrollHero(HiHook* h, H3SelectScenarioDialog* dlg, int step, H3Sc
     int i = -1;
     const int selected = SelectedHero(*p);
     for (int j = 0; j < count; ++j)
-        if (list.heroes[j] == selected) i = j;
+        if (list.heroes[j] == selected)
+            i = j;
     for (int attempts = 0; attempts <= count; ++attempts)
     {
         i += step < 0 ? -1 : 1;
-        if (i < -1) i = count - 1;
-        if (i >= count) i = -1;
+        if (i < -1)
+            i = count - 1;
+        if (i >= count)
+            i = -1;
         if (i == -1 || !HeroTaken(dlg, p, list.heroes[i]))
         {
             int color = 0;
-            for (; color < PLAYER_COUNT && Player(dlg, color) != p; ++color) {}
+            for (; color < PLAYER_COUNT && Player(dlg, color) != p; ++color)
+            {
+            }
             if (color < PLAYER_COUNT)
                 ChooseHero(dlg, color, i == -1 ? -1 : list.heroes[i]);
             BroadcastPlayerSelection(dlg);
@@ -469,14 +569,13 @@ void __stdcall ScrollHero(HiHook* h, H3SelectScenarioDialog* dlg, int step, H3Sc
     p->selectedHeroIndex = -1;
 }
 
-int __stdcall LeftClick(HiHook* h, H3SelectScenarioDialog* dlg, H3Msg* msg, int* result, BOOL8 remote)
+int __stdcall LeftClick(HiHook *h, H3SelectScenarioDialog *dlg, H3Msg *msg, int *result, BOOL8 remote)
 {
     if (msg->itemId >= 231 && msg->itemId <= 246)
     {
         const int color = (msg->itemId - 231) % PLAYER_COUNT;
         // A remote 1043 click must not let a guest select an AI hero through the host.
-        if (IntAt(0x69959C) && !HumanPlayer(dlg, color)
-            && (remote || !IsSelectionAuthority()))
+        if (IntAt(0x69959C) && !HumanPlayer(dlg, color) && (remote || !IsSelectionAuthority()))
             return 0;
         if (CanChooseComputerHero(dlg, color))
         {
@@ -488,7 +587,7 @@ int __stdcall LeftClick(HiHook* h, H3SelectScenarioDialog* dlg, H3Msg* msg, int*
     return THISCALL_4(int, h->GetDefaultFunc(), dlg, msg, result, remote);
 }
 
-BOOL8 __stdcall StartGame(HiHook* h, H3SelectScenarioDialog* dlg)
+BOOL8 __stdcall StartGame(HiHook *h, H3SelectScenarioDialog *dlg)
 {
     const bool random = IsRandomMap(dlg);
     const bool remember = random && RememberSettings();
@@ -506,12 +605,12 @@ BOOL8 __stdcall StartGame(HiHook* h, H3SelectScenarioDialog* dlg)
 // This site follows that loop and precedes LoadScenario; EBX still holds the dialog.
 _LHF_(StartingComputerHeroes)
 {
-    auto* dlg = reinterpret_cast<H3SelectScenarioDialog*>(c->ebx);
+    auto *dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
     if (IsNewGame(dlg) && IsSelectionAuthority())
         for (int color = 0; color < PLAYER_COUNT; ++color)
             if (!HumanPlayer(dlg, color) && P_Game->playersInfo.playerType[color] >= 0)
-                IntAt(0x69FB80 + color * sizeof(int)) = CanChooseComputerHero(dlg, color)
-                    ? SelectedHero(*Player(dlg, color)) : -1;
+                IntAt(0x69FB80 + color * sizeof(int)) =
+                    CanChooseComputerHero(dlg, color) ? SelectedHero(*Player(dlg, color)) : -1;
     return EXEC_DEFAULT;
 }
 
@@ -541,19 +640,21 @@ _LHF_(UseComputerStartingHero)
     return EXEC_DEFAULT;
 }
 
-}
+} // namespace mapselection
 
 void RandomMapOptions_Init()
 {
     using namespace mapselection;
     const BYTE handicapBranch[] = {0x83, 0x3D, 0x40, 0x8A, 0x69, 0x00, 0x03, 0x75, 0x4B};
-    if (!std::memcmp(reinterpret_cast<const void*>(0x57B406), handicapBranch, sizeof(handicapBranch)))
+    if (!std::memcmp(reinterpret_cast<const void *>(0x57B406), handicapBranch, sizeof(handicapBranch)))
         _PI->WriteLoHook(0x57B406, CreateHandicapTextButton);
     else
         Era::WriteLog("RMG", "Map selection", "Handicap button constructor differs; native button was left unchanged.");
     _PI->WriteLoHook(0x583D92, CollectStartingHero);
     _PI->WriteHiHook(0x579CE0, SPLICE_, EXTENDED_, THISCALL_, ScenarioCtor);
     _PI->WriteHiHook(0x580180, SPLICE_, EXTENDED_, THISCALL_, ShowRandomSettings);
+    _PI->WriteLoHook(0x581C4F, ShowPlayerSettings);
+    _PI->WriteLoHook(0x582039, HidePlayerSettings);
     _PI->WriteLoHook(0x583BCA, FillComputerHeroes);
     _PI->WriteHiHook(0x583B60, SPLICE_, EXTENDED_, THISCALL_, FillHeroes);
     _PI->WriteHiHook(0x58D280, SPLICE_, EXTENDED_, THISCALL_, CanChooseHero);

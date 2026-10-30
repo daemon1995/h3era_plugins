@@ -1,0 +1,94 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+#include "..\..\..\include\homm3.h"
+#include "..\..\..\include\era.h"
+Patcher* _P;
+PatcherInstance* _PI;
+
+char myString[1024];
+#define MyString  (char*)myString
+
+static _bool_ TIPHON = false;
+static _bool_ BATTLE_DLG_PLUGIN = false;
+
+char* BATTLE_DLG_NAME = "battle_dlg.daemon.plugin";
+
+#include "src\RoseKavalier.cpp"
+#include "src\Ben.cpp"
+#include "src\Npc.cpp"
+#include "src\Monsters.cpp"
+#include "src\Graphics.cpp"
+#include "src\Spells.cpp"
+#include "src\SammonCreatures.cpp"
+#include "src\GameLogic.cpp"
+#include "src\AudioFixes.cpp"
+#include "src\GamePatches.cpp"
+#include "src\CrExpoFixes.cpp"
+#include "src\ScoutingRadiusFixes.cpp"
+#include "src\HeroMovementFixes.cpp"
+#include "src\AIFixes.cpp"
+#include "src\LuckFixes.cpp"
+#include "src\MapSizeFixes.cpp"
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HooksInit(Patcher* _P, PatcherInstance* _PI)
+{
+    RK(_P, _PI);
+    Ben(_PI);
+    Npc(_PI);
+    Monsters(_PI);
+    Graphics(_PI);
+    Spells(_PI);
+    WOG_SammonCreatures(_PI);
+    GameLogic(_PI);
+    BattleAudio::Install(_PI);
+    SetPathes(_PI);
+    CrExpo::CrExpoFixes(_PI);
+    scouting::ScoutingRadiusFixes(_PI);
+    movement::HeroMovementFixes(_PI);
+    AI::AIFixes(_PI);
+    luck::LuckFixes(_PI);
+    MapSize::MapSizeFixes(_PI);
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static _bool_ bug_fixes_On = false;
+
+BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
+{
+    
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH:
+        if (!bug_fixes_On)
+        {
+            bug_fixes_On = true;    
+            constexpr LPSTR PLUGIN_NAME = "game bug fixes extended";
+            Era::ConnectEra(hModule, PLUGIN_NAME);
+
+            _P = GetPatcher();
+            _PI = _P->CreateInstance(PLUGIN_NAME);
+
+
+            if (Era::PluginExists("typhon"))
+                TIPHON = true;
+
+            if (_PI)
+                HooksInit(_P, _PI);
+
+        }
+    break;
+
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+    break;
+    }
+    return TRUE;
+}

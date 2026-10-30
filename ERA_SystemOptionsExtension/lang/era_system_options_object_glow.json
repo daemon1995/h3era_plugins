@@ -1,0 +1,4 @@
+{
+    "era.opt.map.objectGlow.name": "Highlight Objects",
+    "era.opt.map.objectGlow.hint": "{Highlight Objects}\n\nShow sparse rising sparkles over known parts of objects that your player has not visited or that still contain a reward. Sparkles use the object DEF colour."
+}

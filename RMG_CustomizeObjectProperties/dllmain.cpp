@@ -6,6 +6,7 @@ void RegisterRmgConfigProvider();
 
 #include "ExtendedMonoliths.h"
 #include "MapSelection/MapSelection.h"
+#include "Wogification/Settings.h"
 
 namespace dllText
 {
@@ -73,6 +74,7 @@ _LHF_(CrBanksTxt_BeforeLoad)
     monoliths::ExtendedMonoliths::Get();
     ExtendersInitializer::InitObjectExtenders();
     mapselection::Init();
+    wogification::Install();
 
     return EXEC_DEFAULT;
 }

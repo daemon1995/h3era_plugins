@@ -1,4 +1,5 @@
 #include "../pch.h"
+#include "../Assets.h"
 #include "ProfileDialog.h"
 #include "../DialogInput.h"
 
@@ -9,8 +10,8 @@ namespace
 bool Image(const char *name) { return Era::PcxPngExists && Era::PcxPngExists(name); }
 bool PresetSkin()
 {
-    return Image("WOGOBASE.PCX") && Image("WOGOPRST.PCX") && Image("WOGOLST.PCX") &&
-           Image("WOGOTXT.PCX") && Image("WOGOPHNT.PCX");
+    return Image(rmgassets::WOGOBASE_PCX) && Image(rmgassets::WOGOPRST_PCX) && Image(rmgassets::WOGOLST_PCX) &&
+           Image(rmgassets::WOGOTXT_PCX) && Image(rmgassets::WOGOPHNT_PCX);
 }
 std::string Absolute(const std::string &path)
 {
@@ -48,9 +49,9 @@ bool ProfileName(std::string &name)
 }
 void SkinScrollbar(H3DlgScrollbar *scrollbar)
 {
-    if (!scrollbar || !Image("WOGOSCV.PCX")) return;
-    auto *def = H3LoadedDef::Load("WOGOSCR.DEF");
-    auto *track = H3LoadedPcx::Load("WOGOSCV.PCX");
+    if (!scrollbar || !Image(rmgassets::WOGOSCV_PCX)) return;
+    auto *def = H3LoadedDef::Load(rmgassets::WOGOSCR_DEF);
+    auto *track = H3LoadedPcx::Load(rmgassets::WOGOSCV_PCX);
     if (!def || !track || def->widthDEF != 16 || def->heightDEF != 16 ||
         def->groupsCount <= 0 || !def->groups || !def->groups[0] || def->groups[0]->count < 5 ||
         track->width < 16 || track->height < 218)
@@ -168,7 +169,7 @@ class ProfileDialog : public H3Dlg
     {
         const auto target = Absolute(path);
         if (target.empty() || !IsDirectory(target))
-        { H3Messagebox(Text("profileFolderError","Cannot open this folder.")); return; }
+        { H3Messagebox(Text("profileFolderError")); return; }
         directory = target; edit->SetText(""); edit->SetFocus(FALSE);
         Rebuild(); Refresh();
     }
@@ -253,7 +254,7 @@ class ProfileDialog : public H3Dlg
         if (msg.IsMouseOver())
         {
             auto *item = ItemAtPosition(msg);
-            if (hintBar && (!item || !item->GetHint())) hintBar->ShowMessage(Text("profileNavigationHint","Double-click folders/files. Arrows select, Backspace goes up, Home opens the profile folder."));
+            if (hintBar && (!item || !item->GetHint())) hintBar->ShowMessage(Text("profileNavigationHint"));
         }
         return TRUE;
     }
@@ -262,7 +263,7 @@ class ProfileDialog : public H3Dlg
         if (selected >= 0 && entries[selected].directory && edit->GetString()->String()[0] == '\0')
         { Open(Join(directory,entries[selected].name)); return; }
         std::string name(edit->GetString()->String());
-        if (!ProfileName(name)) { H3Messagebox(Text("profileFileNameError","Enter a valid INI file name.")); return; }
+        if (!ProfileName(name)) { H3Messagebox(Text("profileFileNameError")); return; }
         const auto path = Join(directory,name);
         const DWORD attributes = GetFileAttributesA(path.c_str());
         if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY)) return;
@@ -270,10 +271,10 @@ class ProfileDialog : public H3Dlg
         {
             if (attributes != INVALID_FILE_ATTRIBUTES)
             {
-                const std::string question = std::string(Text("overwriteProfile","Overwrite this profile?")) + "\n" + path;
+                const std::string question = std::string(Text("overwriteProfile")) + "\n" + path;
                 if (!H3Messagebox::Choice(question.c_str())) return;
             }
-            if (!SaveProfileFile(path,source)) { H3Messagebox(Text("saveError","Could not save settings. Previous settings were retained.")); return; }
+            if (!SaveProfileFile(path,source)) { H3Messagebox(Text("saveError")); return; }
         }
         else
         {
@@ -290,37 +291,36 @@ public:
     {
         flags = 2; EnableDoubleClick(TRUE);
         root = ProfileDirectory();
-        if (!root.empty()) CreateDirectoryA(root.c_str(),nullptr);
         directory = Directory(previous);
         if (directory.empty() || !IsDirectory(directory)) directory = root;
         if (directory.empty()) directory = Absolute(".");
-        if (skin) Surface(0,0,512,520,80,"WOGOPRST.PCX");
-        CreateText(24,20,464,26,save ? Text("profileSaveTitle","Save wogification settings") : Text("profileLoadTitle","Load wogification settings"),NH3Dlg::Text::MEDIUM,eTextColor::HIGHLIGHT,3,eTextAlignment::MIDDLE_CENTER);
-        CreateText(28,50,456,66,save ? Text("profileSaveDescription","Select a folder and enter a profile name. Only differences from JSON defaults are saved.") : Text("profileLoadDescription","Select an INI profile. Missing values use current JSON defaults; changes stay in the draft until applied."),NH3Dlg::Text::SMALL,eTextColor::REGULAR,4,eTextAlignment::MIDDLE_CENTER);
+        if (skin) Surface(0,0,512,520,80,rmgassets::WOGOPRST_PCX);
+        CreateText(24,20,464,26,save ? Text("profileSaveTitle") : Text("profileLoadTitle"),NH3Dlg::Text::MEDIUM,eTextColor::HIGHLIGHT,3,eTextAlignment::MIDDLE_CENTER);
+        CreateText(28,50,456,66,save ? Text("profileSaveDescription") : Text("profileLoadDescription"),NH3Dlg::Text::SMALL,eTextColor::REGULAR,4,eTextAlignment::MIDDLE_CENTER);
         CreateText(32,116,448,24,"",NH3Dlg::Text::SMALL,eTextColor::HIGHLIGHT,Path,eTextAlignment::MIDDLE_LEFT);
-        Surface(24,140,464,254,81,skin ? "WOGOLST.PCX" : "RMG_back.pcx");
+        Surface(24,140,464,254,81,skin ? rmgassets::WOGOLST_PCX : rmgassets::RMG_BACK_PCX);
         if (!skin) if (auto *frame = CreateFrame(24,140,464,254,82,H3RGB565(H3RGB888::Highlight()))) frame->DeActivate();
         for (int row = 0; row < Rows; ++row)
         {
             selection[row] = CreateFrame(27,StartY+row*RowHeight,440,18,100+row,H3RGB565(H3RGB888::Highlight()));
             selection[row]->DeActivate()->Hide();
-            icons[row] = CreateDef(29,StartY+1+row*RowHeight,16,16,RowBase+row*2,"WNDFOLDER.def",0);
+            icons[row] = CreateDef(29,StartY+1+row*RowHeight,16,16,RowBase+row*2,rmgassets::WNDFOLDER_DEF,0);
             labels[row] = CreateText(49,StartY+row*RowHeight,416,18,"",NH3Dlg::Text::SMALL,eTextColor::REGULAR,RowBase+row*2+1,eTextAlignment::MIDDLE_LEFT);
         }
         scrollbar = H3DlgScrollbar::Create(470,142,16,250,ScrollId,1,Scroll,FALSE,1,TRUE);
         if (scrollbar) { scrollbar->catchKeys = FALSE; if (skin) SkinScrollbar(scrollbar); AddItem(scrollbar); }
-        CreateText(24,392,464,26,Text("profileSelectedFile","Profile file"),NH3Dlg::Text::MEDIUM,eTextColor::HIGHLIGHT,6,eTextAlignment::MIDDLE_CENTER);
-        edit = CreateEdit(26,420,460,16,180,FileName(previous).empty() ? (save ? "default.ini" : "") : FileName(previous).c_str(),NH3Dlg::Text::SMALL,eTextColor::REGULAR,eTextAlignment::MIDDLE_LEFT,skin ? "WOGOTXT.PCX" : "WoGTextEdit.pcx",Edit,TRUE,0,0);
+        CreateText(24,392,464,26,Text("profileSelectedFile"),NH3Dlg::Text::MEDIUM,eTextColor::HIGHLIGHT,6,eTextAlignment::MIDDLE_CENTER);
+        edit = CreateEdit(26,420,460,16,180,FileName(previous).empty() ? (save ? "default.ini" : "") : FileName(previous).c_str(),NH3Dlg::Text::SMALL,eTextColor::REGULAR,eTextAlignment::MIDDLE_LEFT,skin ? rmgassets::WOGOTXT_PCX : rmgassets::WOGTEXTEDIT_PCX,Edit,TRUE,0,0);
         edit->SetAutoredraw(TRUE);
         const char *buttons = ProfileButtonDef();
         ok = CreateButton(177,447,64,30,Accept,buttons,0,1,FALSE,eVKey::H3VK_ENTER);
         auto *cancel = CreateButton(273,447,64,30,Cancel,buttons,3,4,FALSE,eVKey::H3VK_ESCAPE);
-        ok->SetHint(Text("profileConfirmHint","Confirm profile selection.")); cancel->SetHint(Text("cancelHint","Cancel without changing settings."));
+        ok->SetHint(Text("profileConfirmHint")); cancel->SetHint(Text("cancelHint"));
         hintBar = H3ObjectAllocator<H3DlgHintBar>().allocate(1);
         if (hintBar)
         {
             THISCALL_12(H3DlgHintBar *,0x5BCB70,hintBar,48,494,416,18,h3_NullString,NH3Dlg::Text::SMALL,
-                        skin ? "WOGOPHNT.PCX" : "rmghntbr.pcx",eTextColor::REGULAR,0,eTextAlignment::MIDDLE_CENTER,8);
+                        skin ? rmgassets::WOGOPHNT_PCX : rmgassets::RMGHNTBR_PCX,eTextColor::REGULAR,0,eTextAlignment::MIDDLE_CENTER,8);
             hintBar->DeActivate(); AddItem(hintBar);
         }
         Rebuild(); Refresh(false);
@@ -335,18 +335,18 @@ public:
 }
 const char *ProfileButtonDef()
 {
-    if (Image("WOGOBASE.PCX"))
+    if (Image(rmgassets::WOGOBASE_PCX))
     {
-        auto *def = H3LoadedDef::Load("WOGOBTN.DEF");
+        auto *def = H3LoadedDef::Load(rmgassets::WOGOBTN_DEF);
         if (def)
         {
             const bool valid = def->widthDEF == 64 && def->heightDEF == 30 && def->groupsCount > 0 &&
                 def->groups && def->groups[0] && def->groups[0]->count >= 11;
             def->Dereference();
-            if (valid) return "WOGOBTN.DEF";
+            if (valid) return rmgassets::WOGOBTN_DEF;
         }
     }
-    return "WoGBttn.def";
+    return rmgassets::WOGBTTN_DEF;
 }
 bool SelectProfileFile(bool save, Draft &draft, std::string &path)
 {

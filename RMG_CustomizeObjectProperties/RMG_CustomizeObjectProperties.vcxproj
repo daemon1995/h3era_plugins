@@ -18,6 +18,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClInclude Include="Assets.h" />
     <ClInclude Include="Wogification\Settings.h" />
     <ClInclude Include="DialogInput.h" />
     <ClCompile Include="Wogification\Settings.cpp" />

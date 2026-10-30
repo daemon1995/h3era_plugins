@@ -1,4 +1,5 @@
 #include "../pch.h"
+#include "../Assets.h"
 #include "MenuDialogs.h"
 #include "RandomMapOptions.h"
 #include "HdTemplateCompatibility.h"
@@ -276,7 +277,7 @@ class AllianceDialog : public MenuDialog
     {
         flags |= 0x10;
         std::memcpy(teams, reinterpret_cast<void*>(hdBase + 0xF4C28), sizeof(teams));
-        CreateText(0, 32, AllianceWidth(), 42, Text("title.alliances", "Player alliances"), NH3Dlg::Text::MEDIUM,
+        CreateText(0, 32, AllianceWidth(), 42, Text("title.alliances"), NH3Dlg::Text::MEDIUM,
                    eTextColor::GOLD, 10);
         for (int color = 0; color < 8; ++color)
         {
@@ -302,14 +303,14 @@ class AllianceDialog : public MenuDialog
             for (int column = 0; column < count; ++column)
             {
                 CreatePcx(100 + column * 31, 74 + row * 31, 31, 31,
-                          100 + row * 8 + column, "TeamPlSl.pcx");
+                          100 + row * 8 + column, rmgassets::TEAMPLSL_PCX);
             }
         }
         for (int column = 0; column < count; ++column)
-            if (auto* flag = CreateDef(111 + column * 31, 82, 300 + column, "ITGFLAGS.def", rows[column]))
+            if (auto* flag = CreateDef(111 + column * 31, 82, 300 + column, rmgassets::ITGFLAGS_DEF, rows[column]))
                 flag->DeActivate();
-        CreateButton(AllianceWidth() / 2 - 65, AllianceHeight() - 60, 1, "RMG_okay.def", 0, 1, TRUE, eVKey::H3VK_ENTER);
-        CreateButton(AllianceWidth() / 2 + 10, AllianceHeight() - 60, 2, "RMG_cncl.def", 0, 1, TRUE, eVKey::H3VK_ESCAPE);
+        CreateButton(AllianceWidth() / 2 - 65, AllianceHeight() - 60, eControlId::OK, rmgassets::RMG_OKAY_DEF, 0, 1, TRUE, eVKey::H3VK_ENTER);
+        CreateButton(AllianceWidth() / 2 + 10, AllianceHeight() - 60, eControlId::CANCEL, rmgassets::RMG_CNCL_DEF, 0, 1, TRUE, eVKey::H3VK_ESCAPE);
         RefreshTeams(false);
     }
 };
@@ -367,6 +368,11 @@ int __stdcall MenuProc(HiHook* hook, H3SelectScenarioDialog* dlg, H3Msg* msg)
         }
         if (msg->command == eMsgCommand::MOUSE_BUTTON)
         {
+            if (id == REMEMBER_SETTINGS_ID && msg->IsLeftDown())
+            {
+                ToggleRememberSettings(dlg);
+                return 1;
+            }
             const int color = PlayerControlColor(id);
             const bool left = msg->IsLeftDown() || msg->IsLeftClick();
             if (left && IntAt(0x69959C) && color >= 0 && !CanControlPlayer(dlg, color)) return 1;
@@ -395,7 +401,7 @@ int __stdcall MenuProc(HiHook* hook, H3SelectScenarioDialog* dlg, H3Msg* msg)
                     // The native HD road control's frame is a dword at +0x34.
                     IntAt(DWORD(item) + 0x34) = roads[id - 7007];
                     item->Draw(); item->Refresh();
-                    CDECL_6(int, hdBase + 0xB1DF0, 2211, 4, 6, int(roads[0]), int(roads[1]), int(roads[2]));
+                    CDECL_6(int, hdBase + 0xB1DF0, eNetwork::HD_LOBBY_MESSAGE, 4, 6, int(roads[0]), int(roads[1]), int(roads[2]));
                 }
                 return 1;
             }
@@ -428,12 +434,21 @@ HdPatch FindHdAt(DWORD address, int type)
 }
 }
 
-LPCSTR Text(LPCSTR key, LPCSTR fallback)
+LPCSTR Text(LPCSTR key)
 {
     char path[128];
     sprintf_s(path, "RMG.mapSelection.%s", key);
-    const char* value = EraJS::read(path);
-    return value && std::strcmp(value, path) ? value : fallback;
+    bool found = false;
+    LPCSTR value = EraJS::read(path, found);
+    if (found && value && *value) return value;
+    static const std::pair<LPCSTR, LPCSTR> defaults[] = {
+        {"title.templates", "Random map template"}, {"title.alliances", "Player alliances"},
+        {"title.player", "Starting town and hero"}, {"random", "Random"}, {"heroes", "Heroes"},
+        {"rememberSettingsError", "Cannot save player settings preference."},
+        {"rememberSettingsHint", "Remember starting towns, heroes and bonuses"}};
+    for (const auto &entry : defaults)
+        if (!std::strcmp(key, entry.first)) return entry.second;
+    return key;
 }
 
 void InstallScenarioName()
@@ -483,13 +498,13 @@ INT MenuDialog::vDialogProc(H3Msg& msg)
             // Start, disconnect, map/tab changes and HD packets return to the
             // normal parent loop, after this picker has restored its background.
             const int type = packet[2];
-            if (type == 1035 || type == 1036 || type == 1037 || type == 1039 || type == 1044 || type == 0x524D4701)
+            if (type == eNetwork::REQUEST_HERO_FACE || type == eNetwork::REQUEST_HERO_FACE_REPLY || type == eNetwork::SETAGR || type == eNetwork::UPDATE_PLAYER_POS || type == eNetwork::TOWN_UPDATE || type == REQUEST_PLAYER_CHOICE)
             {
                 int closeParent = 0;
                 THISCALL_3(int, 0x588A70, parent, packet, &closeParent);
                 if (closeParent) { interrupted = true; Stop(); }
                 changedByNetwork = true;
-                receivedSelectionSnapshot = type == 1039;
+                receivedSelectionSnapshot = type == eNetwork::UPDATE_PLAYER_POS;
                 Redraw();
             }
             else
@@ -498,10 +513,10 @@ INT MenuDialog::vDialogProc(H3Msg& msg)
                 // Chat, keep-alives and unrelated HD notifications can wait,
                 // just as in HD's modal loop. A changing session/map must return
                 // to the parent immediately, before the picker accepts a choice.
-                const bool sessionChanges = type == 1000 || type == 1014 || type == 1015 ||
-                    type == 1023 || type == 1024 || type == 1030 || type == 1040 ||
-                    type == 1043 || type == 1046 || type == 1047 || type == 1048;
-                const bool hdChangesMap = type == 2211 && packet[3] >= 28 &&
+                const bool sessionChanges = type == eNetwork::GAME_TRANSMIT_INIT || type == eNetwork::PLAYER_DROPPED || type == eNetwork::SET_AS_HOST ||
+                    type == eNetwork::GAME_HEADER_INFO || type == eNetwork::GAME_HEADER_INFO_INIT || type == eNetwork::MAP_FILE_NAME || type == eNetwork::NEW_PLAYER ||
+                    type == eNetwork::CLICK || type == eNetwork::BAD_VERSION || type == eNetwork::SETUP_PING || type == eNetwork::SETUP_PING_RESPONSE;
+                const bool hdChangesMap = type == eNetwork::HD_LOBBY_MESSAGE && packet[3] >= 28 &&
                     (packet[6] == 5 || packet[6] == 8);
                 if (sessionChanges || hdChangesMap || deferredPackets.size() >= 256)
                 {

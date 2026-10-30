@@ -4,6 +4,9 @@ void RandomMapOptions_Init();
 
 namespace mapselection
 {
+constexpr int REMEMBER_SETTINGS_ID = 7900; // HD uses 7010..7012 for road icons.
+void ToggleRememberSettings(h3::H3SelectScenarioDialog* dlg);
+
 struct HeroCandidates
 {
     int heroes[h3::limits::TOTAL_HEROES] = {};

@@ -42,6 +42,15 @@
     <ClCompile Include="MainMenuGraphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MainMenuBackground.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainMenuPng.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClInclude Include="MainMenuPng.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClCompile Include="MainMenuVideo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

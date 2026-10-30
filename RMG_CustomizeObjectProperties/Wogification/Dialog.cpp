@@ -1,3 +1,4 @@
+#include "../Assets.h"
 #include "../pch.h"
 
 #include "../DialogInput.h"
@@ -11,7 +12,7 @@ namespace wogification
 {
 namespace
 {
-const char *WIDGET = "wogification_settings_widget";
+constexpr char WIDGET[] = "wogification_settings_widget";
 enum Control
 {
     Targets = 110,
@@ -92,11 +93,11 @@ class Choices : public H3Dlg
     {
         AddBackground(0, 0, 300, int(labels.size()) * 29 + 52, FALSE, FALSE, 1, TRUE);
         for (int i = 0; i < int(names.size()); ++i)
-            CreateCaptionButton(10, 8 + i * 29, 280, 26, 10 + i, "GSPBUT2.DEF", "", NH3Dlg::Text::SMALL, 0, 0)
+            CreateCaptionButton(10, 8 + i * 29, 280, 26, 10 + i, rmgassets::GSPBUT2_DEF, "", NH3Dlg::Text::SMALL, 0, 0)
                 ->SetClickFrame(1);
-        CreateCaptionButton(10, 12 + int(names.size()) * 29, 135, 28, 1, "GSPBUT2.DEF", Text("chooseDone", "Done"),
+        CreateCaptionButton(10, 12 + int(names.size()) * 29, 135, 28, 1, rmgassets::GSPBUT2_DEF, Text("chooseDone"),
                             NH3Dlg::Text::SMALL, 0, 0, FALSE, eVKey::H3VK_ENTER);
-        CreateCaptionButton(155, 12 + int(names.size()) * 29, 135, 28, 2, "GSPBUT2.DEF", Text("chooseCancel", "Cancel"),
+        CreateCaptionButton(155, 12 + int(names.size()) * 29, 135, 28, 2, rmgassets::GSPBUT2_DEF, Text("chooseCancel"),
                             NH3Dlg::Text::SMALL, 0, 0, FALSE, eVKey::H3VK_ESCAPE);
         Refresh();
     }
@@ -150,22 +151,21 @@ class Dialog : public H3Dlg
         std::vector<std::string> result;
         if (field == CreatureLevels)
             for (int level = 1; level <= 8; ++level)
-                result.push_back(std::string(Text("creatureLevel", "Level ")) + std::to_string(level));
+                result.push_back(std::string(Text("creatureLevel")) + std::to_string(level));
         else if (field == ArtifactLevels)
             for (const char *name : {"special", "treasure", "minor", "major", "relic"})
-                result.emplace_back(Text((std::string("artifactClass_") + name).c_str(), name));
+                result.emplace_back(Text((std::string("artifactClass_") + name).c_str()));
         else
             for (const char *name : {"keep", "random", "chest", "gold"})
-                result.emplace_back(Text((std::string("scrollMode_") + name).c_str(), name));
+                result.emplace_back(Text((std::string("scrollMode_") + name).c_str()));
         return result;
     }
-    void Check(std::vector<H3DlgItem *> &items, int field, int y, const char *key, const char *fallback,
-               const char *hint)
+    void Check(std::vector<H3DlgItem *> &items, int field, int y, const char *key, const char *hint)
     {
-        auto *box = H3DlgDef::Create(48, y + 2, PROCESS_BASE + field * 2, "RMG_chbx.def", 0, 0);
+        auto *box = H3DlgDef::Create(48, y + 2, PROCESS_BASE + field * 2, rmgassets::RMG_CHBX_DEF, 0, 0);
         AddItem(box);
         checks[field] = box;
-        auto *label = CreateText(88, y, 655, 30, Text(key, fallback), NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT,
+        auto *label = CreateText(88, y, 655, 30, Text(key), NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT,
                                  PROCESS_BASE + field * 2 + 1, eTextAlignment::MIDDLE_LEFT);
         for (H3DlgItem *item : {static_cast<H3DlgItem *>(box), static_cast<H3DlgItem *>(label)})
         {
@@ -173,13 +173,12 @@ class Dialog : public H3Dlg
             items.push_back(item);
         }
     }
-    void Select(std::vector<H3DlgItem *> &items, int field, int y, const char *key, const char *fallback)
+    void Select(std::vector<H3DlgItem *> &items, int field, int y, const char *key)
     {
-        items.push_back(CreateText(88, y, 330, 28, Text(key, fallback), NH3Dlg::Text::SMALL, eTextColor::REGULAR, -1,
+        items.push_back(CreateText(88, y, 330, 28, Text(key), NH3Dlg::Text::SMALL, eTextColor::REGULAR, -1,
                                    eTextAlignment::MIDDLE_LEFT));
         selectors[field] = Button(426, y, 315, PROCESS_BASE + field * 2, "", 28);
-        selectors[field]->SetHints(Text("chooseHint", "Open the list to choose values."),
-                                   Text("chooseHint", "Open the list to choose values."), TRUE);
+        selectors[field]->SetHints(Text("chooseHint"), Text("chooseHint"), TRUE);
         items.push_back(selectors[field]);
     }
     void RefreshProcess()
@@ -213,9 +212,9 @@ class Dialog : public H3Dlg
             {
                 const int all = (1 << options.size()) - 1;
                 if (draft.process[f] == all)
-                    caption = Text("allLevels", "All levels");
+                    caption = Text("allLevels");
                 else if (!draft.process[f])
-                    caption = Text("noLevels", "None");
+                    caption = Text("noLevels");
                 else
                     for (int i = 0; i < int(options.size()); ++i)
                         if (draft.process[f] & (1 << i))
@@ -231,8 +230,7 @@ class Dialog : public H3Dlg
             selectors[f]->SetText(caption.c_str());
             selectors[f]->EnableItem(enabled);
         }
-        ShowStatus(Text("processHint",
-                        "Settings apply during wogification; existing WoG rules and restrictions still apply."));
+        ShowStatus(Text("processHint"));
     }
     void UpdateTabs()
     {
@@ -256,19 +254,16 @@ class Dialog : public H3Dlg
     }
     static std::string NativeCategory(int page)
     {
-        static const char *fallback[] = {"General objects", "Learning",           "Income and resources",
-                                         "Creature banks",  "Creature dwellings", "Prisons and quests",
-                                         "WoG objects",     "Treasures",          "Pandora's boxes"};
         if (page < 0 || page >= 9)
-            return Text("otherCategories", "Other objects");
+            return Text("otherCategories");
         bool found = false;
         const char *name = EraJS::read("RMG.text.dlg.pages." + std::to_string(page) + ".name", found);
-        return found ? name : Text(("category" + std::to_string(page)).c_str(), fallback[page]);
+        return found ? name : Text(("category" + std::to_string(page)).c_str());
     }
     H3DlgCaptionButton *Button(int x, int y, int width, int id, const char *text, int height = 24, int hotkey = 0)
     {
-        auto *button = CreateCaptionButton(x, y, width, height, id, "GSPBUT2.DEF", text, NH3Dlg::Text::SMALL, 0, 0,
-                                           FALSE, hotkey, eTextColor::HIGHLIGHT);
+        auto *button = CreateCaptionButton(x, y, width, height, id, rmgassets::GSPBUT2_DEF, text, NH3Dlg::Text::SMALL,
+                                           0, 0, FALSE, hotkey, eTextColor::HIGHLIGHT);
         if (button)
             button->SetClickFrame(1);
         return button;
@@ -296,7 +291,7 @@ class Dialog : public H3Dlg
     H3DlgEdit *Edit(int x, int y, int width, int length, int id, const char *text)
     {
         auto *edit = CreateEdit(x, y, width, 22, length, text, NH3Dlg::Text::SMALL, eTextColor::REGULAR,
-                                eTextAlignment::MIDDLE_CENTER, "RMG_edit.pcx", id, TRUE, 2, 2);
+                                eTextAlignment::MIDDLE_CENTER, rmgassets::RMG_EDIT_PCX, id, TRUE, 2, 2);
         if (edit)
             edit->SetAutoredraw(TRUE);
         return edit;
@@ -304,7 +299,7 @@ class Dialog : public H3Dlg
     std::string GroupName(int group) const
     {
         if (group < 0)
-            return Text("allGroups", "All permitted");
+            return Text("allGroups");
         const auto key = "wogify.objectReplacement.objects." + std::to_string(group) + ".name";
         bool found = false;
         const char *name = EraJS::read(key, found);
@@ -325,9 +320,7 @@ class Dialog : public H3Dlg
                 !Valid(v, kind))
             {
                 if (report)
-                    H3Messagebox(Text(
-                        "invalidValues",
-                        "Chance: 0..100; preserve: 0..65535. Only target weight/limit allow -1. Distance: 0..255."));
+                    H3Messagebox(Text("invalidValues"));
                 return false;
             }
         }
@@ -407,7 +400,7 @@ class Dialog : public H3Dlg
             }
             const size_t c = available[position];
             categorySlots.push_back(c);
-            const char *label = c ? categories[c].c_str() : Text("allCategories", "All objects");
+            const char *label = c ? categories[c].c_str() : Text("allCategories");
             const auto hint = std::string(label) + " [" + std::to_string(slot < 9 ? slot + 1 : 0) + "]";
             button->SetText(label);
             button->SetHints(hint.c_str(), hint.c_str(), TRUE);
@@ -474,20 +467,19 @@ class Dialog : public H3Dlg
         for (auto *item : tableItems)
             item->ShowActivate();
         const auto &objects = Objects();
-        const bool creaturePage = category && categories[category] == Text("creatures", "Creatures");
-        const bool pickupPage = creaturePage || (category && categories[category] == Text("artifacts", "Artifacts"));
-        const char *headers[5] = {kind == Target
-                                      ? (creaturePage ? Text("chance", "Chance %") : Text("weightChance", "Weight / %"))
-                                      : Text("chance", "Chance %"),
-                                  kind == Target ? Text("mapLimit", "Map limit") : Text("preserve", "Keep at least"),
+        const bool creaturePage = category && categories[category] == Text("creatures");
+        const bool pickupPage = creaturePage || (category && categories[category] == Text("artifacts"));
+        const char *headers[5] = {kind == Target ? (creaturePage ? Text("chance") : Text("weightChance"))
+                                                 : Text("chance"),
+                                  kind == Target ? Text("mapLimit") : Text("preserve"),
                                   pickupPage       ? ""
-                                  : kind == Target ? Text("distance", "Distance")
-                                                   : Text("group", "Results"),
-                                  Text("levels", "Levels"), Text("mapKinds", "Maps")};
+                                  : kind == Target ? Text("distance")
+                                                   : Text("group"),
+                                  Text("levels"), Text("mapKinds")};
         for (int f = 0; f < 5; ++f)
             if (auto *text = GetText(300 + f))
                 text->SetText(headers[f]);
-        providerButton->SetText(provider ? providers[provider].c_str() : Text("allMods", "All mods"));
+        providerButton->SetText(provider ? providers[provider].c_str() : Text("allMods"));
         UpdateCategories();
         SyncScrollbar();
         for (int r = 0; r < ROWS; ++r)
@@ -530,42 +522,29 @@ class Dialog : public H3Dlg
             row.distance->SetText(std::to_string(v[Distance]).c_str());
             const auto groupCaption = v[Distance] < 0 ? std::string("*") : "#" + std::to_string(v[Distance]);
             row.group->SetText(groupCaption.c_str());
-            row.levels->SetText(v[Levels] == 3   ? Text("both", "Both")
-                                : v[Levels] == 1 ? Text("surface", "Surface")
-                                                 : Text("underground", "Below"));
-            row.maps->SetText(v[MapKinds] == 3   ? Text("allMaps", "Both")
-                              : v[MapKinds] == 1 ? Text("authored", "Authored")
-                                                 : Text("random", "Random"));
-            row.enabled->SetHint(Text("enabledHint", "Allow this object to participate in replacements."));
-            row.rate->SetHint(
-                kind == Source
-                    ? Text("chanceHint", "Chance for each original object: 0..100%. Zero disables replacement.")
-                    : Text("weightHint", "Relative target weight. -1 uses the rule; 0 disables selection."));
+            row.levels->SetText(v[Levels] == 3 ? Text("both") : v[Levels] == 1 ? Text("surface") : Text("underground"));
+            row.maps->SetText(v[MapKinds] == 3   ? Text("allMaps")
+                              : v[MapKinds] == 1 ? Text("authored")
+                                                 : Text("random"));
+            row.enabled->SetHint(Text("enabledHint"));
+            row.rate->SetHint(kind == Source ? Text("chanceHint") : Text("weightHint"));
             if (kind == Target && object.type == eObject::MONSTER)
-                row.rate->SetHint(
-                    Text("creatureChanceHint",
-                         "Additional chance for a selected creature: -1 uses 100%; values above 100 mean 100%."));
-            row.limit->SetHint(
-                kind == Source
-                    ? Text("preserveHint", "Minimum original objects to keep: 0..65535.")
-                    : Text("limitHint", "Maximum targets on the map, including existing objects. -1 adds no limit."));
-            row.distance->SetHint(
-                Text("distanceHint", "Minimum distance between identical targets on the same map level."));
+                row.rate->SetHint(Text("creatureChanceHint"));
+            row.limit->SetHint(kind == Source ? Text("preserveHint") : Text("limitHint"));
+            row.distance->SetHint(Text("distanceHint"));
             const std::string groupHint = GroupName(v[Distance]);
             row.group->SetHints(groupHint.c_str(), groupHint.c_str(), TRUE);
-            row.levels->SetHint(Text("levelsHint", "Click to cycle surface, underground and both levels."));
-            row.maps->SetHint(Text("mapsHint", "Click to cycle authored, random and both map types."));
+            row.levels->SetHint(Text("levelsHint"));
+            row.maps->SetHint(Text("mapsHint"));
             row.name->SetHints(object.name.c_str(), object.name.c_str(), TRUE);
             row.picture->SetHints(object.name.c_str(), object.name.c_str(), TRUE);
             if (!pictures.count(row.index))
                 pictures[row.index] = rmgdlg::RMG_SettingsDlg::CreateWogificationPreview(object.type, object.subtype);
             row.picture->SetPcx(pictures[row.index]);
         }
-        const std::string count = std::to_string(filtered.size()) + " " + Text("objects", "objects");
+        const std::string count = std::to_string(filtered.size()) + " " + Text("objects");
         GetText(Status)->SetText(count.c_str());
-        ShowStatus(kind == Source
-                       ? Text("sourceHint", "Source chance and preserve count cannot be negative.")
-                       : Text("targetHint", "Target weight/limit: -1 uses the rule. Geometry checks always apply."));
+        ShowStatus(kind == Source ? Text("sourceHint") : Text("targetHint"));
         if (redraw)
             Redraw();
     }
@@ -577,25 +556,20 @@ class Dialog : public H3Dlg
             text += GroupName(draft[index][Source][Distance]) + "\n\n";
         if (Pickup(object.type))
         {
-            text += Text(
-                "pickupHelp",
-                "Defaults: SoD IDs are sources, later IDs are targets. Commanders and combat machines are excluded. "
-                "Settings filter the existing ERM replacement rules; they do not create new replacement rules.");
+            text += Text("pickupHelp");
             H3Messagebox::RMB(text.c_str());
             return;
         }
         if (kind == Target && object.targetGroups.empty())
         {
-            text += Text("unassignedTarget", "No replacement set is assigned. Configure targetGroups and, if needed, "
-                                             "an initializer in JSON before placement can run.");
+            text += Text("unassignedTarget");
             text += "\n\n";
         }
-        text += Text("permittedGroups", "Permitted result sets:");
+        text += Text("permittedGroups");
         for (int group : (kind == Source ? object.sourceGroups : object.targetGroups))
             text += "\n" + GroupName(group);
         text += "\n\n";
-        text += Text("geometryHint", "Placement requires matching blocked cells and entrances. Incompatible objects "
-                                     "remain unchanged. Existing objects count towards the map limit.");
+        text += Text("geometryHint");
         H3Messagebox::RMB(text.c_str());
     }
     void ProfileAction(bool save)
@@ -608,7 +582,7 @@ class Dialog : public H3Dlg
         profileLabel->SetText(profilePath.c_str());
         profileLabel->SetHints(profilePath.c_str(), profilePath.c_str(), TRUE);
         if (save)
-            ShowStatus(Text("profileSaved", "Profile saved."));
+            ShowStatus(Text("profileSaved"));
         else
             Refresh();
         Redraw();
@@ -706,10 +680,7 @@ class Dialog : public H3Dlg
         }
         if (id == Help)
         {
-            H3Messagebox(Text("help", "Use the large buttons for targets/sources and the tabs below for object "
-                                      "categories. Source chance/preserve are nonnegative. Only target weight/limit "
-                                      "use -1. Changes apply to authored maps by default. Profiles load into the "
-                                      "draft; OK saves it, Cancel discards it. Geometry checks always apply."));
+            H3Messagebox(Text("help"));
             return true;
         }
         if (id == CREATURE_TAB || id == ARTIFACT_TAB || id == Targets || id == Sources)
@@ -890,7 +861,7 @@ class Dialog : public H3Dlg
             return;
         if (!SaveCurrent(draft))
         {
-            H3Messagebox(Text("saveError", "Could not save settings. Previous settings were retained."));
+            H3Messagebox(Text("saveError"));
             return;
         }
         Stop();
@@ -907,43 +878,42 @@ class Dialog : public H3Dlg
         AddBackground(0, 0, 800, 600, FALSE, FALSE, 1, TRUE);
         if (background)
             background->SimpleFrameRegion(0, 0, 800, 600);
-        AddItem(H3DlgPcx16::Create(25, 6, 750, 45, -1, "RMG_back.pcx"));
+        AddItem(H3DlgPcx16::Create(25, 6, 750, 45, -1, rmgassets::RMG_BACK_PCX));
         const int tabIds[] = {Targets, Sources, CREATURE_TAB, ARTIFACT_TAB};
         for (int id : tabIds)
         {
             const int slot = id == Targets ? 0 : id == Sources ? 1 : id == CREATURE_TAB ? 2 : 3;
-            auto *tab = CreateCaptionButton(25 + slot * 173, 9, 165, 39, id, "RMGmenbt.def",
-                                            id == Targets        ? Text("targets", "Objects to place")
-                                            : id == Sources      ? Text("sources", "Objects to replace")
-                                            : id == CREATURE_TAB ? Text("creatures", "Creatures")
-                                                                 : Text("artifacts", "Artifacts"),
+            auto *tab = CreateCaptionButton(25 + slot * 173, 9, 165, 39, id, rmgassets::RMGMENBT_DEF,
+                                            id == Targets        ? Text("targets")
+                                            : id == Sources      ? Text("sources")
+                                            : id == CREATURE_TAB ? Text("creatures")
+                                                                 : Text("artifacts"),
                                             NH3Dlg::Text::SMALL, 0, 0, FALSE, eVKey::H3VK_TAB, eTextColor::HIGHLIGHT);
             tab->SetClickFrame(1);
-            tab->SetHint(id == CREATURE_TAB   ? Text("creatureOptions", "Creature replacement settings")
-                         : id == ARTIFACT_TAB ? Text("artifactOptions", "Artifact and scroll replacement settings")
-                         : id == Targets      ? Text("targetsHint", "Choose which objects may appear.")
-                                              : Text("sourcesHint", "Choose which original objects may be replaced."));
+            tab->SetHint(id == CREATURE_TAB   ? Text("creatureOptions")
+                         : id == ARTIFACT_TAB ? Text("artifactOptions")
+                         : id == Targets      ? Text("targetsHint")
+                                              : Text("sourcesHint"));
         }
-        AssetButton(720, 10, Help, "RMG_help.def", Text("helpHint", "Wogification settings help."), false, 0, 1,
-                    eVKey::H3VK_H);
+        AssetButton(720, 10, Help, rmgassets::RMG_HELP_DEF, Text("helpHint"), false, 0, 1, eVKey::H3VK_H);
         for (int slot = 0; slot < CATEGORY_COUNT; ++slot)
             categoryButtons[slot] = Button(32 + (slot % 5) * 138, 56 + (slot / 5) * 22, 128, CATEGORY_BASE + slot, "",
                                            20, slot < 9 ? eVKey::H3VK_1 + slot : eVKey::H3VK_0);
         Button(726, 77, 24, CATEGORY_PREV, "<");
         Button(752, 77, 24, CATEGORY_NEXT, ">");
-        tableItems.push_back(CreateText(25, 107, 60, 22, Text("search", "Search"), NH3Dlg::Text::SMALL,
-                                        eTextColor::HIGHLIGHT, 91, eTextAlignment::MIDDLE_LEFT));
+        tableItems.push_back(CreateText(25, 107, 60, 22, Text("search"), NH3Dlg::Text::SMALL, eTextColor::HIGHLIGHT, 91,
+                                        eTextAlignment::MIDDLE_LEFT));
         search = Edit(86, 107, 300, 80, Search, "");
-        search->SetHint(Text("searchHint", "Search by name, mod, object ID or type:subtype."));
+        search->SetHint(Text("searchHint"));
         CreateText(396, 107, 180, 22, "", NH3Dlg::Text::SMALL, eTextColor::REGULAR, Status,
                    eTextAlignment::MIDDLE_CENTER);
-        providerButton = Button(590, 106, 168, Provider, Text("allMods", "All mods"));
-        providerButton->SetHint(Text("modHint", "Click to filter by mod."));
-        auto *header = H3DlgPcx16::Create(25, 135, 743, 28, -1, "RMG_back.pcx");
+        providerButton = Button(590, 106, 168, Provider, Text("allMods"));
+        providerButton->SetHint(Text("modHint"));
+        auto *header = H3DlgPcx16::Create(25, 135, 743, 28, -1, rmgassets::RMG_BACK_PCX);
         AddItem(header);
         tableItems.push_back(header);
         tableItems.push_back(CreateFrame(header, H3RGB565(H3RGB888::Highlight())));
-        CreateText(26, 138, 300, 22, Text("object", "Object / mod"), NH3Dlg::Text::SMALL, eTextColor::HIGHLIGHT, 299);
+        CreateText(26, 138, 300, 22, Text("object"), NH3Dlg::Text::SMALL, eTextColor::HIGHLIGHT, 299);
         for (int f = 0; f < 5; ++f)
             CreateText(350 + f * 76, 138, 74, 22, "", NH3Dlg::Text::SMALL, eTextColor::HIGHLIGHT, 300 + f,
                        eTextAlignment::MIDDLE_CENTER);
@@ -951,7 +921,7 @@ class Dialog : public H3Dlg
         {
             auto &row = rows[r];
             const int y = TABLE_Y + r * ROW_HEIGHT, id = ROW_BASE + r * ROW_STRIDE;
-            auto *panel = H3DlgPcx16::Create(24, y, 744, ROW_HEIGHT - 2, id + 11, "RMG_back.pcx");
+            auto *panel = H3DlgPcx16::Create(24, y, 744, ROW_HEIGHT - 2, id + 11, rmgassets::RMG_BACK_PCX);
             if (panel)
             {
                 AddItem(panel);
@@ -963,7 +933,7 @@ class Dialog : public H3Dlg
                     AddItem(frame);
                     row.items.push_back(frame);
                 }
-            row.enabled = H3DlgDef::Create(30, y + 7, id, "RMG_chbx.def", 1, 0);
+            row.enabled = H3DlgDef::Create(30, y + 7, id, rmgassets::RMG_CHBX_DEF, 1, 0);
             AddItem(row.enabled);
             row.picture = H3DlgPcx16::Create(66, y + 2, 44, 44, id + 1, nullptr);
             AddItem(row.picture);
@@ -977,8 +947,7 @@ class Dialog : public H3Dlg
             row.group = Button(502, y + 12, 72, id + 7, "");
             row.levels = Button(578, y + 12, 72, id + 8, "");
             row.maps = Button(654, y + 12, 72, id + 9, "");
-            row.reset = AssetButton(734, y + 13, id + 10, "RMG_dfmn.def",
-                                    Text("resetRowHint", "Restore this object's JSON defaults."), false);
+            row.reset = AssetButton(734, y + 13, id + 10, rmgassets::RMG_DFMN_DEF, Text("resetRowHint"), false);
             row.items.insert(row.items.end(), {row.enabled, row.picture, row.name, row.description, row.rate, row.limit,
                                                row.distance, row.group, row.levels, row.maps, row.reset});
         }
@@ -986,58 +955,42 @@ class Dialog : public H3Dlg
         if (scrollbar)
         {
             AddItem(scrollbar);
-            scrollbar->SetHint(Text("scrollHint", "Scroll the object list."));
+            scrollbar->SetHint(Text("scrollHint"));
         }
-        CreateText(25, 523, 84, 22, Text("profile", "Profile:"), NH3Dlg::Text::SMALL, eTextColor::HIGHLIGHT, 400);
-        profileLabel = CreateText(113, 523, 652, 22, Text("noProfile", "No profile selected"), NH3Dlg::Text::SMALL,
-                                  eTextColor::REGULAR, 401, eTextAlignment::MIDDLE_LEFT);
+        CreateText(25, 523, 84, 22, Text("profile"), NH3Dlg::Text::SMALL, eTextColor::HIGHLIGHT, 400);
+        profileLabel = CreateText(113, 523, 652, 22, Text("noProfile"), NH3Dlg::Text::SMALL, eTextColor::REGULAR, 401,
+                                  eTextAlignment::MIDDLE_LEFT);
         const char *profileButtons = ProfileButtonDef();
-        AssetButton(25, 550, ProfileLoad, profileButtons, Text("loadHint", "Load a profile into the draft."), false, 6,
-                    7, eVKey::H3VK_L);
-        AssetButton(97, 550, ProfileSave, profileButtons, Text("saveHint", "Save changes from defaults as a profile."),
-                    false, 9, 10, eVKey::H3VK_S);
-        AssetButton(177, 550, Reset, "RMG_dflt.def", Text("resetVisible", "Defaults for filtered list"), true, 0, 1,
-                    eVKey::H3VK_R);
-        AssetButton(657, 550, Accept, "RMG_okay.def", Text("applyHint", "Apply and save current settings."), true, 0, 1,
-                    eVKey::H3VK_ENTER);
-        AssetButton(720, 550, Cancel, "RMG_cncl.def", Text("cancelHint", "Discard changes and close."), true, 0, 1,
-                    eVKey::H3VK_ESCAPE);
+        AssetButton(25, 550, ProfileLoad, profileButtons, Text("loadHint"), false, 6, 7, eVKey::H3VK_L);
+        AssetButton(97, 550, ProfileSave, profileButtons, Text("saveHint"), false, 9, 10, eVKey::H3VK_S);
+        AssetButton(177, 550, Reset, rmgassets::RMG_DFLT_DEF, Text("resetVisible"), true, 0, 1, eVKey::H3VK_R);
+        AssetButton(657, 550, Accept, rmgassets::RMG_OKAY_DEF, Text("applyHint"), true, 0, 1, eVKey::H3VK_ENTER);
+        AssetButton(720, 550, Cancel, rmgassets::RMG_CNCL_DEF, Text("cancelHint"), true, 0, 1, eVKey::H3VK_ESCAPE);
         hintBar = H3ObjectAllocator<H3DlgHintBar>().allocate(1);
         if (hintBar)
         {
             // Same constructor, resource and placement as RMG_SettingsDlg.
             THISCALL_12(H3DlgHintBar *, 0x5BCB70, hintBar, 240, 549, 409, 34, h3_NullString, NH3Dlg::Text::SMALL,
-                        "rmghntbr.pcx", eTextColor::REGULAR, 0, eTextAlignment::MIDDLE_CENTER, 8);
+                        rmgassets::RMGHNTBR_PCX, eTextColor::REGULAR, 0, eTextAlignment::MIDDLE_CENTER, 8);
             hintBar->DeActivate();
             AddItem(hintBar);
         }
         tableItems.insert(tableItems.end(), {search, providerButton, GetText(Status), GetText(299)});
         for (int f = 0; f < 5; ++f)
             tableItems.push_back(GetText(300 + f));
-        Check(creatureItems, CreatureEnabled, 84, "creatureEnabled", "Enable creature replacement",
-              Text("creatureEnabledHint", "Allow the existing WoG creature replacement rules."));
-        Select(creatureItems, CreatureLevels, 133, "creatureLevels", "Creature levels to replace");
-        Check(creatureItems, MaxAggression, 192, "maxAggression", "Set maximum aggression",
-              Text("maxAggressionHint", "Always fight. Only successfully replaced stacks are affected."));
-        Check(creatureItems, QuestCreatures, 245, "questCreatures", "Replace quest creatures",
-              Text("questCreaturesHint", "Allow replacing stacks required by defeat-monster quests. Disabled by "
-                                         "default; custom stack restrictions remain."));
-        Check(artifactItems, ArtifactEnabled, 75, "artifactEnabled", "Enable artifact replacement",
-              Text("artifactEnabledHint", "Allow the existing WoG artifact replacement rules."));
-        Select(artifactItems, ArtifactLevels, 119, "artifactLevels", "Artifact classes to replace");
-        Check(artifactItems, BankArtifacts, 163, "bankRewards", "Replace artifacts in creature banks",
-              Text("bankRewardsHint",
-                   "Apply artifact replacement rules to existing bank rewards, including Dragon Utopias."));
-        Check(artifactItems, BankBanners, 207, "bankBanners", "Add Warlord's Banners to creature banks",
-              Text("bankBannersHint", "50% chance in eligible banks, plus one extra Banner in every Dragon Utopia. "
-                                      "Requires stack experience and permitted Banners."));
-        Check(artifactItems, ScrollEnabled, 263, "scrollEnabled", "Replace spell scrolls",
-              Text("scrollEnabledHint", "Choose the replacement separately for each spell level."));
+        Check(creatureItems, CreatureEnabled, 84, "creatureEnabled", Text("creatureEnabledHint"));
+        Select(creatureItems, CreatureLevels, 133, "creatureLevels");
+        Check(creatureItems, MaxAggression, 192, "maxAggression", Text("maxAggressionHint"));
+        Check(creatureItems, QuestCreatures, 245, "questCreatures", Text("questCreaturesHint"));
+        Check(artifactItems, ArtifactEnabled, 75, "artifactEnabled", Text("artifactEnabledHint"));
+        Select(artifactItems, ArtifactLevels, 119, "artifactLevels");
+        Check(artifactItems, BankArtifacts, 163, "bankRewards", Text("bankRewardsHint"));
+        Check(artifactItems, BankBanners, 207, "bankBanners", Text("bankBannersHint"));
+        Check(artifactItems, ScrollEnabled, 263, "scrollEnabled", Text("scrollEnabledHint"));
         for (int f = ScrollLevel1; f <= ScrollLevel5; ++f)
         {
             const auto key = "scrollLevel" + std::to_string(f - ScrollLevel1 + 1);
-            const auto label = std::string(Text("spellLevel", "Spell level ")) + std::to_string(f - ScrollLevel1 + 1);
-            Select(artifactItems, f, 308 + (f - ScrollLevel1) * 36, key.c_str(), label.c_str());
+            Select(artifactItems, f, 308 + (f - ScrollLevel1) * 36, key.c_str());
         }
         std::set<std::string> cats, mods;
         for (const auto &object : Objects())
@@ -1045,8 +998,7 @@ class Dialog : public H3Dlg
             const int page = static_cast<int>(
                 rmgdlg::RMG_SettingsDlg::GetObjectAttributesPageByObjectType(object.type, object.subtype));
             objectCategories.push_back(Pickup(object.type)
-                                           ? (object.type == eObject::ARTIFACT ? Text("artifacts", "Artifacts")
-                                                                               : Text("creatures", "Creatures"))
+                                           ? (object.type == eObject::ARTIFACT ? Text("artifacts") : Text("creatures"))
                                        : object.category.empty() ? NativeCategory(page)
                                                                  : object.category);
             if (Pickup(object.type) || (!Participates(object, Target) && !Participates(object, Source)))
@@ -1055,7 +1007,7 @@ class Dialog : public H3Dlg
             mods.insert(object.provider);
         }
         categories.push_back("");
-        for (const char *name : {Text("creatures", "Creatures"), Text("artifacts", "Artifacts")})
+        for (const char *name : {Text("creatures"), Text("artifacts")})
             if (cats.erase(name))
                 categories.emplace_back(name);
         for (int page = 0; page < static_cast<int>(extender::ePandoraBox) + 1; ++page)
@@ -1090,7 +1042,7 @@ int __fastcall Widget(void *message)
 }
 void __stdcall Reload(Era::TEvent *)
 {
-    mainmenu::MainMenu_SetDialogButtonText(WIDGET, Text("title", "Wogification objects"));
+    mainmenu::MainMenu_SetDialogButtonText(WIDGET, Text("title"));
 }
 } // namespace
 void ShowDialog()
@@ -1100,13 +1052,13 @@ void ShowDialog()
 }
 void Install()
 {
-    static bool installed = true; // false;
+    static bool installed = false;
     if (installed)
         return;
     installed = true;
     mainmenu::MenuWidgetInfo widget{};
     widget.name = WIDGET;
-    widget.text = Text("title", "Wogification objects");
+    widget.text = Text("title");
     widget.customProc = Widget;
     widget.menuList =
         static_cast<mainmenu::eMenuFlags>(mainmenu::eMenuFlags::NEW_GAME | mainmenu::eMenuFlags::AT_BOTTOM);

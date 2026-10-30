@@ -2,6 +2,7 @@
 #include "../headers/Era/era.h"
 
 #include <cstring>
+#include <cstdio>
 #include <string>
 
 namespace rmgsettings
@@ -48,7 +49,27 @@ bool SaveIniAtomically(const char *path, const std::function<bool(const char *)>
         return false;
 
     char stagePath[MAX_PATH]{};
-    if (!GetTempFileNameA(target.substr(0, separator + 1).c_str(), "rmg", 0, stagePath))
+    // Generate only a name: GetTempFileName requires an existing directory.
+    // ERA creates the staged INI and its parent directories when saving.
+    static UINT stageId = GetTickCount();
+    bool available = false;
+    for (UINT attempt = 0; attempt < 0xFFFF; ++attempt)
+    {
+        if (!(++stageId & 0xFFFF))
+            ++stageId;
+        const UINT unique = stageId & 0xFFFF;
+        if (_snprintf_s(stagePath, MAX_PATH, _TRUNCATE, "%srmg%04X.tmp",
+                        target.substr(0, separator + 1).c_str(), unique) < 0)
+            return false;
+        if (GetFileAttributesA(stagePath) != INVALID_FILE_ATTRIBUTES)
+            continue;
+        const DWORD error = GetLastError();
+        if (error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+            return false;
+        available = true;
+        break;
+    }
+    if (!available)
         return false;
     TemporaryIni stage{stagePath};
 
@@ -59,7 +80,7 @@ bool SaveIniAtomically(const char *path, const std::function<bool(const char *)>
         if (!copiedExisting)
         {
             const DWORD error = GetLastError();
-            if (error != ERROR_FILE_NOT_FOUND)
+            if (error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
                 return false;
         }
     }

@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <ItemGroup>
+    <Filter Include="Native H3API"><UniqueIdentifier>{0328C9D3-5B0E-46D9-9FB2-E3C6AD2E25D5}</UniqueIdentifier></Filter>
+    <Filter Include="Migrated Fixes"><UniqueIdentifier>{AD4537F5-ED79-4B3B-8793-45596B7A5165}</UniqueIdentifier></Filter>
+    <Filter Include="Dependencies"><UniqueIdentifier>{EE2BB469-18DB-45FC-920B-260ABCD28930}</UniqueIdentifier></Filter>
+    <Filter Include="Legacy (excluded)"><UniqueIdentifier>{AFB4C1A8-CC85-44E0-9C5F-42DB7EB9E0FD}</UniqueIdentifier></Filter>
+  <Filter Include="Migration drafts"><UniqueIdentifier>{B3982468-9D3A-48E3-A1E7-4FB57B6B1407}</UniqueIdentifier></Filter></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AbiLayoutChecks.cpp"><Filter>Native H3API</Filter></ClCompile>
+    <ClCompile Include="src\Plugin.cpp"><Filter>Native H3API</Filter></ClCompile>
+    <ClCompile Include="..\headers\Era\era.cpp"><Filter>Dependencies</Filter></ClCompile>
+    <ClCompile Include="src\Fixes\AI.cpp"><Filter>Migrated Fixes</Filter></ClCompile>
+    <ClCompile Include="src\Fixes\Ben.cpp"><Filter>Migrated Fixes</Filter></ClCompile>
+    <ClCompile Include="src\Fixes\HeroMovement.cpp"><Filter>Migrated Fixes</Filter></ClCompile>
+    <ClCompile Include="src\Fixes\Scouting.cpp"><Filter>Migrated Fixes</Filter></ClCompile>
+    <ClCompile Include="src\Fixes\Runtime.cpp"><Filter>Migrated Fixes</Filter></ClCompile>
+  <ClCompile Include="src\Fixes\Spells.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\Summon.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\Monsters.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\Luck.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\Npc.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\Graphics.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\Audio.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\CrExpo.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\PrimarySkills.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\GameLogicCore.cpp"><Filter>Migrated Fixes</Filter></ClCompile><ClCompile Include="src\Fixes\GameLogicRemaining.cpp"><Filter>Migrated Fixes</Filter></ClCompile></ItemGroup>
+  <ItemGroup>
+    <None Include="legacy\src\AIFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\AudioFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\Ben.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\CrExpoFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\GameLogic.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\GamePatches.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\Graphics.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\HdModFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\HeroMovementFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\LuckFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\MapSizeFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\Monsters.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\Npc.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\PluginRng.h"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\RK primary skill overflow.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\RoseKavalier.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\SammonCreatures.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\ScoutingRadiusFixes.cpp"><Filter>Legacy (excluded)</Filter></None>
+    <None Include="legacy\src\Spells.cpp"><Filter>Legacy (excluded)</Filter></None>
+  <None Include="src\Ports\GameLogic.incomplete.cpp"><Filter>Migration drafts</Filter></None></ItemGroup>
+<ItemGroup><ClInclude Include="include\Plugin.h"><Filter>Native H3API</Filter></ClInclude><ClInclude Include="include\PluginRng.h"><Filter>Native H3API</Filter></ClInclude><ClInclude Include="include\WoGCrExpo.h"><Filter>Native H3API</Filter></ClInclude><ClInclude Include="WoG_NPC.h"><Filter>Dependencies</Filter></ClInclude><ClInclude Include="..\headers\Era\era.h"><Filter>Dependencies</Filter></ClInclude><ClInclude Include="..\headers\H3API\single_header\H3API.hpp"><Filter>Dependencies</Filter></ClInclude></ItemGroup></Project>
