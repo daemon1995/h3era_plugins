@@ -18,6 +18,23 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClInclude Include="Wogification\Settings.h" />
+    <ClInclude Include="DialogInput.h" />
+    <ClCompile Include="Wogification\Settings.cpp" />
+    <ClCompile Include="Wogification\Dialog.cpp" />
+    <ClInclude Include="Wogification\ProfileDialog.h" />
+    <ClCompile Include="Wogification\ProfileDialog.cpp" />
+    <ClInclude Include="MapSelection\MapSelection.h" />
+    <ClInclude Include="MapSelection\MapSize.h" />
+    <ClInclude Include="MapSelection\RandomMapOptions.h" />
+    <ClInclude Include="MapSelection\HdTemplateCompatibility.h" />
+    <ClCompile Include="MapSelection\MapSelection.cpp" />
+    <ClCompile Include="MapSelection\MenuDialogs.cpp" />
+    <ClCompile Include="MapSelection\PlayerDialog.cpp" />
+    <ClInclude Include="MapSelection\MenuDialogs.h" />
+    <ClCompile Include="MapSelection\MapSize.cpp" />
+    <ClCompile Include="MapSelection\RandomMapOptions.cpp" />
+    <ClCompile Include="MapSelection\HdTemplateCompatibility.cpp" />
     <ClInclude Include="..\headers\Objects\DwellingConfig.h" />
     <ClInclude Include="..\headers\Objects\RmgSettingsExport.h" />
     <ClInclude Include="..\headers\Era\ObjectText.hpp" />

@@ -5,6 +5,9 @@
 
 #include "RMG_SettingsDlg.h"
 #include "AtomicIniSave.h"
+#include "DialogInput.h"
+#include "Wogification/Settings.h"
+#include "MapSelection/RandomMapOptions.h"
 
 int GetCreatureBankIndex(const int objType, const int subtype)
 {
@@ -495,6 +498,14 @@ VOID RMG_SettingsDlg::OnHelp() const noexcept
     dlg.Start();
 }
 
+INT RMG_SettingsDlg::vDialogProc(H3Msg &msg)
+{
+    H3Msg event = msg;
+    if (rmginput::BlurOutside(*this,event,[this](H3DlgEdit *edit) { FinishEdit(edit,TRUE); })) isDlgTextEditInput = false;
+    const int result = H3Dlg::vDialogProc(event);
+    msg = event; return result;
+}
+
 BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
 {
     const int itemId = msg.itemId;
@@ -598,21 +609,21 @@ BOOL RMG_SettingsDlg::DialogProc(H3Msg &msg)
 
 BOOL RMG_SettingsDlg::RemoveEditsFocus(const BOOL save) const noexcept
 {
-    if (auto objPage = dynamic_cast<ObjectsPage *>(m_currentPage))
-    {
-        // loop all the panels
-        for (auto panel : objPage->objectsPanels)
-        {
-            // if any of them was foucused
-            if (panel->UnfocusEdits(save))
-            {
-                // return that as flag
-                return true;
-            }
-        }
-    }
-    // this->m_currentPage;
-    return false;
+    const bool changed = rmginput::BlurAll(*const_cast<RMG_SettingsDlg *>(this),[this,save](H3DlgEdit *edit) { FinishEdit(edit,save); });
+    if (changed) isDlgTextEditInput = false;
+    return changed;
+}
+void RMG_SettingsDlg::FinishEdit(H3DlgEdit *edit, BOOL save) const noexcept
+{
+    for (auto *page : m_pages)
+        if (auto *objects = dynamic_cast<ObjectsPage *>(page))
+            for (auto *panel : objects->objectsPanels)
+                if (std::find(std::begin(panel->edits),std::end(panel->edits),edit) != std::end(panel->edits))
+                {
+                    if (save) panel->PanelInfoToObjectInfo();
+                    panel->ObjectInfoToPanelInfo();
+                    return;
+                }
 }
 VOID RMG_SettingsDlg::OnOK()
 {
@@ -873,27 +884,21 @@ void RMG_SettingsDlg::ObjectsPanel::SetObject(RMGDlgObject *mapObject) noexcept
 
 const BOOL RMG_SettingsDlg::ObjectsPanel::UnfocusEdits(const BOOL saveChanges) noexcept
 {
-
+    bool changed = false;
     for (auto &edit : edits)
     {
-        if (edit->IsFocused())
+        if (edit && edit->IsFocused())
         {
             edit->SetFocus(false);
-
-            if (saveChanges)
-            {
-                PanelInfoToObjectInfo();
-            }
-            else
-            {
-                ObjectInfoToPanelInfo();
-            }
-
-            // Redraw();
-            return true;
+            changed = true;
         }
     }
-    return false;
+    if (changed)
+    {
+        if (saveChanges) PanelInfoToObjectInfo();
+        ObjectInfoToPanelInfo();
+    }
+    return changed;
 }
 void RMG_SettingsDlg::ObjectsPanel::ObjectInfoToPanelInfo() noexcept
 {
@@ -974,16 +979,19 @@ H3Msg *__stdcall RMG_SettingsDlg::H3DlgEdit__TranslateInputKey(HiHook *h, H3Inpu
 {
     auto result = THISCALL_2(H3Msg *, h->GetDefaultFunc(), inpt, msg);
 
+    bool numericFocused = false;
     if (instance && instance->blockLettersInput)
+        if (auto *page = dynamic_cast<ObjectsPage *>(instance->m_currentPage))
+            for (const auto *panel : page->objectsPanels)
+                for (const auto *edit : panel->edits)
+                    if (edit && edit->IsVisible() && edit->IsFocused()) numericFocused = true;
+    if (numericFocused)
     {
         isDlgTextEditInput = true;
-        // block inputing any text except numbers and backspaces
-        if (msg->subtype != 127 && (msg->subtype < 48 || msg->subtype > 57)
-            //	|| msg->subtype > 60 && msg->subtype < 122
-            //	|| msg->subtype >255
-        )
-
-            // replace with 0
+        // Filter printable text only. Native Enter/Escape/Tab and editing
+        // control keys must still reach the focused control/dialog.
+        const int symbol = static_cast<int>(msg->subtype);
+        if (symbol >= 32 && symbol != 127 && symbol != '-' && (symbol < '0' || symbol > '9'))
             msg->subtype = h3::eMsgSubtype(0);
     }
 
@@ -2293,7 +2301,8 @@ _LHF_(RMG_SettingsDlg::Dlg_SelectScenario_Proc)
         const int itemId = msg->itemId;
         const int subtype = msg->subtype;
 
-        if (itemId == itemIds::DLG_SETTINGS_BUTTON_ID && subtype == eMsgSubtype::LBUTTON_CLICK)
+        if (itemId == itemIds::DLG_SETTINGS_BUTTON_ID && subtype == eMsgSubtype::LBUTTON_CLICK &&
+            mapselection::IsSelectionAuthority())
         {
             RMG_SettingsDlg dlg(800, 600);
             dlg.Start();
@@ -2304,6 +2313,11 @@ _LHF_(RMG_SettingsDlg::Dlg_SelectScenario_Proc)
 
             if (auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID))
             {
+                if (!mapselection::IsSelectionAuthority())
+                {
+                    edit->SetFocus(false);
+                    return EXEC_DEFAULT;
+                }
                 //                userRandSeed = atol(edit->GetText());
                 const long inputNumber = atol(edit->GetText());
 
@@ -2339,6 +2353,7 @@ _LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_StartButtonClick)
 
     auto dlg = reinterpret_cast<H3SelectScenarioDialog *>(c->ebx);
 
+    if (mapselection::IsSelectionAuthority())
     if (auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID))
     {
         userRandSeed = atol(edit->GetText());
@@ -2359,6 +2374,7 @@ _LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_ShowRandomMapsSettings)
         auto edit = dlg->GetEdit(itemIds::RMG_SEED_TEXTEDIT_ID);
         if (edit)
         {
+            edit->EnableItem(mapselection::IsSelectionAuthority());
             const long inputNumber = atol(edit->GetText());
             if (!inputNumber)
             {
@@ -2369,6 +2385,9 @@ _LHF_(RMG_SettingsDlg::H3SelectScenarioDialog_ShowRandomMapsSettings)
                 edit->SetText(Era::IntToStr(inputNumber).c_str());
             }
         }
+        for (int id : {itemIds::DLG_SETTINGS_BUTTON_ID, itemIds::RMG_RANDOMIZE_BUTTON_ID})
+            if (auto* item = dlg->GetH3DlgItem(id))
+                if (mapselection::IsSelectionAuthority()) item->UnShade(); else item->Shade();
     }
 
     return EXEC_DEFAULT;
@@ -2399,7 +2418,7 @@ void __stdcall RMG_SetRandSeed(HiHook *h, DWORD *rmgSeed)
 
 int __fastcall SelectScenarioDlgRandomizeProc(H3Msg *msg)
 {
-    if (msg->IsLeftClick())
+    if (msg->IsLeftClick() && mapselection::IsSelectionAuthority())
     {
         auto *randomGameButton = msg->GetDlg()->ItemAtPosition(msg)->Cast<H3DlgCustomButton>();
         if (randomGameButton)
@@ -2625,4 +2644,166 @@ void RMG_SettingsDlg::SetPatches(PatcherInstance *_pi)
     }
 }
 
+H3LoadedPcx16 *RMG_SettingsDlg::CreateWogificationPreview(int type, int subtype)
+{
+    if (!mainSetup || type < 0 || type >= H3_MAX_OBJECTS) return nullptr;
+    if (type == eObject::MONSTER && subtype >= 0)
+    {
+        if (auto *def = H3LoadedDef::Load(NH3Dlg::Assets::CREATURE_SMALL))
+        {
+            GraphicalAttributes preview{};
+            if (def->groupsCount > 0 && def->groups && def->groups[0] && subtype+2 < def->groups[0]->count)
+                preview.objectPcx = CopyDefFrameWithoutTransparentBorder(def,def->GetGroupFrame(0,subtype+2));
+            def->Dereference();
+            if (preview.objectPcx) { ResizeObjectPcx(preview); return preview.objectPcx; }
+        }
+    }
+    for (const auto &a : mainSetup->objectLists[type])
+    {
+        if (subtype >= 0 && a.subtype != subtype) continue;
+        H3LoadedDef *def = H3LoadedDef::Load(a.defName.String());
+        if (!def) continue;
+        GraphicalAttributes preview{};
+        preview.objectPcx = CopyDefFrameWithoutTransparentBorder(def, def->GetGroupFrame(0,0));
+        def->Dereference();
+        if (!preview.objectPcx) continue;
+        ResizeObjectPcx(preview);
+        return preview.objectPcx;
+    }
+    return nullptr;
+}
+
 } // namespace rmgdlg
+
+
+#pragma comment(linker, "/EXPORT:RMG_GetDialogObjectInfo=_RMG_GetDialogObjectInfo@12")
+namespace {
+void MakeRmgApiKey(rmg_api::ObjectKey &out, const RMGObjectInfo &info, const H3RmgObjectGenerator *generator)
+{
+    out = {sizeof(out), info.type, info.subtype, rmg_api::OBJECT, 0, 0, 0};
+    PandoraVariantKey pandora;
+    PrisonVariantKey prison;
+    if (PandoraVariants::GetKey(generator, pandora))
+    {
+        out.kind = static_cast<int>(pandora.kind) + 1;
+        out.first = pandora.first; out.second = pandora.second; out.third = pandora.third;
+    }
+    else if (PrisonVariants::GetKey(generator, prison))
+    {
+        out.kind = rmg_api::PRISON; out.first = prison.experience;
+    }
+}
+void CopyRmgApiInfo(rmg_api::ObjectInfo &out, const RMGObjectInfo &info, int settingsSubtype)
+{
+    out = {sizeof(out), info.type, info.subtype, settingsSubtype, info.enabled,
+           info.mapLimit, info.zoneLimit, info.value, info.density};
+}
+}
+BOOL rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(int index, void *draftPtr, void *currentPtr, void *keyPtr) noexcept
+{
+    auto *draft = static_cast<rmg_api::ObjectInfo *>(draftPtr);
+    auto *current = static_cast<rmg_api::ObjectInfo *>(currentPtr);
+    auto *key = static_cast<rmg_api::ObjectKey *>(keyPtr);
+    if ((key && key->structSize < sizeof(*key)) || !instance || index < 0 || !draft || !current ||
+        draft->structSize < sizeof(*draft) || current->structSize < sizeof(*current)) return FALSE;
+    for (auto *page : instance->m_pages)
+        if (auto *objects = dynamic_cast<ObjectsPage *>(page))
+            for (const auto &object : objects->rmgDlgObjects)
+                if (index-- == 0)
+                {
+                    const int subtype = object.objectGenerator
+                        ? RMGObjectInfo::GetSettingsSubtype(object.objectGenerator) : object.objectInfo.subtype;
+                    const auto &committed = object.objectGenerator
+                        ? RMGObjectInfo::CurrentObjectInfo(object.objectGenerator)
+                        : RMGObjectInfo::CurrentObjectInfo(object.objectInfo.type, object.objectInfo.subtype);
+                    if (key) MakeRmgApiKey(*key, object.objectInfo, object.objectGenerator);
+                    CopyRmgApiInfo(*draft, object.objectInfo, subtype);
+                    CopyRmgApiInfo(*current, committed, subtype);
+                    return TRUE;
+                }
+    return FALSE;
+}
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetDialogObjectInfo(
+    int index, rmg_api::ObjectInfo *draft, rmg_api::ObjectInfo *current)
+{
+    return rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(index, draft, current);
+}
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetCurrentObjectInfo(
+    int type, int subtype, rmg_api::ObjectInfo *out)
+{
+    if (!out || out->structSize < sizeof(*out) || type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
+        return FALSE;
+    const auto &records = RMGObjectInfo::currentRMGObjectsInfoByType[type];
+    if (size_t(subtype) >= records.size()) return FALSE;
+    const auto &record = records[subtype];
+    if (record.type != type || record.subtype != subtype) return FALSE;
+    CopyRmgApiInfo(*out, record, subtype);
+    return TRUE;
+}
+#pragma comment(linker, "/EXPORT:RMG_GetCurrentObjectInfo=_RMG_GetCurrentObjectInfo@12")
+#pragma comment(linker, "/EXPORT:RMG_GetDialogObjectInfoByKey=_RMG_GetDialogObjectInfoByKey@16")
+#pragma comment(linker, "/EXPORT:RMG_GetMemoryObjectInfo=_RMG_GetMemoryObjectInfo@12")
+#pragma comment(linker, "/EXPORT:RMG_GetObjectInfoByKey=_RMG_GetObjectInfoByKey@8")
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetDialogObjectInfoByKey(
+    int index, rmg_api::ObjectKey *key, rmg_api::ObjectInfo *draft, rmg_api::ObjectInfo *current)
+{
+    return key && rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(index, draft, current, key);
+}
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetMemoryObjectInfo(
+    int index, rmg_api::ObjectKey *key, rmg_api::ObjectInfo *out)
+{
+    if (index < 0 || !key || key->structSize < sizeof(*key) || !out || out->structSize < sizeof(*out)) return FALSE;
+    for (int type = 0; type < h3::limits::OBJECTS; ++type)
+        for (const auto &record : RMGObjectInfo::currentRMGObjectsInfoByType[type])
+        {
+            if (record.type != type || record.subtype < 0) continue;
+            if (index-- == 0)
+            {
+                MakeRmgApiKey(*key, record, nullptr);
+                CopyRmgApiInfo(*out, record, record.subtype);
+                return TRUE;
+            }
+        }
+    for (const auto &record : PandoraVariants::GetRecords())
+        if (index-- == 0)
+        {
+            const auto &info = record.currentInfo;
+            *key = {sizeof(*key), info.type, info.subtype, static_cast<int>(record.key.kind) + 1,
+                    record.key.first, record.key.second, record.key.third};
+            CopyRmgApiInfo(*out, info, record.virtualSubtype);
+            return TRUE;
+        }
+    for (const auto &record : PrisonVariants::GetRecords())
+        if (index-- == 0)
+        {
+            const auto &info = record.currentInfo;
+            *key = {sizeof(*key), info.type, info.subtype, rmg_api::PRISON, record.key.experience, 0, 0};
+            CopyRmgApiInfo(*out, info, record.virtualSubtype);
+            return TRUE;
+        }
+    return FALSE;
+}
+extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetObjectInfoByKey(
+    const rmg_api::ObjectKey *key, rmg_api::ObjectInfo *out)
+{
+    if (!key || key->structSize < sizeof(*key) || !out || out->structSize < sizeof(*out)) return FALSE;
+    if (key->kind == rmg_api::OBJECT && key->first == 0 && key->second == 0 && key->third == 0)
+        return RMG_GetCurrentObjectInfo(key->type, key->subtype, out);
+    for (const auto &record : PandoraVariants::GetRecords())
+        if (record.currentInfo.type == key->type && record.currentInfo.subtype == key->subtype &&
+            static_cast<int>(record.key.kind) + 1 == key->kind && record.key.first == key->first &&
+            record.key.second == key->second && record.key.third == key->third)
+        {
+            CopyRmgApiInfo(*out, record.currentInfo, record.virtualSubtype);
+            return TRUE;
+        }
+    for (const auto &record : PrisonVariants::GetRecords())
+        if (key->kind == rmg_api::PRISON && record.currentInfo.type == key->type &&
+            record.currentInfo.subtype == key->subtype && record.key.experience == key->first &&
+            key->second == 0 && key->third == 0)
+        {
+            CopyRmgApiInfo(*out, record.currentInfo, record.virtualSubtype);
+            return TRUE;
+        }
+    return FALSE;
+}

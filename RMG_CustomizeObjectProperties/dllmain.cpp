@@ -3,13 +3,13 @@ void RegisterRmgConfigProvider();
 // dllmain.cpp : Определяет точку входа для приложения DLL.
 // #include "pch.h"
 #include "ExtendersInitializer.hpp"
-// declare dlg class here to avoid circular dependencies, also because it's only used in this file
-#include "RMG_SettingsDlg.h"
+
 #include "ExtendedMonoliths.h"
+#include "MapSelection/MapSelection.h"
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "2.4.1";
+constexpr const char *PLUGIN_VERSION = "2.6.0-beta RC2";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr const char *PLUGIN_DATA = __DATE__;
@@ -72,8 +72,7 @@ _LHF_(CrBanksTxt_BeforeLoad)
     extendersManager::ObjectExtenderManager::Get();
     monoliths::ExtendedMonoliths::Get();
     ExtendersInitializer::InitObjectExtenders();
-    //! Set patches for the RMG_SettingsDlg
-    rmgdlg::RMG_SettingsDlg::SetPatches(_PI);
+    mapselection::Init();
 
     return EXEC_DEFAULT;
 }

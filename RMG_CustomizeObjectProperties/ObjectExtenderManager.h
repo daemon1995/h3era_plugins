@@ -226,6 +226,9 @@ class ObjectExtenderManager : public IGamePatch
     void AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenerator *> *rmgObjecsList, const BOOL isPseudoGeneration);
     BOOL AddExtender(ObjectExtender *ext);
     static eRmgDlgObjectPage GetObjectPage(const int type, const int subtype) noexcept;
+    static bool IsOriginalObject(int type, int subtype) noexcept;
+    static bool IsAddedObject(int type, int subtype) noexcept;
+    static const std::set<std::pair<int, int>> &GetAddedObjects() noexcept;
     //BOOL IsObjectAllowedToBeGenerated(const H3RmgObjectGenerator *objGen) const noexcept
     //{
     //    if (auto extender = FindExtender(objGen->type, objGen->subtype))

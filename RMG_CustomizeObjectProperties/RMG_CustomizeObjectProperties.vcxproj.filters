@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="Wogification\Settings.cpp"><Filter>SettingsDlg</Filter></ClCompile>
+    <ClCompile Include="Wogification\Dialog.cpp"><Filter>SettingsDlg</Filter></ClCompile>
+    <ClInclude Include="Wogification\ProfileDialog.h"><Filter>SettingsDlg</Filter></ClInclude>
+    <ClCompile Include="Wogification\ProfileDialog.cpp"><Filter>SettingsDlg</Filter></ClCompile>
+    <ClInclude Include="Wogification\Settings.h"><Filter>SettingsDlg</Filter></ClInclude>
+    <ClInclude Include="DialogInput.h"><Filter>SettingsDlg</Filter></ClInclude>
+    <ClCompile Include="MapSelection\MapSelection.cpp"><Filter>MapSelection</Filter></ClCompile>
+    <ClCompile Include="MapSelection\MapSize.cpp"><Filter>MapSelection</Filter></ClCompile>
+    <ClCompile Include="MapSelection\RandomMapOptions.cpp"><Filter>MapSelection</Filter></ClCompile>
+    <ClCompile Include="MapSelection\HdTemplateCompatibility.cpp"><Filter>MapSelection</Filter></ClCompile>
+    <ClCompile Include="MapSelection\MenuDialogs.cpp"><Filter>MapSelection</Filter></ClCompile>
+    <ClCompile Include="MapSelection\PlayerDialog.cpp"><Filter>MapSelection</Filter></ClCompile>
+    <ClInclude Include="MapSelection\MapSelection.h"><Filter>MapSelection</Filter></ClInclude>
+    <ClInclude Include="MapSelection\MapSize.h"><Filter>MapSelection</Filter></ClInclude>
+    <ClInclude Include="MapSelection\RandomMapOptions.h"><Filter>MapSelection</Filter></ClInclude>
+    <ClInclude Include="MapSelection\HdTemplateCompatibility.h"><Filter>MapSelection</Filter></ClInclude>
+    <ClInclude Include="MapSelection\MenuDialogs.h"><Filter>MapSelection</Filter></ClInclude>
     <ClCompile Include="DwellingInfo.cpp"><Filter>source files</Filter></ClCompile>
     <ClCompile Include="AtomicIniSave.cpp">
       <Filter>source files</Filter>
@@ -108,6 +125,9 @@
     </Filter>
     <Filter Include="Extenders">
       <UniqueIdentifier>{572dc5ac-3f4d-41de-b560-1a6862f4dfd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MapSelection">
+      <UniqueIdentifier>{91433222-32AE-4A8A-A01D-64381AD56712}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

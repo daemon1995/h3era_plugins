@@ -2,12 +2,11 @@
 
 #include "pch.h"
 
-#include "RMG_SettingsDlg.h"
-#include "DwellingInfo.h"
-#include "../headers/Era/ObjectText.hpp"
 #include "../headers/Era/JsonObjectExport.hpp"
+#include "../headers/Era/ObjectText.hpp"
 #include "../headers/Objects/RmgSettingsExport.h"
-
+#include "DwellingInfo.h"
+#include "RMG_SettingsDlg.h"
 
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
@@ -494,8 +493,8 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     for (int type = 0; type < H3_MAX_OBJECTS; ++type)
     {
         typeExportOverrides[type] = {};
-        typeExportOverrides[type].inherited = {{true, limitsInfo.mapTypesLimit[type],
-                                              limitsInfo.zoneTypeLimits[type], -1, -1}};
+        typeExportOverrides[type].inherited = {
+            {true, limitsInfo.mapTypesLimit[type], limitsInfo.zoneTypeLimits[type], -1, -1}};
     }
     // init global defaults for all objects
     bool readSucces = false;
@@ -571,7 +570,6 @@ RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
 {
     if (instance == nullptr)
         instance = new RMGObjectsEditor();
-
 
     return *instance;
     // new RMGObjectsEditor();
@@ -848,8 +846,8 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct)
 {
     nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
-                           reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit),
-                           limitsInfo.mapTypesLimit, limitsInfo.zoneTypeLimits);
+                           reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit), limitsInfo.mapTypesLimit,
+                           limitsInfo.zoneTypeLimits);
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
 
@@ -1058,7 +1056,6 @@ _LHF_(RMG__AtQuestArtifactListSelectRandom)
 }
 
 } // namespace fixes
-
 
 void RMGObjectsEditor::CreatePatches()
 {
@@ -1312,8 +1309,7 @@ BOOL RMGObjectInfo::WriteToINI(LPCSTR iniPath) const noexcept
         // if current data isn't same as default
         if (data[i] != defaultRMGObjectsInfoByType[type][subtype].data[i])
         {
-            if (!Era::WriteStrToIni(PROPERTY_NAMES[i], std::to_string(data[i]).c_str(), sectionName.String(),
-                                    iniPath))
+            if (!Era::WriteStrToIni(PROPERTY_NAMES[i], std::to_string(data[i]).c_str(), sectionName.String(), iniPath))
                 success = false;
         }
     }
@@ -1441,13 +1437,15 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator *gener
 
 void RMGObjectInfo::CaptureNativeExportDefaults(const H3RmgObjectGenerator *generator)
 {
-    if (!generator || generator->type < 0 || generator->type >= h3::limits::OBJECTS) return;
+    if (!generator || generator->type < 0 || generator->type >= h3::limits::OBJECTS)
+        return;
     const int type = generator->type;
     int subtype = generator->subtype;
     if (type == eObject::SPELL_SCROLL)
         subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(generator)->spellLevel;
     auto &records = subtypeExportOverrides[type];
-    if (subtype < 0 || size_t(subtype) >= records.size()) return;
+    if (subtype < 0 || size_t(subtype) >= records.size())
+        return;
     // Dwellings keep automatic valuation as -1; their computed creature AI
     // value is a display/runtime value, not a fixed JSON override.
     const bool dwelling = type == eObject::CREATURE_GENERATOR1 || type == eObject::CREATURE_GENERATOR4;
@@ -1456,16 +1454,20 @@ void RMGObjectInfo::CaptureNativeExportDefaults(const H3RmgObjectGenerator *gene
 
 BOOL RMGObjectInfo::GetExportOverrides(int type, int subtype, EraJS::RmgExportOverridesInfo *info)
 {
-    if (!info || info->structSize < sizeof(*info)) return FALSE;
+    if (!info || info->structSize < sizeof(*info))
+        return FALSE;
     const rmgExport::Overrides *record = nullptr;
-    if (type == -1 && subtype == -1) record = &globalExportOverrides;
+    if (type == -1 && subtype == -1)
+        record = &globalExportOverrides;
     else if (type >= 0 && type < h3::limits::OBJECTS)
     {
-        if (subtype == -1) record = &typeExportOverrides[type];
+        if (subtype == -1)
+            record = &typeExportOverrides[type];
         else if (subtype >= 0 && size_t(subtype) < subtypeExportOverrides[type].size())
             record = &subtypeExportOverrides[type][subtype];
     }
-    if (!record) return FALSE;
+    if (!record)
+        return FALSE;
     *info = EraJS::RmgExportOverridesInfo{};
     info->fieldMask = record->DifferenceMask();
     std::copy(record->configured.begin(), record->configured.end(), info->fields);
@@ -1521,7 +1523,8 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
 
                 // read default data from json for the exact subtype
                 const int subtypeData = EraJS::readInt(h3_TextBuffer, readSucces);
-                if (readSucces) exportOverrides.Set(static_cast<int>(keyIndex), subtypeData);
+                if (readSucces)
+                    exportOverrides.Set(static_cast<int>(keyIndex), subtypeData);
 
                 // set data according to struct offset
                 objInfo->data[keyIndex] = readSucces ? subtypeData : typeData[keyIndex];

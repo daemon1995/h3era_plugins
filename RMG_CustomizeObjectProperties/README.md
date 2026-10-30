@@ -2,6 +2,10 @@
 
 An ERA plugin that extends random-map object configuration and behavior in Heroes of Might and Magic III.
 
+Map selection and random-map menus belong to this plugin, including H/XH/G size controls,
+player choices, template/alliance dialogs and HD compatibility. See [MapSelection](MapSelection/README.md).
+Deploy it together with the updated XXL, which now handles only the adventure-map minimap.
+
 Plugins can integrate with its object lifecycle through the public `ObjectExtender` API. See the [API quick start](QUICK_START.md).
 
 RMG remains the owner of the extender registry and dispatch. New C++ clients discover its versioned table in
@@ -71,6 +75,10 @@ a different plugin owns the runtime tables. See [RMG dwelling information](Dwell
 To check in-game, configure two different existing WAVs for a type and one of its subtypes, and an empty string for another subtype. Restart the game and move a hero near each object: the general sound, specific sound, and silence should apply respectively. Move between areas containing custom sounds and then away from them to check transitions.
 
 ## Generation limits and saved settings
+
+The separate **Wogification objects** dialog edits targets and sources, JSON defaults,
+user INI overrides and named profiles. It shares object previews and transactional INI
+saving with RMG; placement remains in RuntimeServices. See [Wogification settings](Wogification/README.md).
 
 Type-level JSON map/zone limits are applied to the native RMG tables for the duration of generation. Per-subtype limits still apply, and previous native table values are restored afterward. Object and dialog settings share a transactional INI save, so an unsuccessful write keeps the previous file and runtime object values. See [generation limits and saved settings](GenerationLimitsAndSettings.md) for configuration, an example JSON, and verification steps.
 

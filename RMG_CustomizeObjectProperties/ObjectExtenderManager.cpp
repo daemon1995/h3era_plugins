@@ -218,6 +218,20 @@ _LHF_(ObjectExtenderManager::LoadObjectsTxt)
 }
 ObjectExtenderManager *ObjectExtenderManager::instance = nullptr;
 
+bool ObjectExtenderManager::IsOriginalObject(int type, int subtype) noexcept
+{
+    return instance && instance->additionalProperties.IsOriginalObject(type, subtype);
+}
+bool ObjectExtenderManager::IsAddedObject(int type, int subtype) noexcept
+{
+    return instance && instance->additionalProperties.IsAddedObject(type, subtype);
+}
+const std::set<std::pair<int, int>> &ObjectExtenderManager::GetAddedObjects() noexcept
+{
+    static const std::set<std::pair<int, int>> empty;
+    return instance ? instance->additionalProperties.addedObjects : empty;
+}
+
 ObjectExtenderManager::ObjectExtenderManager()
     : IGamePatch("EraPlugin.RMG_CustomizeObjectProperties.ObjectExtenderManager.daemon_n")
 {
@@ -674,8 +688,8 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
     // display terrain types that object can be placed on
 
     H3String tempStr;
-    const UINT8 terrainsNum = ValueAt<UINT8>(0x5168B8 + 2) & 0xFF;
-    for (size_t i = 0; i < terrainsNum; i++)
+    const int terrainsNum = (std::min)(static_cast<int>(static_cast<UINT8>(*P_TerrainCount)), 32);
+    for (int i = 0; i < terrainsNum; i++)
     {
         if (attributes->maskTerrain.bitfield.GetState(i))
         {
@@ -764,9 +778,10 @@ void ObjectExtenderManager::DebugObjectList()
             libc::sprintf(h3_TextBuffer, "%d_%d", obj.subtype, id++);
 
             std::string bits;
-            for (int b = 15; b >= 0; b--)
+            const int terrainCount = (std::min)(static_cast<int>(static_cast<UINT8>(*P_TerrainCount)), 32);
+            for (int b = terrainCount - 1; b >= 0; b--)
             {
-                bits.append(obj.maskTerrain.bits & (1 << b) ? "1" : "0");
+                bits.append(obj.maskTerrain.bitfield.GetState(b) ? "1" : "0");
             }
 
             libc::sprintf(buffer, "%s\t%s", obj.defName.String(), bits.c_str());

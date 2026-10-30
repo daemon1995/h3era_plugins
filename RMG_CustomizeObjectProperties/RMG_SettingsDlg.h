@@ -304,6 +304,7 @@ class RMG_SettingsDlg : public H3Dlg
 
     // virtual methods
   private:
+    virtual INT vDialogProc(H3Msg &msg) override;
     virtual BOOL OnCreate() override;
     virtual BOOL DialogProc(H3Msg &msg) override;
     virtual VOID OnOK() override;
@@ -320,6 +321,7 @@ class RMG_SettingsDlg : public H3Dlg
     VOID OnHelp() const noexcept;
 
     BOOL RemoveEditsFocus(const BOOL save) const noexcept;
+    void FinishEdit(H3DlgEdit *edit, BOOL save) const noexcept;
 
     // hooks
   private:
@@ -336,6 +338,9 @@ class RMG_SettingsDlg : public H3Dlg
     static _ERH_(OnAfterReloadLanguageData);
 
   public:
+    static BOOL GetApiDialogEntry(int index, void *draft, void *current, void *key = nullptr) noexcept;
+    // Caller owns the preview; includes definitions without an RMG generator.
+    static H3LoadedPcx16 *CreateWogificationPreview(int type, int subtype);
     static void SetPatches(PatcherInstance *_pi);
     static RMGDialogDataManager::PageVectors &GetObjectAttributes() noexcept
     {

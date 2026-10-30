@@ -1,0 +1,2 @@
+﻿
+void MapSize_Init();
