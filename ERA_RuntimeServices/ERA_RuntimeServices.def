@@ -1,0 +1,23 @@
+EXPORTS
+    Erm_SetObjectGlow
+    Erm_SetObjectGlowEnabled
+    Erm_GetObjectGlowEnabled
+    Erm_SetObjectGlowProfiling
+    Erm_GetObjectGlowProfile
+    Erm_GetGraphicsApi
+    Erm_SetObjectOwner
+    Erm_RegisterObjectType
+    Erm_GetObjectOwner
+    Erm_RegisterReplayEvent
+    Erm_RegisterReplayEventArgs
+    Erm_GetObjectReplacementApiVersion
+    Erm_GetObjectGeometry
+    Erm_FindObjectReplacement
+    Erm_FindObjectReplacements
+    Erm_ReplaceObject
+    Erm_AddSpecialTerrainsEx
+    Erm_PlaceSpecialTerrain
+    Erm_PlaceSmallestSpecialTerrain
+    Erm_OrderGarrisonSites
+    Erm_ReadJsonInt
+    Erm_ReadJsonIntArray

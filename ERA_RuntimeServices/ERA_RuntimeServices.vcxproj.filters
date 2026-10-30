@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <ItemGroup>
+    <Filter Include="Build">
+      <UniqueIdentifier>{13BD5487-2FC4-52D9-A020-E0252ADF207F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Docs">
+      <UniqueIdentifier>{D6701CA3-6511-5B73-8038-7D245DD68B9A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Research">
+      <UniqueIdentifier>{1B9EC81C-EF68-5F69-9766-8808B425C4F9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared">
+      <UniqueIdentifier>{082E1C34-D0A8-5F3E-A952-C9FC0CA488D7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared\API">
+      <UniqueIdentifier>{806411AE-A523-53BC-9471-148DB50567C7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared\Config">
+      <UniqueIdentifier>{2D481443-CCD7-5752-919B-BDA93F2F131E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared\ERA">
+      <UniqueIdentifier>{F644BD6B-EFDC-5B25-8F2D-0CF87B39147D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{C3F431E1-6CAF-5782-8E67-9007023CD667}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Config">
+      <UniqueIdentifier>{945B671E-B80C-5A3E-B4BA-672EC72D668F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Core">
+      <UniqueIdentifier>{D4A3121F-73C4-50F7-AB9C-487F8ECDE342}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Graphics">
+      <UniqueIdentifier>{D4E3BBE1-86B2-5CE9-856B-0E9139EC4C26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Objects">
+      <UniqueIdentifier>{6D90A217-3D48-5EB0-A7A2-B080F7368F8B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Verification">
+      <UniqueIdentifier>{1F083F0F-EDF4-5EFC-89B2-DDA4835CBA2B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="examples">
+      <UniqueIdentifier>{C0DB2E68-5D07-5E23-8A11-9AE68DE00B23}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\headers\Era\era.cpp">
+      <Filter>Shared\ERA</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\dllmain.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Objects\ObjectRendering.cpp">
+      <Filter>Source\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Objects\ObjectGlow.cpp">
+      <Filter>Source\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Objects\ObjectReplacement.cpp">
+      <Filter>Source\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Objects\GarrisonDistribution.cpp">
+      <Filter>Source\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Config\JsonConfig.cpp">
+      <Filter>Source\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Graphics\GraphicsResources.cpp">
+      <Filter>Source\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Config\ConfigServices.cpp">
+      <Filter>Source\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Config\TextServices.cpp">
+      <Filter>Source\Config</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\framework.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Core\HookGroup.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Core\RuntimeState.h">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\HdMinimapLayout.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\ObjectRendering.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\ObjectGlow.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\ObjectGlowParticles.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\ObjectGeometry.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\ObjectShapeCache.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\SpecialTerrainGeometry.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\ObjectReplacement.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Objects\GarrisonDistribution.h">
+      <Filter>Source\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Config\JsonConfig.h">
+      <Filter>Source\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Graphics\GraphicsResources.h">
+      <Filter>Source\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Config\ConfigServices.h">
+      <Filter>Source\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\RuntimeServices.h">
+      <Filter>Shared\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\ConfigExportAPI.h">
+      <Filter>Shared\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\TextOverridesAPI.h">
+      <Filter>Shared\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\ObjectDefinitionsAPI.h">
+      <Filter>Shared\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\Config\ExportModel.h">
+      <Filter>Shared\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\Config\ExportSnapshot.h">
+      <Filter>Shared\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Graphics\GraphicsPixels.h">
+      <Filter>Source\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Research\GraphicsBitmapDecoder.disabled.h">
+      <Filter>Research</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\GraphicsAPI.h">
+      <Filter>Shared\API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\headers\EraPluginsAPI\ErmFunctionsAPI.h">
+      <Filter>Shared\API</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ERA_RuntimeServices.def">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="Docs\RELEASE_CHECKS.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="Docs\GRAPHICS.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="Docs\CONFIG_SERVICES.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="Verification\BuildConfigServices.cmd">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\RunConfigTests.cmd">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\InstallConfigServices.ps1">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\VerifyConfigServices.ps1">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\ConfigRuntimeProbe.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\EditorConfigRuntimeProbe.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\VerifyEditorConfigServices.ps1">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\ConfigServices.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\ConfigModel.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\TextServices.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\BuildGraphics.cmd">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\InstallGraphics.ps1">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\GraphicsRuntimeChecks.h">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\CreateGraphicsFixture.py">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\VerifyGraphicsResources.ps1">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\GraphicsPixels.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\GraphicsAbi.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Docs\HD_MINIMAP.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="Docs\OBJECT_REPLACEMENT.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="Verification\ObjectGeometry.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\ObjectReplacementAllocation.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\verify_object_replacement_native.py">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\ObjectReplacementHooks.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\run-object-replacement-hooks-tests.cmd">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\JsonConfig.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="examples\api.erm">
+      <Filter>examples</Filter>
+    </None>
+    <None Include="examples\option 879 - capture mills and gardens.erm">
+      <Filter>examples</Filter>
+    </None>
+    <None Include="Verification\RuntimeState.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="run-tests.cmd">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="Verification\inspect_hd_wog.py">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\HdMinimapLayout.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\verify_hd_marker_path.py">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Docs\RELEASE_REVIEW.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="Verification\ConfigClients.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\ConfigTyped.tests.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\ExportMenuRuntimeProbe.cpp">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\InspectConfigBinaries.py">
+      <Filter>Verification</Filter>
+    </None>
+    <None Include="Verification\VerifyExportMenu.ps1">
+      <Filter>Verification</Filter>
+    </None>
+  </ItemGroup>
+</Project>

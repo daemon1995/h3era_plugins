@@ -1,0 +1,29 @@
+ZVSE2
+
+; Example only. Register on each new/loaded map; enable it where your option is enabled.
+!?FU(OnGameEnter);
+!!SN:F^ERA_RuntimeServices:Erm_RegisterObjectType^/(OBJ_WINDMILL)/-1/1;
+!!SN:F^ERA_RuntimeServices:Erm_RegisterObjectType^/(OBJ_WATER_WHEEL)/-1/1;
+!!SN:F^ERA_RuntimeServices:Erm_RegisterObjectType^/(OBJ_MYSTICAL_GARDEN)/-1/1;
+!!SN:F^ERA_RuntimeServices:Erm_RegisterObjectType^/142/-1/1;
+
+; x1,x2,x3 = entrance coordinates, x4 = -1 (neutral) or player 0..7.
+!?FU(API_Example_SetOwner);
+!!SN:F^ERA_RuntimeServices:Erm_SetObjectOwner^/x1/x2/x3/x4;
+!!VRx16:Sv1;                           [1 success, 0 failure]
+
+!?FU(API_Example_GetOwner);
+!!SN:F^ERA_RuntimeServices:Erm_GetObjectOwner^/x1/x2/x3;
+!!VRx16:Sv1;                           [-2 invalid, -1 neutral, 0..7 player]
+
+; Call after the actual event. Records payload now, invokes callbacks during replay only.
+; The optional undo callback is for events that change state; use 0 for visual-only events.
+!?FU(API_Example_RecordEvent);
+!!SN:F^ERA_RuntimeServices:Erm_RegisterReplayEvent^/(API_Example_Redo)/(API_Example_Undo)/x1/x2/x3/x4;
+
+!?FU(API_Example_Redo);
+; x1..x4 are the recorded payload, x5..x16 are zero.
+; Reproduce your event here, respecting replay's state.
+
+!?FU(API_Example_Undo);
+; Restore the state before the event here. Called before playback, in reverse order.

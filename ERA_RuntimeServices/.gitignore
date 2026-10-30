@@ -1,0 +1,9 @@
+!Verification/
+!Verification/*.cpp
+!Verification/*.h
+!Verification/*.cmd
+!Verification/*.ps1
+!Verification/*.py
+Verification/build/
+build/
+DebugMaps/

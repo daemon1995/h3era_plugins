@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{759B4B20-9192-4C5F-B17A-2D7687E71E31}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>ERA_RuntimeServices</ProjectName>
+    <TargetName>ERA_RuntimeServices</TargetName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>ERA_RuntimeServices.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\headers\Era\era.cpp" />
+    <ClCompile Include="Source\Core\dllmain.cpp" />
+    <ClCompile Include="Source\Objects\ObjectRendering.cpp" />
+    <ClCompile Include="Source\Objects\ObjectGlow.cpp" />
+    <ClCompile Include="Source\Objects\ObjectReplacement.cpp" />
+    <ClCompile Include="Source\Objects\GarrisonDistribution.cpp" />
+    <ClCompile Include="Source\Config\JsonConfig.cpp" />
+    <ClCompile Include="Source\Graphics\GraphicsResources.cpp" />
+    <ClCompile Include="Source\Config\ConfigServices.cpp">
+      <!-- Export runs on demand; keep the shared JSON template code compact. -->
+      <Optimization Condition="'$(Configuration)' == 'Release'">MinSpace</Optimization>
+      <FavorSizeOrSpeed Condition="'$(Configuration)' == 'Release'">Size</FavorSizeOrSpeed>
+    </ClCompile>
+    <ClCompile Include="Source\Config\TextServices.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\framework.h" />
+    <ClInclude Include="Source\Core\HookGroup.h" />
+    <ClInclude Include="Source\Core\RuntimeState.h" />
+    <ClInclude Include="Source\Objects\HdMinimapLayout.h" />
+    <ClInclude Include="Source\Objects\ObjectRendering.h" />
+    <ClInclude Include="Source\Objects\ObjectGlow.h" />
+    <ClInclude Include="Source\Objects\ObjectGlowParticles.h" />
+    <ClInclude Include="Source\Objects\ObjectGeometry.h" />
+    <ClInclude Include="Source\Objects\ObjectShapeCache.h" />
+    <ClInclude Include="Source\Objects\SpecialTerrainGeometry.h" />
+    <ClInclude Include="Source\Objects\ObjectReplacement.h" />
+    <ClInclude Include="Source\Objects\GarrisonDistribution.h" />
+    <ClInclude Include="Source\Config\JsonConfig.h" />
+    <ClInclude Include="Source\Graphics\GraphicsResources.h" />
+    <ClInclude Include="Source\Config\ConfigServices.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\RuntimeServices.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\ConfigExportAPI.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\TextOverridesAPI.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\ObjectDefinitionsAPI.h" />
+    <ClInclude Include="..\headers\Config\ExportModel.h" />
+    <ClInclude Include="..\headers\Config\ExportSnapshot.h" />
+    <ClInclude Include="Source\Graphics\GraphicsPixels.h" />
+    <ClInclude Include="Research\GraphicsBitmapDecoder.disabled.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\GraphicsAPI.h" />
+    <ClInclude Include="..\headers\EraPluginsAPI\ErmFunctionsAPI.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ERA_RuntimeServices.def" />
+    <None Include="README.md" />
+    <None Include="Docs\RELEASE_CHECKS.md" />
+    <None Include="Docs\GRAPHICS.md" />
+    <None Include="Docs\CONFIG_SERVICES.md" />
+    <None Include="Verification\BuildConfigServices.cmd" />
+    <None Include="Verification\RunConfigTests.cmd" />
+    <None Include="Verification\InstallConfigServices.ps1" />
+    <None Include="Verification\VerifyConfigServices.ps1" />
+    <None Include="Verification\ConfigRuntimeProbe.cpp" />
+    <None Include="Verification\EditorConfigRuntimeProbe.cpp" />
+    <None Include="Verification\VerifyEditorConfigServices.ps1" />
+    <None Include="Verification\ConfigServices.tests.cpp" />
+    <None Include="Verification\ConfigModel.tests.cpp" />
+    <None Include="Verification\TextServices.tests.cpp" />
+    <None Include="Verification\BuildGraphics.cmd" />
+    <None Include="Verification\InstallGraphics.ps1" />
+    <None Include="Verification\GraphicsRuntimeChecks.h" />
+    <None Include="Verification\CreateGraphicsFixture.py" />
+    <None Include="Verification\VerifyGraphicsResources.ps1" />
+    <None Include="Verification\GraphicsPixels.tests.cpp" />
+    <None Include="Verification\GraphicsAbi.tests.cpp" />
+    <None Include="Docs\HD_MINIMAP.md" />
+    <None Include="Docs\OBJECT_REPLACEMENT.md" />
+    <None Include="Verification\ObjectGeometry.tests.cpp" />
+    <None Include="Verification\ObjectReplacementAllocation.tests.cpp" />
+    <None Include="Verification\verify_object_replacement_native.py" />
+    <None Include="Verification\ObjectReplacementHooks.tests.cpp" />
+    <None Include="Verification\run-object-replacement-hooks-tests.cmd" />
+    <None Include="Verification\JsonConfig.tests.cpp" />
+    <None Include="examples\api.erm" />
+    <None Include="examples\option 879 - capture mills and gardens.erm" />
+    <None Include="Verification\RuntimeState.tests.cpp" />
+    <None Include="run-tests.cmd" />
+    <None Include="Verification\inspect_hd_wog.py" />
+    <None Include="Verification\HdMinimapLayout.tests.cpp" />
+    <None Include="Verification\verify_hd_marker_path.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Docs\RELEASE_REVIEW.md" />
+    <None Include="Verification\ConfigClients.tests.cpp" />
+    <None Include="Verification\ConfigTyped.tests.cpp" />
+    <None Include="Verification\ExportMenuRuntimeProbe.cpp" />
+    <None Include="Verification\InspectConfigBinaries.py" />
+    <None Include="Verification\VerifyExportMenu.ps1" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
