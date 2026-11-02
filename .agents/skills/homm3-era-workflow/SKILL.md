@@ -25,6 +25,12 @@ Default repository: `C:/dev/homm3/plugins/daemon_n/H3EraPlugins`. Adjacent repos
 - Keep all newly created tests, test source, harnesses, fixtures, test generators and test outputs out of Git staging, commits and pushes. Put necessary temporary checks outside the repository or in a verified ignored task directory. Before staging production changes, inspect the intended file list. Do not delete or untrack pre-existing tests as part of this preference. If the user explicitly requests a versioned test change, follow that request.
 - Reuse existing ERA/H3API and plugin APIs where suitable. When the task needs functionality shared across plugins or callable from ERM, expose a small reusable API in the repository's established style, with the necessary declarations, exports and implementation. Keep ABI and lifetime contracts clear; avoid inventing an API for a one-off internal operation without a concrete consumer or need.
 
+## Crash diagnostics
+
+When the user asks to check or investigate a crash while working on game plugins, inspect `D:\games\HoMM 3 ERA\Debug\Era` by default, starting with `exception context.txt` and relevant accompanying diagnostic files. Do not ask the user to supply the standard crash-log path when this default applies.
+
+When working on map editor plugins or investigating a map editor crash, inspect `D:\games\HoMM 3 ERA\Debug\EraEditor` instead, including `exception context.txt` when present. Keep game and editor diagnostics separate. Check file timestamps to establish which crash the files describe; an explicit user-provided path or crash report takes precedence.
+
 ## Implementation constraints
 
 Preserve the 32-bit game ABI, exported names, calling conventions and structure layout. Use the existing headers and plugin initialization patterns instead of recreating declarations. `headers/header.h` routes H3API, patcher_x86, ERA and optional APIs via macros; inspect the owning project's pch/framework and defines before selecting includes.
