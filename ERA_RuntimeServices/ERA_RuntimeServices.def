@@ -6,6 +6,7 @@ EXPORTS
     Erm_GetObjectGlowProfile
     Erm_GetGraphicsApi
     Erm_SetObjectOwner
+    Erm_SetObjectOwnerAndSync
     Erm_RegisterObjectType
     Erm_GetObjectOwner
     Erm_RegisterReplayEvent

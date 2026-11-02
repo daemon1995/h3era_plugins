@@ -137,16 +137,15 @@ Jun 18 2025 Updated by daemon_n: Added "warehouses" object support, rewritten vi
     !!en;
 
     !!if&(ownerChanged);
-      !!IP:D(ANY_PLAYER);
-      !!FU(ES_879_MP_SetObjectOwner):D(x)/(y)/(z)/i^timerOwner^ P(x)/(y)/(z)/i^timerOwner^;
+      !!FU(ES_879_MP_SetObjectOwner):P(x)/(y)/(z)/i^timerOwner^;
     !!en;
 
   !!en;
 
 !?FU(ES_879_MP_SetObjectOwner);
-!#VA (packedCoords[3]:x) (newOwner:x);
+!#VA(x:x) (y:x) (z:x) (newOwner:x);
 
-!!SN:F^ERA_RuntimeServices:Erm_SetObjectOwner^/x1/x2/x3/(newOwner);
+!!SN:F^ERA_RuntimeServices:Erm_SetObjectOwnerAndSync^/(x)/(y)/(z)/(newOwner);
 
 
 

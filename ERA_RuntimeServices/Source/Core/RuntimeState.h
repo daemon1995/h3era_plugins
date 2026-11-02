@@ -7,8 +7,10 @@
 
 namespace erm_functions
 {
+// Owners use -1 for neutral and 0..7 for players, matching the exported API.
 inline bool ValidOwner(int owner) noexcept { return owner >= -1 && owner < 8; }
 
+// Map-local type registrations. An exact subtype takes precedence over subtype -1.
 class ObjectTypes
 {
     std::unordered_map<std::uint64_t, bool> types;
@@ -34,6 +36,7 @@ public:
     void Clear() noexcept { types.clear(); }
 };
 
+// Sidecar event recorded at a native-action boundary; it owns no game memory.
 struct ReplayEvent
 {
     enum Kind { OWNER, ERM } kind = ERM;
@@ -46,7 +49,17 @@ struct ReplayEvent
     std::array<int, 16> args{};
 };
 
-// Sidecar to the native action list: no game-owned pointers, vtables or savegame entries.
+// Save only ownership. Generic ERM callbacks may contain temporary pointers/IDs.
+struct OwnerReplayRecord
+{
+    int boundary;
+    std::uint32_t coords;
+    int oldOwner, newOwner;
+};
+static_assert(sizeof(OwnerReplayRecord) == 16, "Owner replay save ABI");
+
+// Undo/redo timeline layered over native actions. ownerView is temporary replay state;
+// Clear starts a new map generation and invalidates callbacks already in progress.
 class ReplayTimeline
 {
     std::vector<ReplayEvent> events;
@@ -76,6 +89,53 @@ public:
         return true;
     }
     bool IsReplaying() const noexcept { return replaying; }
+    const std::vector<ReplayEvent> &Events() const noexcept { return events; }
+    bool RestoreOwners(const std::vector<OwnerReplayRecord> &records, int nativeCount)
+    {
+        if (nativeCount < 0 || replaying)
+            return false;
+        std::vector<ReplayEvent> restored;
+        restored.reserve(records.size());
+        int previousBoundary = 0;
+        for (const auto &record : records)
+        {
+            if (record.boundary < previousBoundary || record.boundary > nativeCount ||
+                !ValidOwner(record.oldOwner) || !ValidOwner(record.newOwner))
+                return false;
+            ReplayEvent event;
+            event.kind = ReplayEvent::OWNER;
+            event.boundary = record.boundary;
+            event.coords = record.coords;
+            event.oldOwner = record.oldOwner;
+            event.newOwner = record.newOwner;
+            restored.push_back(event);
+            previousBoundary = record.boundary;
+        }
+        Clear();
+        events.swap(restored);
+        lastNativeCount = nativeCount;
+        return true;
+    }
+    void RemoveNativePrefix(int count) noexcept
+    {
+        if (count <= 0)
+            return;
+        // A callback can hand off the turn. Invalidate AtBoundary's indexes
+        // before the native journal's new generation replaces the old one.
+        if (replaying)
+        {
+            Clear();
+            return;
+        }
+        // The game drops completed player turns from the front, without
+        // clearing the remaining replay actions (0x49D330 at turn handoff).
+        const auto firstKept = std::upper_bound(events.begin(), events.end(), count,
+            [](int value, const ReplayEvent &event) { return value < event.boundary; });
+        events.erase(events.begin(), firstKept);
+        for (auto &event : events)
+            event.boundary -= count;
+        lastNativeCount = (std::max)(0, lastNativeCount - count);
+    }
     std::uint64_t Generation() const noexcept { return generation; }
     bool Begin() noexcept
     {

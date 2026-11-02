@@ -29,6 +29,9 @@ using PlaceSmallestSpecialTerrain = int(__stdcall *)(int x, int y, int z, int ty
 // Coordinates are the object's entrance (yellow tile), including when a hero stands there.
 // Set/Register return 1 on success, 0 on invalid arguments or unavailable map/API.
 using SetObjectOwner = int(__stdcall *)(int x, int y, int z, int owner);
+// Applies locally and broadcasts an ERA event to peers. No network sends during replay.
+// 0 may mean a send failure after local application; 1 is not a peer acknowledgement.
+using SetObjectOwnerAndSync = int(__stdcall *)(int x, int y, int z, int owner);
 using RegisterObjectType = int(__stdcall *)(int type, int subtype, int drawOnMinimap);
 // Returns -1 for neutral, 0..7 for a player, -2 for an invalid/unregistered object.
 using GetObjectOwner = int(__stdcall *)(int x, int y, int z);
