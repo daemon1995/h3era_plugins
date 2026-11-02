@@ -271,8 +271,7 @@ void WriteInt(LPCSTR section, LPCSTR key, int value)
 {
     char text[24];
     sprintf_s(text, "%d", value);
-    if (!Era::WriteStrToIni(key, text, section, settingsPath))
-        OutputDebugStringA("RMG: cannot save last random-map settings.\n");
+    Era::WriteStrToIni(key, text, section, settingsPath);
 }
 
 bool RememberSettings()
@@ -407,8 +406,7 @@ void SaveLastGame(const LastGame &s)
         WriteInt(section, "Hero", s.players[color].hero);
         WriteInt(section, "Bonus", s.players[color].bonus);
     }
-    if (!Era::SaveIni(settingsPath))
-        OutputDebugStringA("RMG: cannot save last random-map settings.\n");
+    Era::SaveIni(settingsPath);
 }
 
 H3SelectScenarioDialog *__stdcall ScenarioCtor(HiHook *h, H3SelectScenarioDialog *dlg, int mode)
@@ -427,8 +425,7 @@ H3SelectScenarioDialog *__stdcall ScenarioCtor(HiHook *h, H3SelectScenarioDialog
     restorePlayers = false;
     auto *result = THISCALL_2(H3SelectScenarioDialog *, h->GetDefaultFunc(), dlg, mode);
     if (IsNewLocalGame(dlg) && ReadInt("XXL", "RememberSettings", -1) == -1)
-        if (!SetRememberSettings(false))
-            OutputDebugStringA("RMG: cannot initialize RememberSettings=0.\n");
+        SetRememberSettings(false);
     CreateRememberSettingsControl(dlg);
     SetRememberSettingsVisible(dlg, dlg->mapSelectShown != FALSE);
     UpdateMenuControls(dlg);
@@ -648,8 +645,6 @@ void RandomMapOptions_Init()
     const BYTE handicapBranch[] = {0x83, 0x3D, 0x40, 0x8A, 0x69, 0x00, 0x03, 0x75, 0x4B};
     if (!std::memcmp(reinterpret_cast<const void *>(0x57B406), handicapBranch, sizeof(handicapBranch)))
         _PI->WriteLoHook(0x57B406, CreateHandicapTextButton);
-    else
-        Era::WriteLog("RMG", "Map selection", "Handicap button constructor differs; native button was left unchanged.");
     _PI->WriteLoHook(0x583D92, CollectStartingHero);
     _PI->WriteHiHook(0x579CE0, SPLICE_, EXTENDED_, THISCALL_, ScenarioCtor);
     _PI->WriteHiHook(0x580180, SPLICE_, EXTENDED_, THISCALL_, ShowRandomSettings);

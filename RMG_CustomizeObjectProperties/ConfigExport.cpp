@@ -11,34 +11,24 @@ extern "C" BOOL __stdcall GetRmgExportInfo(int, int, EraJS::RmgExportInfo *);
 extern "C" BOOL __stdcall GetRmgExportOverrides(int, int, EraJS::RmgExportOverridesInfo *);
 namespace {
 using namespace configProvider;
-void RmgScope(const Fields &json, const std::string &key, int type, int subtype, EraJS::GetRmgExportOverrides getOverrides)
+void RmgScope(const Fields &json, const std::string &key, int type, int subtype)
 {
-    constexpr LPCSTR fields[] = {"enabled", "map", "zone", "value", "density"};
     EraJS::RmgExportOverridesInfo info;
-    if (getOverrides && getOverrides(type, subtype, &info))
-    {
+    if (GetRmgExportOverrides(type, subtype, &info))
         PutRmgOverrides(json, key, info.fieldMask, info.fields);
-    }
-    else
-    {
-        // Older hosts can still export explicit configuration; never synthesize
-        // fixed values from their already resolved runtime snapshot.
-        for (LPCSTR field : fields) CopyNumber(json, key + "." + field);
-    }
 }
-void ObjectSettings(Record &record, const std::string &key, int type, int subtype,
-                    EraJS::GetRmgExportOverrides getOverrides, EraJS::GetRmgExportInfo getRmg)
+void ObjectSettings(Record &record, const std::string &key, int type, int subtype)
 {
     // Retain differing ancestor settings once in the merged output, so exporting
     // one category still preserves the aggregate limits and type inheritance.
-    RmgScope(record.data, "RMG.objectGeneration", -1, -1, getOverrides);
+    RmgScope(record.data, "RMG.objectGeneration", -1, -1);
     const auto typeKey = "RMG.objectGeneration." + std::to_string(type);
-    RmgScope(record.data, typeKey, type, -1, getOverrides);
-    RmgScope(record.data, key, type, subtype, getOverrides);
+    RmgScope(record.data, typeKey, type, -1);
+    RmgScope(record.data, key, type, subtype);
     CopyText(record.data, typeKey + ".sound.loop");
     CopyText(record.data, key + ".sound.loop");
     EraJS::RmgExportInfo info;
-    if (getRmg && getRmg(type, subtype, &info))
+    if (GetRmgExportInfo(type, subtype, &info))
     {
         int values[] = {info.enabled, info.map, info.zone, info.value, info.density};
         if (type == eObject::CREATURE_GENERATOR1 || type == eObject::CREATURE_GENERATOR4)
@@ -71,28 +61,23 @@ int BankId(int type, int subtype)
 void CollectObjects(std::vector<Category> &categories)
 {
     auto &objects = categories[0], &dwellings = categories[1], &banks = categories[2];
-    const auto getProperty = GetObjectExportProperty;
-    const auto getOriginalLimit = GetOriginalObjectSubtypeLimit;
-    const auto getRmg = GetRmgExportInfo;
-    const auto getOverrides = GetRmgExportOverrides;
 
     using Identity = std::pair<int, int>;
     std::map<Identity, std::vector<std::string>> definitions;
     std::set<Identity> identities;
-    if (getProperty)
-        for (int index = 0; ; ++index)
-        {
-            const char *line = getProperty(index);
-            if (!line) break;
-            int type = -1, subtype = -1;
-            if (std::sscanf(line, "%*s %*s %*s %*s %*s %d %d", &type, &subtype) != 2 ||
-                !object_config::IsObjectType(type) || !object_config::IsObjectSubtype(subtype)) continue;
-            const Identity identity{type, subtype};
-            identities.insert(identity);
-            auto &lines = definitions[identity];
-            const std::string text = line;
-            if (std::find(lines.begin(), lines.end(), text) == lines.end()) lines.push_back(text);
-        }
+    for (int index = 0; ; ++index)
+    {
+        const char *line = GetObjectExportProperty(index);
+        if (!line) break;
+        int type = -1, subtype = -1;
+        if (std::sscanf(line, "%*s %*s %*s %*s %*s %d %d", &type, &subtype) != 2 ||
+            !object_config::IsObjectType(type) || !object_config::IsObjectSubtype(subtype)) continue;
+        const Identity identity{type, subtype};
+        identities.insert(identity);
+        auto &lines = definitions[identity];
+        const std::string text = line;
+        if (std::find(lines.begin(), lines.end(), text) == lines.end()) lines.push_back(text);
+    }
     if (const auto *game = H3Main::Get())
         for (int type = 0; type < limits::OBJECTS; ++type)
             for (const auto &object : game->mainSetup.objectLists[type])
@@ -117,7 +102,7 @@ void CollectObjects(std::vector<Category> &categories)
         const int type = identity.first, subtype = identity.second, bank = BankId(type, subtype);
         const bool isDwelling = type == eObject::CREATURE_GENERATOR1 || type == eObject::CREATURE_GENERATOR4;
         auto &category = isDwelling ? dwellings : bank >= 0 ? banks : objects;
-        int originalLimit = getOriginalLimit ? getOriginalLimit(type) : 0;
+        int originalLimit = GetOriginalObjectSubtypeLimit(type);
         bool original = subtype <= originalLimit;
         if (isDwelling) original = Original(subtype, type == eObject::CREATURE_GENERATOR1 ? "dwellings1" : "dwellings4", 100);
         else if (bank >= 0) original = Original(bank, "creatureBanks", 20);
@@ -133,7 +118,7 @@ void CollectObjects(std::vector<Category> &categories)
         {
             const auto definition = definitions.find(identity);
             if (definition != definitions.end()) PutArray(record.data, key + ".properties", definition->second.data(), unsigned(definition->second.size()));
-            ObjectSettings(record, key, type, subtype, getOverrides, getRmg);
+            ObjectSettings(record, key, type, subtype);
         }
         if (type == eObject::UNIVERSITY)
             for (int skill = 0; skill < limits::SECONDARY_SKILLS; ++skill)
@@ -154,4 +139,4 @@ int __stdcall Collect(void *, const era_config::Sink *sink)
     catch (...) { return era_config::ProviderFailed; }
 }
 }
-void RegisterRmgConfigProvider() { configProvider::Registrar<Collect>::Install("objects.rmg"); }
+void RegisterRmgConfigProvider() { configProvider::Registrar<Collect, false>::Install("objects.rmg"); }

@@ -1,0 +1,20 @@
+{
+  "RMG": {
+    "objectGeneration": {
+      "6": {
+        "gold": {
+          "5000": {"enabled": "1", "map": "8", "zone": "2", "density": "20", "name": "Pandora: 5000 gold"}
+        },
+        "experience": {
+          "10000": {"enabled": "0"}
+        },
+        "monsters": {
+          "4": {"enabled": "1", "map": "6", "zone": "2"}
+        },
+        "magic": {
+          "3": {"3": {"15": {"enabled": "1", "map": "4", "zone": "1"}}}
+        }
+      }
+    }
+  }
+}

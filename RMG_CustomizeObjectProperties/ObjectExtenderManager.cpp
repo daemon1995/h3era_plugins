@@ -1,9 +1,8 @@
-﻿#pragma comment(linker, "/EXPORT:RegisterObjectExtenderEx=_RegisterObjectExtenderEx@4")
+#pragma comment(linker, "/EXPORT:RegisterObjectExtenderEx=_RegisterObjectExtenderEx@4")
 #pragma comment(linker, "/EXPORT:GetResolvedObjectName=_GetResolvedObjectName@8")
 #pragma comment(linker, "/EXPORT:GetObjectName=_GetObjectName@8")
 #pragma comment(linker, "/EXPORT:RegisterObjectVisitObserver=_RegisterObjectVisitObserver@4")
 
-#include <thread>
 #include <unordered_set>
 #include <array>
 #include <cstdio>
@@ -73,7 +72,7 @@ bool CopyObjectInfo(const void *source, const size_t sourceSize, UniqueObjectInf
     std::memcpy(&result, source, bytesToCopy);
     if (!object_config::IsObjectType(result.uniqueObjectType.type) || result.uniqueObjectType.subtype < -1)
         return false;
-    if (result.page < ePageUnknown || result.page > ePandoraBox)
+    if (result.page < ePageUnknown || result.page > ePageSeerHut)
         result.page = ePageUnknown;
     return true;
 }
@@ -188,7 +187,7 @@ namespace extendersManager
 /// function to load additional properties into objects.txt
 /// it is called from H3GameMainSetup::LoadObjects at 0x515038
 /// it also may replace original properties with new ones if they have same
-/// type/subtype/mask but different other params
+/// DEF/type/subtype, even when terrain masks differ
 /// </summary>
 /// <param name=""></param>
 _LHF_(ObjectExtenderManager::LoadObjectsTxt)
@@ -395,14 +394,14 @@ eRmgDlgObjectPage ObjectExtenderManager::GetObjectPage(const int type, const int
         const int registeredSubtype = object->uniqueObjectType.subtype;
         const bool isExactSubtype = subtype < 0 || registeredSubtype == subtype;
         const bool isTypeRegistration = registeredSubtype < 0;
-        if (isExactSubtype && object->page >= ePageCommon && object->page <= ePandoraBox)
+        if (isExactSubtype && object->page >= ePageCommon && object->page <= ePageSeerHut)
             return object->page;
 
         if (isTypeRegistration && !typeInfo)
             typeInfo = object;
     }
 
-    if (typeInfo && typeInfo->page >= ePageCommon && typeInfo->page <= ePandoraBox)
+    if (typeInfo && typeInfo->page >= ePageCommon && typeInfo->page <= ePageSeerHut)
         return typeInfo->page;
 
     return ePageUnknown;
@@ -616,11 +615,7 @@ void __stdcall ObjectExtenderManager::H3GameMainSetup__LoadObjects(HiHook *h, co
         }
     }
     if (addedWavNames.size())
-    {
-        std::thread th(&sound::SoundManager::Init, addedWavNames);
-        th.join();
-        //  sound::SoundManager::Init(addedWavNames);
-    }
+        sound::SoundManager::Init(addedWavNames);
 
     auto &registrator = ObjectExtenderRegistrator::Get();
     registrator.allowRegistration = false;

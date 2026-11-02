@@ -438,17 +438,7 @@ LPCSTR Text(LPCSTR key)
 {
     char path[128];
     sprintf_s(path, "RMG.mapSelection.%s", key);
-    bool found = false;
-    LPCSTR value = EraJS::read(path, found);
-    if (found && value && *value) return value;
-    static const std::pair<LPCSTR, LPCSTR> defaults[] = {
-        {"title.templates", "Random map template"}, {"title.alliances", "Player alliances"},
-        {"title.player", "Starting town and hero"}, {"random", "Random"}, {"heroes", "Heroes"},
-        {"rememberSettingsError", "Cannot save player settings preference."},
-        {"rememberSettingsHint", "Remember starting towns, heroes and bonuses"}};
-    for (const auto &entry : defaults)
-        if (!std::strcmp(key, entry.first)) return entry.second;
-    return key;
+    return EraJS::read(path);
 }
 
 void InstallScenarioName()
@@ -552,7 +542,6 @@ bool InstallHdMenu(HMODULE module)
         std::memcmp(base + 0x97180, preview, sizeof(preview)) ||
         std::memcmp(base + 0xA1920, templates, sizeof(templates)))
     {
-        Era::WriteLog("RMG", "Map selection", "HD menu backend differs; version-specific replacements were not installed.");
         return false;
     }
     HdPatch previous[] = {FindHdAt(0x587FD0, HIHOOK_), FindHdAt(0x586103, LOHOOK_), FindHdAt(0x5854BE, LOHOOK_)};
@@ -584,7 +573,6 @@ bool InstallHdMenu(HMODULE module)
         hdBase = 0;
         return false;
     }
-    Era::WriteLog("RMG", "Map selection", "Menu, template and alliance pickers installed; duplicate HD.TE hooks removed.");
     return true;
 }
 

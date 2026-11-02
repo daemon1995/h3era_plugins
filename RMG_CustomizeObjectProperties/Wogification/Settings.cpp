@@ -90,8 +90,8 @@ bool ProtectedObject(int type, int subtype)
     }
     // A wildcard source can cover both ordinary and quest subtypes. Check
     // registered subtypes individually when their actual map instance is used.
-    return subtype >= 0 &&
-           extendersManager::ObjectExtenderManager::GetObjectPage(type, subtype) == extender::ePagePrison;
+    const auto page = extendersManager::ObjectExtenderManager::GetObjectPage(type, subtype);
+    return subtype >= 0 && (page == extender::ePagePrison || page == extender::ePageSeerHut);
 }
 size_t Add(int type, int subtype)
 {
@@ -336,8 +336,6 @@ void Load()
         identities.insert(Fold(object.id));
     std::set<std::pair<int, int>> catalogPairs;
     const bool knownCatalog = Read(Root("catalog.schemaVersion"), 1) == 1;
-    if (!knownCatalog)
-        Era::WriteLog("Wogification", "Catalog", "Unsupported catalog version; legacy rules retained.");
     for (int i = 0; knownCatalog && i < 8192; ++i)
     {
         const auto id = String(Root("catalog.order." + std::to_string(i)));
@@ -432,8 +430,6 @@ void Load()
             objects[i].current = draft[i];
         processCurrent = draft.process;
     }
-    else
-        Era::WriteLog("Wogification", "Settings", ("Invalid INI; defaults used: " + error).c_str());
 }
 const Object *Find(int type, int subtype, Kind kind)
 {
