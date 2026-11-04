@@ -1,21 +1,6 @@
 #pragma once
 #include "HandlersList.h"
 
-#define SPELL_FIELDS(X)                                                                                                \
-    X(type)                                                                                                            \
-    X(soundName)                                                                                                       \
-    X(animationIndex)                                                                                                  \
-    X(flags)                                                                                                           \
-    X(name)                                                                                                            \
-    X(shortName)                                                                                                       \
-    X(level)                                                                                                           \
-    X(school)                                                                                                          \
-    X(spEffect)                                                                                                        \
-    X(manaCost)                                                                                                        \
-    X(baseValue)                                                                                                       \
-    X(chanceToGet)                                                                                                     \
-    X(aiValue)                                                                                                         \
-    X(description)
 class SpellHandler
 {
 
@@ -23,7 +8,7 @@ class SpellHandler
     struct formats
     {
 #define X(field) GENERATE_FORMAT_STR(H3Spell, spells, field)
-        SPELL_FIELDS(X)
+        ERA_SPELL_FIELDS(X)
 #undef X
     };
 
@@ -78,4 +63,3 @@ class SpellHandler
     }
     static int GetSpellsNumber() noexcept;
 };
-#undef SPELL_FIELDS

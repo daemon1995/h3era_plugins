@@ -1,5 +1,6 @@
 #pragma once
 #include "HandlersList.h"
+#include "../../headers/EraPluginsAPI/RuntimeServices.h"
 
 class ArtifactHandler
 {
@@ -21,6 +22,7 @@ class ArtifactHandler
         // 0x50C380 returns a directory/status integer, not a TXT-load boolean.
         const int result = CDECL_0(int, h->GetDefaultFunc());
         h->Undo();
+        if (era_services::Find<era_services::Ownership>(era_services::ARTIFACT_OWNER)) return result;
         auto *artifacts = H3ArtifactSetup::Get();
         const int count = GetArtifactsNumber();
         auto *events = GetEventTable();

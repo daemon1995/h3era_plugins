@@ -1,4 +1,5 @@
-// dllmain.cpp : Îïðåäåëÿåò òî÷êó âõîäà äëÿ ïðèëîæåíèÿ DLL.
+ï»¿void RegisterNativeConfigProvider();
+// dllmain.cpp : ÐžÐ¿Ñ€ÐµÐ´ÐµÐ»ÑÐµÑ‚ Ñ‚Ð¾Ñ‡ÐºÑƒ Ð²Ñ…Ð¾Ð´Ð° Ð´Ð»Ñ Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ DLL.
 #define _H3API_PLUGINS_
 #include "framework.h"
 
@@ -48,10 +49,6 @@ static _ERH_(OnAfterCreateWindow)
     HeroHandler::Init();
     SecondarySkillHandler::Init();
 }
-static _ERH_(OnAfterReloadLanguageData)
-{
-    EraJS::ReloadTextOverrides();
-}
 static _LHF_(HooksInit)
 {
     MapObjectHandler::Init();
@@ -73,11 +70,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
             _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 
             Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
+            RegisterNativeConfigProvider();
             _REH_(OnReportVersion);
 
             _REH_(OnAfterWog); // ERA way; used for new plugins and late hooks set
             _REH_(OnAfterCreateWindow);
-            _REH_(OnAfterReloadLanguageData);
+
             _PI->WriteLoHook(0x4EEAF2, HooksInit); // SoD way; used for old plugins and early hooks set
         }
     case DLL_THREAD_ATTACH:

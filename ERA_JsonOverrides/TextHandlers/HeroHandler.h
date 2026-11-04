@@ -1,19 +1,6 @@
 #pragma once
 #include "HandlersList.h"
 
-#define HERO_INFO_FIELDS(X)                                                                                           \
-    X(isFemale)                                                                                                       \
-    X(race)                                                                                                           \
-    X(heroClass)                                                                                                      \
-    X(hasSpellbook)                                                                                                   \
-    X(startingSpell)                                                                                                  \
-    X(armyType)                                                                                                       \
-    X(smallPortrait)                                                                                                  \
-    X(largePortrait)                                                                                                  \
-    X(roeHero)                                                                                                        \
-    X(expansionHero)                                                                                                  \
-    X(campaignHero)
-
 class HeroHandler
 {
 
@@ -26,7 +13,7 @@ class HeroHandler
         static constexpr LPCSTR BIOGRAPHY = "era.heroes.%d.biography";
 
 #define X(field) GENERATE_FORMAT_STR(H3HeroInfo, heroes, field)
-        HERO_INFO_FIELDS(X)
+        ERA_HERO_DATA_FIELDS(X)
 #undef X
     };
 
@@ -59,4 +46,3 @@ class HeroHandler
         }
     }
 };
-#undef HERO_INFO_FIELDS
