@@ -8,11 +8,11 @@ PatcherInstance* instance = nullptr;
 BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID) {
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(module);
-        Era::ConnectEra(module, "game bug fixes H3API");
+        Era::ConnectEra(module, "game bug fixes extended");
         gbf::patcher = GetPatcher();
         if (!gbf::patcher)
             return TRUE;
-        gbf::instance = gbf::patcher->CreateInstance("game bug fixes H3API");
+        gbf::instance = gbf::patcher->CreateInstance("game bug fixes extended");
         if (!gbf::instance)
             return TRUE;
         // All compiled modules below are installed. Runtime compatibility still

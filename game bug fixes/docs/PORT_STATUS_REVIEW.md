@@ -28,7 +28,7 @@
 
 ## Условия загрузки
 
-Оригинальный HooksInit вызывает Npc, Monsters, Graphics, Spells, Summon, Audio, Luck и MapSize по умолчанию. В текущем GBFE все эти модули включены, кроме MapSize. Имя ERA/patcher instance в GBFE — `game bug fixes H3API`, тогда как в оригинале — `game bug fixes extended`; переименование DLL само по себе не меняет идентификатор, по которому сторонние плагины могут искать instance. Порядок установки тоже отличается от оригинала: в GBFE сначала Ben/Scouting/Movement/Runtime/AI, затем GameLogic/PrimarySkills/CrExpo; это необходимо учитывать при проверке цепочек хуков и перекрывающихся байтов.
+Оригинальный HooksInit вызывает Npc, Monsters, Graphics, Spells, Summon, Audio, Luck и MapSize по умолчанию. В текущем GBFE все эти модули включены, кроме MapSize. Имя ERA/patcher instance в GBFE совпадает с оригиналом — `game bug fixes extended`; выходной файл — `game bug fixes extended.dll`. Порядок установки тоже отличается от оригинала: в GBFE сначала Ben/Scouting/Movement/Runtime/AI, затем GameLogic/PrimarySkills/CrExpo; это необходимо учитывать при проверке цепочек хуков и перекрывающихся байтов.
 
 В итоговом поиске прямых адресов для каждой пары полный охват — лишь индикатор адресов. Дальнейшая работа должна проверять обработчики по функциям и конкретному EXE, выравнивание, calling convention, патч-диапазоны, активные сторонние плагины, порядок применения/отмены, сохранения и реальные игровые сценарии.
 ## Дополнительное наблюдение: граница NPC

@@ -4,11 +4,11 @@
     <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
   </ItemGroup>
-  <PropertyGroup Label="Globals"><ProjectGuid>{E595AC24-E995-4FCD-97DC-C82B574B85D6}</ProjectGuid><Keyword>Win32Proj</Keyword><RootNamespace>GameBugFixesH3API</RootNamespace></PropertyGroup>
+  <PropertyGroup Label="Globals"><ProjectGuid>{E595AC24-E995-4FCD-97DC-C82B574B85D6}</ProjectGuid><Keyword>Win32Proj</Keyword><RootNamespace>gamebugfixes</RootNamespace></PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v141_xp</PlatformToolset><CharacterSet>MultiByte</CharacterSet><UseDebugLibraries>true</UseDebugLibraries></PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v141_xp</PlatformToolset><CharacterSet>MultiByte</CharacterSet><UseDebugLibraries>false</UseDebugLibraries></PropertyGroup>
-  <PropertyGroup><TargetName>Game bugs fixes extended</TargetName><PluginTargetExt>.dll</PluginTargetExt></PropertyGroup>
+  <PropertyGroup><TargetName>game bug fixes extended</TargetName><PluginTargetExt>.dll</PluginTargetExt></PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup><IntDir>$(ProjectDir)obj\$(ProjectName)\$(Configuration)\</IntDir></PropertyGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"><Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /></ImportGroup>

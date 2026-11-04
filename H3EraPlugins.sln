@@ -57,12 +57,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ERA_DwellingsExtender", "ER
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XXL", "XXL\XXL.vcxproj", "{F83C9487-588D-4C87-8F84-159210B5C6EE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game bug fixes", "game bug fixes\game bug fixes.vcxproj", "{E595AC24-E995-4FCD-97DC-C82B574B85D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E595AC24-E995-4FCD-97DC-C82B574B85D6}.Debug|x86.ActiveCfg = Debug|Win32
+		{E595AC24-E995-4FCD-97DC-C82B574B85D6}.Release|x86.ActiveCfg = Release|Win32
 		{F83C9487-588D-4C87-8F84-159210B5C6EE}.Debug|x86.ActiveCfg = Debug|Win32
 		{F83C9487-588D-4C87-8F84-159210B5C6EE}.Debug|x86.Build.0 = Debug|Win32
 		{F83C9487-588D-4C87-8F84-159210B5C6EE}.Release|x86.ActiveCfg = Release|Win32
