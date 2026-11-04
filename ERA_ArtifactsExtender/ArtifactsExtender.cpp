@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ArtifactSave.h"
+#include "../headers/Era/GameResources.hpp"
 #include "../headers/EraPluginsAPI/GraphicsAPI.h"
 #include "../headers/EraPluginsAPI/RuntimeServices.h"
 #include <algorithm>
@@ -308,6 +309,13 @@ void ArtifactsExtender::AddMapObjects(H3MainSetup *setup)
         object.subtype = id;
         object.defIndex = static_cast<UINT16>(-1);
         if (!definitions[id].mapDef.empty()) object.defName = definitions[id].mapDef.c_str();
+        else
+        {
+            // The adventure-map DEF suffix matches the subtype: 7 is AVA0007.
+            char name[16];
+            sprintf_s(name, "AVA%04d.def", id);
+            if (game_resources::Exists(name, true)) object.defName = name;
+        }
         // The engine leaves spare vector storage unconstructed. H3API::Push
         // assigns into it, which makes H3String read an uninitialized pointer.
         setup->AddObjectAttribute(&object);
