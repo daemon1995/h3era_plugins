@@ -16,42 +16,28 @@ constexpr int kMenuHeight = 54;
 constexpr LPCSTR kButtonDef = "icmAltq.def";
 INT actionDepth = 0;
 
-__declspec(noinline) INT CallCursorPreservingRegisters(const INT nativeProc, H3CombatManager *manager, INT hex)
+const char *ActionText(eAction action, bool rightClick)
 {
-    // GBFE's 0x476020 self-hover/back-step hook pops the native saved EDI/ESI
-    // without restoring them. Preserve the caller's nonvolatile registers here;
-    // otherwise C++ may dereference the creature address as the combat manager
-    // after the native cursor calculation returns.
-    INT cursor = 0;
-    __asm
-    {
-        push ebx
-        push esi
-        push edi
-        push hex
-        mov ecx, manager
-        call nativeProc
-        pop edi
-        pop esi
-        pop ebx
-        mov cursor, eax
-    }
-    return cursor;
-}
-
-const char *ActionHint(eAction action)
-{
-    switch (action)
-    {
-    case eAction::MELEE: return "Switch to melee attack (ALT).";
-    case eAction::SHOOT: return "Switch to ranged attack (ALT).";
-    case eAction::CAST: return "Switch to creature spell (ALT).";
-    case eAction::MOVE: return "Move onto an allied corpse without resurrecting (ALT).";
-    case eAction::RETURN: return "Switch to attack and return (ALT).";
-    case eAction::NO_RETURN: return "Switch to attack without returning (ALT).";
-    case eAction::AREA_SHOT: return "Area shot: choose a battlefield hex (ALT).";
-    default: return "Press ALT to switch the active creature's action.";
-    }
+    struct Text { const char *key, *hint, *description; };
+    static const Text texts[] = {
+        {"none", "Switch creature action (ALT).", "{Alternate actions}\n\nPress ALT or click this button to cycle through the actions available to the active stack. The button shows the next action."},
+        {"melee", "Switch to melee attack (ALT).", "{Melee attack}\n\nSwitch to a melee attack instead of shooting or casting a creature spell."},
+        {"shoot", "Switch to ranged attack (ALT).", "{Ranged attack}\n\nSwitch to an ordinary shot at an enemy stack. Ammo and native shooting restrictions apply."},
+        {"cast", "Switch to creature spell (ALT).", "{Creature spell}\n\nSwitch to the creature's spell or ability. Spells on living targets allow ordinary movement. Reachable corpse spells use the separate Move mode to walk without resurrecting."},
+        {"move", "Move without resurrecting (ALT).", "{Move}\n\nMove onto an allied corpse instead of resurrecting it. Available only when this stack can both resurrect and reach such a hex."},
+        {"return", "Switch to attack and return (ALT).", "{Attack and return}\n\nReturn to the original hex after attacking."},
+        {"no_return", "Switch to attack without returning (ALT).", "{Attack and stay}\n\nRemain near the target after attacking."},
+        {"area_shot", "Choose area shot target (ALT / G).", "{Area shot}\n\nPress ALT, G or click this button to open target selection. ESC or right-click cancels and returns to ordinary shooting. Area targeting is not remembered for the next turn. The shot hits the center and adjacent hexes, including allies. Splash immunity depends on the configured shot type. Uses one shot."}
+    };
+    const INT index = static_cast<INT>(action);
+    const Text &text = texts[index >= 0 && index < 8 ? index : 0];
+    char key[96];
+    sprintf(key, "combat_switching_actions.%s.%s", rightClick ? "rmc" : "hint", text.key);
+    bool found = false;
+    const char *translation = EraJS::read(key, found);
+    if (found && translation && translation[0])
+        return translation;
+    return rightClick ? text.description : text.hint;
 }
 
 bool IsWarMachine(const H3CombatCreature *stack)
@@ -107,10 +93,14 @@ void SetActionFrames(H3DlgCustomButton *button, eAction action)
 {
     const int frame = static_cast<int>(action) * 3;
     H3LoadedDef *def = button->GetDef();
-    if (def && def->groupsCount && def->groups[0] && def->groups[0]->count > frame + 1)
+    if (def && def->groupsCount && def->groups[0] && def->groups[0]->count > frame + 2)
     {
         button->SetFrame(frame);
         button->SetClickFrame(frame + 1);
+        // Native drawing also uses disabled and selected frames. Its defaults
+        // are 2 and 3; frame 3 would incorrectly show melee on a neutral button.
+        IntAt(reinterpret_cast<INT>(button) + 0x3C) = frame + 2;
+        IntAt(reinterpret_cast<INT>(button) + 0x40) = frame;
     }
 }
 } // namespace
@@ -128,15 +118,6 @@ DllExport BOOL __stdcall SetOnBattleStackActionDetermination(const INT functionI
     return ActionSwitcher::Get().SetActionDeterminationCallback(functionId);
 }
 
-BOOL SwitcherDlgPanel::IsAltHeld(const H3Msg *msg)
-{
-    if (GetActiveWindow() != H3Hwnd::Get())
-        return FALSE;
-    if ((msg->IsKeyDown() || msg->IsKeyPress()) && msg->GetKey() == eVKey::H3VK_ALT)
-        return msg->IsKeyDown();
-    return msg->AltPressed() || (GetAsyncKeyState(VK_MENU) & 0x8000);
-}
-
 SwitcherDlgPanel::SwitcherDlgPanel(H3CombatBottomPanel *panel, const int firstItemId)
     : bottomPanel(panel), dialog(static_cast<H3CombatDlg *>(panel->GetParent()))
 {
@@ -146,6 +127,7 @@ SwitcherDlgPanel::SwitcherDlgPanel(H3CombatBottomPanel *panel, const int firstIt
         firstItemId, kButtonDef, SwitchPanelButtonProcedure, 0, 1);
     if (!actionSwitchButton)
         return;
+    actionSwitchButton->AddHotkey(static_cast<INT>(eVKey::H3VK_ALT));
     AddAreaShotFrames(actionSwitchButton->GetDef());
     panel->AddItem(actionSwitchButton);
 
@@ -173,6 +155,7 @@ SwitcherDlgPanel::SwitcherDlgPanel(H3CombatBottomPanel *panel, const int firstIt
 
 SwitcherDlgPanel::~SwitcherDlgPanel()
 {
+    aoe::ResetTargeting(P_CombatManager->Get());
     // The combat panel owns and destroys all registered dialog items.
     if (instance == this)
         instance = nullptr;
@@ -212,6 +195,7 @@ void SwitcherDlgPanel::InitNewStackAttackType()
     const BOOL oldButtonVisible = actionSwitchButton && actionSwitchButton->IsVisible();
     actionsNeedRefresh = FALSE;
     creatureActions.clear();
+    actionOptions = StackActionOptions{};
     if (!IsEligibleForCurrentPlayer(manager))
     {
         currentStack = nullptr;
@@ -233,45 +217,56 @@ void SwitcherDlgPanel::InitNewStackAttackType()
         !stack->activeSpellDuration[eSpell::STONE] && !stack->activeSpellDuration[eSpell::PARALYZE])
     {
         const bool warMachine = IsWarMachine(stack);
-        if (!warMachine)
-            creatureActions.push_back(eAction::MELEE);
-        if (stack->type != eCreature::CATAPULT && ActionSwitcher::CanShootNormally(stack))
-            creatureActions.push_back(eAction::SHOOT);
-
-        bool canCast = false;
-        bool canCastOnPoint = false;
+        actionOptions.melee = !warMachine;
+        actionOptions.shoot = stack->type != eCreature::CATAPULT && ActionSwitcher::CanShootNormally(stack);
+        actionOptions.areaShot = aoe::IsAvailable(stack);
+        actionOptions.attackReturn = !warMachine && StackCanAttackAndReturn(stack);
         if (stack->info.spellCharges > 0)
         {
             for (int hex = 0; hex < 187; ++hex)
             {
-                const bool empty = !manager->squares[hex].GetCreature();
-                // A corpse spell conflicts with movement only on an empty hex
-                // which the active stack can actually occupy on this turn.
-                if (empty && THISCALL_2(BOOL8, 0x4470F0, stack, hex) && CanMoveToHex(manager, stack, hex))
+                H3CombatCreature *target = manager->squares[hex].GetCreature();
+                if (!target || target->numberAlive <= 0)
                 {
-                    canCast = canCastOnPoint = true;
-                    break;
+                    // Only reachable empty/corpse spell targets compete with walking.
+                    if (!actionOptions.castHex &&
+                        (THISCALL_2(BOOL8, 0x4470F0, stack, hex) || THISCALL_2(BOOL8, 0x4473E0, stack, hex)) &&
+                        CanMoveToHex(manager, stack, hex))
+                        actionOptions.castHex = TRUE;
+                    continue;
                 }
+                BOOL &canCast = target->GetSide() == stack->GetSide() ? actionOptions.castAlly : actionOptions.castEnemy;
                 if (!canCast && THISCALL_2(BOOL8, 0x4473E0, stack, hex))
-                    canCast = !empty || CanMoveToHex(manager, stack, hex);
+                    canCast = TRUE;
             }
         }
-        if (canCast)
-            creatureActions.push_back(eAction::CAST);
-        if (canCastOnPoint && !warMachine)
-            creatureActions.push_back(eAction::MOVE);
-        if (!warMachine && StackCanAttackAndReturn(stack))
+    }
+    ActionSwitcher::Get().DetermineStackActions(stack, actionOptions);
+    // Build UI modes from the permitted capabilities. Return/stay replaces the
+    // duplicate ordinary melee mode; all permitted spell targets share CAST.
+    if (actionOptions.melee)
+    {
+        if (actionOptions.attackReturn)
         {
             creatureActions.push_back(eAction::RETURN);
             creatureActions.push_back(eAction::NO_RETURN);
         }
-        if (aoe::IsAvailable(stack))
-            creatureActions.push_back(eAction::AREA_SHOT);
+        else
+            creatureActions.push_back(eAction::MELEE);
     }
-    ActionSwitcher::Get().DetermineStackActions(stack, creatureActions);
+    if (actionOptions.shoot)
+        creatureActions.push_back(eAction::SHOOT);
+    if (actionOptions.castEnemy || actionOptions.castAlly || actionOptions.castHex)
+        creatureActions.push_back(eAction::CAST);
+    if (actionOptions.castHex && !IsWarMachine(stack))
+        creatureActions.push_back(eAction::MOVE);
+    if (actionOptions.areaShot)
+        creatureActions.push_back(eAction::AREA_SHOT);
     checkingAvailability = FALSE;
     const auto remembered = rememberedActions.find(stack);
     selectedAction = remembered != rememberedActions.end() ? remembered->second : eAction::NONE;
+    if (selectedAction == eAction::AREA_SHOT)
+        selectedAction = eAction::SHOOT;
     // Keep the preference in memory even if it is unavailable on this turn.
     if (std::find(creatureActions.begin(), creatureActions.end(), selectedAction) == creatureActions.end())
         selectedAction = eAction::NONE;
@@ -296,7 +291,7 @@ BOOL SwitcherDlgPanel::CanMoveToHex(H3CombatManager *manager, H3CombatCreature *
     const INT targetIndex = stack->_f_14;
     const INT destination = stack->battlefieldDestination;
     checkingMovement = TRUE;
-    const INT cursor = CallCursorPreservingRegisters(0x475DC0, manager, hex);
+    const INT cursor = THISCALL_2(INT, 0x475DC0, manager, hex);
     checkingMovement = FALSE;
     stack->_f_10 = targetSide;
     stack->_f_14 = targetIndex;
@@ -326,29 +321,6 @@ eAction SwitcherDlgPanel::NextAvailableAction() const
     if (++current == creatureActions.end())
         current = creatureActions.begin();
     return *current;
-}
-
-BOOL SwitcherDlgPanel::HandleAltCycle(H3CombatManager *manager, H3Msg *msg)
-{
-    if (GetActiveWindow() != H3Hwnd::Get())
-    {
-        altCyclePressed = FALSE;
-        return FALSE;
-    }
-    const bool altEvent = (msg->IsKeyDown() || msg->IsKeyPress() || msg->IsKeyHeld()) &&
-                          msg->GetKey() == eVKey::H3VK_ALT;
-    const BOOL held = IsAltHeld(msg);
-    const BOOL wasHeld = altCyclePressed;
-    altCyclePressed = held;
-    // Physical edges also cover Windows system-key messages. Native release-only
-    // events are accepted, while KEY_HELD never advances the action repeatedly.
-    if (creatureActions.size() > 1 &&
-        ((held && !wasHeld) || (altEvent && msg->IsKeyPress() && !wasHeld)))
-    {
-        SelectAction(NextAvailableAction(), manager);
-        return TRUE;
-    }
-    return altEvent;
 }
 
 void SwitcherDlgPanel::UpdateLayout()
@@ -394,10 +366,12 @@ void SwitcherDlgPanel::UpdateLayout()
 
 void SwitcherDlgPanel::UpdateButtonStates()
 {
+    H3CombatManager *manager = P_CombatManager->Get();
+    const BOOL eligible = IsEligibleForCurrentPlayer(manager);
     UpdateLayout();
     if (background)
     {
-        if (visible && creatureActions.size() > 1)
+        if (eligible && visible && creatureActions.size() > 1)
             background->Show();
         else
             background->HideDeactivate();
@@ -411,16 +385,16 @@ void SwitcherDlgPanel::UpdateButtonStates()
             if (item.action != eAction::NONE)
             {
                 SetActionFrames(item.button, item.action);
-                item.button->SetHints(ActionHint(item.action), "", FALSE);
+                item.button->SetHints(ActionText(item.action, false), ActionText(item.action, true), FALSE);
             }
-            if (visible && item.action != eAction::NONE)
+            if (eligible && visible && item.action != eAction::NONE)
                 item.button->ShowActivate();
             else
                 item.button->HideDeactivate();
         }
         if (item.number)
         {
-            if (visible && item.action != eAction::NONE)
+            if (eligible && visible && item.action != eAction::NONE)
                 item.number->Show();
             else
                 item.number->HideDeactivate();
@@ -428,11 +402,21 @@ void SwitcherDlgPanel::UpdateButtonStates()
     }
     if (actionSwitchButton)
     {
-        const eAction next = NextAvailableAction();
-        actionSwitchButton->SetHints(ActionHint(next), "", FALSE);
+        const eAction next = eligible ? NextAvailableAction() : eAction::NONE;
+        actionSwitchButton->SetHints(ActionText(next, false), ActionText(next, true), FALSE);
         SetActionFrames(actionSwitchButton, next);
-        if (creatureActions.size() > 1)
+        if (!eligible)
+        {
+            actionSwitchButton->Show();
+            actionSwitchButton->DeActivate();
+            actionSwitchButton->RemoveState(eControlState::PRESSED | eControlState::SELECTED);
+            actionSwitchButton->Shade();
+        }
+        else if (creatureActions.size() > 1)
+        {
+            actionSwitchButton->UnShade();
             actionSwitchButton->ShowActivate();
+        }
         else
             actionSwitchButton->HideDeactivate();
     }
@@ -449,7 +433,43 @@ void SwitcherDlgPanel::SelectAction(eAction action, H3CombatManager *manager)
     if (!CanInteract(manager) ||
         std::find(creatureActions.begin(), creatureActions.end(), action) == creatureActions.end())
         return;
+    if (action == eAction::AREA_SHOT)
+    {
+        // G, ALT and menu clicks share this single transient target picker.
+        // AoE is selected only while this dialog is open. The saved preference
+        // remains ordinary shooting; the button displays the action after AoE.
+        selectedAction = eAction::AREA_SHOT;
+        const eAction fallback = actionOptions.shoot ? eAction::SHOOT : eAction::NONE;
+        rememberedActions[currentStack] = fallback;
+        pendingButton = -1;
+        SetVisible(FALSE);
+        UpdateButtonStates();
+        buttonNeedsRedraw = TRUE;
+        Refresh();
+        aoe::OpenForActiveStack();
+        const BOOL advance = pendingButton == BUTTON_ID;
+        const eAction next = advance ? NextAvailableAction() : fallback;
+        pendingButton = -1;
+        if (advance)
+        {
+            // Leave the target picker before changing modes; never nest dialogs.
+            SelectAction(next, manager);
+            return;
+        }
+        selectedAction = fallback;
+        manager->mouseCoord = -1;
+        manager->moveType = -99;
+        UpdateButtonStates();
+        buttonNeedsRedraw = TRUE;
+        battlefieldNeedsRedraw |= manager->action == eCombatAction::CANCEL;
+        Refresh();
+        THISCALL_1(void, 0x472730, manager->dlg);
+        THISCALL_1(INT, 0x4ECCD0, *reinterpret_cast<H3InputManager **>(0x699530));
+        return;
+    }
     const bool changed = selectedAction != action;
+    if (changed)
+        aoe::ResetTargeting(manager);
     selectedAction = action;
     rememberedActions[currentStack] = action;
     // Recalculate the native cursor at the next mouse message, even on the same hex.
@@ -470,16 +490,35 @@ void SwitcherDlgPanel::SelectAction(eAction action, H3CombatManager *manager)
     // The native input queue used by the original selector is at 0x699530.
     auto inputManager = *reinterpret_cast<H3InputManager **>(0x699530);
     THISCALL_1(INT, 0x4ECCD0, inputManager);
-    if (action == eAction::AREA_SHOT)
+}
+
+BOOL SwitcherDlgPanel::HandleAreaShotSwitch(H3Msg *msg)
+{
+    H3CombatManager *manager = P_CombatManager->Get();
+    if (!msg || selectedAction != eAction::AREA_SHOT || !IsEligibleForCurrentPlayer(manager) ||
+        !actionSwitchButton || !actionSwitchButton->IsVisible() || creatureActions.size() < 2)
+        return FALSE;
+    if (!msg->IsKeyDown() && !msg->IsKeyPress() && !msg->IsKeyHeld() &&
+        static_cast<INT>(msg->command) != 8 && static_cast<INT>(msg->command) != 16 && !msg->IsLeftClick())
+        return FALSE;
+
+    // The target picker deactivates the parent dialog. Dispatch only our DEF
+    // button, including its native ALT hotkey, without enabling other controls.
+    H3Msg buttonMessage = *msg;
+    // H3API does not expose the nesting counter or the message virtual publicly.
+    const INT buttonAddress = reinterpret_cast<INT>(actionSwitchButton);
+    INT &deactivationCount = IntAt(buttonAddress + 0x2C);
+    const INT deactivations = deactivationCount;
+    deactivationCount = 0;
+    const INT processMessage = IntAt(IntAt(buttonAddress) + 0x08);
+    THISCALL_2(INT, processMessage, actionSwitchButton, &buttonMessage);
+    deactivationCount = deactivations;
+    if (buttonMessage.IsLeftClick() && buttonMessage.itemId == BUTTON_ID)
     {
-        SetVisible(FALSE);
-        Refresh();
-        // The modal targeting callback builds the standard SHOOT command. The outer
-        // combat message loop executes it after this procedure returns.
-        checkingAvailability = TRUE;
-        aoe::OpenForActiveStack();
-        checkingAvailability = FALSE;
+        pendingButton = BUTTON_ID;
+        return TRUE;
     }
+    return FALSE;
 }
 
 BOOL SwitcherDlgPanel::SetVisible(const BOOL show)
@@ -573,12 +612,11 @@ INT __stdcall SwitcherDlgPanel::H3CombatDlg_Procedure(HiHook *h, H3CombatManager
     SwitcherDlgPanel &panel = *instance;
     if (!panel.CanInteract(manager))
     {
+        aoe::ResetTargeting(manager);
         panel.SetVisible(FALSE);
-        if (!panel.IsEligibleForCurrentPlayer(manager) && panel.actionSwitchButton)
-            panel.actionSwitchButton->HideDeactivate();
+        if (!panel.IsEligibleForCurrentPlayer(manager))
+            panel.UpdateButtonStates();
         panel.pendingButton = -1;
-        panel.altCyclePressed = GetActiveWindow() == H3Hwnd::Get() &&
-                                (GetAsyncKeyState(VK_MENU) & 0x8000);
         panel.heldNumberKeys = 0;
         panel.consumedNumberKeys = 0;
         panel.actionsNeedRefresh = TRUE;
@@ -587,9 +625,33 @@ INT __stdcall SwitcherDlgPanel::H3CombatDlg_Procedure(HiHook *h, H3CombatManager
     if (panel.actionsNeedRefresh || panel.currentStack != manager->activeStack ||
         panel.currentTurn != manager->turn)
         panel.InitNewStackAttackType();
-    if (panel.HandleAltCycle(manager, msg))
+    if ((msg->IsKeyDown() || msg->IsKeyPress() || msg->IsKeyHeld()) &&
+        msg->GetKey() == eVKey::H3VK_G &&
+        std::find(panel.creatureActions.begin(), panel.creatureActions.end(), eAction::AREA_SHOT) != panel.creatureActions.end())
+    {
+        if (msg->IsKeyDown() && aoe::IsAvailable(manager->activeStack))
+        {
+            panel.pendingButton = -1;
+            panel.SelectAction(eAction::AREA_SHOT, manager);
+        }
         return TRUE;
-
+    }
+    if (msg->IsRightClick())
+    {
+        H3DlgCustomButton *button = msg->itemId == BUTTON_ID ? panel.actionSwitchButton : nullptr;
+        if (!button && panel.visible)
+            for (const auto &item : panel.switchItems)
+                if (item.button && item.button->GetID() == msg->itemId)
+                    button = item.button;
+        if (button && button->IsVisible() && button->GetRightClickHint())
+        {
+            panel.pendingButton = -1;
+            H3Messagebox::RMB(button->GetRightClickHint());
+            manager->mouseCoord = -1;
+            THISCALL_1(INT, 0x4ECCD0, *reinterpret_cast<H3InputManager **>(0x699530));
+            return TRUE;
+        }
+    }
     // Custom callbacks queue clicks during native dialog dispatch. Also handle the
     // original click directly when it reaches the combat procedure first.
     const int buttonId = panel.pendingButton >= 0 ? panel.pendingButton :
@@ -617,6 +679,7 @@ INT __stdcall SwitcherDlgPanel::H3CombatManager_ProcessAction(HiHook *h, H3Comba
                                                             H3Msg *msg, INT argument)
 {
     ++actionDepth;
+    aoe::ResetTargeting(manager);
     if (instance && instance->dialog == manager->dlg)
     {
         instance->SetVisible(FALSE);
@@ -640,8 +703,7 @@ _LHF_(SwitcherDlgPanel::H3CombatManager_GetControl)
             return EXEC_DEFAULT;
         instance->panelShownByAlt = FALSE;
         instance->SetVisible(FALSE);
-        instance->altCyclePressed = GetActiveWindow() == H3Hwnd::Get() &&
-                                    (GetAsyncKeyState(VK_MENU) & 0x8000);
+        aoe::ResetTargeting(P_CombatManager->Get());
         instance->pendingButton = -1;
         instance->heldNumberKeys = instance->consumedNumberKeys = 0;
         // Native control transfer draws the complete bottom panel once afterwards.
@@ -667,14 +729,15 @@ BOOL ActionSwitcher::SetActionDeterminationCallback(const INT functionId)
     return TRUE;
 }
 
-void ActionSwitcher::DetermineStackActions(H3CombatCreature *stack, std::vector<eAction> &actions)
+void ActionSwitcher::DetermineStackActions(H3CombatCreature *stack, StackActionOptions &options)
 {
     const INT callback = actionDeterminationCallback;
     if (!callback || !stack || !Era::GetArgXVars || !Era::GetRetXVars || !Era::FireErmEvent)
         return;
 
-    // x1 = stable battle-stack ID, x2 = current owner hero (-1 without a hero),
-    // x3 = count, x4..x10 = ordered action IDs. All seven slots are initialized.
+    // x1 = stack ID, x2 = current owner hero. x3..x9 are boolean capabilities,
+    // not action IDs/counts: melee, shoot, area, enemy/ally/hex spell, return.
+    const StackActionOptions physical = options;
     auto arguments = *Era::GetArgXVars();
     auto results = *Era::GetRetXVars();
     std::array<INT, 16> savedArguments;
@@ -685,9 +748,13 @@ void ActionSwitcher::DetermineStackActions(H3CombatCreature *stack, std::vector<
     arguments[0] = stack->Index();
     const H3Hero *hero = stack->GetOwner();
     arguments[1] = hero ? hero->id : -1;
-    arguments[2] = static_cast<INT>(actions.size());
-    for (size_t i = 0; i < actions.size(); ++i)
-        arguments[3 + i] = static_cast<INT>(actions[i]);
+    arguments[2] = options.melee;
+    arguments[3] = options.shoot;
+    arguments[4] = options.areaShot;
+    arguments[5] = options.castEnemy;
+    arguments[6] = options.castAlly;
+    arguments[7] = options.castHex;
+    arguments[8] = options.attackReturn;
     Era::FireErmEvent(callback);
 
     std::array<INT, 16> returned;
@@ -695,20 +762,25 @@ void ActionSwitcher::DetermineStackActions(H3CombatCreature *stack, std::vector<
     std::copy(savedArguments.begin(), savedArguments.end(), arguments);
     std::copy(savedResults.begin(), savedResults.end(), results);
 
-    const INT count = returned[2];
-    if (count < 0 || count > SwitcherDlgPanel::MAX_ACTIONS)
-        return;
-    std::vector<eAction> filtered;
-    filtered.reserve(count);
-    for (INT i = 0; i < count; ++i)
-    {
-        const eAction action = static_cast<eAction>(returned[3 + i]);
-        // ERM can remove/reorder actions, but cannot bypass physical availability.
-        if (std::find(actions.begin(), actions.end(), action) != actions.end() &&
-            std::find(filtered.begin(), filtered.end(), action) == filtered.end())
-            filtered.push_back(action);
-    }
-    actions.swap(filtered);
+    // A flag can permit a native capability, not create a spell/shooting ability.
+    options.melee = physical.melee && returned[2] != 0;
+    options.shoot = physical.shoot && returned[3] != 0;
+    options.areaShot = physical.areaShot && returned[4] != 0;
+    options.castEnemy = physical.castEnemy && returned[5] != 0;
+    options.castAlly = physical.castAlly && returned[6] != 0;
+    options.castHex = physical.castHex && returned[7] != 0;
+    options.attackReturn = physical.attackReturn && returned[8] != 0;
+}
+
+const StackActionOptions *ActionSwitcher::GetActiveOptions(const H3CombatCreature *stack) const
+{
+    H3CombatManager *manager = P_CombatManager->Get();
+    if (!state || !switcherDlgPanel || !manager || manager->dlg != switcherDlgPanel->dialog ||
+        manager->activeStack != stack || switcherDlgPanel->currentStack != stack ||
+        switcherDlgPanel->checkingAvailability || switcherDlgPanel->checkingMovement ||
+        !switcherDlgPanel->IsEligibleForCurrentPlayer(manager))
+        return nullptr;
+    return &switcherDlgPanel->actionOptions;
 }
 
 eAction ActionSwitcher::GetActiveAction(const H3CombatCreature *stack) const
@@ -732,6 +804,26 @@ _LHF_(ActionSwitcher::Y_BattleMgr_WOG_HarpyReturn)
     return EXEC_DEFAULT;
 }
 
+_LHF_(ActionSwitcher::Y_ExecuteMeleeCommand)
+{
+    H3CombatManager *manager = P_CombatManager->Get();
+    const auto stack = reinterpret_cast<H3CombatCreature *>(c->esi);
+    if (instance && instance->IsEnabled() && manager &&
+        manager->currentMonSide >= 0 && manager->currentMonSide < 2 &&
+        manager->currentMonIndex >= 0 && manager->currentMonIndex < 21 &&
+        &manager->stacks[manager->currentMonSide][manager->currentMonIndex] == stack &&
+        manager->action == eCombatAction::WALK_ATTACK)
+    {
+        // The command is sent by the game to both peers. Its melee path must not
+        // fall back to shooting after movement, regardless of the local UI mode.
+        // Preserve the shooter flag: doubleAttack still applies only to shots.
+        // MakeAttack clears activeStack before this branch; use its stable IDs.
+        c->return_address = 0x4458E2;
+        return NO_EXEC_DEFAULT;
+    }
+    return EXEC_DEFAULT;
+}
+
 BOOL ActionSwitcher::CanShootNormally(const H3CombatCreature *stack)
 {
     if (!stack)
@@ -742,7 +834,12 @@ BOOL ActionSwitcher::CanShootNormally(const H3CombatCreature *stack)
 
 BOOL8 __stdcall ActionSwitcher::Y_CanShoot(HiHook *h, H3CombatCreature *stack, INT target)
 {
+    if (actionDepth)
+        return THISCALL_2(BOOL8, h->GetDefaultFunc(), stack, target);
     const eAction action = instance ? instance->GetActiveAction(stack) : eAction::NONE;
+    const StackActionOptions *options = instance ? instance->GetActiveOptions(stack) : nullptr;
+    if (options && !(action == eAction::AREA_SHOT ? options->areaShot : options->shoot))
+        return FALSE;
     if (action == eAction::MELEE || action == eAction::MOVE || action == eAction::CAST ||
         action == eAction::RETURN || action == eAction::NO_RETURN)
         return FALSE;
@@ -751,16 +848,30 @@ BOOL8 __stdcall ActionSwitcher::Y_CanShoot(HiHook *h, H3CombatCreature *stack, I
 
 BOOL8 __stdcall ActionSwitcher::Y_CanCast(HiHook *h, H3CombatCreature *stack, INT hex)
 {
+    if (actionDepth)
+        return THISCALL_2(BOOL8, h->GetDefaultFunc(), stack, hex);
     const eAction action = instance ? instance->GetActiveAction(stack) : eAction::NONE;
     if (action != eAction::NONE && action != eAction::CAST)
         return FALSE;
+    const StackActionOptions *options = instance ? instance->GetActiveOptions(stack) : nullptr;
+    if (options && hex >= 0 && hex < 187)
+    {
+        H3CombatCreature *target = P_CombatManager->squares[hex].GetCreature();
+        const BOOL allowed = !target || target->numberAlive <= 0 ? options->castHex :
+            target->GetSide() == stack->GetSide() ? options->castAlly : options->castEnemy;
+        if (!allowed)
+            return FALSE;
+    }
     return THISCALL_2(BOOL8, h->GetDefaultFunc(), stack, hex);
 }
 
 INT __stdcall ActionSwitcher::Y_GetCursorAction(HiHook *h, H3CombatManager *manager, INT hex)
 {
-    const int cursor = CallCursorPreservingRegisters(h->GetDefaultFunc(), manager, hex);
+    const int cursor = THISCALL_2(INT, h->GetDefaultFunc(), manager, hex);
     const eAction action = instance ? instance->GetActiveAction(manager->activeStack) : eAction::NONE;
+    const StackActionOptions *options = instance ? instance->GetActiveOptions(manager->activeStack) : nullptr;
+    if (options && cursor == 7 && !options->melee)
+        return 0;
     // Native cursor values: 1 walk, 2 fly, 3/15 shoot, 7 melee, 20 creature spell.
     // Preserve native reachability, direction, target and command parameters.
     if (action == eAction::MOVE && cursor != 1 && cursor != 2 && cursor != 22)
@@ -768,7 +879,13 @@ INT __stdcall ActionSwitcher::Y_GetCursorAction(HiHook *h, H3CombatManager *mana
     if (action == eAction::SHOOT && cursor != 3 && cursor != 15)
         return 0;
     if (action == eAction::CAST && cursor != 20)
-        return 0;
+    {
+        // Casting on living creatures does not compete with walking on an empty
+        // hex. Keep the explicit CAST/MOVE choice only for reachable corpse casts.
+        const bool movement = cursor == 1 || cursor == 2 || cursor == 22;
+        if (!movement || instance->switcherDlgPanel->actionOptions.castHex)
+            return 0;
+    }
     return cursor;
 }
 
@@ -856,6 +973,7 @@ void ActionSwitcher::CreatePatches() noexcept
     _PI->WriteHiHook(0x4470F0, THISCALL_, Y_CanCast);
     _PI->WriteHiHook(0x4473E0, THISCALL_, Y_CanCast);
     _PI->WriteHiHook(0x475DC0, THISCALL_, Y_GetCursorAction);
+    _PI->WriteLoHook(0x445829, Y_ExecuteMeleeCommand);
     _PI->WriteLoHook(0x75E0E7, Y_BattleMgr_WOG_HarpyReturn);
 
     aoe::Install(_PI);

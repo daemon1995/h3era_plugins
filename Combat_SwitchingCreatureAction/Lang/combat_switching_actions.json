@@ -1,0 +1,44 @@
+{
+  "combat_switching_actions": {
+    "hint": {
+      "none": "Switch creature action (ALT)",
+      "melee": "Switch to melee attack (ALT)",
+      "shoot": "Switch to ranged attack (ALT)",
+      "cast": "Switch to creature spell (ALT)",
+      "move": "Move without resurrecting (ALT)",
+      "return": "Attack and return (ALT)",
+      "no_return": "Attack and stay (ALT)",
+      "area_shot": "Choose area shot target (ALT / G)"
+    },
+    "rmc": {
+      "none": "{Alternate actions}\n\nPress ALT or click this button to cycle through the actions currently available to this stack. The icon shows the next action. The chosen mode is remembered for this stack until the end of the battle, except for one-time area targeting.",
+      "melee": "{Melee attack}\n\nPress ALT or click this button to switch to a melee attack instead of shooting or casting a creature spell.",
+      "shoot": "{Ranged attack}\n\nPress ALT or click this button to switch to an ordinary shot at an enemy stack. Ammo and native shooting restrictions apply.",
+      "cast": "{Creature spell}\n\nPress ALT or click this button to switch to the creature's spell or ability. Only currently valid targets are available. Spells on living creatures allow ordinary movement. For reachable corpse spells, use Move to walk without resurrecting.",
+      "move": "{Move}\n\nPress ALT or click this button to move onto an allied corpse instead of resurrecting it. Available only when this creature can both resurrect and reach such a hex.",
+      "return": "{Attack and return}\n\nPress ALT or click this button to return to the original hex after attacking.",
+      "no_return": "{Attack and stay}\n\nPress ALT or click this button to remain near the enemy after attacking.",
+      "area_shot": "{Area shot}\n\nPress ALT, G or click this button to open the same target selection dialog. Click a battlefield hex to fire; empty hexes and allied stacks can be targeted. ESC or right-click cancels without using a turn and returns to ordinary shooting. Area targeting is not remembered for the next turn.\n\nThe shot hits the center and six adjacent hexes. Fire splash spares fire-immune creatures; death clouds affect living creatures; physical splash can hit any creature. These splash immunities do not protect a direct target at the center. A double-wide stack is hit only once.\n\nUses one shot. Your own hexes and adjacent hexes without the Bow of the Sharpshooter cannot be targeted."
+    }
+  },
+  "jsMod": {
+    "shotAtArea": {
+      "hintFormat": {
+        "singular": "%s can shoot at an area (ALT / G: select target)",
+        "plural": "%s can shoot at an area (ALT / G: select target)",
+        "desc": "Shoot here",
+        "descOnTarget": "Shoot at %s (shots: %d, damage: %s)",
+        "offDescOnTarget": "Shoot at %s",
+        "cannotShootHint": "Select a valid target hex"
+      },
+      "creatures": {
+        "45": { "type": 1 },
+        "64": { "type": 2 },
+        "65": { "type": 2 },
+        "94": { "type": 3 },
+        "95": { "type": 3 },
+        "196": { "type": 2 }
+      }
+    }
+  }
+}

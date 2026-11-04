@@ -8,8 +8,13 @@ namespace switcher
 {
 namespace aoe
 {
+enum class AreaShotType : INT { NONE = 0, FIRE = 1, DEATH = 2, PHYSICAL = 3 };
+AreaShotType GetAreaShotType(const H3CombatCreature *stack);
+bool CanDealAreaDamage(const H3CombatCreature *target, AreaShotType type);
+void InstallTypes(PatcherInstance *patcher);
 bool IsAvailable(const H3CombatCreature *stack);
 void OpenForActiveStack();
+void ResetTargeting(H3CombatManager *manager);
 void Install(PatcherInstance *patcher);
 void SetEnabled(bool enabled);
 } // namespace aoe
@@ -27,6 +32,17 @@ enum class eAction : INT
 };
 
 class ActionSwitcher;
+
+struct StackActionOptions
+{
+    BOOL melee = FALSE;
+    BOOL shoot = FALSE;
+    BOOL areaShot = FALSE;
+    BOOL castEnemy = FALSE;
+    BOOL castAlly = FALSE;
+    BOOL castHex = FALSE;
+    BOOL attackReturn = FALSE;
+};
 
 class SwitcherDlgPanel
 {
@@ -51,6 +67,7 @@ class SwitcherDlgPanel
     H3DlgCustomButton *actionSwitchButton = nullptr;
     std::vector<PanelSwitchItem> switchItems;
     std::vector<eAction> creatureActions;
+    StackActionOptions actionOptions;
     // The panel lives for one battle; choices belong to individual stack objects.
     std::unordered_map<const H3CombatCreature *, eAction> rememberedActions;
     H3CombatCreature *currentStack = nullptr;
@@ -60,7 +77,6 @@ class SwitcherDlgPanel
     BOOL panelShownByAlt = false;
     BOOL checkingAvailability = false;
     BOOL checkingMovement = FALSE;
-    BOOL altCyclePressed = FALSE;
     BOOL actionsNeedRefresh = TRUE;
     BOOL buttonNeedsRedraw = FALSE;
     BOOL battlefieldNeedsRedraw = FALSE;
@@ -74,6 +90,8 @@ class SwitcherDlgPanel
                               const int firstItemId = BUTTON_ID);
     ~SwitcherDlgPanel();
 
+    BOOL HandleAreaShotSwitch(H3Msg *msg);
+
     eAction GetSelectedAction() const
     {
         return checkingMovement ? eAction::MOVE : checkingAvailability ? eAction::NONE : selectedAction;
@@ -86,8 +104,7 @@ class SwitcherDlgPanel
     void InitNewStackAttackType();
     BOOL CanMoveToHex(H3CombatManager *manager, H3CombatCreature *stack, INT hex);
     eAction NextAvailableAction() const;
-    BOOL HandleAltCycle(H3CombatManager *manager, H3Msg *msg);
-    // Optional legacy menu; the normal combat procedure uses HandleAltCycle.
+    // Optional legacy menu; the normal interface uses the DEF button's hotkey.
     BOOL HandleHeldAltMenu(H3CombatManager *manager, H3Msg *msg);
     static BOOL IsAltHeld(const H3Msg *msg);
     void UpdateLayout();
@@ -120,6 +137,7 @@ class ActionSwitcher : public IGamePatch
     void CreatePatches() noexcept final;
 
     static _LHF_(Y_BattleMgr_WOG_HarpyReturn);
+    static _LHF_(Y_ExecuteMeleeCommand);
     static BOOL8 __stdcall Y_CanShoot(HiHook *h, H3CombatCreature *stack, INT target);
     static BOOL8 __stdcall Y_CanCast(HiHook *h, H3CombatCreature *stack, INT hex);
     static INT __stdcall Y_GetCursorAction(HiHook *h, H3CombatManager *manager, INT hex);
@@ -127,13 +145,14 @@ class ActionSwitcher : public IGamePatch
                                                              H3CombatDlg *dlg, INT argument);
     static void __stdcall Y_DestroyBottomPanel(HiHook *h, H3CombatBottomPanel *panel);
     eAction GetActiveAction(const H3CombatCreature *stack) const;
+    const StackActionOptions *GetActiveOptions(const H3CombatCreature *stack) const;
 
   public:
     BOOL SetPluginState(bool state) noexcept;
     BOOL IsEnabled() const { return state; }
     static BOOL CanShootNormally(const H3CombatCreature *stack);
     BOOL SetActionDeterminationCallback(INT functionId);
-    void DetermineStackActions(H3CombatCreature *stack, std::vector<eAction> &actions);
+    void DetermineStackActions(H3CombatCreature *stack, StackActionOptions &options);
     static ActionSwitcher &Get();
 };
 } // namespace switcher

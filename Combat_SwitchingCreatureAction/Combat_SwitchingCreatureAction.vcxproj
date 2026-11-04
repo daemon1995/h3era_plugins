@@ -24,7 +24,14 @@
     <ClCompile Include="ActionSwitcher.cpp" />
     <ClCompile Include="HeldAltMenu.cpp" />
     <ClCompile Include="aoe_attack.cpp" />
+    <ClCompile Include="AreaShotTypes.cpp" />
     <ClCompile Include="dllmain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Lang\combat_switching_actions.json" />
+    <None Include="Lang\Ru\combat_switching_actions.json" />
+    <None Include="Data\*.def" />
+    <None Include="Install-WoG.ps1" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

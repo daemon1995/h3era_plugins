@@ -15,6 +15,15 @@ UINT ReadNumberKeys()
 }
 } // namespace
 
+BOOL SwitcherDlgPanel::IsAltHeld(const H3Msg *msg)
+{
+    if (GetActiveWindow() != H3Hwnd::Get())
+        return FALSE;
+    if ((msg->IsKeyDown() || msg->IsKeyPress()) && msg->GetKey() == eVKey::H3VK_ALT)
+        return msg->IsKeyDown();
+    return msg->AltPressed() || (GetAsyncKeyState(VK_MENU) & 0x8000);
+}
+
 // Retained for a future optional interface. The default combat procedure does
 // not call this handler: pressing ALT cycles actions without opening a menu.
 BOOL SwitcherDlgPanel::HandleHeldAltMenu(H3CombatManager *manager, H3Msg *msg)
