@@ -1,8 +1,9 @@
-
+﻿
 #include "LanguageSelectionDlg.h"
 
 #ifdef CREATE_TEXT_JSON_EXPORTS
 #include "ExportManager.h"
+#include "../headers/EraPluginsAPI/ConfigExportUIAPI.h"
 #endif // CREATE_TEXT_JSON_EXPORTS
 
 #pragma comment(linker, "/EXPORT:CallLocaleSelectionDlg=_CallLocaleSelectionDlg@12")
@@ -307,8 +308,14 @@ BOOL LanguageSelectionDlg::DialogProc(H3Msg &msg)
 #ifdef CREATE_TEXT_JSON_EXPORTS
             P_SoundManager->ClickSound();
             // create export dialog
-            ExportDlg exportDlg(630, 300, -1, -1);
-            exportDlg.Start();
+            try
+            {
+                era_config_ui::Open(era_config_ui::Translations);
+            }
+            catch (const std::exception &error)
+            {
+                H3Messagebox::Show(error.what());
+            }
 #endif //  CREATE_TEXT_JSON_EXPORTS
         }
     }

@@ -1,106 +1,53 @@
 #pragma once
-
-#include <unordered_set>
-
 #include "framework.h"
 #ifdef CREATE_TEXT_JSON_EXPORTS
+#include "../headers/Config/ExportClient.h"
+
+class ExportManager
+{
+  public:
+    static BOOL WriteJsonFile(const std::string &filePath, const std::string &utf8Json);
+    static std::vector<configExport::Category> Collect();
+};
 
 class ExportDlg : public H3Dlg
 {
   public:
     static constexpr LPCSTR BUTTON_NAME = "era.locale.dlg.export.name";
+    explicit ExportDlg(unsigned mode = 0);
+    BOOL DialogProc(H3Msg &msg) override;
+    VOID OnOK() override;
 
   private:
-    static constexpr LPCSTR PANEL_NAME_FORMAT = "era.locale.dlg.export.items.%d";
-    static constexpr LPCSTR SUBFOLDER_NAME = "Runtime\\Exports\\";
-    static constexpr int PANEL_TEXT_WIDTH = 200;
-    static constexpr int CHECKBOX_PADDING = 200;
-    static constexpr int PANELS_PADDING = 30;
-    static constexpr int ITEMS_PER_PANEL = 3;
-
-    struct SelectionPanel
+    static constexpr int PADDING = 20;
+    static constexpr int FIRST_CHECKBOX_ID = 100;
+    static constexpr int MERGE_OPTION_ID = 60000;
+    static constexpr int IGNORE_DEFAULTS_OPTION_ID = 60001;
+    struct Layout
     {
-
-        H3DlgText *panelText = nullptr;
-        H3DlgDef *originalDataCheckBox = nullptr;
-        H3DlgDef *additionalDataCheckBox = nullptr;
-        LPCSTR exportPath = nullptr;
-        BOOL (*exportFunction)(LPCSTR, const BOOL, const BOOL) = nullptr;
-        // SelectionPanel(const int x, const int y, LPCSTR text, void *(*exportFunc)(LPCSTR, const BOOL));
+        int width, height, labelWidth, columnWidth, rowHeight, headerHeight, noteHeight, visibleRows;
+        std::array<int, 2> optionHeights;
     };
+    struct Row
+    {
+        configExport::Selection selection;
+        std::array<H3DlgDef *, 4> checkboxes{};
+        std::array<H3DlgText *, 4> counts{};
+        std::array<bool, 4> enabled{};
+        H3DlgText *label = nullptr;
+    };
+    std::vector<configExport::Category> categories;
+    std::vector<Row> rows;
+    Layout layout;
+    configExport::Options options;
+    unsigned mode = 0;
+    unsigned page = 0;
+    std::array<H3DlgDef *, 2> optionCheckboxes{};
 
-    std::vector<SelectionPanel *> selectionPanels;
-    SelectionPanel *CreateSelectionPanel(const int x, const int y, LPCSTR text, const int startId, LPCSTR path,
-                                         BOOL (*exportFunc)(LPCSTR, const BOOL, const BOOL));
-
-  public:
-    ExportDlg(const int width, const int height, const int x, const int y);
-    virtual ~ExportDlg();
-
-    virtual BOOL DialogProc(H3Msg &msg) override;
-    virtual VOID OnOK() override;
-
-  private:
+    ExportDlg(std::vector<configExport::Category> categories, unsigned mode);
+    ExportDlg(const std::vector<configExport::Category> &categories, const Layout &layout, unsigned mode);
+    static Layout Measure(const std::vector<configExport::Category> &categories);
     void CreateDlgItems();
+    void RefreshRow(size_t index);
 };
-class ExportManager
-{
-    static constexpr LPCSTR MAX_ID_JSON = "era.dlg.maximumId.";
-
-  public:
-    struct MonsterInfo
-    {
-        static constexpr LPCSTR DEFAULT_PATH = "CreaturesText.json";
-    };
-    struct ArtifactInfo
-    {
-        static constexpr LPCSTR DEFAULT_PATH = "ArtifactText.json";
-        static inline LPCSTR *GetEventTable() noexcept
-        {
-            return *reinterpret_cast<LPCSTR **>(0x49F51B + 3);
-        }
-        static inline int GetArtifactsNumber() noexcept
-        {
-            return IntAt(0x717020);
-        }
-    };
-    struct MapObjectInfo
-    {
-        static constexpr LPCSTR DEFAULT_PATH = "ObjectText.json";
-
-    };
-    struct CreatureBankInfo
-    {
-        static constexpr LPCSTR DEFAULT_PATH = "CreatureBankText.json";
-    };
-    struct TownBuildingInfo
-    {
-        static constexpr LPCSTR DEFAULT_PATH = "TownText.json";
-        static inline LPCSTR *GetTownDwellingNames() noexcept
-        {
-            return *reinterpret_cast<LPCSTR **>(0x05B9923 + 2);
-        }
-        static inline LPCSTR *GetTownDwellingDescriptions() noexcept
-        {
-            return *reinterpret_cast<LPCSTR **>(0x05B9957 + 2);
-        }
-    };
-    struct HeroInfo
-    {
-        static constexpr LPCSTR DEFAULT_PATH = "HeroText.json";
-    };
-
-    static std::string LPCSTR_to_wstring(LPCSTR ansi_str);
-    static INT GetMaxOriginalId(LPCSTR keySubstring, const int defaultValue);
-    static BOOL WriteJsonFile(const std::string &filePath, nlohmann::json &j);
-    static BOOL WriteJsonFile(const std::string &filePath, nlohmann::ordered_json &j);
-    static BOOL CreateMonstersJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
-    static BOOL CreateArtifactsJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
-    static BOOL CreateObjectsJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
-    static BOOL CreateCreatureBanksJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
-    static BOOL CreateTownBuildingsJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
-    static BOOL CreateHeroesJson(LPCSTR filePath, const BOOL originalData, const BOOL additionalData);
-
-    //  static BOOL ExportAllToJson(const BOOL originalData, const BOOL additionalData);
-};
-#endif // CREATE_TEXT_JSON_EXPORTS
+#endif

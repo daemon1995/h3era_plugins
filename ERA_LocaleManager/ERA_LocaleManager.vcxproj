@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -24,6 +24,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ExportManager.h" />
+    <ClInclude Include="ExportModel.h" />
     <ClInclude Include="H3DlgTextPcxLocale.h" />
     <ClInclude Include="LanguageSelectionDlg.h" />
     <ClInclude Include="Locale.h" />
@@ -35,6 +36,7 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="ExportManager.cpp" />
     <ClCompile Include="ExportDlg.cpp" />
+    <ClCompile Include="ConfigExportUI.cpp" />
     <ClCompile Include="H3DlgTextPcxLocale.cpp" />
     <ClCompile Include="LanguageSelectionDlg.cpp" />
     <ClCompile Include="LocaleManager.cpp" />

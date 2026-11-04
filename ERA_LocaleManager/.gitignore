@@ -1,0 +1,7 @@
+!lang/
+!lang/**
+!Verification/
+!Verification/*.cpp
+!Verification/*.py
+!Verification/*.cmd
+Verification/build/

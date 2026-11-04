@@ -1,3 +1,4 @@
+﻿void InitializeConfigExportUi();
 // dllmain.cpp : Defines the entry point for the DLL application.
 #define _H3API_PLUGINS_
 #include "framework.h"
@@ -56,6 +57,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
                 _PI = globalPatcher->CreateInstance(dllText::INSTANCE_NAME);
 
                 Era::ConnectEra(hModule, dllText::INSTANCE_NAME);
+                InitializeConfigExportUi();
 
                 _REH_(OnReportVersion);
                 _REH_(OnAfterReloadLanguageData);
