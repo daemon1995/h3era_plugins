@@ -4,7 +4,8 @@
 #include <vector>
 
 namespace erm_functions { namespace distribution {
-// Pure ordering of caller-owned candidate coordinates. Never accesses the game.
+// Deterministically seeded, spatially balanced ordering of caller-owned xyz triples.
+// Invalid coordinates are skipped; this helper never reads or mutates game state.
 inline std::vector<int> OrderGarrisons(const int* xyz, int count, int size, std::uint32_t seed)
 {
     const int grid=(std::max)(2,(std::min)(7,size/36));

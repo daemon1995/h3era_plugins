@@ -4,6 +4,7 @@
 #include "ObjectGeometry.h"
 
 namespace erm_functions { namespace geometry {
+// Accept only a fully passable, entrance-free rectangular footprint for flat terrain placement.
 inline bool PassableUnderlay(int width, int height, bool flat, std::uint64_t passability,
                              std::uint64_t entrances)
 {
@@ -12,8 +13,8 @@ inline bool PassableUnderlay(int width, int height, bool flat, std::uint64_t pas
            (passability & mask) == mask && !(entrances & mask);
 }
 
-// An even-sized footprint has two central cells on that axis. Try both, without
-// shifting an odd-sized footprint away from its true center to fit a map edge.
+// Return legal bottom-right origins centered on x/y. Even footprints have two central
+// cells per axis; odd footprints are never shifted to fit at a map edge.
 inline int CenteredTerrainOrigins(int x, int y, int width, int height, int mapSize,
                                   std::array<Cell, 4> &origins)
 {

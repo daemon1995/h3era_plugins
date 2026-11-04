@@ -40,11 +40,13 @@ bool RegisteredMinimapColor(H3MapItem *tile, UINT16 &color)
     const int actualType = THISCALL_1(int, 0x4FD220, tile);
     for (int i = int(tile->objectDrawing.Count()) - 1; i >= 0; --i)
     {
+        const auto &draw = tile->objectDrawing[i];
         int x = -1, y = -1, z = -1;
         const H3ObjectAttributes *attributes = nullptr;
-        if (!runtime::ResolveDrawObject(*map, tile->objectDrawing[i], x, y, z, attributes))
+        if (!runtime::ResolveDrawObject(*map, draw, x, y, z, attributes))
             continue;
-        if (!IsMinimapObjectCell(actualType, attributes->type, tile->mirror, tile->access))
+        if (!IsMinimapObjectCell(actualType, attributes->type, tile->mirror, tile->access, draw.tileID,
+                                 attributes->passability.m_bitsPacked, attributes->entrances.m_bitsPacked))
             continue;
         const bool *minimap = runtime::FindObjectType(attributes->type, attributes->subtype);
         if (!minimap || !*minimap)

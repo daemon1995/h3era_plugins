@@ -1,7 +1,7 @@
 #pragma once
 
-// Particle animation from the supplied HotAPatcher 1.03.
-// Normalized horizontal position, rise, horizontal offset, palette shade.
+// Fixed 64-frame particle animation data from the supplied HotAPatcher 1.03.
+// Each pixel stores normalized horizontal position, rise, horizontal offset and palette shade.
 namespace erm_functions { namespace glow { namespace {
 struct SparklePixel { unsigned char position, rise; signed char offset; unsigned char shade; };
 const unsigned short sparkleFrameOffsets[] = {

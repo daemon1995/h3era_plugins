@@ -9,6 +9,7 @@ namespace erm_functions
 {
 namespace geometry
 {
+// Native object masks are fixed at 8 columns by 6 rows (48 meaningful bits).
 constexpr int MASK_WIDTH = 8;
 constexpr int MASK_HEIGHT = 6;
 
@@ -29,6 +30,7 @@ inline bool NativeMaskCell(std::uint64_t bits, int column, int row)
 
 struct Shape
 {
+    // Cell offsets are relative to the first entrance encountered in native row order.
     int width = 0, height = 0;
     int entranceColumn = -1, entranceRow = -1;
     std::vector<Cell> blocked, entrances, visible;

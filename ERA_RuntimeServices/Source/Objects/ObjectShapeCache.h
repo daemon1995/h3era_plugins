@@ -4,7 +4,8 @@
 #include <tuple>
 
 namespace erm_functions { namespace geometry {
-// Immutable shapes have stable addresses until Clear(). Failed builds are cached too.
+// Cache mask-derived shapes by dimensions and mask contents. Returned shapes stay immutable
+// and keep stable addresses until Clear(); invalid shapes are cached to avoid repeat parsing.
 class ShapeCache
 {
     using Key = std::tuple<int, int, std::uint64_t, std::uint64_t, std::uint64_t>;

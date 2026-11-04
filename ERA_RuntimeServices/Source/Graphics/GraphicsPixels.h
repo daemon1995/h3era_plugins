@@ -6,9 +6,10 @@
 
 namespace graphics_resources
 {
+// Decoded source pixel in BGRA byte order, as returned by the image loaders.
 struct Pixel { unsigned char b, g, r, a; };
 
-// DEF compression 1: row offsets followed by transparent and literal runs.
+// Encode palette indices using DEF compression 1: row offsets, then transparent and literal runs.
 inline std::vector<std::uint8_t> EncodeFrame(const std::vector<std::uint8_t> &pixels, int width, int height)
 {
     if (width <= 0 || height <= 0 || std::size_t(width) * height != pixels.size()) return {};
@@ -48,7 +49,8 @@ unsigned char PaletteIndex(const Pixel &pixel, const Palette &palette)
     return static_cast<unsigned char>(best);
 }
 
-// Resolve every source before calling this: allocation failure leaves the atlas intact.
+// Publish a complete replacement frame table. Resolve every source before calling this:
+// validation/allocation failure leaves the original atlas and frame count unchanged.
 template <class Group, class Frame, class Reallocate>
 bool UpdateFrameTable(Group &group, const std::vector<Frame *> &frames, Reallocate reallocate)
 {

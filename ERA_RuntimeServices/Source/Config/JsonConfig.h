@@ -6,6 +6,7 @@
 #include <vector>
 
 namespace erm_functions { namespace json_config {
+// Read current ERA language data on every call; missing keys and malformed values stay distinct.
 // ERA flattens JSON arrays into key.0, key.1, ... . No language-data cache is kept.
 template <class Lookup>
 bool ReadValue(const char *key, int &value, const Lookup &lookup)
@@ -21,8 +22,8 @@ int ReadInt(const char *key, int defaultValue, const Lookup &lookup)
     return key && *key && ReadValue(key, value, lookup) ? value : defaultValue;
 }
 
-// A null output with capacity 0 queries size. Otherwise return the number copied.
-// Validate the entire sequence before writing, so invalid data never partially fills a buffer.
+// A null output with capacity 0 queries size; otherwise return the number copied (up to capacity).
+// Scalars count as one-element arrays. Invalid elements return 0 without partial writes.
 template <class Lookup>
 int ReadIntArray(const char *key, int *output, int capacity, const Lookup &lookup)
 {

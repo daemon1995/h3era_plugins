@@ -1,4 +1,5 @@
-// External bitmap decoding remains disabled; retained for a future opt-in backend.
+// Research-only Windows Imaging Component decoder prototype. Disabled and excluded from the project;
+// the shipped resource service uses the native PCX/DEF/PNG loaders instead.
 #if 0
 #include <wincodec.h>
 #pragma comment(lib, "ole32.lib")

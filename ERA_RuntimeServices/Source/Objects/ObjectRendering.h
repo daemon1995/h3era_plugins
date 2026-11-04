@@ -1,4 +1,5 @@
 #pragma once
+#include "ObjectGeometry.h"
 #include <cstdint>
 
 namespace h3
@@ -13,18 +14,26 @@ namespace erm_functions
 {
 namespace rendering
 {
+// Install native object/minimap hooks. Failure leaves the original renderer active.
 bool InstallHooks();
+// Discover and hook a compatible HD_WOG module; incompatible builds keep native HD markers.
 void EnsureHdMinimapHooks();
 
-// Same occupied-cell test as the native mine minimap branch. A DEF can extend onto
-// walkable cells or cells belonging to another object; those are not owner markers.
-inline bool IsMinimapObjectCell(int actualType, int drawnType, unsigned char mirror, unsigned char access)
+// The native tile flags describe the whole tile. Check the mask of this DEF piece
+// as well, since an overlapping sprite can have the same type as the actual object.
+inline bool IsMinimapObjectCell(int actualType, int drawnType, unsigned char mirror, unsigned char access,
+                               unsigned char tileId, std::uint64_t passability, std::uint64_t entrances)
 {
-    return actualType == drawnType && (!(mirror & 0x40) || (access & 0x10));
+    const int column = tileId & 15, row = tileId >> 4;
+    if (actualType != drawnType || column >= geometry::MASK_WIDTH || row >= geometry::MASK_HEIGHT)
+        return false;
+    if (access & 0x10)
+        return geometry::NativeMaskCell(entrances, column, row);
+    return !(mirror & 0x40) && !geometry::NativeMaskCell(passability, column, row);
 }
 }
 
-// Read-only bridge to the map and ownership state owned by dllmain's API component.
+// Read-only bridge to map and ownership state owned by the API component in dllmain.cpp.
 namespace runtime
 {
 h3::H3MainSetup *GetMap();

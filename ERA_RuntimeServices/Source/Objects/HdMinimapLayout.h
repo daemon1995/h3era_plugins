@@ -7,8 +7,10 @@ namespace erm_functions
 {
 namespace hd_minimap
 {
+// Sentinel used when a unique, verified HD code pattern could not be located.
 constexpr std::size_t MISSING = (std::numeric_limits<std::size_t>::max)();
 
+// Offsets are relative to the matched executable section, not absolute DLL addresses.
 struct Layout
 {
     std::size_t objects16 = MISSING;
@@ -21,6 +23,7 @@ struct Layout
     }
 };
 
+// Match exact bytes and treat negative pattern entries as wildcards; reject out-of-range spans.
 template<std::size_t N> bool Match(const std::uint8_t *code, std::size_t size, std::size_t offset,
                                   const int (&pattern)[N])
 {
@@ -32,6 +35,7 @@ template<std::size_t N> bool Match(const std::uint8_t *code, std::size_t size, s
     return true;
 }
 
+// Return the sole match; missing or ambiguous signatures both return MISSING.
 template<std::size_t N> std::size_t FindUnique(const std::uint8_t *code, std::size_t size,
                                             const int (&pattern)[N])
 {

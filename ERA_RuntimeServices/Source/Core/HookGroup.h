@@ -1,6 +1,6 @@
 #pragma once
 
-// Include after framework.h. Never publish readiness for a partially installed group.
+// Shared hook helpers. Include after framework.h; never report a partially installed group as ready.
 namespace erm_functions
 {
 inline void Log(const char *component, const char *message) noexcept
