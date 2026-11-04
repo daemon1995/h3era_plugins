@@ -487,10 +487,6 @@ void HdTemplateCompatibility_Ensure()
         return;
     attemptedModule = module;
     installed = Install(module);
-    Era::WriteLog("RMG", "HD template compatibility",
-                  installed ? "Installed: extended sizes, size-button mapping and template masks."
-                            : "Not installed: HD signatures/contracts differ or a target is already patched; no "
-                              "partial patch retained.");
 }
 
 void HdTemplateCompatibility_Refresh(H3SelectScenarioDialog *dialog)

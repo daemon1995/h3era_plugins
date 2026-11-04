@@ -10,7 +10,7 @@ void RegisterRmgConfigProvider();
 
 namespace dllText
 {
-constexpr const char *PLUGIN_VERSION = "2.6.0-beta RC2";
+constexpr const char *PLUGIN_VERSION = "2.6.0";
 constexpr const char *PLUGIN_AUTHOR = "daemon_n";
 constexpr const char *INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr const char *PLUGIN_DATA = __DATE__;
@@ -74,7 +74,7 @@ _LHF_(CrBanksTxt_BeforeLoad)
     monoliths::ExtendedMonoliths::Get();
     ExtendersInitializer::InitObjectExtenders();
     mapselection::Init();
-    wogification::Install();
+    // wogification::Install();
 
     return EXEC_DEFAULT;
 }

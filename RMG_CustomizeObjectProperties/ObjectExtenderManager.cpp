@@ -3,19 +3,19 @@
 #pragma comment(linker, "/EXPORT:GetObjectName=_GetObjectName@8")
 #pragma comment(linker, "/EXPORT:RegisterObjectVisitObserver=_RegisterObjectVisitObserver@4")
 
-#include <unordered_set>
 #include <array>
 #include <cstdio>
+#include <unordered_set>
 
 #include "pch.h"
 
-#include "SoundManager.h"
-#include "ExtendedMonoliths.h"
-#include "DwellingInfo.h"
 #include "../headers/Era/GameDwellingInfo.hpp"
 #include "../headers/Era/JsonObjectExport.hpp"
 #include "../headers/EraPluginsAPI/ObjectDefinitionsAPI.h"
 #include "../headers/Objects/ObjectDefinitions.h"
+#include "DwellingInfo.h"
+#include "ExtendedMonoliths.h"
+#include "SoundManager.h"
 
 #pragma comment(linker, "/EXPORT:GetRmgExportInfo=_GetRmgExportInfo@12")
 #pragma comment(linker, "/EXPORT:GetRmgExportOverrides=_GetRmgExportOverrides@12")
@@ -119,7 +119,8 @@ bool DecodeObjectInfos(const ObjectExtenderObjectInfoView &view, std::vector<Uni
 
 DllExport int __stdcall GetOriginalObjectSubtypeLimit(int type)
 {
-    if (!originalObjectLimitsCaptured || type < 0 || type >= h3::limits::OBJECTS) return -1;
+    if (!originalObjectLimitsCaptured || type < 0 || type >= h3::limits::OBJECTS)
+        return -1;
     return originalObjectSubtypeLimits[type];
 }
 
@@ -130,7 +131,8 @@ DllExport int __stdcall GetObjectSubtypeCount(int type)
 
 DllExport LPCSTR __stdcall GetObjectExportProperty(int index)
 {
-    return index >= 0 && size_t(index) < objectExportProperties.size() ? objectExportProperties[index].c_str() : nullptr;
+    return index >= 0 && size_t(index) < objectExportProperties.size() ? objectExportProperties[index].c_str()
+                                                                       : nullptr;
 }
 
 DllExport BOOL __stdcall GetRmgExportInfo(int type, int subtype, EraJS::RmgExportInfo *info)
@@ -138,9 +140,11 @@ DllExport BOOL __stdcall GetRmgExportInfo(int type, int subtype, EraJS::RmgExpor
     if (!info || info->structSize < sizeof(*info) || type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
         return FALSE;
     const auto &records = RMGObjectInfo::defaultRMGObjectsInfoByType[type];
-    if (size_t(subtype) >= records.size()) return FALSE;
+    if (size_t(subtype) >= records.size())
+        return FALSE;
     const auto &record = records[subtype];
-    if (record.type != type || record.subtype != subtype) return FALSE;
+    if (record.type != type || record.subtype != subtype)
+        return FALSE;
     *info = EraJS::RmgExportInfo{};
     info->enabled = record.enabled;
     info->map = record.mapLimit;
@@ -161,7 +165,8 @@ DllExport LPCSTR __stdcall GetResolvedObjectName(const int objectType, const int
 }
 DllExport BOOL __stdcall RegisterObjectVisitObserver(extender::TObjectVisitObserver observer)
 {
-    if (!observer) return FALSE;
+    if (!observer)
+        return FALSE;
     if (std::find(visitObservers.begin(), visitObservers.end(), observer) == visitObservers.end())
         visitObservers.push_back(observer);
     return TRUE;
@@ -209,7 +214,8 @@ _LHF_(ObjectExtenderManager::LoadObjectsTxt)
     }
 
     // Publish exactly the records passed to the native loader, excluding tails.
-    const int countDelta = instance->additionalProperties.InsertPropertiesIntoObjectsList(objectTxt, objectExportProperties);
+    const int countDelta =
+        instance->additionalProperties.InsertPropertiesIntoObjectsList(objectTxt, objectExportProperties);
     c->eax = static_cast<int>(c->eax) + countDelta;
     objectSubtypeCounts = object_config::SubtypeCounts(objectExportProperties);
 
@@ -277,8 +283,7 @@ void ObjectExtenderManager::InitializeObjectExtenders(
     {
         ObjectExtenderObjectInfoView view;
         std::vector<UniqueObjectInfo> objects;
-        if (!registration.getObjectInfos ||
-            !registration.getObjectInfos(registration.objectInfosContext, &view) ||
+        if (!registration.getObjectInfos || !registration.getObjectInfos(registration.objectInfosContext, &view) ||
             !DecodeObjectInfos(view, objects))
         {
             MessageBoxA(NULL, ObjectExtenderRegistrator::ErrorText::ERR_INVALID_REGISTRATION,
@@ -330,8 +335,7 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
     // initialize subtype arrays to nullptr
     for (size_t type = 0; type < h3::limits::OBJECTS; type++)
     {
-        const size_t subtypesAmount = lastDispatchObjectSubtypes[type] >= 0
-                                         ? lastDispatchObjectSubtypes[type] + 1 : 0;
+        const size_t subtypesAmount = lastDispatchObjectSubtypes[type] >= 0 ? lastDispatchObjectSubtypes[type] + 1 : 0;
         delete[] subTypeRelatedExtenders[type];
         delete[] subTypeRelatedAiScoutingValues[type];
         subTypeRelatedExtenders[type] = subtypesAmount ? new ObjectExtender *[subtypesAmount]() : nullptr;
@@ -347,8 +351,8 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
         const int type = object->uniqueObjectType.type;
         if (type >= 0 && type < h3::limits::OBJECTS)
         {
-            const size_t subtypesAmount = lastDispatchObjectSubtypes[type] >= 0
-                                             ? lastDispatchObjectSubtypes[type] + 1 : 0;
+            const size_t subtypesAmount =
+                lastDispatchObjectSubtypes[type] >= 0 ? lastDispatchObjectSubtypes[type] + 1 : 0;
             const int subtype = object->uniqueObjectType.subtype;
             if (subtype < 0)
                 typeRelatedExtenders[type] = ext;
@@ -365,8 +369,7 @@ void ObjectExtenderManager::AssignExtendersToObjectSubtypes()
         // if assigned type extender exists and subtype array allocated
         if (typeRelatedExtenders[type])
         {
-            const size_t maxSubtype = lastDispatchObjectSubtypes[type] >= 0
-                                         ? lastDispatchObjectSubtypes[type] + 1 : 0;
+            const size_t maxSubtype = lastDispatchObjectSubtypes[type] >= 0 ? lastDispatchObjectSubtypes[type] + 1 : 0;
             // iterate through subtype array and fill in gaps
             for (size_t subtype = 0; subtype < maxSubtype; subtype++)
             {
@@ -414,8 +417,6 @@ int ObjectExtenderManager::ShowObjectHint(LoHook *h, HookContext *c, const BOOL 
 
     const int interactPlayerId = IntAt(0x6977DC); // P_MePlayerID *(INT32 *)0x6977DC
     BOOL hintIsSet = false;
-
-
 
     if (auto extender = FindExtender(mapItem))
     {
@@ -678,7 +679,7 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
 
     stringResult = H3String::Format("{~>%s:0:%d block}", defName, rand() % def->groups[0]->count); // .Append(defPic);
     stringResult += info.GetName();
-    stringResult.Append(H3String::Format(" (%d/%d)", info.type, info.subtype));
+    stringResult += H3String::Format(" (%d/%d): {%s}", info.type, info.subtype, attributes->defName.String());
 
     // display terrain types that object can be placed on
 
@@ -706,7 +707,8 @@ BOOL ObjectExtenderManager::ShowObjectExtendedInfo(const RMGObjectInfo &info, co
         if (*description)
             stringResult += DLG_HORIZONTAL_GAP + H3String(description);
     if (auto *owner = instance->FindExtender(info.type, info.subtype))
-        if (owner->RMGDlg_ShowCustomObjectHint(*attributes, stringResult)) return TRUE;
+        if (owner->RMGDlg_ShowCustomObjectHint(*attributes, stringResult))
+            return TRUE;
     return rmgDwellings::AppendHint(info.type, info.subtype, stringResult);
 }
 
@@ -717,8 +719,8 @@ BOOL ObjectExtenderRegistrator::AddExtender(const ObjectExtenderRegistration *re
         MessageBoxA(NULL, ErrorText::ERR_REGISTRATION_CLOSED, ErrorText::TITLE_ERROR, MB_OK | MB_ICONEXCLAMATION);
         return FALSE;
     }
-    constexpr size_t REQUIRED_SIZE = offsetof(ObjectExtenderRegistration, getObjectInfos) +
-                                     sizeof(TGetObjectExtenderObjectInfos);
+    constexpr size_t REQUIRED_SIZE =
+        offsetof(ObjectExtenderRegistration, getObjectInfos) + sizeof(TGetObjectExtenderObjectInfos);
     if (!registration || !IsReadableMemory(registration, sizeof(UINT32) * 2))
     {
         MessageBoxA(NULL, ErrorText::ERR_INVALID_REGISTRATION, ErrorText::TITLE_ERROR, MB_OK | MB_ICONEXCLAMATION);
@@ -813,8 +815,8 @@ void ObjectExtenderManager::DebugObjectExtenderList()
 
         // if (instance->typeRelatedExtenders[i])
         {
-            const size_t maxSubtype = instance->lastDispatchObjectSubtypes[i] >= 0
-                                         ? instance->lastDispatchObjectSubtypes[i] + 1 : 0;
+            const size_t maxSubtype =
+                instance->lastDispatchObjectSubtypes[i] >= 0 ? instance->lastDispatchObjectSubtypes[i] + 1 : 0;
             //  iterate through subtype array and fill in gaps
             for (size_t subtype = 0; subtype < maxSubtype; subtype++)
             {
@@ -840,10 +842,15 @@ ObjectExtenderManager &ObjectExtenderManager::Get()
 
 void PublishObjectExtenderApi()
 {
-    static const extender::DispatchApi api{sizeof(api), 2, ::RegisterObjectExtenderEx, ::GetObjectName, ::RegisterObjectVisitObserver};
+    static const extender::DispatchApi api{sizeof(api), 2, ::RegisterObjectExtenderEx, ::GetObjectName,
+                                           ::RegisterObjectVisitObserver};
     era_services::Publish(extender::DISPATCH_SERVICE, &api);
-    static const era_objects::DefinitionsApi definitions{sizeof(definitions), 1,
+    static const era_objects::DefinitionsApi definitions{
+        sizeof(definitions),
+        1,
         []() -> unsigned { return static_cast<unsigned>(objectExportProperties.size()); },
-        ::GetObjectExportProperty, ::GetOriginalObjectSubtypeLimit, ::GetObjectSubtypeCount};
+        ::GetObjectExportProperty,
+        ::GetOriginalObjectSubtypeLimit,
+        ::GetObjectSubtypeCount};
     era_services::Publish(era_objects::DEFINITIONS, &definitions);
 }
