@@ -16055,6 +16055,39 @@ namespace h3
 	_H3API_TYPE_DECLARE_(H3Main, Game);
 	_H3API_TYPE_DECLARE_(H3Main, Base);
 
+	struct H3ReplayAction
+	{
+		struct VTable
+		{
+			// +00: виртуальный удаляющий деструктор
+			H3ReplayAction* (__thiscall* Destroy)(
+				H3ReplayAction* self, UINT32 flags);
+
+			// +04: идентификатор действия — eReplayAction
+			eReplayAction(__thiscall* GetType)(
+				H3ReplayAction* self);
+
+			// +08: чтение из сохранения
+			BOOL8(__thiscall* Read)(
+				H3ReplayAction* self, void* stream, INT32 saveVersion);
+
+			// +0C: запись в сохранение
+			BOOL8(__thiscall* Write)(
+				H3ReplayAction* self, void* stream);
+
+			// +10: воспроизведение действия
+			void(__thiscall* Redo)(
+				H3ReplayAction* self, BOOL8 redraw);
+
+			// +14: отмена действия
+			void(__thiscall* Undo)(
+				H3ReplayAction* self);
+		};
+
+		VTable* vTable;       // +00: базовая таблица — 0x63DE74
+		INT8 playerId;        // +04: игрок, в чей ход записано действие
+		UINT8 _padding[3];    // +05..07: выравнивание
+	};
 #pragma pack(push, 4)
 	/**
 	 * @brief Holds most data relevant to play a map/game

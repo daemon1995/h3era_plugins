@@ -104,13 +104,14 @@ inline void ObjectText(Record &record, const std::string &key) {
         CopyText(record.text, key + ".text." + field);
 }
 using Collector = int (__stdcall *)(void *, const era_config::Sink *);
-template<Collector Collect> struct Registrar {
+template<Collector Collect, bool LogErrors = true> struct Registrar {
     static const char *&Id() { static const char *id = nullptr; return id; }
     static void __stdcall Register(Era::TEvent *) {
         const auto *api = era_services::Find<era_config::Api>(era_config::SERVICE);
         if (!api) return;
         era_config::Provider provider; provider.id = Id(); provider.collect = Collect;
-        if (api->registerProvider(&provider) != era_config::Ok && Era::WriteLog)
+        const int result = api->registerProvider(&provider);
+        if (LogErrors && result != era_config::Ok && Era::WriteLog)
             Era::WriteLog(Id(), "Configuration export", "Provider registration failed.");
     }
     static void Install(const char *id) {

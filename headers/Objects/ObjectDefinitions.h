@@ -125,8 +125,8 @@ inline std::array<int, OBJECT_TYPE_LIMIT> SubtypeCounts(const std::vector<std::s
     return counts;
 }
 
-// Preserve terrain variants. A zero generation mask disables the whole
-// DEF/type/subtype group, including variants added earlier in this merge.
+// Override by DEF/type/subtype, including every existing terrain variant.
+// A zero generation mask disables the group without changing its other fields.
 inline void MergeObjectProperties(std::vector<std::string> &lines, const std::vector<std::string> &additions)
 {
     if (lines.empty())
@@ -150,14 +150,11 @@ inline void MergeObjectProperties(std::vector<std::string> &lines, const std::ve
                                          existing.generationMaskLength, '0');
             continue;
         }
-        // Match the last equivalent variant, as before, without collapsing
-        // original duplicates. Reparse after a previous disabling override.
-        auto found = variants.rbegin();
-        for (; found != variants.rend(); ++found)
-            if (ParseObjectProperty(lines[*found], existing) && existing.key == property.key)
-                break;
-        if (found != variants.rend())
-            lines[*found] = line;
+        // Replace all variants so an older mask cannot keep a terrain enabled.
+        // Keep native record positions and duplicate counts intact.
+        if (!variants.empty())
+            for (const size_t index : variants)
+                lines[index] = line;
         else
         {
             variants.push_back(lines.size());
