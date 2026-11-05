@@ -652,13 +652,6 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 if (rmgObjGen->type == eObject::SEER_HUT)
                     continue;
 
-                if (rmgObjGen->type == eObject::SPELL_SCROLL)
-                {
-                    const int spellLevel = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
-                    if (spellLevel < 7)
-                        rmgObjGen->subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
-                }
-
                 RMGObjectInfo::InitFromRmgObjectGenerator(rmgObjGen);
             }
         }
@@ -709,10 +702,6 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 case eObject::SEER_HUT:
                     editor.editedRMGObjectGenerators.Add(rmgObjGen);
                     continue;
-
-                case eObject::SPELL_SCROLL:
-                    rmgObjGen->subtype = reinterpret_cast<_RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
-                    break;
 
                 default:
                     break;
@@ -788,24 +777,11 @@ _LHF_(RMGObjectsEditor::RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck)
             const int zoneId = IntAt(c->ebp - 0x34);
 
             // check if numer of placed this object'type/subtypes on the whole map is more than allowed
-            if (objGen->type == eObject::SPELL_SCROLL)
-            {
-                objGen->subtype = reinterpret_cast<_RMGObjGenScroll_ *>(objGen)->spellLevel;
-                if (objGen->subtype > 6)
-                {
-                    return EXEC_DEFAULT;
-                }
-            }
             if (generatedInfo.ObjectCantBeGenerated(objGen, zoneId))
             {
 
                 // set flag that limit is exceeded
                 c->flags.SF = c->flags.OF;
-            }
-            if (objGen->type == eObject::SPELL_SCROLL)
-            {
-                // reinterpret_cast<_RMGObjGenScroll_ *>(objGen)->spellLevel = objGen->subtype;
-                objGen->subtype = 0;
             }
         }
     }
@@ -831,22 +807,12 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
             generatedInfo.IncreaseObjectsCounters(prototype, c->ecx, virtualSubtype);
             break;
         }
-        case eObject::SPELL_SCROLL:
-
-            if (generatedInfo.lastGeneratedSpellScroll)
-            {
-                const int storedObjectSubtype = prototype->subtype;
-                if (storedObjectSubtype < 7)
-                {
-                    prototype->subtype = generatedInfo.lastGeneratedSpellScroll->spellLevel;
-                    generatedInfo.IncreaseObjectsCounters(prototype, c->ecx);
-                    prototype->subtype = storedObjectSubtype;
-                }
-
-                generatedInfo.lastGeneratedSpellScroll = nullptr;
-            }
-
+        case eObject::SPELL_SCROLL: {
+            const int spellLevel = generatedInfo.TakeGeneratedObjectVirtualSubtype(rmgObject);
+            if (spellLevel >= 0)
+                generatedInfo.IncreaseObjectsCounters(prototype, c->ecx, spellLevel);
             break;
+        }
         case eObject::TRADING_POST_SNOW:
             // fix generated snow trade posts counnter
             prototype->type = eObject::TRADING_POST;
@@ -954,7 +920,7 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
     SetMapControlSpellLevels(false);
 }
 
-// set virtual object subtype to spell level to increase counters
+// Keep the generator level with the scroll until placement.
 H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHook *h, _RMGObjGenScroll_ *scrollGen,
                                                                             H3RmgObjectPropsRef *ref,
                                                                             H3RmgRandomMapGenerator *rmg,
@@ -963,16 +929,8 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHo
 {
 
     H3RmgObject *rmgObject = THISCALL_4(H3RmgObject *, h->GetDefaultFunc(), scrollGen, ref, rmg, zoneGen);
-    if (rmgObject)
-    {
-        generatedInfo.lastGeneratedSpellScroll = scrollGen;
-
-        // auto &prototype = rmgObject->properties->prototype;
-        // const int storedObjectSubtype = prototype->subtype;
-        // prototype->subtype = scrollGen->spellLevel;
-        //// generatedInfo.IncreaseObjectsCounters(rmgObject->properties->prototype, zoneGen->zoneInfo->id);
-        // prototype->subtype = storedObjectSubtype;
-    }
+    if (generatedInfo.IsFor(rmg))
+        generatedInfo.RememberGeneratedObjectVariant(rmgObject, scrollGen);
     return rmgObject;
 }
 
@@ -1146,8 +1104,17 @@ void GeneratedInfo::IncreaseObjectsCounters(const H3RmgObjectProperties *prop, c
 
 void GeneratedInfo::RememberGeneratedObjectVariant(const H3RmgObject *object, const H3RmgObjectGenerator *generator)
 {
-    if (object && PandoraVariants::Find(generator))
-        generatedObjectVirtualSubtypes[object] = PandoraVariants::GetVirtualSubtype(generator);
+    if (!object)
+        return;
+
+    if (generator->type == eObject::SPELL_SCROLL)
+    {
+        const int level = RMGObjectInfo::GetSettingsSubtype(generator);
+        if (level >= 0 && level < _RMGObjGenScroll_::BANNED_SPELL_LEVEL)
+            generatedObjectVirtualSubtypes[object] = level;
+    }
+    else if (const auto *record = PandoraVariants::Find(generator))
+        generatedObjectVirtualSubtypes[object] = record->virtualSubtype;
 }
 
 int GeneratedInfo::TakeGeneratedObjectVirtualSubtype(const H3RmgObject *object) noexcept
@@ -1375,7 +1342,7 @@ const RMGObjectInfo &RMGObjectInfo::DefaultObjectInfo(const H3RmgObjectGenerator
         return record->defaultInfo;
     if (const auto *record = PrisonVariants::Find(generator))
         return record->defaultInfo;
-    return DefaultObjectInfo(generator->type, generator->subtype);
+    return DefaultObjectInfo(generator->type, GetSettingsSubtype(generator));
 }
 inline const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const int objType, const int subtype) noexcept
 {
@@ -1387,7 +1354,7 @@ const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const H3RmgObjectGenerator
         return record->currentInfo;
     if (const auto *record = PrisonVariants::Find(generator))
         return record->currentInfo;
-    return CurrentObjectInfo(generator->type, generator->subtype);
+    return CurrentObjectInfo(generator->type, GetSettingsSubtype(generator));
 }
 
 void RMGObjectInfo::SetCurrentObjectInfo(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept
@@ -1397,7 +1364,7 @@ void RMGObjectInfo::SetCurrentObjectInfo(const H3RmgObjectGenerator *generator, 
     else if (auto *record = PrisonVariants::FindMutable(generator))
         record->currentInfo = info;
     else
-        currentRMGObjectsInfoByType[generator->type][generator->subtype] = info;
+        currentRMGObjectsInfoByType[generator->type][GetSettingsSubtype(generator)] = info;
 }
 
 int RMGObjectInfo::GetSettingsSubtype(const H3RmgObjectGenerator *generator) noexcept
@@ -1406,6 +1373,8 @@ int RMGObjectInfo::GetSettingsSubtype(const H3RmgObjectGenerator *generator) noe
         return PandoraVariants::GetVirtualSubtype(generator);
     if (PrisonVariants::Find(generator))
         return PrisonVariants::GetVirtualSubtype(generator);
+    if (generator && generator->type == eObject::SPELL_SCROLL)
+        return reinterpret_cast<const _RMGObjGenScroll_ *>(generator)->spellLevel;
     return generator ? generator->subtype : eObject::NO_OBJ;
 }
 
@@ -1430,7 +1399,7 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator *gener
     }
 
     const int objType = generator->type;
-    const int objSubtype = generator->subtype;
+    const int objSubtype = GetSettingsSubtype(generator);
     if (objSubtype >= defaultRMGObjectsInfoByType[objType].size())
     {
         defaultRMGObjectsInfoByType[objType].resize(objSubtype + 1);
@@ -1459,9 +1428,7 @@ void RMGObjectInfo::CaptureNativeExportDefaults(const H3RmgObjectGenerator *gene
     if (!generator || generator->type < 0 || generator->type >= h3::limits::OBJECTS)
         return;
     const int type = generator->type;
-    int subtype = generator->subtype;
-    if (type == eObject::SPELL_SCROLL)
-        subtype = reinterpret_cast<const _RMGObjGenScroll_ *>(generator)->spellLevel;
+    const int subtype = type == eObject::SPELL_SCROLL ? GetSettingsSubtype(generator) : generator->subtype;
     auto &records = subtypeExportOverrides[type];
     if (subtype < 0 || size_t(subtype) >= records.size())
         return;
@@ -1649,7 +1616,7 @@ H3String RMGObjectInfo::GetObjectName(const H3RmgObjectGenerator *generator)
         return PandoraVariants::GetDisplayName(generator);
     if (PrisonVariants::Find(generator))
         return PrisonVariants::GetDisplayName(generator);
-    return H3String(GetObjectName(generator->type, generator->subtype));
+    return H3String(GetObjectName(generator->type, GetSettingsSubtype(generator)));
 }
 
 LPCSTR RMGObjectInfo::GetObjectDescription(const H3MapItem *mapItem)
@@ -1793,8 +1760,8 @@ int GeneratedInfo::FindLimitIndex(int type, int subtype, bool pandoraVariant) co
     {
         if (!generator || generator->type != type)
             continue;
-        const auto *variant = PandoraVariants::Find(generator);
-        if ((variant != nullptr) == pandoraVariant && (variant ? variant->virtualSubtype : generator->subtype) == subtype)
+        if ((PandoraVariants::Find(generator) != nullptr) == pandoraVariant &&
+            RMGObjectInfo::GetSettingsSubtype(generator) == subtype)
             return index2D(type, subtype, maxObjectSubtype);
     }
     return -1;
@@ -1827,6 +1794,10 @@ BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, co
     // Prison variants share the native (62, 0) generation counter; their
     // virtual subtype is only used to address per-variant dialog settings.
     const int subtype = objGen->type == eObject::PRISON ? objGen->subtype : RMGObjectInfo::GetSettingsSubtype(objGen);
+    if (objGen->type == eObject::SPELL_SCROLL &&
+        (subtype < 0 || subtype >= _RMGObjGenScroll_::BANNED_SPELL_LEVEL))
+        return FALSE;
+
     // increment number of map generated subtypes of that obj type
     const int index2 = index2D(objGen->type, subtype, maxObjectSubtype);
     // increment number of zone generated subtypes of that obj type
@@ -1841,7 +1812,6 @@ void GeneratedInfo::Clear() noexcept
 {
     activeRmg = nullptr;
     generatedObjectVirtualSubtypes.clear();
-    lastGeneratedSpellScroll = nullptr;
     for (auto &arr : arrays)
     {
         delete[] arr;

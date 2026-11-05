@@ -13,7 +13,7 @@ struct RMGTemplateLimits
 struct _RMGObjGenScroll_ : public H3RmgObjectGenerator
 {
     static constexpr UINT MAP_CONTROL_SPELL_LEVEL = 6;
-    static constexpr UINT BANNED_SPELL_LEVEL = 7;
+    static constexpr int BANNED_SPELL_LEVEL = 7;
     static constexpr UINT MAP_CONTROL_SPELL_VALUE = 20000;
     int spellLevel;
 };
@@ -239,9 +239,6 @@ struct GeneratedInfo
         int *arrays[4];
     };
     std::unordered_map<const H3RmgObject *, int> generatedObjectVirtualSubtypes;
-
-  public:
-    const _RMGObjGenScroll_ *lastGeneratedSpellScroll = nullptr;
 
   public:
     void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId, const int settingsSubtype = -1);
