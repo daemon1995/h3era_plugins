@@ -26,6 +26,7 @@ template <std::size_t Count> class NativeTypeLimitsOverride
     std::array<int, Count> previousZone{};
     int *nativeMap = nullptr;
     int *nativeZone = nullptr;
+    std::size_t preservedType = Count;
 
   public:
     NativeTypeLimitsOverride() = default;
@@ -37,16 +38,18 @@ template <std::size_t Count> class NativeTypeLimitsOverride
     }
 
     void Apply(int *mapTable, int *zoneTable, const int *mapLimits, const int *zoneLimits,
-               const bool *zoneLimitsPerSubtype, std::size_t excludedType = Count) noexcept
+               const bool *zoneLimitsPerSubtype, std::size_t excludedType = Count,
+               std::size_t externallyManagedType = Count) noexcept
     {
         Restore();
         std::copy_n(mapTable, Count, previousMap.begin());
         std::copy_n(zoneTable, Count, previousZone.begin());
         nativeMap = mapTable;
         nativeZone = zoneTable;
+        preservedType = externallyManagedType;
         for (std::size_t i = 0; i < Count; ++i)
         {
-            if (i == excludedType)
+            if (i == excludedType || i == preservedType)
                 continue;
 
             const auto limits = NormalizeTypeLimits(mapLimits[i], zoneLimits[i]);
@@ -61,8 +64,13 @@ template <std::size_t Count> class NativeTypeLimitsOverride
     {
         if (nativeMap)
         {
-            std::copy(previousMap.begin(), previousMap.end(), nativeMap);
-            std::copy(previousZone.begin(), previousZone.end(), nativeZone);
+            for (std::size_t i = 0; i < Count; ++i)
+            {
+                if (i == preservedType)
+                    continue;
+                nativeMap[i] = previousMap[i];
+                nativeZone[i] = previousZone[i];
+            }
             nativeMap = nullptr;
             nativeZone = nullptr;
         }

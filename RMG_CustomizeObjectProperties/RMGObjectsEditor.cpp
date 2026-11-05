@@ -516,8 +516,9 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     {
         limitsInfo.zoneTypeLimits[limit[i].type] = limit[i].value;
     }
-    limitsInfo.mapTypesLimit[eObject::PRISON] = 100;
-    limitsInfo.zoneTypeLimits[eObject::PRISON] = 5;
+    // Prison limits are handled by MGF.
+    // limitsInfo.mapTypesLimit[eObject::PRISON] = 100;
+    // limitsInfo.zoneTypeLimits[eObject::PRISON] = 5;
     globalExportOverrides = {};
     globalExportOverrides.inherited[rmgExport::MAP] = defaultLimit;
     globalExportOverrides.inherited[rmgExport::ZONE] = defaultLimit;
@@ -707,7 +708,6 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                     break;
                 }
 
-                // This also resolves each prison's settings by Exp, keeping its native subtype 0.
                 const RMGObjectInfo &rmgObjInfo = RMGObjectInfo::CurrentObjectInfo(rmgObjGen);
                 // if object is enabled
                 if (rmgObjInfo.enabled)
@@ -800,6 +800,7 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
         auto &prototype = rmgObject->properties->prototype;
         switch (prototype->type)
         {
+        case eObject::PRISON: // Prison counting is handled by MGF.
         case eObject::SEER_HUT:
             break;
         case eObject::PANDORAS_BOX: {
@@ -858,9 +859,11 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
     if (generatedInfo.IsFor(rmgStruct))
     {
+        // MGF manages the native prison limits based on the available heroes.
         nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
                                reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit), limitsInfo.mapTypesLimit,
-                               limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype, eObject::SEER_HUT);
+                               limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype, eObject::SEER_HUT,
+                               eObject::PRISON);
     }
 
     // store spell levels
@@ -1681,13 +1684,11 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
 
     for (auto *p_ObjGen : rmg->objectGenerators)
     {
-        if (p_ObjGen->type == eObject::SEER_HUT)
+        // Prison limits and counters are handled by MGF.
+        if (p_ObjGen->type == eObject::SEER_HUT || p_ObjGen->type == eObject::PRISON)
             continue;
 
-        // Prison variants are split only in the settings dialog. The game
-        // still counts every prison under its real subtype 0.
-        const int objSubtype =
-            p_ObjGen->type == eObject::PRISON ? p_ObjGen->subtype : RMGObjectInfo::GetSettingsSubtype(p_ObjGen);
+        const int objSubtype = RMGObjectInfo::GetSettingsSubtype(p_ObjGen);
         if (objSubtype < 0)
             continue;
         const int objType = p_ObjGen->type;
@@ -1725,7 +1726,8 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
     {
         for (const auto &info : vec)
         {
-
+            if (info.type == eObject::PRISON)
+                continue;
             const int objSubtype = info.subtype;
             if (objSubtype < 0 || objSubtype >= maxSubtype)
                 continue;
@@ -1788,12 +1790,11 @@ bool GeneratedInfo::SetLimits(int type, int subtype, bool pandoraVariant, editor
 
 BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, const int zoneId) const
 {
-    if (objGen->type == eObject::SEER_HUT)
+    // Prison limits are handled by MGF.
+    if (objGen->type == eObject::SEER_HUT || objGen->type == eObject::PRISON)
         return FALSE;
 
-    // Prison variants share the native (62, 0) generation counter; their
-    // virtual subtype is only used to address per-variant dialog settings.
-    const int subtype = objGen->type == eObject::PRISON ? objGen->subtype : RMGObjectInfo::GetSettingsSubtype(objGen);
+    const int subtype = RMGObjectInfo::GetSettingsSubtype(objGen);
     if (objGen->type == eObject::SPELL_SCROLL &&
         (subtype < 0 || subtype >= _RMGObjGenScroll_::BANNED_SPELL_LEVEL))
         return FALSE;
