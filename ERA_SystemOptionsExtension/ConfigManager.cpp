@@ -3,10 +3,11 @@
 #pragma comment(linker, "/EXPORT:SaveOptions=_SaveOptions@0")
 #include "CombatCreatureHealthBar.h"
 #include "CombatSettings.h"
+// #include "BattleQueue.h"
 #include "MapScroller.h"
 #include "SoundSettings.h"
 #include "framework.h"
-#include "../headers/EraPluginsAPI/ErmFunctionsAPI.h"
+// #include "../headers/EraPluginsAPI/ErmFunctionsAPI.h"
 #include <cstddef>
 #include <cstring>
 
@@ -98,6 +99,7 @@ void ApplyBackgroundSound(const ConfigEntry &entry, const EOptionChangeSource so
 }
 void ApplyBattleQueue(const ConfigEntry &entry, const EOptionChangeSource)
 {
+    // battleQueue::ApplyEnabled(entry.value != 0);
     if (auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue"))
         entry.value ? queuePI->ApplyAll() : queuePI->UndoAll();
 }
@@ -109,6 +111,7 @@ void ApplySmoothMapScroll(const ConfigEntry &entry, const EOptionChangeSource)
 {
     scroll::MapScroller::ApplySmoothScrollState(entry.value);
 }
+/*
 void ApplyObjectGlow(const ConfigEntry &entry, const EOptionChangeSource)
 {
     if (const auto setEnabled = erm_functions::FindObjectGlowControl())
@@ -129,6 +132,7 @@ void __stdcall RegisterObjectGlowDefaults(Era::TEvent *)
     }
     ApplyObjectGlow(AdditionalConfig::Get().objectGlow, EOptionChangeSource::InitialLoad);
 }
+*/
 BOOL ReadHealth(LPCSTR key, char *buffer)
 {
     return Era::ReadStrFromIni(key, HEALTH_SECTION, AdditionalConfig::fileName, buffer);
@@ -242,7 +246,7 @@ void AdditionalConfig::BindCallbacks() noexcept
     quickCombatType.applyCallback = cmbsttngs::CombatSettings::ApplyQuickCombatType;
     showCreatureHealthBar.applyCallback = ApplyHealthBar;
     smoothMapScroll.applyCallback = ApplySmoothMapScroll;
-    objectGlow.applyCallback = ApplyObjectGlow;
+    // objectGlow.applyCallback = ApplyObjectGlow;
 }
 void AdditionalConfig::InitialApply()
 {
@@ -252,6 +256,7 @@ void AdditionalConfig::InitialApply()
     cmbsttngs::CombatSettings::Get();
     for (auto *entry : Entries())
         entry->Apply(EOptionChangeSource::InitialLoad);
+    /*
     // API registrations are map-local and must be restored after loading a game.
     static bool glowEventsRegistered = false;
     if (!glowEventsRegistered)
@@ -260,6 +265,7 @@ void AdditionalConfig::InitialApply()
         glowEventsRegistered = true;
     }
     RegisterObjectGlowDefaults(nullptr);
+    */
 }
 BOOL AdditionalConfig::Save()
 {

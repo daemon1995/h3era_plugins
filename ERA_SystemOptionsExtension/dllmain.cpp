@@ -1,5 +1,6 @@
 #define _H3API_PLUGINS_
 #include "BattleSave.h"
+// #include "BattleQueue.h"
 #include "SystemOptionsDlg.h"
 
 #pragma comment(linker, "/EXPORT:ShowSystemOptionsDlg=_ShowSystemOptionsDlg@0")
@@ -9,7 +10,7 @@ PatcherInstance *_PI = nullptr;
 namespace dllText
 {
 constexpr LPCSTR PLUGIN_AUTHOR = "daemon_n";
-constexpr LPCSTR PLUGIN_VERSION = "1.8.2";
+constexpr LPCSTR PLUGIN_VERSION = "1.10.0";
 constexpr LPCSTR PLUGIN_DATA = __DATE__;
 constexpr LPCSTR INSTANCE_NAME = "EraPlugin." PROJECT_NAME ".daemon_n";
 constexpr LPCSTR UNIQUE_BUTTON_NAME = "ERA_SystemOptionsExtension_Button";
@@ -109,6 +110,7 @@ _LHF_(HooksInit)
 
     _PI->WriteLoHook(0x041ABBA, AdvMapSettingsDlg);
     _PI->WriteHiHook(0x0474834, THISCALL_, CombatManager_ShowCombatSettingsDlg);
+    // battleQueue::Initialize();
     AdditionalConfig::Load();
     battleSave::Initialize();
     SystemOptionsDlg::SetPatches(_PI);

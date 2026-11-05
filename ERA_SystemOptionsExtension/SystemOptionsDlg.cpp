@@ -1,7 +1,8 @@
 #include "SystemOptionsDlg.h"
+// #include "BattleQueue.h"
 #include "BattleSave.h"
 #include "SoundSettings.h"
-#include "../headers/EraPluginsAPI/ErmFunctionsAPI.h"
+// #include "../headers/EraPluginsAPI/ErmFunctionsAPI.h"
 
 #pragma comment(linker, "/EXPORT:RegisterErmCallbackButton=_RegisterErmCallbackButton@16")
 #pragma comment(linker, "/EXPORT:UnregisterErmCallbackButton=_UnregisterErmCallbackButton@4")
@@ -398,6 +399,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         {
             page->CreateSetting<CheckBoxSetting>(info);
         }
+        /*
         if (const auto setEnabled = erm_functions::FindObjectGlowControl())
         {
             setEnabled(extraConfig.objectGlow.value);
@@ -411,6 +413,7 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                               &extraConfig.objectGlow};
             page->CreateSetting<CheckBoxSetting>(info);
         }
+        */
         // RIGHT PAGE PART
         constexpr int rCheckboxX = DLG_RIGHT_PART_X_MARGIN;
         int rCheckboxY = settingsStartY;
@@ -581,6 +584,22 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
 
         rightPartY += baseSettingHeight * 2 + ISetting::TITLE_Y_OFFSET;
 
+        /*
+        auto &battleQueue = extraConfig.battleQueue;
+
+        const SettingsInfo combatQueueCheckBoxInfo = {
+            "combat_creatures_queue",
+            {rightX, rightPartY},
+            itemId++,
+            &battleQueue.value,
+            ERA_OPT(combat, battleQueue, name),
+            ERA_OPT(combat, battleQueue, hint),
+            FALSE,
+            &battleQueue};
+
+        page->CreateSetting<CheckBoxSetting>(combatQueueCheckBoxInfo);
+        rightPartY += baseSettingHeight;
+        */
         auto queuePI = globalPatcher->GetInstance("H3.ERA_BattleQueue");
         if (queuePI)
         {

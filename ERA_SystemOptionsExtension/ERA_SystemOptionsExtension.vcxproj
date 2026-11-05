@@ -20,6 +20,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
     <ClInclude Include="BattleSave.h" />
+    <!--
+    <ClInclude Include="BattleQueue.h" />
+    <ClInclude Include="BattleQueueOrder.h" />
+    -->
     <ClInclude Include="CombatCreatureHealthBar.h" />
     <ClInclude Include="CombatSettings.h" />
     <ClInclude Include="QuickCombatState.h" />
@@ -34,6 +38,10 @@
   <ItemGroup>
     <ClCompile Include="..\headers\Era\era.cpp" />
     <ClCompile Include="BattleSave.cpp" />
+    <!--
+    <ClCompile Include="BattleQueue.cpp" />
+    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp" />
+    -->
     <ClCompile Include="CombatCreatureHealthBar.cpp" />
     <ClCompile Include="CombatSettings.cpp" />
     <ClCompile Include="ConfigManager.cpp" />
@@ -46,10 +54,19 @@
     <None Include="BattleSave.LICENSE" />
     <None Include="BattleSave.tests.cpp" />
     <None Include="CombatSettings.tests.cpp" />
+    <!--
     <None Include="lang\era_system_options_object_glow.json" />
     <None Include="lang\ru\era_system_options_object_glow.json" />
+    -->
     <None Include="run-battlesave-tests.cmd" />
     <None Include="run-combat-settings-tests.cmd" />
   </ItemGroup>
+  <!--
+  <ItemGroup>
+    <ResourceCompile Include="BattleQueue.rc" />
+    <None Include="lang\ru\era_system_options_combat_text.json" />
+    <None Include="lang\era_system_options_combat_text.json" />
+  </ItemGroup>
+  -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

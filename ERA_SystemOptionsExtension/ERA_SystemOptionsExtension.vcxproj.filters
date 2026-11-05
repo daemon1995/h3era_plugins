@@ -26,6 +26,14 @@
     <ClInclude Include="CombatSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <!--
+    <ClInclude Include="BattleQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BattleQueueOrder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    -->
     <ClInclude Include="BattleSave.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -67,6 +75,14 @@
     <ClCompile Include="MapScroller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <!--
+    <ClCompile Include="BattleQueue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\headers\DrawPcx16ResizedBicubic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    -->
     <ClCompile Include="BattleSave.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
