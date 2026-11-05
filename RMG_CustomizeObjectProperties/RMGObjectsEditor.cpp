@@ -443,41 +443,47 @@ RMGObjectsEditor::RMGObjectsEditor() : IGamePatch(globalPatcher->CreateInstance(
 void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
 {
     auto &editor = Get();
-    editor.settingsLoaded = false;
     editor.InitDefaultProperties(maxSubtypes);
 
     // Finish loading before the dialog or generation can use/edit this data.
     RMGObjectInfo::LoadUserProperties();
-    editor.settingsLoaded = true;
-}
-
-bool RMGObjectsEditor::CanEditSettings() noexcept
-{
-    return instance && instance->settingsLoaded && !instance->isGenerating && !instance->isPseudoGeneration;
 }
 
 bool RMGObjectsEditor::GetTypeLimits(int type, TypeGenerationLimits &out) noexcept
 {
-    if (!instance || !instance->settingsLoaded || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT)
+    if (!generatedInfo.IsInited() || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT)
         return false;
 
     const auto &info = instance->limitsInfo;
-    out = {info.mapTypesLimit[type], info.zoneLimitsPerSubtype[type] ? info.mapTypesLimit[type]
-                                                                   : info.zoneTypeLimits[type]};
+    out = {reinterpret_cast<const int *>(info.RMG_ObjectTypeMapLimit)[type],
+           reinterpret_cast<const int *>(info.RMG_ObjectTypeZoneLimit)[type]};
     return true;
 }
 
 bool RMGObjectsEditor::SetTypeLimits(int type, int mapLimit, int zoneLimit) noexcept
 {
-    if (!CanEditSettings() || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT)
+    if (!generatedInfo.IsInited() || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT)
         return false;
 
-    auto &info = instance->limitsInfo;
+    const auto &info = instance->limitsInfo;
     const auto limits = NormalizeTypeLimits(mapLimit, zoneLimit);
-    info.mapTypesLimit[type] = limits.map;
-    info.zoneTypeLimits[type] = limits.zone;
-    info.zoneLimitsPerSubtype[type] = false;
+    reinterpret_cast<int *>(info.RMG_ObjectTypeMapLimit)[type] = limits.map;
+    reinterpret_cast<int *>(info.RMG_ObjectTypeZoneLimit)[type] = limits.zone;
     return true;
+}
+
+bool RMGObjectsEditor::GetObjectLimits(int type, int subtype, bool pandoraVariant, TypeGenerationLimits &out) noexcept
+{
+    return generatedInfo.GetLimits(type, subtype, pandoraVariant, out);
+}
+
+bool RMGObjectsEditor::SetObjectLimits(int type, int subtype, bool pandoraVariant, int mapLimit, int zoneLimit) noexcept
+{
+    TypeGenerationLimits typeLimits;
+    if (!GetTypeLimits(type, typeLimits))
+        return false;
+    return generatedInfo.SetLimits(type, subtype, pandoraVariant,
+                                   NormalizeTypeLimits(std::min(mapLimit, typeLimits.map), zoneLimit));
 }
 
 void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
@@ -609,8 +615,6 @@ RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
 void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRandomMapGenerator *rmgStruct)
 {
     auto &editor = RMGObjectsEditor::Get();
-    if (!editor.isPseudoGeneration)
-        editor.isGenerating = true;
 
     // call default function to create rmg gen list first
     THISCALL_1(void, h->GetDefaultFunc(), rmgStruct);
@@ -877,17 +881,21 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 
     THISCALL_2(void, h->GetDefaultFunc(), rmg, RmgTemplate);
 
-    Get().BeforeMapGeneration(rmg);
+    auto &editor = Get();
+    if (!editor.isPseudoGeneration)
+        editor.BeforeMapGeneration(rmg);
 }
 
 void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct)
 {
-    isGenerating = true;
-    nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
-                           reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit), limitsInfo.mapTypesLimit,
-                           limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype, eObject::SEER_HUT);
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
+    if (generatedInfo.IsFor(rmgStruct))
+    {
+        nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
+                               reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit), limitsInfo.mapTypesLimit,
+                               limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype, eObject::SEER_HUT);
+    }
 
     // store spell levels
     SetMapControlSpellLevels(true, !(rmgStruct->waterAmount));
@@ -912,10 +920,11 @@ void __stdcall RMGObjectsEditor::RMG__AfterMapGenerated(HiHook *h, H3RmgRandomMa
 }
 void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) noexcept
 {
-    nativeTypeLimits.Restore();
-
-    // clear generated objects counters
-    generatedInfo.Clear(rmgStruct);
+    if (generatedInfo.IsFor(rmgStruct))
+    {
+        generatedInfo.Clear();
+        nativeTypeLimits.Restore();
+    }
 
     auto &monstersInfo = RMGObjectInfo::currentRMGObjectsInfoByType[eObject::MONSTER];
     for (auto &info : monstersInfo)
@@ -943,7 +952,6 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
 
     // restore changed spell levels
     SetMapControlSpellLevels(false);
-    isGenerating = false;
 }
 
 // set virtual object subtype to spell level to increase counters
@@ -1768,7 +1776,47 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         mapLimitsBySubtype[index2] = record.currentInfo.mapLimit;
     }
 
-    isInited = true;
+    activeRmg = rmg;
+}
+
+int GeneratedInfo::FindLimitIndex(int type, int subtype, bool pandoraVariant) const noexcept
+{
+    if (!activeRmg || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT ||
+        type == eObject::PRISON || subtype < 0 || subtype >= maxObjectSubtype)
+        return -1;
+
+    // Variant records take precedence over the base Pandora slots in Assign.
+    if (type == eObject::PANDORAS_BOX && !pandoraVariant && size_t(subtype) < PandoraVariants::GetRecords().size())
+        return -1;
+
+    for (const auto *generator : activeRmg->objectGenerators)
+    {
+        if (!generator || generator->type != type)
+            continue;
+        const auto *variant = PandoraVariants::Find(generator);
+        if ((variant != nullptr) == pandoraVariant && (variant ? variant->virtualSubtype : generator->subtype) == subtype)
+            return index2D(type, subtype, maxObjectSubtype);
+    }
+    return -1;
+}
+
+bool GeneratedInfo::GetLimits(int type, int subtype, bool pandoraVariant, editor::TypeGenerationLimits &out) const noexcept
+{
+    const int index = FindLimitIndex(type, subtype, pandoraVariant);
+    if (index < 0)
+        return false;
+    out = {mapLimitsBySubtype[index], zoneLimitsBySubtype[index]};
+    return true;
+}
+
+bool GeneratedInfo::SetLimits(int type, int subtype, bool pandoraVariant, editor::TypeGenerationLimits limits) noexcept
+{
+    const int index = FindLimitIndex(type, subtype, pandoraVariant);
+    if (index < 0)
+        return false;
+    mapLimitsBySubtype[index] = limits.map;
+    zoneLimitsBySubtype[index] = limits.zone;
+    return true;
 }
 
 BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, const int zoneId) const
@@ -1789,22 +1837,15 @@ BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, co
                : eachZoneGeneratedBySubtype[index3] >= zoneLimitsBySubtype[index2];
 }
 
-void GeneratedInfo::Clear(const H3RmgRandomMapGenerator *rmgStruct)
+void GeneratedInfo::Clear() noexcept
 {
-    // delete all the allocated arrays
-    if (isInited)
+    activeRmg = nullptr;
+    generatedObjectVirtualSubtypes.clear();
+    lastGeneratedSpellScroll = nullptr;
+    for (auto &arr : arrays)
     {
-        generatedObjectVirtualSubtypes.clear();
-
-        for (auto &arr : arrays)
-        {
-            if (arr)
-            {
-                delete[] arr;
-                arr = nullptr;
-            }
-        }
-        isInited = false;
-        maxObjectSubtype = 0;
+        delete[] arr;
+        arr = nullptr;
     }
+    maxObjectSubtype = 0;
 }

@@ -170,7 +170,7 @@ class PandoraVariants
   private:
     static std::vector<Record> records;
 
-    static const Record *FindRecord(const PandoraVariantKey &key) noexcept;
+    static Record *FindRecordMutable(const PandoraVariantKey &key) noexcept;
     static H3String GetPersistentKey(const PandoraVariantKey &key);
     static H3String GetIniSectionName(const PandoraVariantKey &key);
 
@@ -180,7 +180,7 @@ class PandoraVariants
     static void LoadUserProperties();
     static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
     static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
-    static Record *FindRecordMutable(const PandoraVariantKey &key) noexcept;
+    static const Record *FindRecord(const PandoraVariantKey &key) noexcept;
     static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
     static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
                            LPCSTR iniPath = RMGObjectInfo::INI_FILE_PATH) noexcept;
@@ -203,7 +203,7 @@ class PrisonVariants
   private:
     static std::vector<Record> records;
 
-    static const Record *FindRecord(const PrisonVariantKey &key) noexcept;
+    static Record *FindRecordMutable(const PrisonVariantKey &key) noexcept;
     static H3String GetPersistentKey(const PrisonVariantKey &key);
     static H3String GetIniSectionName(const PrisonVariantKey &key);
 
@@ -213,7 +213,7 @@ class PrisonVariants
     static void LoadUserProperties();
     static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
     static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
-    static Record *FindRecordMutable(const PrisonVariantKey &key) noexcept;
+    static const Record *FindRecord(const PrisonVariantKey &key) noexcept;
     static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
     static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
                            LPCSTR iniPath = RMGObjectInfo::INI_FILE_PATH) noexcept;
@@ -224,8 +224,9 @@ class PrisonVariants
 struct GeneratedInfo
 {
   private:
-    BOOL isInited = false;
+    const H3RmgRandomMapGenerator *activeRmg = nullptr;
     int maxObjectSubtype = NULL;
+    int FindLimitIndex(int type, int subtype, bool pandoraVariant) const noexcept;
     // allocated fields
     union {
         struct
@@ -247,11 +248,17 @@ struct GeneratedInfo
     void RememberGeneratedObjectVariant(const H3RmgObject *object, const H3RmgObjectGenerator *generator);
     int TakeGeneratedObjectVirtualSubtype(const H3RmgObject *object) noexcept;
     void Assign(const H3RmgRandomMapGenerator *rmg, std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS]);
-    void Clear(const H3RmgRandomMapGenerator *rmgStruct);
+    void Clear() noexcept;
+    bool IsFor(const H3RmgRandomMapGenerator *rmg) const noexcept
+    {
+        return activeRmg && activeRmg == rmg;
+    }
     inline BOOL IsInited() const noexcept
     {
-        return isInited;
+        return activeRmg != nullptr;
     }
+    bool GetLimits(int type, int subtype, bool pandoraVariant, editor::TypeGenerationLimits &out) const noexcept;
+    bool SetLimits(int type, int subtype, bool pandoraVariant, editor::TypeGenerationLimits limits) noexcept;
 
   public:
     BOOL ObjectCantBeGenerated(const H3RmgObjectGenerator *rmgObjGen, const int zoneId) const;
@@ -330,8 +337,6 @@ class RMGObjectsEditor : public IGamePatch
   private:
     // used to store default generated data
     BOOL isPseudoGeneration = false;
-    bool settingsLoaded = false;
-    bool isGenerating = false;
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
     NativeTypeLimitsOverride<H3_MAX_OBJECTS> nativeTypeLimits;
@@ -390,9 +395,10 @@ class RMGObjectsEditor : public IGamePatch
   public:
     static void Init(const INT16 *maxSubtypes);
     static RMGObjectsEditor &Get() noexcept;
-    static bool CanEditSettings() noexcept;
     static bool GetTypeLimits(int type, TypeGenerationLimits &out) noexcept;
     static bool SetTypeLimits(int type, int mapLimit, int zoneLimit) noexcept;
+    static bool GetObjectLimits(int type, int subtype, bool pandoraVariant, TypeGenerationLimits &out) noexcept;
+    static bool SetObjectLimits(int type, int subtype, bool pandoraVariant, int mapLimit, int zoneLimit) noexcept;
 };
 
 } // namespace editor

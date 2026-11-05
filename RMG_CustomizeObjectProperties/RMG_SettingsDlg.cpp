@@ -2719,19 +2719,19 @@ void CopyRmgApiInfo(rmg_api::ObjectInfo &out, const RMGObjectInfo &info, int set
            info.mapLimit, info.zoneLimit, info.value,   info.density};
 }
 
-RMGObjectInfo *FindCurrentObject(int type, int subtype) noexcept
+const RMGObjectInfo *FindCurrentObject(int type, int subtype) noexcept
 {
     if (type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
         return nullptr;
-    auto &records = RMGObjectInfo::currentRMGObjectsInfoByType[type];
+    const auto &records = RMGObjectInfo::currentRMGObjectsInfoByType[type];
     if (size_t(subtype) >= records.size())
         return nullptr;
-    auto &record = records[subtype];
+    const auto &record = records[subtype];
     return record.type == type && record.subtype == subtype ? &record : nullptr;
 }
 
 template <typename Record>
-RMGObjectInfo *MatchApiVariant(Record *record, const rmg_api::ObjectKey &key, int &settingsSubtype) noexcept
+const RMGObjectInfo *MatchApiVariant(const Record *record, const rmg_api::ObjectKey &key, int &settingsSubtype) noexcept
 {
     if (!record || record->currentInfo.type != key.type || record->currentInfo.subtype != key.subtype)
         return nullptr;
@@ -2739,7 +2739,7 @@ RMGObjectInfo *MatchApiVariant(Record *record, const rmg_api::ObjectKey &key, in
     return &record->currentInfo;
 }
 
-RMGObjectInfo *FindApiObject(const rmg_api::ObjectKey *key, int &settingsSubtype) noexcept
+const RMGObjectInfo *FindApiObject(const rmg_api::ObjectKey *key, int &settingsSubtype) noexcept
 {
     if (!key || key->structSize < sizeof(*key))
         return nullptr;
@@ -2747,7 +2747,7 @@ RMGObjectInfo *FindApiObject(const rmg_api::ObjectKey *key, int &settingsSubtype
     if (key->kind >= rmg_api::PANDORA_GOLD && key->kind <= rmg_api::PANDORA_MONSTERS)
     {
         const auto kind = static_cast<ePandoraGeneratorKind>(key->kind - 1);
-        return MatchApiVariant(PandoraVariants::FindRecordMutable({kind, key->first, key->second, key->third}),
+        return MatchApiVariant(PandoraVariants::FindRecord({kind, key->first, key->second, key->third}),
                                *key, settingsSubtype);
     }
     if (key->second != 0 || key->third != 0)
@@ -2759,16 +2759,12 @@ RMGObjectInfo *FindApiObject(const rmg_api::ObjectKey *key, int &settingsSubtype
         settingsSubtype = key->subtype;
         return key->first == 0 ? FindCurrentObject(key->type, key->subtype) : nullptr;
     case rmg_api::PRISON:
-        return MatchApiVariant(PrisonVariants::FindRecordMutable({key->first}), *key, settingsSubtype);
+        return MatchApiVariant(PrisonVariants::FindRecord({key->first}), *key, settingsSubtype);
     default:
         return nullptr;
     }
 }
 
-bool CanEditRmgSettings() noexcept
-{
-    return !rmgdlg::RMG_SettingsDlg::IsOpen() && editor::RMGObjectsEditor::CanEditSettings();
-}
 } // namespace
 BOOL rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(int index, void *draftPtr, void *currentPtr, void *keyPtr) noexcept
 {
@@ -2873,21 +2869,28 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetObjectInfoByKey(const rmg
     return TRUE;
 }
 
+#pragma comment(linker, "/EXPORT:RMG_GetObjectLimitsByKey=_RMG_GetObjectLimitsByKey@8")
+DllExport BOOL __stdcall RMG_GetObjectLimitsByKey(const rmg_api::ObjectKey *key, rmg_api::TypeLimits *out)
+{
+    if (!out || out->structSize < sizeof(*out))
+        return FALSE;
+    int settingsSubtype;
+    editor::TypeGenerationLimits limits;
+    const auto *info = FindApiObject(key, settingsSubtype);
+    if (!info || !editor::RMGObjectsEditor::GetObjectLimits(info->type, settingsSubtype, key->kind != rmg_api::OBJECT,
+                                                           limits))
+        return FALSE;
+    *out = {sizeof(*out), limits.map, limits.zone};
+    return TRUE;
+}
+
 #pragma comment(linker, "/EXPORT:RMG_SetObjectLimitsByKey=_RMG_SetObjectLimitsByKey@12")
 DllExport BOOL __stdcall RMG_SetObjectLimitsByKey(const rmg_api::ObjectKey *key, int mapLimit, int zoneLimit)
 {
-    if (!CanEditRmgSettings())
-        return FALSE;
     int settingsSubtype;
-    auto *info = FindApiObject(key, settingsSubtype);
-    if (!info)
-        return FALSE;
-
-    const int typeMapLimit = editor::RMGObjectsEditor::Get().MaxMapTypeLimit(info->type);
-    const auto limits = editor::NormalizeTypeLimits(std::min(mapLimit, typeMapLimit), zoneLimit);
-    info->mapLimit = limits.map;
-    info->zoneLimit = limits.zone;
-    return TRUE;
+    const auto *info = FindApiObject(key, settingsSubtype);
+    return info && editor::RMGObjectsEditor::SetObjectLimits(info->type, settingsSubtype, key->kind != rmg_api::OBJECT,
+                                                             mapLimit, zoneLimit);
 }
 
 #pragma comment(linker, "/EXPORT:RMG_GetObjectTypeLimits=_RMG_GetObjectTypeLimits@8")
@@ -2903,5 +2906,5 @@ DllExport BOOL __stdcall RMG_GetObjectTypeLimits(int type, rmg_api::TypeLimits *
 #pragma comment(linker, "/EXPORT:RMG_SetObjectTypeLimits=_RMG_SetObjectTypeLimits@12")
 DllExport BOOL __stdcall RMG_SetObjectTypeLimits(int type, int mapLimit, int zoneLimit)
 {
-    return CanEditRmgSettings() && editor::RMGObjectsEditor::SetTypeLimits(type, mapLimit, zoneLimit);
+    return editor::RMGObjectsEditor::SetTypeLimits(type, mapLimit, zoneLimit);
 }
