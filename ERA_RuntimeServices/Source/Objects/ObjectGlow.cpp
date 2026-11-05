@@ -16,7 +16,7 @@ namespace glow
 namespace
 {
 ObjectTypes overrides;
-bool enabled = true;
+bool enabled = false;
 bool hooksReady = false;
 constexpr std::size_t MASK_CACHE_LIMIT = 16 * 1024 * 1024;
 struct Profile
@@ -496,9 +496,10 @@ void __stdcall DrawFog(HiHook *hook, H3AdventureManager *adv, int x, int y, int 
 }
 }
 
-bool InstallHooks()
+static bool InstallHooks()
 {
     if (hooksReady) return true;
+    if (!_PI) return false;
     // Native thiscall, five stack arguments, both exits ret 14h. The function
     // splice also covers HD's map pass and chains with GEM's call-site hook.
     Patch *hooks[] = {_PI->WriteHiHook(0x412180, SPLICE_, EXTENDED_, THISCALL_, DrawFog)};
@@ -527,18 +528,20 @@ extern "C" int __stdcall Erm_SetObjectGlowEnabled(int enabled) noexcept
 {
     if (enabled != 0 && enabled != 1)
         return 0;
+    if (enabled && !erm_functions::glow::InstallHooks())
+        return 0;
     erm_functions::glow::enabled = enabled != 0;
     return 1;
 }
 extern "C" int __stdcall Erm_GetObjectGlowEnabled() noexcept
 {
-    return erm_functions::glow::enabled;
+    return erm_functions::glow::hooksReady && erm_functions::glow::enabled;
 }
 
 extern "C" int __stdcall Erm_SetObjectGlowProfiling(int enabled) noexcept
 {
     using namespace erm_functions::glow;
-    if (enabled != 0 && enabled != 1) return 0;
+    if (!hooksReady || (enabled != 0 && enabled != 1)) return 0;
     if (enabled)
     {
         profile = {};
@@ -552,7 +555,8 @@ extern "C" int __stdcall Erm_SetObjectGlowProfiling(int enabled) noexcept
 
 extern "C" int __stdcall Erm_GetObjectGlowProfile(erm_functions::ObjectGlowProfile *output) noexcept
 {
-    if (!output || output->structSize < sizeof(*output) || output->version != 1) return 0;
+    if (!erm_functions::glow::hooksReady || !output || output->structSize < sizeof(*output) || output->version != 1)
+        return 0;
     const auto &sample = erm_functions::glow::profile;
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);

@@ -444,7 +444,6 @@ void __stdcall OnReportVersion(Era::TEvent *)
 void __stdcall OnAfterWog(Era::TEvent *)
 {
     erm_functions::replacement::InstallHooks(_PI);
-    erm_functions::glow::InstallHooks();
     if (!hooksReady && erm_functions::rendering::InstallHooks())
     {
         static const unsigned char deleteCall[] = {0xE8, 0x2F, 0x13, 0xFE, 0xFF, 0x83, 0xC4, 0x0C};
