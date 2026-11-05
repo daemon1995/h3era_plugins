@@ -2,10 +2,10 @@
 
 Assembly versions form a single row: `Assembly | v1.23 | v1.25`.
 The cells are title, installed version, latest version, all in `smalfont.fnt`.
-Each is one runtime PCX16 widget with a distinct free ID, black background,
-gold text and shared one-pixel frame edges. Only Latest blinks when a newer
-version is available; its frame and click target remain visible. The installed
-version text is red while it is older, and returns to gold otherwise.
+Each is one native text widget with a distinct free ID and transparent
+background, without a frame. The installed version uses the regular text
+color; Latest is always green and does not blink. On text changes the menu
+redraw restores the picture behind the text.
 
 The installed version is read from `[Assembly] Version` in `ERA_Project.ini`.
 A nonempty `current_version.custom_version` explicitly overrides that value.
@@ -18,7 +18,7 @@ canvas, frame and HD texture; native dialog bounds are the fallback when its
 background rendering is disabled or MainMenuAPI is absent.
 
 Geometry is fixed in code, independent of JSON and translated text: the title
-cell is 80 pixels wide, each version cell 70, total 218 with shared borders.
+cell is 80 pixels wide, each version cell 70, total 218 in the existing compact layout.
 Height uses the loaded smalfont height plus six pixels of internal padding.
 There are no outer margins. Disabled version cells are omitted; if both are
 disabled, the title is omitted too.

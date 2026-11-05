@@ -38,6 +38,7 @@ static mainmenu::background::Layout GetVersionLabelBounds(H3BaseDlg *dlg)
 AssemblyInformation::AssemblyInformation(PatcherInstance *_pi)
     : IGamePatch(_pi), versions{&m_eraVersion, &m_localVersion, &m_remoteVersion}
 {
+    m_remoteVersion.textColor = eTextColor::GREEN;
     LoadDataFromJson();
 }
 void AssemblyInformation::Version::GetVersion() noexcept
@@ -76,7 +77,7 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
     }
 }
 
-H3DlgPcx16 *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
+H3DlgText *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
 {
     parentDlg = dlg;
     int itemId = 29000;
@@ -87,8 +88,8 @@ H3DlgPcx16 *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
         parentDlg = nullptr;
         return nullptr;
     }
-    dlgItem = H3DlgPcx16::Create(0, 0, 1, 1, itemId, nullptr);
-    if (!dlgItem || !UpdateImage())
+    dlgItem = H3DlgText::Create(0, 0, 1, 1, h3_NullString, fontName, textColor, itemId);
+    if (!dlgItem || !UpdateText())
     {
         if (dlgItem)
             dlgItem->Destroy(TRUE);
@@ -100,7 +101,7 @@ H3DlgPcx16 *AssemblyInformation::Version::AddToDlg(H3BaseDlg *dlg) noexcept
     return dlgItem;
 }
 
-bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
+bool AssemblyInformation::Version::UpdateText() noexcept
 {
     if (!parentDlg || !dlgItem)
         return false;
@@ -115,51 +116,31 @@ bool AssemblyInformation::Version::UpdateImage(const bool drawText) noexcept
     if (!font.Get() || maxWidth <= horizontalPadding * 2 || maxHeight <= verticalPadding * 2)
         return false;
 
-    // Keep the right edge and never shrink the backing image: an asynchronous
-    // version update must paint over the entire previous label.
     const int textWidth = Clamp(1, font->GetMaxLineWidth(text.String()), maxWidth - horizontalPadding * 2);
-    const int width = fixedWidth > 0 ? std::min(fixedWidth, maxWidth)
-                                     : std::max(textWidth + horizontalPadding * 2, labelPcx ? labelPcx->width : 0);
+    const int width = fixedWidth > 0 ? std::min(fixedWidth, maxWidth) : textWidth + horizontalPadding * 2;
     const int height = std::min(std::max(fixedHeight, font->height + verticalPadding * 2), maxHeight);
-    const int right = labelPcx ? dlgItem->GetX() + dlgItem->GetWidth()
-                              : Clamp(minX, x, minX + maxWidth - width) + width;
-    const int top = labelPcx ? dlgItem->GetY() : y;
-    if (!labelPcx || labelPcx->width != width || labelPcx->height != height)
-    {
-        auto *replacement = H3LoadedPcx16::Create(width, height);
-        if (!replacement)
-            return false;
-        dlgItem->SetPcx(nullptr);
-        if (labelPcx)
-            labelPcx->Destroy();
-        labelPcx = replacement;
-        dlgItem->SetPcx(labelPcx);
-    }
     dlgItem->SetWidth(width);
     dlgItem->SetHeight(height);
-    dlgItem->SetX(Clamp(minX, right - width, minX + maxWidth - width));
-    dlgItem->SetY(Clamp(minY, top, minY + maxHeight - height));
-
-    // Same runtime text-on-PCX approach as the language selection dialog.
-    libc::memset(labelPcx->buffer, 0, labelPcx->buffSize);
-    labelPcx->DrawFrame(0, 0, width, height); // Thin, one-pixel frame.
-    if (drawText)
-        font->TextDraw(labelPcx, text.String(), horizontalPadding, verticalPadding,
-                       width - horizontalPadding * 2, height - verticalPadding * 2,
-                       textColor, eTextAlignment::MIDDLE_CENTER);
+    dlgItem->SetX(Clamp(minX, x, minX + maxWidth - width));
+    dlgItem->SetY(Clamp(minY, y, minY + maxHeight - height));
+    dlgItem->color = textColor;
+    dlgItem->SetText(text.String());
     return true;
 }
 
-void AssemblyInformation::Version::ReleaseImage() noexcept
+void AssemblyInformation::Version::ReleaseItem() noexcept
 {
-    // Dialog items belong to the game; detach our image before their destructor.
-    if (dlgItem)
-        dlgItem->SetPcx(nullptr);
-    if (labelPcx)
-        labelPcx->Destroy();
-    labelPcx = nullptr;
+    // Text widgets belong to the dialog; there are no owned image buffers.
     dlgItem = nullptr;
     parentDlg = nullptr;
+}
+
+void AssemblyInformation::Version::RedrawText() noexcept
+{
+    // Transparent text cannot erase its previous glyphs. Redraw the menu only
+    // when the label changes, using the menu's existing cached background.
+    if (parentDlg && dlgItem)
+        parentDlg->Redraw();
 }
 
 void AssemblyInformation::Version::AdjustItemText() noexcept
@@ -417,39 +398,9 @@ void AssemblyInformation::CheckOnlineVersion()
 const BOOL AssemblyInformation::CompareVersions()
 {
     m_remoteVersion.ApplyCompletedRequest();
-    const BOOL wasHigher = m_localVersion.remoteVersionIsHigher;
     m_localVersion.remoteVersionIsHigher =
         assemblyVersion::IsNewer(m_remoteVersion.version.String(), m_localVersion.version.String());
-    m_localVersion.textColor = m_localVersion.remoteVersionIsHigher ? eTextColor::RED : eTextColor::HIGHLIGHT;
-    if (wasHigher != m_localVersion.remoteVersionIsHigher && isVisible && m_localVersion.dlgItem)
-    {
-        m_localVersion.UpdateImage();
-        m_localVersion.dlgItem->Draw();
-        m_localVersion.dlgItem->Refresh();
-    }
-
-    if (m_localVersion.remoteVersionIsHigher && !wasHigher)
-    {
-        versionBlinkLastUpdate = h3::GetTime();
-        versionBlinkVisible = true;
-        if (isVisible && m_remoteVersion.dlgItem)
-        {
-            m_remoteVersion.UpdateImage();
-            m_remoteVersion.dlgItem->Show();
-            m_remoteVersion.dlgItem->Draw();
-            m_remoteVersion.dlgItem->Refresh();
-        }
-    }
-    else if (wasHigher && !m_localVersion.remoteVersionIsHigher && isVisible && m_remoteVersion.dlgItem)
-    {
-        // Do not leave the latest version hidden when blinking stops.
-        versionBlinkVisible = true;
-        m_remoteVersion.UpdateImage();
-        m_remoteVersion.dlgItem->Show();
-        m_remoteVersion.dlgItem->Draw();
-        m_remoteVersion.dlgItem->Refresh();
-    }
-
+    m_localVersion.textColor = m_localVersion.remoteVersionIsHigher ? eTextColor::RED : eTextColor::GREEN;
     return m_localVersion.remoteVersionIsHigher;
 }
 
@@ -473,9 +424,9 @@ int __stdcall AssemblyInformation::DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 
 {
     Get().isVisible = false;
-    Get().m_assemblyTitle.ReleaseImage();
+    Get().m_assemblyTitle.ReleaseItem();
     for (auto *version : Get().versions)
-        version->ReleaseImage();
+        version->ReleaseItem();
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
 // int __stdcall AssemblyInformation::DlgMainMenu_NewLoad_Create(HiHook *h,
@@ -497,8 +448,6 @@ void AssemblyInformation::CreateDlgItems(H3BaseDlg *dlg)
 {
     LoadAssemblyLabelText();
     PrepareAssemblyLabels(dlg);
-    versionBlinkVisible = true;
-    versionBlinkLastUpdate = h3::GetTime();
     CompareVersions();
     // hide wnd version hint
     if (auto *it = dlg->GetH3DlgItem(545))
@@ -557,11 +506,11 @@ void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
     m_assemblyTitle.y = top;
     m_assemblyTitle.fixedWidth = titleWidth;
     m_assemblyTitle.fixedHeight = height;
-    m_assemblyTitle.fontName = NH3Dlg::Text::SMALL;
+    m_assemblyTitle.fontName = NH3Dlg::Text::MEDIUM;
     int columnX = left + titleWidth - 1;
     for (auto *version : {static_cast<Version *>(&m_localVersion), static_cast<Version *>(&m_remoteVersion)})
     {
-        version->fontName = NH3Dlg::Text::SMALL;
+        version->fontName = NH3Dlg::Text::MEDIUM;
         version->fixedWidth = versionWidth;
         version->fixedHeight = height;
         version->x = columnX;
@@ -581,10 +530,8 @@ void __stdcall AssemblyInformation::OnAfterReloadLanguageData(Era::TEvent *e)
             continue;
         if (version != &instance.m_assemblyTitle)
             version->AdjustItemText();
-        const bool drawText = version != &instance.m_remoteVersion || instance.versionBlinkVisible;
-        version->UpdateImage(drawText);
-        version->dlgItem->Draw();
-        version->dlgItem->Refresh();
+        version->UpdateText();
+        version->RedrawText();
     }
 }
 
@@ -600,7 +547,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
         const AssemblyInformation::Version *activeVersion = nullptr;
         for (auto *ver : instance.versions)
         {
-            H3DlgPcx16 *it = ver->dlgItem;
+            H3DlgText *it = ver->dlgItem;
             if (it && it->IsVisible())
             {
                 if (it == hovered && !ver->shellExecutePath.Empty())
@@ -627,27 +574,34 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
         AssemblyInformation::RemoteVersion &remoteVersion = instance.m_remoteVersion;
 
-        H3DlgPcx16 *it = remoteVersion.dlgItem;
+        H3DlgText *it = remoteVersion.dlgItem;
 
         remoteVersion.ApplyCompletedRequest();
-        if (remoteVersion.workDone && it)
+        if (remoteVersion.workDone)
         {
             instance.CompareVersions();
-            if (it->IsVisible())
+            auto &localVersion = instance.m_localVersion;
+            auto *localItem = localVersion.dlgItem;
+            const bool localColorChanged = localItem && localItem->color != localVersion.textColor;
+            if (localColorChanged)
+                localItem->color = localVersion.textColor;
+
+            const bool updateRemoteText = it && it->IsVisible();
+            if (updateRemoteText)
             {
                 remoteVersion.AdjustItemText();
-                remoteVersion.UpdateImage();
-
-                it->Draw();
-                it->Refresh();
+                remoteVersion.UpdateText();
             }
+            if (localColorChanged)
+                localVersion.RedrawText();
+            else if (updateRemoteText)
+                remoteVersion.RedrawText();
 
             remoteVersion.workDone = false;
         }
 
         if (instance.m_assemblyTitle.dlgItem && instance.m_assemblyTitle.alwaysDraw)
             instance.m_assemblyTitle.dlgItem->Draw();
-        instance.UpdateVersionBlink();
     }
 
     // The outermost menu hook applies the combined request, in either plugin
@@ -657,25 +611,6 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
     if (result != 2 && cursor.IsOwner() && (msg->GetX() || cursor.WantsHand()))
         mainmenu::ApplyHandCursor(cursor.WantsHand());
     return result;
-}
-
-void AssemblyInformation::UpdateVersionBlink() noexcept
-{
-    if (!m_localVersion.remoteVersionIsHigher || !m_remoteVersion.dlgItem)
-        return;
-
-    const DWORD currentTime = h3::GetTime();
-    constexpr DWORD BLINK_INTERVAL_MS = 1000;
-    if (currentTime - versionBlinkLastUpdate < BLINK_INTERVAL_MS)
-        return;
-
-    versionBlinkLastUpdate = currentTime;
-    versionBlinkVisible = !versionBlinkVisible;
-    // Blink only the text. Drawing the black backing image erases the old
-    // glyphs while the frame, click target and item visibility stay stable.
-    m_remoteVersion.UpdateImage(versionBlinkVisible != FALSE);
-    m_remoteVersion.dlgItem->Draw();
-    m_remoteVersion.dlgItem->Refresh();
 }
 
 H3DlgText *__stdcall H3DlgText__Ctor(HiHook *h, H3DlgText *_this, int xpos, int ypos, int xsize, int ysize,

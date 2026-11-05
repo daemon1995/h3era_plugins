@@ -22,7 +22,7 @@ class AssemblyInformation : public IGamePatch
         int y = 0;
         int fixedWidth = 0;
         int fixedHeight = 0;
-        const char *fontName = NH3Dlg::Text::SMALL;
+        const char *fontName = NH3Dlg::Text::MEDIUM;
         const char *format = 0;
         eTextColor textColor = eTextColor::HIGHLIGHT;
 
@@ -35,8 +35,7 @@ class AssemblyInformation : public IGamePatch
         BOOL show = false;
         BOOL alwaysDraw = false;
 
-        H3DlgPcx16 *dlgItem = nullptr;
-        H3LoadedPcx16 *labelPcx = nullptr;
+        H3DlgText *dlgItem = nullptr;
         H3BaseDlg *parentDlg = nullptr;
 
       public:
@@ -46,9 +45,10 @@ class AssemblyInformation : public IGamePatch
 
       public:
         void ClickProcedure() const noexcept;
-        H3DlgPcx16 *AddToDlg(H3BaseDlg *dlg) noexcept;
-        bool UpdateImage(bool drawText = true) noexcept;
-        void ReleaseImage() noexcept;
+        H3DlgText *AddToDlg(H3BaseDlg *dlg) noexcept;
+        bool UpdateText() noexcept;
+        void ReleaseItem() noexcept;
+        void RedrawText() noexcept;
 
     } m_eraVersion;
     Version m_assemblyTitle;
@@ -83,8 +83,6 @@ class AssemblyInformation : public IGamePatch
 
     Version *versions[3];
     BOOL isVisible = false;
-    DWORD versionBlinkLastUpdate = 0;
-    BOOL versionBlinkVisible = true;
 
   private:
     AssemblyInformation(PatcherInstance *_pi);
@@ -102,7 +100,6 @@ class AssemblyInformation : public IGamePatch
 
   private:
     void LoadDataFromJson();
-    void UpdateVersionBlink() noexcept;
     void PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept;
     void LoadAssemblyLabelText();
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
