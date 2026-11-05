@@ -1808,8 +1808,3 @@ void GeneratedInfo::Clear(const H3RmgRandomMapGenerator *rmgStruct)
         maxObjectSubtype = 0;
     }
 }
-
-BOOL GeneratedInfo::IsInited() const noexcept
-{
-    return isInited;
-}

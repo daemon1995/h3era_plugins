@@ -1,6 +1,5 @@
 #pragma once
 struct ObjectLimitsInfo;
-#include <array>
 #include "ObjectTypeLimits.h"
 
 struct RMGTemplateLimits
@@ -77,7 +76,10 @@ struct PrisonVariantKey
     }
 };
 
-namespace EraJS { struct RmgExportOverridesInfo; }
+namespace EraJS
+{
+struct RmgExportOverridesInfo;
+}
 
 struct RMGObjectInfo : public extender::RMGObjectProperties
 {
@@ -241,13 +243,15 @@ struct GeneratedInfo
     const _RMGObjGenScroll_ *lastGeneratedSpellScroll = nullptr;
 
   public:
-    void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId,
-                                 const int settingsSubtype = -1);
+    void IncreaseObjectsCounters(const H3RmgObjectProperties *prop, const int zoneId, const int settingsSubtype = -1);
     void RememberGeneratedObjectVariant(const H3RmgObject *object, const H3RmgObjectGenerator *generator);
     int TakeGeneratedObjectVirtualSubtype(const H3RmgObject *object) noexcept;
     void Assign(const H3RmgRandomMapGenerator *rmg, std::vector<RMGObjectInfo> (&userRmgInfoSet)[h3::limits::OBJECTS]);
     void Clear(const H3RmgRandomMapGenerator *rmgStruct);
-    BOOL IsInited() const noexcept;
+    inline BOOL IsInited() const noexcept
+    {
+        return isInited;
+    }
 
   public:
     BOOL ObjectCantBeGenerated(const H3RmgObjectGenerator *rmgObjGen, const int zoneId) const;
@@ -337,7 +341,7 @@ class RMGObjectsEditor : public IGamePatch
     H3Vector<H3RmgObjectGenerator *> originalRMGObjectGenerators;
     struct StoredCurrentObject
     {
-        const H3RmgObjectGenerator* generator = nullptr;
+        const H3RmgObjectGenerator *generator = nullptr;
         RMGObjectInfo info;
     };
     std::vector<StoredCurrentObject> storedCurrentObjects;
