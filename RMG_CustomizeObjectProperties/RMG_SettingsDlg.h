@@ -340,6 +340,10 @@ class RMG_SettingsDlg : public H3Dlg
 
   public:
     static BOOL GetApiDialogEntry(int index, void *draft, void *current, void *key = nullptr) noexcept;
+    static bool IsOpen() noexcept
+    {
+        return instance != nullptr;
+    }
     // Caller owns the preview; includes definitions without an RMG generator.
     static H3LoadedPcx16 *CreateWogificationPreview(int type, int subtype);
     static void SetPatches(PatcherInstance *_pi);

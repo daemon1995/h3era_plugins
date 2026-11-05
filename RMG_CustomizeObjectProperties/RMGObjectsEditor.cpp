@@ -464,12 +464,42 @@ RMGObjectsEditor::RMGObjectsEditor() : IGamePatch(globalPatcher->CreateInstance(
 
 void RMGObjectsEditor::Init(const INT16 *maxSubtypes)
 {
-
-    // init data in the main
-    Get().InitDefaultProperties(maxSubtypes);
+    auto &editor = Get();
+    editor.settingsLoaded = false;
+    editor.InitDefaultProperties(maxSubtypes);
 
     // Finish loading before the dialog or generation can use/edit this data.
     RMGObjectInfo::LoadUserProperties();
+    editor.settingsLoaded = true;
+}
+
+bool RMGObjectsEditor::CanEditSettings() noexcept
+{
+    return instance && instance->settingsLoaded && !instance->isGenerating && !instance->isPseudoGeneration;
+}
+
+bool RMGObjectsEditor::GetTypeLimits(int type, TypeGenerationLimits &out) noexcept
+{
+    if (!instance || !instance->settingsLoaded || type < 0 || type >= H3_MAX_OBJECTS)
+        return false;
+
+    const auto &info = instance->limitsInfo;
+    out = {info.mapTypesLimit[type], info.zoneLimitsPerSubtype[type] ? info.mapTypesLimit[type]
+                                                                   : info.zoneTypeLimits[type]};
+    return true;
+}
+
+bool RMGObjectsEditor::SetTypeLimits(int type, int mapLimit, int zoneLimit) noexcept
+{
+    if (!CanEditSettings() || type < 0 || type >= H3_MAX_OBJECTS)
+        return false;
+
+    auto &info = instance->limitsInfo;
+    const auto limits = NormalizeTypeLimits(mapLimit, zoneLimit);
+    info.mapTypesLimit[type] = limits.map;
+    info.zoneTypeLimits[type] = limits.zone;
+    info.zoneLimitsPerSubtype[type] = false;
+    return true;
 }
 
 void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
@@ -615,6 +645,9 @@ RMGObjectsEditor &RMGObjectsEditor::Get() noexcept
 
 void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRandomMapGenerator *rmgStruct)
 {
+    auto &editor = RMGObjectsEditor::Get();
+    if (!editor.isPseudoGeneration)
+        editor.isGenerating = true;
 
     // call default function to create rmg gen list first
     THISCALL_1(void, h->GetDefaultFunc(), rmgStruct);
@@ -623,7 +656,6 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
     if (H3Vector<H3RmgObjectGenerator *> *rmgObjectsList = &rmgStruct->objectGenerators)
     {
         // and add objects by properly allocated memory m_size and types (this case is CB)
-        auto &editor = RMGObjectsEditor::Get();
         auto &manager = extendersManager::ObjectExtenderManager::Get();
 
         const BOOL isPseudoGeneration = editor.isPseudoGeneration;
@@ -884,6 +916,7 @@ void __stdcall RMGObjectsEditor::RMG__InitGenZones(HiHook *h, const H3RmgRandomM
 
 void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStruct)
 {
+    isGenerating = true;
     nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
                            reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit), limitsInfo.mapTypesLimit,
                            limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype);
@@ -944,6 +977,7 @@ void RMGObjectsEditor::AfterMapGeneration(H3RmgRandomMapGenerator *rmgStruct) no
 
     // restore changed spell levels
     SetMapControlSpellLevels(false);
+    isGenerating = false;
 }
 
 // set virtual object subtype to spell level to increase counters
@@ -1815,7 +1849,7 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         {
 
             const int objSubtype = info.subtype;
-            if (objSubtype < 0)
+            if (objSubtype < 0 || objSubtype >= maxSubtype)
                 continue;
 
             const int index2 = index2D(info.type, objSubtype, maxSubtype);

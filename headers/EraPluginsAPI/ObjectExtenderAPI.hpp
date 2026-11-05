@@ -458,9 +458,27 @@ struct ObjectKey
 // The caller initializes structSize on every output. Returns FALSE for an
 // invalid key, unavailable data, closed dialog, or an out-of-range index.
 using GetByKey = BOOL(__stdcall *)(const ObjectKey *key, ObjectInfo *out);
+// Change the current subtype/variant limits. The map limit is clamped to the
+// aggregate map cap; the zone limit is clamped to the resulting map limit.
+using SetObjectLimitsByKey = BOOL(__stdcall *)(const ObjectKey *key, int mapLimit, int zoneLimit);
 using GetMemoryEntry = BOOL(__stdcall *)(int index, ObjectKey *key, ObjectInfo *out);
 using GetDialogEntryByKey = BOOL(__stdcall *)(int index, ObjectKey *key, ObjectInfo *draft, ObjectInfo *current);
 constexpr const char *GET_BY_KEY = "RMG_GetObjectInfoByKey";
+constexpr const char *SET_OBJECT_LIMITS_BY_KEY = "RMG_SetObjectLimitsByKey";
 constexpr const char *GET_MEMORY_ENTRY = "RMG_GetMemoryObjectInfo";
 constexpr const char *GET_DIALOG_ENTRY_BY_KEY = "RMG_GetDialogObjectInfoByKey";
+
+struct TypeLimits
+{
+    unsigned structSize;
+    int mapLimit, zoneLimit;
+};
+// The aggregate caps shared by all subtypes of an object type. Read after RMG
+// initialization. The setter clamps the zone limit to the map limit.
+using GetTypeLimits = BOOL(__stdcall *)(int type, TypeLimits *out);
+using SetTypeLimits = BOOL(__stdcall *)(int type, int mapLimit, int zoneLimit);
+constexpr const char *GET_TYPE_LIMITS = "RMG_GetObjectTypeLimits";
+constexpr const char *SET_TYPE_LIMITS = "RMG_SetObjectTypeLimits";
+// Call setters on the game thread with the settings dialog closed and outside
+// generation. Changes are session settings. All limits have a minimum of zero.
 } // namespace rmg_api

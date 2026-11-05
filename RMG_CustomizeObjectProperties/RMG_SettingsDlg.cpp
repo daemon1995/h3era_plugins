@@ -2755,6 +2755,68 @@ void CopyRmgApiInfo(rmg_api::ObjectInfo &out, const RMGObjectInfo &info, int set
     out = {sizeof(out),   info.type,      info.subtype, settingsSubtype, info.enabled,
            info.mapLimit, info.zoneLimit, info.value,   info.density};
 }
+
+RMGObjectInfo *FindCurrentObject(int type, int subtype) noexcept
+{
+    if (type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
+        return nullptr;
+    auto &records = RMGObjectInfo::currentRMGObjectsInfoByType[type];
+    if (size_t(subtype) >= records.size())
+        return nullptr;
+    auto &record = records[subtype];
+    return record.type == type && record.subtype == subtype ? &record : nullptr;
+}
+
+template <typename Record>
+RMGObjectInfo *MatchApiVariant(Record *record, const rmg_api::ObjectKey &key, int &settingsSubtype) noexcept
+{
+    if (!record || record->currentInfo.type != key.type || record->currentInfo.subtype != key.subtype)
+        return nullptr;
+    settingsSubtype = record->virtualSubtype;
+    return &record->currentInfo;
+}
+
+RMGObjectInfo *FindApiObject(const rmg_api::ObjectKey *key, int &settingsSubtype) noexcept
+{
+    if (!key || key->structSize < sizeof(*key))
+        return nullptr;
+
+    if (key->kind >= rmg_api::PANDORA_GOLD && key->kind <= rmg_api::PANDORA_MONSTERS)
+    {
+        const auto kind = static_cast<ePandoraGeneratorKind>(key->kind - 1);
+        return MatchApiVariant(PandoraVariants::FindRecordMutable({kind, key->first, key->second, key->third}),
+                               *key, settingsSubtype);
+    }
+    if (key->second != 0 || key->third != 0)
+        return nullptr;
+
+    ePandoraGeneratorKind kind;
+    switch (key->kind)
+    {
+    case rmg_api::OBJECT:
+        settingsSubtype = key->subtype;
+        return key->first == 0 ? FindCurrentObject(key->type, key->subtype) : nullptr;
+    case rmg_api::PRISON:
+        return MatchApiVariant(PrisonVariants::FindRecordMutable({key->first}), *key, settingsSubtype);
+    case rmg_api::SEER_HUT_GOLD:
+        kind = ePandoraGeneratorKind::GOLD;
+        break;
+    case rmg_api::SEER_HUT_EXPERIENCE:
+        kind = ePandoraGeneratorKind::EXPERIENCE;
+        break;
+    case rmg_api::SEER_HUT_MONSTERS:
+        kind = ePandoraGeneratorKind::MONSTERS;
+        break;
+    default:
+        return nullptr;
+    }
+    return MatchApiVariant(SeerHutVariants::FindRecordMutable({kind, key->first}), *key, settingsSubtype);
+}
+
+bool CanEditRmgSettings() noexcept
+{
+    return !rmgdlg::RMG_SettingsDlg::IsOpen() && editor::RMGObjectsEditor::CanEditSettings();
+}
 } // namespace
 BOOL rmgdlg::RMG_SettingsDlg::GetApiDialogEntry(int index, void *draftPtr, void *currentPtr, void *keyPtr) noexcept
 {
@@ -2792,15 +2854,12 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetDialogObjectInfo(int inde
 extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetCurrentObjectInfo(int type, int subtype,
                                                                          rmg_api::ObjectInfo *out)
 {
-    if (!out || out->structSize < sizeof(*out) || type < 0 || type >= h3::limits::OBJECTS || subtype < 0)
+    if (!out || out->structSize < sizeof(*out))
         return FALSE;
-    const auto &records = RMGObjectInfo::currentRMGObjectsInfoByType[type];
-    if (size_t(subtype) >= records.size())
+    const auto *record = FindCurrentObject(type, subtype);
+    if (!record)
         return FALSE;
-    const auto &record = records[subtype];
-    if (record.type != type || record.subtype != subtype)
-        return FALSE;
-    CopyRmgApiInfo(*out, record, subtype);
+    CopyRmgApiInfo(*out, *record, subtype);
     return TRUE;
 }
 #pragma comment(linker, "/EXPORT:RMG_GetCurrentObjectInfo=_RMG_GetCurrentObjectInfo@12")
@@ -2860,33 +2919,45 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetMemoryObjectInfo(int inde
 extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetObjectInfoByKey(const rmg_api::ObjectKey *key,
                                                                        rmg_api::ObjectInfo *out)
 {
-    if (!key || key->structSize < sizeof(*key) || !out || out->structSize < sizeof(*out))
+    if (!out || out->structSize < sizeof(*out))
         return FALSE;
-    if (key->kind == rmg_api::OBJECT && key->first == 0 && key->second == 0 && key->third == 0)
-        return RMG_GetCurrentObjectInfo(key->type, key->subtype, out);
-    for (const auto &record : PandoraVariants::GetRecords())
-        if (record.currentInfo.type == key->type && record.currentInfo.subtype == key->subtype &&
-            static_cast<int>(record.key.kind) + 1 == key->kind && record.key.first == key->first &&
-            record.key.second == key->second && record.key.third == key->third)
-        {
-            CopyRmgApiInfo(*out, record.currentInfo, record.virtualSubtype);
-            return TRUE;
-        }
-    for (const auto &record : SeerHutVariants::GetRecords())
-        if (key->kind == SeerHutApiKind(record.key) && record.currentInfo.type == key->type &&
-            record.currentInfo.subtype == key->subtype && record.key.first == key->first && key->second == 0 &&
-            key->third == 0)
-        {
-            CopyRmgApiInfo(*out, record.currentInfo, record.virtualSubtype);
-            return TRUE;
-        }
-    for (const auto &record : PrisonVariants::GetRecords())
-        if (key->kind == rmg_api::PRISON && record.currentInfo.type == key->type &&
-            record.currentInfo.subtype == key->subtype && record.key.experience == key->first && key->second == 0 &&
-            key->third == 0)
-        {
-            CopyRmgApiInfo(*out, record.currentInfo, record.virtualSubtype);
-            return TRUE;
-        }
-    return FALSE;
+    int settingsSubtype;
+    const auto *info = FindApiObject(key, settingsSubtype);
+    if (!info)
+        return FALSE;
+    CopyRmgApiInfo(*out, *info, settingsSubtype);
+    return TRUE;
+}
+
+#pragma comment(linker, "/EXPORT:RMG_SetObjectLimitsByKey=_RMG_SetObjectLimitsByKey@12")
+DllExport BOOL __stdcall RMG_SetObjectLimitsByKey(const rmg_api::ObjectKey *key, int mapLimit, int zoneLimit)
+{
+    if (!CanEditRmgSettings())
+        return FALSE;
+    int settingsSubtype;
+    auto *info = FindApiObject(key, settingsSubtype);
+    if (!info)
+        return FALSE;
+
+    const int typeMapLimit = editor::RMGObjectsEditor::Get().MaxMapTypeLimit(info->type);
+    const auto limits = editor::NormalizeTypeLimits(std::min(mapLimit, typeMapLimit), zoneLimit);
+    info->mapLimit = limits.map;
+    info->zoneLimit = limits.zone;
+    return TRUE;
+}
+
+#pragma comment(linker, "/EXPORT:RMG_GetObjectTypeLimits=_RMG_GetObjectTypeLimits@8")
+DllExport BOOL __stdcall RMG_GetObjectTypeLimits(int type, rmg_api::TypeLimits *out)
+{
+    editor::TypeGenerationLimits limits;
+    if (!out || out->structSize < sizeof(*out) || !editor::RMGObjectsEditor::GetTypeLimits(type, limits))
+        return FALSE;
+    *out = {sizeof(*out), limits.map, limits.zone};
+    return TRUE;
+}
+
+#pragma comment(linker, "/EXPORT:RMG_SetObjectTypeLimits=_RMG_SetObjectTypeLimits@12")
+DllExport BOOL __stdcall RMG_SetObjectTypeLimits(int type, int mapLimit, int zoneLimit)
+{
+    return CanEditRmgSettings() && editor::RMGObjectsEditor::SetTypeLimits(type, mapLimit, zoneLimit);
 }

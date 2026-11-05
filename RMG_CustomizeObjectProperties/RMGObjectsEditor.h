@@ -168,7 +168,6 @@ template<int ObjectType> class RewardVariants
   private:
     static std::vector<Record> records;
 
-    static Record *FindRecordMutable(const PandoraVariantKey &key) noexcept;
     static const Record *FindRecord(const PandoraVariantKey &key) noexcept;
     static H3String GetPersistentKey(const PandoraVariantKey &key);
     static H3String GetIniSectionName(const PandoraVariantKey &key);
@@ -179,6 +178,7 @@ template<int ObjectType> class RewardVariants
     static void LoadUserProperties();
     static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
     static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
+    static Record *FindRecordMutable(const PandoraVariantKey &key) noexcept;
     static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
     static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
                            LPCSTR iniPath = RMGObjectInfo::INI_FILE_PATH) noexcept;
@@ -203,7 +203,6 @@ class PrisonVariants
   private:
     static std::vector<Record> records;
 
-    static Record *FindRecordMutable(const PrisonVariantKey &key) noexcept;
     static const Record *FindRecord(const PrisonVariantKey &key) noexcept;
     static H3String GetPersistentKey(const PrisonVariantKey &key);
     static H3String GetIniSectionName(const PrisonVariantKey &key);
@@ -214,6 +213,7 @@ class PrisonVariants
     static void LoadUserProperties();
     static const Record *Find(const H3RmgObjectGenerator *generator) noexcept;
     static Record *FindMutable(const H3RmgObjectGenerator *generator) noexcept;
+    static Record *FindRecordMutable(const PrisonVariantKey &key) noexcept;
     static int GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept;
     static BOOL WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
                            LPCSTR iniPath = RMGObjectInfo::INI_FILE_PATH) noexcept;
@@ -329,6 +329,8 @@ class RMGObjectsEditor : public IGamePatch
   private:
     // used to store default generated data
     BOOL isPseudoGeneration = false;
+    bool settingsLoaded = false;
+    bool isGenerating = false;
 
     ObjectLimitsInfo limitsInfo; // = nullptr;
     NativeTypeLimitsOverride<H3_MAX_OBJECTS> nativeTypeLimits;
@@ -390,6 +392,9 @@ class RMGObjectsEditor : public IGamePatch
   public:
     static void Init(const INT16 *maxSubtypes);
     static RMGObjectsEditor &Get() noexcept;
+    static bool CanEditSettings() noexcept;
+    static bool GetTypeLimits(int type, TypeGenerationLimits &out) noexcept;
+    static bool SetTypeLimits(int type, int mapLimit, int zoneLimit) noexcept;
 };
 
 } // namespace editor
