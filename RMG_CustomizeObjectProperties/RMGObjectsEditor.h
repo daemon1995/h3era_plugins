@@ -154,7 +154,7 @@ struct RMGObjectInfo : public extender::RMGObjectProperties
 };
 
 // Reward settings are independent of the native graphics subtype.
-template<int ObjectType> class RewardVariants
+class PandoraVariants
 {
   public:
     struct Record
@@ -186,8 +186,6 @@ template<int ObjectType> class RewardVariants
     static const std::vector<Record> &GetRecords() noexcept;
 };
 
-using PandoraVariants = RewardVariants<h3::eObject::PANDORAS_BOX>;
-using SeerHutVariants = RewardVariants<h3::eObject::SEER_HUT>;
 
 class PrisonVariants
 {
@@ -253,7 +251,6 @@ struct GeneratedInfo
 
   public:
     BOOL ObjectCantBeGenerated(const H3RmgObjectGenerator *rmgObjGen, const int zoneId) const;
-    BOOL SeerHutCantBePlaced(const H3RmgLocalMap &localMap, int zoneId) const;
 };
 struct ObjectLimitsInfo
 {
@@ -368,12 +365,9 @@ class RMGObjectsEditor : public IGamePatch
                                                                      H3RmgObjectPropsRef *ref,
                                                                      H3RmgRandomMapGenerator *rmg,
                                                                      H3RmgZoneGenerator *zoneGen) noexcept;
-    static H3RmgObject *__stdcall RMG__Reward__CreateObject(HiHook *h, H3RmgObjectGenerator *generator,
-                                                                      H3RmgObjectPropsRef *ref,
-                                                                      H3RmgRandomMapGenerator *rmg,
-                                                                      H3RmgZoneGenerator *zoneGen) noexcept;
-    static BOOL8 __stdcall RMG__PlaceLocalMap(HiHook *h, H3RmgRandomMapGenerator *rmg,
-                                             H3RmgLocalMap *localMap, H3RmgZoneGenerator *zone, UINT flags);
+    static H3RmgObject *__stdcall RMG__RMGObjGenPandora__CreateObject(HiHook *h, H3RmgObjectGenerator *generator,
+                                                            H3RmgObjectPropsRef *ref, H3RmgRandomMapGenerator *rmg,
+                                                            H3RmgZoneGenerator *zoneGen) noexcept;
 
     static void __stdcall RMG__InitGenZones(HiHook *h, const H3RmgRandomMapGenerator *rmg,
                                             const H3RmgTemplate *RmgTemplate);

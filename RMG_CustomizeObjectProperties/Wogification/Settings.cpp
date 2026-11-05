@@ -90,8 +90,8 @@ bool ProtectedObject(int type, int subtype)
     }
     // A wildcard source can cover both ordinary and quest subtypes. Check
     // registered subtypes individually when their actual map instance is used.
-    const auto page = extendersManager::ObjectExtenderManager::GetObjectPage(type, subtype);
-    return subtype >= 0 && (page == extender::ePagePrison || page == extender::ePageSeerHut);
+    return subtype >= 0 &&
+           extendersManager::ObjectExtenderManager::GetObjectPage(type, subtype) == extender::ePagePrison;
 }
 size_t Add(int type, int subtype)
 {

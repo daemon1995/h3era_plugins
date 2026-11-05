@@ -38,8 +38,7 @@ enum eRmgDlgObjectPage
     ePageQuest = ePagePrison,
     ePageWogObject,
     ePageTreasure,
-    ePandoraBox,
-    ePageSeerHut
+    ePandoraBox
 };
 struct UniqueObjectInfo
 {
@@ -435,10 +434,7 @@ enum VariantKind
     PANDORA_EXPERIENCE = 2,
     PANDORA_MAGIC = 3,
     PANDORA_MONSTERS = 4,
-    PRISON = 5,
-    SEER_HUT_GOLD = 6,
-    SEER_HUT_EXPERIENCE = 7,
-    SEER_HUT_MONSTERS = 8
+    PRISON = 5
 };
 struct ObjectKey
 {
@@ -446,10 +442,6 @@ struct ObjectKey
     int type, subtype, kind;
     // GOLD: amount; EXPERIENCE/PRISON: experience; MONSTERS: creature ID;
     // MAGIC: minimum level, maximum level, school mask. Unused fields are zero.
-    // SEER_HUT_* uses type 83/subtype 0 for the shared reward settings,
-    // independently of the hut's real graphics subtype.
-    // SEER_HUT_* uses type 83/subtype 0 for the shared reward settings,
-    // independently of the hut's real graphics subtype.
     int first, second, third;
 };
 // Memory enumeration includes ordinary base records and separate variant records.

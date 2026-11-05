@@ -72,7 +72,7 @@ bool CopyObjectInfo(const void *source, const size_t sourceSize, UniqueObjectInf
     std::memcpy(&result, source, bytesToCopy);
     if (!object_config::IsObjectType(result.uniqueObjectType.type) || result.uniqueObjectType.subtype < -1)
         return false;
-    if (result.page < ePageUnknown || result.page > ePageSeerHut)
+    if (result.page < ePageUnknown || result.page > ePandoraBox)
         result.page = ePageUnknown;
     return true;
 }
@@ -397,14 +397,14 @@ eRmgDlgObjectPage ObjectExtenderManager::GetObjectPage(const int type, const int
         const int registeredSubtype = object->uniqueObjectType.subtype;
         const bool isExactSubtype = subtype < 0 || registeredSubtype == subtype;
         const bool isTypeRegistration = registeredSubtype < 0;
-        if (isExactSubtype && object->page >= ePageCommon && object->page <= ePageSeerHut)
+        if (isExactSubtype && object->page >= ePageCommon && object->page <= ePandoraBox)
             return object->page;
 
         if (isTypeRegistration && !typeInfo)
             typeInfo = object;
     }
 
-    if (typeInfo && typeInfo->page >= ePageCommon && typeInfo->page <= ePageSeerHut)
+    if (typeInfo && typeInfo->page >= ePageCommon && typeInfo->page <= ePandoraBox)
         return typeInfo->page;
 
     return ePageUnknown;
@@ -646,6 +646,9 @@ void ObjectExtenderManager::AddObjectsToObjectGenList(H3Vector<H3RmgObjectGenera
     // iterate each added RMG INFO
     for (auto &info : additionalRmgObjects)
     {
+        if (info.type == eObject::SEER_HUT)
+            continue;
+
         H3RmgObjectGenerator *objGen = nullptr;
 
         // check if it is possible to add object into the list

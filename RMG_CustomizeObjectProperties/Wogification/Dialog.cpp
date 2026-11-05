@@ -1010,9 +1010,9 @@ class Dialog : public H3Dlg
         for (const char *name : {Text("creatures"), Text("artifacts")})
             if (cats.erase(name))
                 categories.emplace_back(name);
-        for (int page = 0; page < static_cast<int>(extender::ePageSeerHut) + 1; ++page)
+        for (int page = 0; page < static_cast<int>(extender::ePandoraBox) + 1; ++page)
         {
-            if (page == extender::ePagePrison || page == extender::ePageSeerHut)
+            if (page == extender::ePagePrison)
                 continue;
             const auto name = NativeCategory(page);
             if (cats.erase(name))

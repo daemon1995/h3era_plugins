@@ -68,14 +68,12 @@ The project currently compiles extenders for spell markets, universities, creatu
 
 Two-way monolith subtypes 8 and above use separate teleport networks, including native pathfinding and ERA savegame support. See [extended monoliths](ExtendedMonoliths.md) for configuration and in-game checks.
 
-Seer's Huts have a separate page after Pandora's Boxes: one row per reward, with graphics from all type-83 subtypes. See [Seer's Hut settings](SeerHuts.md).
+Seer's Huts use the game's native generation and have no RMG settings page.
 
-Reward keys use the object type directly: `RMG.objectGeneration.6.gold.5000.map`
-and `RMG.objectGeneration.83.gold.5000.map`. Supported reward groups are `gold`,
-`experience`, `monsters`, and (for Pandora's Boxes) `magic`.
-INI sections follow `[6_0_gold.5000_0]` and `[83_0_gold.5000_0]` in
-`Runtime/RMG_CustomizeObjectsProperties.ini`. See [Pandora JSON](examples/pandora.json)
-and [Seer's Hut JSON](examples/seer_huts.json).
+Pandora's Box reward keys use the object type directly, for example
+`RMG.objectGeneration.6.gold.5000.map`. Supported reward groups are `gold`,
+`experience`, `monsters`, and `magic`. INI sections such as `[6_0_gold.5000_0]`
+are stored in `Runtime/RMG_CustomizeObjectsProperties.ini`. See [Pandora JSON](examples/pandora.json).
 
 Creature dwellings of types 17 and 20 use the standalone [ERA_DwellingsExtender](../ERA_DwellingsExtender/README.md)
 for extended gameplay. RMG keeps independent read-only dwelling hints and generator integration, including when

@@ -11,7 +11,7 @@
 std::vector<RMGObjectInfo> RMGObjectInfo::currentRMGObjectsInfoByType[h3::limits::OBJECTS];
 std::vector<RMGObjectInfo> RMGObjectInfo::defaultRMGObjectsInfoByType[h3::limits::OBJECTS];
 char RMGObjectInfo::localBuffer[512];
-template <int ObjectType> std::vector<typename RewardVariants<ObjectType>::Record> RewardVariants<ObjectType>::records;
+std::vector<PandoraVariants::Record> PandoraVariants::records;
 std::vector<PrisonVariants::Record> PrisonVariants::records;
 
 namespace
@@ -71,9 +71,7 @@ H3String GetPandoraMagicSchoolName(const INT32 schoolBit)
 }
 } // namespace
 
-template <int ObjectType>
-typename RewardVariants<ObjectType>::Record *RewardVariants<ObjectType>::FindRecordMutable(
-    const PandoraVariantKey &key) noexcept
+PandoraVariants::Record *PandoraVariants::FindRecordMutable(const PandoraVariantKey &key) noexcept
 {
     for (auto &record : records)
     {
@@ -83,9 +81,7 @@ typename RewardVariants<ObjectType>::Record *RewardVariants<ObjectType>::FindRec
     return nullptr;
 }
 
-template <int ObjectType>
-const typename RewardVariants<ObjectType>::Record *RewardVariants<ObjectType>::FindRecord(
-    const PandoraVariantKey &key) noexcept
+const PandoraVariants::Record *PandoraVariants::FindRecord(const PandoraVariantKey &key) noexcept
 {
     for (const auto &record : records)
     {
@@ -95,38 +91,32 @@ const typename RewardVariants<ObjectType>::Record *RewardVariants<ObjectType>::F
     return nullptr;
 }
 
-template <int ObjectType>
-BOOL RewardVariants<ObjectType>::GetKey(const H3RmgObjectGenerator *generator, PandoraVariantKey &key) noexcept
+BOOL PandoraVariants::GetKey(const H3RmgObjectGenerator *generator, PandoraVariantKey &key) noexcept
 {
-    if (!generator || generator->type != ObjectType || !generator->vTable)
+    if (!generator || generator->type != eObject::PANDORAS_BOX || !generator->vTable)
         return FALSE;
 
     const DWORD vTable = reinterpret_cast<DWORD>(generator->vTable);
     switch (vTable)
     {
-    case ObjectType == eObject::SEER_HUT ? 0x00640C10:
-    RMG_OBJ_GEN_PANDORA_MON_VTABLE: {
+    case RMG_OBJ_GEN_PANDORA_MON_VTABLE: {
         const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraMon_ *>(generator);
         // Creature type is the stable identity. objectValue is derived from
         // creature balance data and may change when another mod rebalances it.
         key = {ePandoraGeneratorKind::MONSTERS, pandora->montype, 0, 0};
         return TRUE;
     }
-    case ObjectType == eObject::SEER_HUT ? 0x00640C1C:
-    RMG_OBJ_GEN_PANDORA_GOLD_VTABLE: {
+    case RMG_OBJ_GEN_PANDORA_GOLD_VTABLE: {
         const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraGold_ *>(generator);
         key = {ePandoraGeneratorKind::GOLD, pandora->gold, 0, 0};
         return TRUE;
     }
-    case ObjectType == eObject::SEER_HUT ? 0x00640C28:
-    RMG_OBJ_GEN_PANDORA_EXP_VTABLE: {
+    case RMG_OBJ_GEN_PANDORA_EXP_VTABLE: {
         const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraExp_ *>(generator);
         key = {ePandoraGeneratorKind::EXPERIENCE, pandora->exp, 0, 0};
         return TRUE;
     }
     case RMG_OBJ_GEN_PANDORA_MAGIC_VTABLE: {
-        if (ObjectType != eObject::PANDORAS_BOX)
-            return FALSE;
         const auto *pandora = reinterpret_cast<const _RMGObjGenPandoraMagic_ *>(generator);
         key = {ePandoraGeneratorKind::MAGIC, pandora->minLevel, pandora->maxLevel, pandora->schoolBit};
         return TRUE;
@@ -136,7 +126,7 @@ BOOL RewardVariants<ObjectType>::GetKey(const H3RmgObjectGenerator *generator, P
     }
 }
 
-template <int ObjectType> H3String RewardVariants<ObjectType>::GetPersistentKey(const PandoraVariantKey &key)
+H3String PandoraVariants::GetPersistentKey(const PandoraVariantKey &key)
 {
     switch (key.kind)
     {
@@ -153,12 +143,12 @@ template <int ObjectType> H3String RewardVariants<ObjectType>::GetPersistentKey(
     }
 }
 
-template <int ObjectType> H3String RewardVariants<ObjectType>::GetIniSectionName(const PandoraVariantKey &key)
+H3String PandoraVariants::GetIniSectionName(const PandoraVariantKey &key)
 {
-    return H3String::Format("%d_0_%s_0", ObjectType, GetPersistentKey(key).String());
+    return H3String::Format("6_0_%s_0", GetPersistentKey(key).String());
 }
 
-template <int ObjectType> void RewardVariants<ObjectType>::RegisterDefault(const H3RmgObjectGenerator *generator)
+void PandoraVariants::RegisterDefault(const H3RmgObjectGenerator *generator)
 {
     PandoraVariantKey key;
     if (!GetKey(generator, key))
@@ -170,15 +160,14 @@ template <int ObjectType> void RewardVariants<ObjectType>::RegisterDefault(const
         Record newRecord;
         newRecord.key = key;
         newRecord.virtualSubtype = static_cast<INT32>(records.size());
-        newRecord.defaultInfo =
-            RMGObjectInfo::DefaultObjectInfo(ObjectType, ObjectType == eObject::SEER_HUT ? 0 : generator->subtype);
+        newRecord.defaultInfo = RMGObjectInfo::DefaultObjectInfo(generator->type, generator->subtype);
 
         const H3String persistentKey = GetPersistentKey(key);
         bool readSuccess = false;
         for (size_t i = 0; i < RMGObjectInfo::DATA_SIZE; ++i)
         {
-            const H3String jsonKey = H3String::Format("RMG.objectGeneration.%d.%s.%s", ObjectType,
-                                                      persistentKey.String(), RMGObjectInfo::PROPERTY_NAMES[i]);
+            const H3String jsonKey = H3String::Format("RMG.objectGeneration.6.%s.%s", persistentKey.String(),
+                                                      RMGObjectInfo::PROPERTY_NAMES[i]);
             const int value = EraJS::readInt(jsonKey.String(), readSuccess);
             if (readSuccess)
                 newRecord.defaultInfo.data[i] = value;
@@ -195,7 +184,7 @@ template <int ObjectType> void RewardVariants<ObjectType>::RegisterDefault(const
     }
 }
 
-template <int ObjectType> void RewardVariants<ObjectType>::LoadUserProperties()
+void PandoraVariants::LoadUserProperties()
 {
     for (auto &record : records)
     {
@@ -215,32 +204,26 @@ template <int ObjectType> void RewardVariants<ObjectType>::LoadUserProperties()
     }
 }
 
-template <int ObjectType>
-const typename RewardVariants<ObjectType>::Record *RewardVariants<ObjectType>::Find(
-    const H3RmgObjectGenerator *generator) noexcept
+const PandoraVariants::Record *PandoraVariants::Find(const H3RmgObjectGenerator *generator) noexcept
 {
     PandoraVariantKey key;
     return GetKey(generator, key) ? FindRecord(key) : nullptr;
 }
 
-template <int ObjectType>
-typename RewardVariants<ObjectType>::Record *RewardVariants<ObjectType>::FindMutable(
-    const H3RmgObjectGenerator *generator) noexcept
+PandoraVariants::Record *PandoraVariants::FindMutable(const H3RmgObjectGenerator *generator) noexcept
 {
     PandoraVariantKey key;
     return GetKey(generator, key) ? FindRecordMutable(key) : nullptr;
 }
 
-template <int ObjectType>
-int RewardVariants<ObjectType>::GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept
+int PandoraVariants::GetVirtualSubtype(const H3RmgObjectGenerator *generator) noexcept
 {
     const Record *record = Find(generator);
     return record ? record->virtualSubtype : (generator ? generator->subtype : eObject::NO_OBJ);
 }
 
-template <int ObjectType>
-BOOL RewardVariants<ObjectType>::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
-                                            LPCSTR iniPath) noexcept
+BOOL PandoraVariants::WriteToINI(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info,
+                                 LPCSTR iniPath) noexcept
 {
     const Record *record = Find(generator);
     if (!record)
@@ -260,21 +243,20 @@ BOOL RewardVariants<ObjectType>::WriteToINI(const H3RmgObjectGenerator *generato
     return success;
 }
 
-template <int ObjectType> H3String RewardVariants<ObjectType>::GetDisplayName(const H3RmgObjectGenerator *generator)
+H3String PandoraVariants::GetDisplayName(const H3RmgObjectGenerator *generator)
 {
     PandoraVariantKey key;
     if (!GetKey(generator, key))
-        return RMGObjectInfo::GetObjectName(ObjectType, 0);
+        return RMGObjectInfo::GetObjectName(eObject::PANDORAS_BOX, 0);
 
     const H3String persistentKey = GetPersistentKey(key);
-    const H3String jsonKey =
-        H3String::Format("RMG.objectGeneration.%d.%s.name", ObjectType, persistentKey.String());
+    const H3String jsonKey = H3String::Format("RMG.objectGeneration.6.%s.name", persistentKey.String());
     bool readSuccess = false;
     const LPCSTR translatedName = EraJS::read(jsonKey.String(), readSuccess);
     if (readSuccess)
         return translatedName;
 
-    const LPCSTR baseName = RMGObjectInfo::GetObjectName(ObjectType, 0);
+    const LPCSTR baseName = RMGObjectInfo::GetObjectName(eObject::PANDORAS_BOX, 0);
     switch (key.kind)
     {
     case ePandoraGeneratorKind::MONSTERS:
@@ -299,14 +281,10 @@ template <int ObjectType> H3String RewardVariants<ObjectType>::GetDisplayName(co
     }
 }
 
-template <int ObjectType>
-const std::vector<typename RewardVariants<ObjectType>::Record> &RewardVariants<ObjectType>::GetRecords() noexcept
+const std::vector<PandoraVariants::Record> &PandoraVariants::GetRecords() noexcept
 {
     return records;
 }
-
-template class RewardVariants<eObject::PANDORAS_BOX>;
-template class RewardVariants<eObject::SEER_HUT>;
 
 PrisonVariants::Record *PrisonVariants::FindRecordMutable(const PrisonVariantKey &key) noexcept
 {
@@ -480,7 +458,7 @@ bool RMGObjectsEditor::CanEditSettings() noexcept
 
 bool RMGObjectsEditor::GetTypeLimits(int type, TypeGenerationLimits &out) noexcept
 {
-    if (!instance || !instance->settingsLoaded || type < 0 || type >= H3_MAX_OBJECTS)
+    if (!instance || !instance->settingsLoaded || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT)
         return false;
 
     const auto &info = instance->limitsInfo;
@@ -491,7 +469,7 @@ bool RMGObjectsEditor::GetTypeLimits(int type, TypeGenerationLimits &out) noexce
 
 bool RMGObjectsEditor::SetTypeLimits(int type, int mapLimit, int zoneLimit) noexcept
 {
-    if (!CanEditSettings() || type < 0 || type >= H3_MAX_OBJECTS)
+    if (!CanEditSettings() || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT)
         return false;
 
     auto &info = instance->limitsInfo;
@@ -576,6 +554,9 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     // for each subtype and must not become shared native zone caps.
     for (int type = 0; type < H3_MAX_OBJECTS; ++type)
     {
+        if (type == eObject::SEER_HUT)
+            continue;
+
         const H3String mapKey = H3String::Format(RMGObjectInfo::OBJECT_TYPE_PROPERTY_JSON_KEY_FORMAT, type, "map");
         const int mapLimit = EraJS::readInt(mapKey.String(), readSucces);
         if (readSucces)
@@ -604,25 +585,7 @@ void RMGObjectsEditor::InitDefaultProperties(const INT16 *maxSubtypes)
     // P_Game->mainSetup.objectLists[eObject::KEYMASTER];
     PseudoH3RmgRandomMapGenerator pseudoH3RmgRandomMapGenerator;
 
-    // 0x539000 enumerates seer rewards only when this prototype list is nonempty.
-    // It reads its count, not the entries. One slot enumerates the shared rewards;
-    // the dialog attaches all real graphics subtypes separately.
-
-    H3RmgObjectProperties *seerHutPrototypes;
-    auto &seerHutList = P_Game->mainSetup.objectLists[eObject::SEER_HUT];
-
-    auto &rmgSeerHutList = pseudoH3RmgRandomMapGenerator.objectPrototypes[eObject::SEER_HUT];
-
-    if (const size_t seerHutCount = seerHutList.Size())
-    {
-        rmgSeerHutList.Resize(seerHutCount);
-
-        for (auto &i : rmgSeerHutList)
-            i = &seerHutPrototypes;
-    }
-
     THISCALL_1(void, 0x539000, &pseudoH3RmgRandomMapGenerator); // RMG__CreateObjectGenerators
-    rmgSeerHutList.RemoveAll();
     originalRMGObjectGenerators = pseudoH3RmgRandomMapGenerator.objectGenerators;
     // originalRMGObjectGenerators = &originalRMGObjectGeneratorsA;
 
@@ -682,6 +645,9 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
 
             for (auto rmgObjGen : *rmgObjectsList)
             {
+                if (rmgObjGen->type == eObject::SEER_HUT)
+                    continue;
+
                 if (rmgObjGen->type == eObject::SPELL_SCROLL)
                 {
                     const int spellLevel = reinterpret_cast<const _RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
@@ -736,10 +702,9 @@ void __stdcall RMGObjectsEditor::RMG__CreateObjectGenerators(HiHook *h, H3RmgRan
                 {
                 case eObject::PRISON: // temporary disable prisons generation;
                     continue;
-                    // add these objects w/o any restrictions
-                    // case eObject::BORDERGUARD:
-                    // case eObject::KEYMASTER:
-                    //
+                case eObject::SEER_HUT:
+                    editor.editedRMGObjectGenerators.Add(rmgObjGen);
+                    continue;
 
                 case eObject::SPELL_SCROLL:
                     rmgObjGen->subtype = reinterpret_cast<_RMGObjGenScroll_ *>(rmgObjGen)->spellLevel;
@@ -856,6 +821,7 @@ _LHF_(RMGObjectsEditor::RMG__RMGObject_AtPlacement)
         switch (prototype->type)
         {
         case eObject::SEER_HUT:
+            break;
         case eObject::PANDORAS_BOX: {
             const int virtualSubtype = generatedInfo.TakeGeneratedObjectVirtualSubtype(rmgObject);
             generatedInfo.IncreaseObjectsCounters(prototype, c->ecx, virtualSubtype);
@@ -919,7 +885,7 @@ void RMGObjectsEditor::BeforeMapGeneration(const H3RmgRandomMapGenerator *rmgStr
     isGenerating = true;
     nativeTypeLimits.Apply(reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeMapLimit),
                            reinterpret_cast<int *>(limitsInfo.RMG_ObjectTypeZoneLimit), limitsInfo.mapTypesLimit,
-                           limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype);
+                           limitsInfo.zoneTypeLimits, limitsInfo.zoneLimitsPerSubtype, eObject::SEER_HUT);
     // create limits counters
     generatedInfo.Assign(rmgStruct, RMGObjectInfo::CurrentObjectInfos());
 
@@ -1002,7 +968,7 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHo
     return rmgObject;
 }
 
-H3RmgObject *__stdcall RMGObjectsEditor::RMG__Reward__CreateObject(HiHook *h, H3RmgObjectGenerator *generator,
+H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenPandora__CreateObject(HiHook *h, H3RmgObjectGenerator *generator,
                                                                    H3RmgObjectPropsRef *ref,
                                                                    H3RmgRandomMapGenerator *rmg,
                                                                    H3RmgZoneGenerator *zoneGen) noexcept
@@ -1013,14 +979,6 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__Reward__CreateObject(HiHook *h, H3
     return rmgObject;
 }
 
-BOOL8 __stdcall RMGObjectsEditor::RMG__PlaceLocalMap(HiHook *h, H3RmgRandomMapGenerator *rmg, H3RmgLocalMap *localMap,
-                                                     H3RmgZoneGenerator *zone, UINT flags)
-{
-    // A quest artifact's hut can be placed in a different zone from the artifact.
-    if (generatedInfo.IsInited() && generatedInfo.SeerHutCantBePlaced(*localMap, zone->zoneInfo->id))
-        return FALSE;
-    return THISCALL_4(BOOL8, h->GetDefaultFunc(), rmg, localMap, zone, flags);
-}
 // fixes for different RMG bugs/stuff
 namespace fixes
 {
@@ -1112,31 +1070,6 @@ _LHF_(RMG__AtSecondSubterranianGatesPlacement)
     return EXEC_DEFAULT;
 }
 
-_LHF_(RMG__AtQuestArtifactListCounter)
-{
-    const int artId = c->eax;
-    if (artId >= 0 && P_ArtifactSetup[artId].IsPartOfCombo())
-    {
-        // jump to next art in the loop
-        c->return_address = 0x54B9D1;
-        return NO_EXEC_DEFAULT;
-    }
-
-    return EXEC_DEFAULT;
-}
-_LHF_(RMG__AtQuestArtifactListSelectRandom)
-{
-    const int artId = c->eax;
-    if (artId >= 0 && P_ArtifactSetup[artId].IsPartOfCombo())
-    {
-        // jump to next art in the loop
-        c->return_address = 0x54BA32;
-        return NO_EXEC_DEFAULT;
-    }
-
-    return EXEC_DEFAULT;
-}
-
 } // namespace fixes
 
 void RMGObjectsEditor::CreatePatches()
@@ -1154,14 +1087,10 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteLoHook(0x54676B, RMG__ZoneGeneration__AfterObjectTypeZoneLimitCheck);
 
         _pi->WriteHiHook(0x05353C0, THISCALL_, RMG__RMGObjGenScroll__CreateObject);
-        _pi->WriteHiHook(0x0534870, THISCALL_, RMG__Reward__CreateObject); // monster
-        _pi->WriteHiHook(0x0534900, THISCALL_, RMG__Reward__CreateObject); // experience
-        _pi->WriteHiHook(0x0534980, THISCALL_, RMG__Reward__CreateObject); // gold
-        _pi->WriteHiHook(0x0534A10, THISCALL_, RMG__Reward__CreateObject); // magic
-        _pi->WriteHiHook(0x535080, THISCALL_, RMG__Reward__CreateObject);  // seer: creatures
-        _pi->WriteHiHook(0x5351B0, THISCALL_, RMG__Reward__CreateObject);  // seer: gold
-        _pi->WriteHiHook(0x5352A0, THISCALL_, RMG__Reward__CreateObject);  // seer: experience
-        _pi->WriteHiHook(0x5475C0, THISCALL_, RMG__PlaceLocalMap);
+        _pi->WriteHiHook(0x0534870, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // monster
+        _pi->WriteHiHook(0x0534900, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // experience
+        _pi->WriteHiHook(0x0534980, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // gold
+        _pi->WriteHiHook(0x0534A10, THISCALL_, RMG__RMGObjGenPandora__CreateObject); // magic
 
         _pi->WriteLoHook(0x05353F6, fixes::RMGObjGenScroll__AtRandomSelection);
         _pi->WriteLoHook(0x0549DE8, fixes::RMG__WaterWheelRiver_AtGeneration);
@@ -1178,10 +1107,6 @@ void RMGObjectsEditor::CreatePatches()
         _pi->WriteLoHook(0x05427DA, RMG__AtSecondSubterranianGatesPositioning);
         _pi->WriteLoHook(0x0542937, RMG__AtSecondSubterranianGatesPlacement);
 
-        // Prevent combo art pieces becoming the artifacts for Seer Huts
-        _PI->WriteLoHook(0x54B9C0, RMG__AtQuestArtifactListCounter);
-        _PI->WriteLoHook(0x54BA1B, RMG__AtQuestArtifactListSelectRandom);
-        // Hook for the setting defaults
 
         m_isInited = true;
     }
@@ -1215,13 +1140,6 @@ void GeneratedInfo::RememberGeneratedObjectVariant(const H3RmgObject *object, co
 {
     if (object && PandoraVariants::Find(generator))
         generatedObjectVirtualSubtypes[object] = PandoraVariants::GetVirtualSubtype(generator);
-    else if (object && SeerHutVariants::Find(generator))
-    {
-        // A seer generator returns the quest-artifact wrapper; the hut is placed later.
-        const auto *quest = reinterpret_cast<const H3RmgQuestArtifact *>(object);
-        if (quest->seer)
-            generatedObjectVirtualSubtypes[quest->seer] = SeerHutVariants::GetVirtualSubtype(generator);
-    }
 }
 
 int GeneratedInfo::TakeGeneratedObjectVirtualSubtype(const H3RmgObject *object) noexcept
@@ -1414,8 +1332,6 @@ BOOL RMGObjectInfo::WriteToINI(const H3RmgObjectGenerator *generator, LPCSTR ini
 {
     if (PandoraVariants::Find(generator))
         return PandoraVariants::WriteToINI(generator, *this, iniPath);
-    if (SeerHutVariants::Find(generator))
-        return SeerHutVariants::WriteToINI(generator, *this, iniPath);
     if (PrisonVariants::Find(generator))
         return PrisonVariants::WriteToINI(generator, *this, iniPath);
     return WriteToINI(iniPath);
@@ -1449,8 +1365,6 @@ const RMGObjectInfo &RMGObjectInfo::DefaultObjectInfo(const H3RmgObjectGenerator
 {
     if (const auto *record = PandoraVariants::Find(generator))
         return record->defaultInfo;
-    if (const auto *record = SeerHutVariants::Find(generator))
-        return record->defaultInfo;
     if (const auto *record = PrisonVariants::Find(generator))
         return record->defaultInfo;
     return DefaultObjectInfo(generator->type, generator->subtype);
@@ -1463,8 +1377,6 @@ const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const H3RmgObjectGenerator
 {
     if (const auto *record = PandoraVariants::Find(generator))
         return record->currentInfo;
-    if (const auto *record = SeerHutVariants::Find(generator))
-        return record->currentInfo;
     if (const auto *record = PrisonVariants::Find(generator))
         return record->currentInfo;
     return CurrentObjectInfo(generator->type, generator->subtype);
@@ -1473,8 +1385,6 @@ const RMGObjectInfo &RMGObjectInfo::CurrentObjectInfo(const H3RmgObjectGenerator
 void RMGObjectInfo::SetCurrentObjectInfo(const H3RmgObjectGenerator *generator, const RMGObjectInfo &info) noexcept
 {
     if (auto *record = PandoraVariants::FindMutable(generator))
-        record->currentInfo = info;
-    else if (auto *record = SeerHutVariants::FindMutable(generator))
         record->currentInfo = info;
     else if (auto *record = PrisonVariants::FindMutable(generator))
         record->currentInfo = info;
@@ -1486,8 +1396,6 @@ int RMGObjectInfo::GetSettingsSubtype(const H3RmgObjectGenerator *generator) noe
 {
     if (PandoraVariants::Find(generator))
         return PandoraVariants::GetVirtualSubtype(generator);
-    if (SeerHutVariants::Find(generator))
-        return SeerHutVariants::GetVirtualSubtype(generator);
     if (PrisonVariants::Find(generator))
         return PrisonVariants::GetVirtualSubtype(generator);
     return generator ? generator->subtype : eObject::NO_OBJ;
@@ -1503,12 +1411,6 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator *gener
     if (PandoraVariants::GetKey(generator, pandoraKey))
     {
         PandoraVariants::RegisterDefault(generator);
-        return;
-    }
-
-    if (SeerHutVariants::GetKey(generator, pandoraKey))
-    {
-        SeerHutVariants::RegisterDefault(generator);
         return;
     }
 
@@ -1563,7 +1465,7 @@ void RMGObjectInfo::CaptureNativeExportDefaults(const H3RmgObjectGenerator *gene
 
 BOOL RMGObjectInfo::GetExportOverrides(int type, int subtype, EraJS::RmgExportOverridesInfo *info)
 {
-    if (!info || info->structSize < sizeof(*info))
+    if (!info || info->structSize < sizeof(*info) || type == eObject::SEER_HUT)
         return FALSE;
     const rmgExport::Overrides *record = nullptr;
     if (type == -1 && subtype == -1)
@@ -1590,6 +1492,9 @@ void RMGObjectInfo::InitDefaultProperties(const ObjectLimitsInfo &limitsInfo, co
 
     for (INT objType = 0; objType < h3::limits::OBJECTS; objType++)
     {
+        if (objType == eObject::SEER_HUT)
+            continue;
+
         const int subtypesAmount = maxSubtypes[objType] + 1;
         defaultRMGObjectsInfoByType[objType].resize(subtypesAmount);
         subtypeExportOverrides[objType].assign(subtypesAmount, {});
@@ -1663,7 +1568,6 @@ void RMGObjectInfo::LoadUserProperties()
     }
 
     PandoraVariants::LoadUserProperties();
-    SeerHutVariants::LoadUserProperties();
     PrisonVariants::LoadUserProperties();
 }
 
@@ -1735,8 +1639,6 @@ H3String RMGObjectInfo::GetObjectName(const H3RmgObjectGenerator *generator)
 {
     if (PandoraVariants::Find(generator))
         return PandoraVariants::GetDisplayName(generator);
-    if (SeerHutVariants::Find(generator))
-        return SeerHutVariants::GetDisplayName(generator);
     if (PrisonVariants::Find(generator))
         return PrisonVariants::GetDisplayName(generator);
     return H3String(GetObjectName(generator->type, generator->subtype));
@@ -1804,6 +1706,9 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
 
     for (auto *p_ObjGen : rmg->objectGenerators)
     {
+        if (p_ObjGen->type == eObject::SEER_HUT)
+            continue;
+
         // Prison variants are split only in the settings dialog. The game
         // still counts every prison under its real subtype 0.
         const int objSubtype =
@@ -1821,8 +1726,6 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
     }
 
     for (const auto &record : PandoraVariants::GetRecords())
-        maxObjectSubtype = std::max(maxObjectSubtype, record.virtualSubtype + 1);
-    for (const auto &record : SeerHutVariants::GetRecords())
         maxObjectSubtype = std::max(maxObjectSubtype, record.virtualSubtype + 1);
 
     maxObjectSubtype = std::max(1, maxObjectSubtype);
@@ -1865,17 +1768,14 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
         mapLimitsBySubtype[index2] = record.currentInfo.mapLimit;
     }
 
-    for (const auto &record : SeerHutVariants::GetRecords())
-    {
-        const int index2 = index2D(eObject::SEER_HUT, record.virtualSubtype, maxSubtype);
-        zoneLimitsBySubtype[index2] = record.currentInfo.zoneLimit;
-        mapLimitsBySubtype[index2] = record.currentInfo.mapLimit;
-    }
     isInited = true;
 }
 
 BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, const int zoneId) const
 {
+    if (objGen->type == eObject::SEER_HUT)
+        return FALSE;
+
     // Prison variants share the native (62, 0) generation counter; their
     // virtual subtype is only used to address per-variant dialog settings.
     const int subtype = objGen->type == eObject::PRISON ? objGen->subtype : RMGObjectInfo::GetSettingsSubtype(objGen);
@@ -1886,25 +1786,7 @@ BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, co
     // return with that simple comparison function
     return mapGeneratedBySubtype[index2] >= mapLimitsBySubtype[index2]
                ? true
-               : objGen->type != eObject::SEER_HUT && eachZoneGeneratedBySubtype[index3] >= zoneLimitsBySubtype[index2];
-}
-
-BOOL GeneratedInfo::SeerHutCantBePlaced(const H3RmgLocalMap &localMap, int zoneId) const
-{
-    for (const auto *object : localMap.localObjects)
-    {
-        if (object->properties->prototype->type != eObject::SEER_HUT)
-            continue;
-        const auto found = generatedObjectVirtualSubtypes.find(object);
-        if (found == generatedObjectVirtualSubtypes.end())
-            continue;
-        const int index2 = index2D(eObject::SEER_HUT, found->second, maxObjectSubtype);
-        const int index3 = index3D(zoneId, eObject::SEER_HUT, found->second, H3_MAX_OBJECTS, maxObjectSubtype);
-        if (mapGeneratedBySubtype[index2] >= mapLimitsBySubtype[index2] ||
-            eachZoneGeneratedBySubtype[index3] >= zoneLimitsBySubtype[index2])
-            return TRUE;
-    }
-    return FALSE;
+               : eachZoneGeneratedBySubtype[index3] >= zoneLimitsBySubtype[index2];
 }
 
 void GeneratedInfo::Clear(const H3RmgRandomMapGenerator *rmgStruct)

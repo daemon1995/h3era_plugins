@@ -192,7 +192,7 @@ DllExport BOOL RMGObjectSupportsGeneration(const int objType, const int objSubty
     if (objType > eObject::NO_OBJ && objType < H3_MAX_OBJECTS)
     {
         const auto page = RMG_SettingsDlg::GetObjectAttributesPageByObjectType(objType, objSubtype);
-        if (page >= extender::ePageCommon && page <= extender::ePageSeerHut)
+        if (page >= extender::ePageCommon && page <= extender::ePandoraBox)
         {
             const auto &allAttributes = RMG_SettingsDlg::GetObjectAttributes();
             const auto &vec = allAttributes[static_cast<size_t>(page)];
@@ -343,7 +343,7 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
 
         H3DlgCaptionButton *captionbttn = H3DlgCaptionButton::Create(
             _x, _y, pageButtonWidth, pageButtonHeight, NItemIDs::PAGE_FIRST + i, pageButtonDefName, pageName,
-            NH3Dlg::Text::SMALL, 0, 0, 0, i == 9 ? eVKey::H3VK_0 : eVKey::H3VK_1 + i, eTextColor::HIGHLIGHT);
+            NH3Dlg::Text::SMALL, 0, 0, 0, eVKey::H3VK_1 + i, eTextColor::HIGHLIGHT);
 
         captionbttn->SetHints(EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.hint", i).String()),
                               EraJS::read(H3String::Format("RMG.text.dlg.pages.%d.rmc", i).String()), false);
@@ -391,9 +391,6 @@ RMG_SettingsDlg::RMG_SettingsDlg(int width, int height, int x = -1, int y = -1)
             break;
         case extender::ePandoraBox:
             page = new PandoraPage{captionButtons[i], pageObjects};
-            break;
-        case extender::ePageSeerHut:
-            page = new PandoraPage{captionButtons[i], pageObjects, eObject::SEER_HUT};
             break;
         default:
             page = new ObjectsPage{captionButtons[i], pageObjects, false};
@@ -1346,29 +1343,19 @@ RMG_SettingsDlg::PrisonPage::~PrisonPage()
 {
 }
 
-namespace
-{
-BOOL GetRewardKey(const H3RmgObjectGenerator *generator, PandoraVariantKey &key) noexcept
-{
-    return generator && generator->type == eObject::SEER_HUT ? SeerHutVariants::GetKey(generator, key)
-                                                             : PandoraVariants::GetKey(generator, key);
-}
-} // namespace
-RMG_SettingsDlg::PandoraPage::PandoraPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data,
-                                          int objectType)
-    : ObjectsPage(captionbttn, data, false, 155, 7), categories(objectType == eObject::SEER_HUT ? 3 : 4)
+RMG_SettingsDlg::PandoraPage::PandoraPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data)
+    : ObjectsPage(captionbttn, data, false, 155, 7)
 {
     categories[0].kind = ePandoraGeneratorKind::GOLD;
     categories[1].kind = ePandoraGeneratorKind::EXPERIENCE;
-    categories.back().kind = ePandoraGeneratorKind::MONSTERS;
-    categories.back().expanded = false;
-    if (objectType == eObject::PANDORAS_BOX)
-        categories[2].kind = ePandoraGeneratorKind::MAGIC;
+    categories[2].kind = ePandoraGeneratorKind::MAGIC;
+    categories[3].kind = ePandoraGeneratorKind::MONSTERS;
+    categories[3].expanded = false;
 
     for (const auto &object : rmgDlgObjects)
     {
         PandoraVariantKey key;
-        if (!GetRewardKey(object.objectGenerator, key))
+        if (!PandoraVariants::GetKey(object.objectGenerator, key))
             continue;
         for (auto &category : categories)
         {
@@ -1428,7 +1415,7 @@ void RMG_SettingsDlg::PandoraPage::RebuildDisplayedObjects()
         for (auto &object : rmgDlgObjects)
         {
             PandoraVariantKey key;
-            if (GetRewardKey(object.objectGenerator, key) && key.kind == category.kind)
+            if (PandoraVariants::GetKey(object.objectGenerator, key) && key.kind == category.kind)
                 displayedObjects.emplace_back(&object);
         }
     }
@@ -1479,7 +1466,7 @@ int RMG_SettingsDlg::PandoraPage::GetObjectExtendedInfoAdditionalHeight(const Ob
         return 100;
 
     PandoraVariantKey key;
-    if (!GetRewardKey(panel->rmgObject->objectGenerator, key))
+    if (!PandoraVariants::GetKey(panel->rmgObject->objectGenerator, key))
         return 100;
 
     const size_t spellsCount = CountPandoraMagicSpells(key);
@@ -1498,7 +1485,7 @@ void RMG_SettingsDlg::PandoraPage::AppendObjectExtendedInfo(const ObjectsPanel *
         return;
 
     PandoraVariantKey key;
-    if (!GetRewardKey(panel->rmgObject->objectGenerator, key) || key.kind != ePandoraGeneratorKind::MAGIC)
+    if (!PandoraVariants::GetKey(panel->rmgObject->objectGenerator, key) || key.kind != ePandoraGeneratorKind::MAGIC)
     {
         return;
     }
@@ -1963,6 +1950,9 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
                                                                                  const int objectSubtype) noexcept
 {
     extendersManager::ObjectExtenderManager::Get();
+    if (objectType == eObject::SEER_HUT)
+        return extender::ePageUnknown;
+
     const auto extenderPage = extendersManager::ObjectExtenderManager::GetObjectPage(objectType, objectSubtype);
     if (extenderPage != extender::ePageUnknown)
         return extenderPage;
@@ -2081,9 +2071,6 @@ extender::eRmgDlgObjectPage RMG_SettingsDlg::GetObjectAttributesPageByObjectType
     case eObject::SHIPWRECK_SURVIVOR:
     case eObject::TREASURE_CHEST:
         return extender::ePageTreasure;
-
-    case eObject::SEER_HUT:
-        return extender::ePageSeerHut;
 
     case eObject::PANDORAS_BOX:
         return extender::ePandoraBox;
@@ -2211,14 +2198,9 @@ void RMG_SettingsDlg::AssignPrototypeToObjectGens(const H3RmgObjectGenerator *ob
     const UINT64 pair =
         (static_cast<UINT64>(static_cast<UINT32>(objGen->type)) << 32) | static_cast<UINT32>(settingsSubtype);
 
-    // Each reward is shown once, with every native seer-hut graphics subtype.
-    const bool allSubtypes = objGen->type == eObject::SEER_HUT;
-    if (allSubtypes && uniqueObjectsIndex.count(pair))
-        return;
-
     for (auto &attributes : objectTypeVector)
     {
-        if (allSubtypes || attributes.subtype == objectSubtype)
+        if (attributes.subtype == objectSubtype)
         {
             auto itIndex = uniqueObjectsIndex.find(pair);
 
@@ -2300,7 +2282,7 @@ BOOL RMG_SettingsDlg::CreateObjectPrototypesLists(const H3Vector<H3RmgObjectGene
         const int objectType = objGen->type;
 
         const auto page = GetObjectAttributesPageByObjectType(objectType, objGen->subtype);
-        if (page >= extender::ePageCommon && page <= extender::ePageSeerHut)
+        if (page >= extender::ePageCommon && page <= extender::ePandoraBox)
         {
             auto *workingVector = &m_data.GetPage(static_cast<size_t>(page));
 
@@ -2713,20 +2695,6 @@ H3LoadedPcx16 *RMG_SettingsDlg::CreateWogificationPreview(int type, int subtype)
 #pragma comment(linker, "/EXPORT:RMG_GetDialogObjectInfo=_RMG_GetDialogObjectInfo@12")
 namespace
 {
-int SeerHutApiKind(const PandoraVariantKey &key) noexcept
-{
-    switch (key.kind)
-    {
-    case ePandoraGeneratorKind::GOLD:
-        return rmg_api::SEER_HUT_GOLD;
-    case ePandoraGeneratorKind::EXPERIENCE:
-        return rmg_api::SEER_HUT_EXPERIENCE;
-    case ePandoraGeneratorKind::MONSTERS:
-        return rmg_api::SEER_HUT_MONSTERS;
-    default:
-        return rmg_api::OBJECT;
-    }
-}
 void MakeRmgApiKey(rmg_api::ObjectKey &out, const RMGObjectInfo &info, const H3RmgObjectGenerator *generator)
 {
     out = {sizeof(out), info.type, info.subtype, rmg_api::OBJECT, 0, 0, 0};
@@ -2738,11 +2706,6 @@ void MakeRmgApiKey(rmg_api::ObjectKey &out, const RMGObjectInfo &info, const H3R
         out.first = pandora.first;
         out.second = pandora.second;
         out.third = pandora.third;
-    }
-    else if (SeerHutVariants::GetKey(generator, pandora))
-    {
-        out.kind = SeerHutApiKind(pandora);
-        out.first = pandora.first;
     }
     else if (PrisonVariants::GetKey(generator, prison))
     {
@@ -2790,7 +2753,6 @@ RMGObjectInfo *FindApiObject(const rmg_api::ObjectKey *key, int &settingsSubtype
     if (key->second != 0 || key->third != 0)
         return nullptr;
 
-    ePandoraGeneratorKind kind;
     switch (key->kind)
     {
     case rmg_api::OBJECT:
@@ -2798,19 +2760,9 @@ RMGObjectInfo *FindApiObject(const rmg_api::ObjectKey *key, int &settingsSubtype
         return key->first == 0 ? FindCurrentObject(key->type, key->subtype) : nullptr;
     case rmg_api::PRISON:
         return MatchApiVariant(PrisonVariants::FindRecordMutable({key->first}), *key, settingsSubtype);
-    case rmg_api::SEER_HUT_GOLD:
-        kind = ePandoraGeneratorKind::GOLD;
-        break;
-    case rmg_api::SEER_HUT_EXPERIENCE:
-        kind = ePandoraGeneratorKind::EXPERIENCE;
-        break;
-    case rmg_api::SEER_HUT_MONSTERS:
-        kind = ePandoraGeneratorKind::MONSTERS;
-        break;
     default:
         return nullptr;
     }
-    return MatchApiVariant(SeerHutVariants::FindRecordMutable({kind, key->first}), *key, settingsSubtype);
 }
 
 bool CanEditRmgSettings() noexcept
@@ -2895,14 +2847,6 @@ extern "C" __declspec(dllexport) BOOL __stdcall RMG_GetMemoryObjectInfo(int inde
             const auto &info = record.currentInfo;
             *key = {sizeof(*key),     info.type,         info.subtype,    static_cast<int>(record.key.kind) + 1,
                     record.key.first, record.key.second, record.key.third};
-            CopyRmgApiInfo(*out, info, record.virtualSubtype);
-            return TRUE;
-        }
-    for (const auto &record : SeerHutVariants::GetRecords())
-        if (index-- == 0)
-        {
-            const auto &info = record.currentInfo;
-            *key = {sizeof(*key), info.type, info.subtype, SeerHutApiKind(record.key), record.key.first, 0, 0};
             CopyRmgApiInfo(*out, info, record.virtualSubtype);
             return TRUE;
         }

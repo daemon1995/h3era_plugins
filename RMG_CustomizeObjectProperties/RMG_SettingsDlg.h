@@ -22,7 +22,7 @@ class RMGDialogDataManager
 {
   public:
     using ObjectVector = std::vector<GraphicalAttributes>;
-    static constexpr size_t PAGE_COUNT = static_cast<size_t>(extender::ePageSeerHut) + 1;
+    static constexpr size_t PAGE_COUNT = static_cast<size_t>(extender::ePandoraBox) + 1;
     using PageVectors = std::array<ObjectVector, PAGE_COUNT>;
 
   private:
@@ -264,10 +264,9 @@ class RMG_SettingsDlg : public H3Dlg
             size_t objectsCount = 0;
         };
 
-        std::vector<Category> categories;
+        std::array<Category, 4> categories;
 
-        PandoraPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data,
-                    int objectType = eObject::PANDORAS_BOX);
+        PandoraPage(H3DlgCaptionButton *captionbttn, const std::vector<GraphicalAttributes> &data);
         virtual ~PandoraPage();
 
       protected:

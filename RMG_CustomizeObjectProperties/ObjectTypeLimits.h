@@ -37,7 +37,7 @@ template <std::size_t Count> class NativeTypeLimitsOverride
     }
 
     void Apply(int *mapTable, int *zoneTable, const int *mapLimits, const int *zoneLimits,
-               const bool *zoneLimitsPerSubtype) noexcept
+               const bool *zoneLimitsPerSubtype, std::size_t excludedType = Count) noexcept
     {
         Restore();
         std::copy_n(mapTable, Count, previousMap.begin());
@@ -46,6 +46,9 @@ template <std::size_t Count> class NativeTypeLimitsOverride
         nativeZone = zoneTable;
         for (std::size_t i = 0; i < Count; ++i)
         {
+            if (i == excludedType)
+                continue;
+
             const auto limits = NormalizeTypeLimits(mapLimits[i], zoneLimits[i]);
             nativeMap[i] = limits.map;
             // JSON zone defaults are enforced by the plugin's subtype counters.
