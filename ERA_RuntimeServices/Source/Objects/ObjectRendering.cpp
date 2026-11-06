@@ -73,6 +73,96 @@ _LHF_(MinimapRegisteredObject)
     return EXEC_DEFAULT;
 }
 
+namespace
+{
+constexpr int NATIVE_INDEX = -1;
+constexpr unsigned TERRAIN_COUNT = 256;
+// The 32-bit graphics patch uses the final two words of H3Palette565 for a pointer.
+constexpr int MAX_PALETTE_INDEX = 253;
+
+struct TerrainPaletteIndices
+{
+    int normal;
+    int blocked;
+    bool configured;
+};
+
+TerrainPaletteIndices terrainPaletteIndices[TERRAIN_COUNT]{};
+
+int TerrainPaletteIndex(unsigned terrain, const H3Palette565 &palette, bool blocked)
+{
+    const auto &indices = terrainPaletteIndices[terrain];
+    if (indices.configured)
+        return blocked ? indices.blocked : indices.normal;
+
+    // Temporary default for the GEM replacement of Watrtl.def (terrain 8).
+    // Identify its palette before using its green indices; stock water stays blue.
+    if (terrain == 8 && palette.color[8].GetBits() == 0x28E2 &&
+        palette.color[9].GetBits() == 0x2141 && palette.color[22].GetBits() == 0x1A41 &&
+        palette.color[17].GetBits() == 0x21E4)
+        return blocked ? 17 : 22;
+    return NATIVE_INDEX;
+}
+
+void OverrideTerrainColor(const H3MapItem *tile, const H3Palette565 *palette, bool blocked, UINT16 &color)
+{
+    const int index = TerrainPaletteIndex(static_cast<UINT8>(tile->land), *palette, blocked);
+    if (index != NATIVE_INDEX)
+        color = palette->color[index].GetBits();
+}
+
+// The engine has loaded the terrain RGB565 into SI. Keep the original branch and
+// let the following hero/object code take priority over the terrain color.
+template<bool Blocked> int __stdcall NativeTerrainColor(LoHook *, HookContext *c)
+{
+    OverrideTerrainColor(c->Ebx<H3MapItem *>(), c->Edx<H3Palette565 *>(), Blocked, c->SI());
+    return EXEC_DEFAULT;
+}
+
+// Both HD paths load DX from the resolved tileset immediately before storing it.
+template<unsigned TileLocal, bool Blocked> int __stdcall HdTerrainColor(LoHook *, HookContext *c)
+{
+    OverrideTerrainColor(c->Local<H3MapItem *>(TileLocal / 4), c->Ecx<H3Palette565 *>(), Blocked, c->DX());
+    return EXEC_DEFAULT;
+}
+
+void InstallNativeTerrainHooks()
+{
+    constexpr std::uintptr_t normal = 0x412EDF, blocked = 0x412F78;
+    static const int normalCode[] = {0x8B,0x51,0x20,0x8B,0x4D,0xE4,0x3B,0xC8,
+                                     0x66,0x8B,0x72,0x2C,0x75,0x24,0x8B,0x4D,0xCC};
+    static const int blockedCode[] = {0x8B,0x51,0x20,0x66,0x8B,0x72,0x2E,0xE9,0x62,0x01,0x00,0x00};
+    if (globalPatcher->GetFirstPatchAt(normal) || globalPatcher->GetFirstPatchAt(blocked) ||
+        !hd_minimap::Match(reinterpret_cast<const BYTE *>(normal - 12), sizeof(normalCode) / sizeof(int), 0, normalCode) ||
+        !hd_minimap::Match(reinterpret_cast<const BYTE *>(blocked - 7), sizeof(blockedCode) / sizeof(int), 0, blockedCode))
+    {
+        Log("Terrain minimap", "Unsupported or occupied native color sites.");
+        return;
+    }
+    Patch *hooks[] = {_PI->WriteLoHook(normal, NativeTerrainColor<false>),
+                      _PI->WriteLoHook(blocked, NativeTerrainColor<true>)};
+    CheckHooks(hooks, "Terrain minimap");
+}
+
+void InstallHdTerrainHooks(std::uintptr_t base, std::size_t size, const hd_minimap::Layout &ownerLayout)
+{
+    const auto terrain = hd_minimap::FindTerrainLayout(reinterpret_cast<const BYTE *>(base), size, ownerLayout);
+    if (!terrain || globalPatcher->GetFirstPatchAt(base + terrain.normal16) ||
+        globalPatcher->GetFirstPatchAt(base + terrain.blocked16) ||
+        globalPatcher->GetFirstPatchAt(base + terrain.normal32) ||
+        globalPatcher->GetFirstPatchAt(base + terrain.blocked32))
+    {
+        Log("Terrain minimap", "Unsupported or occupied HD color sites.");
+        return;
+    }
+    Patch *hooks[] = {_PI->WriteLoHook(base + terrain.normal16, HdTerrainColor<0x84, false>),
+                      _PI->WriteLoHook(base + terrain.blocked16, HdTerrainColor<0x84, true>),
+                      _PI->WriteLoHook(base + terrain.normal32, HdTerrainColor<0x88, false>),
+                      _PI->WriteLoHook(base + terrain.blocked32, HdTerrainColor<0x88, true>)};
+    CheckHooks(hooks, "HD terrain minimap");
+}
+}
+
 hd_minimap::Layout hdLayout;
 std::uintptr_t hdCodeBase = 0;
 HMODULE checkedHdModule = nullptr;
@@ -123,6 +213,7 @@ void EnsureHdMinimapHooks()
     const auto section = IMAGE_FIRST_SECTION(nt);
     hd_minimap::Layout candidate;
     std::uintptr_t candidateBase = 0;
+    std::size_t candidateSize = 0;
     for (unsigned i = 0; i < nt->FileHeader.NumberOfSections; ++i)
     {
         if (!(section[i].Characteristics & IMAGE_SCN_MEM_EXECUTE))
@@ -144,6 +235,7 @@ void EnsureHdMinimapHooks()
             }
             candidate = found;
             candidateBase = reinterpret_cast<std::uintptr_t>(base + rva);
+            candidateSize = size;
         }
     }
     if (!candidate)
@@ -151,6 +243,7 @@ void EnsureHdMinimapHooks()
         Log("HD minimap", "Unknown HD_WOG layout; HD owner markers disabled.");
         return;
     }
+    InstallHdTerrainHooks(candidateBase, candidateSize, candidate);
     const auto site16 = candidateBase + candidate.objects16;
     const auto site32 = candidateBase + candidate.objects32;
     // These private HD seams must be unmodified. Never combine incompatible local-frame hooks.
@@ -188,6 +281,12 @@ void EnsureHdMinimapHooks()
 
 bool InstallHooks()
 {
+    static bool triedTerrain = false;
+    if (!triedTerrain)
+    {
+        triedTerrain = true;
+        InstallNativeTerrainHooks();
+    }
     static bool ready = false;
     if (ready) return true;
     Patch *hooks[] = {_PI->WriteLoHook(0x410DCA, DrawRegisteredObject),
@@ -198,5 +297,16 @@ bool InstallHooks()
     EnsureHdMinimapHooks();
     return true;
 }
+}
+
+extern "C" int __stdcall Erm_SetTerrainMinimapPaletteIndices(int terrain, int normalIndex, int blockedIndex) noexcept
+{
+    using namespace rendering;
+    if (static_cast<unsigned>(terrain) >= TERRAIN_COUNT ||
+        normalIndex < NATIVE_INDEX || normalIndex > MAX_PALETTE_INDEX ||
+        blockedIndex < NATIVE_INDEX || blockedIndex > MAX_PALETTE_INDEX)
+        return 0;
+    terrainPaletteIndices[terrain] = {normalIndex, blockedIndex, true};
+    return 1;
 }
 }

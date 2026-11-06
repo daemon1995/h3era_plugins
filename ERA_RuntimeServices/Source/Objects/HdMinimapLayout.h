@@ -95,5 +95,32 @@ inline Layout FindLayout(const std::uint8_t *code, std::size_t size)
     result.markers32 = tail32 + 4;
     return result;
 }
+
+struct TerrainLayout
+{
+    std::size_t normal16 = MISSING;
+    std::size_t blocked16 = MISSING;
+    std::size_t normal32 = MISSING;
+    std::size_t blocked32 = MISSING;
+    explicit operator bool() const { return normal16 != MISSING; }
+};
+
+// Verify each palette load and its displaced instructions relative to the
+// recognized object branches. Owner hooks can work even if these sites differ.
+inline TerrainLayout FindTerrainLayout(const std::uint8_t *code, std::size_t size, const Layout &owner)
+{
+    if (!owner || owner.objects16 < 0xEE || owner.objects32 < 0xE8)
+        return {};
+    const TerrainLayout sites{owner.objects16 - 0xEE, owner.objects16 + 0x79,
+                              owner.objects32 - 0xE8, owner.objects32 + 0x79};
+    static const int normal16[] = {0x8B,0x48,0x20,0x66,0x8B,0x51,0x2C,0x66,0x89,0x95,0x74,0xFF,0xFF,0xFF};
+    static const int blocked16[] = {0x8B,0x48,0x20,0x66,0x8B,0x51,0x2E,0x66,0x89,0x95,0x74,0xFF,0xFF,0xFF};
+    static const int normal32[] = {0x8B,0x48,0x20,0x66,0x8B,0x51,0x2C,0x66,0x89,0x55,0x80,0x8B,0x45,0xBC};
+    static const int blocked32[] = {0x8B,0x48,0x20,0x66,0x8B,0x51,0x2E,0x66,0x89,0x55,0x80,0xE9,-1,-1,-1,-1};
+    if (!Match(code, size, sites.normal16 - 7, normal16) || !Match(code, size, sites.blocked16 - 7, blocked16) ||
+        !Match(code, size, sites.normal32 - 7, normal32) || !Match(code, size, sites.blocked32 - 7, blocked32))
+        return {};
+    return sites;
+}
 }
 }
