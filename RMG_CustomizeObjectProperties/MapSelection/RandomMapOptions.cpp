@@ -411,14 +411,6 @@ void SaveLastGame(const LastGame &s)
 
 H3SelectScenarioDialog *__stdcall ScenarioCtor(HiHook *h, H3SelectScenarioDialog *dlg, int mode)
 {
-    // TEMPORARY multiplayer test: expose campaign heroes to both the lobby
-    // and the native random-map generator for this process. Remove after test.
-    for (int hero = 0; hero < limits::TOTAL_HEROES; ++hero)
-        if (P_HeroInfo[hero].campaignHero)
-        {
-            P_HeroInfo[hero].campaignHero = 0;
-            P_HeroInfo[hero].expansionHero = 1;
-        }
     InitHdMenu();
     candidateDialog = nullptr;
     settingsLoaded = false;

@@ -33,7 +33,8 @@ int PanelHeight(const H3SelectScenarioDialog* dlg)
 }
 bool HasHeroPanel(int color)
 {
-    return P_Game->mapInfo.playerAttributes[color].generateHeroAtMainTown != 0;
+    const auto& attributes = P_Game->mapInfo.playerAttributes[color];
+    return attributes.generateHeroAtMainTown || attributes.hasRandomHero;
 }
 int DialogWidth(const H3SelectScenarioDialog* dlg, int color)
 {
@@ -61,6 +62,8 @@ bool CanEdit(H3SelectScenarioDialog* dlg, int color, bool hero)
 {
     if (!CanControlPlayer(dlg, color))
         return false;
+    if (hero && PlayerTown(dlg, color) == -1)
+        return HasHeroPanel(color);
     return THISCALL_2(BOOL8, hero ? 0x58D280 : 0x58D180, dlg, color) != 0;
 }
 
@@ -82,8 +85,10 @@ bool ApplyChoice(H3SelectScenarioDialog* dlg, int color, int kind, int value)
         THISCALL_1(void, 0x58BE90, dlg);
         return true;
     }
-    if (kind != 2 || PlayerTown(dlg, color) < 0 ||
-        !(attributes.generateHeroAtMainTown || attributes.hasRandomHero))
+    if (kind != 2 || !HasHeroPanel(color))
+        return false;
+    const int town = PlayerTown(dlg, color);
+    if (town < 0 && !(town == -1 && value == -1))
         return false;
     return ChooseHero(dlg, color, value);
 }
