@@ -1,6 +1,7 @@
 #include "CatalogueData.h"
 #include "MasteryPopup.h"
 #include "ObjectCard.h"
+#include "../headers/SpellLimits.h"
 
 namespace helpdlg
 {
@@ -340,7 +341,7 @@ CatalogueEntry Hero(int id, bool details = true)
     entry.cardRows.push_back(
         {Text("help.text.starting_army"), startingArmy.empty() ? Text("help.text.none") : startingArmy});
     entry.cardRows.back().icons = std::move(armyIcons);
-    const int spellCount = limits::TOTAL_SPELLS;
+    const int spellCount = spellLimits::GetSpellCount();
 
     const auto startingSpell = info.startingSpell >= 0 && info.startingSpell < spellCount
                                    ? Safe(P_Spell[info.startingSpell].name)
@@ -558,7 +559,7 @@ bool TryBuildObjectEntry(main::eHelpPage page, int id, CatalogueEntry &entry, bo
         entry = Hero(id, details);
         break;
     case main::eHelpPage::SPELLS:
-        if (id >= limits::TOTAL_SPELLS)
+        if (id >= spellLimits::GetSpellCount())
             return false;
         entry = Spell(id, details);
         break;
@@ -627,9 +628,8 @@ Catalogue BuildCatalogue(main::eHelpPage page)
         catalogue.categories.resize(6);
         catalogue.levelCount = 6;
         catalogue.facets = {ReadFacet(page, 0, 3), ReadFacet(page, 1, 3)};
-        // H3SpellCount is the 70 hero spells; H3Spell's native table has
-        // 81 entries including creature abilities, IDs 70..80.
-        const int count = limits::TOTAL_SPELLS;
+        // Include native creature abilities and spells added by table extenders.
+        const int count = spellLimits::GetSpellCount();
         catalogue.entries.reserve(count);
         for (int id = 0; id < count; ++id)
             catalogue.entries.push_back(Spell(id, false));
