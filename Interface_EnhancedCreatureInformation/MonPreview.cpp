@@ -585,8 +585,8 @@ void MonPreview::UpdateSpellSlots(const std::array<H3DlgPcx16 *, SPELL_SLOT_COUN
     spells.fill(-1);
 
     int count = 0;
-    for (int spellId = COMBAT_SPELL_COUNT - 1; spellId >= 0 && count < SPELL_SLOT_COUNT; --spellId)
-        if (stack->activeSpellDuration[spellId] > 0)
+    for (int spellId = spellLimits::GetSpellCount() - 1; spellId >= 0 && count < SPELL_SLOT_COUNT; --spellId)
+        if (GetSpellDuration(stack, spellId) > 0)
             spells[count++] = spellId;
 
     for (int slot = 0; slot < SPELL_SLOT_COUNT; ++slot)
@@ -633,7 +633,7 @@ void MonPreview::UpdateSpellSlots(const std::array<H3DlgPcx16 *, SPELL_SLOT_COUN
         if (hasSpellPicture && HasVisibleSpellDuration(spellId))
         {
             char text[SPELL_DURATION_BUFFER_SIZE];
-            std::snprintf(text, sizeof(text), "x%d", stack->activeSpellDuration[spellId]);
+            std::snprintf(text, sizeof(text), "x%d", GetSpellDuration(stack, spellId));
             duration->SetText(text);
             SetCreatureSpellHints(duration, stack, spellId);
             duration->ShowActivate();

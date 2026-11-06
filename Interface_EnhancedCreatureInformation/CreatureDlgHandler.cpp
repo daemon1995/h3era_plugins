@@ -256,7 +256,7 @@ BOOL CreatureDlgHandler::AddSpellEffects()
         if (HasVisibleSpellDuration(spellId))
         {
             char duration[SPELL_DURATION_BUFFER_SIZE];
-            std::snprintf(duration, sizeof(duration), "x%d", stack->activeSpellDuration[spellId]);
+            std::snprintf(duration, sizeof(duration), "x%d", GetSpellDuration(stack, spellId));
             auto *text = H3DlgText::Create(icon->GetX() + icon->GetWidth() - SPELL_DURATION_WIDTH,
                                           icon->GetY() + icon->GetHeight() - SPELL_DURATION_HEIGHT,
                                           SPELL_DURATION_WIDTH, SPELL_DURATION_HEIGHT, duration, NH3Dlg::Text::TINY,

@@ -1,13 +1,23 @@
 #pragma once
 #include "pch.h"
+#include "../headers/SpellLimits.h"
 
 #include <array>
+#include <climits>
 
 namespace creatureInfo
 {
-constexpr int COMBAT_SPELL_COUNT = sizeof(((H3CombatCreature *)nullptr)->activeSpellDuration) / sizeof(INT32);
+constexpr int MAX_COMBAT_SPELL_COUNT = UCHAR_MAX;
 constexpr int SPELL_DEF_FRAME_OFFSET = 1;
 constexpr int SPELL_DURATION_BUFFER_SIZE = 16;
+
+inline INT32 GetSpellDuration(const H3CombatCreature *stack, int spellId) noexcept
+{
+    // The spell extender uses the following array's memory for extra durations.
+    // Address the patched storage without indexing H3API's fixed 81-element array.
+    const auto *durations = reinterpret_cast<const unsigned char *>(&stack->activeSpellDuration);
+    return *reinterpret_cast<const INT32 *>(durations + spellId * sizeof(INT32));
+}
 
 enum SpellHintTextId : int
 {
@@ -20,16 +30,17 @@ enum SpellHintTextId : int
 
 struct ActiveSpellList
 {
-    std::array<int, COMBAT_SPELL_COUNT> ids = {};
+    std::array<int, MAX_COMBAT_SPELL_COUNT> ids = {};
     int count = 0;
 };
 
 inline ActiveSpellList CollectActiveSpells(const H3CombatCreature *stack)
 {
     ActiveSpellList result;
+    const int spellCount = spellLimits::GetSpellCount();
     if (stack)
-        for (int spell = 0; spell < COMBAT_SPELL_COUNT; ++spell)
-            if (stack->activeSpellDuration[spell])
+        for (int spell = 0; spell < spellCount; ++spell)
+            if (GetSpellDuration(stack, spell))
                 result.ids[result.count++] = spell;
     return result;
 }
@@ -49,7 +60,7 @@ inline bool HasVisibleSpellDuration(int spellId)
 
 inline void SetCreatureSpellHints(H3DlgItem *item, const H3CombatCreature *stack, int spellId)
 {
-    if (!item || !stack || spellId < 0 || spellId >= COMBAT_SPELL_COUNT)
+    if (!item || !stack || spellId < 0 || spellId >= spellLimits::GetSpellCount())
         return;
     const char *name = h3::H3Spell::Get()[spellId].name;
     const char *description = h3::H3Spell::Get()[spellId].description[0];
@@ -70,7 +81,7 @@ inline void SetCreatureSpellHints(H3DlgItem *item, const H3CombatCreature *stack
                           generalText->GetText(specialTextId));
     else
         h3::libc::sprintf(h3::h3_TextBuffer, generalText->GetText(SPELL_DURATION_HINT), name,
-                          stack->activeSpellDuration[spellId]);
+                          GetSpellDuration(stack, spellId));
     item->SetHints(h3::h3_TextBuffer, description, TRUE);
 }
 } // namespace creatureInfo

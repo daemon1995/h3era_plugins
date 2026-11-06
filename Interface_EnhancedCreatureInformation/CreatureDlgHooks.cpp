@@ -466,7 +466,7 @@ BOOL ShowStackActiveSpells(H3CombatCreature *stack, bool isRMC, H3DlgItem *click
         if (HasVisibleSpellDuration(spellId))
         {
             char duration[SPELL_DURATION_BUFFER_SIZE];
-            std::snprintf(duration, sizeof(duration), "x%d", stack->activeSpellDuration[spellId]);
+            std::snprintf(duration, sizeof(duration), "x%d", GetSpellDuration(stack, spellId));
             if (auto *text = H3DlgText::Create(x, y + SPELL_POPUP_DURATION_Y, def->widthDEF,
                                                SPELL_POPUP_DURATION_HEIGHT, duration, NH3Dlg::Text::TINY,
                                                eTextColor::WHITE, DLG_SPELL_DURATION_FIRST_ID + slot,
