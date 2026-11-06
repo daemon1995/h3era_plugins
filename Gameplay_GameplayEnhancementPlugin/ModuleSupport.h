@@ -8,10 +8,10 @@ namespace gem
 inline bool ModuleEnabled(LPCSTR key, bool defaultValue = true)
 {
     bool found = false;
-    LPCSTR value = EraJS::read(key, found);
+    int value = EraJS::readInt(key, found);
     if (!found || !value)
         return defaultValue;
-    return !libc::strcmpi(value, "true") || !libc::strcmpi(value, "1");
+    return bool(value);
 }
 
 template <typename T> class ScopedValue
@@ -21,8 +21,13 @@ template <typename T> class ScopedValue
     bool restored = false;
 
   public:
-    explicit ScopedValue(T &target) : value(target), previous(target) {}
-    ScopedValue(T &target, const T &replacement) : ScopedValue(target) { value = replacement; }
+    explicit ScopedValue(T &target) : value(target), previous(target)
+    {
+    }
+    ScopedValue(T &target, const T &replacement) : ScopedValue(target)
+    {
+        value = replacement;
+    }
     ScopedValue(const ScopedValue &) = delete;
     ScopedValue &operator=(const ScopedValue &) = delete;
     void Restore()
@@ -33,7 +38,10 @@ template <typename T> class ScopedValue
             restored = true;
         }
     }
-    ~ScopedValue() { Restore(); }
+    ~ScopedValue()
+    {
+        Restore();
+    }
 };
 
 class ScopedPatch
@@ -44,7 +52,9 @@ class ScopedPatch
   public:
     explicit ScopedPatch(Patch *target)
         // Apply returns a patch index: zero is success, negative values are errors.
-        : patch(target), appliedHere(target && !target->IsApplied() && target->Apply() >= 0) {}
+        : patch(target), appliedHere(target && !target->IsApplied() && target->Apply() >= 0)
+    {
+    }
     ScopedPatch(const ScopedPatch &) = delete;
     ScopedPatch &operator=(const ScopedPatch &) = delete;
     ~ScopedPatch()
@@ -53,4 +63,4 @@ class ScopedPatch
             patch->Undo();
     }
 };
-}
+} // namespace gem
