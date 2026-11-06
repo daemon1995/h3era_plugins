@@ -1,13 +1,5 @@
 # Keep the dwelling checks reviewable without exposing unrelated local verification helpers.
-!Verification/
 Verification/*
-!Verification/DwellingSetupTests.cpp
-!Verification/NativeLayout.py
-!Verification/run.cmd
-!Verification/ObjectDispatchTests.cpp
-!Verification/PrepareObjectDispatchTests.py
-!Verification/run-object-dispatch.cmd
-!Verification/DwellingInfoTests.cpp
 
 # UI text is required by the plugin; keep its source catalog with the code.
 !lang/
