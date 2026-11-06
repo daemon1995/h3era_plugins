@@ -14,18 +14,20 @@ Alt-подписи статических объектов привязаны к
 смещения, поскольку используют отдельную отрисовку DEF.
 
 DllMain подключает ERA и ставит отложенный обработчик. В HooksInit через настоящие
-заголовки запускаются пять модулей. У каждого свой экземпляр патчера:
+заголовки запускаются шесть модулей. У модулей с хуками свой экземпляр патчера:
 
 | Модуль | Экземпляр | JSON-флаг |
 | --- | --- | --- |
 | Графика и индикаторы городов | EraPlugin.GraphicsEnhancements.daemon_n | gem_plugin.modules.graphics |
 | Общие улучшения | EraPlugin.GameplayTweaks.daemon_n | gem_plugin.modules.features |
+| Улучшение отрядов города | Без хуков; экспорт вызывается из ERM | gem_plugin.modules.town_upgrades |
 | Ресурсы и мифрил | EraPlugin.ResourceBar.daemon_n | gem_plugin.modules.resources |
 | Артефакты | EraPlugin.ArtifactHints.daemon_n | gem_plugin.modules.artifact_hints |
 | Подсказки карты | EraPlugin.AdventureMapHints.daemon_n | gem_plugin.modules.adventure_hints |
 
 Отсутствующие флаги означают true. Поддерживаются true/false и 1/0.
 Флаги читаются при инициализации; изменение требует перезапуска игры.
+Модуль города, настройка ERM, тексты, кнопка и экспорт описаны в [TownUpgrades.ru.md](TownUpgrades.ru.md).
 Это не новый интерфейс переключения модулей во время партии.
 
 Пример дополнения существующего JSON, без удаления его остальных настроек:
@@ -36,6 +38,7 @@ DllMain подключает ERA и ставит отложенный обраб
     "modules": {
       "graphics": true,
       "features": true,
+      "town_upgrades": true,
       "resources": true,
       "artifact_hints": true,
       "adventure_hints": true
@@ -101,9 +104,8 @@ ArtifactHints публикует Api через переменную патче�
 при построении окна, восстанавливаются перед его обработкой и дополнительно
 защищены восстановлением при выходе. Чужое сообщение сбрасывает ожидающие данные.
 
-JSON-флаг gem_plugin.artifact_hints.primary_skills.enabled теперь учитывается;
-ERM-переменные выбора игрока продолжают действовать. При true результат определяется
-ERM-настройкой, при false блок характеристик отключён.
+Показ первичных характеристик управляется ERM-переменной
+`gem_artifact_hints_primary_skills`. JSON задаёт оформление блока.
 
 ## Проверка
 
