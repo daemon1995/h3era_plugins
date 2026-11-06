@@ -15916,13 +15916,10 @@ namespace h3
 		INT8  townsCount;
 		/** @brief [3F] */
 		INT8  currentTown;
-		/** @brief [40] */
-		INT8  towns[48];
+		/** @brief [40] The game copies 0x48 town IDs (0x58FABA). */
+		INT8  towns[0x48];
 	protected:
-		h3unk8 _f_70[4];
-		/** @brief [74] */
-		INT32 topHeroIndex;
-		h3unk8 _f_78[36];
+		h3unk8 _f_88[0x14];
 	public:
 		/** @brief [9C] */
 		H3Resources playerResources;
@@ -15968,6 +15965,15 @@ namespace h3
 	};
 	_H3API_ASSERT_SIZE_(H3Player);
 	_H3API_ASSERT_SIZE_(H3Player::AIPlayer);
+	_H3API_STATIC_ASSERT_(sizeof(((H3Player*)0)->towns) == 0x48,
+		"H3Player must contain 72 town IDs");
+
+#ifdef __clang__
+	// H3Player has mixed access levels. Clang supports offsetof here as an extension.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-offsetof"
+#endif
+	_H3API_ASSERT_OFFSET_(H3Player, towns, 0x40);
 	_H3API_ASSERT_OFFSET_(H3Player, comboArtifacts, 0xE8);
 	_H3API_ASSERT_OFFSET_(H3Player, aIPlayer, 0xF0);
 	_H3API_ASSERT_OFFSET_(H3Player::AIPlayer, gameAttentionValue, 0x00);
@@ -15988,6 +15994,9 @@ namespace h3
 		"H3Player gold value must be at 0x158");
 	_H3API_STATIC_ASSERT_(sizeof(((H3Player::AIPlayer*)0)->resourceImportance) == 7 * sizeof(DOUBLE),
 		"H3Player must contain seven double resource values");
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 	_H3API_NAMED_STRUCT_(H3Player, ActivePlayer, 0x69CCFC);
 
@@ -17444,8 +17453,8 @@ namespace h3
 		INT32                flags;
 		/** @ brief [14]*/
 		INT32                state;
-		/** @ brief [18]*/
 	protected:
+		/** @ brief [18]*/
 		INT32                xDlg;
 		/** @ brief [1C]*/
 		INT32                yDlg;
@@ -19188,17 +19197,22 @@ namespace h3
 		/** @brief [20C] */
 		BOOL8 centeredHero;
 	protected:
-		h3unk8 _f_20D[11];
+		h3unk8 _f_20D[3];
 	public:
+		/** @brief [210] */
+		INT32 iShowMode;
+		/** @brief [214] */
+		INT32 bForceCompleteDraw;
 		/** @brief [218] */
 		INT32 monsterTypeBattle;
 		/** @brief [21C] */
 		INT32 monsterCountBattle;
 		/** @brief [220] */
 		INT32 monsterSideBattle;
-	protected:
-		h3unk8 _f_224[4];
+		/** @brief [224] */
+		INT32 touchedSounds;
 	public:
+		/** @brief [228] */
 		struct {
 			INT32 loopSound; // index of looped sound
 			INT32 volume;

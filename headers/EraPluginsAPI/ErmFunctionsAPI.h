@@ -33,6 +33,11 @@ using SetObjectOwner = int(__stdcall *)(int x, int y, int z, int owner);
 // 0 may mean a send failure after local application; 1 is not a peer acknowledgement.
 using SetObjectOwnerAndSync = int(__stdcall *)(int x, int y, int z, int owner);
 using RegisterObjectType = int(__stdcall *)(int type, int subtype, int drawOnMinimap);
+// Main thread only. Sets process-local indices for terrain ID 0..255, until overwritten.
+// 0..253 select a palette entry. -1 restores the engine's entry for that branch.
+// Returns 1 for a stored rule or 0 for invalid arguments. Takes effect on the next
+// minimap redraw when the renderer's color sites are supported.
+using SetTerrainMinimapPaletteIndices = int(__stdcall *)(int terrain, int normalIndex, int blockedIndex);
 // Returns -1 for neutral, 0..7 for a player, -2 for an invalid/unregistered object.
 using GetObjectOwner = int(__stdcall *)(int x, int y, int z);
 

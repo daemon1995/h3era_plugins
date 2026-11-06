@@ -440,6 +440,8 @@ struct ObjectKey
 {
     unsigned structSize;
     int type, subtype, kind;
+    // For SPELL_SCROLL with kind OBJECT, subtype is the scroll level (1-5),
+    // or 6 for the map-control spell group. All three parameters are zero.
     // GOLD: amount; EXPERIENCE/PRISON: experience; MONSTERS: creature ID;
     // MAGIC: minimum level, maximum level, school mask. Unused fields are zero.
     int first, second, third;
@@ -450,13 +452,9 @@ struct ObjectKey
 // The caller initializes structSize on every output. Returns FALSE for an
 // invalid key, unavailable data, closed dialog, or an out-of-range index.
 using GetByKey = BOOL(__stdcall *)(const ObjectKey *key, ObjectInfo *out);
-// Change the current subtype/variant limits. The map limit is clamped to the
-// aggregate map cap; the zone limit is clamped to the resulting map limit.
-using SetObjectLimitsByKey = BOOL(__stdcall *)(const ObjectKey *key, int mapLimit, int zoneLimit);
 using GetMemoryEntry = BOOL(__stdcall *)(int index, ObjectKey *key, ObjectInfo *out);
 using GetDialogEntryByKey = BOOL(__stdcall *)(int index, ObjectKey *key, ObjectInfo *draft, ObjectInfo *current);
 constexpr const char *GET_BY_KEY = "RMG_GetObjectInfoByKey";
-constexpr const char *SET_OBJECT_LIMITS_BY_KEY = "RMG_SetObjectLimitsByKey";
 constexpr const char *GET_MEMORY_ENTRY = "RMG_GetMemoryObjectInfo";
 constexpr const char *GET_DIALOG_ENTRY_BY_KEY = "RMG_GetDialogObjectInfoByKey";
 
@@ -465,12 +463,20 @@ struct TypeLimits
     unsigned structSize;
     int mapLimit, zoneLimit;
 };
-// The aggregate caps shared by all subtypes of an object type. Read after RMG
-// initialization. The setter clamps the zone limit to the map limit.
+// Call the limit exports on the game thread. They are available from the
+// initialization of a real map's generation tables until RMG releases them.
+// Calls outside that lifetime return FALSE.
+// The aggregate caps shared by all subtypes of an object type.
 using GetTypeLimits = BOOL(__stdcall *)(int type, TypeLimits *out);
 using SetTypeLimits = BOOL(__stdcall *)(int type, int mapLimit, int zoneLimit);
 constexpr const char *GET_TYPE_LIMITS = "RMG_GetObjectTypeLimits";
 constexpr const char *SET_TYPE_LIMITS = "RMG_SetObjectTypeLimits";
-// Call setters on the game thread with the settings dialog closed and outside
-// generation. Changes are session settings. All limits have a minimum of zero.
+
+// The caps for a subtype or Pandora variant available on the current map.
+// All limits have a minimum of zero. The zone cap is clamped to the map
+// cap, and the subtype's map cap is clamped to the current type map cap.
+using GetObjectLimitsByKey = BOOL(__stdcall *)(const ObjectKey *key, TypeLimits *out);
+using SetObjectLimitsByKey = BOOL(__stdcall *)(const ObjectKey *key, int mapLimit, int zoneLimit);
+constexpr const char *GET_OBJECT_LIMITS_BY_KEY = "RMG_GetObjectLimitsByKey";
+constexpr const char *SET_OBJECT_LIMITS_BY_KEY = "RMG_SetObjectLimitsByKey";
 } // namespace rmg_api

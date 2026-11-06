@@ -70,6 +70,18 @@ template <typename Hero, typename Visitor> inline void VisitHeroData(const Hero 
 #define ERA_HERO_VISIT(field) visitor(#field, hero.field);
     ERA_HERO_DATA_FIELDS(ERA_HERO_VISIT)
 #undef ERA_HERO_VISIT
+    for (int slot = 0; slot < 2; ++slot)
+    {
+        const auto key = "sskills." + std::to_string(slot);
+        visitor((key + ".type").c_str(), hero.sskills[slot].type);
+        visitor((key + ".level").c_str(), hero.sskills[slot].level);
+    }
+    for (int slot = 0; slot < 3; ++slot)
+    {
+        const auto key = "creatureAmount." + std::to_string(slot);
+        visitor((key + ".lowAmount").c_str(), hero.creatureAmount[slot].lowAmount);
+        visitor((key + ".highAmount").c_str(), hero.creatureAmount[slot].highAmount);
+    }
 }
 template <typename Spell, typename Visitor> inline void VisitSpell(const Spell &spell, Visitor visitor)
 {
