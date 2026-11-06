@@ -22,7 +22,6 @@ struct HintsText : public IPluginText
     LPCSTR increaseFormat = "{~LightGreen}(+%d)}";
     LPCSTR decreaseFormat = "{~r}(%d)}";
     LPCSTR fontName = NH3Dlg::Text::MEDIUM;
-    BOOL enabled = true;
     BOOL placeBelowText = false;
     BOOL addAsExtraObject = false;
 

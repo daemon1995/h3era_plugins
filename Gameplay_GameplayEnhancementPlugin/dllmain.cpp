@@ -10,6 +10,7 @@ PatcherInstance *_PI = nullptr;
 #include "MithrilDisplay.h"
 #include "ModuleSupport.h"
 #include "PluginVersion.h"
+#include "TownUpgrades.h"
 
 namespace dllText
 {
@@ -30,6 +31,8 @@ _LHF_(HooksInit)
         graphics::GraphicsEnhancements::Get();
     if (gem::ModuleEnabled("gem_plugin.modules.features"))
         features::GameplayFeature::Get();
+    if (gem::ModuleEnabled("gem_plugin.modules.town_upgrades"))
+        townupgrades::Init();
     if (gem::ModuleEnabled("gem_plugin.modules.resources"))
         ERI::ExtendedResourcesInfo::Get();
     if (gem::ModuleEnabled("gem_plugin.modules.artifact_hints"))

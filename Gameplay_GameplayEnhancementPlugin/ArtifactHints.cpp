@@ -220,7 +220,7 @@ H3String *__stdcall ArtifactHints::BuildUpArtifactDescription(HiHook *h, const H
         message.additionalHeight = 300;
     }
     extra.Erase();
-    if (instance->settings.enabled && Era::GetAssocVarIntValue(PRIMARY_SKILLS_ERM_VARIABLE_NAME) &&
+    if (Era::GetAssocVarIntValue(PRIMARY_SKILLS_ERM_VARIABLE_NAME) &&
         instance->CreateStatsString(artifact, hero, slot, &extra))
     {
         message.text = instance->settings;
@@ -362,7 +362,6 @@ StatBytes &StatBytes::operator+=(const StatBytes &other)
 void HintsText::Load()
 {
     *this = HintsText();
-    enabled = gem::ModuleEnabled("gem_plugin.artifact_hints.primary_skills.enabled");
     bool readSuccess = false;
     auto txt = EraJS::read("gem_plugin.artifact_hints.primary_skills.text_format", readSuccess);
     if (readSuccess)

@@ -25,6 +25,8 @@
   <ItemGroup>
     <ClInclude Include="..\headers\EraPluginsAPI\ArtifactDescriptionApi.h" />
     <ClInclude Include="ModuleSupport.h" />
+    <ClInclude Include="TownUpgrades.h" />
+    <ClInclude Include="TownUpgradeLogic.h" />
     <ClInclude Include="PluginVersion.h" />
     <ClInclude Include="ArtifactComparison.h" />
     <ClInclude Include="AdventureMapHints.h" />
@@ -41,6 +43,7 @@
     <ClCompile Include="AdventureMapHints.cpp" />
     <ClCompile Include="ArtifactHints.cpp" />
     <ClCompile Include="GameplayFeature.cpp" />
+    <ClCompile Include="TownUpgrades.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GraphicsEnhancements.cpp" />
     <ClCompile Include="MithrilDisplay.cpp" />
@@ -48,5 +51,10 @@
   <ItemGroup>
     <ResourceCompile Include="PluginVersion.rc" />
   </ItemGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>$(ProjectDir)GameplayEnhancement.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

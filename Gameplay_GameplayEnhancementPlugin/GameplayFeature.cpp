@@ -96,96 +96,102 @@ signed int __stdcall H3HeroDlg_Main(HiHook *h, const int heroId, int hideDelButt
     }
     return result;
 }
-
-_LHF_(DlgEdit_CorrectInpulSymbol) noexcept
+_LHF_(DlgEdit_CorrectInputSymbol) noexcept
 {
+
     // skip select scenario dialog
     const auto dlgAddr = reinterpret_cast<DWORD>(P_WindowManager->Get()->lastDlg);
-    if (!dlgAddr || DwordAt(dlgAddr) == 0x0641CBC)
-    {
+
+    if (!dlgAddr)
         return EXEC_DEFAULT;
+    if (DwordAt(dlgAddr) == 0x0641CBC)
+    {
+        auto *dlg = reinterpret_cast<H3SelectScenarioDialog *>(dlgAddr);
+        if (dlg->saveGameMode)
+            return EXEC_DEFAULT;
     }
     static UINT8 buttonsState[256];
     // get buttons state
     // check numlock state
-    if (GetKeyboardState(buttonsState) && (buttonsState[VK_NUMLOCK] & 1))
+    if (!GetKeyboardState(buttonsState) || !(buttonsState[VK_NUMLOCK] & 1) || !c->esi)
+        return EXEC_DEFAULT;
+
+    H3Msg *msg = reinterpret_cast<H3Msg *>(c->esi);
+
+    UINT scanCode = msg->GetKey();
+
+    // if button is within range and is pressed
+    if (scanCode >= eVKey::H3VK_HOME && scanCode <= eVKey::H3VK_DELETE)
     {
-
-        if (H3Msg *msg = reinterpret_cast<H3Msg *>(c->esi))
+        constexpr UINT8 VK_NPOS = 255u;
+        // assume out of range is pressed
+        UINT8 vkCode = VK_NPOS;
+        // check heroes scan code and convert it to VK
+        switch (scanCode)
         {
+        case eVKey::H3VK_HOME:
+            vkCode = VK_NUMPAD7;
+            scanCode = eVKey::H3VK_7;
+            break;
 
-            UINT scanCode = msg->GetKey();
+        case eVKey::H3VK_UP:
+            vkCode = VK_NUMPAD8;
+            scanCode = eVKey::H3VK_8;
+            break;
 
-            // if button is within range and is pressed
-            if (scanCode >= eVKey::H3VK_HOME && scanCode <= eVKey::H3VK_DELETE)
-            {
-                constexpr UINT8 VK_NPOS = 255u;
-                // assume out of range is pressed
-                UINT8 vkCode = VK_NPOS;
-                // check heroes scan code and convert it to VK
-                switch (scanCode)
-                {
-                case eVKey::H3VK_HOME:
-                    vkCode = VK_NUMPAD7;
-                    scanCode = eVKey::H3VK_7;
+        case eVKey::H3VK_PAGE_UP:
+            vkCode = VK_NUMPAD9;
+            scanCode = eVKey::H3VK_9;
+            break;
 
-                    break;
-                case eVKey::H3VK_UP:
-                    vkCode = VK_NUMPAD8;
-                    scanCode = eVKey::H3VK_8;
-                    break;
-                case eVKey::H3VK_PAGE_UP:
-                    vkCode = VK_NUMPAD9;
-                    scanCode = eVKey::H3VK_9;
+        case eVKey::H3VK_LEFT:
+            vkCode = VK_NUMPAD4;
+            scanCode = eVKey::H3VK_4;
+            break;
 
-                    break;
-                case eVKey::H3VK_LEFT:
-                    vkCode = VK_NUMPAD4;
-                    scanCode = eVKey::H3VK_4;
+        case eVKey::H3VK_NUMPAD5:
+            vkCode = VK_NUMPAD5;
+            scanCode = eVKey::H3VK_5;
+            break;
 
-                    break;
-                case eVKey::H3VK_NUMPAD5:
-                    vkCode = VK_NUMPAD5;
-                    scanCode = eVKey::H3VK_5;
+        case eVKey::H3VK_RIGHT:
+            vkCode = VK_NUMPAD6;
+            scanCode = eVKey::H3VK_6;
+            break;
 
-                    break;
-                case eVKey::H3VK_RIGHT:
-                    vkCode = VK_NUMPAD6;
-                    scanCode = eVKey::H3VK_6;
+        case eVKey::H3VK_END:
+            vkCode = VK_NUMPAD1;
+            scanCode = eVKey::H3VK_1;
+            break;
 
-                    break;
-                case eVKey::H3VK_END:
-                    vkCode = VK_NUMPAD1;
-                    scanCode = eVKey::H3VK_1;
+        case eVKey::H3VK_DOWN:
+            vkCode = VK_NUMPAD2;
+            scanCode = eVKey::H3VK_2;
+            break;
 
-                    break;
-                case eVKey::H3VK_DOWN:
-                    vkCode = VK_NUMPAD2;
-                    scanCode = eVKey::H3VK_2;
+        case eVKey::H3VK_PAGE_DOWN:
+            vkCode = VK_NUMPAD3;
+            scanCode = eVKey::H3VK_3;
+            break;
 
-                    break;
-                case eVKey::H3VK_PAGE_DOWN:
-                    vkCode = VK_NUMPAD3;
-                    scanCode = eVKey::H3VK_3;
-                    break;
-                case eVKey::H3VK_INSERT:
-                    vkCode = VK_NUMPAD0;
-                    scanCode = eVKey::H3VK_0;
-                    break;
-                case eVKey::H3VK_DELETE:
-                    vkCode = VK_DECIMAL;
-                    scanCode = eVKey::H3VK_PERIOD;
-                    break;
-                default:
-                    break;
-                }
+        case eVKey::H3VK_INSERT:
+            vkCode = VK_NUMPAD0;
+            scanCode = eVKey::H3VK_0;
+            break;
 
-                if (vkCode != VK_NPOS && (buttonsState[vkCode] & 0x80))
-                {
-                    c->eax = scanCode;
-                    msg->subtype = eMsgSubtype(scanCode);
-                }
-            }
+        case eVKey::H3VK_DELETE:
+            vkCode = VK_DECIMAL;
+            scanCode = eVKey::H3VK_PERIOD;
+            break;
+
+        default:
+            break;
+        }
+
+        if (vkCode != VK_NPOS && (buttonsState[vkCode] & 0x80))
+        {
+            c->eax = scanCode;
+            msg->subtype = eMsgSubtype(scanCode);
         }
     }
 
@@ -245,7 +251,7 @@ void GameplayFeature::CreatePatches() noexcept
         _pi->WriteLoHook(0x070C1A1, WoG_AfterTownbuildingDemolishQuestion);
 
         // Adding support for NumPad keys number input @Hawaiing
-        _pi->WriteLoHook(0x05BB0B6, DlgEdit_CorrectInpulSymbol);
+        _pi->WriteLoHook(0x05BB0B6, DlgEdit_CorrectInputSymbol);
 
         // Adding "SPACE" as "OK" hotkey to close any dlg
         _pi->WriteHiHook(0x455BD0, THISCALL_, H3DlgDefButton__Ctor);

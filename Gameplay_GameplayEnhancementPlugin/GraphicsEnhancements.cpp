@@ -602,7 +602,7 @@ void GraphicsEnhancements::CreatePatches() noexcept
     // is needed to load/unload defs
     _pi->WriteLoHook(0x040730F, AdventureManager_Show);
     _pi->WriteLoHook(0x04077B6, AdventureManager_Hide);
-    buildingHintsEnabled = gem::ModuleEnabled("gem_plugin.building_hints.enable", false);
+    buildingHintsEnabled = gem::ModuleEnabled("gem_plugin.modules.building_hints", false);
     if (buildingHintsEnabled)
     {
 
