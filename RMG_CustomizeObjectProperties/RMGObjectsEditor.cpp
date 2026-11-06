@@ -938,9 +938,9 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenScroll__CreateObject(HiHo
 }
 
 H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenPandora__CreateObject(HiHook *h, H3RmgObjectGenerator *generator,
-                                                                   H3RmgObjectPropsRef *ref,
-                                                                   H3RmgRandomMapGenerator *rmg,
-                                                                   H3RmgZoneGenerator *zoneGen) noexcept
+                                                                             H3RmgObjectPropsRef *ref,
+                                                                             H3RmgRandomMapGenerator *rmg,
+                                                                             H3RmgZoneGenerator *zoneGen) noexcept
 {
     H3RmgObject *rmgObject = THISCALL_4(H3RmgObject *, h->GetDefaultFunc(), generator, ref, rmg, zoneGen);
     if (rmgObject)
@@ -1039,6 +1039,31 @@ _LHF_(RMG__AtSecondSubterranianGatesPlacement)
     return EXEC_DEFAULT;
 }
 
+_LHF_(RMG__AtQuestArtifactListCounter)
+{
+    const int artId = c->eax;
+    if (artId >= 0 && P_ArtifactSetup[artId].IsPartOfCombo())
+    {
+        // jump to next art in the loop
+        c->return_address = 0x54B9D1;
+        return NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
+_LHF_(RMG__AtQuestArtifactListSelectRandom)
+{
+    const int artId = c->eax;
+    if (artId >= 0 && P_ArtifactSetup[artId].IsPartOfCombo())
+    {
+        // jump to next art in the loop
+        c->return_address = 0x54BA32;
+        return NO_EXEC_DEFAULT;
+    }
+
+    return EXEC_DEFAULT;
+}
+
 } // namespace fixes
 
 void RMGObjectsEditor::CreatePatches()
@@ -1075,7 +1100,9 @@ void RMGObjectsEditor::CreatePatches()
         // creates correct gates prototype corresponding to the ground of the 2nd subterranian gate
         _pi->WriteLoHook(0x05427DA, RMG__AtSecondSubterranianGatesPositioning);
         _pi->WriteLoHook(0x0542937, RMG__AtSecondSubterranianGatesPlacement);
-
+        // Prevent combo art pieces becoming the artifacts for Seer Huts
+        _pi->WriteLoHook(0x54B9C0, RMG__AtQuestArtifactListCounter);
+        _pi->WriteLoHook(0x54BA1B, RMG__AtQuestArtifactListSelectRandom);
 
         m_isInited = true;
     }
@@ -1750,8 +1777,8 @@ void GeneratedInfo::Assign(const H3RmgRandomMapGenerator *rmg,
 
 int GeneratedInfo::FindLimitIndex(int type, int subtype, bool pandoraVariant) const noexcept
 {
-    if (!activeRmg || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT ||
-        type == eObject::PRISON || subtype < 0 || subtype >= maxObjectSubtype)
+    if (!activeRmg || type < 0 || type >= H3_MAX_OBJECTS || type == eObject::SEER_HUT || type == eObject::PRISON ||
+        subtype < 0 || subtype >= maxObjectSubtype)
         return -1;
 
     // Variant records take precedence over the base Pandora slots in Assign.
@@ -1769,7 +1796,8 @@ int GeneratedInfo::FindLimitIndex(int type, int subtype, bool pandoraVariant) co
     return -1;
 }
 
-bool GeneratedInfo::GetLimits(int type, int subtype, bool pandoraVariant, editor::TypeGenerationLimits &out) const noexcept
+bool GeneratedInfo::GetLimits(int type, int subtype, bool pandoraVariant,
+                              editor::TypeGenerationLimits &out) const noexcept
 {
     const int index = FindLimitIndex(type, subtype, pandoraVariant);
     if (index < 0)
@@ -1795,8 +1823,7 @@ BOOL GeneratedInfo::ObjectCantBeGenerated(const H3RmgObjectGenerator *objGen, co
         return FALSE;
 
     const int subtype = RMGObjectInfo::GetSettingsSubtype(objGen);
-    if (objGen->type == eObject::SPELL_SCROLL &&
-        (subtype < 0 || subtype >= _RMGObjGenScroll_::BANNED_SPELL_LEVEL))
+    if (objGen->type == eObject::SPELL_SCROLL && (subtype < 0 || subtype >= _RMGObjGenScroll_::BANNED_SPELL_LEVEL))
         return FALSE;
 
     // increment number of map generated subtypes of that obj type
