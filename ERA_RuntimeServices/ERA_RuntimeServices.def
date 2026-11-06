@@ -8,6 +8,7 @@ EXPORTS
     Erm_SetObjectOwner
     Erm_SetObjectOwnerAndSync
     Erm_RegisterObjectType
+    Erm_SetTerrainMinimapPaletteIndices
     Erm_GetObjectOwner
     Erm_RegisterReplayEvent
     Erm_RegisterReplayEventArgs
