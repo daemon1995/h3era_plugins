@@ -1430,12 +1430,16 @@ void RMGObjectInfo::InitFromRmgObjectGenerator(const H3RmgObjectGenerator *gener
 
     const int objType = generator->type;
     const int objSubtype = GetSettingsSubtype(generator);
-    if (objSubtype >= defaultRMGObjectsInfoByType[objType].size())
+    auto &objectInfos = defaultRMGObjectsInfoByType[objType];
+    const size_t oldSize = objectInfos.size();
+    if (objSubtype >= oldSize)
     {
-        defaultRMGObjectsInfoByType[objType].resize(objSubtype + 1);
-        defaultRMGObjectsInfoByType[objType][objSubtype] = {objType, objSubtype};
+        objectInfos.resize(objSubtype + 1);
+        // Generators can arrive in descending subtype order, so initialize the entire new range.
+        for (size_t subtype = oldSize; subtype < objectInfos.size(); ++subtype)
+            objectInfos[subtype] = {objType, static_cast<int>(subtype)};
     }
-    auto &rmgObjInfo = defaultRMGObjectsInfoByType[objType][objSubtype];
+    auto &rmgObjInfo = objectInfos[objSubtype];
     // if this is first fucntion call with pseudo generator
     // we collect data
 
