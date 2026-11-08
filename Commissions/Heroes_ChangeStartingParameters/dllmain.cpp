@@ -20,17 +20,17 @@ void ChangeHeroStartingParameters(H3HeroInfo &heroInfo, int id)
     //    heroInfo.expansionHero = true;
 
     sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.hasSpellBook", id);
-    std::string trResult = Era::tr(h3_TextBuffer);
+    bool readSuccess = false;
+    const int hasSpellbook = EraJS::readInt(h3_TextBuffer, readSuccess);
 
-    if (trResult != h3_TextBuffer)
-        heroInfo.hasSpellbook = atoi(trResult.c_str());
+    if (readSuccess)
+        heroInfo.hasSpellbook = hasSpellbook != 0;
 
     sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.startingSpell", id);
-    trResult = Era::tr(h3_TextBuffer);
+    int spellId = 0;
 
-    if (trResult != h3_TextBuffer)
+    if (EraJS::ReadSingleValue(spellId, h3_TextBuffer))
     {
-        int spellId = atoi(trResult.c_str());
         spellId = Clamp(eSpell::NONE, spellId, eSpell::AIR_ELEMENTAL);
         heroInfo.startingSpell = spellId;
     }
@@ -38,20 +38,17 @@ void ChangeHeroStartingParameters(H3HeroInfo &heroInfo, int id)
     for (size_t i = 0; i < 2; i++)
     {
         sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.skill%d.type", id, i);
-        trResult = Era::tr(h3_TextBuffer);
-        if (trResult != h3_TextBuffer)
+        int skillId = 0;
+        if (EraJS::ReadSingleValue(skillId, h3_TextBuffer))
         {
-            int skillId = atoi(trResult.c_str());
             skillId = Clamp(eSecondary::NONE, skillId, eSecondary::FIRST_AID);
             heroInfo.sskills[i].type = (eSecondary)skillId;
             if (skillId != eSecondary::NONE)
             {
                 sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.skill%d.level", id, i);
                 int skillLvl = eSecSkillLevel::BASIC;
-                trResult = Era::tr(h3_TextBuffer);
-                if (trResult != h3_TextBuffer)
+                if (EraJS::ReadSingleValue(skillLvl, h3_TextBuffer))
                 {
-                    skillLvl = atoi(trResult.c_str());
                     skillLvl = Clamp(eSecSkillLevel::BASIC, skillLvl, eSecSkillLevel::EXPERT);
                 }
                 heroInfo.sskills[i].level = (eSecSkillLevel)skillLvl;
@@ -64,29 +61,24 @@ void ChangeHeroStartingParameters(H3HeroInfo &heroInfo, int id)
     for (size_t i = 0; i < 3; i++)
     {
         sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.army%d.type", id, i);
-        trResult = Era::tr(h3_TextBuffer);
-        if (trResult != h3_TextBuffer)
+        int armyType = 0;
+        if (EraJS::ReadSingleValue(armyType, h3_TextBuffer))
         {
-            int armyType = atoi(trResult.c_str());
             armyType = Clamp(eCreature::UNDEFINED, armyType, MAX_CREATURE_ID);
             heroInfo.armyType[i] = armyType;
             if (armyType != eCreature::UNDEFINED)
             {
                 sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.army%d.low", id, i);
                 int low = heroInfo.creatureAmount[i].lowAmount;
-                trResult = Era::tr(h3_TextBuffer);
-                if (trResult != h3_TextBuffer)
+                if (EraJS::ReadSingleValue(low, h3_TextBuffer))
                 {
-                    low = atoi(trResult.c_str());
                     low = Clamp(1, low, INT32_MAX);
                 }
                 heroInfo.creatureAmount[i].lowAmount = low;
                 sprintf(h3_TextBuffer, "gem.heroesStartingParameters.%d.army%d.high", id, i);
                 int high = heroInfo.creatureAmount[i].highAmount;
-                trResult = Era::tr(h3_TextBuffer);
-                if (trResult != h3_TextBuffer)
+                if (EraJS::ReadSingleValue(high, h3_TextBuffer))
                 {
-                    high = atoi(trResult.c_str());
                     high = Clamp(1, high, INT32_MAX);
                 }
                 if (high < low)
