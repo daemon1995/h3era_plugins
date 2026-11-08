@@ -33,7 +33,7 @@ static int __stdcall Hero_GiveExperience(HiHook* h, H3Hero* hero, const int expe
 	const int result = THISCALL_4(int, h->GetDefaultFunc(), hero, experience, a3, a4);
 
 	const auto& player = P_Game->players[hero->owner];
-	if (player.is_human)
+	if (player.isHuman)
 	{
 
 		for (auto& i : player.heroIDs)
@@ -70,7 +70,7 @@ static int __stdcall Hero_GiveExperience(HiHook* h, H3Hero* hero, const int expe
 void __stdcall OnAfterWog(Era::TEvent* e)
 {
 	// This function is called after
-	if (atoi(Era::tr("tlrq.heroes.splitExperience")))
+	if (EraJS::readInt("tlrq.heroes.splitExperience"))
 	{
 		_PI->WriteHiHook(0x0477278, THISCALL_, Hero_GiveExperience); // CALL_ combat finish
 		_PI->WriteHiHook(0x04A06B8, THISCALL_, Hero_GiveExperience); // CALL_ pandora/event pick up
