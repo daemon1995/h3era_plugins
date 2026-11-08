@@ -1,7 +1,6 @@
 #pragma once
 #include "SettingsSupport.h"
 #include <array>
-#include <unordered_map>
 #pragma pack(push, 4)
 struct OriginalConfig
 {
@@ -66,7 +65,6 @@ struct AdditionalConfig
 
     static constexpr LPCSTR sectionName = "Settings.Extra";
     static constexpr LPCSTR fileName = sysopts::SETTINGS_FILE;
-    static std::unordered_map<std::string, ConfigEntry *> optionsMap;
 
     struct ConfigEntry
     {
@@ -137,6 +135,7 @@ struct AdditionalConfig
         static AdditionalConfig instance;
         return instance;
     }
+    static ConfigEntry *FindEntry(LPCSTR key) noexcept;
     static BOOL Load();
     static BOOL Save();
     static BOOL SaveIfDirty(const BOOL reportError = FALSE);

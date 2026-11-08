@@ -7,6 +7,7 @@ struct Settings
 {
     BOOL isEnabled;
     BOOL isHeld;
+    BOOL progressiveColor;
     int scanCode;
     int vKey;
     union {
@@ -40,7 +41,8 @@ struct DlgText
     LPCSTR setHk;
     LPCSTR press;
     LPCSTR held;
-    LPCSTR warMachines;
+    LPCSTR progressive;
+    LPCSTR progressiveHint;
     // DlgText();
 };
 
@@ -54,6 +56,7 @@ struct SettingsDlg : public H3Dlg
     H3DlgDef *creatureDef = nullptr;
     BOOL needRedraw;
     DWORD nextAnimationAt = 0;
+    int previewHp = 28;
     const DlgText *text = nullptr;
 
     struct HkHandler
@@ -87,6 +90,7 @@ struct SettingsDlg : public H3Dlg
 
     void HitPointsBarDraw() noexcept;
     void RedrawPreview() noexcept;
+    void SyncControls() noexcept;
 };
 
 class CombatHints : public IGamePatch
@@ -120,7 +124,8 @@ class CombatHints : public IGamePatch
 
     // static void Init();
     static void WindMgr_DrawColoredRect(const int x, const int y, const int width, const int height,
-                                        const Settings *settings, const BOOL lost = false) noexcept;
+                                        const Settings *settings, const BOOL lost = false,
+                                        const float healthFraction = 1.0f) noexcept;
 
     static CombatHints &Get(); // (PatcherInstance* _PI);
 };

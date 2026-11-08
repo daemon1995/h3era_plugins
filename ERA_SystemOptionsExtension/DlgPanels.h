@@ -60,11 +60,9 @@ struct ISetting
     static constexpr int BASE_SETTINGS_Y_OFFSET = 30;             // TITLE_Y_OFFSET + 6;
     static constexpr int TITLE_Y_OFFSET = BASE_SETTINGS_Y_OFFSET; // TITLE_HEIGHT + 4 + 4;
 
-    std::string uuid;
     tagPOINT position;
 
     struct Value value;
-    LPCSTR displayedName = nullptr;
     H3DlgPcx16 *titleItem = nullptr;
     std::vector<std::function<void()>> languageUpdates;
     int firstClickableItemId = -1;
@@ -72,7 +70,6 @@ struct ISetting
 
   protected:
     OnChangeCallback m_onChange = nullptr;
-    OnChangeCallback m_onClose = nullptr;
 
   public:
     ISetting(const tagPOINT &position, const Value &value) : position(position), value(value)
@@ -109,10 +106,7 @@ struct ISetting
     {
         m_onChange = cb;
     }
-    void SetOnDlgClose(OnChangeCallback cb) noexcept
-    {
-        m_onClose = cb;
-    }
+
     void TriggerChange() noexcept
     {
         if (value.isBlocked)
@@ -124,11 +118,6 @@ struct ISetting
         if (m_onChange)
             m_onChange(this);
         SyncFromSource(TRUE);
-    }
-    void TriggerDlgClose() noexcept
-    {
-        if (m_onClose)
-            m_onClose(this);
     }
 
     void SyncFromSource(const BOOL redraw) noexcept

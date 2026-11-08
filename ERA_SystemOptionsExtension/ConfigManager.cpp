@@ -11,7 +11,6 @@
 #include <cstddef>
 #include <cstring>
 
-std::unordered_map<std::string, AdditionalConfig::ConfigEntry *> AdditionalConfig::optionsMap;
 namespace
 {
 using ConfigEntry = AdditionalConfig::ConfigEntry;
@@ -144,6 +143,8 @@ void LoadHealth()
     int integer = 0;
     if (ReadHealth("held", buffer) && sysopts::ParseInteger(buffer, integer))
         settings.isHeld = integer != 0;
+    if (ReadHealth("progressiveColor", buffer) && sysopts::ParseInteger(buffer, integer))
+        settings.progressiveColor = integer != 0;
     if (ReadHealth("keyCode", buffer) && sysopts::ParseInteger(buffer, integer))
     {
         const int scanCode = MapVirtualKeyA(integer, MAPVK_VK_TO_VSC);
@@ -164,13 +165,21 @@ BOOL WriteInteger(LPCSTR key, const int value, LPCSTR section)
 }
 } // namespace
 
+AdditionalConfig::ConfigEntry *AdditionalConfig::FindEntry(LPCSTR key) noexcept
+{
+    if (key)
+        for (auto *entry : Get().Entries())
+            if (!std::strcmp(key, entry->keyName))
+                return entry;
+    return nullptr;
+}
+
 DllExport INT __stdcall GetOptionValue(LPCSTR key)
 {
     if (!key)
         return -1;
-    const auto it = AdditionalConfig::optionsMap.find(key);
-    if (it != AdditionalConfig::optionsMap.end())
-        return it->second->value;
+    if (const auto entry = AdditionalConfig::FindEntry(key))
+        return entry->value;
     if (const auto native = FindNative(key))
         return native->ConfiguredValue();
     return -1;
@@ -180,12 +189,11 @@ DllExport INT __stdcall SetOptionValue(LPCSTR key, INT value)
     if (!key)
         return -1;
     BOOL changed = FALSE;
-    const auto it = AdditionalConfig::optionsMap.find(key);
-    if (it != AdditionalConfig::optionsMap.end())
+    if (const auto entry = AdditionalConfig::FindEntry(key))
     {
-        if (!AdditionalConfig::CanChangeOption(*it->second, EOptionChangeSource::ExternalApi))
+        if (!AdditionalConfig::CanChangeOption(*entry, EOptionChangeSource::ExternalApi))
             return -2;
-        changed = it->second->SetValue(value, EOptionChangeSource::ExternalApi);
+        changed = entry->SetValue(value, EOptionChangeSource::ExternalApi);
     }
     else if (const auto native = FindNative(key))
     {
@@ -275,6 +283,7 @@ BOOL AdditionalConfig::Save()
     const auto &health = cmbhints::CombatHints::Get().settings;
     success = WriteInteger("held", !!health.isHeld, HEALTH_SECTION) && success;
     success = WriteInteger("keyCode", health.vKey, HEALTH_SECTION) && success;
+    success = WriteInteger("progressiveColor", !!health.progressiveColor, HEALTH_SECTION) && success;
     const char *keys[] = {"fillColor", "lossColor", "colorSaturation", "yLabelShift"};
     for (int i = 0; i < 4; ++i)
         success =
@@ -305,7 +314,6 @@ BOOL AdditionalConfig::Load()
     // The game loads and saves native options; this plugin reads only its own settings.
     for (auto *entry : instance.Entries())
     {
-        optionsMap[entry->keyName] = entry;
         entry->value = entry->defaultValue;
         if (Era::ReadStrFromIni(entry->keyName, sectionName, fileName, buffer) && sysopts::ParseInteger(buffer, parsed))
             entry->value = Clamp(0, parsed, entry->maxValue);

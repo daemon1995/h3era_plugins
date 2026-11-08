@@ -1,12 +1,9 @@
+#include "DlgPanels.h"
 #include "CombatCreatureHealthBar.h"
+
 #include <algorithm>
 #include <array>
-#include <cctype>
-#include <cmath>
-#include <cstdint>
 #include <cstdlib>
-#include <initializer_list>
-#include <optional>
 
 void __stdcall ShowHealthBarDlg()
 {
@@ -27,33 +24,67 @@ constexpr int HP_LABEL_MAX_OFFSET = 18;
 namespace
 {
 constexpr auto COMBAT_STACK_COUNT = sizeof(H3CombatManager::stacks) / sizeof(H3CombatCreature);
-std::array<std::optional<INT32>, COMBAT_STACK_COUNT> visibleHealthLost{};
+std::array<INT32, COMBAT_STACK_COUNT> visibleHealthLost{};
+std::array<Patch *, 4> battleHooks{};
+H3CombatDlg *healthBarDlg = nullptr;
 
-std::optional<INT32> *FindVisibleHealthLost(const H3CombatManager *manager, const H3CombatCreature *stack) noexcept
+H3CombatManager *VisibleCombatManager() noexcept
 {
-    if (!manager)
-        return nullptr;
-
-    const auto offset = reinterpret_cast<std::uintptr_t>(stack) -
-                        reinterpret_cast<std::uintptr_t>(&manager->stacks[0][0]);
-    if (offset >= sizeof(manager->stacks) || offset % sizeof(*stack) != 0)
-        return nullptr;
-    return &visibleHealthLost[offset / sizeof(*stack)];
+    auto *manager = H3CombatManager::Get();
+    return manager && healthBarDlg && manager->dlg == healthBarDlg && !P_AutoSolo && !manager->IsHiddenBattle()
+               ? manager
+               : nullptr;
 }
 
-void __stdcall ClearVisibleHealthLost(Era::TEvent *)
+void SetBattleHooksEnabled(const bool enabled) noexcept
 {
-    visibleHealthLost.fill(std::nullopt);
+    for (auto *hook : battleHooks)
+    {
+        if (hook)
+            enabled ? hook->Apply() : hook->Undo();
+    }
+    visibleHealthLost.fill(-1);
+}
+
+H3CombatDlg *__stdcall CombatDlg_Ctor(HiHook *hook, H3CombatDlg *dlg, INT32 tactics)
+{
+    // A new attempt must never inherit the previous battle's visible HP.
+    SetBattleHooksEnabled(false);
+    healthBarDlg = nullptr;
+    auto *result = THISCALL_2(H3CombatDlg *, hook->GetDefaultFunc(), dlg, tactics);
+    auto *manager = H3CombatManager::Get();
+    if (result && manager && !P_AutoSolo && !manager->IsHiddenBattle())
+    {
+        healthBarDlg = result;
+        SetBattleHooksEnabled(true);
+    }
+    return result;
+}
+
+void __stdcall CombatDlg_Dtor(HiHook *hook, H3CombatDlg *dlg)
+{
+    if (dlg == healthBarDlg)
+    {
+        SetBattleHooksEnabled(false);
+        healthBarDlg = nullptr;
+    }
+    THISCALL_1(void, hook->GetDefaultFunc(), dlg);
+}
+
+_LHF_(AfterBattleAction)
+{
+    visibleHealthLost.fill(-1);
+    return EXEC_DEFAULT;
 }
 
 int __stdcall BattleStack_DoPhysicalDamage(HiHook *hook, H3CombatCreature *stack, int damage)
 {
-    auto *visibleLoss = damage > 0 && CombatHints::Get().settings.isEnabled
-                            ? FindVisibleHealthLost(H3CombatManager::Get(), stack)
+    auto *visibleLoss = damage > 0 && CombatHints::Get().settings.isEnabled && VisibleCombatManager()
+                            ? &visibleHealthLost[stack->Index()]
                             : nullptr;
     const INT32 before = stack->healthLost;
     if (visibleLoss && !stack->hasLosses)
-        visibleLoss->reset();
+        *visibleLoss = -1;
 
     const int killed = THISCALL_2(int, hook->GetDefaultFunc(), stack, damage);
     if (visibleLoss && stack->healthLost != before)
@@ -63,14 +94,15 @@ int __stdcall BattleStack_DoPhysicalDamage(HiHook *hook, H3CombatCreature *stack
 
 _LHF_(BeforeBattleStackSpriteDraw)
 {
+    if (!VisibleCombatManager())
+        return EXEC_DEFAULT;
     const auto *stack = reinterpret_cast<const H3CombatCreature *>(c->ebx);
     using Groups = eSpriteCreatureGroups;
     // This path draws the sprite after the engine has selected its animation group.
     if (!stack->hasLosses || stack->animation == Groups::GETTING_HIT ||
         stack->animation == Groups::DEFEND || stack->animation == Groups::DEATH)
     {
-        if (auto *visibleLoss = FindVisibleHealthLost(H3CombatManager::Get(), stack))
-            visibleLoss->reset();
+        visibleHealthLost[stack->Index()] = -1;
     }
     return EXEC_DEFAULT;
 }
@@ -95,11 +127,14 @@ void CombatHints::CreatePatches() noexcept
     if (!m_isInited)
     {
 
-        this->_pi->WriteLoHook(0x43E38B, BeforeBattleStackHintDraw);
-        this->_pi->WriteHiHook(0x443DB0, THISCALL_, BattleStack_DoPhysicalDamage);
-        this->_pi->WriteLoHook(0x43DF52, BeforeBattleStackSpriteDraw);
-        Era::RegisterHandler(ClearVisibleHealthLost, "OnBeforeBattleUniversal");
-        Era::RegisterHandler(ClearVisibleHealthLost, "OnAfterBattleAction");
+        battleHooks[0] = _pi->CreateLoHook(0x43E38B, BeforeBattleStackHintDraw);
+        battleHooks[1] = _pi->CreateHiHook(0x443DB0, SPLICE_, EXTENDED_, THISCALL_, BattleStack_DoPhysicalDamage);
+        battleHooks[2] = _pi->CreateLoHook(0x43DF52, BeforeBattleStackSpriteDraw);
+        // ERA replaces 0x75D306..0x75D316 and resumes here after firing BG1.
+        battleHooks[3] = _pi->CreateLoHook(0x75D317, AfterBattleAction);
+        _pi->WriteHiHook(0x471D20, SPLICE_, EXTENDED_, THISCALL_, CombatDlg_Ctor);
+        _pi->WriteHiHook(0x472440, SPLICE_, EXTENDED_, THISCALL_, CombatDlg_Dtor);
+
         //_PI->WriteLoHook(0x4682C0, BattleOptionsDlg);
         // blocked for new options dlg
         // this->_pi->WriteHiHook(0x4682C0, THISCALL_, BattleOptionsDlg_Show);
@@ -140,9 +175,12 @@ _LHF_(CombatHints::BattleMgr_ProcessActionL)
 
 _LHF_(CombatHints::BeforeBattleStackHintDraw)
 {
+    const H3CombatManager *cmbMgr = VisibleCombatManager();
+    if (!cmbMgr)
+        return EXEC_DEFAULT;
     H3CombatCreature *stack = reinterpret_cast<H3CombatCreature *>(c->ebx);
     auto &settings = Get().settings;
-    const H3CombatManager *cmbMgr = H3CombatManager::Get();
+
     const int visibleCount = stack->previousNumber == -1 ? stack->numberAlive : stack->previousNumber;
 
     if (visibleCount > 0 && settings.isEnabled)
@@ -193,8 +231,8 @@ _LHF_(CombatHints::BeforeBattleStackHintDraw)
                     const int dlgX = cmbMgr->dlg->GetX();
                     const int dlgY = cmbMgr->dlg->GetY();
                     // count if it makes sense to draw health
-                    const auto *visibleLoss = FindVisibleHealthLost(cmbMgr, stack);
-                    const int healthLost = visibleLoss ? visibleLoss->value_or(stack->healthLost) : stack->healthLost;
+                    const int visibleLoss = visibleHealthLost[stack->Index()];
+                    const int healthLost = visibleLoss >= 0 ? visibleLoss : stack->healthLost;
                     float fillPartF = static_cast<float>((maxHp - healthLost)) * 28 / maxHp * 10;
                     bool hpRemainder = fillPartF > 4;
 
@@ -221,7 +259,8 @@ _LHF_(CombatHints::BeforeBattleStackHintDraw)
                         }
                     }
                     // assert(P_CombatManager->updateRect.bottom < 800);
-                    WindMgr_DrawColoredRect(drawX, drawY, drawWidth, drawHeight, &settings);
+                    WindMgr_DrawColoredRect(drawX, drawY, drawWidth, drawHeight, &settings, false,
+                                            static_cast<float>(maxHp - healthLost) / maxHp);
 
                     if (drawWidth < hpBarLimit)
                     {
@@ -261,15 +300,18 @@ void CombatHints::ShowHealthBarDlg() noexcept
                               EraJS::read("gem_plugin.combat_hints.text.enable"),
                               EraJS::read("gem_plugin.combat_hints.text.set_hotkey"),
                               EraJS::read("gem_plugin.combat_hints.text.press_any"),
-                              EraJS::read("gem_plugin.combat_hints.text.held")};
+                              EraJS::read("gem_plugin.combat_hints.text.held"),
+                              EraJS::read("gem_plugin.combat_hints.text.progressive"),
+                              EraJS::read("gem_plugin.combat_hints.text.progressive_hint")};
     auto &settings = Get().settings;
 
     const Settings before = settings;
-    SettingsDlg dlg(450, 450, &settings, &dlgText);
+    SettingsDlg dlg(450, 470, &settings, &dlgText);
     dlg.Start();
     AdditionalConfig::Get().showCreatureHealthBar.SetValue(settings.isEnabled,
                                                            AdditionalConfig::EOptionChangeSource::Dialog);
-    if (before.isEnabled != settings.isEnabled || before.isHeld != settings.isHeld || before.vKey != settings.vKey ||
+    if (before.isEnabled != settings.isEnabled || before.isHeld != settings.isHeld ||
+        before.progressiveColor != settings.progressiveColor || before.vKey != settings.vKey ||
         before.fcolorFill != settings.fcolorFill || before.fcolorLoss != settings.fcolorLoss ||
         before.fsaturation != settings.fsaturation || before.height != settings.height)
         AdditionalConfig::MarkDirty();
@@ -331,7 +373,7 @@ void __stdcall CombatHints::BattleOptionsDlg_Show(HiHook *h, H3BaseDlg *dlg)
 }
 
 void CombatHints::WindMgr_DrawColoredRect(const int x, const int y, const int width, const int height,
-                                          const Settings *stg, const BOOL lost) noexcept
+                                          const Settings *stg, const BOOL lost, const float healthFraction) noexcept
 {
     if (width <= 0 || height <= 0)
         return;
@@ -341,7 +383,28 @@ void CombatHints::WindMgr_DrawColoredRect(const int x, const int y, const int wi
     const int top = Clamp(0, y, buffer->height);
     const int right = Clamp(left, x + width, buffer->width);
     const int bottom = Clamp(top, y + height, buffer->height);
-    if (right > left && bottom > top)
+    if (right <= left || bottom <= top)
+        return;
+    if (stg->progressiveColor)
+    {
+        // HD_HOTA: green at full HP, yellow above 25%, red at 25% or less.
+        const UINT16 light = lost ? 0x2104 : healthFraction >= 1.0f ? 0x2527
+                                               : healthFraction > 0.25f ? 0xFDC0 : 0xD9E7;
+        const UINT16 dark = lost ? 0x1082 : healthFraction >= 1.0f ? 0x1345
+                                              : healthFraction > 0.25f ? 0xCCA0 : 0x8144;
+        const H3RGB888 first(H3RGB565(light).GetRGB888());
+        const H3RGB888 last(H3RGB565(dark).GetRGB888());
+        const int steps = (std::max)(1, height - 1);
+        for (int row = top; row < bottom; ++row)
+        {
+            const int offset = row - y;
+            buffer->FillRectangle(left, row, right - left, 1,
+                                  first.r + (last.r - first.r) * offset / steps,
+                                  first.g + (last.g - first.g) * offset / steps,
+                                  first.b + (last.b - first.b) * offset / steps);
+        }
+    }
+    else
         buffer->AdjustHueSaturation(left, top, right - left, bottom - top, lost ? stg->fcolorLoss : stg->fcolorFill,
                                     stg->fsaturation);
 }
@@ -373,11 +436,11 @@ void SettingsDlg::HitPointsBarDraw() noexcept
 
         const int drawY = this->yDlg + (isBottomDrawing ? nativeLabelY + labelHeight : newLabelY + 1);
 
-        constexpr int filledHp = 16;
+        const int filledHp = settings->progressiveColor ? previewHp : 16;
         const int drawX = labelForHp->GetAbsoluteX() + 1; // add 1px offsets for the borders
 
         // draw hp
-        CombatHints::WindMgr_DrawColoredRect(drawX, drawY, filledHp, drawHeight, settings);
+        CombatHints::WindMgr_DrawColoredRect(drawX, drawY, filledHp, drawHeight, settings, false, filledHp / 28.0f);
         CombatHints::WindMgr_DrawColoredRect(drawX + filledHp, drawY, labelForHp->GetWidth() - filledHp - 2, drawHeight,
                                              settings, true);
         labelForHp->Refresh();
@@ -396,7 +459,8 @@ void SettingsDlg::RedrawPreview() noexcept
 
 void __fastcall SettingsDlg::ScrollBarGeneralProc(SettingsDlg *dlg, INT32 scrollBarId, float &valuePtr)
 {
-    // auto txt = dlg->GetText(txtId);
+    if (dlg->settings->progressiveColor)
+        return;
     auto scroll = dlg->GetScrollbar(scrollBarId);
     if (scroll) // txt && )
     {
@@ -438,298 +502,205 @@ void __fastcall SettingsDlg::HeightScrollBarProc(INT32 value, H3BaseDlg *dlg)
     sDlg->RedrawPreview();
 }
 
-BOOL SettingsDlg::DialogProc(H3Msg &msg)
+void SettingsDlg::SyncControls() noexcept
 {
-    // External API changes also reach an already open advanced dialog.
-    auto enabled = GetDefButton(7);
-    if (enabled && enabled->GetFrame() != settings->isEnabled)
-    {
-        enabled->SetFrame(settings->isEnabled);
-        enabled->SetClickFrame(settings->isEnabled);
-        enabled->Draw();
-        enabled->Refresh();
-    }
-    if (creatureDef)
-    {
-        const DWORD currentTime = GetTime();
+    const BOOL states[] = {settings->isEnabled, settings->isHeld, settings->progressiveColor};
+    const int ids[] = {7, 8, 10};
+    for (int i = 0; i < 3; ++i)
+        if (auto *checkBox = GetDef(ids[i]))
+            checkBox->SetFrame(!!states[i]);
 
-        if (static_cast<INT32>(currentTime - nextAnimationAt) >= 0)
+    for (int i = 0; i < 3; ++i)
+    {
+        auto *slider = GetScrollbar(100 + i);
+        auto *label = GetText(200 + i);
+        if (settings->progressiveColor)
         {
-            // рисуем следующий кадр анимации
-            THISCALL_1(void, 0x04EB140, creatureDef);
-
-            const DWORD elapsed = currentTime - nextAnimationAt;
-            nextAnimationAt += elapsed < 100 ? 100 : elapsed;
-            Redraw();
-            needRedraw = true;
+            slider->DeActivate();
+            slider->Shade();
+            label->Shade();
+        }
+        else
+        {
+            slider->Activate();
+            slider->UnShade();
+            label->UnShade();
         }
     }
+}
 
-    if (needRedraw)
-    {
-        needRedraw = false;
-        HitPointsBarDraw();
-    }
+BOOL SettingsDlg::DialogProc(H3Msg &msg)
+{
+    if (auto *enabled = GetDef(7))
+        if (enabled->GetFrame() != !!settings->isEnabled)
+        {
+            enabled->SetFrame(!!settings->isEnabled);
+            enabled->Draw();
+            enabled->Refresh();
+        }
 
     if (hk.bttn && !hk.bttn->IsVisible() && msg.IsKeyDown())
     {
-        for (auto it : dlgItems)
-            it->Activate();
-
-        if (msg.IsKeyDown())
+        for (auto *item : dlgItems)
+            item->Activate();
+        const eVKey scanCode = msg.GetKey();
+        if (settings->validateScanCode(scanCode))
         {
-
-            eVKey scanCode = msg.GetKey();
-
-            if (settings->validateScanCode(scanCode))
-            {
-                settings->vKey = MapVirtualKeyA(scanCode, MAPVK_VSC_TO_VK);
-                settings->scanCode = scanCode;
-                //	str = H3String::Format("\'{%s}\'", getVirtualKeyName(settings.vKey).String());
-                hk.name->SetText(getVirtualKeyName(settings->vKey));
-            }
-            else
-            {
-                H3Messagebox::RMB(this->text->wrong);
-                // hk.text->SetText(text->hotkey);
-            }
-            hk.text->SetText(text->setHk);
+            settings->vKey = MapVirtualKeyA(scanCode, MAPVK_VSC_TO_VK);
+            settings->scanCode = scanCode;
+            hk.name->SetText(getVirtualKeyName(settings->vKey));
         }
-
+        else
+            H3Messagebox::RMB(text->wrong);
+        hk.text->SetText(text->setHk);
         hk.bttn->Show();
-        Redraw();
-        needRedraw = true;
+        SyncControls(); // Restore slider locks after hotkey capture.
+        RedrawPreview();
+        return TRUE;
     }
 
-    // click on the check boxes
-    if (msg.subtype == eMsgSubtype::LBUTTON_CLICK)
+    if (msg.IsLeftDown() && (msg.itemId == 7 || msg.itemId == 8 || msg.itemId == 10))
     {
-        int itemId = msg.itemId;
+        BOOL *option = msg.itemId == 7 ? &settings->isEnabled
+                       : msg.itemId == 8 ? &settings->isHeld : &settings->progressiveColor;
+        *option = !*option;
+        if (msg.itemId == 7)
+            AdditionalConfig::Get().showCreatureHealthBar.SetValue(
+                settings->isEnabled, AdditionalConfig::EOptionChangeSource::Dialog);
+        SyncControls();
+        RedrawPreview();
+        P_SoundManager->ClickSound();
+        return TRUE;
+    }
 
-        auto bttn = GetDefButton(itemId);
-
-        if (bttn)
+    if (msg.IsLeftClick() && msg.itemId == 9)
+    {
+        settings->reset();
+        AdditionalConfig::Get().showCreatureHealthBar.SetValue(settings->isEnabled,
+                                                               AdditionalConfig::EOptionChangeSource::Dialog);
+        for (int i = 0; i < 4; ++i)
         {
+            auto *slider = GetScrollbar(100 + i);
+            slider->SetTick(i == 3 ? static_cast<int>(settings->height) + HP_LABEL_MAX_OFFSET
+                                  : sysopts::NormalizedToTick(settings->values[i], slider->GetTicksCount()));
+            slider->SetButtonPosition();
+        }
+        if (labelForHp && originalLabel)
+            labelForHp->SetY(originalLabel->GetY() - static_cast<int>(settings->height));
+        hk.name->SetText(getVirtualKeyName(settings->vKey));
+        SyncControls();
+        RedrawPreview();
+    }
 
-            if (itemId == 7 || itemId == 8)
-            {
-                BOOL *optionPtr = itemId == 7 ? &settings->isEnabled : &settings->isHeld;
-                *optionPtr ^= 1;
-                if (itemId == 7)
-                    AdditionalConfig::Get().showCreatureHealthBar.SetValue(
-                        settings->isEnabled, AdditionalConfig::EOptionChangeSource::Dialog);
-                bttn->SetFrame(*optionPtr);
-                bttn->SetClickFrame(*optionPtr);
-                bttn->Draw();
-                bttn->Refresh();
-            }
-            else if (itemId == 9)
-            {
-
-                // reset settings values
-                settings->reset();
-                AdditionalConfig::Get().showCreatureHealthBar.SetValue(settings->isEnabled,
-                                                                       AdditionalConfig::EOptionChangeSource::Dialog);
-                constexpr UINT16 SIZE = 4;
-                float values[SIZE] = {settings->fcolorFill, settings->fcolorLoss, settings->fsaturation,
-                                      settings->height + HP_LABEL_MAX_OFFSET};
-
-                // set correct positions
-                for (UINT16 i = 0; i < SIZE; i++)
-                {
-                    auto scrollBar = GetScrollbar(100 + i);
-                    if (i == 3)
-                    {
-                        scrollBar->SetTick(static_cast<int>(values[i]));
-                    }
-                    else
-                    {
-                        scrollBar->SetTick(sysopts::NormalizedToTick(values[i], scrollBar->GetTicksCount()));
-                    }
-
-                    scrollBar->SetButtonPosition();
-                    scrollBar->ParentRedraw();
-                }
-                labelForHp->SetY(originalLabel->GetY() - static_cast<int>(settings->height));
-                bttn = GetDefButton(7);
-                bttn->SetFrame(settings->isEnabled);
-                bttn->SetClickFrame(settings->isEnabled);
-
-                // bttn->Draw();
-                // bttn->Refresh();
-
-                bttn = GetDefButton(8);
-                bttn->SetFrame(settings->isHeld);
-                bttn->SetClickFrame(settings->isHeld);
-
-                hk.name->SetText(getVirtualKeyName(settings->vKey));
-                Redraw();
-                needRedraw = true;
-            }
+    if (creatureDef)
+    {
+        const DWORD now = GetTime();
+        if (static_cast<INT32>(now - nextAnimationAt) >= 0)
+        {
+            THISCALL_1(void, 0x4EB140, creatureDef);
+            const DWORD elapsed = now - nextAnimationAt;
+            nextAnimationAt += elapsed < 100 ? 100 : elapsed;
+            if (settings->progressiveColor)
+                previewHp = previewHp > 1 ? previewHp - 1 : 28;
+            needRedraw = true;
         }
     }
-
+    if (needRedraw)
+        RedrawPreview();
     if (hintBar)
         hintBar->ShowHint(&msg);
-
-    return 0;
-}
-
-void SinkItem(H3LoadedPcx16 *pcx, H3DlgItem *it)
-{
-    pcx->SinkArea(it->GetX() - 5, it->GetY(), it->GetWidth() + 10, it->GetHeight());
+    return FALSE;
 }
 
 SettingsDlg::SettingsDlg(int width, int height, Settings *incomingSettings, DlgText *text)
-    : H3Dlg(width, height, -1, -1, true), text(text), needRedraw(true), nextAnimationAt(GetTime())
+    : H3Dlg(width, height, -1, -1, false, true, IntAt(0x69CCF4)), text(text), needRedraw(true),
+      nextAnimationAt(GetTime()), settings(incomingSettings)
 {
-    settings = incomingSettings;
-    auto okBttn = CreateOK32Button(widthDlg - 100, heightDlg - 80);
-    okBttn->AddHotkey(eVKey::H3VK_ESCAPE);
-    // okBttn->AddHotkey(eVKey::H3VK_H);
+    auto *ok = CreateOK32Button(width - 100, height - 60);
+    ok->AddHotkey(eVKey::H3VK_ESCAPE);
 
-    //  auto cmb = H3CombatManager::Get();
-    LPCSTR barPcxName = ValueAt<LPCSTR>(0x0462F75 + 1); // cmb->cmNumWinPcxLoaded->GetName();
-
-    // H3DlgDef* creatureDef = H3DlgDef::Create(1, 25, 100, 130, 12, P_CreatureInformation[12].defName, 0, 2);
-
-    H3DlgDef *d = H3ObjectAllocator<H3DlgDef>().allocate(1);
-    creatureDef = THISCALL_12(H3DlgDef *, 0x4EA800, d, 30, 12, 100, 130, 225,
+    const LPCSTR barPcxName = ValueAt<LPCSTR>(0x462F75 + 1);
+    auto *def = H3ObjectAllocator<H3DlgDef>().allocate(1);
+    creatureDef = THISCALL_12(H3DlgDef *, 0x4EA800, def, 30, 20, 100, 130, 225,
                               P_CreatureInformation[eCreature::HORNED_DEMON].defName, 0, 2, 0, 0, 0x12);
-
-    // THISCALL_16(H3DlgDef *,0x4EA800, d,)
     AddItem(creatureDef);
-    // SinkItem(background, creatureDef);
-    background->SinkArea(creatureDef->GetX() - 5, creatureDef->GetY() + 11, creatureDef->GetWidth() + 25,
-                         creatureDef->GetHeight() - 10);
-    eTextColor textColor = eTextColor::WHITE;
+    background->SinkArea(25, 31, 125, 120);
     originalLabel = H3DlgPcx16::Create(creatureDef->GetX() + creatureDef->GetWidth() - 25,
                                        creatureDef->GetY() + creatureDef->GetHeight() - 30, 5, nullptr);
     if (!originalLabel)
         return;
-
     H3PcxLoader barPcx(barPcxName);
-    const int lWidth = barPcx->width;
-    const int lHeight = barPcx->height;
-    originalLabel->SetWidth(lWidth);
-    originalLabel->SetHeight(lHeight);
-    H3LoadedPcx16 *barPcx16 = H3LoadedPcx16::Create(lWidth, lHeight);
-
-    barPcx->DrawToPcx16(barPcx16, 0, 0, 1);
-    barPcx16->AdjustHueSaturation(1, 1, lWidth - 2, lHeight - 2, FloatAt(0x43E3AC + 1), FloatAt(0x43E3A7 + 1));
-
-    // draw text over the color
-    barPcx16->TextDraw(P_TinyFont->Get(), "505", 0, 0, lWidth, lHeight);
-    originalLabel->SetPcx(barPcx16);
-
-    labelForHp = H3DlgPcx::Create(originalLabel->GetX(), originalLabel->GetY() - static_cast<int>(settings->height), 6,
-                                  barPcxName);
+    const int labelWidth = barPcx->width;
+    const int labelHeight = barPcx->height;
+    originalLabel->SetWidth(labelWidth);
+    originalLabel->SetHeight(labelHeight);
+    auto *label = H3LoadedPcx16::Create(labelWidth, labelHeight);
+    barPcx->DrawToPcx16(label, 0, 0, 1);
+    label->AdjustHueSaturation(1, 1, labelWidth - 2, labelHeight - 2,
+                               FloatAt(0x43E3AC + 1), FloatAt(0x43E3A7 + 1));
+    label->TextDraw(P_TinyFont->Get(), "505", 0, 0, labelWidth, labelHeight);
+    originalLabel->SetPcx(label);
+    labelForHp = H3DlgPcx::Create(originalLabel->GetX(), originalLabel->GetY() - static_cast<int>(settings->height),
+                                  6, barPcxName);
     if (labelForHp)
         AddItem(labelForHp);
-    // add after to draw inbefore
     AddItem(originalLabel);
 
-    // glob = new Settings{};
+    const LPCSTR names[] = {text->enable, text->held, text->progressive};
+    const int ids[] = {7, 8, 10};
+    for (int i = 0; i < 3; ++i)
+    {
+        const int y = 28 + i * 38;
+        auto *checkBox = H3DlgDef::Create(width - 56, y, ids[i], NH3Dlg::Assets::ON_OFF_CHECKBOX, 0, 0);
+        if (i == 2)
+            checkBox->SetRightClickHint(text->progressiveHint);
+        AddItem(CreateThickFrameOverItem(checkBox));
+        AddItem(checkBox);
+        CreateText(170, y - 5, width - 232, 34, names[i], NH3Dlg::Text::MEDIUM,
+                   eTextColor::REGULAR, 20 + i, eTextAlignment::MIDDLE_LEFT);
+    }
 
-    textColor = eTextColor::REGULAR;
-    H3DlgDefButton *enabledChebox = H3DlgDefButton::Create(160, 30, 7, NH3Dlg::Assets::ON_OFF_CHECKBOX,
-                                                           settings->isEnabled, settings->isEnabled, false, -1);
-    AddItem(enabledChebox);
+    const H3RGB888 frameLight(0x7A, 0x65, 0x48);
+    const H3RGB888 frameDark(0x31, 0x21, 0x10);
+    background->DrawThickFrame(158, 24, 1, 122, 1, frameLight);
+    background->DrawThickFrame(159, 24, 1, 122, 1, frameDark);
+    background->DrawThickFrame(16, 164, width - 32, 52, 1, frameLight);
+    background->DrawThickFrame(17, 165, width - 34, 50, 1, frameDark);
 
-    H3DlgText *enabledText =
-        CreateText(enabledChebox->GetX() + enabledChebox->GetWidth() + 12, enabledChebox->GetY() - 7, 200, 40,
-                   text->enable, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
-    SinkItem(background, enabledText);
-
-    H3DlgDefButton *onlyHeldCheckBox =
-        CreateButton(enabledChebox->GetX(), enabledChebox->GetY() + enabledText->GetHeight(), 8,
-                     NH3Dlg::Assets::ON_OFF_CHECKBOX, settings->isHeld, settings->isHeld, false, -1);
-
-    H3DlgText *onlyHeldText =
-        CreateText(enabledText->GetX(), enabledText->GetY() + enabledText->GetHeight(), enabledText->GetWidth(), 40,
-                   text->held, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
-    SinkItem(background, onlyHeldText);
-
-    // getVirtualKeyName(settings.vKey).
-
-    auto fnt = H3MediumFont::Get();
-    int textWidth = 0;
-    for (const int key : {VK_SHIFT, VK_CONTROL, VK_MENU, VK_CAPITAL, VK_SPACE, VK_OEM_3, VK_BACK})
-        textWidth = (std::max)(textWidth, fnt->GetMaxLineWidth(getVirtualKeyName(key).String()));
-    int textX = widthDlg - textWidth - 16;
-
-    hk.bttn = CreateCustomButton(onlyHeldCheckBox->GetX(), onlyHeldCheckBox->GetY() + enabledText->GetHeight() - 3, 15,
-                                 "iam009.DEF", SettingsHotkeyCallback, 0, 1);
+    hk.bttn = CreateCustomButton(24, 176, 15, "iam009.DEF", SettingsHotkeyCallback, 0, 1);
     hk.bttn->ColorDefToPlayer(IntAt(0x69CCF4));
-    int textY = 85;
+    hk.text = CreateText(66, 175, width - 232, 34, text->setHk, NH3Dlg::Text::MEDIUM,
+                          eTextColor::REGULAR, 23, eTextAlignment::MIDDLE_LEFT);
+    CreateBlackBox(300, 179, width - 324, 26);
+    hk.name = CreateText(300, 179, width - 324, 26, getVirtualKeyName(settings->vKey).String(),
+                          NH3Dlg::Text::MEDIUM, eTextColor::WHITE, 17);
+    AddItem(CreateThickFrameOverItem(hk.name));
 
-    hk.text =
-        CreateText(onlyHeldText->GetX(), onlyHeldText->GetY() + onlyHeldText->GetHeight(), enabledText->GetWidth(), 40,
-                   text->setHk, NH3Dlg::Text::MEDIUM, textColor, 0, eTextAlignment::MIDDLE_LEFT);
-    SinkItem(background, hk.text);
+    background->DrawThickFrame(24, 222, width - 48, 1, 1, frameLight);
+    background->DrawThickFrame(24, 223, width - 48, 1, 1, frameDark);
 
-    // SinkItem(background, hk.name);
-
-    CreateBlackBox(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(),
-                   enabledText->GetHeight());
-    hk.name = CreateText(onlyHeldText->GetX(), hk.text->GetY() + hk.text->GetHeight(), enabledText->GetWidth(),
-                         enabledText->GetHeight(), getVirtualKeyName(settings->vKey).String(), fnt->GetName(),
-                         eTextColor::WHITE, 17);
-
-    // create default bttn
-    H3DlgDefButton *bttn = H3DlgDefButton::Create(100 - okBttn->GetWidth(), okBttn->GetY(), 9, "wogbttn.def", 12, 13,
-                                                  false, eVKey::H3VK_D);
-    if (bttn)
+    CreateText(24, 230, width - 48, 24, text->handlers, NH3Dlg::Text::MEDIUM, eTextColor::HIGHLIGHT, 24);
+    const int ticks[] = {101, 101, 11, HP_LABEL_MAX_OFFSET * 2 + 1};
+    const LPCSTR hints[] = {text->health, text->loss, text->density, text->height};
+    H3DlgScrollbar_proc procs[] = {ColorFillScrollBarProc, ColorLossScrollBarProc,
+                                    SaturationScrollBarProc, HeightScrollBarProc};
+    for (int i = 0; i < 4; ++i)
     {
-        bttn->SetHint(text->dfltName);
-        CreatePcx(bttn->GetX() - 1, bttn->GetY() - 1, 15, NH3Dlg::Assets::BOX_64_30_PCX);
-        AddItem(bttn);
+        const int y = 264 + i * 34;
+        auto *slider = H3DlgScrollbar::Create(24, y, 160, 16, 100 + i, ticks[i], procs[i], false, 2, true);
+        IntAt(reinterpret_cast<int>(slider) + 0x5C) = 0; // No keyboard capture.
+        AddItem(slider);
+        slider->SetTick(i == 3 ? static_cast<int>(settings->height) + HP_LABEL_MAX_OFFSET
+                              : sysopts::NormalizedToTick(settings->values[i], ticks[i]));
+        slider->SetButtonPosition();
+        CreateText(196, y - 3, width - 220, 24, hints[i], NH3Dlg::Text::MEDIUM,
+                   eTextColor::REGULAR, 200 + i, eTextAlignment::MIDDLE_LEFT);
     }
-
-    constexpr int SIZE = 4;
-    int ticks[SIZE] = {101, 101, 11, HP_LABEL_MAX_OFFSET * 2 + 1};
-    float values[SIZE] = {settings->fcolorFill, settings->fcolorLoss, settings->fsaturation,
-                          settings->height + HP_LABEL_MAX_OFFSET};
-
-    LPCSTR hints[SIZE] = {text->health, text->loss, text->density, text->height};
-    H3DlgScrollbar_proc procs[SIZE] = {ColorFillScrollBarProc, ColorLossScrollBarProc, SaturationScrollBarProc,
-                                       HeightScrollBarProc};
-    H3DlgText *description;
-
-    // background->DrawShadow(160, originalLabel->GetY() + 20, widthDlg - 60, heightDlg / 3);
-
-    H3DlgText *dlgText = CreateText(45, hk.text->GetY() + hk.text->GetHeight() + 45, widthDlg - 90, 24, text->handlers,
-                                    NH3Dlg::Text::BIG, 7, 0);
-
-    for (size_t i = 0; i < SIZE; i++)
-    {
-        H3DlgScrollbar *scrollBar = H3DlgScrollbar::Create(20, 34 * i + dlgText->GetY() + 27, 148, 16, i + 100,
-                                                           ticks[i], procs[i], false, 2, true);
-
-        // disable catch keys
-        if (scrollBar)
-        {
-            IntAt(reinterpret_cast<int>(scrollBar) + 0x5C) = NULL;
-            AddItem(scrollBar);
-            scrollBar->SetTick(sysopts::NormalizedToTick(values[i], ticks[i]));
-
-            if (i == 3)
-            {
-                scrollBar->SetTick(static_cast<int>(values[i]));
-            }
-            scrollBar->SetButtonPosition();
-        }
-
-        description =
-            H3DlgText::Create(scrollBar->GetX() + scrollBar->GetWidth() + 12, scrollBar->GetY() - 2, 224, 20, hints[i],
-                              NH3Dlg::Text::MEDIUM, textColor, i + 100, eTextAlignment::MIDDLE_LEFT);
-        if (description)
-        {
-            background->SinkArea(description->GetX() - 5, description->GetY(), description->GetWidth() + 10,
-                                 description->GetHeight());
-            AddItem(description);
-        }
-    }
+    auto *reset = H3DlgDefButton::Create(24, height - 60, 9, "wogbttn.def", 12, 13, false, eVKey::H3VK_D);
+    reset->SetHint(text->dfltName);
+    CreatePcx(23, height - 61, 25, NH3Dlg::Assets::BOX_64_30_PCX);
+    AddItem(reset);
+    SyncControls();
 }
 
 BOOL Settings::validateScanCode(eVKey scanCode) const noexcept
@@ -812,6 +783,7 @@ void Settings::reset()
 {
     isEnabled = true;
     isHeld = false;
+    progressiveColor = false;
     vKey = VK_CONTROL;
     scanCode = eVKey::H3VK_CTRL;
     height = HP_LABEL_HEIGHT;
