@@ -215,7 +215,7 @@ void __stdcall OnAfterCreateWindow(Era::TEvent *event)
     // @ daemon_n
     // фикс WoG бага, когда командиры призывают боевые машины в банках существ
     constexpr LPCSTR fixKey = "gbfe.disable_fix.npc.creature_banks_war_machines";
-    if (std::atoi(Era::tr(fixKey, {}).c_str()) == 0)
+    if (EraJS::readInt(fixKey) == 0)
     {
         instance->WriteLoHook(0x76B889, WoG_CombatStart_SummonNPC); // tent
         instance->WriteLoHook(0x76B97B, WoG_CombatStart_SummonNPC); // ballista
