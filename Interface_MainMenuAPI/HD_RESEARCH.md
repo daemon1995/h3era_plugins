@@ -29,6 +29,22 @@ Verified by static disassembly and a Release|Win32 build with `v141_xp`;
 in-game visual verification is still required. When installing, replace
 the old `Interface_MainMenuLogo.era` rather than loading both plugins.
 
+## Credits background
+
+The installed `credits_unlink.dll` (SHA256
+`FE64E7D28A33407CBB011B9B24B5446A83FAE573D86B163323C0CEC0FC568284`)
+hooks `0x4EF7EF`: its handler at RVA `0x1030` draws Gamselbk from source
+(460, 0), size 340x600, through the existing call chain.
+
+At the following ShowCredits call (`0x4EF7F4`), MainMenuAPI prepares the
+fitted canvas but copies and presents only the native 340x600 strip at the
+actual menu origin plus (460, 0). Pixels outside this region are retained.
+ShowCredits saves a separate 328x580 scrolling
+backing at `0x4EE536`; that call copies from the prepared canvas at the
+actual menu origin plus (460, 10). This avoids capturing the old screen or
+applying HD's source translation to an already positioned canvas. The
+native scrolling/restore calls remain intact.
+
 ## Video presentation
 
 The native video update routine at `0x597CD0` submits the decoded dirty region

@@ -74,6 +74,8 @@ inline Layout GetLayout(h3::H3BaseDlg *dlg, bool configured)
     if (!configured || !screen || !asset || !asset->buffer || asset->width <= 0 || asset->height <= 0)
     {
         Layout fallback;
+        if (!dlg)
+            return fallback;
         fallback.x = dlg->GetX();
         fallback.y = dlg->GetY();
         fallback.width = dlg->GetWidth();
@@ -87,6 +89,7 @@ inline Layout GetLayout(h3::H3BaseDlg *dlg, bool configured)
 }
 
 bool Draw(h3::H3BaseDlg *dlg);
+h3::H3LoadedPcx16 *GetBuffer(h3::H3BaseDlg *dlg = nullptr);
 void ReleaseCache();
 } // namespace background
 } // namespace mainmenu

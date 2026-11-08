@@ -128,6 +128,7 @@ struct ResizedBackground
     int sourceHeight = 0;
     int bitMode = 0;
 } cache;
+h3::H3LoadedPcx16 *canvas = nullptr;
 } // namespace
 
 void ReleaseCache()
@@ -135,17 +136,20 @@ void ReleaseCache()
     if (cache.image)
         cache.image->Destroy();
     cache = {};
+    if (canvas)
+        canvas->Destroy();
+    canvas = nullptr;
 }
 
-bool Draw(h3::H3BaseDlg *dlg)
+h3::H3LoadedPcx16 *GetBuffer(h3::H3BaseDlg *dlg)
 {
     const auto layout = GetLayout(dlg, Enabled());
     if (!layout.custom)
-        return false;
+        return nullptr;
     auto *screen = h3::H3WindowManager::Get()->GetDrawBuffer();
     auto *asset = GetAsset();
     if (!screen || !screen->buffer || !asset || screen == asset)
-        return false;
+        return nullptr;
 
     h3::H3LoadedPcx16 *image = asset;
     if (layout.assetWidth != asset->width || layout.assetHeight != asset->height)
@@ -166,7 +170,7 @@ bool Draw(h3::H3BaseDlg *dlg)
                     source->Destroy();
                 if (fitted)
                     fitted->Destroy();
-                return false;
+                return nullptr;
             }
             libc::memset(source->buffer, 0, source->buffSize);
             libc::memset(fitted->buffer, 0, fitted->buffSize);
@@ -195,9 +199,37 @@ bool Draw(h3::H3BaseDlg *dlg)
         }
         image = cache.image;
     }
-    image->DrawToPcx16(layout.assetX, layout.assetY, FALSE, screen);
+    if (canvas && (canvas->width != screen->width || canvas->height != screen->height))
+    {
+        canvas->Destroy();
+        canvas = nullptr;
+    }
+    if (!canvas)
+        canvas = h3::H3LoadedPcx16::Create(screen->width, screen->height);
+    if (!canvas)
+        return nullptr;
+    // Rebuild the entire backing layer: HD's saved screen contains the old
+    // 800x600 frame, which must not survive outside the fitted picture.
+    canvas->BackgroundRegion(0, 0, canvas->width, canvas->height, "DlgGreyBk.pcx");
+    image->DrawToPcx16(layout.assetX, layout.assetY, FALSE, canvas);
     if (layout.frame)
-        screen->SimpleFrameRegion(layout.x - 4, layout.y - 4, layout.width + 8, layout.height + 8);
+    {
+        // When the fitted canvas fills the window, both outlines coincide.
+        // Otherwise retain its own frame as well as the window perimeter.
+        if (layout.x != 4 || layout.y != 4 || layout.width + 8 != canvas->width ||
+            layout.height + 8 != canvas->height)
+            canvas->SimpleFrameRegion(layout.x - 4, layout.y - 4, layout.width + 8, layout.height + 8);
+        canvas->SimpleFrameRegion(0, 0, canvas->width, canvas->height);
+    }
+    return canvas;
+}
+
+bool Draw(h3::H3BaseDlg *dlg)
+{
+    auto *buffer = GetBuffer(dlg);
+    if (!buffer)
+        return false;
+    buffer->DrawToPcx16(0, 0, FALSE, h3::H3WindowManager::Get()->GetDrawBuffer());
     return true;
 }
 } // namespace background

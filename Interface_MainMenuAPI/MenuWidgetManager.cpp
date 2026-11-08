@@ -234,8 +234,42 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
     //    widgetStartX = backgroundWidth + xFrameOffset;
 
     const int panelWidth = widgetWidth + frameWidth * 2;
-    const int outsideSpace = gameWidth - backgroundRight - frameOffset;
+    int panelX = backgroundRight + frameOffset;
+    int outsideSpace = gameWidth - (layout.frame ? frameWidth : 0) - panelX;
     placedOutside = outsideSpace >= panelWidth;
+    if (!placedOutside && layout.custom)
+    {
+        // Prefer the right-hand canvas margin, then the space after the
+        // actual native controls. Their linked list also includes items that
+        // the game creates without H3API's AddItem/GetList helpers.
+        const int imageRight = layout.assetX + layout.assetWidth;
+        if (backgroundRight - imageRight >= panelWidth)
+        {
+            panelX = backgroundRight - panelWidth;
+            outsideSpace = panelWidth;
+            placedOutside = true;
+        }
+        else
+        {
+            int controlsRight = 0;
+            auto &items = dlg->GetList();
+            auto *item = items.Count() ? items[0] : nullptr;
+            if (item)
+                while (item->GetNextItem()) item = item->GetNextItem();
+            for (; item; item = item->GetPreviousItem())
+                if (*reinterpret_cast<const h3::ADDRESS *>(item) == H3DlgDefButton::VTABLE)
+                    controlsRight = std::max(controlsRight, item->GetAbsoluteX() + item->GetWidth());
+            if (controlsRight && backgroundRight - controlsRight >= panelWidth)
+            {
+                panelX = backgroundRight - panelWidth;
+                outsideSpace = panelWidth;
+            }
+            else
+                panelX = backgroundX;
+        }
+    }
+    else if (!placedOutside)
+        panelX = backgroundX;
 
     if (placedOutside && hideWidgetInd >= 0)
     {
@@ -244,7 +278,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         createdWidgets.pop_back();
     }
 
-    frameStartX = (placedOutside ? backgroundRight + frameOffset : backgroundX) - dlg->GetX();
+    frameStartX = panelX - dlg->GetX();
     frameStartY = backgroundY - dlg->GetY() - (placedOutside ? frameOffset : 0);
 
     const int availableHeight = backgroundHeight - frameWidth * 2;
@@ -254,7 +288,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
         SLIDER,
         ARROWS
     };
-    const ScrollType scrollType = placedOutside && outsideSpace < panelWidth + scrollbarWidth ? ARROWS : SLIDER;
+    const ScrollType scrollType = outsideSpace < panelWidth + scrollbarWidth && panelX != backgroundX ? ARROWS : SLIDER;
 
     BOOL createScrollbar = false;
     INT widgetsToDraw = currentMenuTypeWidgets;

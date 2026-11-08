@@ -102,7 +102,7 @@ Boolean settings accept JSON booleans or numeric 0/1.
 | --- | --- | --- |
 | `background.enabled` | true | Draw the loaded Gamselbk.pcx using its actual size and the configured bounds. False retains the game/HD background renderer. |
 | `background.width`, `background.height` | 0, 0 | Inner canvas dimensions; zero/negative means the corresponding PCX dimension. The canvas is limited to the current game buffer. |
-| `background.frame.enabled` | false | Draw the four-pixel HD frame outside the canvas, reserving room for all four edges. |
+| `background.frame.enabled` | false | Draw the four-pixel HD frame around the game window and outside the canvas, reserving room for all four edges. Coincident frames are drawn once. |
 | `widgets.frame.enabled` | true | Draw the same HD frame around the API button panel. |
 | `video.position.enabled` | true | Enable the former VideoPositioning compatibility fix for menu video 33. |
 | `video.position.x`, `video.position.y` | 0, 0 | Coordinates supplied to OpenVideo when that compatibility fix applies. |
@@ -164,14 +164,30 @@ names are unchanged, preserving the existing C++ API and its callers.
 With width/height zero, an 800x600 PCX stays 800x600; no 16:9 area is
 forced. Larger PCXs are fitted into the available window. Explicit dimensions
 set the canvas; the picture is centered and scaled proportionally to fit it,
-with HD Mod's existing texture in any unused area. The plugin does not fill
+with a clean grey dialog texture in any unused area. The plugin does not fill
 the screen with black. The default native-size path does not resize.
-For example, 800x600 in a 1067x600 canvas remains 800x600 over HD's background.
+For example, 800x600 in a 1067x600 canvas remains 800x600 over the grey background.
 The former `background.widescreen.enabled` test switch is removed.
 
 Both frames use `H3LoadedPcx16::SimpleFrameRegion`, which loads HD Mod's
 `hd_fr_*.bmp` assets. Background/frame settings apply on full redraw;
 restart the menu/game after changing panel frame settings.
+
+The complete backing buffer is rebuilt before painting the picture and its
+frame, removing HD's saved 800x600 frame from the unused margins. Credits
+repaint and present only the original 340x600 strip at the menu origin plus
+(460, 0) at entry, after the native
+Mainmenu.pcx overlay and replacements such as credits_unlink. Their 328x580
+scrolling backing is copied directly from that same canvas at the actual
+menu-dialog origin plus (460, 10), bypassing HD's source translation.
+High scores
+with such a picture use a separate frame around the actual score dialog.
+
+API buttons prefer space to the right of the canvas, then its right picture
+margin, then space between native game controls and the right canvas edge.
+If no right-hand space fits the panel, it keeps its left-hand placement.
+Narrow right-hand spaces use scroll arrows rather than widening the panel
+with a scrollbar.
 
 ## Rendering
 
@@ -180,6 +196,9 @@ dialog items. A scoped Show context handles the first draw before AddDialog
 links the menu into `WindowManager::lastDlg`. Partial item redraws do not clear
 the background. The API panel uses the same configured/asset-derived bounds; background
 snapshots are refreshed for each menu, including the campaign-set selector.
+Full redraws compose the background and all controls before presenting the
+completed screen. Intermediate refreshes (including notification auto-open)
+are suppressed during this composition; partial control updates remain live.
 
 BIK and SMK frame presentation checks the player's actual updated rectangle
 against visible items added after the native menu constructor: API widgets,
