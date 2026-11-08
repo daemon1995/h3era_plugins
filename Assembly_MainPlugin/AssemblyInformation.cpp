@@ -70,7 +70,6 @@ void AssemblyInformation::Version::GetJsonData(const char *jsonSubKey)
             format = mainmenu::config::Text(h3_TextBuffer, "ERA Engine v%s");
         }
 
-        alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 
         Era::ReadStrFromIni("ERA", "ShellExecute", ASSEMBLY_INI_FILE, h3_TextBuffer);
         shellExecutePath = h3_TextBuffer;
@@ -472,7 +471,6 @@ void AssemblyInformation::LoadAssemblyLabelText()
     m_assemblyTitle.text = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.title", "Assembly");
     m_localVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.installed_format", "v%s");
     m_remoteVersion.format = mainmenu::config::Text("gem_plugin.main_menu.assembly_version.latest_format", "v%s");
-    m_assemblyTitle.alwaysDraw = mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 }
 
 void AssemblyInformation::PrepareAssemblyLabels(H3BaseDlg *dlg) noexcept
@@ -555,10 +553,7 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
                     activeVersion = ver;
                 }
 
-                if (ver->alwaysDraw)
-                {
-                    it->Draw();
-                }
+
             }
         }
 
@@ -600,8 +595,6 @@ int __stdcall AssemblyInformation::DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
             remoteVersion.workDone = false;
         }
 
-        if (instance.m_assemblyTitle.dlgItem && instance.m_assemblyTitle.alwaysDraw)
-            instance.m_assemblyTitle.dlgItem->Draw();
     }
 
     // The outermost menu hook applies the combined request, in either plugin

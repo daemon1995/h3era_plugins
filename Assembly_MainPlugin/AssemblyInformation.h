@@ -33,7 +33,6 @@ class AssemblyInformation : public IGamePatch
 
         BOOL customText = false;
         BOOL show = false;
-        BOOL alwaysDraw = false;
 
         H3DlgText *dlgItem = nullptr;
         H3BaseDlg *parentDlg = nullptr;

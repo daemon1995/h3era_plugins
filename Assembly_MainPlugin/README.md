@@ -6,6 +6,10 @@ Each is one native text widget with a distinct free ID and transparent
 background, without a frame. The installed version uses the regular text
 color; Latest is always green and does not blink. On text changes the menu
 redraw restores the picture behind the text.
+With MainMenuAPI, labels overlapping the video are redrawn before its frame
+is presented. They are added after the menu constructor, so they participate
+in the same repair pass as the other added dialog items. Text changes request
+a full menu redraw to remove the old glyphs, including over a paused video.
 
 The installed version is read from `[Assembly] Version` in `ERA_Project.ini`.
 A nonempty `current_version.custom_version` explicitly overrides that value.
@@ -35,7 +39,7 @@ The `v%s` formatter removes an existing leading v/V before adding its own v,
 so server tags such as `v2.300` are not displayed as `vv2.300`.
 Install `Data/assembly_version.json` in `Lang/` and its Russian counterpart
 in `Lang/ru/`, or merge these keys into `assembly_main.json`. Language reload
-updates images without changing their geometry.
+updates text without changing its geometry.
 
 Existing `display_version`, `custom_text`, `custom_version` and version-source
 settings remain supported. Old installed/latest `format`, all per-version
