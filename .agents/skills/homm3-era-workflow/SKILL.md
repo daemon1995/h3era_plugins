@@ -25,6 +25,8 @@ Default repository: `C:/dev/homm3/plugins/daemon_n/H3EraPlugins`. Adjacent repos
 - Keep all newly created tests, test source, harnesses, fixtures, test generators and test outputs out of Git staging, commits and pushes. Put necessary temporary checks outside the repository or in a verified ignored task directory. Before staging production changes, inspect the intended file list. Do not delete or untrack pre-existing tests as part of this preference. If the user explicitly requests a versioned test change, follow that request.
 - Reuse existing ERA/H3API and plugin APIs where suitable. When the task needs functionality shared across plugins or callable from ERM, expose a small reusable API in the repository's established style, with the necessary declarations, exports and implementation. Keep ABI and lifetime contracts clear; avoid inventing an API for a one-off internal operation without a concrete consumer or need.
 
+- Use the existing EraJS JSON readers (`readInt`, `readFloat`, `ReadValue`/`ReadSingleValue`) instead of reading a scalar as text and adding another parser. For an already supplied scalar string, reuse `EraJS::ParseNumber`; for an already parsed JSON object, use its typed getters. ERA exposes native JSON booleans as 0/1: do not add string-boolean aliases (`true`/`false`, `on`/`off`, etc.) or duplicate number parsers. Preserve field-specific bounds and missing-key defaults at the call site.
+
 ## Crash diagnostics
 
 When the user asks to check or investigate a crash while working on game plugins, inspect `D:\games\HoMM 3 ERA\Debug\Era` by default, starting with `exception context.txt` and relevant accompanying diagnostic files. Do not ask the user to supply the standard crash-log path when this default applies.
