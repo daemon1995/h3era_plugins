@@ -14,6 +14,9 @@ constexpr int ANY_SUBTYPE = -1;
 // No game access or map mutation. Returns index count, -1 for invalid arguments.
 using OrderGarrisonSites = int(__stdcall *)(const int* xyz, int count, int mapSize,
                                            int* output, int capacity, unsigned seed);
+// Tries to place special terrains on level z. Returns placements or -1 on failure.
+// A failure can follow a partial placement pass, so do not retry on -1.
+using AddSpecialTerrainsEx = int(__stdcall *)(int attempts, int z);
 // Bottom-right coordinates of a passable, entrance-free flat terrain. 1 placed,
 // 0 not placed, -1 native failure (may have placed an object).
 // Multiplayer is currently rejected; see the network protocol limitation.
