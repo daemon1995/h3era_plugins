@@ -568,8 +568,10 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
         int rightPartY = settingsStartY;
         //     page->CreateTitle(rightX, rightPartY, ERA_OPT(combat, creatureInfo, name));
 
-        LPCSTR infoTexts[] = {ERA_OPT(combat, allStatistics, name), ERA_OPT(combat, onlySpells, name)};
-        LPCSTR infoHints[] = {ERA_OPT(combat, allStatistics, hint), ERA_OPT(combat, onlySpells, hint)};
+        LPCSTR infoTexts[] = {ERA_OPT(combat, noCreatureInfo, name), ERA_OPT(combat, allStatistics, name),
+                              ERA_OPT(combat, onlySpells, name)};
+        LPCSTR infoHints[] = {ERA_OPT(combat, noCreatureInfo, hint), ERA_OPT(combat, allStatistics, hint),
+                              ERA_OPT(combat, onlySpells, hint)};
         constexpr size_t radioButtonsCount = std::size(infoTexts);
         RadioButtonInfo radioInfo = {"combat_creature_info",
                                      {rightX, rightPartY},
@@ -578,11 +580,12 @@ void SystemOptionsDlg::CreateDlgPages() noexcept
                                      ERA_OPT(combat, creatureInfo, name),
                                      radioButtonsCount,
                                      infoTexts,
-                                     infoHints};
+                                     infoHints,
+                                     TRUE};
         itemId += radioButtonsCount;
         page->CreateSetting<RadioBoxSetting>(radioInfo);
 
-        rightPartY += baseSettingHeight * 2 + ISetting::TITLE_Y_OFFSET;
+        rightPartY += baseSettingHeight * radioButtonsCount + ISetting::TITLE_Y_OFFSET;
 
         /*
         auto &battleQueue = extraConfig.battleQueue;
@@ -929,8 +932,8 @@ BOOL ExternalButtonsManager::RegisterButton(LPCSTR tag, const RegisteredButtonIn
     }
     else
     {
-        targetIndex = freedIndices.top();
-        freedIndices.pop();
+        targetIndex = freedIndices.back();
+        freedIndices.pop_back();
         registeredErmButtonsVec[targetIndex] = info;
     }
     nameToIndexMap[tag] = targetIndex;
@@ -949,7 +952,7 @@ BOOL ExternalButtonsManager::UnregisterButton(LPCSTR tag)
     }
     const size_t targetIndex = it->second;
     registeredErmButtonsVec[targetIndex] = {};
-    freedIndices.push(targetIndex);
+    freedIndices.push_back(targetIndex);
     nameToIndexMap.erase(tag);
     return TRUE;
 }

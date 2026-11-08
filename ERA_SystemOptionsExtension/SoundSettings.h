@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_set>
 
-#include "DlgPanels.h"
+#include "framework.h"
 namespace sound
 {
 class SoundSettings : public IGamePatch

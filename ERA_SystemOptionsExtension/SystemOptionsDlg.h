@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stack>
 #include <unordered_map>
 
 #include "framework.h"
@@ -51,7 +50,7 @@ struct ExternalButtonsManager
   protected:
     std::vector<RegisteredButtonInfo> registeredErmButtonsVec;
     std::unordered_map<std::string, size_t> nameToIndexMap;
-    std::stack<size_t> freedIndices;
+    std::vector<size_t> freedIndices;
 
   public:
     BOOL RegisterButton(LPCSTR tag, const RegisteredButtonInfo &info);
@@ -75,9 +74,7 @@ struct ExternalButtonsManager
     {
         registeredErmButtonsVec.clear();
         nameToIndexMap.clear();
-        size_t size = freedIndices.size();
-        for (size_t i = 0; i < size; i++)
-            freedIndices.pop();
+        freedIndices.clear();
     }
 
   public:
@@ -119,7 +116,6 @@ class SystemOptionsDlg : public H3Dlg
         H3Vector<H3DlgItem *> items;
         H3Vector<ISetting *> settings;
         H3Vector<H3DlgPcx16 *> createdDlgTitles;
-        std::unordered_map<int, ISetting *> settingsByItemId;
         std::vector<std::function<void()>> languageUpdates;
 
       public:
@@ -150,11 +146,6 @@ class SystemOptionsDlg : public H3Dlg
         void AddSetting(ISetting *setting)
         {
             settings += setting;
-            // A setting owns its title; this page owns only titles created directly.
-
-            if (setting->firstClickableItemId > 0)
-                for (int i = setting->firstClickableItemId; i <= setting->lastClickableItemId; ++i)
-                    settingsByItemId[i] = setting;
         }
 
         H3DlgPcx16 *CreateTitle(int x, int &y, LPCSTR displayedText)
@@ -201,8 +192,15 @@ class SystemOptionsDlg : public H3Dlg
 
         BOOL ProcessMessage(H3Msg &msg) noexcept
         {
-            auto settingIt = settingsByItemId.find(msg.itemId);
-            return settingIt != settingsByItemId.end() && settingIt->second->ProcessMessage(msg);
+            // Match the last added setting if item ranges overlap.
+            for (auto it = settings.end(); it != settings.begin();)
+            {
+                auto *setting = *--it;
+                if (setting->firstClickableItemId > 0 && msg.itemId >= setting->firstClickableItemId &&
+                    msg.itemId <= setting->lastClickableItemId)
+                    return setting->ProcessMessage(msg);
+            }
+            return FALSE;
         }
     };
 
