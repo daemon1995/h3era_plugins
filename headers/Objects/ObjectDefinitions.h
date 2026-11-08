@@ -127,38 +127,62 @@ inline std::array<int, OBJECT_TYPE_LIMIT> SubtypeCounts(const std::vector<std::s
 
 // Override by DEF/type/subtype, including every existing terrain variant.
 // A zero generation mask disables the group without changing its other fields.
-inline void MergeObjectProperties(std::vector<std::string> &lines, const std::vector<std::string> &additions)
+inline void MergeObjectProperties(std::vector<std::string> &lines, const std::vector<std::string> &additions,
+                                  const std::vector<int> *additionOwners = nullptr,
+                                  std::vector<int> *owners = nullptr, size_t baseDefinitionCount = 0)
 {
     if (lines.empty())
         return;
+    // Owner indices exclude the count header, just like the published definitions.
+    if (owners)
+        owners->assign(lines.size() - 1, -1);
     std::unordered_map<std::string, std::vector<size_t>> indices;
     ObjectProperty property;
     for (size_t i = 1; i < lines.size(); ++i)
         if (ParseObjectProperty(lines[i], property))
             indices[property.objectKey].push_back(i);
-    for (const auto &line : additions)
+    for (size_t additionIndex = 0; additionIndex < additions.size(); ++additionIndex)
     {
+        const auto &line = additions[additionIndex];
+        const int owner = additionOwners && additionIndex < additionOwners->size()
+                              ? (*additionOwners)[additionIndex] : -2;
         if (!ParseObjectProperty(line, property))
             continue;
         auto &variants = indices[property.objectKey];
+        // Unscoped JSON properties extend the base list, even for an existing DEF.
+        // Register their positions so subsequent mod overrides also replace them.
+        if (additionIndex < baseDefinitionCount)
+        {
+            variants.push_back(lines.size());
+            lines.push_back(line);
+            if (owners) owners->push_back(-2);
+            continue;
+        }
         ObjectProperty existing;
         if (property.generationDisabled && !variants.empty())
         {
             for (const size_t index : variants)
                 if (ParseObjectProperty(lines[index], existing))
+                {
                     lines[index].replace(existing.generationMaskOffset, existing.generationMaskLength,
                                          existing.generationMaskLength, '0');
+                    if (owners) (*owners)[index - 1] = owner;
+                }
             continue;
         }
         // Replace all variants so an older mask cannot keep a terrain enabled.
         // Keep native record positions and duplicate counts intact.
         if (!variants.empty())
             for (const size_t index : variants)
+            {
                 lines[index] = line;
+                if (owners) (*owners)[index - 1] = owner;
+            }
         else
         {
             variants.push_back(lines.size());
             lines.push_back(line);
+            if (owners) owners->push_back(owner);
         }
     }
     lines[0] = std::to_string(lines.size() - 1);
@@ -168,19 +192,34 @@ inline void MergeObjectProperties(std::vector<std::string> &lines, const std::ve
 namespace object_config
 {
 // Mod priority is resolved once, before either host touches native memory.
-// Explicit per-subtype definitions override legacy mod lists; the final entry wins.
+// Unscoped JSON extends the base list first; mod lists override it afterwards.
 template <class Lookup, class Mods>
-std::vector<std::string> CollectDefinitions(const Lookup &lookup, const Mods &mods)
+std::vector<std::string> CollectDefinitions(const Lookup &lookup, const Mods &mods,
+                                            std::vector<int> *owners = nullptr,
+                                            size_t *baseDefinitionCount = nullptr)
 {
     std::vector<std::string> result;
+    if (owners) owners->clear();
+    int modIndex = -2;
     ObjectProperty parsed;
     const auto append = [&](const std::string &key, int type = -1, int subtype = -1) {
         const char *line = lookup(key.c_str());
         if (!line || key == line) return false;
         if (ParseObjectProperty(line, parsed) && (type < 0 || (parsed.type == type && parsed.subtype == subtype)))
+        {
             result.emplace_back(line);
+            if (owners) owners->push_back(modIndex);
+        }
         return true;
     };
+    for (int type = 0; type < OBJECT_TYPE_LIMIT; ++type)
+        for (int subtype = 0; subtype < PROPERTY_SUBTYPE_SCAN_LIMIT; ++subtype)
+        {
+            const std::string prefix = "RMG.objectGeneration." + std::to_string(type) + "." + std::to_string(subtype) + ".properties.";
+            for (int i = 0; append(prefix + std::to_string(i), type, subtype); ++i) {}
+        }
+    if (baseDefinitionCount) *baseDefinitionCount = result.size();
+    modIndex = 0;
     for (const auto &mod : mods)
     {
         const std::string prefix = "RMG." + mod + ".properties.";
@@ -191,13 +230,8 @@ std::vector<std::string> CollectDefinitions(const Lookup &lookup, const Mods &mo
             for (; append(prefix + std::to_string(group) + "." + std::to_string(i)); ++i) {}
             if (!i) break;
         }
+        ++modIndex;
     }
-    for (int type = 0; type < OBJECT_TYPE_LIMIT; ++type)
-        for (int subtype = 0; subtype < PROPERTY_SUBTYPE_SCAN_LIMIT; ++subtype)
-        {
-            const std::string prefix = "RMG.objectGeneration." + std::to_string(type) + "." + std::to_string(subtype) + ".properties.";
-            for (int i = 0; append(prefix + std::to_string(i), type, subtype); ++i) {}
-        }
     return result;
 }
 }
