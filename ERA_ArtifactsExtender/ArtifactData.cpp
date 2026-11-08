@@ -26,11 +26,10 @@ namespace
 bool ReadInt(const std::string &prefix, const char *field, int &value)
 {
     const std::string key = prefix + "." + field;
-    bool found = false;
-    const char *text = EraJS::read(key, found);
-    if (!found) return false;
-    if (EraJS::ParseNumber(text, value)) return true;
-    Log("Invalid integer: %s = %s", key.c_str(), text);
+    const auto status = EraJS::ReadValue(value, key.c_str());
+    if (status == EraJS::ReadStatus::Applied) return true;
+    if (status == EraJS::ReadStatus::Invalid)
+        Log("Invalid integer: %s = %s", key.c_str(), EraJS::read(key));
     return false;
 }
 void ReadText(LPCSTR &target, const std::string &prefix, const char *field)

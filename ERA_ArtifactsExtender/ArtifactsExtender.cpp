@@ -25,13 +25,12 @@ void ArtifactsExtender::Discover()
         for (int index = 0; index < CAPACITY; ++index)
         {
             const std::string key = mod + ".artifacts." + std::to_string(index);
-            bool found = false;
-            const char *text = EraJS::read(key + ".id", found);
-            if (!found) break;
             int id;
-            if (!EraJS::ParseNumber(text, id) || id < 0 || id >= CAPACITY)
+            const auto status = EraJS::ReadValue(id, (key + ".id").c_str());
+            if (status == EraJS::ReadStatus::Missing) break;
+            if (status != EraJS::ReadStatus::Applied || id < 0 || id >= CAPACITY)
             {
-                Log("Rejected artifact ID: %s.id = %s", key.c_str(), text);
+                Log("Rejected artifact ID: %s.id = %s", key.c_str(), EraJS::read(key + ".id"));
                 continue;
             }
             auto &definition = definitions[id];
