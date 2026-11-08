@@ -15,7 +15,7 @@
       "options": [
         {
           "key": "example.checkbox",
-          "change_during_game": "true",
+          "change_during_game": true,
           "name": "Демонстрационная галочка",
           "hint": "Нажмите для переключения; ПКМ открывает описание.",
           "popup": "Эта опция демонстрирует загрузку из JSON. Игровые скрипты могут читать её через API плагина.",
@@ -23,24 +23,24 @@
             "example",
             "interface"
           ],
-          "default": "true",
+          "default": true,
           "disables": [
-            { "id": "20000" },
-            { "tag": "choice", "value": "0" }
+            { "id": 20000 },
+            { "tag": "choice", "value": 0 }
           ],
           "page": "Интерфейс",
           "category": "Галочки"
         },
         {
           "key": "example.fixed",
-          "id": "20000",
+          "id": 20000,
           "name": "Пример с явно заданным ID 20000",
-          "requires": [{ "tag": "choice", "value": "1" }],
+          "requires": [{ "tag": "choice", "value": 1 }],
           "tags": [
             "example",
             "static"
           ],
-          "default": "false",
+          "default": false,
           "page": "Интерфейс",
           "category": "Галочки"
         },
@@ -54,7 +54,7 @@
             "Второй",
             "Третий"
           ],
-          "default": "1",
+          "default": 1,
           "tags": [
             "example",
             "choice"
@@ -65,8 +65,8 @@
         {
           "key": "example.disabled",
           "name": "Недоступная для изменения опция",
-          "enabled": "false",
-          "default": "true",
+          "enabled": false,
+          "default": true,
           "tags": [
             "example",
             "disabled"
@@ -77,8 +77,8 @@
         {
           "key": "example.hidden",
           "name": "Скрытая опция, доступная через API",
-          "visible": "false",
-          "default": "false",
+          "visible": false,
+          "default": false,
           "category": "Общее"
         }
       ]

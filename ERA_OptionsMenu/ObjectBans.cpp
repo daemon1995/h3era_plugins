@@ -1,6 +1,8 @@
 #include "ObjectBans.h"
 #include "OptionMenuModel.h"
 #include "../headers/json.hpp"
+#include "../headers/Era/eraJSON.hpp"
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 
@@ -131,9 +133,8 @@ bool ParseObjectBans(const std::string &json, ObjectBanRules &rules, std::string
             if (!document.contains(key) || !document.at(key).is_array()) throw std::runtime_error(std::string(key) + ": expected an array of object IDs");
             for (const auto &entry : document.at(key))
             {
-                int id = -1;
-                if (!(entry.is_string() || entry.is_number_integer()) ||
-                    !ParseInteger(entry.is_string() ? entry.get<std::string>() : entry.dump(), id) || !parsed.SetBanned(kind, id, true))
+                if (!entry.is_number_integer() || entry < 0 || entry > (std::numeric_limits<int>::max)() ||
+                    !parsed.SetBanned(kind, entry.get<int>(), true))
                     throw std::runtime_error(std::string(key) + ": invalid object ID");
             }
         }
@@ -144,9 +145,9 @@ bool ParseObjectBans(const std::string &json, ObjectBanRules &rules, std::string
             const auto key = BanSourceKey(source);
             if (!sources.contains(key)) continue;
             const auto &entry = sources.at(key);
-            if (!(entry.is_string() || entry.is_boolean()) ||
-                !ParseBoolean(entry.is_string() ? entry.get<std::string>() : entry.dump(), parsed.sources[source]))
+            if (!entry.is_boolean())
                 throw std::runtime_error(std::string(key) + ": expected true/false");
+            parsed.sources[source] = entry.get<bool>();
         }
         rules = std::move(parsed);
         return true;
@@ -170,7 +171,7 @@ std::vector<int> FilterBanObjects(const std::vector<BanObjectInfo> &objects, con
         if (!number.empty() && number.find_first_not_of(L"0123456789") == std::wstring::npos)
         {
             int id;
-            if (!ParseInteger(std::string(number.begin(), number.end()), id) || id != entry.id) continue;
+            if (!EraJS::ParseNumber(std::string(number.begin(), number.end()).c_str(), id) || id != entry.id) continue;
         }
         else
         {

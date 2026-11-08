@@ -1,6 +1,7 @@
 #define NOMINMAX
 #include <windows.h>
 #include "OptionMenuModel.h"
+#include "../headers/Era/eraJSON.hpp"
 
 #include <algorithm>
 #include <cwctype>
@@ -51,7 +52,7 @@ bool MatchesOptionSearch(const EOption &option, const std::wstring &query, unsig
     if (!number.empty() && number.find_first_not_of(L"0123456789") == std::wstring::npos)
     {
         int id = -1;
-        return ParseInteger(std::string(number.begin(), number.end()), id) && option.GetId() == id;
+        return EraJS::ParseNumber(std::string(number.begin(), number.end()).c_str(), id) && option.GetId() == id;
     }
     const auto &definition = option.Definition();
     std::string text = definition.name + " " + definition.key + " " + definition.hint + " " +

@@ -49,7 +49,7 @@ void RestoreSavedValue(OptionId id)
     char buffer[64] = {};
     GetPrivateProfileStringA("Options", option->GetKey().c_str(), "", buffer, sizeof(buffer), ValuesFilePath().c_str());
     int value = 0;
-    if (ParseInteger(buffer, value))
+    if (EraJS::ParseNumber(buffer, value))
         registry.RestoreValue(id, value);
 }
 
@@ -118,7 +118,7 @@ void RebuildDependencies(bool apply = true)
                 GetPrivateProfileStringA("DependencyValues", registry.Find(id)->GetKey().c_str(), "",
                     buffer, sizeof(buffer), ValuesFilePath().c_str());
                 int value = 0;
-                if (ParseInteger(buffer, value) && registry.Find(id)->AcceptsValue(value)) requestedValues[id] = value;
+                if (EraJS::ParseNumber(buffer, value) && registry.Find(id)->AcceptsValue(value)) requestedValues[id] = value;
             }
         dependenciesLoaded = true;
     }

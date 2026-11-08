@@ -1,4 +1,5 @@
 #include "OptionJson.h"
+#include "../headers/Era/eraJSON.hpp"
 
 #include <climits>
 #include <set>
@@ -10,9 +11,9 @@ namespace
 bool ReadBool(const JsonReader &read, const std::string &path, bool &value, std::string &error)
 {
     std::string raw;
-    if (!read(path, raw) || ParseBoolean(raw, value))
+    if (!read(path, raw) || EraJS::ParseNumber(raw.c_str(), value))
         return true;
-    error = path + ": expected true/false, on/off, or 1/0";
+    error = path + ": expected a boolean (0/1)";
     return false;
 }
 
@@ -75,12 +76,12 @@ bool ReadJsonOption(const JsonReader &read, const std::string &path, const std::
     read(path + ".section", definition.section);
 
     std::string raw;
-    if (read(path + ".category_order", raw) && !ParseInteger(raw, definition.categoryOrder))
+    if (read(path + ".category_order", raw) && !EraJS::ParseNumber(raw.c_str(), definition.categoryOrder))
     {
         error = "category_order must be a 32-bit integer";
         return false;
     }
-    if (read(path + ".id", raw) && (!ParseInteger(raw, definition.fixedId) || definition.fixedId < 0))
+    if (read(path + ".id", raw) && (!EraJS::ParseNumber(raw.c_str(), definition.fixedId) || definition.fixedId < 0))
     {
         error = "id must be a non-negative 32-bit integer";
         return false;
@@ -97,7 +98,7 @@ bool ReadJsonOption(const JsonReader &read, const std::string &path, const std::
         }
     }
     if (read(path + ".wog_option", raw) &&
-        (!ParseInteger(raw, definition.wogOption) || definition.wogOption < 0 || definition.wogOption >= 1000))
+        (!EraJS::ParseNumber(raw.c_str(), definition.wogOption) || definition.wogOption < 0 || definition.wogOption >= 1000))
     {
         error = "wog_option must be an index in 0..999";
         return false;
@@ -108,7 +109,7 @@ bool ReadJsonOption(const JsonReader &read, const std::string &path, const std::
     for (const auto &value : rawValues)
     {
         int number = 0;
-        if (!ParseInteger(value, number))
+        if (!EraJS::ParseNumber(value.c_str(), number))
         {
             error = "wog_values must contain 32-bit integers";
             return false;
@@ -124,10 +125,7 @@ bool ReadJsonOption(const JsonReader &read, const std::string &path, const std::
 
     if (read(path + ".default", raw))
     {
-        bool checked = false;
-        if (definition.type == OptionType::Checkbox && ParseBoolean(raw, checked))
-            definition.defaultValue = checked ? 1 : 0;
-        else if (!ParseInteger(raw, definition.defaultValue))
+        if (!EraJS::ParseNumber(raw.c_str(), definition.defaultValue))
         {
             error = "default must be a checkbox state or a zero-based choice index";
             return false;
@@ -145,9 +143,9 @@ bool ReadJsonOption(const JsonReader &read, const std::string &path, const std::
         const bool hasWhen = read(rulePath + ".when", when);
         const bool hasValue = read(rulePath + ".value", value);
         if (!hasId && !hasTag && !hasWhen && !hasValue) break;
-        if ((hasId && (!ParseInteger(id, rule.id) || rule.id < 0)) ||
-            (hasWhen && !ParseInteger(when, rule.when)) ||
-            (hasValue && !ParseInteger(value, rule.value)))
+        if ((hasId && (!EraJS::ParseNumber(id.c_str(), rule.id) || rule.id < 0)) ||
+            (hasWhen && !EraJS::ParseNumber(when.c_str(), rule.when)) ||
+            (hasValue && !EraJS::ParseNumber(value.c_str(), rule.value)))
         {
             error = rulePath + ": id/when/value must be valid non-negative integers";
             return false;
@@ -189,7 +187,7 @@ JsonLoadResult LoadJsonOptions(OptionRegistry &registry, const JsonReader &read,
             // Contiguous arrays do not need an explicit count.
             int count = -1;
             std::string raw;
-            if (read(collectionRoot + ".option_count", raw) && (!ParseInteger(raw, count) || count < 0))
+            if (read(collectionRoot + ".option_count", raw) && (!EraJS::ParseNumber(raw.c_str(), count) || count < 0))
             {
                 report.issues.push_back({collectionRoot + ".option_count", "expected a non-negative integer"});
                 return;

@@ -78,7 +78,5 @@ class EOption final
 };
 
 std::string LowerAscii(std::string value);
-bool ParseInteger(const std::string &text, int &value);
-bool ParseBoolean(const std::string &text, bool &value);
 bool ValidateDefinition(const OptionDefinition &definition, std::string &error);
 } // namespace era_options

@@ -54,10 +54,10 @@ std::string SerializeOptionsJson(const OptionRegistry &registry, unsigned codePa
         auto &mod = mods[TextToUtf8(definition.modFolder, codePage)];
         mod["name"] = TextToUtf8(definition.modName, codePage);
         if (mod.find("options") == mod.end()) mod["options"] = Json::array();
-        Json item = {{"key", option->GetKey()}, {"id", std::to_string(option->GetId())},
+        Json item = {{"key", option->GetKey()}, {"id", option->GetId()},
                      {"name", TextToUtf8(definition.name, codePage)}};
         const int value = readValue ? readValue(*option) : option->GetValue();
-        if (value) item["default"] = std::to_string(value);
+        if (value) item["default"] = value;
         if (definition.type == OptionType::Choice)
         {
             item["type"] = "choice";
@@ -78,10 +78,10 @@ std::string SerializeOptionsJson(const OptionRegistry &registry, unsigned codePa
         {
             const char *field = required ? "requires" : "disables";
             const auto append = [&](OptionId id, const std::string &tag, int when, int value) {
-                Json record = id >= 0 ? Json{{"id", std::to_string(id)}} :
+                Json record = id >= 0 ? Json{{"id", id}} :
                     Json{{"tag", TextToUtf8(tag, codePage)}};
-                if (when != 1) record["when"] = std::to_string(when);
-                if (value != (required ? 1 : 0)) record["value"] = std::to_string(value);
+                if (when != 1) record["when"] = when;
+                if (value != (required ? 1 : 0)) record["value"] = value;
                 item[field].push_back(std::move(record));
             };
             if (required)
@@ -90,17 +90,17 @@ std::string SerializeOptionsJson(const OptionRegistry &registry, unsigned codePa
             }
             else for (const auto &rule : definition.disables) append(rule.id, rule.tag, rule.when, rule.value);
         }
-        if (!definition.enabled) item["enabled"] = "false";
-        if (!definition.visible) item["visible"] = "false";
-        if (definition.changeDuringGame) item["change_during_game"] = "true";
-        if (definition.categoryOrder) item["category_order"] = std::to_string(definition.categoryOrder);
+        if (!definition.enabled) item["enabled"] = false;
+        if (!definition.visible) item["visible"] = false;
+        if (definition.changeDuringGame) item["change_during_game"] = true;
+        if (definition.categoryOrder) item["category_order"] = definition.categoryOrder;
         if (definition.wogOption >= 0)
         {
-            item["wog_option"] = std::to_string(definition.wogOption);
+            item["wog_option"] = definition.wogOption;
             if (!definition.wogValues.empty())
             {
                 item["wog_values"] = Json::array();
-                for (const auto value : definition.wogValues) item["wog_values"].push_back(std::to_string(value));
+                for (const auto value : definition.wogValues) item["wog_values"].push_back(value);
             }
         }
         mod["options"].push_back(std::move(item));

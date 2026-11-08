@@ -1,22 +1,10 @@
 #include "EOption.h"
 
 #include <algorithm>
-#include <cerrno>
 #include <climits>
-#include <cstdlib>
 
 namespace era_options
 {
-namespace
-{
-std::string Trim(const std::string &value)
-{
-    const auto first = value.find_first_not_of(" \t\r\n");
-    return first == std::string::npos ? std::string() :
-        value.substr(first, value.find_last_not_of(" \t\r\n") - first + 1);
-}
-}
-
 EOption::EOption(OptionId identifier, const OptionDefinition &source)
     : id(identifier), definition(source), value(source.defaultValue)
 {
@@ -79,32 +67,6 @@ std::string LowerAscii(std::string value)
         if (ch >= 'A' && ch <= 'Z')
             ch = static_cast<char>(ch + ('a' - 'A'));
     return value;
-}
-
-bool ParseInteger(const std::string &text, int &value)
-{
-    const std::string normalized = Trim(text);
-    if (normalized.empty())
-        return false;
-    char *end = nullptr;
-    errno = 0;
-    const long parsed = std::strtol(normalized.c_str(), &end, 10);
-    if (errno == ERANGE || end == normalized.c_str() || *end || parsed < INT_MIN || parsed > INT_MAX)
-        return false;
-    value = static_cast<int>(parsed);
-    return true;
-}
-
-bool ParseBoolean(const std::string &text, bool &value)
-{
-    const std::string normalized = LowerAscii(Trim(text));
-    if (normalized == "true" || normalized == "1" || normalized == "on")
-        value = true;
-    else if (normalized == "false" || normalized == "0" || normalized == "off")
-        value = false;
-    else
-        return false;
-    return true;
 }
 
 bool ValidateDefinition(const OptionDefinition &definition, std::string &error)
