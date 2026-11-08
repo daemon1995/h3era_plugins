@@ -28,3 +28,30 @@ without patching HD DLL addresses, its cache or global centering offsets.
 Verified by static disassembly and a Release|Win32 build with `v141_xp`;
 in-game visual verification is still required. When installing, replace
 the old `Interface_MainMenuLogo.era` rather than loading both plugins.
+
+## Video presentation
+
+The native video update routine at `0x597CD0` submits the decoded dirty region
+through two `thiscall` calls to `H3WindowManager::H3Redraw` (`0x603190`):
+`0x597DC1` for SMK and `0x597E95` for BIK. ECX is the window manager; the
+four stack arguments are x, y, width and height. BIK offsets are already added
+at this point; SMK obtains its destination rectangles through SmackToBufferRect.
+
+Both call instructions and target prologues were checked in the local files:
+
+- `h3era.exe`, SHA256 `451E208CB2985BCA75330F0E3C52F89F9219C0C3701BC6E1F354217890C36181`.
+- `h3era HD.exe`, SHA256 `CA47B6406FB064AECACFD4620C3A0DE190A4A37D97A313D66E1F9AAF95A9D594`.
+
+The supplied `video.asm` matches `Graphics_BikVideo/video.asm` (SHA256
+`3B593F87C0288C6BB38E3E6D22D3558DD4279268FC26B84A1866412EA79D27E9`).
+Its `recovered.inc` replaces codec/opening and frame paths while retaining
+these common presentation calls. MainMenuAPI uses CALL hooks here, restores
+overlapping added menu items, then forwards to the existing presentation chain.
+The scrollable-text Draw method is a no-op; its separately initialized text
+lines and scrollbar must also be restored.
+
+A native x86 harness using the production implementation and patcher_x86.dll
+passed 2000 frame submissions through both hooks, including stack balance,
+panel children, clipping, modal/nested menus, lifecycle cleanup and hooks
+installed before and after MainMenuAPI. This is an isolated hook/geometry
+verification, not an in-game BIK/SMK playback or visual check.
