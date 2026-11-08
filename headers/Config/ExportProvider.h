@@ -95,8 +95,8 @@ inline void CopyText(const Fields &root, const std::string &key) {
     bool found; const char *value = EraJS::read(key, found); if (found) Put(root, key, value);
 }
 inline void CopyNumber(const Fields &root, const std::string &key) {
-    bool found; const char *text = EraJS::read(key, found); long long value;
-    if (found && EraJS::ParseNumber(text, value)) Put(root, key, value);
+    long long value;
+    if (EraJS::ReadSingleValue(value, key.c_str())) Put(root, key, value);
 }
 inline void ObjectText(Record &record, const std::string &key) {
     CopyText(record.text, key + ".name"); CopyText(record.text, key + ".description");
