@@ -89,8 +89,8 @@ class ScopedSpellPreview
         previewInProgress = true;
         // Read once per preview, not once per target or MR event.
         bool found = false;
-        const auto setting = EraJS::read(Preview::MR1_SETTING, found);
-        previewMr1Enabled = found && Preview::Mr1Enabled(setting);
+        const int setting = EraJS::readInt(Preview::MR1_SETTING, found);
+        previewMr1Enabled = found && setting != 0;
         combat->action = casterKind == 1 ? eCombatAction::MONSTER_SPELL : eCombatAction::CAST_SPELL;
         combat->actionParameter = spellId;
         combat->actionTarget = hex;
@@ -423,7 +423,7 @@ bool LiveDamageTarget(const H3CombatCreature *target)
 void AddAreaTarget(DamagePreview &preview, H3CombatManager *combat, H3CombatCreature *target, int spellId, int base,
                    int side, H3Hero *hero, int casterKind)
 {
-    if (!LiveDamageTarget(target) || target->info.cannotMove || preview.Contains(target))
+    if (!LiveDamageTarget(target) || target->info.dead || preview.Contains(target))
         return;
     const int chance = SpellChance(combat, target, spellId, side, casterKind);
     if (!chance)
