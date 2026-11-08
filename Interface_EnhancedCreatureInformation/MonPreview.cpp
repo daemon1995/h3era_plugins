@@ -18,7 +18,8 @@ namespace
 constexpr int PANEL_HEIGHT_ADD = 86;
 constexpr int PANEL_Y_CORRECTION = 13;
 constexpr int EXPANDED_PANEL_TYPE = 1;
-constexpr int NATIVE_PANEL_HEIGHT = 288;
+constexpr int SPELLS_ONLY_PANEL_TYPE = 2;
+constexpr int SPELLS_ONLY_Y = 7;
 constexpr int BACKGROUND_SOURCE_Y = 70;
 constexpr int HEALTH_LOSSES_Y = 131;
 constexpr int MORALE_LUCK_Y = 217;
@@ -386,10 +387,13 @@ H3CombatMonsterPanel *__stdcall MonPreview::H3CombatMonsterPanel_Ctor(HiHook *ho
 
     H3CombatMonsterPanel *result = THISCALL_7(H3CombatMonsterPanel *, hook->GetDefaultFunc(), panel,
                                                x, y, width, height, parent, type);
-    if (result && type == EXPANDED_PANEL_TYPE && enabled)
+    if (result && enabled && (type == EXPANDED_PANEL_TYPE || type == SPELLS_ONLY_PANEL_TYPE))
     {
         auto &self = Get();
-        self.BuildExtendedPanel(result);
+        if (type == EXPANDED_PANEL_TYPE)
+            self.BuildExtendedPanel(result);
+        else
+            self.BuildSpellOnlyPanel(result);
         self.RegisterPanel(result);
     }
     return result;
@@ -467,6 +471,22 @@ void MonPreview::BuildExtendedPanel(H3CombatMonsterPanel *panel)
         AddStatisticRow(panel, y, labelId, valueId, Era::tr(STATUS_LABEL_KEYS[row]));
     }
 
+    BuildSpellSlots(panel, SPELL_Y);
+}
+
+void MonPreview::BuildSpellOnlyPanel(H3CombatMonsterPanel *panel)
+{
+    // Keep the compact SPELLINF background and replace its three large icons
+    // with the same twelve slots used by the full statistics panel.
+    for (H3DlgItem *item : panel->GetItems())
+        if (item && item->GetID() >= NATIVE_SPELL_FIRST_ID && item->GetID() <= NATIVE_SPELL_LAST_ID)
+            item->HideDeactivate();
+
+    BuildSpellSlots(panel, SPELLS_ONLY_Y);
+}
+
+void MonPreview::BuildSpellSlots(H3CombatMonsterPanel *panel, int spellY)
+{
     EnsureSpellEffectResources();
     const int iconWidth = spellIconWidth > 0 ? spellIconWidth : DEFAULT_SPELL_ICON_SIZE;
     const int iconHeight = spellIconHeight > 0 ? spellIconHeight : DEFAULT_SPELL_ICON_SIZE;
@@ -476,7 +496,7 @@ void MonPreview::BuildExtendedPanel(H3CombatMonsterPanel *panel)
     for (int slot = 0; slot < SPELL_SLOT_COUNT; ++slot)
     {
         const int x = SPELL_X + (slot % SPELL_COLUMNS) * SPELL_X_STEP;
-        const int y = SPELL_Y + (slot / SPELL_COLUMNS) * SPELL_Y_STEP;
+        const int y = spellY + (slot / SPELL_COLUMNS) * SPELL_Y_STEP;
         const int pictureId = SPELL_FIRST_ITEM_ID + slot * 2;
         const int durationId = pictureId + 1;
 
@@ -513,8 +533,7 @@ void __stdcall MonPreview::H3CombatMonsterPanel_Prepare(HiHook *hook, H3CombatMo
                                                          H3CombatCreature *stack, H3Hero *hero)
 {
     THISCALL_3(void, hook->GetDefaultFunc(), panel, stack, hero);
-    if (panel && stack && creatureInfo::GetPluginSettings().showExpandedBattleMonsterPanel &&
-        panel->GetHeight() > NATIVE_PANEL_HEIGHT)
+    if (panel && stack && creatureInfo::GetPluginSettings().showExpandedBattleMonsterPanel)
         Get().UpdateExtendedPanel(panel, stack, hero);
 }
 

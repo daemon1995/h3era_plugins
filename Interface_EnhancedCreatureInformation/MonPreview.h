@@ -89,6 +89,8 @@ class MonPreview : public IGamePatch
 
     void CreatePanelBackground();
     void BuildExtendedPanel(H3CombatMonsterPanel *panel);
+    void BuildSpellOnlyPanel(H3CombatMonsterPanel *panel);
+    void BuildSpellSlots(H3CombatMonsterPanel *panel, int spellY);
     void UpdateExtendedPanel(H3CombatMonsterPanel *panel, H3CombatCreature *stack, H3Hero *hero);
     void UpdateSpellSlots(const std::array<H3DlgPcx16 *, BATTLE_PREVIEW_SPELL_SLOTS> &pictures,
                           const std::array<H3DlgText *, BATTLE_PREVIEW_SPELL_SLOTS> &durations,
