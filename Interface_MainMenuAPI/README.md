@@ -41,6 +41,12 @@ together after a language change, including when a longer translation is loaded.
 Previous/next buttons use `SendCommand(5 + isEnable, 4096)` according to the
 available pages, updating after switching, hiding notifications or reopening
 the panel. Both are disabled when there is no adjacent page.
+The opener counts all loaded notifications, including hidden ones; reopening
+through it makes all of them available again. The panel counter shows the
+current page and the number of currently available pages, using the medium
+font when the large font would exceed its width. Language reloads defer panel
+updates until the next full main-menu redraw, rebuilding the theme from the
+clean picture before reopening a previously visible panel.
 
 The button panel captures its backing image on the menu's first full redraw,
 after HD Mod has installed its background and before the panel items draw.
@@ -105,7 +111,6 @@ Boolean settings accept JSON booleans or numeric 0/1.
 | `logos.{main,scenario}.asset` | empty | PCX resource name; an empty name disables the logo. |
 | `logos.{main,scenario}.x`, `.y` | 23, 23 | Logo position relative to the dialog. |
 | `logos.{main,scenario}.item_id` | 666 | Dialog item ID, clamped to 1..32767. |
-| `rendering.redraw_always` | false | Force main-menu logo and assembly-version label redraws during callbacks. |
 | `widgets.visibility_toggle.enabled` | true | Create the hide-panel button. |
 | `widgets.system_options.enabled` | false | Create the system-options button. |
 | `widgets.wog_options.enabled` | true | Create the WoG-options button. |
@@ -126,7 +131,6 @@ does not read the old aliases:
 | `nmmi.menu_info.main.*` | `era.main_menu.logos.main.*` |
 | `nmmi.menu_info.select_scenario.*` | `era.main_menu.logos.scenario.*` |
 | Logo `enable`, `pcx_name` | `enabled`, `asset` |
-| `nmmi.menu_info.main.always_draw` | `era.main_menu.rendering.redraw_always` |
 | `era.api.main_menu.widgets.hide.create` | `era.main_menu.widgets.visibility_toggle.enabled` |
 | `era.api.main_menu.widgets.hide.text_hide` | `era.main_menu.widgets.visibility_toggle.text` |
 | `era.api.main_menu.widgets.{system_options,wog_options}.create` | `era.main_menu.widgets.{system_options,wog_options}.enabled` |
@@ -176,6 +180,53 @@ dialog items. A scoped Show context handles the first draw before AddDialog
 links the menu into `WindowManager::lastDlg`. Partial item redraws do not clear
 the background. The API panel uses the same configured/asset-derived bounds; background
 snapshots are refreshed for each menu, including the campaign-set selector.
+
+BIK and SMK frame presentation checks the player's actual updated rectangle
+against visible items added after the native menu constructor: API widgets,
+notification panels, logos and later additions by other plugins. Intersecting
+items are redrawn before that region is copied to the screen. Restoring a
+panel background expands the update region to include its child controls;
+scrollable notification lines and their scrollbar are restored as well.
+This is automatic while video is present, independently of the video-position
+setting. The obsolete `rendering.redraw_always` setting is no longer read.
+The button-panel background is drawn only outside the full video rectangle;
+buttons remain visible above the video. Video presentation hooks are active
+only while tracked menu dialogs exist, and modal dialogs above a menu bypass
+the restoration.
+
+Native menu PNG buttons also redraw over video updates. Their transparent
+pixels use a cached clean video frame inside the video bounds and the static
+menu snapshot outside. Decoder updates refresh only the changed video region
+before any widgets draw, so repeated hover/pressed frames cannot accumulate
+alpha or restore the old wallpaper over a playing video. Full menu redraws
+restore the cached video area after painting the static menu background.
+Before animation/forced-frame decoding, the previous UI is removed from the
+video area. The codec's dirty bounding rectangle can include unchanged pixels
+between updated blocks; these must contain the preceding clean frame, not
+buttons. Wait/pause paths restore the UI too. Unrelated screen presentations
+never update the clean-frame cache.
+The New/Load headings are direct PCX/PNG draws, not button items. Their draw
+parameters are saved per dialog and replayed before presenting each affected
+frame. The active forced-frame callee at the game's `0x5FF667` call is also
+tracked: the BIK plugin can redirect it directly to its DLL, bypassing the
+native forced-frame function. Decoder calls retain their original count and
+return value. A delayed video start enters decoding without a cached frame;
+wait paths do not mistake the pre-video menu image for a decoded frame.
+Menu restoration is suspended while the window manager shows a non-menu
+dialog: its initial draw and forced video call precede its insertion into
+the dialog stack, so `lastDlg` still points at the underlying menu then.
+Menu-page hiding restores its saved background without presenting that
+intermediate image when a clean video frame is available. The frame survives
+the gap between menu dialogs and is restored into the next page's backdrop;
+constructor-time screen contents never seed the video cache. A different
+player, video rectangle, screen size or color mode invalidates the retained
+frame when tracking the next menu.
+The initial cache is captured at MainLoop's background-draw call, after the
+player has rendered its current frame and before Gamselbk and dialog items
+cover it. This keeps the first dirty-block update from caching panel or text
+pixels. Assembly version labels are ordinary dialog text items added after
+MainMenuAPI tracks the menu, so overlapping labels use the same frame repair
+as other added controls, without a separate background image.
 
 When the background must shrink to fit the window or its four-pixel frame,
 the plugin first renders the asset through ERA into a temporary pixel buffer.

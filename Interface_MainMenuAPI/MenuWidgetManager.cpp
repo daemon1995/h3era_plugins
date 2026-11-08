@@ -297,6 +297,7 @@ void MenuWidgetManager::CreateWidgets(H3BaseDlg *dlg, const mainmenu::eMenuFlags
 
     framedBackground->HideDeactivate();
     dlg->AddItem(framedBackground);
+    mainmenu::video::SetPanelBackground(dlg, framedBackground);
 
     framedBackgroundPcx->BackgroundRegion(0, 0, backgroundAreaWidth, backgroundAreaHeight, backgroundName);
 
@@ -405,6 +406,7 @@ void MenuWidgetManager::CaptureBackground(H3BaseDlg *dlg)
 
 void MenuWidgetManager::DestroyWidgets(H3BaseDlg *dlg, const BOOL forceRedraw)
 {
+    mainmenu::video::SetPanelBackground(dlg, nullptr);
 
     if (framedBackground)
     {

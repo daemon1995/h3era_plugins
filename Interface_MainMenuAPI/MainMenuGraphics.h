@@ -14,7 +14,6 @@ public:
     struct alignas(4) MenuInformation
     {
         BOOL enable = false;
-        BOOL alwaysDraw = false;
         const char* pcxName = h3_NullString;
 
         int x =23;
@@ -29,6 +28,7 @@ private:
     static int __stdcall DlgMainMenu_Redraw(HiHook* h, H3BaseDlg* dlg, BOOL8 redrawScreen,
                                            int firstItemId, int lastItemId);
     static int __stdcall DlgMainMenu_Show(HiHook* h, H3BaseDlg* dlg, int zOrder, BOOL8 draw);
+    static int __stdcall DlgMainMenu_Hide(HiHook* h, H3BaseDlg* dlg, BOOL8 redrawScreen);
 
 private:
     static _LHF_(SelectScenarioDlg_NewGame);
@@ -39,7 +39,6 @@ private:
     MainMenuGraphics(PatcherInstance *_pi);
 public:
     static void CreateLogo(H3BaseDlg *dlg);
-    static void DrawLogo(H3Msg *msg);
     virtual void CreatePatches() final override;
     static MainMenuGraphics& Get();
 

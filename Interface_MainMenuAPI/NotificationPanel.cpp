@@ -104,9 +104,16 @@ void DrawBlurredPanel(H3LoadedPcx16 *target, const H3LoadedPcx16 *screen, int so
 
 void NotificationPanel::PrepareAppearance(H3BaseDlg *dlg, H3LoadedPcx16 *cleanScreen) noexcept
 {
-    if (dlg != parentDlg || !cleanScreen || !runtimes.panelBackground.pcx || !backupScreen)
+    if (dlg != parentDlg || !cleanScreen)
         return;
-    if (!themeReady)
+    if (themeDirty)
+        ReloadLanguageData();
+    if (!runtimes.panelBackground.pcx || !backupScreen)
+    {
+        themeDirty = false;
+        return;
+    }
+    if (!themeReady || themeDirty)
         PlaceAtPictureCorner();
     const int absoluteX = x + dlg->GetX(), absoluteY = y + dlg->GetY();
     if (absoluteX < 0 || absoluteY < 0 || absoluteX + width > cleanScreen->width ||
@@ -114,8 +121,8 @@ void NotificationPanel::PrepareAppearance(H3BaseDlg *dlg, H3LoadedPcx16 *cleanSc
         return;
     backupScreen->CopyRegion(cleanScreen, absoluteX, absoluteY);
     auto *asset = mainmenu::background::GetAsset();
-    if (!themeReady || themeScreenWidth != cleanScreen->width || themeScreenHeight != cleanScreen->height ||
-        themeAsset != asset)
+    if (!themeReady || themeDirty || themeScreenWidth != cleanScreen->width ||
+        themeScreenHeight != cleanScreen->height || themeAsset != asset)
     {
         DrawBlurredPanel(runtimes.panelBackground.pcx, cleanScreen, absoluteX, absoluteY);
         auto &body = runtimes.modBackground;
@@ -128,6 +135,7 @@ void NotificationPanel::PrepareAppearance(H3BaseDlg *dlg, H3LoadedPcx16 *cleanSc
         for (auto &button : buttonImages)
             button.valid = false;
         themeReady = true;
+        themeDirty = false;
         themeScreenWidth = cleanScreen->width;
         themeScreenHeight = cleanScreen->height;
         themeAsset = asset;
@@ -331,8 +339,10 @@ void NotificationPanel::RegisterWidget()
 
 void __stdcall NotificationPanel::OnAfterReloadLanguageData(Era::TEvent *e)
 {
+    // The language picker may still be on top. Update the panel on the next
+    // full menu redraw, before preparing its theme and showing its controls.
     if (instance)
-        instance->ReloadLanguageData();
+        instance->themeDirty = true;
 }
 
 NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y, const int width,
@@ -349,14 +359,12 @@ NotificationPanel::NotificationPanel(H3BaseDlg *parent, const int x, const int y
 
     CreateModInfoList(modList);
 
+    parentCaller = GetNotificationPanelCallerWidget();
+    libc::sprintf(h3_TextBuffer, mainmenu::config::Text(panelText::BUTTON_FORMAT, "Notifications (%d)"), notificationsTotal);
+    MenuWidgetManager::Get().SetWidgetText(PARENT_BUTTON_CALLER_NAME, h3_TextBuffer);
+
     if (notificationsTotal)
     {
-        if (parentCaller = GetNotificationPanelCallerWidget())
-        {
-            libc::sprintf(h3_TextBuffer, mainmenu::config::Text(panelText::BUTTON_FORMAT, "Notifications (%d)"), notificationsTotal);
-            parentCaller->SetText(h3_TextBuffer);
-        }
-
         backupScreen = H3LoadedPcx16::Create(width, height);
 
         H3RGB565 highLightColor(H3RGB888::Highlight());
@@ -612,8 +620,12 @@ void NotificationPanel::UpdateCounterImage() noexcept
     char text[32];
     libc::sprintf(text, NOTIFICATION_COUNTER_FORMAT, currentModInfoIndex, notificationsVisible);
     H3FontLoader font(NH3Dlg::Text::BIG);
-    font->TextDraw(counter.pcx, text, 0, 0, counter.pcx->width, counter.pcx->height,
-                   eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
+    H3FontLoader compactFont;
+    if (font->GetMaxLineWidth(text) > counter.pcx->width)
+        compactFont.Set(H3Font::Load(NH3Dlg::Text::MEDIUM));
+    auto *counterFont = compactFont ? compactFont.Get() : font.Get();
+    counterFont->TextDraw(counter.pcx, text, 0, 0, counter.pcx->width, counter.pcx->height,
+                          eTextColor::REGULAR, eTextAlignment::MIDDLE_CENTER);
 }
 
 void NotificationPanel::PrepareTextBackground(ModInfo &info) noexcept
@@ -1074,8 +1086,13 @@ bool NotificationPanel::IsLinkHovered(H3Msg *msg) const noexcept
            currentModInfo->modNameDlgText == msg->ItemAtPosition(parentDlg);
 }
 
-BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcept
+BOOL NotificationPanel::ProcessPanel(H3Msg *msg) noexcept
 {
+    // Language selection can run in a modal dialog. Rebuild the theme only
+    // after the main menu is active and its clean background can be captured.
+    if (themeDirty && msg && msg->GetDlg() == parentDlg && P_WindowManager->lastDlg == parentDlg)
+        parentDlg->Redraw();
+
     if (!isVisible || !notificationsTotal)
         return false;
 
@@ -1159,47 +1176,6 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
                 mainmenu::OpenNotificationLink(currentModInfo->externalLink);
             }
         }
-
-        if (isVisible && forceRedraw)
-        {
-
-            for (auto &i : items)
-            {
-                i->Draw();
-            }
-
-            if (currentModInfo && currentModInfo->isVisible)
-            {
-                for (auto &i : currentModInfo->items)
-                {
-                    if (i->IsVisible())
-                        i->Draw();
-                }
-
-                if (auto scroll = currentModInfo->descriptionTextScrollBar)
-                {
-                    if (scroll->IsVisible())
-                    {
-                        if (auto _items = scroll->GetItems())
-                        {
-                            for (auto &i : *_items)
-                            {
-                                i->Draw();
-                            }
-                        }
-
-                        // manage scrollbar if it has more than one tick (visible)
-                        if (auto _i = scroll->GetTextScrollBar())
-                        {
-                            if (_i->GetTicksCount() > 1)
-                            {
-                                _i->Draw();
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     return result;
@@ -1207,25 +1183,18 @@ BOOL NotificationPanel::ProcessPanel(H3Msg *msg, const BOOL forceRedraw) noexcep
 
 void NotificationPanel::ReloadLanguageData() noexcept
 {
-    themeReady = false;
+    libc::sprintf(h3_TextBuffer, mainmenu::config::Text(panelText::BUTTON_FORMAT, "Notifications (%d)"), notificationsTotal);
+    MenuWidgetManager::Get().SetWidgetText(PARENT_BUTTON_CALLER_NAME, h3_TextBuffer);
     if (!notificationsTotal)
         return;
 
-    if (parentCaller)
-    {
-        libc::sprintf(h3_TextBuffer, mainmenu::config::Text(panelText::BUTTON_FORMAT, "Notifications (%d)"), notificationsTotal);
-        parentCaller->SetText(h3_TextBuffer);
-        MenuWidgetManager::Get().SetWidgetText(NotificationPanel::PARENT_BUTTON_CALLER_NAME, h3_TextBuffer);
-    }
-
-    const bool isVisibleBefore = isVisible;
-
-    Retranslate(isVisibleBefore);
-
-    if (isVisibleBefore)
-    {
-        SetVisible(false);
-    }
+    // PrepareAppearance owns the clean screen now. Hide controls without
+    // drawing the old backup, then reopen after the new theme is ready.
+    openAfterFirstDraw = openAfterFirstDraw || isVisible;
+    isVisible = false;
+    for (auto *item : items)
+        item->HideDeactivate();
+    Retranslate();
 
     for (auto &i : this->modInfos)
     {
@@ -1237,12 +1206,8 @@ void NotificationPanel::ReloadLanguageData() noexcept
                 i.descriptionText->SetText(i.displayedText);
             if (i.modNameDlgText)
                 i.modNameDlgText->SetText(i.displayedName);
-            SetModVisible(i, false);
         }
-    }
-    if (isVisibleBefore)
-    {
-        SetVisible(true);
+        SetModVisible(i, false);
     }
 }
 

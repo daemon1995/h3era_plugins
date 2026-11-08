@@ -6,7 +6,7 @@
 
 namespace dllText
 {
-const char *PLUGIN_VERSION = "2.3.0";
+const char *PLUGIN_VERSION = "2.3.1";
 const char *INSTANCE_NAME = "EraPlugin.Interface_MainMenuAPI.daemon_n";
 const char *PLUGIN_AUTHOR = "daemon_n";
 const char *PLUGIN_DATA = __DATE__;
@@ -22,6 +22,7 @@ int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg);
 int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int val)
 {
     const int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, val);
+    mainmenu::video::Track(dlg);
     MainMenuGraphics::CreateLogo(dlg);
     MenuWidgetManager::Get().CreateWidgets(dlg, val ? mainmenu::eMenuFlags::LOAD_GAME : mainmenu::eMenuFlags::NEW_GAME);
     return result;
@@ -29,20 +30,20 @@ int __stdcall DlgMainMenu_NewLoad_Create(HiHook *h, H3BaseDlg *dlg, const int va
 
 int __stdcall DlgMainMenu_NewLoad_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
+    mainmenu::video::Release(dlg);
     mainmenu::png::Release(dlg);
     MenuWidgetManager::Get().DestroyWidgets(dlg);
     return THISCALL_1(int, h->GetDefaultFunc(), dlg);
 }
 int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 {
-    MainMenuGraphics::DrawLogo(msg);
     mainmenu::CursorRequest cursor(msg);
     if (auto *panel = NotificationPanel::instance)
     {
         if (panel->parentDlg == msg->GetDlg())
         {
             cursor.RequestHand(panel->IsLinkHovered(msg));
-            panel->ProcessPanel(msg, mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false));
+            panel->ProcessPanel(msg);
         }
     }
     const int result = FASTCALL_1(int, h->GetDefaultFunc(), msg);
@@ -57,6 +58,7 @@ int __stdcall DlgMainMenu_Proc(HiHook *h, H3Msg *msg)
 
 int __stdcall DlgMainMenu_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
+    mainmenu::video::Release(dlg);
     mainmenu::background::ReleaseCache();
     mainmenu::png::Release(dlg);
     if (auto *panel = NotificationPanel::instance)
@@ -85,6 +87,7 @@ int __stdcall DlgMainMenu_Campaign_Ctor(HiHook *h, H3BaseDlg *dlg)
 {
     const int result = THISCALL_1(int, h->GetDefaultFunc(), dlg);
 
+    mainmenu::video::Track(dlg);
     MainMenuGraphics::CreateLogo(dlg);
     MenuWidgetManager::Get().CreateWidgets(dlg, mainmenu::eMenuFlags::CAMPAIGN);
     if (campaignData.dlg == nullptr)
@@ -101,7 +104,6 @@ int __stdcall DlgMainMenu_Campaign_Proc(HiHook *h, H3Msg *msg)
     // Custom processing for the campaign menu dialog
     if (campaignData.dlg == msg->GetDlg())
     {
-        MainMenuGraphics::DrawLogo(msg);
         MenuWidgetManager::Get().HandleEvent(msg);
     }
     return FASTCALL_1(int, h->GetDefaultFunc(), msg);
@@ -109,6 +111,7 @@ int __stdcall DlgMainMenu_Campaign_Proc(HiHook *h, H3Msg *msg)
 
 int __stdcall DlgMainMenu_Campaign_Dtor(HiHook *h, H3BaseDlg *dlg)
 {
+    mainmenu::video::Release(dlg);
     mainmenu::png::Release(dlg);
     MenuWidgetManager::Get().DestroyWidgets(dlg);
 
@@ -123,6 +126,7 @@ H3BaseDlg *__stdcall DlgMainMenu_Create(HiHook *h, H3BaseDlg *dlg)
 {
     InitializeHooks();
     auto *result = THISCALL_1(H3BaseDlg *, h->GetDefaultFunc(), dlg);
+    mainmenu::video::Track(dlg);
     if (!MenuWidgetManager::initialized)
     {
         MenuWidgetManager::initialized = true;

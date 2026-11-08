@@ -1,4 +1,5 @@
 #include "framework.h"
+
 #include "MainMenuGraphics.h"
 #include "MainMenuPng.h"
 
@@ -80,13 +81,7 @@ void MainMenuGraphics::CreateLogo(H3BaseDlg *dlg)
         H3BaseDlg__CreateLogo(dlg, Get().mainMenu);
 }
 
-void MainMenuGraphics::DrawLogo(H3Msg *msg)
-{
-    const auto &info = Get().mainMenu;
-    if (info.enable && info.alwaysDraw)
-        if (auto *logo = msg->GetDlg()->GetPcx(info.dlgItemId))
-            logo->Draw();
-}
+
 
 int __stdcall MainMenuGraphics::DlgMainMenu_Show(HiHook *h, H3BaseDlg *dlg, int zOrder, BOOL8 draw)
 {
@@ -99,21 +94,34 @@ int __stdcall MainMenuGraphics::DlgMainMenu_Show(HiHook *h, H3BaseDlg *dlg, int 
     return result;
 }
 
-int __stdcall MainMenuGraphics::DlgMainMenu_Redraw(HiHook *h, H3BaseDlg *dlg, BOOL8 redrawScreen,
-                                               int firstItemId, int lastItemId)
+int __stdcall MainMenuGraphics::DlgMainMenu_Hide(HiHook *h, H3BaseDlg *dlg, BOOL8 redrawScreen)
+{
+    RECT bounds;
+    const bool haveVideo = mainmenu::video::GetBackground(bounds) != nullptr;
+    // The native/HD hide chain restores a pre-menu snapshot. Keep that
+    // intermediate image off screen; the next page presents its completed UI.
+    const int result = THISCALL_2(int, h->GetDefaultFunc(), dlg, haveVideo ? FALSE : redrawScreen);
+    if (haveVideo)
+        mainmenu::video::RestoreBackground();
+    return result;
+}
+
+int __stdcall MainMenuGraphics::DlgMainMenu_Redraw(HiHook *h, H3BaseDlg *dlg, BOOL8 redrawScreen, int firstItemId,
+                                                   int lastItemId)
 {
     // Keep partial button updates intact. Replacing the background there would
     // erase API items outside the requested ID range.
     bool replaced = false;
     auto *mouse = H3MouseManager::Get();
     const bool hideMouse = mouse && !mouse->cursorHidden;
-    const bool fullRedraw = firstItemId == -65535 && lastItemId == 65535 &&
-                            (showingMenu == dlg || H3WindowManager::Get()->lastDlg == dlg);
+    const bool fullRedraw =
+        firstItemId == -65535 && lastItemId == 65535 && (showingMenu == dlg || H3WindowManager::Get()->lastDlg == dlg);
     if (fullRedraw)
     {
         if (hideMouse)
             mouse->TurnOff();
         replaced = mainmenu::background::Draw(dlg);
+        mainmenu::video::RestoreBackground();
         static bool reported = false;
         if (!reported)
         {
@@ -121,12 +129,15 @@ int __stdcall MainMenuGraphics::DlgMainMenu_Redraw(HiHook *h, H3BaseDlg *dlg, BO
             auto *asset = mainmenu::background::GetAsset();
             auto *screen = H3WindowManager::Get()->GetDrawBuffer();
             const auto layout = mainmenu::background::GetLayout(dlg, mainmenu::background::Enabled());
+#ifdef DEBUG
+
             Era::WriteLog("Interface_MainMenuAPI", "First menu redraw",
                           H3String::Format("showing=%d replaced=%d asset=%dx%d screen=%dx%d canvas=%dx%d at %d,%d",
-                                           showingMenu == dlg, replaced,
-                                           asset ? asset->width : 0, asset ? asset->height : 0,
-                                           screen ? screen->width : 0, screen ? screen->height : 0,
-                                           layout.width, layout.height, layout.x, layout.y).String());
+                                           showingMenu == dlg, replaced, asset ? asset->width : 0,
+                                           asset ? asset->height : 0, screen ? screen->width : 0,
+                                           screen ? screen->height : 0, layout.width, layout.height, layout.x, layout.y)
+                              .String());
+#endif
         }
     }
     H3BaseDlg *previousPngMenu = nullptr;
@@ -169,6 +180,9 @@ void MainMenuGraphics::CreatePatches()
         _PI->WriteHiHook(0x63FF64, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Show);
         _PI->WriteHiHook(0x63E6DC, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Show);
         _PI->WriteHiHook(0x63BC0C, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Show);
+        _PI->WriteHiHook(0x63FF68, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Hide);
+        _PI->WriteHiHook(0x63E6E0, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Hide);
+        _PI->WriteHiHook(0x63BC10, FUNCPTR_, EXTENDED_, THISCALL_, DlgMainMenu_Hide);
 
         if (selectScenario.enable)
         {
@@ -200,6 +214,4 @@ void MainMenuGraphics::MenuInformation::LoadInfo(const char *jsonSubKey)
     x = mainmenu::config::Int(H3String::Format("%sx", prefix.String()).String(), 23);
     y = mainmenu::config::Int(H3String::Format("%sy", prefix.String()).String(), 23);
     dlgItemId = Clamp(1, mainmenu::config::Int(H3String::Format("%sitem_id", prefix.String()).String(), 666), 32767);
-    alwaysDraw = !strcmp(jsonSubKey, "main") &&
-                 mainmenu::config::Enabled("era.main_menu.rendering.redraw_always", false);
 }

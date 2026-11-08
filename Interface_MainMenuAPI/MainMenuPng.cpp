@@ -206,6 +206,12 @@ const Image *LoadImage(const std::string &path)
 
 struct Backdrop
 {
+    struct Title
+    {
+        std::string path;
+        int sx = 0, sy = 0, width = 0, height = 0;
+        int x = 0, y = 0;
+    } title;
     H3LoadedPcx16 *image = nullptr;
     int bytesPerPixel = 0;
     ~Backdrop() { if (image) image->Destroy(); }
@@ -257,11 +263,18 @@ bool DrawImage(const std::string &path, int mirrorWidth, int sx, int sy, int wid
     const int left = std::max(0, -dx), top = std::max(0, -dy);
     const int right = std::min(width, std::min(dstWidth, screen->width) - dx);
     const int bottom = std::min(height, std::min(dstHeight, screen->height) - dy);
+    RECT videoBounds;
+    auto *video = mainmenu::video::GetBackground(videoBounds);
+    if (video && (video->width != screen->width || video->height != screen->height))
+        video = nullptr;
     for (int y = top; y < bottom; ++y)
         for (int x = left; x < right; ++x)
         {
             auto *dst = screen->buffer + (dy + y) * pitch + (dx + x) * bpp;
-            const auto *clean = back.image->buffer + (dy + y) * back.image->scanlineSize + (dx + x) * bpp;
+            const bool onVideo = video && dx + x >= videoBounds.left && dx + x < videoBounds.right &&
+                                 dy + y >= videoBounds.top && dy + y < videoBounds.bottom;
+            const auto *background = onVideo ? video : back.image;
+            const auto *clean = background->buffer + (dy + y) * background->scanlineSize + (dx + x) * bpp;
             const int px = sx + (mirror ? width - 1 - x : x), py = sy + y;
             const unsigned char *pixel = px >= 0 && py >= 0 && px < png->width && py < png->height
                                              ? &png->pixels[(py * png->width + px) * 4] : nullptr;
@@ -304,7 +317,8 @@ bool Draw(H3LoadedDef *def, int group, int frame, int sx, int sy, int width, int
         panel->DrawButtonBackground(def, frame, sx, sy, width, height, buffer, dx, dy,
                                     dstWidth, dstHeight, pitch))
         return true;
-    if (!background::Enabled())
+    RECT videoBounds;
+    if (!background::Enabled() && !mainmenu::video::GetBackground(videoBounds))
         return false;
     const auto path = Normalize(H3String::Format("data\\defs\\%s\\%d_%d.png", def->GetName(), group, frame).String());
     return DrawImage(path, def->widthDEF, sx, sy, width, height, buffer, dx, dy, dstWidth, dstHeight, pitch, mirror);
@@ -345,7 +359,9 @@ _LHF_(DrawTitle)
 {
     const auto *a = reinterpret_cast<const int *>(c->esp);
     void *buffer = reinterpret_cast<void *>(a[5]);
-    if (!HasBackdrop(buffer) || !background::Enabled())
+    RECT videoBounds;
+    if (!HasBackdrop(buffer) ||
+        (!background::Enabled() && !mainmenu::video::GetBackground(videoBounds)))
         return EXEC_DEFAULT;
     const char *title = nullptr;
     const auto *pcx = reinterpret_cast<H3ResourceItem *>(c->ecx);
@@ -360,7 +376,14 @@ _LHF_(DrawTitle)
     }
     if (title && DrawImage(std::string("data\\pcx\\mainmenu\\") + title + ".png", 0, a[1], a[2], a[3], a[4],
                            buffer, a[6], a[7], a[8], a[9], a[10], false))
+    {
+        auto *dlg = capturingMenu ? capturingMenu : H3WindowManager::Get()->lastDlg;
+        auto &saved = backdrops[dlg]->title;
+        saved.path = std::string("data\\pcx\\mainmenu\\") + title + ".png";
+        saved.sx = a[1]; saved.sy = a[2]; saved.width = a[3]; saved.height = a[4];
+        saved.x = a[6]; saved.y = a[7];
         return ReturnFromDraw(c, 11);
+    }
     return EXEC_DEFAULT;
 }
 
@@ -372,6 +395,26 @@ void __stdcall Reload(Era::TEvent *)
     zipIndexed = false;
 }
 } // namespace
+
+bool RedrawTitles(H3BaseDlg *dlg, RECT &dirty)
+{
+    const auto entry = backdrops.find(dlg);
+    auto *screen = H3WindowManager::Get()->GetDrawBuffer();
+    if (entry == backdrops.end() || !screen)
+        return false;
+    const auto &title = entry->second->title;
+    const RECT rect{title.x, title.y, title.x + title.width, title.y + title.height};
+    RECT overlap;
+    if (title.path.empty() || !IntersectRect(&overlap, &rect, &dirty))
+        return false;
+    if (DrawImage(title.path, 0, title.sx, title.sy, title.width, title.height, screen->buffer,
+                  title.x, title.y, screen->width, screen->height, screen->scanlineSize, false))
+    {
+        UnionRect(&dirty, &dirty, &rect);
+        return true;
+    }
+    return false;
+}
 
 void Capture(H3BaseDlg *dlg)
 {

@@ -26,9 +26,6 @@
           "enabled": false
         }
       },
-      "rendering": {
-        "redraw_always": false
-      },
       "video": {
         "position": {
           "enabled": true,

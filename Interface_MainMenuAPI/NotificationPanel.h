@@ -91,6 +91,7 @@ struct NotificationPanel
     H3LoadedPcx16 *backupScreen = nullptr;
     bool openAfterFirstDraw = false;
     bool themeReady = false;
+    bool themeDirty = false;
     int themeScreenWidth = 0;
     int themeScreenHeight = 0;
     H3LoadedPcx16 *themeAsset = nullptr;
@@ -165,7 +166,7 @@ struct NotificationPanel
     static void RegisterWidget();
     static void __stdcall OnAfterReloadLanguageData(Era::TEvent *e);
     void SetVisible(const BOOL isVisible, const BOOL activateAllNotifications = false) noexcept;
-    BOOL ProcessPanel(H3Msg *msg, const BOOL forceRedraw = false) noexcept;
+    BOOL ProcessPanel(H3Msg *msg) noexcept;
     bool IsLinkHovered(H3Msg *msg) const noexcept;
     void PrepareAppearance(H3BaseDlg *dlg, H3LoadedPcx16 *cleanScreen) noexcept;
     bool DrawButtonBackground(H3LoadedDef *def, int frame, int sx, int sy, int width, int height,

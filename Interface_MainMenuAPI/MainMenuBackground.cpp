@@ -128,7 +128,7 @@ struct ResizedBackground
     int sourceHeight = 0;
     int bitMode = 0;
 } cache;
-}
+} // namespace
 
 void ReleaseCache()
 {
@@ -178,11 +178,15 @@ bool Draw(h3::H3BaseDlg *dlg)
             ResizeBackground(source, fitted, bitMode);
             QueryPerformanceCounter(&resizedAt);
             source->Destroy();
+#ifdef DEBUG
             Era::WriteLog("Interface_MainMenuAPI", "Background cache prepared",
-                          H3String::Format("%dx%d -> %dx%d: PNG/PCX draw=%.2f ms, bicubic=%.2f ms",
-                                           asset->width, asset->height, fitted->width, fitted->height,
+                          H3String::Format("%dx%d -> %dx%d: PNG/PCX draw=%.2f ms, bicubic=%.2f ms", asset->width,
+                                           asset->height, fitted->width, fitted->height,
                                            1000.0 * (rendered.QuadPart - begin.QuadPart) / frequency.QuadPart,
-                                           1000.0 * (resizedAt.QuadPart - rendered.QuadPart) / frequency.QuadPart).String());
+                                           1000.0 * (resizedAt.QuadPart - rendered.QuadPart) / frequency.QuadPart)
+                              .String());
+#endif // DEBUG
+
             cache.source = asset;
             cache.sourceWidth = asset->width;
             cache.sourceHeight = asset->height;
