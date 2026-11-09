@@ -951,20 +951,6 @@ H3RmgObject *__stdcall RMGObjectsEditor::RMG__RMGObjGenPandora__CreateObject(HiH
 // fixes for different RMG bugs/stuff
 namespace fixes
 {
-BOOL8 __stdcall RMG__FindObjectGroupPlacement(HiHook *h, H3RmgRandomMapGenerator *rmg, H3RmgLocalMap *localMap,
-                                             H3RmgZoneGenerator *zone, UINT minimumDistance)
-{
-    const RECT &area = localMap->area;
-    // An empty footprint leaves {32000, 32000, -32000, -32000} after 0x5362E0.
-    // Stock placement treats these sentinels as coordinates and reads outside the map.
-    // Returning failure lets 0x547850 discard the group and retry through its normal cleanup.
-    if (area.left < 0 || area.top < 0 || area.right <= area.left || area.bottom <= area.top ||
-        area.right > localMap->mapWidth || area.bottom > localMap->mapHeight)
-        return FALSE;
-
-    return THISCALL_4(BOOL8, h->GetDefaultFunc(), rmg, localMap, zone, minimumDistance);
-}
-
 _LHF_(RMGObjGenScroll__AtRandomSelection)
 {
     const _RMGObjGenScroll_ *scrollGen = reinterpret_cast<const _RMGObjGenScroll_ *>(c->edi);
@@ -1102,7 +1088,6 @@ void RMGObjectsEditor::CreatePatches()
 
         _pi->WriteLoHook(0x05353F6, fixes::RMGObjGenScroll__AtRandomSelection);
         _pi->WriteLoHook(0x0549DE8, fixes::RMG__WaterWheelRiver_AtGeneration);
-        _pi->WriteHiHook(0x5475C0, THISCALL_, fixes::RMG__FindObjectGroupPlacement);
         _pi->WriteLoHook(0x540881, RMG__RMGObject_AtPlacement);
 
         _pi->WriteHiHook(0x5382E0, THISCALL_, RMG__AfterMapGenerated);

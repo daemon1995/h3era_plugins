@@ -1,10 +1,41 @@
 ﻿#include "pch.h"
 #include "../headers/Objects/ObjectDefinitions.h"
 #include "../headers/Era/eraModList.hpp"
+#include "../headers/Era/GameResources.hpp"
 void AdditionalProperties::LoadProperties()
 {
     definitions = object_config::CollectDefinitions([](const char *key) { return EraJS::read(key); },
         modList::GetEraModList(modList::CASE_TO_LOWER));
+
+    // Check without loading DEFs or allowing the native MSK loader to use default.msk.
+    // Main and preview setups may load the same properties: report each missing file once per process.
+    static std::set<std::string> reportedMissing;
+    std::set<std::string> files;
+    for (const auto &line : definitions)
+    {
+        const auto begin = line.find_first_not_of(" \t\r\n\f\v");
+        if (begin == std::string::npos)
+            continue;
+        std::string def = line.substr(begin, line.find_first_of(" \t\r\n\f\v", begin) - begin);
+        std::transform(def.begin(), def.end(), def.begin(),
+                       [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        files.insert(def);
+        const auto extension = def.find_last_of('.');
+        files.insert(def.substr(0, extension) + ".msk");
+    }
+    std::string missing;
+    for (const auto &file : files)
+        if (!game_resources::Exists(file, true) && reportedMissing.insert(file).second)
+            missing += file + "\r\n";
+    if (!missing.empty())
+    {
+        bool translated = false;
+        const char *text = EraJS::read("RMG.text.missingObjectResources", translated);
+        const std::string message =
+            std::string(translated ? text : "Files required by added objects are missing. Install these files and "
+                                           "restart the game before generating a map:") + "\r\n\r\n" + missing;
+        MessageBoxA(nullptr, message.c_str(), "RMG: missing object resources", MB_OK | MB_ICONWARNING);
+    }
 }
 bool AdditionalProperties::IsOriginalObject(int type, int subtype) const noexcept
 {

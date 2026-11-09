@@ -12,6 +12,7 @@
       "heroes": "Heroes"
     },
     "text": {
+      "missingObjectResources": "Files required by added objects are missing. Install these files and restart the game before generating a map:",
       "dlg": {
         "pandora": {
           "school": {
